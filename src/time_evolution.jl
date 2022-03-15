@@ -108,7 +108,7 @@ function mesolve(H, psi0, t_l, c_ops; e_ops = [], krylovdim = 10)
     rho0_vec = reshape(psi0 * psi0', length(psi0)^2)
 
     A = DiffEqArrayOperator(L)
-    prob = ODEProblem{true}(A, rho0_vec, tspan, abstol = 1e-7, reltol = 1e-5)
+    prob = ODEProblem(A, rho0_vec, tspan, abstol = 1e-7, reltol = 1e-5)
     sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (N_t - 1))
 
     if length(e_ops) != 0
