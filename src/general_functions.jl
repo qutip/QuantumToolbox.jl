@@ -1,3 +1,11 @@
+# row_major_reshape(X::AbstractArray, size...) = permutedims(reshape(X, reverse([size...])...), length(size):-1:1)
+
+function row_major_reshape(Q::AbstractArray, shapes)
+    shapes = reverse(shapes)
+    perm = collect(length(shapes):-1:1)
+    return permutedims(reshape(Q, shapes), perm)
+end
+
 function chop_op(O, tol = 1e-8)
     tmp_r = (abs.(real.(O)) .> tol) .* real.(O)
     tmp_i = (abs.(imag.(O)) .> tol) .* imag.(O)
@@ -22,4 +30,80 @@ function trunc_op(op, states)
         end
     end
     return chop_op(res)
+end
+
+function eigensystem(A; k = 6, v0 = nothing, sigma = nothing, krylovdim = 30)
+    is_A_hermitian = ishermitian(A)
+
+    if v0 === nothing
+        v0 = rand(eltype(A), size(A, 1))
+    end
+    v0 /= norm(v0)
+
+    if sigma === nothing
+        vals, vecs, info = eigsolve(A, v0, k, ishermitian = is_A_hermitian)
+    else
+        # fac = factorize(A - sigma * I)
+        # vals, vecs, info = eigsolve(x -> fac \ x, v0, k, ishermitian = is_A_hermitian)
+        # vals = (1 .+ sigma * vals) ./ vals
+        
+        A_s = A - sigma * I
+
+        P_cpu = ilu(A_s, τ = 0.01)
+        vals, vecs, info = eigsolve(x -> cg(A_s, x; Pl = P_cpu, maxiter = 500), v0, k, ishermitian = true, krylovdim = krylovdim)
+        vals = (1 .+ sigma * vals) ./ vals
+    end
+    if is_A_hermitian
+        vals = real.(vals)
+    end
+    vals = vals[1:k]
+    vecs = hcat(vecs...)[:, 1:k]
+    return vals, vecs
+end
+
+function ptrace(Q, sel, rd)
+    nd = length(rd)
+    dkeep = rd[sel]
+    qtrace = filter(e->e∉sel,1:nd)
+    dtrace = rd[qtrace]
+
+    vmat = row_major_reshape(Q, (prod(rd), 1))
+    vmat = row_major_reshape(vmat, rd)
+    topermute = []
+    append!(topermute, sel)
+    append!(topermute, qtrace)
+    vmat = permutedims(vmat, topermute)
+    vmat = permutedims(vmat, nd:-1:1)
+    vmat = row_major_reshape(vmat, (prod(dkeep), prod(dtrace)))
+    return vmat * adjoint(vmat)
+end
+
+function entropy_vn(rho, base = 0, tol = 1e-15)
+    vals = eigvals(rho)
+    indexes = abs.(vals) .> tol
+    if 1 ∈ indexes
+        nzvals = vals[indexes]
+    #     nzvals = vals[vals .!= 0]
+        if base != 0
+            logvals = log.(base, Complex.(nzvals))
+        else
+            logvals = log.(Complex.(nzvals))
+        end
+        return -real(sum(nzvals .* logvals))
+    else
+        return 0
+    end
+end
+
+function entanglement(psi, subspaces, size)
+    norm = sqrt(sum(abs.(psi).^2))
+    ψ = deepcopy(psi)
+    if norm > 1e-5
+        ψ = ψ ./ norm
+    else
+        return 0
+    end
+    rho_rabi = ptrace(ψ, subspaces, size)
+    entropy = entropy_vn(rho_rabi)
+    return (entropy > 0) * entropy
 end
