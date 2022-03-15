@@ -1,5 +1,5 @@
 module QuPhys
 
-# Write your package code here.
+prova(x) = x^2
 
 end
