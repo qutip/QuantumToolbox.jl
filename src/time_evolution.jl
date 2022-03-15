@@ -23,7 +23,7 @@ function LindbladJumpCallback()
                 # println(prob)
                 if prob >= r2[]
                     collaps_idx = i
-                    println(collaps_idx)
+                    # println(collaps_idx)
                     break
                 end
             end
