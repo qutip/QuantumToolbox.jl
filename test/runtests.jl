@@ -10,9 +10,9 @@ end
 
 @testset "Eigenvalues" begin
     A = sprand(ComplexF64, 15, 15, 0.1)
-    A += A'
+    A += A' + I
     eigs1 = eigen(collect(A)).values
-    eigs2 = eigensystem(A, k = 8, sigma = -4, krylovdim = 10)[1]
+    eigs2 = eigensystem(A, k = 8, sigma = -5, krylovdim = 10)[1]
     eigs3 = eigensystem(A, k = 8, krylovdim = 10)[1]
     @test sum(abs.(eigs1[1:8] .- eigs2)) < 0.1
     @test sum(reverse(sort(abs.(eigs1))[end-7:end]) .- abs.(eigs3)) < 0.1

@@ -17,6 +17,11 @@ function chop_op(O::AbstractArray, tol = 1e-8)
     return tmp_r + 1im .* tmp_i
 end
 
+"""
+    gaussian(x, mu, sig)
+
+Gaussian function.
+"""
 function gaussian(x, mu, sig)
     return exp.(- 0.5 * (x .- mu).^2 / sig^2)
 end
