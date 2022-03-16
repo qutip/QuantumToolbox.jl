@@ -18,13 +18,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - '1.6'
-          - '1.7'
-        os:
-          - ubuntu-latest
-        arch:
-          - x64
+        version: ['1.6', '1.7']
+        os: [ubuntu-latest]
+        arch: [x64]
         experimental: [false]
         incude:
           - version: 'nightly'
