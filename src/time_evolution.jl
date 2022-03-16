@@ -41,7 +41,12 @@ function LindbladJumpCallback()
     return ContinuousCallback(condition, affect!, initialize = initialize, save_positions = (false,false))
 end
 
-function mcsolve(H, psi0, t_l, c_ops; e_ops = [], n_traj = 100, ensemble_method = EnsembleSerial())
+"""
+    mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 100, ensemble_method = EnsembleSerial())
+
+Time evolution of an open quantum system using quantum trajectories.
+"""
+function mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 100, ensemble_method = EnsembleSerial())
     N_c_ops = length(c_ops)
     N_t = length(t_l)
     ti, tf = t_l[1], t_l[end]
@@ -93,7 +98,7 @@ function mcsolve(H, psi0, t_l, c_ops; e_ops = [], n_traj = 100, ensemble_method 
     end
 end
 
-function mesolve(H, psi0, t_l, c_ops; e_ops = [], krylovdim = 10)
+function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], krylovdim = 10)
     N_c_ops = length(c_ops)
     N_t = length(t_l)
     ti, tf = t_l[1], t_l[end]

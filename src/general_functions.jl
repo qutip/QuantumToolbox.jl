@@ -1,12 +1,17 @@
 # row_major_reshape(X::AbstractArray, size...) = permutedims(reshape(X, reverse([size...])...), length(size):-1:1)
 
+"""
+    row_major_reshape(Q::AbstractArray, shapes)
+
+Reshaping arrays in a different order.
+"""
 function row_major_reshape(Q::AbstractArray, shapes)
     shapes = reverse(shapes)
     perm = collect(length(shapes):-1:1)
     return permutedims(reshape(Q, shapes), perm)
 end
 
-function chop_op(O, tol = 1e-8)
+function chop_op(O::AbstractArray, tol = 1e-8)
     tmp_r = (abs.(real.(O)) .> tol) .* real.(O)
     tmp_i = (abs.(imag.(O)) .> tol) .* imag.(O)
     return tmp_r + 1im .* tmp_i
@@ -20,7 +25,7 @@ function gaussian_derivative(x, mu, sig)
     return - (x .- mu) ./ sig^2 .* exp.(- 0.5 * (x .- mu).^2 / sig^2)
 end
 
-function trunc_op(op, states)
+function trunc_op(op::AbstractArray, states)
     N_trunc = size(states)[1]
     # qstates = [qtp.Qobj(states[i], dims = [[N_s, N_s], [1, 1]]) for i in range(N_trunc)]
     res = spzeros(N_trunc, N_trunc)
@@ -32,7 +37,7 @@ function trunc_op(op, states)
     return chop_op(res)
 end
 
-function eigensystem(A; k = 6, v0 = nothing, sigma = nothing, krylovdim = 30)
+function eigensystem(A::AbstractArray; k = 6, v0 = nothing, sigma = nothing, krylovdim = 30)
     is_A_hermitian = ishermitian(A)
 
     if v0 === nothing
@@ -61,7 +66,7 @@ function eigensystem(A; k = 6, v0 = nothing, sigma = nothing, krylovdim = 30)
     return vals, vecs
 end
 
-function ptrace(Q, sel, rd)
+function ptrace(Q::AbstractArray, sel, rd)
     nd = length(rd)
     dkeep = rd[sel]
     qtrace = filter(e->e∉sel,1:nd)
@@ -78,7 +83,7 @@ function ptrace(Q, sel, rd)
     return vmat * adjoint(vmat)
 end
 
-function entropy_vn(rho, base = 0, tol = 1e-15)
+function entropy_vn(rho::AbstractArray, base = 0, tol = 1e-15)
     vals = eigvals(rho)
     indexes = abs.(vals) .> tol
     if 1 ∈ indexes
