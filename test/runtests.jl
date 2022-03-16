@@ -10,7 +10,7 @@ end
 
 @testset "Eigenvalues" begin
     A = sprand(ComplexF64, 15, 15, 0.1)
-    A += A' + I
+    A *= A'
     eigs1 = eigen(collect(A)).values
     eigs2 = eigensystem(A, k = 8, sigma = -5, krylovdim = 10)[1]
     eigs3 = eigensystem(A, k = 8, krylovdim = 10)[1]
@@ -20,6 +20,22 @@ end
 
 @testset "Time Evolution" begin
     N = 10
+
+    a = kron(destroy(N), eye(2))
+    a_d = a'
+    sp = kron(eye(N), destroy(2))
+    sm = sp'
+    sx = sm + sp
+    sy = 1im * (sm - sp)
+    sz = sp * sm - sm * sp
+    η = 0.01
+    H = a_d * a + 0.5 * sz - 1im * η * (a - a_d) * sx
+    psi0 = kron(fock(N, 0), fock(2, 0))
+    t_l = LinRange(0, 1000, 1000)
+    e_ops = [a_d * a]
+    sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops)
+    @test sum(abs.(expect_se[1:end, 1] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
+
     a = destroy(N)
     a_d = a'
     H = a_d * a

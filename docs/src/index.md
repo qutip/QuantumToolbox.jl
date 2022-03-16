@@ -12,7 +12,3 @@ Documentation for [QuPhys](https://github.com/albertomercurio/QuPhys.jl).
 ```@autodocs
 Modules = [QuPhys]
 ```
-
-```@docs
-gaussian(x, mu, sig)
-```

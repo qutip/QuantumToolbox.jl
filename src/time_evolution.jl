@@ -118,21 +118,43 @@ function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], krylovdim = 10)
 
     if length(e_ops) != 0
         e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
-    end
 
-    Threads.@threads for i in 1:length(t_l)
-        for j in 1:length(e_ops)
-            if ishermitian(e_ops[j])
-                e_ops_expect[i, j] = real(tr(e_ops[j] * reshape(sol.u[i], size(H, 1), size(H, 1))))
-            else
-                e_ops_expect[i, j] = tr(e_ops[j] * reshape(sol.u[i], size(H, 1), size(H, 1)))
+        Threads.@threads for i in 1:length(t_l)
+            for j in 1:length(e_ops)
+                if ishermitian(e_ops[j])
+                    e_ops_expect[i, j] = real(tr(e_ops[j] * reshape(sol.u[i], size(H, 1), size(H, 1))))
+                else
+                    e_ops_expect[i, j] = tr(e_ops[j] * reshape(sol.u[i], size(H, 1), size(H, 1)))
+                end
             end
         end
-    end
 
-    if length(e_ops) == 0
-        return sol
-    else
         return sol, e_ops_expect
+    else
+        return sol
+    end
+end
+
+function sesolve(H::AbstractArray, psi0, t_l; e_ops = [], krylovdim = 10)
+    N_t = length(t_l)
+    ti, tf = t_l[1], t_l[end]
+    tspan = (ti, tf)
+
+    A = DiffEqArrayOperator(-1im * H)
+    prob = ODEProblem(A, psi0, tspan, abstol = 1e-7, reltol = 1e-5)
+    sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (N_t - 1))
+
+    if length(e_ops) != 0
+        e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
+
+        Threads.@threads for i in 1:length(t_l)
+            for j in 1:length(e_ops)
+                e_ops_expect[i, j] = expect(e_ops[j], sol.u[i])
+            end
+        end
+
+        return sol, e_ops_expect
+    else
+        return sol
     end
 end
