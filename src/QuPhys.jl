@@ -20,6 +20,6 @@ export sinm, cosm
 export expect
 export row_major_reshape, chop_op, gaussian, gaussian_derivative, trunc_op, eigensystem
 export ptrace, entropy_vn, entanglement
-export mesolve, mcsolve
+export mesolve, mcsolve, sesolve
 
 end
