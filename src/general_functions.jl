@@ -11,6 +11,12 @@ function row_major_reshape(Q::AbstractArray, shapes)
     return permutedims(reshape(Q, shapes), perm)
 end
 
+function meshgrid(x, y)
+    X = [x for _ in y, x in x]
+    Y = [y for y in y, _ in x]
+    X, Y
+end
+
 function chop_op(O::AbstractArray, tol = 1e-8)
     tmp_r = (abs.(real.(O)) .> tol) .* real.(O)
     tmp_i = (abs.(imag.(O)) .> tol) .* imag.(O)
@@ -86,6 +92,31 @@ function ptrace(Q::AbstractArray, sel, rd)
     vmat = permutedims(vmat, nd:-1:1)
     vmat = row_major_reshape(vmat, (prod(dkeep), prod(dtrace)))
     return vmat * adjoint(vmat)
+
+    if length(size(Q)) == 1 ## Is Ket or Bra
+        vmat = row_major_reshape(Q, (prod(rd), 1))
+        vmat = row_major_reshape(vmat, rd)
+        topermute = []
+        append!(topermute, sel)
+        append!(topermute, qtrace)
+        vmat = permutedims(vmat, topermute)
+        vmat = permutedims(vmat, nd:-1:1)
+        vmat = row_major_reshape(vmat, (prod(dkeep), prod(dtrace)))
+        return vmat * adjoint(vmat)
+    elseif length(size(Q)) == 2 ## Is matrix
+        ρmat = row_major_reshape(Q, (rd..., rd...))
+        topermute = []
+        append!(topermute, qtrace)
+        append!(topermute, [nd + q for q in qtrace])
+        append!(topermute, sel)
+        append!(topermute, [nd + q for q in sel])
+        ρmat = permutedims(ρmat, topermute)
+        ρmat = permutedims(ρmat, 2*nd:-1:1)
+        ρmat = row_major_reshape(ρmat, (prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep)))
+        dims = size(ρmat)
+        res = [tr(ρmat[:, :, i, j]) for i in 1:dims[3] for j in 1:dims[4]]
+        return row_major_reshape(res, dims[3:length(dims)])
+    end
 end
 
 function entropy_vn(rho::AbstractArray, base = 0, tol = 1e-15)

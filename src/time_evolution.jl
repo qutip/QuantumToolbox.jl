@@ -46,7 +46,7 @@ end
 
 Time evolution of an open quantum system using quantum trajectories.
 """
-function mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 100, ensemble_method = EnsembleSerial())
+function mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 1, ensemble_method = EnsembleSerial(), update_function = nothing, abstol = 1e-7, reltol = 1e-5)
     N_c_ops = length(c_ops)
     N_t = length(t_l)
     ti, tf = t_l[1], t_l[end]
@@ -58,14 +58,22 @@ function mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 100, e
         c_op = c_ops[i]
         H_eff += - 0.5im * c_op' * c_op
     end
-    
-    A = DiffEqArrayOperator(-1im * H_eff)
+
+    if update_function === nothing
+        A = DiffEqArrayOperator(-1im * H_eff)
+    else
+        function update_func(A, u, p, t)
+            copyto!(A, -1im * (H_eff + update_function(t)))
+        end
+        
+        A = DiffEqArrayOperator(-1im * H_eff, update_func = update_func)
+    end
     prob = ODEProblem(A, psi0, tspan, p)
     cb1 = LindbladJumpCallback()
     cb2 = AutoAbstol(false; init_curmax=0.0)
     cb = CallbackSet(cb1, cb2)
 
-    prob = ODEProblem{true}(A, psi0, tspan, p, callback = cb, abstol = 1e-7, reltol = 1e-5)
+    prob = ODEProblem{true}(A, psi0, tspan, p, callback = cb, abstol = abstol, reltol = reltol)
     ensemble_prob = EnsembleProblem(prob)
     # Tsit5() alg_hints=[:nonstiff] lsoda()
     sol = solve(ensemble_prob, alg_hints=[:nonstiff], ensemble_method, trajectories=n_traj, saveat = t_l)
@@ -85,12 +93,6 @@ function mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 100, e
         end
     end
 
-    # Threads.@threads for idx in 1:length(sol)
-    #     for i in 1:length(sol[idx].t)
-    #         normalize!(sol[idx].u[i])
-    #     end
-    # end
-
     if length(e_ops) == 0
         return sol
     else
@@ -98,7 +100,7 @@ function mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 100, e
     end
 end
 
-function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], krylovdim = 10)
+function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], krylovdim = 10, abstol = 1e-7, reltol = 1e-5)
     N_c_ops = length(c_ops)
     N_t = length(t_l)
     ti, tf = t_l[1], t_l[end]
@@ -113,7 +115,7 @@ function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], krylovdim = 10)
     rho0_vec = reshape(psi0 * psi0', length(psi0)^2)
 
     A = DiffEqArrayOperator(L)
-    prob = ODEProblem(A, rho0_vec, tspan, abstol = 1e-7, reltol = 1e-5)
+    prob = ODEProblem(A, rho0_vec, tspan, abstol = abstol, reltol = reltol)
     sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (N_t - 1))
 
     if length(e_ops) != 0
@@ -135,13 +137,13 @@ function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], krylovdim = 10)
     end
 end
 
-function sesolve(H::AbstractArray, psi0, t_l; e_ops = [], krylovdim = 10)
+function sesolve(H::AbstractArray, psi0, t_l; e_ops = [], krylovdim = 10, abstol = 1e-7, reltol = 1e-5)
     N_t = length(t_l)
     ti, tf = t_l[1], t_l[end]
     tspan = (ti, tf)
 
     A = DiffEqArrayOperator(-1im * H)
-    prob = ODEProblem(A, psi0, tspan, abstol = 1e-7, reltol = 1e-5)
+    prob = ODEProblem(A, psi0, tspan, abstol = abstol, reltol = reltol)
     sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (N_t - 1))
 
     if length(e_ops) != 0
@@ -157,4 +159,43 @@ function sesolve(H::AbstractArray, psi0, t_l; e_ops = [], krylovdim = 10)
     else
         return sol
     end
+end
+
+function liouvillian_floquet(L_0::AbstractArray, L_p::AbstractArray, L_m::AbstractArray, w_l; n_max = 4)
+    N_size = size(L_0, 1)
+    Id = sparse( eye(N_size) )
+    S = T = spzeros(ComplexF64, N_size, N_size)
+
+    L_p_d = Matrix(L_p)
+    L_m_d = Matrix(L_m)
+
+    for n_i in n_max:-1:1
+        S = - ( L_0 - 1im * n_i * w_l * Id + L_m * S ) \ L_p_d
+        T = - ( L_0 + 1im * n_i * w_l * Id + L_p * T ) \ L_m_d
+    end
+
+    return L_0 + L_m * S + L_p * T
+end
+
+function steadystate(L::AbstractArray)
+    L_tmp = deepcopy(L)
+    N_size = floor(Int, √(size(L_tmp, 1)))
+    weight = mean( abs.(L_tmp) )
+    v0 = zeros(ComplexF64, N_size^2)
+    v0[1] = weight
+    
+    L_tmp[1, [N_size * (i - 1) + i for i in 1:N_size]] .+= weight
+    
+    rho_ss_vec = L_tmp \ v0
+    rho_ss = sparse(reshape(rho_ss_vec, N_size, N_size))
+    return rho_ss
+end
+
+function steadystate(H::AbstractArray, c_ops::Vector)
+    L = -1im * ( spre(H) - spost(H) )
+    for op in c_ops
+        L += lindblad_dissipator( op )
+    end
+
+    return steadystate(L)
 end
