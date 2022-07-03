@@ -14,13 +14,13 @@ include("time_evolution.jl")
 
 export EnsembleSerial, EnsembleThreads, EnsembleDistributed
 
-export spre, spost, sprepost, lindblad_dissipator, liouvillian_floquet
+export spre, spost, sprepost, lindblad_dissipator
 export destroy, eye, fock, projection
 export sinm, cosm
 export expect
 export wigner
 export row_major_reshape, chop_op, gaussian, gaussian_derivative, trunc_op, eigensystem
 export ptrace, entropy_vn, entanglement
-export mesolve, mcsolve, sesolve
+export mesolve, mcsolve, sesolve, liouvillian_floquet, steadystate
 
 end

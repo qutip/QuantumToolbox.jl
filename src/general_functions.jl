@@ -83,16 +83,6 @@ function ptrace(Q::AbstractArray, sel, rd)
     qtrace = filter(e->e∉sel,1:nd)
     dtrace = rd[qtrace]
 
-    vmat = row_major_reshape(Q, (prod(rd), 1))
-    vmat = row_major_reshape(vmat, rd)
-    topermute = []
-    append!(topermute, sel)
-    append!(topermute, qtrace)
-    vmat = permutedims(vmat, topermute)
-    vmat = permutedims(vmat, nd:-1:1)
-    vmat = row_major_reshape(vmat, (prod(dkeep), prod(dtrace)))
-    return vmat * adjoint(vmat)
-
     if length(size(Q)) == 1 ## Is Ket or Bra
         vmat = row_major_reshape(Q, (prod(rd), 1))
         vmat = row_major_reshape(vmat, rd)
