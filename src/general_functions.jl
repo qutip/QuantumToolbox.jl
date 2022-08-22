@@ -138,3 +138,9 @@ function entanglement(psi, subspaces, size)
     entropy = entropy_vn(rho_rabi)
     return (entropy > 0) * entropy
 end
+
+function coherent(N::Real, α::T) where T <: Number
+    a = destroy(N)
+    ad = a'
+    return exp(collect(α * ad - α' * a)) * fock(N, 0)
+end
