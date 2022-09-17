@@ -15,7 +15,8 @@ include("time_evolution.jl")
 export EnsembleSerial, EnsembleThreads, EnsembleDistributed
 
 export spre, spost, sprepost, lindblad_dissipator
-export destroy, eye, fock, projection
+export fock, coherent
+export destroy, eye, projection
 export sinm, cosm
 export expect
 export wigner
