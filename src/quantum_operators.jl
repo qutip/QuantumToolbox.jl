@@ -12,7 +12,7 @@ function spost(O::AbstractArray)
     return kron(A, B)
 end
  
-function sprepost(A, B::AbstractArray)
+function sprepost(A::AbstractArray, B::AbstractArray)
     return sparse( spre(A) * spost(B) )
 end
  

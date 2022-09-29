@@ -1,14 +1,14 @@
 using QuPhys
 using Test
 
-using LinearAlgebra
-using SparseArrays
-
-@testset "QuPhys.jl" begin
+@testitem "QuPhys.jl" begin
     # Write your tests here.
 end
 
-@testset "Eigenvalues" begin
+@testitem "Eigenvalues" begin
+    using LinearAlgebra
+    using SparseArrays
+
     A = sprand(ComplexF64, 15, 15, 0.1)
     A *= A'
     eigs1 = eigen(collect(A)).values
@@ -18,7 +18,10 @@ end
     @test sum(reverse(sort(abs.(eigs1))[end-7:end]) .- abs.(eigs3)) < 0.1
 end
 
-@testset "Time Evolution" begin
+@testitem "Time Evolution" begin
+    using LinearAlgebra
+    using SparseArrays
+
     N = 10
 
     a = kron(destroy(N), eye(2))
@@ -70,7 +73,10 @@ end
     @test sum(abs.(expect_mc[1:end, 1:2] .- expect_me[1:end, 1:2])) / length(t_l) < 0.1
 end
 
-@testset "Entanglement" begin
+@testitem "Entanglement" begin
+    using LinearAlgebra
+    using SparseArrays
+    
     g = fock(2, 1)
     e = fock(2, 0)
     state = normalize(kron(g, e) + kron(e, g))

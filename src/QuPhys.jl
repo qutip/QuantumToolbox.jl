@@ -12,7 +12,8 @@ include("quantum_operators.jl")
 include("general_functions.jl")
 include("time_evolution.jl")
 
-export EnsembleSerial, EnsembleThreads, EnsembleDistributed
+# export EnsembleSerial, EnsembleThreads, EnsembleDistributed
+export DifferentialEquations
 
 export spre, spost, sprepost, lindblad_dissipator
 export fock, coherent

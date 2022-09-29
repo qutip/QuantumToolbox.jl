@@ -48,7 +48,7 @@ function trunc_op(op::AbstractArray, states)
     return chop_op(res)
 end
 
-function eigensystem(A::AbstractArray; k = 6, v0 = nothing, sigma = nothing, krylovdim = 30)
+function eigensystem(A::AbstractArray; k::Int = 6, v0 = nothing, sigma = nothing, krylovdim::Int = 30)
     is_A_hermitian = ishermitian(A)
 
     if v0 === nothing
@@ -59,14 +59,10 @@ function eigensystem(A::AbstractArray; k = 6, v0 = nothing, sigma = nothing, kry
     if sigma === nothing
         vals, vecs, info = eigsolve(A, v0, k, ishermitian = is_A_hermitian)
     else
-        # fac = factorize(A - sigma * I)
-        # vals, vecs, info = eigsolve(x -> fac \ x, v0, k, ishermitian = is_A_hermitian)
-        # vals = (1 .+ sigma * vals) ./ vals
-        
         A_s = A - sigma * I
 
-        P_cpu = ilu(A_s, τ = 0.01)
-        vals, vecs, info = eigsolve(x -> cg(A_s, x; Pl = P_cpu, maxiter = 500), v0, k, ishermitian = true, krylovdim = krylovdim)
+        P = ilu(A_s, τ = 0.001)
+        vals, vecs, info = eigsolve(x -> cg(A_s, x; Pl = P, maxiter = 500), v0, k, ishermitian = is_A_hermitian, krylovdim = krylovdim)
         vals = (1 .+ sigma * vals) ./ vals
     end
     if is_A_hermitian
