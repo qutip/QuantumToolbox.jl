@@ -1,11 +1,11 @@
 using QuPhys
 using Test
 
-@testitem "QuPhys.jl" begin
+@testset "QuPhys.jl" begin
     # Write your tests here.
 end
 
-@testitem "Eigenvalues" begin
+@testset "Eigenvalues" begin
     using LinearAlgebra
     using SparseArrays
 
@@ -18,7 +18,7 @@ end
     @test sum(reverse(sort(abs.(eigs1))[end-7:end]) .- abs.(eigs3)) < 0.1
 end
 
-@testitem "Time Evolution" begin
+@testset "Time Evolution" begin
     using LinearAlgebra
     using SparseArrays
 
@@ -73,7 +73,7 @@ end
     @test sum(abs.(expect_mc[1:end, 1:2] .- expect_me[1:end, 1:2])) / length(t_l) < 0.1
 end
 
-@testitem "Entanglement" begin
+@testset "Entanglement" begin
     using LinearAlgebra
     using SparseArrays
     
