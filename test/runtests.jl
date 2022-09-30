@@ -1,20 +1,20 @@
 using QuPhys
 using Test
+using LinearAlgebra
+using SparseArrays
+
 
 @testset "QuPhys.jl" begin
     # Write your tests here.
 end
 
-@testset "Time Evolution" begin
-    using LinearAlgebra
-    using SparseArrays
-
+@testset "Time Evolution and partial trace" begin
     N = 10
 
-    a = kron(destroy(N), eye(2))
-    a_d = a'
-    sp = kron(eye(N), destroy(2))
-    sm = sp'
+    a_d = kron(create(N), eye(2))
+    a = a_d'
+    sm = kron(eye(N), sigmam())
+    sp = sm'
     sx = sm + sp
     sy = 1im * (sm - sp)
     sz = sp * sm - sm * sp
@@ -37,12 +37,12 @@ end
     sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, ensemble_method = EnsembleSerial());
     @test sum(abs.(expect_mc .- expect_me)) / length(t_l) < 0.1
 
-    sp1 = kron(destroy(2), eye(2))
+    sp1 = kron(sigmap(), eye(2))
     sm1 = sp1'
     sx1 = sm1 + sp1
     sy1 = 1im * (sm1 - sp1)
     sz1 = sp1 * sm1 - sm1 * sp1
-    sp2 = kron(eye(2), destroy(2))
+    sp2 = kron(eye(2), sigmap())
     sm2 = sp2'
     sx2 = sm2 + sp2
     sy2 = 1im * (sm2 - sp2)
@@ -58,15 +58,31 @@ end
     sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2]);
     sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], ensemble_method = EnsembleSerial());
     @test sum(abs.(expect_mc[1:end, 1:2] .- expect_me[1:end, 1:2])) / length(t_l) < 0.1
+
+    ## partial trace
+    @test expect(sp1 * sm1, reshape(sol_me.u[500], 4, 4)) ≈ expect(sigmap() * sigmam(), ptrace(reshape(sol_me.u[500], 4, 4), [1], (2, 2)))
 end
 
 @testset "Entanglement" begin
-    using LinearAlgebra
-    using SparseArrays
-    
     g = fock(2, 1)
     e = fock(2, 0)
     state = normalize(kron(g, e) + kron(e, g))
     rho = state * state'
     @test entanglement(state, [1], (2, 2)) / log(2) ≈ 1
+end
+
+@testset "Wigner" begin
+    α = 0.5 + 0.8im
+    ψ = coherent(30, α)
+    xvec = LinRange(-3, 3, 300)
+    yvec = LinRange(-3, 3, 300)
+
+    wig = wigner(ψ, xvec, yvec)
+
+    X, Y = meshgrid(xvec, yvec)
+    wig_tmp1 = gaussian(xvec, real(α), 1 / √2)
+    wig_tmp2 = gaussian(yvec, imag(α), 1 / √2)
+    wig2 = maximum(wig) * reshape(kron(wig_tmp1, wig_tmp2), 300, 300)
+
+    @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 0.1
 end

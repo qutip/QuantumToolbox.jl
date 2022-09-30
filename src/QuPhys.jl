@@ -13,11 +13,11 @@ export EnsembleSerial, EnsembleThreads, EnsembleDistributed
 
 export spre, spost, sprepost, lindblad_dissipator
 export fock, coherent
-export destroy, eye, projection
+export destroy, create, sigmam, sigmap, eye, projection
 export sinm, cosm
 export expect
 export wigner
-export row_major_reshape, chop_op, gaussian, gaussian_derivative, trunc_op, eigensystem
+export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid
 export ptrace, entropy_vn, entanglement
 export mesolve, mcsolve, sesolve, liouvillian_floquet, steadystate
 

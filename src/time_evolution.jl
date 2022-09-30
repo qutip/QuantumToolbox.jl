@@ -118,11 +118,7 @@ function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], krylovdim = 10,
 
         Threads.@threads for i in 1:length(t_l)
             for j in eachindex(e_ops)
-                if ishermitian(e_ops[j])
-                    e_ops_expect[i, j] = real(tr(e_ops[j] * reshape(sol.u[i], size(H, 1), size(H, 1))))
-                else
-                    e_ops_expect[i, j] = tr(e_ops[j] * reshape(sol.u[i], size(H, 1), size(H, 1)))
-                end
+                e_ops_expect[i, j] = expect(e_ops[j], reshape(sol.u[i], size(H, 1), size(H, 1)))
             end
         end
 

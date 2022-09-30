@@ -12,18 +12,20 @@ function spost(O::AbstractArray)
     return kron(A, B)
 end
  
-function sprepost(A::AbstractArray, B::AbstractArray)
-    return sparse( spre(A) * spost(B) )
-end
+sprepost(A::AbstractArray, B::AbstractArray) = spre(A) * spost(B)
  
 function lindblad_dissipator(O::AbstractArray)
     Od_O = adjoint(O) * O
     return sprepost(O, adjoint(O)) - 0.5 * spre(Od_O) - 0.5 * spost(Od_O)
 end
 
-function destroy(N::Number)
-    return spdiagm(1 => Array{ComplexF64}(sqrt.(1:N - 1)))
-end
+destroy(N::Number) = spdiagm(1 => Array{ComplexF64}(sqrt.(1:N - 1)))
+
+create(N::Number) = spdiagm(-1 => Array{ComplexF64}(sqrt.(1:N - 1)))
+
+sigmap() = destroy(2)
+
+sigmam() = create(2)
 
 function eye(N::Number)
     return spdiagm(ones(ComplexF64, N))
