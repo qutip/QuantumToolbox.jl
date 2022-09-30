@@ -1,22 +1,16 @@
 name = "QuPhys"
 uuid = "6c2fb7c5-b903-41d2-bc5e-5a7c320b9fab"
 authors = ["Alberto Mercurio"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
-IncompleteLU = "40713840-3770-5561-ab4c-a76e7d0d7895"
-IterativeSolvers = "42fd0dbc-a981-5370-80f2-aaf504508153"
-KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 DifferentialEquations = "7"
-IncompleteLU = "0.2"
-IterativeSolvers = "0.9"
-KrylovKit = "0.5"
 julia = "1.6"
 
 [extras]

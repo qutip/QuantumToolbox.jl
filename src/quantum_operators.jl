@@ -43,12 +43,6 @@ function projection(N::Number, i::Number, j::Number, shift = false)
     end
 end
 
-# function exp_gpu(M)
-#     M_tmp = copy(M)
-#     E_gpu, U_gpu = CUDA.CUSOLVER.heevd!('V','U', M_tmp)
-#     return U_gpu * Diagonal(exp.(E_gpu)) * adjoint(U_gpu)
-# end
-
 function sinm(O::AbstractArray)
     M = collect(O)
     return sparse( 0.5im * (exp(1im * M) - exp(-1im * M)) )

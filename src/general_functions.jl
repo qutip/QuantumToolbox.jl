@@ -48,31 +48,6 @@ function trunc_op(op::AbstractArray, states)
     return chop_op(res)
 end
 
-function eigensystem(A::AbstractArray; k::Int = 6, v0 = nothing, sigma = nothing, krylovdim::Int = 30)
-    is_A_hermitian = ishermitian(A)
-
-    if v0 === nothing
-        v0 = rand(eltype(A), size(A, 1))
-    end
-    v0 /= norm(v0)
-
-    if sigma === nothing
-        vals, vecs, info = eigsolve(A, v0, k, ishermitian = is_A_hermitian)
-    else
-        A_s = A - sigma * I
-
-        P = ilu(A_s, τ = 0.001)
-        vals, vecs, info = eigsolve(x -> cg(A_s, x; Pl = P, maxiter = 500), v0, k, ishermitian = is_A_hermitian, krylovdim = krylovdim)
-        vals = (1 .+ sigma * vals) ./ vals
-    end
-    if is_A_hermitian
-        vals = real.(vals)
-    end
-    vals = vals[1:k]
-    vecs = hcat(vecs...)[:, 1:k]
-    return vals, vecs
-end
-
 function ptrace(Q::AbstractArray, sel, rd)
     nd = length(rd)
     dkeep = rd[sel]

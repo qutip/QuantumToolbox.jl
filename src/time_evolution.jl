@@ -12,18 +12,16 @@ function LindbladJumpCallback()
         else
             r2[] = rand()
             dp = 0
-            for i in 1:length(c_ops)
+            for i in eachindex(c_ops)
                 c_op = c_ops[i]
                 dp += real(psi' * (c_op' * c_op) * psi)
             end
             prob = 0
-            for i in 1:length(c_ops)
+            for i in eachindex(c_ops)
                 c_op = c_ops[i]
                 prob += real(psi' * (c_op' * c_op) * psi) / dp
-                # println(prob)
                 if prob >= r2[]
                     collaps_idx = i
-                    # println(collaps_idx)
                     break
                 end
             end
@@ -75,21 +73,18 @@ function mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 1, ens
 
     prob = ODEProblem{true}(A, psi0, tspan, p, callback = cb, abstol = abstol, reltol = reltol)
     ensemble_prob = EnsembleProblem(prob)
-    # Tsit5() alg_hints=[:nonstiff] lsoda()
     sol = solve(ensemble_prob, alg_hints=[:nonstiff], ensemble_method, trajectories=n_traj, saveat = t_l)
-    # sol = solve(ensemble_prob, LinearExponential(krylov=:adaptive), 
-    #     EnsembleThreads(), trajectories=n_traj, dt = (tf - ti) / N_t)
 
     if length(e_ops) != 0
         e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
     end
 
     Threads.@threads for i in 1:length(t_l)
-        for idx in 1:length(sol)
+        for idx in eachindex(sol)
             normalize!(sol[idx].u[i])
         end
-        for j in 1:length(e_ops)
-            e_ops_expect[i, j] = mean([expect(e_ops[j], sol[idx2].u[i]) for idx2 in 1:length(sol)])
+        for j in eachindex(e_ops)
+            e_ops_expect[i, j] = mean([expect(e_ops[j], sol[idx2].u[i]) for idx2 in eachindex(sol)])
         end
     end
 
@@ -122,7 +117,7 @@ function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], krylovdim = 10,
         e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
 
         Threads.@threads for i in 1:length(t_l)
-            for j in 1:length(e_ops)
+            for j in eachindex(e_ops)
                 if ishermitian(e_ops[j])
                     e_ops_expect[i, j] = real(tr(e_ops[j] * reshape(sol.u[i], size(H, 1), size(H, 1))))
                 else
@@ -150,7 +145,7 @@ function sesolve(H::AbstractArray, psi0, t_l; e_ops = [], krylovdim = 10, abstol
         e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
 
         Threads.@threads for i in 1:length(t_l)
-            for j in 1:length(e_ops)
+            for j in eachindex(e_ops)
                 e_ops_expect[i, j] = expect(e_ops[j], sol.u[i])
             end
         end
@@ -163,7 +158,7 @@ end
 
 function liouvillian_floquet(L_0::AbstractArray, L_p::AbstractArray, L_m::AbstractArray, w_l; n_max = 4)
     N_size = size(L_0, 1)
-    Id = sparse( eye(N_size) )
+    Id = eye(N_size)
     S = T = spzeros(ComplexF64, N_size, N_size)
 
     L_p_d = Matrix(L_p)
@@ -178,7 +173,7 @@ function liouvillian_floquet(L_0::AbstractArray, L_p::AbstractArray, L_m::Abstra
 end
 
 function steadystate(L::AbstractArray)
-    L_tmp = deepcopy(L)
+    L_tmp = copy(L)
     N_size = floor(Int, √(size(L_tmp, 1)))
     weight = mean( abs.(L_tmp) )
     v0 = zeros(ComplexF64, N_size^2)
@@ -194,7 +189,7 @@ end
 function steadystate(H::AbstractArray, c_ops::Vector)
     L = -1im * ( spre(H) - spost(H) )
     for op in c_ops
-        L += lindblad_dissipator( op )
+        L += lindblad_dissipator(op)
     end
 
     return steadystate(L)

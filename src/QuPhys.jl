@@ -2,9 +2,6 @@ module QuPhys
 
 using LinearAlgebra
 using SparseArrays
-using KrylovKit
-using IterativeSolvers
-using IncompleteLU
 using Statistics
 using DifferentialEquations
 
@@ -13,7 +10,6 @@ include("general_functions.jl")
 include("time_evolution.jl")
 
 export EnsembleSerial, EnsembleThreads, EnsembleDistributed
-# export DifferentialEquations
 
 export spre, spost, sprepost, lindblad_dissipator
 export fock, coherent
