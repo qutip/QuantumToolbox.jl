@@ -22,7 +22,7 @@ end
     t_l = LinRange(0, 1000, 1000)
     e_ops = [a_d * a]
     sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops)
-    @test sum(abs.(expect_se[1:end, 1] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
+    @test sum(abs.(expect_se[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
 
     a = destroy(N)
     a_d = a'
@@ -55,10 +55,10 @@ end
     t_l = LinRange(0, 10 / (γ1 + γ2), 1000)
     sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2]);
     sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], ensemble_method = EnsembleSerial());
-    @test sum(abs.(expect_mc[1:end, 1:2] .- expect_me[1:end, 1:2])) / length(t_l) < 0.1
+    @test sum(abs.(expect_mc[1:2, :] .- expect_me[1:2, :])) / length(t_l) < 0.1
 
     ## partial trace
-    @test expect(sp1 * sm1, reshape(sol_me.u[500], 4, 4)) ≈ expect(sigmap() * sigmam(), ptrace(reshape(sol_me.u[500], 4, 4), [1], (2, 2)))
+    @test expect(sp1 * sm1, reshape(sol_me(4 / (γ1 + γ2)), 4, 4)) ≈ expect(sigmap() * sigmam(), ptrace(reshape(sol_me(4 / (γ1 + γ2)), 4, 4), [1], (2, 2)))
 end
 
 @testset "Entanglement" begin
@@ -78,8 +78,8 @@ end
     wig = wigner(ψ, xvec, yvec)
 
     X, Y = meshgrid(xvec, yvec)
-    wig_tmp1 = gaussian(xvec, real(α), 1 / √2)
-    wig_tmp2 = gaussian(yvec, imag(α), 1 / √2)
+    wig_tmp1 = gaussian(xvec / √2, real(α), 1 / 2)
+    wig_tmp2 = gaussian(yvec / √2, imag(α), 1 / 2)
     wig2 = maximum(wig) * reshape(kron(wig_tmp1, wig_tmp2), 300, 300)
 
     @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 0.1

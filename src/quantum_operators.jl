@@ -71,41 +71,46 @@ function expect(op::AbstractArray, state::AbstractArray)
     end
 end
 
-function wigner(state, xvec, yvec; g = sqrt(2))
+function _wig_laguerre_val(L, x, c)
+    if length(c) == 1
+        y0 = c[1]
+        y1 = 0
+    elseif  length(c) == 2
+        y0 = c[1]
+        y1 = c[2]
+    else
+        k = length(c)
+        y0 = c[end-1]
+        y1 = c[end]
+        for i in range(3, length(c), step = 1)
+            k -= 1
+            y0, y1 = @. c[end+1-i] - y1 * ( (k - 1)*(L+k-1)/((L + k)*k) )^0.5, y0 - y1 * ((L + 2*k -1) - x) * ((L+k)*k)^(-0.5)
+        end
+    end
+    return @. y0 - y1 * ((L + 1) - x) * (L + 1)^(-0.5)
+end
+
+function wigner(state, xvec::Union{Vector{T1}, LinRange{T2, N}}, 
+    yvec::Union{Vector{T1}, LinRange{T2, N}}; g::Real = √2) where {T1, T2, N}
     if length(size(state)) == 1
         ρ = state * state'
     else
         ρ = state
     end
     M = size(ρ, 1)
-    X, Y = meshgrid(xvec, yvec)
-    A = @. 0.5 * g * (X + 1.0im * Y)
+    X,Y = meshgrid(xvec, yvec)
+    A2 = g * (X + 1im * Y)
 
-    Wlist = [zeros(ComplexF64, size(A)) for k in 1:M]
-    Wlist[1] = @. exp(-2.0 * abs(A)^2) / pi
+    B = abs.(A2)
+    B .*= B
+    w0 = (2*ρ[1, end]) .* ones(eltype(A2), size(A2)...)
+    L = M-1
 
-    W = @. real(ρ[1,1]) * real(Wlist[1])
-    for n in 2:M
-        Wlist[n] = @. (2.0 * A * Wlist[n - 1]) / sqrt(n)
-        W += @. 2 * real(ρ[1, n] * Wlist[n])
+    ρ = ρ .* (2 * ones(M,M) - diagm(ones(M)))
+    while L > 0
+        L -= 1
+        w0 = _wig_laguerre_val(L, B, diag(ρ, L)) .+ w0 .* A2 .* (L+1)^(-0.5)
     end
 
-    for m in 2:M
-        temp = deepcopy(Wlist[m])
-        Wlist[m] = @. (2 * conj(A) * temp - sqrt(m) * Wlist[m - 1]) / sqrt(m)
-
-        # Wlist[m] = Wigner function for |m><m|
-        W += @. real(ρ[m, m] * Wlist[m])
-
-        for n in m+1:M
-            temp2 = @. (2 * A * Wlist[n - 1] - sqrt(m) * temp) / sqrt(n)
-            temp = deepcopy(Wlist[n])
-            Wlist[n] = temp2
-
-            # Wlist[n] = Wigner function for |m><n|
-            W += @. 2 * real(ρ[m, n] * Wlist[n])
-        end
-    end
-
-    return 0.5 * W * g^2
+    return @. real(w0) * exp(-B * 0.5) * (g*g*0.5 / π)
 end

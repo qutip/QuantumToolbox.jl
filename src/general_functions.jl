@@ -11,19 +11,19 @@ function row_major_reshape(Q::AbstractArray, shapes)
     return permutedims(reshape(Q, shapes), perm)
 end
 
-function meshgrid(x::Vector{T}, y::Vector{T}) where {T}
+function meshgrid(x::Union{Vector{T1}, LinRange{T2, M}}, y::Union{Vector{T1}, LinRange{T2, M}}) where {T1, T2, M}
     X = reshape(repeat(x, inner = length(y)), length(y), length(x))
     Y = repeat(y, outer = (1, length(x)))
     X, Y
 end
 
 """
-    gaussian(x, mu, sig)
+    gaussian(x, μ, σ)
 
 Gaussian function.
 """
-function gaussian(x::Vector{T}, mu, sig) where {T}
-    return exp.(- 0.5 * (x .- mu).^2 / sig^2)
+function gaussian(x::Union{Vector{T1}, LinRange{T2, M}}, μ::Real, σ::Real) where {T1, T2, M}
+    return exp.(- 0.5 * (x .- μ).^2 / σ::Real^2)
 end
 
 function ptrace(Q::AbstractArray, sel, rd)

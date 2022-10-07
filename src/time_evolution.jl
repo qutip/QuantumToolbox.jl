@@ -35,7 +35,15 @@ function LindbladJumpCallback()
 end
 
 """
-    mcsolve(H::AbstractArray, ψ0, t_l, c_ops; e_ops = [], n_traj = 1, ensemble_method = EnsembleSerial(), update_function = (t)->0*I, abstol = 1e-7, reltol = 1e-5)
+    function mcsolve(H::AbstractArray, ψ0, t_l, c_ops; 
+        e_ops = [], 
+        n_traj = 1, 
+        alg = Tsit5(), 
+        ensemble_method = EnsembleSerial(), 
+        update_function = (t)->0*I, 
+        abstol = 1e-7,
+        reltol = 1e-5,
+        kwargs...)
 
 Time evolution of an open quantum system using quantum trajectories.
 """
@@ -45,6 +53,8 @@ function mcsolve(H::AbstractArray, ψ0, t_l, c_ops;
     alg = Tsit5(), 
     ensemble_method = EnsembleSerial(), 
     update_function = (t)->0*I, 
+    abstol = 1e-7,
+    reltol = 1e-5,
     kwargs...)
 
     tspan = (t_l[1], t_l[end])
@@ -65,7 +75,7 @@ function mcsolve(H::AbstractArray, ψ0, t_l, c_ops;
     cb = CallbackSet(cb1)
 
     p = [c_ops, rand()]
-    prob = ODEProblem(dudt!, ψ0, tspan, p, callback = cb, kwargs...)
+    prob = ODEProblem(dudt!, ψ0, tspan, p, callback = cb, abstol = abstol, reltol = reltol, kwargs...)
     ensemble_prob = EnsembleProblem(prob, prob_func=prob_func, output_func=output_func)
     sol = solve(ensemble_prob, alg, ensemble_method, trajectories=n_traj, saveat = t_l)
 
@@ -77,7 +87,14 @@ function mcsolve(H::AbstractArray, ψ0, t_l, c_ops;
 end
 
 """
-    mesolve(H::AbstractArray, ψ0, t_l, c_ops; e_ops = [], alg = Tsit5(), update_function = nothing, krylovdim = 30, kwargs...)
+    mesolve(H::AbstractArray, ψ0, t_l, c_ops; 
+        e_ops = [], 
+        alg = Tsit5(), 
+        update_function = nothing, 
+        krylovdim = 30,
+        abstol = 1e-7,
+        reltol = 1e-5,
+        kwargs...)
 
 Time evolution of an open quantum system using master equation.
 """
@@ -85,7 +102,9 @@ function mesolve(H::AbstractArray, ψ0, t_l, c_ops;
     e_ops = [], 
     alg = Tsit5(), 
     update_function = nothing, 
-    krylovdim = 30, 
+    krylovdim = 30,
+    abstol = 1e-7,
+    reltol = 1e-5,
     kwargs...)
 
     tspan = (t_l[1], t_l[end])
@@ -116,11 +135,11 @@ function mesolve(H::AbstractArray, ψ0, t_l, c_ops;
     if alg == LinearExponential()
         !(update_function === nothing) && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
         A = DiffEqArrayOperator(L)
-        prob = ODEProblem(A, rho0_vec, tspan, kwargs...)
+        prob = ODEProblem(A, rho0_vec, tspan, abstol = abstol, reltol = reltol, kwargs...)
         sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (length(t_l) - 1))
     else
         dudt!(du,u,p,t) = mul!(du, L + L_t(t), u)
-        prob = ODEProblem(dudt!, rho0_vec, tspan, kwargs...)
+        prob = ODEProblem(dudt!, rho0_vec, tspan, abstol = abstol, reltol = reltol, kwargs...)
         sol = solve(prob, alg, callback = cb)
     end
 
@@ -130,7 +149,14 @@ function mesolve(H::AbstractArray, ψ0, t_l, c_ops;
 end
 
 """
-    sesolve(H::AbstractArray, ψ0, t_l; e_ops = [], alg = Tsit5(), update_function = nothing, krylovdim = 10, kwargs...)
+    sesolve(H::AbstractArray, ψ0, t_l; 
+        e_ops = [], 
+        alg = Tsit5(), 
+        update_function = nothing, 
+        krylovdim = 10, 
+        abstol =1e-7,
+        reltol = 1e-5,
+        kwargs...)
 
 Time evolution of a closed quantum system using Schrödinger equation.
 """
@@ -139,6 +165,8 @@ function sesolve(H::AbstractArray, ψ0, t_l;
     alg = Tsit5(), 
     update_function = nothing, 
     krylovdim = 10, 
+    abstol =1e-7,
+    reltol = 1e-5,
     kwargs...)
 
     tspan = (t_l[1], t_l[end])
@@ -157,11 +185,11 @@ function sesolve(H::AbstractArray, ψ0, t_l;
     if alg == LinearExponential()
         !(update_function === nothing) && error("The Hamiltonian must to be time independent when using LinearExponential algorithm.")
         A = DiffEqArrayOperator(-1im * H)
-        prob = ODEProblem(A, ψ0, tspan, kwargs...)
+        prob = ODEProblem(A, ψ0, tspan, abstol = abstol, reltol = reltol, kwargs...)
         sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (length(t_l) - 1))
     else
         dudt!(du,u,p,t) = mul!(du, -1im * (H + H_t(t)), u)
-        prob = ODEProblem(dudt!, ψ0, tspan, kwargs...)
+        prob = ODEProblem(dudt!, ψ0, tspan, abstol = abstol, reltol = reltol, kwargs...)
         sol = solve(prob, alg, callback = cb)
     end
 
