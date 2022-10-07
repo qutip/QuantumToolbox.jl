@@ -1,7 +1,5 @@
 using QuPhys
 using Test
-using LinearAlgebra
-using SparseArrays
 
 
 @testset "QuPhys.jl" begin

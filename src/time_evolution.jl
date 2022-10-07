@@ -1,155 +1,165 @@
 function LindbladJumpCallback()
-    r1 = Ref{Float64}(rand(Float64))
-    r2 = Ref{Float64}(rand(Float64))
-    condition = (u, t, integrator) -> real(u' * u) - r1[]
+    function LindbladJumpCondition(u, t, integrator)
+        norm(u)^2 < integrator.p[2]
+    end
 
-    affect! = function (integrator)
-        psi = copy(integrator.u)
-        c_ops = copy(integrator.p)
-        collaps_idx = 1
+    function LindbladJumpAffect!(integrator)
+        ψ = integrator.u
+        c_ops = integrator.p[1]
+        
         if length(c_ops) == 1
-            integrator.u = normalize(c_ops[1] * psi)
+            integrator.u = normalize(c_ops[1] * ψ)
         else
-            r2[] = rand()
+            collaps_idx = 1
+            r2 = rand()
             dp = 0
             for i in eachindex(c_ops)
                 c_op = c_ops[i]
-                dp += real(psi' * (c_op' * c_op) * psi)
+                dp += real(ψ' * (c_op' * c_op) * ψ)
             end
             prob = 0
             for i in eachindex(c_ops)
                 c_op = c_ops[i]
-                prob += real(psi' * (c_op' * c_op) * psi) / dp
-                if prob >= r2[]
+                prob += real(ψ' * (c_op' * c_op) * ψ) / dp
+                if prob >= r2
                     collaps_idx = i
                     break
                 end
             end
-            integrator.u = normalize(c_ops[collaps_idx] * psi)
+            integrator.u = normalize(c_ops[collaps_idx] * ψ)
         end
-        
-        r1[] = rand()
+        integrator.p = [c_ops, rand()]
     end
 
-    initialize = function (c, u, t, integrator)
-        r1[] = rand()
-        u_modified!(integrator, false)
-    end
-
-    return ContinuousCallback(condition, affect!, initialize = initialize, save_positions = (false,false))
+    DiscreteCallback(LindbladJumpCondition, LindbladJumpAffect!, save_positions = (false,false))
 end
 
 """
-    mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 100, ensemble_method = EnsembleSerial())
+    mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 1, ensemble_method = EnsembleSerial(), update_function = (t)->0*I, abstol = 1e-7, reltol = 1e-5)
 
 Time evolution of an open quantum system using quantum trajectories.
 """
-function mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 1, ensemble_method = EnsembleSerial(), update_function = nothing, abstol = 1e-7, reltol = 1e-5)
-    N_c_ops = length(c_ops)
-    N_t = length(t_l)
-    ti, tf = t_l[1], t_l[end]
-    tspan = (ti, tf)
-    p = c_ops
+function mcsolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], n_traj = 1, ensemble_method = EnsembleSerial(), update_function = (t)->0*I, kwargs...)
+    tspan = (t_l[1], t_l[end])
 
     H_eff = H
-    for i in 1:N_c_ops
-        c_op = c_ops[i]
+    for c_op in c_ops
         H_eff += - 0.5im * c_op' * c_op
     end
 
-    if update_function === nothing
-        A = DiffEqArrayOperator(-1im * H_eff)
-    else
-        function update_func(A, u, p, t)
-            copyto!(A, -1im * (H_eff + update_function(t)))
-        end
-        
-        A = DiffEqArrayOperator(-1im * H_eff, update_func = update_func)
-    end
-    prob = ODEProblem(A, psi0, tspan, p)
+    dudt!(du,u,p,t) = mul!(du, -1im * (H_eff + update_function(t)), u)
+
     cb1 = LindbladJumpCallback()
-    cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb = CallbackSet(cb1, cb2)
 
-    prob = ODEProblem{true}(A, psi0, tspan, p, callback = cb, abstol = abstol, reltol = reltol)
-    ensemble_prob = EnsembleProblem(prob)
-    sol = solve(ensemble_prob, alg_hints=[:nonstiff], ensemble_method, trajectories=n_traj, saveat = t_l)
-
-    if length(e_ops) != 0
-        e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
+    function prob_func(prob,i,repeat)
+        remake(prob,p=[prob.p[1], rand()])
     end
 
-    Threads.@threads for i in 1:length(t_l)
-        for idx in eachindex(sol)
-            normalize!(sol[idx].u[i])
-        end
+    p = [c_ops, rand()]
+    prob = ODEProblem(dudt!, psi0, tspan, p, kwargs...)
+    ensemble_prob = EnsembleProblem(prob, prob_func=prob_func)
+    sol = solve(ensemble_prob, Vern7(), callback = cb1, ensemble_method, trajectories=n_traj, saveat = t_l)
+
+    length(e_ops) == 0 && return sol
+
+    e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
+
+    for i in 1:length(t_l)
         for j in eachindex(e_ops)
-            e_ops_expect[i, j] = mean([expect(e_ops[j], sol[idx2].u[i]) for idx2 in eachindex(sol)])
+            e_ops_expect[i, j] = sum([expect(e_ops[j], normalize!(sol[idx].u[i])) for idx in eachindex(sol)]) / length(sol)
         end
     end
 
-    if length(e_ops) == 0
-        return sol
-    else
-        return sol, e_ops_expect
-    end
+    return sol, e_ops_expect
 end
 
-function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], krylovdim = 10, abstol = 1e-7, reltol = 1e-5)
-    N_c_ops = length(c_ops)
-    N_t = length(t_l)
-    ti, tf = t_l[1], t_l[end]
-    tspan = (ti, tf)
-    p = c_ops
+"""
+    mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], method = "Vern7", update_function = nothing, krylovdim = 30, kwargs...)
+
+Time evolution of an open quantum system using master equation.
+"""
+function mesolve(H::AbstractArray, psi0, t_l, c_ops; e_ops = [], method = "Vern7", update_function = nothing, krylovdim = 30, kwargs...)
+    tspan = (t_l[1], t_l[end])
 
     L = -1im * (spre(H) - spost(H))
-    for i in 1:N_c_ops
-        L += lindblad_dissipator( c_ops[i] )
+    for c_op in c_ops
+        L += lindblad_dissipator( c_op )
+    end
+    function L_t(t)
+        update_function === nothing && return 0 * I
+        size(update_function(0)) == size(H) && (ft = update_function(t); return -1im * (spre(ft) - spost(ft)))
+        return update_function(t)
     end
 
     rho0_vec = reshape(psi0 * psi0', length(psi0)^2)
 
-    A = DiffEqArrayOperator(L)
-    prob = ODEProblem(A, rho0_vec, tspan, abstol = abstol, reltol = reltol)
-    sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (N_t - 1))
-
-    if length(e_ops) != 0
-        e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
-
-        Threads.@threads for i in 1:length(t_l)
-            for j in eachindex(e_ops)
-                e_ops_expect[i, j] = expect(e_ops[j], reshape(sol.u[i], size(H, 1), size(H, 1)))
-            end
-        end
-
-        return sol, e_ops_expect
-    else
-        return sol
+    if method == "LinearExponential"
+        !(update_function === nothing) && error("The Liouvillian must to be time independent when using LinearExponential method.")
+        A = DiffEqArrayOperator(L)
+        prob = ODEProblem(A, rho0_vec, tspan, kwargs...)
+        sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (length(t_l) - 1))
+    elseif method == "Vern7"
+        dudt!(du,u,p,t) = mul!(du, L + L_t(t), u)
+        prob = ODEProblem(dudt!, rho0_vec, tspan, kwargs...)
+        sol = solve(prob, Vern7(), saveat = t_l)
     end
+
+    length(e_ops) == 0 && return sol
+
+    e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
+
+    for i in eachindex(t_l)
+        for j in eachindex(e_ops)
+            e_ops_expect[i, j] = expect(e_ops[j], reshape(sol.u[i], size(H)...))
+        end
+    end
+
+    return sol, e_ops_expect
 end
 
-function sesolve(H::AbstractArray, psi0, t_l; e_ops = [], krylovdim = 10, abstol = 1e-7, reltol = 1e-5)
-    N_t = length(t_l)
-    ti, tf = t_l[1], t_l[end]
-    tspan = (ti, tf)
+"""
+    sesolve(H::AbstractArray, psi0, t_l; e_ops = [], method = "Vern7", update_function = nothing, krylovdim = 10, kwargs...)
 
-    A = DiffEqArrayOperator(-1im * H)
-    prob = ODEProblem(A, psi0, tspan, abstol = abstol, reltol = reltol)
-    sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (N_t - 1))
+Time evolution of a closed quantum system using Schrödinger equation.
+"""
+function sesolve(H::AbstractArray, psi0, t_l; e_ops = [], method = "Vern7", update_function = nothing, krylovdim = 10, kwargs...)
+    tspan = (t_l[1], t_l[end])
 
-    if length(e_ops) != 0
-        e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
-
-        Threads.@threads for i in 1:length(t_l)
-            for j in eachindex(e_ops)
-                e_ops_expect[i, j] = expect(e_ops[j], sol.u[i])
-            end
-        end
-
-        return sol, e_ops_expect
-    else
-        return sol
+    function H_t(t)
+        update_function === nothing && return 0 * I
+        return update_function(t)
     end
+
+    if method == "LinearExponential"
+        !(update_function === nothing) && error("The Hamiltonian must to be time independent when using LinearExponential method.")
+        A = DiffEqArrayOperator(-1im * H)
+        prob = ODEProblem(A, psi0, tspan, kwargs...)
+        sol = solve(prob, LinearExponential(krylov=:adaptive, m = krylovdim), dt = (tf - ti) / (length(t_l) - 1))
+    elseif method == "Vern7"
+        dudt!(du,u,p,t) = mul!(du, -1im * (H + H_t(t)), u)
+        prob = ODEProblem(dudt!, psi0, tspan, kwargs...)
+        sol = solve(prob, Vern7(), saveat = t_l)
+    end
+
+    length(e_ops) == 0 && return sol
+
+    e_ops_expect = zeros(Float64, length(t_l), length(e_ops))
+
+    for i in 1:length(t_l)
+        for j in eachindex(e_ops)
+            e_ops_expect[i, j] = expect(e_ops[j], sol.u[i])
+        end
+    end
+
+    return sol, e_ops_expect
+end
+
+function liouvillian(H::AbstractArray, c_ops)
+    L = -1im * (spre(H) - spost(H))
+    for c_op in c_ops
+        L += lindblad_dissipator(c_op)
+    end
+    L
 end
 
 function liouvillian_floquet(L_0::AbstractArray, L_p::AbstractArray, L_m::AbstractArray, w_l; n_max = 4)

@@ -16,7 +16,7 @@ sprepost(A::AbstractArray, B::AbstractArray) = spre(A) * spost(B)
  
 function lindblad_dissipator(O::AbstractArray)
     Od_O = adjoint(O) * O
-    return sprepost(O, adjoint(O)) - 0.5 * spre(Od_O) - 0.5 * spost(Od_O)
+    return sprepost(O, adjoint(O)) - spre(Od_O) / 2 - spost(Od_O) / 2
 end
 
 destroy(N::Number) = spdiagm(1 => Array{ComplexF64}(sqrt.(1:N - 1)))
