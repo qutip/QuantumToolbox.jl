@@ -11,9 +11,9 @@ function row_major_reshape(Q::AbstractArray, shapes)
     return permutedims(reshape(Q, shapes), perm)
 end
 
-function meshgrid(x, y)
-    X = [x for _ in y, x in x]
-    Y = [y for y in y, _ in x]
+function meshgrid(x::Vector{T}, y::Vector{T}) where {T}
+    X = reshape(repeat(x, inner = length(y)), length(y), length(x))
+    Y = repeat(y, outer = (1, length(x)))
     X, Y
 end
 
@@ -22,7 +22,7 @@ end
 
 Gaussian function.
 """
-function gaussian(x, mu, sig)
+function gaussian(x::Vector{T}, mu, sig) where {T}
     return exp.(- 0.5 * (x .- mu).^2 / sig^2)
 end
 
