@@ -65,8 +65,7 @@ end
     @test expect(sp1 * sm1, reshape(sol_me(4 / (γ1 + γ2)), 4, 4)) ≈ expect(sigmap() * sigmam(), ptrace(reshape(sol_me(4 / (γ1 + γ2)), 4, 4), [1], (2, 2)))
 end
 
-@testitem "Steadystate" begin
-    using QuPhys
+@testset "Steadystate" begin
     N = 10
 
     a = destroy(N)
