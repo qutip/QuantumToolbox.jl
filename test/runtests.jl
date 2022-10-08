@@ -23,6 +23,8 @@ end
     e_ops = [a_d * a]
     sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops)
     @test sum(abs.(expect_se[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
+    sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7())
+    @test sum(abs.(expect_se[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
 
     a = destroy(N)
     a_d = a'
@@ -32,7 +34,9 @@ end
     psi0 = fock(N, 3)
     t_l = LinRange(0, 100, 1000)
     sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops);
-    sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, ensemble_method = EnsembleSerial());
+    sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops);
+    @test sum(abs.(expect_mc .- expect_me)) / length(t_l) < 0.1
+    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7());
     @test sum(abs.(expect_mc .- expect_me)) / length(t_l) < 0.1
 
     sp1 = kron(sigmap(), eye(2))
@@ -59,6 +63,32 @@ end
 
     ## partial trace
     @test expect(sp1 * sm1, reshape(sol_me(4 / (γ1 + γ2)), 4, 4)) ≈ expect(sigmap() * sigmam(), ptrace(reshape(sol_me(4 / (γ1 + γ2)), 4, 4), [1], (2, 2)))
+end
+
+@testitem "Steadystate" begin
+    using QuPhys
+    N = 10
+
+    a = destroy(N)
+    a_d = a'
+    H = a_d * a + 0.1 * (a + a_d)
+    c_ops = [sqrt(0.1) * a]
+    e_ops = [a_d * a]
+    psi0 = fock(N, 3)
+    t_l = LinRange(0, 200, 1000)
+    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops);
+    ρ_ss = steadystate(H, c_ops)
+    @test abs(expect_me[1, end] - expect(e_ops[1], ρ_ss)) < 1e-4
+
+    H = a_d * a
+    H_t = 0.1 * (a + a_d)
+    c_ops = [sqrt(0.1) * a]
+    e_ops = [a_d * a]
+    psi0 = fock(N, 3)
+    t_l = LinRange(0, 200, 1000)
+    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, update_function = (t)->sin(t)*H_t);
+    ρ_ss = steadystate_floquet(H, c_ops, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1)
+    @test abs(sum(expect_me[1, end-100:end])/101 - expect(e_ops[1], ρ_ss)) < 1e-2
 end
 
 @testset "Entanglement" begin
