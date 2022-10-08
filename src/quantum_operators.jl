@@ -90,8 +90,8 @@ function _wig_laguerre_val(L, x, c)
     return @. y0 - y1 * ((L + 1) - x) * (L + 1)^(-0.5)
 end
 
-function wigner(state, xvec::Union{Vector{T1}, LinRange{T2, N}}, 
-    yvec::Union{Vector{T1}, LinRange{T2, N}}; g::Real = √2) where {T1, T2, N}
+function wigner(state, xvec::Union{Vector{T1}, LinRange{T2}}, 
+    yvec::Union{Vector{T1}, LinRange{T2}}; g::Real = √2) where {T1,T2}
     if length(size(state)) == 1
         ρ = state * state'
     else
