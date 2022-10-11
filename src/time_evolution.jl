@@ -1,6 +1,6 @@
-function LindbladJumpCallback()
+function LindbladJumpCallback(savebefore=false,saveafter=false)
     function LindbladJumpCondition(u, t, integrator)
-        norm(u)^2 < integrator.p[2]
+        norm(u)^2 - integrator.p[2]
     end
 
     function LindbladJumpAffect!(integrator)
@@ -13,14 +13,14 @@ function LindbladJumpCallback()
             collaps_idx = 1
             r2 = rand()
             dp = 0
-            for i in eachindex(c_ops)
+            @inbounds for i in eachindex(c_ops)
                 c_op = c_ops[i]
                 dp += real(ψ' * (c_op' * c_op) * ψ)
             end
             prob = 0
-            for i in eachindex(c_ops)
+            @inbounds for i in eachindex(c_ops)
                 c_op = c_ops[i]
-                prob += real(ψ' * (c_op' * c_op) * ψ) / dp
+                prob += real(expect(c_op' * c_op, ψ)) / dp
                 if prob >= r2
                     collaps_idx = i
                     break
@@ -31,7 +31,7 @@ function LindbladJumpCallback()
         integrator.p = [c_ops, rand()]
     end
 
-    DiscreteCallback(LindbladJumpCondition, LindbladJumpAffect!, save_positions = (false,false))
+    ContinuousCallback(LindbladJumpCondition, LindbladJumpAffect!, save_positions = (savebefore,saveafter))
 end
 
 """
@@ -42,17 +42,19 @@ end
         alg = AutoVern7(KenCarp4(autodiff=false)),
         ensemble_method = EnsembleThreads(), 
         update_function = (t)->0*I,
+        progress = true,
         kwargs...)
 
 Time evolution of an open quantum system using quantum trajectories.
 """
-function mcsolve(H::AbstractArray, ψ0, t_l, c_ops; 
+function mcsolve(H::AbstractArray, ψ0, t_l, c_ops;
     e_ops = [], 
     n_traj::Int = 1,
     batch_size::Int = n_traj % 10 == 0 ? round(Int, n_traj / 10) : n_traj,
     alg = AutoVern7(KenCarp4(autodiff=false)),
     ensemble_method = EnsembleThreads(), 
     update_function = (t)->0*I,
+    progress = true,
     kwargs...)
 
     tspan = (t_l[1], t_l[end])
@@ -62,10 +64,17 @@ function mcsolve(H::AbstractArray, ψ0, t_l, c_ops;
         H_eff += - 0.5im * c_op' * c_op
     end
 
+    progr = Progress(n_traj, showspeed=true, enabled=progress)
+    channel = RemoteChannel(()->Channel{Bool}(), 1)
+    @async while take!(channel)
+        next!(progr)
+    end
+
     function prob_func(prob,i,repeat)
         remake(prob,p=[prob.p[1], rand()])
     end
     function output_func(sol,i)
+        put!(channel, true)
         res = hcat(map(i->map(op->expect(op, normalize(sol.u[i])), e_ops), eachindex(t_l))...)
         (res, false)
     end
@@ -86,6 +95,8 @@ function mcsolve(H::AbstractArray, ψ0, t_l, c_ops;
     ensemble_prob = EnsembleProblem(prob, prob_func=prob_func, output_func=output_func, reduction=reduction)
     sol = solve(ensemble_prob, alg, ensemble_method, trajectories=n_traj, batch_size=batch_size, saveat = t_l)
 
+    put!(channel, false)
+
     length(e_ops) == 0 && return sol
 
     e_ops_expect = sum(sol.u, dims = 3) ./ n_traj
@@ -98,6 +109,7 @@ end
         e_ops = [], 
         alg = Vern7(), 
         update_function = nothing, 
+        progress = true,
         kwargs...)
 
 Time evolution of an open quantum system using master equation.
@@ -106,15 +118,16 @@ function mesolve(H::AbstractArray, ψ0, t_l, c_ops;
     e_ops = [], 
     alg = Vern7(), 
     update_function = nothing, 
+    progress = true,
     kwargs...)
 
     tspan = (t_l[1], t_l[end])
-    rho0_vec = reshape(ψ0 * ψ0', length(ψ0)^2)
 
-    L = -1im * (spre(H) - spost(H))
-    for c_op in c_ops
-        L += lindblad_dissipator( c_op )
-    end
+    progr = Progress(length(t_l), showspeed=true, enabled=progress)
+
+    ρ0 = reshape(ψ0 * ψ0', length(ψ0)^2)
+
+    L = liouvillian(H, c_ops)
     function L_t(t)
         update_function === nothing && return 0 * I
         size(update_function(0)) == size(H) && (ft = update_function(t); return -1im * (spre(ft) - spost(ft)))
@@ -123,11 +136,8 @@ function mesolve(H::AbstractArray, ψ0, t_l, c_ops;
 
     saved_values = SavedValues(Float64, Vector{Float64})
     function save_func(u, t, integrator)
-        res = Vector{Float64}([])
-        for op in e_ops
-            push!(res, expect(op, reshape(u, size(H)...)))
-        end
-        res
+        next!(progr)
+        map(op->expect(op, reshape(u, size(H)...)), e_ops)
     end
     cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
@@ -136,11 +146,13 @@ function mesolve(H::AbstractArray, ψ0, t_l, c_ops;
     if typeof(alg) <: LinearExponential
         !(update_function === nothing) && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
         A = DiffEqArrayOperator(L)
-        prob = ODEProblem(A, rho0_vec, tspan, kwargs...)
+        prob = ODEProblem(A, 
+        ρ0, tspan; kwargs...)
         sol = solve(prob, alg, dt = (t_l[2] - t_l[1]), callback = cb)
     else
         dudt!(du,u,p,t) = mul!(du, L + L_t(t), u)
-        prob = ODEProblem(dudt!, rho0_vec, tspan, kwargs...)
+        prob = ODEProblem(dudt!, 
+        ρ0, tspan; kwargs...)
         sol = solve(prob, alg, callback = cb)
     end
 
@@ -154,6 +166,7 @@ end
         e_ops = [], 
         alg = Vern7(), 
         update_function = nothing, 
+        progress = true,
         kwargs...)
 
 Time evolution of a closed quantum system using Schrödinger equation.
@@ -162,14 +175,20 @@ function sesolve(H::AbstractArray, ψ0, t_l;
     e_ops = [], 
     alg = Vern7(), 
     update_function = nothing, 
+    progress = true,
     kwargs...)
 
     H_t(t) = update_function === nothing ? 0*I : update_function(t)
 
     tspan = (t_l[1], t_l[end])
 
-    saved_values = SavedValues(Float64, Vector{Float64})
-    save_func = (u, t, integrator) -> map(op->expect(op, u), e_ops)
+    progr = Progress(length(t_l), showspeed=true, enabled=progress)
+
+    saved_values = SavedValues(Float64, Vector{Float64}) 
+    function save_func(u, t, integrator)
+        next!(progr)
+        map(op->expect(op, u), e_ops)
+    end
     cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
     cb = CallbackSet(cb1, cb2)
@@ -203,17 +222,16 @@ liouvillian(H::AbstractArray) = -1im * (spre(H) - spost(H))
 function liouvillian_floquet(L_0::AbstractArray, L_p::AbstractArray, L_m::AbstractArray, w_l::Real; n_max::Int = 4)
     N_size = size(L_0, 1)
     Id = eye(N_size)
-    S = T = spzeros(ComplexF64, N_size, N_size)
+    S = T = spzeros(eltype(L_0), N_size, N_size)
 
     L_p_d = Matrix(L_p)
     L_m_d = Matrix(L_m)
 
     for n_i in n_max:-1:1
-        S = - ( L_0 - 1im * n_i * w_l * Id + L_m * S ) \ L_p_d
-        T = - ( L_0 + 1im * n_i * w_l * Id + L_p * T ) \ L_m_d
+        S, T = - ( L_0 - 1im * n_i * w_l * Id + L_m * S ) \ L_p_d, - ( L_0 + 1im * n_i * w_l * Id + L_p * T ) \ L_m_d
     end
 
-    return L_0 + L_m * S + L_p * T
+    return droptol!(sparse(L_0 + L_m * S + L_p * T), 1e-8)
 end
 
 function steadystate(L::AbstractArray)
