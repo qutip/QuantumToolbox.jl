@@ -1,22 +1,18 @@
 function spre(O::AbstractArray)
-    N = size(O, 1)
-    A = spdiagm( ones(ComplexF64, N) )
-    B = O
-    return kron(A, B)
+    A = spdiagm( ones(ComplexF64, size(O, 1)) )
+    return kron(A, O)
 end
  
 function spost(O::AbstractArray)
-    N = size(O, 1)
-    A = sparse( transpose(O) )
-    B = spdiagm( ones(ComplexF64, N) )
-    return kron(A, B)
+    B = spdiagm( ones(ComplexF64, size(O, 1)) )
+    return kron(O', B)
 end
  
 sprepost(A::AbstractArray, B::AbstractArray) = spre(A) * spost(B)
  
 function lindblad_dissipator(O::AbstractArray)
-    Od_O = adjoint(O) * O
-    return sprepost(O, adjoint(O)) - spre(Od_O) / 2 - spost(Od_O) / 2
+    Od_O = O' * O
+    return sprepost(O, O') - spre(Od_O) / 2 - spost(Od_O) / 2
 end
 
 destroy(N::Number) = spdiagm(1 => Array{ComplexF64}(sqrt.(1:N - 1)))

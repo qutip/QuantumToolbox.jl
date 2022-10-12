@@ -50,7 +50,7 @@ Time evolution of an open quantum system using quantum trajectories.
 function mcsolve(H::AbstractArray, ψ0, t_l, c_ops;
     e_ops = [], 
     n_traj::Int = 1,
-    batch_size::Int = n_traj % 10 == 0 ? round(Int, n_traj / 10) : n_traj,
+    batch_size::Int = min(10, n_traj),
     alg = AutoVern7(KenCarp4(autodiff=false)),
     ensemble_method = EnsembleThreads(), 
     update_function = (t)->0*I,
@@ -81,7 +81,7 @@ function mcsolve(H::AbstractArray, ψ0, t_l, c_ops;
     function reduction(u,batch,I)
         tmp = sum(cat(batch..., dims = 3), dims = 3)
         length(u) == 0 && return tmp, false
-        cat(u, tmp, dims = 3), false
+        sum(cat(u, tmp, dims = 3), dims = 3), false
     end
 
     dudt!(du,u,p,t) = mul!(du, -1im * (H_eff + update_function(t)), u)
@@ -107,7 +107,7 @@ end
 """
     mesolve(H::AbstractArray, ψ0, t_l, c_ops; 
         e_ops = [], 
-        alg = Vern7(), 
+        alg = LinearExponential(krylov=:adaptive, m=10), 
         update_function = nothing, 
         progress = true,
         kwargs...)
@@ -116,7 +116,7 @@ Time evolution of an open quantum system using master equation.
 """
 function mesolve(H::AbstractArray, ψ0, t_l, c_ops; 
     e_ops = [], 
-    alg = Vern7(), 
+    alg = LinearExponential(krylov=:adaptive, m=10), 
     update_function = nothing, 
     progress = true,
     kwargs...)
@@ -164,7 +164,7 @@ end
 """
     sesolve(H::AbstractArray, ψ0, t_l; 
         e_ops = [], 
-        alg = Vern7(), 
+        alg = LinearExponential(), 
         update_function = nothing, 
         progress = true,
         kwargs...)
@@ -173,7 +173,7 @@ Time evolution of a closed quantum system using Schrödinger equation.
 """
 function sesolve(H::AbstractArray, ψ0, t_l; 
     e_ops = [], 
-    alg = Vern7(), 
+    alg = LinearExponential(), 
     update_function = nothing, 
     progress = true,
     kwargs...)
