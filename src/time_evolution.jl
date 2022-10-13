@@ -116,7 +116,7 @@ Time evolution of an open quantum system using master equation.
 """
 function mesolve(H::AbstractArray, ψ0, t_l, c_ops; 
     e_ops = [], 
-    alg = LinearExponential(krylov=:adaptive, m=10), 
+    alg = LinearExponential(krylov=:adaptive, m = 15), 
     update_function = nothing, 
     progress = true,
     kwargs...)

@@ -21,9 +21,9 @@ end
     psi0 = kron(fock(N, 0), fock(2, 0))
     t_l = LinRange(0, 1000, 1000)
     e_ops = [a_d * a]
-    sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops)
+    sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops, progress = false)
     @test sum(abs.(expect_se[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
-    sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7())
+    sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress = false)
     @test sum(abs.(expect_se[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
 
     a = destroy(N)
@@ -33,10 +33,10 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 100, 1000)
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops);
-    sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops);
+    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress = false);
+    sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress = false);
     @test sum(abs.(expect_mc .- expect_me)) / length(t_l) < 0.1
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7());
+    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress = false);
     @test sum(abs.(expect_mc .- expect_me)) / length(t_l) < 0.1
 
     sp1 = kron(sigmap(), eye(2))
@@ -57,8 +57,8 @@ end
     psi0_2 = normalize(fock(2, 0) + fock(2, 1))
     psi0 = kron(psi0_1, psi0_2)
     t_l = LinRange(0, 10 / (γ1 + γ2), 1000)
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2]);
-    sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], ensemble_method = EnsembleSerial());
+    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress = false);
+    sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], progress = false);
     @test sum(abs.(expect_mc[1:2, :] .- expect_me[1:2, :])) / length(t_l) < 0.1
 
     ## partial trace
@@ -75,9 +75,9 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops);
+    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress = false);
     ρ_ss = steadystate(H, c_ops)
-    @test abs(expect_me[1, end] - expect(e_ops[1], ρ_ss)) < 1e-4
+    @test abs(expect_me[1, end] - expect(e_ops[1], ρ_ss)) < 1e-3
 
     H = a_d * a
     H_t = 0.1 * (a + a_d)
@@ -85,7 +85,7 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, update_function = (t)->sin(t)*H_t);
+    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, update_function = (t)->sin(t)*H_t, progress = false);
     ρ_ss = steadystate_floquet(H, c_ops, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1)
     @test abs(sum(expect_me[1, end-100:end])/101 - expect(e_ops[1], ρ_ss)) < 1e-2
 end
