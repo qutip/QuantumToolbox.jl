@@ -8,13 +8,16 @@ using Distributed
 @reexport using OrdinaryDiffEq
 @reexport using DiffEqCallbacks
 
+include("quantum_object.jl")
 include("quantum_operators.jl")
 include("general_functions.jl")
 include("time_evolution.jl")
 
+export QuantumObject, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject
 export spre, spost, sprepost, lindblad_dissipator
-export fock, coherent
-export destroy, create, sigmam, sigmap, eye, projection
+export fock, basis, coherent
+export sigmam, sigmap, sigmax, sigmay, sigmaz
+export destroy, create, eye, projection
 export sinm, cosm
 export expect
 export wigner

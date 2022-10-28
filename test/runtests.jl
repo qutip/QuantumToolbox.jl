@@ -21,11 +21,11 @@ end
     psi0 = kron(fock(N, 0), fock(2, 0))
     t_l = LinRange(0, 1000, 1000)
     e_ops = [a_d * a]
-    sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops, progress = false)
-    @test sum(abs.(expect_se[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
-    sol, expect_se = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress = false)
-    @test sum(abs.(expect_se[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
-
+    sol = sesolve(H, psi0, t_l, e_ops = e_ops, progress = false)
+    @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
+    sol = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress = false)
+    @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
+    
     a = destroy(N)
     a_d = a'
     H = a_d * a
@@ -33,12 +33,12 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 100, 1000)
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress = false);
-    sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress = false);
-    @test sum(abs.(expect_mc .- expect_me)) / length(t_l) < 0.1
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress = false);
-    @test sum(abs.(expect_mc .- expect_me)) / length(t_l) < 0.1
-
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress = false);
+    sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress = false);
+    @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
+    sol = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress = false);
+    @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
+    
     sp1 = kron(sigmap(), eye(2))
     sm1 = sp1'
     sx1 = sm1 + sp1
@@ -56,13 +56,13 @@ end
     psi0_1 = normalize(fock(2, 0) + fock(2, 1))
     psi0_2 = normalize(fock(2, 0) + fock(2, 1))
     psi0 = kron(psi0_1, psi0_2)
-    t_l = LinRange(0, 10 / (γ1 + γ2), 1000)
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress = false);
-    sol_mc, expect_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], progress = false);
-    @test sum(abs.(expect_mc[1:2, :] .- expect_me[1:2, :])) / length(t_l) < 0.1
+    t_l = LinRange(0, 20 / γ1, 1000)
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress = false);
+    sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], progress = false);
+    @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
+    
+    @test expect(sp1 * sm1, sol_me.states[300]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[300], [1]))
 
-    ## partial trace
-    @test expect(sp1 * sm1, reshape(sol_me(4 / (γ1 + γ2)), 4, 4)) ≈ expect(sigmap() * sigmam(), ptrace(reshape(sol_me(4 / (γ1 + γ2)), 4, 4), [1], (2, 2)))
 end
 
 @testset "Steadystate" begin
@@ -75,9 +75,9 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress = false);
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress = false);
     ρ_ss = steadystate(H, c_ops)
-    @test abs(expect_me[1, end] - expect(e_ops[1], ρ_ss)) < 1e-3
+    @test abs(sol_me.expect[1, end] - expect(e_ops[1], ρ_ss)) < 1e-3
 
     H = a_d * a
     H_t = 0.1 * (a + a_d)
@@ -85,9 +85,9 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
-    sol_me, expect_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, update_function = (t)->sin(t)*H_t, progress = false);
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, H_t = (t)->sin(t)*H_t, alg=Vern7(), progress = false);
     ρ_ss = steadystate_floquet(H, c_ops, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1)
-    @test abs(sum(expect_me[1, end-100:end])/101 - expect(e_ops[1], ρ_ss)) < 1e-2
+    @test abs(sum(sol_me.expect[1, end-100:end])/101 - expect(e_ops[1], ρ_ss)) < 1e-2
 end
 
 @testset "Entanglement" begin
@@ -95,7 +95,7 @@ end
     e = fock(2, 0)
     state = normalize(kron(g, e) + kron(e, g))
     rho = state * state'
-    @test entanglement(state, [1], (2, 2)) / log(2) ≈ 1
+    @test entanglement(state, [1]) / log(2) ≈ 1
 end
 
 @testset "Wigner" begin
