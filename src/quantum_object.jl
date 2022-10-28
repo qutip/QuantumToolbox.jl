@@ -53,6 +53,13 @@ Base.size(A::QuantumObject{<:AbstractArray{T}, OpType}, inds...) where {T,OpType
 Base.length(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T,OpType<:QuantumObjectType} = length(A.data)
 SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T,OpType<:QuantumObjectType} = QuantumObject(sparse(A.data), OpType, A.dims)
 
+Base.isequal(A::QuantumObject{<:AbstractArray{T}, OpType}, B::QuantumObject{<:AbstractArray{T}, OpType}) where 
+            {T,OpType<:QuantumObjectType} = isequal(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
+Base.isapprox(A::QuantumObject{<:AbstractArray{T}, OpType}, B::QuantumObject{<:AbstractArray{T}, OpType}) where 
+            {T,OpType<:QuantumObjectType} = isapprox(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
+Base.:(==)(A::QuantumObject{<:AbstractArray{T}, OpType}, B::QuantumObject{<:AbstractArray{T}, OpType}) where 
+            {T,OpType<:QuantumObjectType} = (A.data == B.data) && (A.type == B.type) && (A.dims == B.dims)
+    
 function Base.show(io::IO, ::MIME"text/plain", QO::QuantumObject{<:AbstractArray{T}, OpType}) where 
         {T, OpType<:Union{BraQuantumObject, KetQuantumObject, SuperOperatorQuantumObject}}
 
@@ -122,12 +129,8 @@ LinearAlgebra.transpose(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T, 
     QuantumObject(transpose(A.data), OpType, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T}, KetQuantumObject}) where {T} = 
     QuantumObject(adjoint(A.data), BraQuantumObject, A.dims)
-LinearAlgebra.transpose(A::QuantumObject{<:AbstractArray{T}, KetQuantumObject}) where {T} = 
-    QuantumObject(transpose(A.data), BraQuantumObject, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T}, BraQuantumObject}) where {T} = 
     QuantumObject(adjoint(A.data), KetQuantumObject, A.dims)
-LinearAlgebra.transpose(A::QuantumObject{<:AbstractArray{T}, BraQuantumObject}) where {T} = 
-    QuantumObject(transpose(A.data), KetQuantumObject, A.dims)
 
 LinearAlgebra.tr(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T, OpType<:Union{OperatorQuantumObject, SuperOperatorQuantumObject}} = tr(A.data)
 

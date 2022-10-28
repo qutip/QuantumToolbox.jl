@@ -6,6 +6,88 @@ using Test
     # Write your tests here.
 end
 
+@testitem "QuantumObjects" begin
+    using QuPhys
+    a = rand(ComplexF64, 10)
+    @test_logs (:warn,"The norm of the input data is not one.") QuantumObject(a)
+    a2 = QuantumObject(a, type=BraQuantumObject)
+    a3 = QuantumObject(a, type=KetQuantumObject)
+    @test isket(a2) == false
+    @test isbra(a2) == true
+    @test isoper(a2) == false
+    @test issuper(a2) == false
+    @test isket(a3) == true
+    @test isbra(a3) == false
+    @test isoper(a3) == false
+    @test issuper(a3) == false
+    show(a2)
+    show(a3)
+
+    a = sprand(ComplexF64, 100, 100, 0.1)
+    a2 = QuantumObject(a, type=OperatorQuantumObject)
+    a3 = QuantumObject(a, type=SuperOperatorQuantumObject)
+
+    @test isket(a2) == false
+    @test isbra(a2) == false
+    @test isoper(a2) == true
+    @test issuper(a2) == false
+    @test isket(a3) == false
+    @test isbra(a3) == false
+    @test isoper(a3) == false
+    @test issuper(a3) == true
+
+    show(QuantumObject(a, type=OperatorQuantumObject))
+    show(QuantumObject(a, type=SuperOperatorQuantumObject))
+
+    a = Array(a)
+    a4 = QuantumObject(a)
+    a5 = sparse(a4)
+    @test isequal(a5, a2)
+    @test (a5 == a3) == false
+    @test a5 ≈ a2
+
+    @test +a2 == a2
+    @test -(-a2) == a2
+    @test a2^3 ≈ a2*a2*a2
+    @test a2+2 == 2+a2
+    @test (a2+2).data == a2.data + 2*I
+    @test a2*2 == 2*a2
+
+    @test transpose(transpose(a2)) == a2
+    @test transpose(a2).data == transpose(a2.data)
+    @test adjoint(adjoint(a2)) == a2
+    @test adjoint(a2).data == adjoint(a2.data)
+
+    N = 10
+    a = fock(N, 3)
+    @test ket2dm(a) ≈ projection(N, 3, 3)
+    @test isket(a') == false
+    @test isbra(a') == true
+    @test size(a) == (N,)
+    @test size(a') == (1,N)
+    @test norm(a) ≈ 1
+    @test norm(a') ≈ 1
+
+    a = QuantumObject(rand(ComplexF64, N))
+    @test (norm(a) ≈ 1) == false
+    @test (norm(normalize(a)) ≈ 1) == true
+    @test (norm(a) ≈ 1) == false # Again, to be sure that it is still non-normalized
+    normalize!(a)
+    @test (norm(a) ≈ 1) == true
+
+    a = destroy(N)
+    a_d = a'
+    X = a + a_d
+    Y = 1im * (a - a_d)
+    Z = a + transpose(a)
+    @test ishermitian(X) == true
+    @test ishermitian(Y) == true
+    @test issymmetric(Y) == false
+    @test issymmetric(Z) == true
+
+    @test eigvals(a_d * a) ≈ 0:9
+end
+
 @testset "Time Evolution and partial trace" begin
     N = 10
 
