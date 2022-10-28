@@ -6,8 +6,7 @@ using Test
     # Write your tests here.
 end
 
-@testitem "QuantumObjects" begin
-    using QuPhys
+@testset "QuantumObjects" begin
     a = rand(ComplexF64, 10)
     @test_logs (:warn,"The norm of the input data is not one.") QuantumObject(a)
     a2 = QuantumObject(a, type=BraQuantumObject)
