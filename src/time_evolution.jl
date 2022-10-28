@@ -207,8 +207,8 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
             dudt! = (du,u,p,t) -> mul!(du, L, u)
         else
             if H_t(0.0).type <: OperatorQuantumObject
-                @warn "To speed up the calculation, it is always better to define \
-                    the time-dependent part as a SuperOperator, and not as an Operator." maxlog=1
+                @warn string("To speed up the calculation, it is always better to define ",
+                    "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog=1
                 dudt! = (du,u,p,t) -> mul!(du, L + liouvillian(H_t(t)).data, u)
             else
                 dudt! = (du,u,p,t) -> mul!(du, L + H_t(t).data, u)
