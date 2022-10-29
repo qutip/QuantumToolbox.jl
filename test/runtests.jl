@@ -169,7 +169,7 @@ end
     vals_d, vecs_d = eigen(H_d)
     vals_c, vecs_c = eigen(Hermitian(H_c))
 
-    @test vals_d ≈ vals_c
+    @test sum(vals_d[1:20] .- vals_c[1:20]) / 20 < 1e-3
 end
 
 @testset "Steadystate" begin
