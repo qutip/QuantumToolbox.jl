@@ -169,6 +169,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     Hdims = H.dims
+    Hsize = prod(Hdims)
 
     tspan = (t_l[1], t_l[end])
 
@@ -187,10 +188,10 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
 
     is_time_dependent = !(H_t === nothing)
 
-    saved_values = SavedValues(Float64, Vector{Float64})
+    saved_values = SavedValues(Float64, Vector{ComplexF64})
     function save_func(u, t, integrator)
         next!(progr)
-        map(op->expect(op, QuantumObject(reshape(u, size(H)...), OperatorQuantumObject, Hdims)), e_ops)
+        map(op->expect(op, QuantumObject(reshape(u, Hsize, Hsize), OperatorQuantumObject, Hdims)), e_ops)
     end
     cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
@@ -219,9 +220,15 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
         sol = solve(prob, alg, callback = cb)
     end
 
-    length(e_ops) == 0 && return TimeEvolutionSol(t_l, [QuantumObject(sparse(reshape(ϕ, size(H)...)), dims=Hdims) for ϕ in sol.u], [])
+    ρt_len = isqrt(length(sol.u[1]))
+    if ρt_len > 1
+        ρt = [QuantumObject(sparse(reshape(ϕ, ρt_len, ρt_len)), dims=Hdims) for ϕ in sol.u]
+    else
+        ρt = []
+    end
+    length(e_ops) == 0 && return TimeEvolutionSol(t_l, ρt, [])
 
-    return TimeEvolutionSol(t_l, [QuantumObject(sparse(reshape(ϕ, size(H)...)), dims=Hdims) for ϕ in sol.u], hcat(saved_values.saveval...))
+    return TimeEvolutionSol(t_l, ρt, hcat(saved_values.saveval...))
 end
 
 """
@@ -281,9 +288,15 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
         sol = solve(prob, alg)
     end
 
-    length(e_ops) == 0 && return TimeEvolutionSol(t_l, [QuantumObject(normalize(ϕ), dims=Hdims) for ϕ in sol.u], [])
+    ψt_len = isqrt(length(sol.u[1]))
+    if ψt_len == prod(Hdims)
+        ψt = [QuantumObject(ϕ, dims=Hdims) for ϕ in sol.u]
+    else
+        ψt = []
+    end
+    length(e_ops) == 0 && return TimeEvolutionSol(t_l, ψt, [])
 
-    return TimeEvolutionSol(t_l, [QuantumObject(normalize(ϕ), dims=Hdims) for ϕ in sol.u], hcat(saved_values.saveval...))
+    return TimeEvolutionSol(t_l, ψt, hcat(saved_values.saveval...))
 end
 
 function liouvillian(H::QuantumObject{<:AbstractArray{T}, OpType}, 

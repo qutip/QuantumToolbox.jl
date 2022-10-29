@@ -19,8 +19,6 @@ end
     @test isbra(a3) == false
     @test isoper(a3) == false
     @test issuper(a3) == false
-    show(a2)
-    show(a3)
 
     a = sprand(ComplexF64, 100, 100, 0.1)
     a2 = QuantumObject(a, type=OperatorQuantumObject)
@@ -34,9 +32,6 @@ end
     @test isbra(a3) == false
     @test isoper(a3) == false
     @test issuper(a3) == true
-
-    show(QuantumObject(a, type=OperatorQuantumObject))
-    show(QuantumObject(a, type=SuperOperatorQuantumObject))
 
     a = Array(a)
     a4 = QuantumObject(a)
@@ -84,6 +79,16 @@ end
     @test issymmetric(Y) == false
     @test issymmetric(Z) == true
 
+    @test Y[1,2] == conj(Y[2,1])
+
+    @test triu(X) == a
+    @test tril(X) == a_d
+
+    triu!(X)
+    @test X == a
+    tril!(X)
+    @test nnz(X) == 0
+
     @test eigvals(a_d * a) ≈ 0:9
 end
 
@@ -94,9 +99,9 @@ end
     a = a_d'
     sm = kron(eye(N), sigmam())
     sp = sm'
-    sx = sm + sp
-    sy = 1im * (sm - sp)
-    sz = sp * sm - sm * sp
+    sx = kron(eye(N), sigmax())
+    sy = kron(eye(N), sigmay())
+    sz = kron(eye(N), sigmaz())
     η = 0.01
     H = a_d * a + 0.5 * sz - 1im * η * (a - a_d) * sx
     psi0 = kron(fock(N, 0), fock(2, 0))
@@ -112,7 +117,7 @@ end
     H = a_d * a
     c_ops = [sqrt(0.1) * a]
     e_ops = [a_d * a]
-    psi0 = fock(N, 3)
+    psi0 = basis(N, 3)
     t_l = LinRange(0, 100, 1000)
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress = false);
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress = false);
@@ -144,6 +149,27 @@ end
     
     @test expect(sp1 * sm1, sol_me.states[300]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[300], [1]))
 
+end
+
+@testset "Eigenvalues and Operators" begin
+    N = 30
+    a = kron(destroy(N), eye(2))
+    a_d = a'
+
+    sm = kron(eye(N), sigmam())
+    sp = sm'
+    sx = kron(eye(N), sigmax())
+    sy = kron(eye(N), sigmay())
+    sz = kron(eye(N), sigmaz())
+
+    η = 0.2
+    H_d = a_d * a + 0.5 * sz - 1im * η * (a - a_d) * sx + η^2
+    H_c = a_d * a + 0.5 * (sz * cosm(2 * η * (a + a_d)) + sy * sinm(2 * η * (a + a_d)))
+
+    vals_d, vecs_d = eigen(H_d)
+    vals_c, vecs_c = eigen(Hermitian(H_c))
+
+    @test vals_d ≈ vals_c
 end
 
 @testset "Steadystate" begin

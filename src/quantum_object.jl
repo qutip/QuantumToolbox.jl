@@ -51,7 +51,12 @@ issuper(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T,OpType<:QuantumOb
 Base.size(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T,OpType<:QuantumObjectType} = size(A.data)
 Base.size(A::QuantumObject{<:AbstractArray{T}, OpType}, inds...) where {T,OpType<:QuantumObjectType} = size(A.data, inds...)
 Base.length(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T,OpType<:QuantumObjectType} = length(A.data)
+
 SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T,OpType<:QuantumObjectType} = QuantumObject(sparse(A.data), OpType, A.dims)
+SparseArrays.nnz(A::QuantumObject{<:SparseMatrixCSC{T}, OpType}) where {T,OpType<:QuantumObjectType} = nnz(A.data)
+SparseArrays.nonzeros(A::QuantumObject{<:SparseMatrixCSC{T}, OpType}) where {T,OpType<:QuantumObjectType} = nonzeros(A.data)
+SparseArrays.rowvals(A::QuantumObject{<:SparseMatrixCSC{T}, OpType}) where {T,OpType<:QuantumObjectType} = rowvals(A.data)
+SparseArrays.droptol!(A::QuantumObject{<:SparseMatrixCSC{T}, OpType}, tol::Real) where {T,OpType<:QuantumObjectType} = (droptol!(A.data, tol); return A)
 
 Base.isequal(A::QuantumObject{<:AbstractArray{T}, OpType}, B::QuantumObject{<:AbstractArray{T}, OpType}) where 
             {T,OpType<:QuantumObjectType} = isequal(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
@@ -60,6 +65,11 @@ Base.isapprox(A::QuantumObject{<:AbstractArray{T}, OpType}, B::QuantumObject{<:A
 Base.:(==)(A::QuantumObject{<:AbstractArray{T}, OpType}, B::QuantumObject{<:AbstractArray{T}, OpType}) where 
             {T,OpType<:QuantumObjectType} = (A.data == B.data) && (A.type == B.type) && (A.dims == B.dims)
     
+
+LinearAlgebra.Hermitian(A::QuantumObject{<:AbstractArray{T}, OpType}, uplo::Symbol = :U) where 
+            {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = 
+    QuantumObject(Hermitian(A.data, uplo), A.type, A.dims)
+
 function Base.show(io::IO, ::MIME"text/plain", QO::QuantumObject{<:AbstractArray{T}, OpType}) where 
         {T, OpType<:Union{BraQuantumObject, KetQuantumObject, SuperOperatorQuantumObject}}
 
@@ -153,7 +163,14 @@ end
 LinearAlgebra.exp(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T, OpType<:QuantumObjectType} = 
     QuantumObject(exp(A.data), OpType, A.dims)
 
-# # LinearAlgebra.exp(A::SparseMatrixCSC{T,M}) where {T,M} = sparse(exp(collect(A)))
+LinearAlgebra.triu!(A::QuantumObject{<:AbstractArray{T}, OpType}, k::Int=0) where 
+        {T, OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (triu!(A.data, k); A)
+LinearAlgebra.tril!(A::QuantumObject{<:AbstractArray{T}, OpType}, k::Int=0) where 
+        {T, OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (tril!(A.data, k); A)
+LinearAlgebra.triu(A::QuantumObject{<:AbstractArray{T}, OpType}, k::Int=0) where 
+        {T, OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(triu(A.data, k), OpType, A.dims)
+LinearAlgebra.tril(A::QuantumObject{<:AbstractArray{T}, OpType}, k::Int=0) where 
+        {T, OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(tril(A.data, k), OpType, A.dims)
 
 function LinearAlgebra.exp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20) where {T,M}
     rows = checksquare(A) # Throws exception if not square

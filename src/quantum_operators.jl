@@ -5,7 +5,7 @@ end
 
 function spost(O::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}) where {T}
     B = spdiagm( ones(T, size(O, 1)) )
-    QuantumObject(kron(transpose(O.data), B), SuperOperatorQuantumObject, O.dims)
+    QuantumObject(kron(sparse(transpose(O.data)), B), SuperOperatorQuantumObject, O.dims)
 end
 
 sprepost(A::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}, B::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}) where {T} = spre(A) * spost(B)
@@ -26,10 +26,10 @@ sigmaz() = sigmap() * sigmam() - sigmam() * sigmap()
 
 eye(N::Int) = QuantumObject(spdiagm(ones(ComplexF64, N)), OperatorQuantumObject, [N])
 
-function fock(N::Int, pos::Int)
+function fock(N::Int, pos::Int; dims::AbstractVector=[N])
     array = zeros(N)
     array[pos + 1] = 1
-    QuantumObject(Array{ComplexF64}(array), KetQuantumObject, [N])
+    QuantumObject(Array{ComplexF64}(array), KetQuantumObject, dims)
 end
 
 basis(N::Int, pos::Int) = fock(N, pos)
