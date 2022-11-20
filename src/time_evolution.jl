@@ -20,7 +20,7 @@ function LindbladJumpCallback(savebefore=false,saveafter=false)
         c_ops = integrator.p[1]
         
         if length(c_ops) == 1
-            integrator.u = normalize(c_ops[1] * ψ)
+            integrator.u = normalize!(c_ops[1] * ψ)
         else
             collaps_idx = 1
             r2 = rand()
@@ -38,7 +38,7 @@ function LindbladJumpCallback(savebefore=false,saveafter=false)
                     break
                 end
             end
-            integrator.u = normalize(c_ops[collaps_idx] * ψ)
+            integrator.u = normalize!(c_ops[collaps_idx] * ψ)
         end
         integrator.p = [c_ops, rand()]
     end
@@ -57,6 +57,7 @@ end
             ensemble_method = EnsembleThreads(), 
             H_t = nothing,
             progress = true,
+            callbacks = [],
             kwargs...)
 
 Time evolution of an open quantum system using quantum trajectories.
@@ -71,6 +72,7 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
             ensemble_method = EnsembleThreads(), 
             H_t = nothing,
             progress = true,
+            callbacks = [],
             kwargs...) where {T}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
@@ -102,7 +104,7 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
             # res = hcat(sol.u...)
             res = [QuantumObject(ϕ, dims=Hdims) for ϕ in sol.u]
         else
-            res = hcat(map(i->map(op->expect(op, QuantumObject(normalize(sol.u[i]), dims=Hdims)), e_ops), eachindex(t_l))...)
+            res = hcat(map(i->map(op->expect(op, QuantumObject(normalize!(sol.u[i]), dims=Hdims)), e_ops), eachindex(t_l))...)
         end
         (res, false)
     end
@@ -128,7 +130,7 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
 
     cb1 = LindbladJumpCallback()
     cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb = CallbackSet(cb1, cb2)
+    cb = CallbackSet(cb1, cb2, callbacks...)
 
     p = [c_ops, rand()]
     prob = ODEProblem(dudt!, ψ0, tspan, p, callback = cb; kwargs...)
@@ -153,6 +155,7 @@ end
             alg = LinearExponential(krylov=:simple), 
             H_t = nothing, 
             progress = true,
+            callbacks = [],
             kwargs...)
 
 Time evolution of an open quantum system using master equation.
@@ -164,6 +167,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
             alg = LinearExponential(krylov=:off), 
             H_t = nothing, 
             progress = true,
+            callbacks = [],
             kwargs...) where {T,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
                                 StateOpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
 
@@ -195,7 +199,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
     end
     cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb = CallbackSet(cb1, cb2)
+    cb = CallbackSet(cb1, cb2, callbacks...)
 
     if typeof(alg) <: LinearExponential
         is_time_dependent && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
@@ -226,9 +230,9 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
     else
         ρt = []
     end
-    length(e_ops) == 0 && return TimeEvolutionSol(t_l, ρt, [])
+    length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ρt, [])
 
-    return TimeEvolutionSol(t_l, ρt, hcat(saved_values.saveval...))
+    return TimeEvolutionSol(sol.t, ρt, hcat(saved_values.saveval...))
 end
 
 """
@@ -239,6 +243,7 @@ end
                 alg = LinearExponential(), 
                 H_t = nothing, 
                 progress = true,
+                callbacks = [],
                 kwargs...)
 
 Time evolution of a closed quantum system using Schrödinger equation.
@@ -250,6 +255,7 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
             alg = LinearExponential(), 
             H_t = nothing, 
             progress = true,
+            callbacks = [],
             kwargs...) where {T}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
@@ -267,7 +273,7 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
     saved_values = SavedValues(Float64, Vector{Float64}) 
     function save_func(u, t, integrator)
         next!(progr)
-        map(op->expect(op, QuantumObject(normalize(u), dims=Hdims)), e_ops)
+        map(op->expect(op, QuantumObject(normalize!(u), dims=Hdims)), e_ops)
     end
     cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
@@ -294,9 +300,9 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
     else
         ψt = []
     end
-    length(e_ops) == 0 && return TimeEvolutionSol(t_l, ψt, [])
+    length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ψt, [])
 
-    return TimeEvolutionSol(t_l, ψt, hcat(saved_values.saveval...))
+    return TimeEvolutionSol(sol.t, ψt, hcat(saved_values.saveval...))
 end
 
 function liouvillian(H::QuantumObject{<:AbstractArray{T}, OpType}, 
@@ -341,7 +347,7 @@ function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1}, SuperOper
     L_m_d = Matrix(L_m)
 
     for n_i in n_max:-1:1
-        S, T = - ( L_0 - 1im * n_i * ω * I + L_m * S ) \ L_p_d, - ( L_0 + 1im * n_i * ω * I + L_p * T ) \ L_m_d
+        S, T = - ( L_0 - 1im * n_i * ω * I + L_m_d * S ) \ L_p_d, - ( L_0 + 1im * n_i * ω * I + L_p_d * T ) \ L_m_d
     end
 
     QuantumObject(droptol!(sparse(L_0 + L_m * S + L_p * T), 1e-12), SuperOperatorQuantumObject, L₀.dims)
