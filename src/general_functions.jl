@@ -1,8 +1,4 @@
-function row_major_reshape(Q::AbstractArray{T}, shapes) where {T}
-    shapes = reverse(shapes)
-    perm = collect(length(shapes):-1:1)
-    return permutedims(reshape(Q, shapes...), perm)
-end
+row_major_reshape(Q::AbstractArray{T}, shapes...) where {T} = PermutedDimsArray(reshape(Q, reverse(shapes)...), (length(shapes):-1:1))
 
 function meshgrid(x::AbstractVector{T}, y::AbstractVector{T}) where {T}
     X = reshape(repeat(x, inner = length(y)), length(y), length(x))
@@ -23,31 +19,31 @@ function ptrace(QO::QuantumObject{<:AbstractArray{T}, OpType}, sel) where
     qtrace = filter(e->e∉sel,1:nd)
     dtrace = rd[qtrace]
 
-    Q = QO.data
+    nd == 1 && return QO
 
-    if isket(QO) || isbra(QO) ## Is Ket or Bra
-        vmat = row_major_reshape(Q, (prod(rd), 1))
-        vmat = row_major_reshape(vmat, rd)
-        topermute = []
+    if isket(QO) || isbra(QO)
+        vmat = row_major_reshape(QO.data, prod(rd), 1)
+        vmat = row_major_reshape(vmat, rd...)
+        topermute = Int64[]
         append!(topermute, sel)
         append!(topermute, qtrace)
-        vmat = permutedims(vmat, topermute)
-        vmat = permutedims(vmat, nd:-1:1)
-        vmat = row_major_reshape(vmat, (prod(dkeep), prod(dtrace)))
-        return QuantumObject(sparse(vmat * vmat'), OperatorQuantumObject, dkeep)
-    elseif isoper(QO) ## Is matrix
-        ρmat = row_major_reshape(Q, (rd..., rd...))
-        topermute = []
+        reverse!(topermute)
+        vmat = PermutedDimsArray(vmat, topermute)
+        vmat = row_major_reshape(vmat, prod(dkeep), prod(dtrace))
+        return QuantumObject(vmat * vmat', OperatorQuantumObject, dkeep)
+    elseif isoper(QO)
+        ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
+        topermute = Int64[]
         append!(topermute, qtrace)
         append!(topermute, [nd + q for q in qtrace])
         append!(topermute, sel)
         append!(topermute, [nd + q for q in sel])
-        ρmat = permutedims(ρmat, topermute)
-        ρmat = permutedims(ρmat, 2*nd:-1:1)
-        ρmat = row_major_reshape(ρmat, (prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep)))
+        reverse!(topermute)
+        ρmat = PermutedDimsArray(ρmat, topermute)
+        ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
         dims = size(ρmat)
-        res = [tr(ρmat[:, :, i, j]) for i in 1:dims[3] for j in 1:dims[4]]
-        return QuantumObject(sparse(row_major_reshape(res, dims[3:length(dims)])), OperatorQuantumObject, dkeep)
+        res = [tr(@view(ρmat[:, :, i, j])) for i in 1:dims[3] for j in 1:dims[4]]
+        return QuantumObject(row_major_reshape(res, dims[3:length(dims)]...), OperatorQuantumObject, dkeep)
     end
 end
 

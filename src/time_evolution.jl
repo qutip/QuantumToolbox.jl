@@ -154,6 +154,7 @@ end
             e_ops::AbstractVector = [], 
             alg = LinearExponential(krylov=:simple), 
             H_t = nothing, 
+            params::AbstractVector = [],
             progress = true,
             callbacks = [],
             kwargs...)
@@ -165,7 +166,8 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
             t_l::AbstractVector, c_ops::AbstractVector; 
             e_ops::AbstractVector = [], 
             alg = LinearExponential(krylov=:off), 
-            H_t = nothing, 
+            H_t = nothing,
+            params::AbstractVector = [],
             progress = true,
             callbacks = [],
             kwargs...) where {T,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
@@ -204,8 +206,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
     if typeof(alg) <: LinearExponential
         is_time_dependent && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
         A = DiffEqArrayOperator(L)
-        prob = ODEProblem(A, 
-        ρ0, tspan; kwargs...)
+        prob = ODEProblem(A, ρ0, tspan, params; kwargs...)
         sol = solve(prob, alg, dt = (t_l[2] - t_l[1]), callback = cb)
     else
         if !is_time_dependent
@@ -219,8 +220,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
                 dudt! = (du,u,p,t) -> mul!(du, L + H_t(t).data, u)
             end
         end
-        prob = ODEProblem(dudt!, 
-        ρ0, tspan; kwargs...)
+        prob = ODEProblem(dudt!, ρ0, tspan, params; kwargs...)
         sol = solve(prob, alg, callback = cb)
     end
 
@@ -242,6 +242,7 @@ end
                 e_ops::AbstractVector = [], 
                 alg = LinearExponential(), 
                 H_t = nothing, 
+                params::AbstractVector = [],
                 progress = true,
                 callbacks = [],
                 kwargs...)
@@ -254,6 +255,7 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
             e_ops::AbstractVector = [], 
             alg = LinearExponential(), 
             H_t = nothing, 
+            params::AbstractVector = [],
             progress = true,
             callbacks = [],
             kwargs...) where {T}
@@ -277,21 +279,21 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
     end
     cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb = CallbackSet(cb1, cb2)
+    cb = CallbackSet(cb1, cb2, callbacks...)
 
     if typeof(alg) <: LinearExponential
         is_time_dependent && error("The Hamiltonian must to be time independent when using LinearExponential algorithm.")
         A = DiffEqArrayOperator(-1im * H)
-        prob = ODEProblem(A, ψ0, tspan, callback = cb; kwargs...)
-        sol = solve(prob, alg, dt = (t_l[2] - t_l[1]))
+        prob = ODEProblem(A, ψ0, tspan, params; kwargs...)
+        sol = solve(prob, alg, dt = (t_l[2] - t_l[1]), callback = cb)
     else
         if !is_time_dependent
             dudt! = (du,u,p,t) -> mul!(du, -1im * H, u)
         else
             dudt! = (du,u,p,t) -> mul!(du, -1im * (H + H_t(t).data), u)
         end
-        prob = ODEProblem(dudt!, ψ0, tspan, callback = cb; kwargs...)
-        sol = solve(prob, alg)
+        prob = ODEProblem(dudt!, ψ0, tspan, params; kwargs...)
+        sol = solve(prob, alg, callback = cb)
     end
 
     ψt_len = isqrt(length(sol.u[1]))
