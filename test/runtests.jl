@@ -149,6 +149,38 @@ end
     
     @test expect(sp1 * sm1, sol_me.states[300]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[300], [1]))
 
+
+    ### DYNAMICAL FOCK DIMENSION ###
+    F, Δ, κ = 5, 0.25, 1
+    t_l = LinRange(0, 15, 100)
+
+    N0 = 250
+    a0 = destroy(N0)
+    H0 = Δ*a0'*a0 + F*(a0 + a0')
+    c_ops0 = [√κ * a0]
+    e_ops0 = [a0' * a0]
+    ψ00 = fock(N0, 0)
+    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops = e_ops0, alg = Vern7(), progress = false, saveat = [t_l[end]]);
+
+    function H_dfd(dims::AbstractVector)
+        a = destroy(dims[1])
+        Δ*a'*a + F*(a + a')
+    end
+    function c_ops_dfd(dims::AbstractVector)
+        a = destroy(dims[1])
+        [√κ * a]
+    end
+    function e_ops_dfd(dims::AbstractVector)
+        a = destroy(dims[1])
+        [a' * a]
+    end
+    
+    maxdims = [400]
+    ψ0  = fock(3, 0)
+    
+    sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, e_ops_dfd, maxdims, progress = false, saveat = [t_l[end]], tstops = t_l);
+
+    @test sum(abs.(( sol.expect[1,:] .- sol0.expect[1,:] ) ./ (sol0.expect[1,:] .+ 1e-8)) ) < 0.005
 end
 
 @testset "Eigenvalues and Operators" begin

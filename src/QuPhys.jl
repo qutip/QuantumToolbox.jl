@@ -24,6 +24,7 @@ export expect
 export wigner
 export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid
 export ptrace, entropy_vn, entanglement
-export mesolve, mcsolve, sesolve, liouvillian, liouvillian_floquet, steadystate, steadystate_floquet
+export mesolve, mcsolve, sesolve, dfd_mesolve
+export liouvillian, liouvillian_floquet, steadystate, steadystate_floquet
 
 end
