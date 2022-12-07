@@ -154,7 +154,7 @@ end
     F, Δ, κ = 5, 0.25, 1
     t_l = LinRange(0, 15, 100)
 
-    N0 = 250
+    N0 = 140
     a0 = destroy(N0)
     H0 = Δ*a0'*a0 + F*(a0 + a0')
     c_ops0 = [√κ * a0]
@@ -174,13 +174,45 @@ end
         a = destroy(dims[1])
         [a' * a]
     end
-    
-    maxdims = [400]
+    maxdims = [150]
     ψ0  = fock(3, 0)
-    
-    sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, e_ops_dfd, maxdims, progress = false, saveat = [t_l[end]], tstops = t_l);
+    sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, e_ops_dfd, maxdims, progress = false, 
+                      saveat = [t_l[end]], abstol = 1e-15, reltol = 1e-7);
 
-    @test sum(abs.(( sol.expect[1,:] .- sol0.expect[1,:] ) ./ (sol0.expect[1,:] .+ 1e-8)) ) < 0.005
+    @test sum(abs.(( sol.expect[1,:] .- sol0.expect[1,:] ) ./ (sol0.expect[1,:] .+ 1e-16)) ) < 0.01
+
+    F, Δ, κ, J = 1.5, 0.25, 1, 0.05
+    N0 = 25
+    N1 = 20
+    a0 = kron(destroy(N0), eye(N1))
+    a1 = kron(eye(N0), destroy(N1))
+    H0 = Δ*a0'*a0 + F*(a0 + a0') + Δ*a1'*a1 + J * (a0'*a1 + a0*a1')
+    c_ops0 = [√κ * a0, √κ * a1]
+    e_ops0 = [a0' * a0, a1' * a1]
+    ψ00 = kron(fock(N0, 0), fock(N1, 15))
+    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops = e_ops0, alg = Vern7(), progress = false, saveat = [t_l[end]]);
+
+    function H_dfd2(dims::AbstractVector)
+        a = kron(destroy(dims[1]), eye(dims[2]))
+        b = kron(eye(dims[1]), destroy(dims[2]))
+        Δ*a'*a + F*(a + a') + Δ*b'*b + J * (a'*b + a*b')
+    end
+    function c_ops_dfd2(dims::AbstractVector)
+        a = kron(destroy(dims[1]), eye(dims[2]))
+        b = kron(eye(dims[1]), destroy(dims[2]))
+        [√κ * a, √κ * b]
+    end
+    function e_ops_dfd2(dims::AbstractVector)
+        a = kron(destroy(dims[1]), eye(dims[2]))
+        b = kron(eye(dims[1]), destroy(dims[2]))
+        [a' * a, b' * b]
+    end
+    maxdims = [50, 50]
+    ψ0  = kron(fock(3, 0), fock(20, 15))
+    sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, e_ops_dfd2, maxdims, progress = false, saveat = [t_l[end]]);
+
+    @test sum(abs.(( sol.expect[1,:] .- sol0.expect[1,:] ) ./ (sol0.expect[1,:] .+ 1e-16)) ) + 
+          sum(abs.(( sol.expect[2,:] .- sol0.expect[2,:] ) ./ (sol0.expect[2,:] .+ 1e-16)) ) < 0.01
 end
 
 @testset "Eigenvalues and Operators" begin

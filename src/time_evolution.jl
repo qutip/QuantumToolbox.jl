@@ -43,7 +43,7 @@ function LindbladJumpCallback(savebefore=false,saveafter=false)
         integrator.p = [c_ops, rand()]
     end
 
-    ContinuousCallback(LindbladJumpCondition, LindbladJumpAffect!, save_positions = (savebefore,saveafter))
+    ContinuousCallback(LindbladJumpCondition, nothing, LindbladJumpAffect!, interp_points=0, save_positions = (savebefore,saveafter))
 end
 
 """
@@ -324,7 +324,6 @@ end
 
 function _increase_dims(QO::QuantumObject{<:AbstractArray{T}, OpType}, sel::AbstractVector, increase::AbstractVector) where {T,OpType<:OperatorQuantumObject}
     rd = QO.dims
-    nd = length(rd)
     incr_l = zero(rd)
     incr_l[sel] .= increase
     rd_new = rd .+ incr_l
@@ -337,13 +336,13 @@ function _increase_dims(QO::QuantumObject{<:AbstractArray{T}, OpType}, sel::Abst
     QuantumObject(ρmat, OperatorQuantumObject, rd_new)
 end
 
-function _DFDIncreaseCondition(u, t, integrator)
+function _DFDIncreaseReduceCondition(u, t, integrator)
     internal_params = integrator.p[1]
     dim_list = internal_params["dim_list"]
     maxdims = internal_params["maxdims"]
     tol_list = internal_params["tol_list"]
     increase_list = internal_params["increase_list"]
-    res_list = internal_params["res_list"]
+    reduce_list = internal_params["reduce_list"]
     # Here I use copy(u) otherwise I have an error.
     ρt = QuantumObject(reshape(copy(u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
 
@@ -355,70 +354,38 @@ function _DFDIncreaseCondition(u, t, integrator)
             ρi = ptrace(ρt, [i]).data
             zeros_i = min( max(round(Int, 0.02 * dim_i), 1), 20 )
             @views res = sum(abs.(ρi[diagind(ρi)[end-zeros_i:end]])) / (zeros_i * dim_i)
-            res_list[i] = res
             if res > tol_list[i]
                 push!(increase_list, i)
                 condition = true
+            elseif res < tol_list[i]*1e-2 && dim_i > 3
+                push!(reduce_list, i)
+                condition = true
             end
-        end
-    end
-    condition ? 1 : -1
-end
-
-function _DFDReduceCondition(u, t, integrator)
-    internal_params = integrator.p[1]
-    dim_list = internal_params["dim_list"]
-    maxdims = internal_params["maxdims"]
-    tol_list = internal_params["tol_list"]
-    reduce_list = internal_params["reduce_list"]
-    res_list = internal_params["res_list"]
-    # Here I use copy(u) otherwise I have an error.
-    ρt = QuantumObject(reshape(copy(u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
-
-    condition = false
-    for i in 1:length(dim_list)
-        if res_list[i] < tol_list[i]*1e-6 && dim_list[i] > 3 && maxdims[i] != 0
-            push!(reduce_list, i)
-            condition = true
         end
     end
     condition
 end
 
-function _DFDIncreaseAffect!(integrator)
+function _DFDIncreaseReduceAffect!(integrator)
     internal_params = integrator.p[1]
     H = internal_params["H"]
     c_ops = internal_params["c_ops"]
     dim_list = internal_params["dim_list"]
     increase_list = internal_params["increase_list"]
-    # Here I use copy(integrator.u) otherwise I have an error.
-    ρt  = QuantumObject(reshape(copy(integrator.u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
-
-    ρt = _increase_dims(ρt, increase_list, ones(length(increase_list)))
-    dim_list[increase_list] .+= 1
-
-    deleteat!(increase_list, 1:length(increase_list))
-
-    params = integrator.p
-    L = liouvillian(H(dim_list), c_ops(dim_list)).data
-    newsize = size(L, 1)
-    resize!(integrator, newsize)
-    params[1]["L"] = L
-    integrator.u = reshape(ρt.data, newsize)
-end
-
-function _DFDReduceAffect!(integrator)
-    internal_params = integrator.p[1]
-    H = internal_params["H"]
-    c_ops = internal_params["c_ops"]
-    dim_list = internal_params["dim_list"]
     reduce_list = internal_params["reduce_list"]
     # Here I use copy(integrator.u) otherwise I have an error.
     ρt  = QuantumObject(reshape(copy(integrator.u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
 
-    ρt = _reduce_dims(ρt, reduce_list, ones(length(reduce_list)))
-    dim_list[reduce_list] .-= 1
+    if length(increase_list) > 0
+        ρt = _increase_dims(ρt, increase_list, ones(length(increase_list)))
+        dim_list[increase_list] .+= 1
+    end
+    if length(reduce_list) > 0
+        ρt = _reduce_dims(ρt, reduce_list, ones(length(reduce_list)))
+        dim_list[reduce_list] .-= 1
+    end
 
+    deleteat!(increase_list, 1:length(increase_list))
     deleteat!(reduce_list, 1:length(reduce_list))
 
     params = integrator.p
@@ -470,7 +437,6 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T}, StateOp
     length(tol_list) == 0 && (tol_list = [1e-8 for d in dim_list])
     reduce_list = Int16[]
     increase_list = Int16[]
-    res_list = [0.0 for d in dim_list]
 
     saved_values = SavedValues(Float64, Vector{ComplexF64})
     function save_func(u, t, integrator)
@@ -484,14 +450,12 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T}, StateOp
     end
     cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb_increase = ContinuousCallback(_DFDIncreaseCondition, _DFDIncreaseAffect!, nothing, interp_points=0, save_positions=(false,false))
-    cb_reduce = DiscreteCallback(_DFDReduceCondition, _DFDReduceAffect!, save_positions=(false,false))
-    cb = CallbackSet(cb1, cb2, cb_increase, cb_reduce, callbacks...)
+    cb_increasereduce = DiscreteCallback(_DFDIncreaseReduceCondition, _DFDIncreaseReduceAffect!, save_positions=(false,false))
+    cb = CallbackSet(cb1, cb2, cb_increasereduce, callbacks...)
     
     params = [Dict("L" => L, "H" => H, "c_ops" => c_ops, "e_ops" => e_ops, 
                    "dim_list" => dim_list, "maxdims" => maxdims, "tol_list" => tol_list, 
-                   "reduce_list" => reduce_list, "increase_list" => increase_list, "res_list" => res_list)]
-    # params = [L]
+                   "reduce_list" => reduce_list, "increase_list" => increase_list)]
     
     dudt! = (du,u,p,t) -> mul!(du, p[1]["L"], u)
     prob = ODEProblem(dudt!, ρ0, tspan, params; kwargs...)
