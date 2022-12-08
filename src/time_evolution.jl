@@ -85,7 +85,12 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
     for c_op in c_ops
         H_eff += - 0.5im * c_op' * c_op
     end
-    H_eff = H_eff.data
+    H_eff = - 1im * H_eff.data
+    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
+    if isa(H_eff, SparseMatrixCSC)
+        H_eff = sparse(transpose(H_eff))
+        H_eff = transpose(H_eff)
+    end
     ψ0 = ψ0.data
     c_ops = [op.data for op in c_ops]
 
@@ -123,9 +128,9 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
 
     is_time_dependent = !(H_t === nothing)
     if is_time_dependent
-        dudt! = (du,u,p,t) -> mul!(du, -1im * (H_eff + H_t(t).data), u)
+        dudt! = (du,u,p,t) -> mul!(du, H_eff - 1im * H_t(t).data, u)
     else
-        dudt! = (du,u,p,t) -> mul!(du, -1im * H_eff, u)
+        dudt! = (du,u,p,t) -> mul!(du, H_eff, u)
     end
 
     cb1 = LindbladJumpCallback()
@@ -191,6 +196,11 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
     end
 
     L = liouvillian(H, c_ops).data
+    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
+    if isa(L, SparseMatrixCSC)
+        L = sparse(transpose(L))
+        L = transpose(L)
+    end
 
     is_time_dependent = !(H_t === nothing)
 
@@ -225,12 +235,9 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
     end
 
     ρt_len = isqrt(length(sol.u[1]))
-    if ρt_len > 1
-        ρt = [QuantumObject(sparse(reshape(ϕ, ρt_len, ρt_len)), dims=Hdims) for ϕ in sol.u]
-    else
-        ρt = []
-    end
-    length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ρt, [])
+    ρt_len == prod(Hdims) ? ρt = [QuantumObject(sparse(reshape(ϕ, ρt_len, ρt_len)), dims=Hdims) for ϕ in sol.u] : ρt = []
+
+    # length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ρt, [])
 
     return TimeEvolutionSol(sol.t, ρt, hcat(saved_values.saveval...))
 end
@@ -253,7 +260,7 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
             ψ0::QuantumObject{<:AbstractArray{T}, KetQuantumObject},
             t_l::AbstractVector;  
             e_ops::AbstractVector = [], 
-            alg = LinearExponential(), 
+            alg = LinearExponential(krylov=:adaptive, m=10), 
             H_t = nothing, 
             params::AbstractVector = [],
             progress = true,
@@ -265,7 +272,12 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
 
     tspan = (t_l[1], t_l[end])
 
-    H = H.data
+    H0 = -1im * H.data
+    # Since SparseArrays use CSC matrices, the transpose operation makes it faster.
+    if isa(H0, SparseMatrixCSC)
+        H0 = sparse(transpose(H0))
+        H0 = transpose(H0)
+    end
     ψ0 = ψ0.data
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
@@ -283,29 +295,29 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
 
     if typeof(alg) <: LinearExponential
         is_time_dependent && error("The Hamiltonian must to be time independent when using LinearExponential algorithm.")
-        A = DiffEqArrayOperator(-1im * H)
+        A = DiffEqArrayOperator(H0)
         prob = ODEProblem(A, ψ0, tspan, params; kwargs...)
         sol = solve(prob, alg, dt = (t_l[2] - t_l[1]), callback = cb)
     else
         if !is_time_dependent
-            dudt! = (du,u,p,t) -> mul!(du, -1im * H, u)
+            dudt! = (du,u,p,t) -> mul!(du, H0, u)
         else
-            dudt! = (du,u,p,t) -> mul!(du, -1im * (H + H_t(t).data), u)
+            dudt! = (du,u,p,t) -> mul!(du, H0 -1im * H_t(t).data, u)
         end
         prob = ODEProblem(dudt!, ψ0, tspan, params; kwargs...)
         sol = solve(prob, alg, callback = cb)
     end
 
-    ψt_len = isqrt(length(sol.u[1]))
-    if ψt_len == prod(Hdims)
-        ψt = [QuantumObject(ϕ, dims=Hdims) for ϕ in sol.u]
-    else
-        ψt = []
-    end
-    length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ψt, [])
+    ψt_len = length(sol.u[1])
+    ψt_len == prod(Hdims) ? ψt = [QuantumObject(ϕ, dims=Hdims) for ϕ in sol.u] : ψt = []
+
+    # length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ψt, [])
 
     return TimeEvolutionSol(sol.t, ψt, hcat(saved_values.saveval...))
 end
+
+
+
 
 ### DYNAMICAL FOCK DIMENSION ###
 function _reduce_dims(QO::QuantumObject{<:AbstractArray{T}, OpType}, sel::AbstractVector, reduce::AbstractVector) where {T,OpType<:OperatorQuantumObject}
@@ -355,7 +367,7 @@ function _DFDIncreaseReduceCondition(u, t, integrator)
             ρi = ptrace(ρt, [i]).data
             pillow_i = min( max(round(Int, 0.02 * dim_i), 1), 20 )
             pillow_list[i] = pillow_i
-            @views res = sum(abs.(ρi[diagind(ρi)[end-pillow_i:end]])) / pillow_i
+            @views res = sum(abs.(ρi[diagind(ρi)[end-pillow_i:end]])) * sqrt(dim_i) / pillow_i
             if res > tol_list[i]
                 push!(increase_list, i)
                 condition = true

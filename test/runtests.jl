@@ -109,7 +109,7 @@ end
     e_ops = [a_d * a]
     sol = sesolve(H, psi0, t_l, e_ops = e_ops, progress = false)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
-    sol = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress = false)
+    sol = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress = false, abstol=1e-7, reltol=1e-5)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
     
     a = destroy(N)
@@ -121,8 +121,6 @@ end
     t_l = LinRange(0, 100, 1000)
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress = false);
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress = false);
-    @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
-    sol = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress = false);
     @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
     
     sp1 = kron(sigmap(), eye(2))
