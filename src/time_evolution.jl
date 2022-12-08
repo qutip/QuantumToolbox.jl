@@ -165,7 +165,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
             ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
             t_l::AbstractVector, c_ops::AbstractVector; 
             e_ops::AbstractVector = [], 
-            alg = LinearExponential(krylov=:off), 
+            alg = LinearExponential(krylov=:adaptive, m=15),
             H_t = nothing,
             params::AbstractVector = [],
             progress = true,
@@ -343,17 +343,19 @@ function _DFDIncreaseReduceCondition(u, t, integrator)
     tol_list = internal_params["tol_list"]
     increase_list = internal_params["increase_list"]
     reduce_list = internal_params["reduce_list"]
+    pillow_list = internal_params["pillow_list"]
     # Here I use copy(u) otherwise I have an error.
     ρt = QuantumObject(reshape(copy(u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
 
     condition = false
-    for i in 1:length(dim_list)
+    @inbounds for i in 1:length(dim_list)
         maxdim_i = maxdims[i]
         dim_i = dim_list[i]
         if dim_i < maxdim_i && dim_i > 2 && maxdim_i != 0
             ρi = ptrace(ρt, [i]).data
-            zeros_i = min( max(round(Int, 0.02 * dim_i), 1), 20 )
-            @views res = sum(abs.(ρi[diagind(ρi)[end-zeros_i:end]])) / (zeros_i * dim_i)
+            pillow_i = min( max(round(Int, 0.02 * dim_i), 1), 20 )
+            pillow_list[i] = pillow_i
+            @views res = sum(abs.(ρi[diagind(ρi)[end-pillow_i:end]])) / pillow_i
             if res > tol_list[i]
                 push!(increase_list, i)
                 condition = true
@@ -373,16 +375,19 @@ function _DFDIncreaseReduceAffect!(integrator)
     dim_list = internal_params["dim_list"]
     increase_list = internal_params["increase_list"]
     reduce_list = internal_params["reduce_list"]
+    pillow_list = internal_params["pillow_list"]
     # Here I use copy(integrator.u) otherwise I have an error.
     ρt  = QuantumObject(reshape(copy(integrator.u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
 
+    @views pillow_increase = pillow_list[increase_list]
+    @views pillow_reduce = pillow_list[reduce_list]
     if length(increase_list) > 0
-        ρt = _increase_dims(ρt, increase_list, ones(length(increase_list)))
-        dim_list[increase_list] .+= 1
+        ρt = _increase_dims(ρt, increase_list, pillow_increase)
+        dim_list[increase_list] .+= pillow_increase
     end
     if length(reduce_list) > 0
-        ρt = _reduce_dims(ρt, reduce_list, ones(length(reduce_list)))
-        dim_list[reduce_list] .-= 1
+        ρt = _reduce_dims(ρt, reduce_list, pillow_reduce)
+        dim_list[reduce_list] .-= pillow_reduce
     end
 
     deleteat!(increase_list, 1:length(increase_list))
@@ -437,6 +442,7 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T}, StateOp
     length(tol_list) == 0 && (tol_list = [1e-8 for d in dim_list])
     reduce_list = Int16[]
     increase_list = Int16[]
+    pillow_list = ones(Int16, length(dim_list))
 
     saved_values = SavedValues(Float64, Vector{ComplexF64})
     function save_func(u, t, integrator)
@@ -455,7 +461,7 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T}, StateOp
     
     params = [Dict("L" => L, "H" => H, "c_ops" => c_ops, "e_ops" => e_ops, 
                    "dim_list" => dim_list, "maxdims" => maxdims, "tol_list" => tol_list, 
-                   "reduce_list" => reduce_list, "increase_list" => increase_list)]
+                   "reduce_list" => reduce_list, "increase_list" => increase_list, "pillow_list" => pillow_list)]
     
     dudt! = (du,u,p,t) -> mul!(du, p[1]["L"], u)
     prob = ODEProblem(dudt!, ρ0, tspan, params; kwargs...)

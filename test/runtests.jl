@@ -177,7 +177,7 @@ end
     maxdims = [150]
     ψ0  = fock(3, 0)
     sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, e_ops_dfd, maxdims, progress = false, 
-                      saveat = [t_l[end]], abstol = 1e-15, reltol = 1e-7);
+                      saveat = [t_l[end]], abstol = 1e-9, reltol = 1e-7);
 
     @test sum(abs.(( sol.expect[1,:] .- sol0.expect[1,:] ) ./ (sol0.expect[1,:] .+ 1e-16)) ) < 0.01
 
