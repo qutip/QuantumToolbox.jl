@@ -21,14 +21,17 @@ function LindbladJumpAffect!(integrator)
         collaps_idx = 1
         r2 = rand()
         dp = 0
+        c_op_ψ_l = Vector{Float64}(undef, length(c_ops))
         @inbounds for i in eachindex(c_ops)
-            c_op = c_ops[i]
-            dp += real(ψ' * (c_op' * c_op) * ψ)
+            c_op_ψ = c_ops[i] * ψ
+            res = real(dot(c_op_ψ, c_op_ψ))
+            c_op_ψ_l[i] = res
+            dp += res
         end
         prob = 0
         @inbounds for i in eachindex(c_ops)
-            c_op = c_ops[i]
-            prob += real(ψ' * c_op' * c_op * ψ) / dp
+            res = c_op_ψ_l[i]
+            prob += res / dp
             if prob >= r2
                 collaps_idx = i
                 break
@@ -78,7 +81,7 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
             e_ops::AbstractVector = [], 
             n_traj::Int = 1,
             batch_size::Int = min(Threads.nthreads(), n_traj),
-            alg = KenCarp4(autodiff=false),
+            alg = AutoVern7(KenCarp4(autodiff=false)),
             ensemble_method = EnsembleThreads(), 
             H_t = nothing,
             progress::Bool = true,
@@ -100,7 +103,7 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
     # Since SparseArrays use CSC matrices, the transpose operation make it faster.
     isa(H_eff, SparseMatrixCSC) && ( H_eff = transpose(sparse(transpose(H_eff))) )
     ψ0 = ψ0.data
-    c_ops = [op.data for op in c_ops]
+    c_ops = map(op -> op.data, c_ops)
 
     progr = Progress(n_traj, showspeed=true, enabled=progress)
     channel = RemoteChannel(()->Channel{Bool}(), 1)
