@@ -1,10 +1,10 @@
 function spre(O::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}) where {T}
-    A = spdiagm( ones(T, size(O, 1)) )
+    A = I(size(O, 1))
     QuantumObject(kron(A, O.data), SuperOperatorQuantumObject, O.dims)
 end
 
 function spost(O::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}) where {T}
-    B = spdiagm( ones(T, size(O, 1)) )
+    B = I(size(O, 1))
     QuantumObject(kron(sparse(transpose(O.data)), B), SuperOperatorQuantumObject, O.dims)
 end
 
@@ -24,7 +24,7 @@ sigmax() = sigmam() + sigmap()
 sigmay() = 1im * (sigmam() - sigmap())
 sigmaz() = sigmap() * sigmam() - sigmam() * sigmap()
 
-eye(N::Int) = QuantumObject(spdiagm(ones(ComplexF64, N)), OperatorQuantumObject, [N])
+eye(N::Int) = QuantumObject(I(N))
 
 function fock(N::Int, pos::Int; dims::AbstractVector=[N])
     array = zeros(N)
@@ -38,6 +38,13 @@ function coherent(N::Real, α::T) where T <: Number
     a = destroy(N)
     ad = a'
     return exp(α * ad - α' * a) * fock(N, 0)
+end
+
+function rand_dm(N::Integer; kwargs...)
+    ρ = rand(ComplexF64, N, N)
+    ρ *= ρ'
+    ρ /= tr(ρ)
+    QuantumObject(ρ; kwargs...)
 end
 
 projection(N::Int, i::Int, j::Int) = fock(N, i) * fock(N, j)'

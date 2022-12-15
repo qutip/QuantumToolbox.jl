@@ -10,40 +10,49 @@ struct TimeEvolutionSol
     expect::AbstractArray
 end
 
-function LindbladJumpCallback(savebefore=false,saveafter=false)
-    function LindbladJumpCondition(u, t, integrator)
-        norm(u)^2 - integrator.p[2]
-    end
-
-    function LindbladJumpAffect!(integrator)
-        ψ = integrator.u
-        c_ops = integrator.p[1]
-        
-        if length(c_ops) == 1
-            integrator.u = normalize!(c_ops[1] * ψ)
-        else
-            collaps_idx = 1
-            r2 = rand()
-            dp = 0
-            @inbounds for i in eachindex(c_ops)
-                c_op = c_ops[i]
-                dp += real(ψ' * (c_op' * c_op) * ψ)
-            end
-            prob = 0
-            @inbounds for i in eachindex(c_ops)
-                c_op = c_ops[i]
-                prob += real(ψ' * c_op' * c_op * ψ) / dp
-                if prob >= r2
-                    collaps_idx = i
-                    break
-                end
-            end
-            integrator.u = normalize!(c_ops[collaps_idx] * ψ)
+function LindbladJumpAffect!(integrator)
+    ψ = integrator.u
+    internal_params = integrator.p[1]
+    c_ops = internal_params["c_ops"]
+    
+    if length(c_ops) == 1
+        integrator.u = normalize!(c_ops[1] * ψ)
+    else
+        collaps_idx = 1
+        r2 = rand()
+        dp = 0
+        @inbounds for i in eachindex(c_ops)
+            c_op = c_ops[i]
+            dp += real(ψ' * (c_op' * c_op) * ψ)
         end
-        integrator.p = [c_ops, rand()]
+        prob = 0
+        @inbounds for i in eachindex(c_ops)
+            c_op = c_ops[i]
+            prob += real(ψ' * c_op' * c_op * ψ) / dp
+            if prob >= r2
+                collaps_idx = i
+                break
+            end
+        end
+        integrator.u = normalize!(c_ops[collaps_idx] * ψ)
+    end
+    integrator.p[1]["random_n"] = rand()
+end
+
+function ContinuousLindbladJumpCallback(interp_points::Int=0)
+    function LindbladJumpCondition(u, t, integrator)
+        integrator.p[1]["random_n"] - norm(u)^2
     end
 
-    ContinuousCallback(LindbladJumpCondition, nothing, LindbladJumpAffect!, interp_points=0, save_positions = (savebefore,saveafter))
+    ContinuousCallback(LindbladJumpCondition, LindbladJumpAffect!, nothing, interp_points=interp_points, save_positions = (false,false))
+end
+
+function DiscreteLindbladJumpCallback()
+    function LindbladJumpCondition(u, t, integrator)
+        norm(u)^2 < integrator.p[1]["random_n"]
+    end
+
+    DiscreteCallback(LindbladJumpCondition, LindbladJumpAffect!, save_positions = (false,false))
 end
 
 """
@@ -56,7 +65,8 @@ end
             alg = AutoVern7(KenCarp4(autodiff=false)),
             ensemble_method = EnsembleThreads(), 
             H_t = nothing,
-            progress = true,
+            progress::Bool = true,
+            jump_interp_pts::Int = 0,
             callbacks = [],
             kwargs...)
 
@@ -67,11 +77,12 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
             t_l::AbstractVector, c_ops::AbstractVector;
             e_ops::AbstractVector = [], 
             n_traj::Int = 1,
-            batch_size::Int = min(10, n_traj),
-            alg = AutoVern7(KenCarp4(autodiff=false)),
+            batch_size::Int = min(Threads.nthreads(), n_traj),
+            alg = KenCarp4(autodiff=false),
             ensemble_method = EnsembleThreads(), 
             H_t = nothing,
-            progress = true,
+            progress::Bool = true,
+            jump_interp_pts::Int = 0,
             callbacks = [],
             kwargs...) where {T}
 
@@ -87,10 +98,7 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
     end
     H_eff = - 1im * H_eff.data
     # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    if isa(H_eff, SparseMatrixCSC)
-        H_eff = sparse(transpose(H_eff))
-        H_eff = transpose(H_eff)
-    end
+    isa(H_eff, SparseMatrixCSC) && ( H_eff = transpose(sparse(transpose(H_eff))) )
     ψ0 = ψ0.data
     c_ops = [op.data for op in c_ops]
 
@@ -101,7 +109,9 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
     end
 
     function prob_func(prob,i,repeat)
-        remake(prob,p=[prob.p[1], rand()])
+        params = copy(prob.p)
+        params[1]["random_n"] = rand()
+        remake(prob,p=params)
     end
     function output_func(sol,i)
         put!(channel, true)
@@ -128,16 +138,17 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
 
     is_time_dependent = !(H_t === nothing)
     if is_time_dependent
-        dudt! = (du,u,p,t) -> mul!(du, H_eff - 1im * H_t(t).data, u)
+        dudt! = (du,u,p,t) -> mul!(du, p[1]["H"] - 1im * H_t(t).data, u)
     else
-        dudt! = (du,u,p,t) -> mul!(du, H_eff, u)
+        dudt! = (du,u,p,t) -> mul!(du, p[1]["H"], u)
     end
 
-    cb1 = LindbladJumpCallback()
+    cb1 = jump_interp_pts == -1 ? DiscreteLindbladJumpCallback() : ContinuousLindbladJumpCallback(jump_interp_pts)
     cb2 = AutoAbstol(false; init_curmax=0.0)
     cb = CallbackSet(cb1, cb2, callbacks...)
 
-    p = [c_ops, rand()]
+    p = [Dict("H" => H_eff, "c_ops" => c_ops, "random_n" => rand())]
+
     prob = ODEProblem(dudt!, ψ0, tspan, p, callback = cb; kwargs...)
     ensemble_prob = EnsembleProblem(prob, prob_func=prob_func, output_func=output_func, reduction=reduction)
     sol = solve(ensemble_prob, alg, ensemble_method, trajectories=n_traj, 
@@ -160,7 +171,7 @@ end
             alg = LinearExponential(krylov=:simple), 
             H_t = nothing, 
             params::AbstractVector = [],
-            progress = true,
+            progress::Bool = true,
             callbacks = [],
             kwargs...)
 
@@ -173,7 +184,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
             alg = LinearExponential(krylov=:adaptive, m=15),
             H_t = nothing,
             params::AbstractVector = [],
-            progress = true,
+            progress::Bool = true,
             callbacks = [],
             kwargs...) where {T,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
                                 StateOpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
@@ -197,10 +208,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
 
     L = liouvillian(H, c_ops).data
     # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    if isa(L, SparseMatrixCSC)
-        L = sparse(transpose(L))
-        L = transpose(L)
-    end
+    isa(L, SparseMatrixCSC) && ( L = transpose(sparse(transpose(L))) )
 
     is_time_dependent = !(H_t === nothing)
 
@@ -235,7 +243,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
     end
 
     ρt_len = isqrt(length(sol.u[1]))
-    ρt_len == prod(Hdims) ? ρt = [QuantumObject(sparse(reshape(ϕ, ρt_len, ρt_len)), dims=Hdims) for ϕ in sol.u] : ρt = []
+    ρt_len == prod(Hdims) ? ρt = [QuantumObject(reshape(ϕ, ρt_len, ρt_len), dims=Hdims) for ϕ in sol.u] : ρt = []
 
     # length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ρt, [])
 
@@ -250,7 +258,7 @@ end
                 alg = LinearExponential(), 
                 H_t = nothing, 
                 params::AbstractVector = [],
-                progress = true,
+                progress::Bool = true,
                 callbacks = [],
                 kwargs...)
 
@@ -263,7 +271,7 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
             alg = LinearExponential(krylov=:adaptive, m=10), 
             H_t = nothing, 
             params::AbstractVector = [],
-            progress = true,
+            progress::Bool = true,
             callbacks = [],
             kwargs...) where {T}
 
@@ -273,11 +281,8 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
     tspan = (t_l[1], t_l[end])
 
     H0 = -1im * H.data
-    # Since SparseArrays use CSC matrices, the transpose operation makes it faster.
-    if isa(H0, SparseMatrixCSC)
-        H0 = sparse(transpose(H0))
-        H0 = transpose(H0)
-    end
+    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
+    isa(H0, SparseMatrixCSC) && ( H0 = transpose(sparse(transpose(H0))) )
     ψ0 = ψ0.data
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
@@ -309,9 +314,7 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
     end
 
     ψt_len = length(sol.u[1])
-    ψt_len == prod(Hdims) ? ψt = [QuantumObject(ϕ, dims=Hdims) for ϕ in sol.u] : ψt = []
-
-    # length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ψt, [])
+    ψt_len == prod(Hdims) ? ψt = [QuantumObject(normalize!(ϕ), dims=Hdims) for ϕ in sol.u] : ψt = []
 
     return TimeEvolutionSol(sol.t, ψt, hcat(saved_values.saveval...))
 end

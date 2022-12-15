@@ -73,12 +73,16 @@ function entanglement(psi::QuantumObject{<:AbstractArray{T}, OpType}, sel) where
 end
 
 function expect(op::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T}, KetQuantumObject}) where {T}
-    ishermitian(op) && return real(ψ' * op * ψ)
-    return ψ' * op * ψ
+    ψd = ψ.data
+    opd = op.data
+    ishermitian(op) && return real(dot(ψd, opd * ψd))
+    return dot(ψd, opd * ψd)
 end
 function expect(op::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T}, BraQuantumObject}) where {T}
-    ishermitian(op) && return real(ψ * op * ψ')
-    return ψ * op * ψ'
+    ψd = ψ.data'
+    opd = op.data
+    ishermitian(op) && return real(dot(ψd, opd * ψd))
+    return dot(ψd, opd * ψd)
 end
 function expect(op::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}, ρ::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}) where {T}
     ishermitian(op) && return real(tr(op * ρ))

@@ -97,8 +97,8 @@ end
 
 for op in (:(+), :(-), :(*))
     @eval begin
-        function LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T}, OpType}, B::QuantumObject{<:AbstractArray{T}, OpType}) where 
-                {T, OpType<:QuantumObjectType}
+        function LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T1}, OpType}, B::QuantumObject{<:AbstractArray{T2}, OpType}) where 
+                {T1, T2, OpType<:QuantumObjectType}
             
             A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
             QuantumObject($(op)(A.data, B.data), OpType, A.dims)
@@ -112,19 +112,23 @@ for op in (:(+), :(-), :(*))
     end
 end
 
-function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}, B::QuantumObject{<:AbstractArray{T}, KetQuantumObject}) where {T}
+function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1}, OperatorQuantumObject}, 
+                            B::QuantumObject{<:AbstractArray{T2}, KetQuantumObject}) where {T1, T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     QuantumObject(A.data * B.data, KetQuantumObject, A.dims)
 end
-function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T}, BraQuantumObject}, B::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}) where {T}
+function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1}, BraQuantumObject}, 
+                            B::QuantumObject{<:AbstractArray{T2}, OperatorQuantumObject}) where {T1, T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     QuantumObject(A.data * B.data, BraQuantumObject, A.dims)
 end
-function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T}, KetQuantumObject}, B::QuantumObject{<:AbstractArray{T}, BraQuantumObject}) where {T}
+function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1}, KetQuantumObject}, 
+                            B::QuantumObject{<:AbstractArray{T2}, BraQuantumObject}) where {T1, T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    QuantumObject(sparse(A.data * B.data), OperatorQuantumObject, A.dims)
+    QuantumObject(A.data * B.data, OperatorQuantumObject, A.dims)
 end
-function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T}, BraQuantumObject}, B::QuantumObject{<:AbstractArray{T}, KetQuantumObject}) where {T}
+function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1}, BraQuantumObject}, 
+                            B::QuantumObject{<:AbstractArray{T2}, KetQuantumObject}) where {T1, T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     A.data * B.data
 end
@@ -154,8 +158,8 @@ LinearAlgebra.ishermitian(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T
 LinearAlgebra.issymmetric(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T, OpType<:QuantumObjectType} = issymmetric(A.data)
 LinearAlgebra.isposdef(A::QuantumObject{<:AbstractArray{T}, OpType}) where {T, OpType<:QuantumObjectType} = isposdef(A.data)
 
-function LinearAlgebra.kron(A::QuantumObject{<:AbstractArray{T}, OpType}, B::QuantumObject{<:AbstractArray{T}, OpType}) where 
-    {T, OpType<:Union{KetQuantumObject, BraQuantumObject, OperatorQuantumObject}}
+function LinearAlgebra.kron(A::QuantumObject{<:AbstractArray{T1}, OpType}, B::QuantumObject{<:AbstractArray{T2}, OpType}) where 
+    {T1, T2, OpType<:Union{KetQuantumObject, BraQuantumObject, OperatorQuantumObject}}
 
     QuantumObject(kron(A.data, B.data), OpType, vcat(A.dims, B.dims))
 end
@@ -201,7 +205,7 @@ function LinearAlgebra.exp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_t
     P
 end
 
-LinearAlgebra.eigen(A::QuantumObject{<:AbstractArray{T}, OpType}) where 
-        {T,OpType<:Union{OperatorQuantumObject, SuperOperatorQuantumObject}} = eigen(Array(A.data))
-LinearAlgebra.eigvals(A::QuantumObject{<:AbstractArray{T}, OpType}) where 
-        {T,OpType<:Union{OperatorQuantumObject, SuperOperatorQuantumObject}} = eigvals(Array(A.data))
+LinearAlgebra.eigen(A::QuantumObject{<:AbstractArray{T}, OpType}; kwargs...) where 
+        {T,OpType<:Union{OperatorQuantumObject, SuperOperatorQuantumObject}} = eigen(Array(A.data); kwargs...)
+LinearAlgebra.eigvals(A::QuantumObject{<:AbstractArray{T}, OpType}; kwargs...) where 
+        {T,OpType<:Union{OperatorQuantumObject, SuperOperatorQuantumObject}} = eigvals(Array(A.data); kwargs...)

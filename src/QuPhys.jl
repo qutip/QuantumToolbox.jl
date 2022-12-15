@@ -18,7 +18,7 @@ export isket, isbra, isoper, issuper, ket2dm
 export spre, spost, sprepost, lindblad_dissipator
 export fock, basis, coherent
 export sigmam, sigmap, sigmax, sigmay, sigmaz
-export destroy, create, eye, projection
+export destroy, create, eye, projection, rand_dm
 export sinm, cosm
 export expect
 export wigner
