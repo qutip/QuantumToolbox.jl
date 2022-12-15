@@ -213,6 +213,8 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
     # Since SparseArrays use CSC matrices, the transpose operation make it faster.
     isa(L, SparseMatrixCSC) && ( L = transpose(sparse(transpose(L))) )
 
+    p = [Dict("L" => L), params...]
+
     is_time_dependent = !(H_t === nothing)
 
     saved_values = SavedValues(Float64, Vector{ComplexF64})
@@ -227,21 +229,21 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
     if typeof(alg) <: LinearExponential
         is_time_dependent && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
         A = DiffEqArrayOperator(L)
-        prob = ODEProblem(A, ρ0, tspan, params; kwargs...)
+        prob = ODEProblem(A, ρ0, tspan, p; kwargs...)
         sol = solve(prob, alg, dt = (t_l[2] - t_l[1]), callback = cb)
     else
         if !is_time_dependent
-            dudt! = (du,u,p,t) -> mul!(du, L, u)
+            dudt! = (du,u,p,t) -> mul!(du, p[1]["L"], u)
         else
             if H_t(0.0).type <: OperatorQuantumObject
                 @warn string("To speed up the calculation, it is always better to define ",
                     "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog=1
-                dudt! = (du,u,p,t) -> mul!(du, L + liouvillian(H_t(t)).data, u)
+                dudt! = (du,u,p,t) -> mul!(du, p[1]["L"] + liouvillian(H_t(t)).data, u)
             else
-                dudt! = (du,u,p,t) -> mul!(du, L + H_t(t).data, u)
+                dudt! = (du,u,p,t) -> mul!(du, p[1]["L"] + H_t(t).data, u)
             end
         end
-        prob = ODEProblem(dudt!, ρ0, tspan, params; kwargs...)
+        prob = ODEProblem(dudt!, ρ0, tspan, p; kwargs...)
         sol = solve(prob, alg, callback = cb)
     end
 
