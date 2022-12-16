@@ -334,10 +334,15 @@ function _reduce_dims(QO::QuantumObject{<:AbstractArray{T}, OpType}, sel::Abstra
     reduce_l[sel] .= reduce
     rd_new = rd .- reduce_l
 
-    ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
-    ρmat2 = zeros(eltype(ρmat), repeat(rd_new, 2)...)
-    copyto!(ρmat2, view(ρmat, repeat([1:n for n in rd_new], 2)...))
-    ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
+    if length(rd) == 1
+        ρmat = 0 .* similar(QO.data, repeat(rd_new, 2)...)
+        copyto!(ρmat, view(QO.data, repeat([1:n for n in rd_new], 2)...))
+    else
+        ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
+        ρmat2 = 0 .* similar(QO.data, repeat(rd_new, 2)...)
+        copyto!(ρmat2, view(ρmat, repeat([1:n for n in rd_new], 2)...))
+        ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
+    end
 
     QuantumObject(ρmat, OperatorQuantumObject, rd_new)
 end
@@ -348,10 +353,15 @@ function _increase_dims(QO::QuantumObject{<:AbstractArray{T}, OpType}, sel::Abst
     incr_l[sel] .= increase
     rd_new = rd .+ incr_l
 
-    ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
-    ρmat2 = zeros(eltype(ρmat), repeat(rd_new, 2)...)
-    copyto!(view(ρmat2, repeat([1:n for n in rd], 2)...), ρmat)
-    ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
+    if length(rd) == 1
+        ρmat = 0 .* similar(QO.data, repeat(rd_new, 2)...)
+        copyto!(view(ρmat, repeat([1:n for n in rd], 2)...), QO.data)
+    else
+        ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
+        ρmat2 = 0 .* similar(QO.data, repeat(rd_new, 2)...)
+        copyto!(view(ρmat2, repeat([1:n for n in rd], 2)...), ρmat)
+        ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
+    end
 
     QuantumObject(ρmat, OperatorQuantumObject, rd_new)
 end
@@ -413,11 +423,10 @@ function _DFDIncreaseReduceAffect!(integrator)
     deleteat!(increase_list, 1:length(increase_list))
     deleteat!(reduce_list, 1:length(reduce_list))
 
-    params = integrator.p
     L = liouvillian(H(dim_list), c_ops(dim_list)).data
     newsize = size(L, 1)
     resize!(integrator, newsize)
-    params[1]["L"] = L
+    internal_params["L"] = L
     integrator.u = reshape(ρt.data, newsize)
 end
 
