@@ -14,7 +14,7 @@ function LindbladJumpAffect!(integrator)
     ψ = integrator.u
     internal_params = integrator.p[1]
     c_ops = internal_params["c_ops"]
-    
+
     if length(c_ops) == 1
         integrator.u = normalize!(c_ops[1] * ψ)
     else
@@ -47,7 +47,7 @@ function ContinuousLindbladJumpCallback(interp_points::Int=0)
         integrator.p[1]["random_n"] - norm(u)^2
     end
 
-    ContinuousCallback(LindbladJumpCondition, LindbladJumpAffect!, nothing, interp_points=interp_points, save_positions = (false,false))
+    ContinuousCallback(LindbladJumpCondition, LindbladJumpAffect!, nothing, interp_points=interp_points, save_positions=(false, false))
 end
 
 function DiscreteLindbladJumpCallback()
@@ -55,7 +55,7 @@ function DiscreteLindbladJumpCallback()
         norm(u)^2 < integrator.p[1]["random_n"]
     end
 
-    DiscreteCallback(LindbladJumpCondition, LindbladJumpAffect!, save_positions = (false,false))
+    DiscreteCallback(LindbladJumpCondition, LindbladJumpAffect!, save_positions=(false, false))
 end
 
 """
@@ -75,19 +75,19 @@ end
 
 Time evolution of an open quantum system using quantum trajectories.
 """
-function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}, 
-            ψ0::QuantumObject{<:AbstractArray{T}, KetQuantumObject}, 
-            t_l::AbstractVector, c_ops::AbstractVector;
-            e_ops::AbstractVector = [], 
-            n_traj::Int = 1,
-            batch_size::Int = min(Threads.nthreads(), n_traj),
-            alg = AutoVern7(KenCarp4(autodiff=false)),
-            ensemble_method = EnsembleThreads(), 
-            H_t = nothing,
-            progress::Bool = true,
-            jump_interp_pts::Int = 0,
-            callbacks = [],
-            kwargs...) where {T}
+function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
+    t_l::AbstractVector, c_ops::AbstractVector;
+    e_ops::AbstractVector=[],
+    n_traj::Int=1,
+    batch_size::Int=min(Threads.nthreads(), n_traj),
+    alg=AutoVern7(KenCarp4(autodiff=false)),
+    ensemble_method=EnsembleThreads(),
+    H_t=nothing,
+    progress::Bool=true,
+    jump_interp_pts::Int=0,
+    callbacks=[],
+    kwargs...) where {T}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     Hdims = H.dims
@@ -97,53 +97,53 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
 
     H_eff = H
     for c_op in c_ops
-        H_eff += - 0.5im * c_op' * c_op
+        H_eff += -0.5im * c_op' * c_op
     end
-    H_eff = - 1im * H_eff.data
+    H_eff = -1im * H_eff.data
     # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    isa(H_eff, SparseMatrixCSC) && ( H_eff = transpose(sparse(transpose(H_eff))) )
+    isa(H_eff, SparseMatrixCSC) && (H_eff = transpose(sparse(transpose(H_eff))))
     ψ0 = ψ0.data
     c_ops = map(op -> op.data, c_ops)
 
     progr = Progress(n_traj, showspeed=true, enabled=progress)
-    channel = RemoteChannel(()->Channel{Bool}(), 1)
+    channel = RemoteChannel(() -> Channel{Bool}(), 1)
     @async while take!(channel)
         next!(progr)
     end
 
-    function prob_func(prob,i,repeat)
+    function prob_func(prob, i, repeat)
         params = copy(prob.p)
         params[1]["random_n"] = rand()
-        remake(prob,p=params)
+        remake(prob, p=params)
     end
-    function output_func(sol,i)
+    function output_func(sol, i)
         put!(channel, true)
         if e_ops_len == 0
             # res = hcat(sol.u...)
             res = [QuantumObject(ϕ, dims=Hdims) for ϕ in sol.u]
         else
-            res = hcat(map(i->map(op->expect(op, QuantumObject(normalize!(sol.u[i]), dims=Hdims)), e_ops), eachindex(t_l))...)
+            res = hcat(map(i -> map(op -> expect(op, QuantumObject(normalize!(sol.u[i]), dims=Hdims)), e_ops), eachindex(t_l))...)
         end
         (res, false)
     end
-    function reduction(u,batch,I)
+    function reduction(u, batch, I)
         if e_ops_len == 0
             tmp = hcat(batch...)
             length(u) == 0 && return tmp, false
             res = hcat(u, tmp)
         else
-            tmp = sum(cat(batch..., dims = 3), dims = 3)
+            tmp = sum(cat(batch..., dims=3), dims=3)
             length(u) == 0 && return tmp, false
-            res = sum(cat(u, tmp, dims = 3), dims = 3)
+            res = sum(cat(u, tmp, dims=3), dims=3)
         end
         return res, false
     end
 
     is_time_dependent = !(H_t === nothing)
     if is_time_dependent
-        dudt! = (du,u,p,t) -> mul!(du, p[1]["H"] - 1im * H_t(t).data, u)
+        dudt! = (du, u, p, t) -> mul!(du, p[1]["H"] - 1im * H_t(t).data, u)
     else
-        dudt! = (du,u,p,t) -> mul!(du, p[1]["H"], u)
+        dudt! = (du, u, p, t) -> mul!(du, p[1]["H"], u)
     end
 
     cb1 = jump_interp_pts == -1 ? DiscreteLindbladJumpCallback() : ContinuousLindbladJumpCallback(jump_interp_pts)
@@ -152,16 +152,16 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
 
     p = [Dict("H" => H_eff, "c_ops" => c_ops, "random_n" => rand())]
 
-    prob = ODEProblem(dudt!, ψ0, tspan, p, callback = cb; kwargs...)
+    prob = ODEProblem(dudt!, ψ0, tspan, p, callback=cb; kwargs...)
     ensemble_prob = EnsembleProblem(prob, prob_func=prob_func, output_func=output_func, reduction=reduction)
-    sol = solve(ensemble_prob, alg, ensemble_method, trajectories=n_traj, 
-            batch_size=batch_size, saveat = t_l)
+    sol = solve(ensemble_prob, alg, ensemble_method, trajectories=n_traj,
+        batch_size=batch_size, saveat=t_l)
 
     put!(channel, false)
 
     e_ops_len == 0 && return TimeEvolutionSol(t_l, sol.u, [])
 
-    e_ops_expect = sum(sol.u, dims = 3) ./ n_traj
+    e_ops_expect = sum(sol.u, dims=3) ./ n_traj
 
     return TimeEvolutionSol(t_l, [], e_ops_expect)
 end
@@ -180,17 +180,17 @@ end
 
 Time evolution of an open quantum system using master equation.
 """
-function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType}, 
-            ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
-            t_l::AbstractVector, c_ops::AbstractVector; 
-            e_ops::AbstractVector = [], 
-            alg = LinearExponential(krylov=:adaptive, m=15),
-            H_t = nothing,
-            params::AbstractVector = [],
-            progress::Bool = true,
-            callbacks = [],
-            kwargs...) where {T,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-                                StateOpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
+    ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
+    t_l::AbstractVector, c_ops::AbstractVector;
+    e_ops::AbstractVector=[],
+    alg=LinearExponential(krylov=:adaptive, m=15),
+    H_t=nothing,
+    params::AbstractVector=[],
+    progress::Bool=true,
+    callbacks=[],
+    kwargs...) where {T,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    StateOpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     Hdims = H.dims
@@ -211,7 +211,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
 
     L = liouvillian(H, c_ops).data
     # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    isa(L, SparseMatrixCSC) && ( L = transpose(sparse(transpose(L))) )
+    isa(L, SparseMatrixCSC) && (L = transpose(sparse(transpose(L))))
 
     p = [Dict("L" => L), params...]
 
@@ -220,9 +220,9 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
     saved_values = SavedValues(Float64, Vector{ComplexF64})
     function save_func(u, t, integrator)
         next!(progr)
-        map(op->expect(op, QuantumObject(reshape(u, Hsize, Hsize), OperatorQuantumObject, Hdims)), e_ops)
+        map(op -> expect(op, QuantumObject(reshape(u, Hsize, Hsize), OperatorQuantumObject, Hdims)), e_ops)
     end
-    cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
+    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
     cb = CallbackSet(cb1, cb2, callbacks...)
 
@@ -230,21 +230,21 @@ function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType},
         is_time_dependent && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
         A = DiffEqArrayOperator(L)
         prob = ODEProblem(A, ρ0, tspan, p; kwargs...)
-        sol = solve(prob, alg, dt = (t_l[2] - t_l[1]), callback = cb)
+        sol = solve(prob, alg, dt=(t_l[2] - t_l[1]), callback=cb)
     else
         if !is_time_dependent
-            dudt! = (du,u,p,t) -> mul!(du, p[1]["L"], u)
+            dudt! = (du, u, p, t) -> mul!(du, p[1]["L"], u)
         else
             if H_t(0.0).type <: OperatorQuantumObject
                 @warn string("To speed up the calculation, it is always better to define ",
-                    "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog=1
-                dudt! = (du,u,p,t) -> mul!(du, p[1]["L"] + liouvillian(H_t(t)).data, u)
+                    "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog = 1
+                dudt! = (du, u, p, t) -> mul!(du, p[1]["L"] + liouvillian(H_t(t)).data, u)
             else
-                dudt! = (du,u,p,t) -> mul!(du, p[1]["L"] + H_t(t).data, u)
+                dudt! = (du, u, p, t) -> mul!(du, p[1]["L"] + H_t(t).data, u)
             end
         end
         prob = ODEProblem(dudt!, ρ0, tspan, p; kwargs...)
-        sol = solve(prob, alg, callback = cb)
+        sol = solve(prob, alg, callback=cb)
     end
 
     ρt_len = isqrt(length(sol.u[1]))
@@ -269,16 +269,16 @@ end
 
 Time evolution of a closed quantum system using Schrödinger equation.
 """
-function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
-            ψ0::QuantumObject{<:AbstractArray{T}, KetQuantumObject},
-            t_l::AbstractVector;  
-            e_ops::AbstractVector = [], 
-            alg = LinearExponential(krylov=:adaptive, m=10), 
-            H_t = nothing, 
-            params::AbstractVector = [],
-            progress::Bool = true,
-            callbacks = [],
-            kwargs...) where {T}
+function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
+    t_l::AbstractVector;
+    e_ops::AbstractVector=[],
+    alg=LinearExponential(krylov=:adaptive, m=10),
+    H_t=nothing,
+    params::AbstractVector=[],
+    progress::Bool=true,
+    callbacks=[],
+    kwargs...) where {T}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     Hdims = H.dims
@@ -287,19 +287,19 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
 
     H0 = -1im * H.data
     # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    isa(H0, SparseMatrixCSC) && ( H0 = transpose(sparse(transpose(H0))) )
+    isa(H0, SparseMatrixCSC) && (H0 = transpose(sparse(transpose(H0))))
     ψ0 = ψ0.data
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
 
     is_time_dependent = !(H_t === nothing)
 
-    saved_values = SavedValues(Float64, Vector{Float64}) 
+    saved_values = SavedValues(Float64, Vector{Float64})
     function save_func(u, t, integrator)
         next!(progr)
-        map(op->expect(op, QuantumObject(normalize!(u), dims=Hdims)), e_ops)
+        map(op -> expect(op, QuantumObject(normalize!(u), dims=Hdims)), e_ops)
     end
-    cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
+    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
     cb = CallbackSet(cb1, cb2, callbacks...)
 
@@ -307,15 +307,15 @@ function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
         is_time_dependent && error("The Hamiltonian must to be time independent when using LinearExponential algorithm.")
         A = DiffEqArrayOperator(H0)
         prob = ODEProblem(A, ψ0, tspan, params; kwargs...)
-        sol = solve(prob, alg, dt = (t_l[2] - t_l[1]), callback = cb)
+        sol = solve(prob, alg, dt=(t_l[2] - t_l[1]), callback=cb)
     else
         if !is_time_dependent
-            dudt! = (du,u,p,t) -> mul!(du, H0, u)
+            dudt! = (du, u, p, t) -> mul!(du, H0, u)
         else
-            dudt! = (du,u,p,t) -> mul!(du, H0 -1im * H_t(t).data, u)
+            dudt! = (du, u, p, t) -> mul!(du, H0 - 1im * H_t(t).data, u)
         end
         prob = ODEProblem(dudt!, ψ0, tspan, params; kwargs...)
-        sol = solve(prob, alg, callback = cb)
+        sol = solve(prob, alg, callback=cb)
     end
 
     ψt_len = length(sol.u[1])
@@ -328,18 +328,19 @@ end
 
 
 ### DYNAMICAL FOCK DIMENSION ###
-function _reduce_dims(QO::QuantumObject{<:AbstractArray{T}, OpType}, sel::AbstractVector, reduce::AbstractVector) where {T,OpType<:OperatorQuantumObject}
+function _reduce_dims(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::AbstractVector, reduce::AbstractVector) where {T,OpType<:OperatorQuantumObject}
     rd = QO.dims
+    nd = length(rd)
     reduce_l = zero(rd)
     reduce_l[sel] .= reduce
     rd_new = rd .- reduce_l
 
-    if length(rd) == 1
-        ρmat = 0 .* similar(QO.data, repeat(rd_new, 2)...)
+    if nd == 1
+        ρmat = similar(QO.data, repeat(rd_new, 2)...)
         copyto!(ρmat, view(QO.data, repeat([1:n for n in rd_new], 2)...))
     else
         ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
-        ρmat2 = 0 .* similar(QO.data, repeat(rd_new, 2)...)
+        ρmat2 = similar(QO.data, repeat(rd_new, 2)...)
         copyto!(ρmat2, view(ρmat, repeat([1:n for n in rd_new], 2)...))
         ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
     end
@@ -347,18 +348,25 @@ function _reduce_dims(QO::QuantumObject{<:AbstractArray{T}, OpType}, sel::Abstra
     QuantumObject(ρmat, OperatorQuantumObject, rd_new)
 end
 
-function _increase_dims(QO::QuantumObject{<:AbstractArray{T}, OpType}, sel::AbstractVector, increase::AbstractVector) where {T,OpType<:OperatorQuantumObject}
+function _increase_dims(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::AbstractVector, increase::AbstractVector) where {T,OpType<:OperatorQuantumObject}
     rd = QO.dims
+    nd = length(rd)
     incr_l = zero(rd)
     incr_l[sel] .= increase
     rd_new = rd .+ incr_l
 
-    if length(rd) == 1
-        ρmat = 0 .* similar(QO.data, repeat(rd_new, 2)...)
+    if nd == 1
+        ρmat = similar(QO.data, repeat(rd_new, 2)...)
+        selectdim(ρmat, sel[1], rd[1]+1:rd_new[1]) .= 0
+        selectdim(ρmat, sel[1] + nd, rd[1]+1:rd_new[1]) .= 0
         copyto!(view(ρmat, repeat([1:n for n in rd], 2)...), QO.data)
     else
         ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
-        ρmat2 = 0 .* similar(QO.data, repeat(rd_new, 2)...)
+        ρmat2 = similar(QO.data, repeat(rd_new, 2)...)
+        for i in eachindex(sel)
+            selectdim(ρmat2, sel[i], rd[i]+1:rd_new[i]) .= 0
+            selectdim(ρmat2, sel[i] + nd, rd[i]+1:rd_new[i]) .= 0
+        end
         copyto!(view(ρmat2, repeat([1:n for n in rd], 2)...), ρmat)
         ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
     end
@@ -383,13 +391,13 @@ function _DFDIncreaseReduceCondition(u, t, integrator)
         dim_i = dim_list[i]
         if dim_i < maxdim_i && dim_i > 2 && maxdim_i != 0
             ρi = ptrace(ρt, [i]).data
-            pillow_i = min( max(round(Int, 0.02 * dim_i), 1), 20 )
+            pillow_i = min(max(round(Int, 0.02 * dim_i), 1), 20)
             pillow_list[i] = pillow_i
             @views res = sum(abs.(ρi[diagind(ρi)[end-pillow_i:end]])) * sqrt(dim_i) / pillow_i
             if res > tol_list[i]
                 push!(increase_list, i)
                 condition = true
-            elseif res < tol_list[i]*1e-2 && dim_i > 3
+            elseif res < tol_list[i] * 1e-2 && dim_i > 3
                 push!(reduce_list, i)
                 condition = true
             end
@@ -407,7 +415,7 @@ function _DFDIncreaseReduceAffect!(integrator)
     reduce_list = internal_params["reduce_list"]
     pillow_list = internal_params["pillow_list"]
     # Here I use copy(integrator.u) otherwise I have an error.
-    ρt  = QuantumObject(reshape(copy(integrator.u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
+    ρt = QuantumObject(reshape(copy(integrator.u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
 
     @views pillow_increase = pillow_list[increase_list]
     @views pillow_reduce = pillow_list[reduce_list]
@@ -441,12 +449,12 @@ end
 
 Time evolution of an open quantum system using master equation, dynamically changing the dimension of the Hilbert subspaces.
 """
-function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
+function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
     t_l::AbstractVector, c_ops::Function, e_ops::Function, maxdims::AbstractVector;
-    tol_list::AbstractVector = [],
-    alg = Vern7(),
-    progress::Bool = true,
-    callbacks::AbstractVector = [],
+    tol_list::AbstractVector=[],
+    alg=Vern7(),
+    progress::Bool=true,
+    callbacks::AbstractVector=[],
     kwargs...) where {T,StateOpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
 
     dim_list = copy(ψ0.dims)
@@ -465,9 +473,9 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T}, StateOp
     else
         ρ0 = reshape(ψ0_data, length(ψ0))
     end
-    
+
     L = liouvillian(H(dim_list), c_ops(dim_list)).data
-    
+
     length(tol_list) == 0 && (tol_list = [1e-8 for d in dim_list])
     reduce_list = Int16[]
     increase_list = Int16[]
@@ -481,20 +489,20 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T}, StateOp
         next!(progr)
         # Here I use copy(u) otherwise I have an error.
         ρt = QuantumObject(reshape(copy(u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
-        map(op->expect(op, ρt), e_ops(dim_list))
+        map(op -> expect(op, ρt), e_ops(dim_list))
     end
-    cb1 = SavingCallback(save_func, saved_values, saveat = t_l)
+    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb_increasereduce = DiscreteCallback(_DFDIncreaseReduceCondition, _DFDIncreaseReduceAffect!, save_positions=(false,false))
+    cb_increasereduce = DiscreteCallback(_DFDIncreaseReduceCondition, _DFDIncreaseReduceAffect!, save_positions=(false, false))
     cb = CallbackSet(cb1, cb2, cb_increasereduce, callbacks...)
-    
-    params = [Dict("L" => L, "H" => H, "c_ops" => c_ops, "e_ops" => e_ops, 
-                   "dim_list" => dim_list, "maxdims" => maxdims, "tol_list" => tol_list, 
-                   "reduce_list" => reduce_list, "increase_list" => increase_list, "pillow_list" => pillow_list)]
-    
-    dudt! = (du,u,p,t) -> mul!(du, p[1]["L"], u)
+
+    params = [Dict("L" => L, "H" => H, "c_ops" => c_ops, "e_ops" => e_ops,
+        "dim_list" => dim_list, "maxdims" => maxdims, "tol_list" => tol_list,
+        "reduce_list" => reduce_list, "increase_list" => increase_list, "pillow_list" => pillow_list)]
+
+    dudt! = (du, u, p, t) -> mul!(du, p[1]["L"], u)
     prob = ODEProblem(dudt!, ρ0, tspan, params; kwargs...)
-    sol = solve(prob, alg, callback = cb)
+    sol = solve(prob, alg, callback=cb)
 
     ρt = [QuantumObject(reshape(ϕ, isqrt(length(ϕ)), :)) for ϕ in sol.u]
 
@@ -503,8 +511,8 @@ end
 
 
 ### LIOUVILLIAN AND STEADYSTATE ###
-function liouvillian(H::QuantumObject{<:AbstractArray{T}, OpType}, 
-            c_ops::AbstractVector) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+function liouvillian(H::QuantumObject{<:AbstractArray{T},OpType},
+    c_ops::AbstractVector) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     L = isoper(H) ? -1im * (spre(H) - spost(H)) : H
     for c_op in c_ops
@@ -518,23 +526,23 @@ function liouvillian(H::QuantumObject{<:AbstractArray{T}, OpType},
 end
 
 
-liouvillian(H::QuantumObject{<:AbstractArray{T}, OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = 
-liouvillian(H, [])
+liouvillian(H::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    liouvillian(H, [])
 
-function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1}, SuperOperatorQuantumObject}, 
-            Lₚ::QuantumObject{<:AbstractArray{T1}, SuperOperatorQuantumObject}, 
-            Lₘ::QuantumObject{<:AbstractArray{T1}, SuperOperatorQuantumObject}, 
-            ω::Real; n_max::Int = 4, solver::Type{LSolver} = LiouvillianDirectSolver) where {T1,LSolver<:LiouvillianSolver}
+function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    Lₚ::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    Lₘ::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    ω::Real; n_max::Int=4, solver::Type{LSolver}=LiouvillianDirectSolver) where {T1,LSolver<:LiouvillianSolver}
 
     ((L₀.dims == Lₚ.dims) && (L₀.dims == Lₘ.dims)) || throw(ErrorException("The operators are not of the same Hilbert dimension."))
 
     _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, solver, n_max=n_max)
 end
 
-function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1}, SuperOperatorQuantumObject}, 
-            Lₚ::QuantumObject{<:AbstractArray{T1}, SuperOperatorQuantumObject}, 
-            Lₘ::QuantumObject{<:AbstractArray{T1}, SuperOperatorQuantumObject}, 
-            ω::Real, solver::Type{LiouvillianDirectSolver}; n_max::Int = 4) where {T1}
+function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    Lₚ::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    Lₘ::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    ω::Real, solver::Type{LiouvillianDirectSolver}; n_max::Int=4) where {T1}
 
     L_0 = L₀.data
     L_p = Lₚ.data
@@ -545,31 +553,31 @@ function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1}, SuperOper
     L_m_d = Matrix(L_m)
 
     for n_i in n_max:-1:1
-        S, T = - ( L_0 - 1im * n_i * ω * I + L_m_d * S ) \ L_p_d, - ( L_0 + 1im * n_i * ω * I + L_p_d * T ) \ L_m_d
+        S, T = -(L_0 - 1im * n_i * ω * I + L_m_d * S) \ L_p_d, -(L_0 + 1im * n_i * ω * I + L_p_d * T) \ L_m_d
     end
 
     QuantumObject(droptol!(sparse(L_0 + L_m * S + L_p * T), 1e-12), SuperOperatorQuantumObject, L₀.dims)
 end
 
-function steadystate(L::QuantumObject{<:AbstractArray{T}, SuperOperatorQuantumObject}; 
-            solver::Type{SSSolver} = SteadyStateDirectSolver) where {T,SSSolver<:SteadyStateSolver}
+function steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject};
+    solver::Type{SSSolver}=SteadyStateDirectSolver) where {T,SSSolver<:SteadyStateSolver}
 
     _steadystate(L, solver)
 end
 
-function steadystate(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}, c_ops::Vector, 
-            solver::Type{SSSolver} = SteadyStateDirectSolver) where {T,SSSolver<:SteadyStateSolver}
+function steadystate(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, c_ops::Vector,
+    solver::Type{SSSolver}=SteadyStateDirectSolver) where {T,SSSolver<:SteadyStateSolver}
 
     L = liouvillian(H, c_ops)
     steadystate(L, solver=solver)
 end
 
-function _steadystate(L::QuantumObject{<:AbstractArray{T}, SuperOperatorQuantumObject}, 
-            solver::Type{SteadyStateDirectSolver}) where {T}
+function _steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
+    solver::Type{SteadyStateDirectSolver}) where {T}
 
     L_tmp = copy(L.data)
     N = prod(L.dims) # floor(Int, √(size(L_tmp, 1)))
-    weight = sum( abs.(L_tmp) ) / length(L_tmp)
+    weight = sum(abs.(L_tmp)) / length(L_tmp)
     v0 = zeros(ComplexF64, N^2)
     v0[1] = weight
 
@@ -580,14 +588,14 @@ function _steadystate(L::QuantumObject{<:AbstractArray{T}, SuperOperatorQuantumO
     QuantumObject(rho_ss, OperatorQuantumObject, L.dims)
 end
 
-function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T}, OpType1}, 
-            c_ops::Vector, H_p::QuantumObject{<:AbstractArray{T}, OpType2}, 
-            H_m::QuantumObject{<:AbstractArray{T}, OpType3}, 
-            ω::Real; n_max::Int = 4, lf_solver::Type{LSolver} = LiouvillianDirectSolver,
-            ss_solver::Type{SSSolver} = SteadyStateDirectSolver) where {T,OpType1<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
-                                                                        OpType2<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
-                                                                        OpType3<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
-                                                                        LSolver<:LiouvillianSolver, SSSolver<:SteadyStateSolver}
+function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T},OpType1},
+    c_ops::Vector, H_p::QuantumObject{<:AbstractArray{T},OpType2},
+    H_m::QuantumObject{<:AbstractArray{T},OpType3},
+    ω::Real; n_max::Int=4, lf_solver::Type{LSolver}=LiouvillianDirectSolver,
+    ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    LSolver<:LiouvillianSolver,SSSolver<:SteadyStateSolver}
 
     L_0 = liouvillian(H_0, c_ops)
     L_p = liouvillian(H_p)

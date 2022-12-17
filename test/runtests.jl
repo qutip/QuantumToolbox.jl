@@ -8,7 +8,7 @@ end
 
 @testset "QuantumObjects" begin
     a = rand(ComplexF64, 10)
-    @test_logs (:warn,"The norm of the input data is not one.") QuantumObject(a)
+    @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
     a2 = QuantumObject(a, type=BraQuantumObject)
     a3 = QuantumObject(a, type=KetQuantumObject)
     @test isket(a2) == false
@@ -42,10 +42,10 @@ end
 
     @test +a2 == a2
     @test -(-a2) == a2
-    @test a2^3 ≈ a2*a2*a2
-    @test a2+2 == 2+a2
-    @test (a2+2).data == a2.data + 2*I
-    @test a2*2 == 2*a2
+    @test a2^3 ≈ a2 * a2 * a2
+    @test a2 + 2 == 2 + a2
+    @test (a2 + 2).data == a2.data + 2 * I
+    @test a2 * 2 == 2 * a2
 
     @test transpose(transpose(a2)) == a2
     @test transpose(a2).data == transpose(a2.data)
@@ -58,7 +58,7 @@ end
     @test isket(a') == false
     @test isbra(a') == true
     @test size(a) == (N,)
-    @test size(a') == (1,N)
+    @test size(a') == (1, N)
     @test norm(a) ≈ 1
     @test norm(a') ≈ 1
 
@@ -79,7 +79,7 @@ end
     @test issymmetric(Y) == false
     @test issymmetric(Z) == true
 
-    @test Y[1,2] == conj(Y[2,1])
+    @test Y[1, 2] == conj(Y[2, 1])
 
     @test triu(X) == a
     @test tril(X) == a_d
@@ -107,11 +107,11 @@ end
     psi0 = kron(fock(N, 0), fock(2, 0))
     t_l = LinRange(0, 1000, 1000)
     e_ops = [a_d * a]
-    sol = sesolve(H, psi0, t_l, e_ops = e_ops, progress = false)
-    @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
-    sol = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress = false, abstol=1e-7, reltol=1e-5)
-    @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l).^2)) / length(t_l) < 0.1
-    
+    sol = sesolve(H, psi0, t_l, e_ops=e_ops, progress=false)
+    @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
+    sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=Vern7(), progress=false, abstol=1e-7, reltol=1e-5)
+    @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
+
     a = destroy(N)
     a_d = a'
     H = a_d * a
@@ -119,10 +119,10 @@ end
     e_ops = [a_d * a]
     psi0 = basis(N, 3)
     t_l = LinRange(0, 100, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress = false);
-    sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress = false);
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=e_ops, alg=Vern7(), progress=false)
+    sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=e_ops, progress=false)
     @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
-    
+
     sp1 = kron(sigmap(), eye(2))
     sm1 = sp1'
     sx1 = sm1 + sp1
@@ -141,10 +141,10 @@ end
     psi0_2 = normalize(fock(2, 0) + fock(2, 1))
     psi0 = kron(psi0_1, psi0_2)
     t_l = LinRange(0, 20 / γ1, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress = false);
-    sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], progress = false);
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
+    sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
     @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
-    
+
     @test expect(sp1 * sm1, sol_me.states[300]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[300], [1]))
 
 
@@ -154,15 +154,15 @@ end
 
     N0 = 140
     a0 = destroy(N0)
-    H0 = Δ*a0'*a0 + F*(a0 + a0')
+    H0 = Δ * a0' * a0 + F * (a0 + a0')
     c_ops0 = [√κ * a0]
     e_ops0 = [a0' * a0]
     ψ00 = fock(N0, 0)
-    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops = e_ops0, alg = Vern7(), progress = false, saveat = [t_l[end]]);
+    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, alg=Vern7(), progress=false, saveat=[t_l[end]])
 
     function H_dfd(dims::AbstractVector)
         a = destroy(dims[1])
-        Δ*a'*a + F*(a + a')
+        Δ * a' * a + F * (a + a')
     end
     function c_ops_dfd(dims::AbstractVector)
         a = destroy(dims[1])
@@ -173,27 +173,27 @@ end
         [a' * a]
     end
     maxdims = [150]
-    ψ0  = fock(3, 0)
-    sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, e_ops_dfd, maxdims, progress = false, 
-                      saveat = [t_l[end]], abstol = 1e-9, reltol = 1e-7);
+    ψ0 = fock(3, 0)
+    sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, e_ops_dfd, maxdims, progress=false,
+        saveat=[t_l[end]], abstol=1e-9, reltol=1e-7)
 
-    @test sum(abs.(( sol.expect[1,:] .- sol0.expect[1,:] ) ./ (sol0.expect[1,:] .+ 1e-16)) ) < 0.01
+    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
 
     F, Δ, κ, J = 1.5, 0.25, 1, 0.05
     N0 = 25
     N1 = 20
     a0 = kron(destroy(N0), eye(N1))
     a1 = kron(eye(N0), destroy(N1))
-    H0 = Δ*a0'*a0 + F*(a0 + a0') + Δ*a1'*a1 + J * (a0'*a1 + a0*a1')
+    H0 = Δ * a0' * a0 + F * (a0 + a0') + Δ * a1' * a1 + J * (a0' * a1 + a0 * a1')
     c_ops0 = [√κ * a0, √κ * a1]
     e_ops0 = [a0' * a0, a1' * a1]
     ψ00 = kron(fock(N0, 0), fock(N1, 15))
-    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops = e_ops0, alg = Vern7(), progress = false, saveat = [t_l[end]]);
+    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, alg=Vern7(), progress=false, saveat=[t_l[end]])
 
     function H_dfd2(dims::AbstractVector)
         a = kron(destroy(dims[1]), eye(dims[2]))
         b = kron(eye(dims[1]), destroy(dims[2]))
-        Δ*a'*a + F*(a + a') + Δ*b'*b + J * (a'*b + a*b')
+        Δ * a' * a + F * (a + a') + Δ * b' * b + J * (a' * b + a * b')
     end
     function c_ops_dfd2(dims::AbstractVector)
         a = kron(destroy(dims[1]), eye(dims[2]))
@@ -206,11 +206,11 @@ end
         [a' * a, b' * b]
     end
     maxdims = [50, 50]
-    ψ0  = kron(fock(3, 0), fock(20, 15))
-    sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, e_ops_dfd2, maxdims, progress = false, saveat = [t_l[end]]);
+    ψ0 = kron(fock(3, 0), fock(20, 15))
+    sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, e_ops_dfd2, maxdims, progress=false, saveat=[t_l[end]])
 
-    @test sum(abs.(( sol.expect[1,:] .- sol0.expect[1,:] ) ./ (sol0.expect[1,:] .+ 1e-16)) ) + 
-          sum(abs.(( sol.expect[2,:] .- sol0.expect[2,:] ) ./ (sol0.expect[2,:] .+ 1e-16)) ) < 0.01
+    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) +
+          sum(abs.((sol.expect[2, :] .- sol0.expect[2, :]) ./ (sol0.expect[2, :] .+ 1e-16))) < 0.01
 end
 
 @testset "Eigenvalues and Operators" begin
@@ -244,7 +244,7 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress = false);
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=e_ops, progress=false)
     ρ_ss = steadystate(H, c_ops)
     @test abs(sol_me.expect[1, end] - expect(e_ops[1], ρ_ss)) < 1e-3
 
@@ -254,9 +254,9 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, H_t = (t)->sin(t)*H_t, alg=Vern7(), progress = false);
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=e_ops, H_t=(t) -> sin(t) * H_t, alg=Vern7(), progress=false)
     ρ_ss = steadystate_floquet(H, c_ops, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1)
-    @test abs(sum(sol_me.expect[1, end-100:end])/101 - expect(e_ops[1], ρ_ss)) < 1e-2
+    @test abs(sum(sol_me.expect[1, end-100:end]) / 101 - expect(e_ops[1], ρ_ss)) < 1e-2
 end
 
 @testset "Entanglement" begin
