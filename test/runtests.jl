@@ -90,6 +90,23 @@ end
     @test nnz(X) == 0
 
     @test eigvals(a_d * a) ≈ 0:9
+
+    # REPL show
+    a = destroy(N)
+    ψ = fock(N, 3)
+
+    opstring = sprint((t, s) -> show(t, "text/plain", s), a)
+    datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
+    a_dims = a.dims
+    a_size = size(a)
+    a_isherm = ishermitian(a)
+    @test opstring == "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+
+    opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
+    datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
+    ψ_dims = ψ.dims
+    ψ_size = size(ψ)
+    @test opstring == "Quantum Object:   type=Ket   dims=$ψ_dims   size=$ψ_size\n$datastring"
 end
 
 @testset "Time Evolution and partial trace" begin
@@ -281,4 +298,32 @@ end
     wig2 = maximum(wig) * reshape(kron(wig_tmp1, wig_tmp2), 300, 300)
 
     @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 0.1
+end
+
+@testset "Permutation" begin
+    # Block Diagonal Form
+    N = 20
+    Δ = 0
+    G = 5
+    tg = 0
+    θ  = atan(tg)
+    U  = sin(θ)
+    κ2 = cos(θ)
+    κ1  = 0.
+    κϕ  = 1e-3
+    nth = 0.
+
+    a     = destroy(N)
+    ad    = create(N)
+    H     = -Δ*ad*a + G/2*(ad^2 + a^2) + U/2*(ad^2*a^2)
+    c_ops = [√(κ2)*a^2, √(κ1*(nth+1))*a, √(κ1*nth)*ad, √(κϕ)*ad*a]
+    L     = liouvillian(H,c_ops)
+
+    P, L_bd, block_sizes = bdf(L)
+    blocks_list, block_indices = get_bdf_blocks(L_bd, block_sizes)
+    @test size(L_bd) == size(L)
+    @test length(block_sizes) == 4
+    @test length(blocks_list) == 4
+    @test length(block_indices) == 4
+    @test sum(block_sizes .== 100) == 4
 end
