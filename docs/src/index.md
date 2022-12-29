@@ -2,13 +2,9 @@
 CurrentModule = QuPhys
 ```
 
-# QuPhys
+# Introduction
 
-Documentation test for [QuPhys](https://github.com/albertomercurio/QuPhys.jl).
+[QuPhys](https://github.com/albertomercurio/QuPhys.jl) is a Julia package for numerical simulation of quantum systems.
 
 ```@index
-```
-
-```@autodocs
-Modules = [QuPhys]
 ```

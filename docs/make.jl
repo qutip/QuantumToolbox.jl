@@ -1,6 +1,8 @@
 using QuPhys
 using Documenter
 
+ENV["GKSwstype"] = "100" # enable headless mode for GR to suppress warnings when plotting
+
 DocMeta.setdocmeta!(QuPhys, :DocTestSetup, :(using QuPhys); recursive=true)
 
 makedocs(;
@@ -13,9 +15,18 @@ makedocs(;
         canonical="https://albertomercurio.github.io/QuPhys.jl",
         edit_link="main",
         assets=String[],
+        mathengine = MathJax3(Dict(
+            :loader => Dict("load" => ["[tex]/physics"]),
+            :tex => Dict(
+                "inlineMath" => [["\$","\$"], ["\\(","\\)"]],
+                "tags" => "ams",
+                "packages" => ["base", "ams", "autoload", "physics"],
+            ),
+            )),
     ),
     pages=[
-        "Home" => "index.md",
+        "index.md",
+        "api.md",
     ],
 )
 
