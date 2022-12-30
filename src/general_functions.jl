@@ -30,7 +30,48 @@ function gaussian(x::Real, μ::Real, σ::Real)
     return exp(-0.5 * (x - μ)^2 / σ^2)
 end
 
-function ptrace(QO::QuantumObject{<:AbstractArray{T},OpType}, sel) where
+@doc raw"""
+    ptrace(QO::QuantumObject, sel::Vector{Int})
+
+[Partial trace](https://en.wikipedia.org/wiki/Partial_trace) of a quantum state `QO` leaving only the dimensions
+with the indices present in the `sel` vector.
+
+# Examples
+Two qubits in the state ``\ket{\psi} = \ket{e,g}``:
+```jldoctest; setup=(using QuPhys)
+julia> ψ = kron(fock(2,0), fock(2,1))
+Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
+4-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 1.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+
+julia> ptrace(ψ, [2])
+Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+2×2 Matrix{ComplexF64}:
+ 0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  1.0+0.0im
+```
+
+or in an entangled state ``\ket{\psi} = \frac{1}{\sqrt{2}} \left( \ket{e,e} + \ket{g,g} \right)``:
+```jldoctest; setup=(using QuPhys)
+julia> ψ = 1 / √2 * (kron(fock(2,0), fock(2,0)) + kron(fock(2,1), fock(2,1)))
+Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
+4-element Vector{ComplexF64}:
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 0.7071067811865475 + 0.0im
+
+julia> ptrace(ψ, [1])
+Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+2×2 Matrix{ComplexF64}:
+ 0.5+0.0im  0.0+0.0im
+ 0.0+0.0im  0.5+0.0im
+```
+"""
+function ptrace(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::Vector{Int}) where
 {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
 
     rd = QO.dims
@@ -67,7 +108,51 @@ function ptrace(QO::QuantumObject{<:AbstractArray{T},OpType}, sel) where
     end
 end
 
-function entropy_vn(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, base=0, tol=1e-15) where {T}
+@doc raw"""
+    entropy_vn(ρ::QuantumObject; base::Int=0, tol::Real=1e-15)
+
+Calculates the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neumann_entropy)
+``S = - \Tr \left[ \hat{\rho} \log \left( \hat{\rho} \right) \right]`` where ``\hat{\rho}``
+is the density matrix of the system.
+
+The `base` parameter specifies the base of the logarithm to use, and when using the default value 0,
+the natural logarithm is used. The `tol` parameter
+describes the absolute tolerance for detecting the zero-valued eigenvalues of the density
+matrix ``\hat{\rho}``.
+
+# Examples
+
+Pure state:
+```jldoctest; setup=(using QuPhys)
+julia> ψ = fock(2,0)
+Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 1.0 + 0.0im
+ 0.0 + 0.0im
+
+julia> ρ = ket2dm(ψ)
+Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+2×2 Matrix{ComplexF64}:
+ 1.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im
+
+julia> entropy_vn(ρ, base=2)
+-0.0
+```
+
+Mixed state:
+```jldoctest; setup=(using QuPhys)
+julia> ρ = 1 / 2 * ( ket2dm(fock(2,0)) + ket2dm(fock(2,1)) )
+Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+2×2 Matrix{ComplexF64}:
+ 0.5+0.0im  0.0+0.0im
+ 0.0+0.0im  0.5+0.0im
+
+julia> entropy_vn(ρ, base=2)
+1.0
+```
+"""
+function entropy_vn(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}; base::Int=0, tol::Real=1e-15) where {T}
     vals = eigvals(ρ)
     indexes = abs.(vals) .> tol
     if 1 ∈ indexes
@@ -83,15 +168,42 @@ function entropy_vn(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     end
 end
 
-function entanglement(psi::QuantumObject{<:AbstractArray{T},OpType}, sel) where
+"""
+    entanglement(QO::QuantumObject, sel::Vector)
+
+Calculates the entanglement by doing the partial trace of `QO`, selecting only the dimensions
+with the indices contained in the `sel` vector, and then using the Von Neumann entropy [`entropy_vn`](@ref). 
+"""
+function entanglement(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::Vector{Int}) where
 {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
 
-    ψ = normalize(psi)
+    ψ = normalize(QO)
     ρ_tr = ptrace(ψ, sel)
     entropy = entropy_vn(ρ_tr)
     return (entropy > 0) * entropy
 end
 
+@doc raw"""
+    expect(op::QuantumObject, ψ::QuantumObject)
+
+Expectation value of the operator `op` with the state `ψ`. The latter
+can be a [`KetQuantumObject`](@ref), [`BraQuantumObject`](@ref) or a [`OperatorQuantumObject`](@ref).
+If `ψ` is a density matrix, the function calculates ``\Tr \left[ \hat{op} \hat{\psi} \right]``, while if `ψ`
+is a state, the function calculates ``\mel{\psi}{\hat{op}}{\psi}``.
+
+The function returns a real number if the operator is hermitian, and returns a complex number otherwise.
+
+# Examples
+
+```jldoctest; setup=(using QuPhys)
+julia> ψ = 1 / √2 * (fock(10,2) + fock(10,4));
+
+julia> a = destroy(10);
+
+julia> expect(a' * a, ψ) ≈ 3
+true
+```
+"""
 function expect(op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T}
     ψd = ψ.data
     opd = op.data
@@ -109,8 +221,16 @@ function expect(op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ρ:
     return tr(op * ρ)
 end
 
+@doc raw"""
+    wigner(state::QuantumObject, xvec::AbstractVector, yvec::AbstractVector; g::Real=√2)
+
+Generates the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution)
+of `state` at points `xvec + 1im * yvec`. The `g` parameter is a scaling factor related to the value of ``\hbar`` in the
+commutation relation ``[x, y] = i \hbar`` via ``\hbar=2/g^2`` giving the default value ``\hbar=1``.
+"""
 function wigner(state::QuantumObject{<:AbstractArray{T1},OpType}, xvec::AbstractVector{T2},
     yvec::AbstractVector{T2}; g::Real=√2) where {T1,T2,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+
     if isket(state)
         ρ = (state * state').data
     elseif isbra(state)

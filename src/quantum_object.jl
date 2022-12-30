@@ -4,15 +4,43 @@ import LinearAlgebra
 
 abstract type QuantumObjectType end
 
+@doc raw"""
+    BraQuantumObject <: QuantumObjectType
+
+Abstract type representing a bra state ``\bra{\psi}``.
+"""
 abstract type BraQuantumObject <: QuantumObjectType end
+
+@doc raw"""
+    KetQuantumObject <: QuantumObjectType
+
+Abstract type representing a ket state ``\ket{\psi}``.
+"""
 abstract type KetQuantumObject <: QuantumObjectType end
+
+@doc raw"""
+    OperatorQuantumObject <: QuantumObjectType
+
+Abstract type representing an operator ``\hat{O}``.
+"""
 abstract type OperatorQuantumObject <: QuantumObjectType end
+
+@doc raw"""
+    SuperOperatorQuantumObject <: QuantumObjectType
+
+Abstract type representing a super-operator ``\hat{\mathcal{O}}``.
+"""
 abstract type SuperOperatorQuantumObject <: QuantumObjectType end
 
+@doc raw"""
+    QuantumObject
+
+Julia struct representing any quantum operator.
+"""
 mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
     data::MT
     type::Type{ObjType}
-    dims::Vector
+    dims::Vector{Int}
 end
 
 function QuantumObject(A::AbstractVector{T}; type::Type{ObjType}=KetQuantumObject, dims=nothing) where
@@ -42,7 +70,12 @@ function QuantumObject(A::AbstractMatrix{T}; type::Type{ObjType}=OperatorQuantum
     QuantumObject(A, type, dims)
 end
 
-ket2dm(A::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = A * A'
+@doc raw"""
+    ket2dm(ψ::QuantumObject)
+
+Transform the ket state ``\ket{\psi}`` into a pure density matrix ``\hat{\rho} = \dyad{\psi}``.
+"""
+ket2dm(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * ψ'
 
 isbra(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: BraQuantumObject
 isket(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: KetQuantumObject
@@ -164,9 +197,6 @@ function LinearAlgebra.kron(A::QuantumObject{<:AbstractArray{T1},OpType}, B::Qua
     QuantumObject(kron(A.data, B.data), OpType, vcat(A.dims, B.dims))
 end
 
-LinearAlgebra.exp(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    QuantumObject(exp(A.data), OpType, A.dims)
-
 LinearAlgebra.triu!(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (triu!(A.data, k); A)
 LinearAlgebra.tril!(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
@@ -175,6 +205,9 @@ LinearAlgebra.triu(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(triu(A.data, k), OpType, A.dims)
 LinearAlgebra.tril(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(tril(A.data, k), OpType, A.dims)
+
+LinearAlgebra.exp(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
+    QuantumObject(exp(A.data), OpType, A.dims)
 
 function LinearAlgebra.exp(A::SparseMatrixCSC{T,M}; threshold=1e-14, nonzero_tol=1e-20) where {T,M}
     rows = checksquare(A) # Throws exception if not square
@@ -205,7 +238,54 @@ function LinearAlgebra.exp(A::SparseMatrixCSC{T,M}; threshold=1e-14, nonzero_tol
     P
 end
 
+"""
+    LinearAlgebra.eigen(A::QuantumObject; kwargs...)
+
+Calculates the eigenvalues and eigenvectors of the [`QuantumObject`](@ref) `A` using
+the Julia [LinearAlgebra](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/) package.
+
+```jldoctest; setup=(using QuPhys)
+julia> a = destroy(5);
+
+julia> H = a + a'
+Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
+5×5 SparseMatrixCSC{ComplexF64, Int64} with 8 stored entries:
+     ⋅          1.0+0.0im          ⋅              ⋅          ⋅
+ 1.0+0.0im          ⋅      1.41421+0.0im          ⋅          ⋅
+     ⋅      1.41421+0.0im          ⋅      1.73205+0.0im      ⋅
+     ⋅              ⋅      1.73205+0.0im          ⋅      2.0+0.0im
+     ⋅              ⋅              ⋅          2.0+0.0im      ⋅
+
+julia> E, U = eigen(H)
+Eigen{ComplexF64, Float64, Matrix{ComplexF64}, Vector{Float64}}
+values:
+5-element Vector{Float64}:
+ -2.8569700138728
+ -1.3556261799742608
+  1.3322676295501878e-15
+  1.3556261799742677
+  2.8569700138728056
+vectors:
+5×5 Matrix{ComplexF64}:
+  0.106101+0.0im  -0.471249-0.0im  …   0.471249-0.0im  0.106101-0.0im
+ -0.303127-0.0im   0.638838+0.0im      0.638838+0.0im  0.303127-0.0im
+  0.537348+0.0im  -0.279149-0.0im      0.279149-0.0im  0.537348-0.0im
+ -0.638838-0.0im  -0.303127-0.0im     -0.303127-0.0im  0.638838+0.0im
+  0.447214+0.0im   0.447214+0.0im     -0.447214-0.0im  0.447214-0.0im
+
+julia> ψ_1 = QuantumObject(U[:,1], dims=H.dims);
+
+julia> expect(H, ψ_1) ≈ E[1]
+true
+```
+"""
 LinearAlgebra.eigen(A::QuantumObject{<:AbstractArray{T},OpType}; kwargs...) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigen(Array(A.data); kwargs...)
+
+"""
+    LinearAlgebra.eigvals(A::QuantumObject; kwargs...)
+
+Same as [`eigen(A::QuantumObject; kwargs...)`](@ref) but for only the eigenvalues.
+"""
 LinearAlgebra.eigvals(A::QuantumObject{<:AbstractArray{T},OpType}; kwargs...) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigvals(Array(A.data); kwargs...)
