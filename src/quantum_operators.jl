@@ -187,7 +187,7 @@ end
 
 Generates the projection operator ``\hat{O} = \dyad{i}{j}`` with Hilbert space dimension `N`.
 """
-projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i],[j],[1+0im], N, N))
+projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i+1],[j+1],[1.0+0.0im], N, N))
 
 @doc raw"""
     sinm(O::QuantumObject)
