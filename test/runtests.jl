@@ -54,7 +54,7 @@ end
 
     N = 10
     a = fock(N, 3)
-    @test ket2dm(a) ≈ projection(N, 3, 3)
+    @test sparse(ket2dm(a)) ≈ projection(N, 3, 3)
     @test isket(a') == false
     @test isbra(a') == true
     @test size(a) == (N,)
