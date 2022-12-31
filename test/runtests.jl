@@ -62,6 +62,10 @@ end
     @test norm(a) ≈ 1
     @test norm(a') ≈ 1
 
+    ψ = QuantumObject(normalize(rand(ComplexF64, N)))
+    @test dot(ψ, ψ) ≈ norm(ψ)
+    @test dot(ψ, ψ) ≈ ψ' * ψ
+
     a = QuantumObject(rand(ComplexF64, N))
     @test (norm(a) ≈ 1) == false
     @test (norm(normalize(a)) ≈ 1) == true
@@ -89,7 +93,21 @@ end
     tril!(X)
     @test nnz(X) == 0
 
+    # Eigenvalues
     @test eigvals(a_d * a) ≈ 0:9
+
+    # Random density matrix
+    ρ = rand_dm(10)
+    @test tr(ρ) ≈ 1
+    @test isposdef(ρ) == true
+
+    # Expectation value
+    a = destroy(10)
+    ψ = normalize(fock(10, 3) + 1im * fock(10, 4))
+    @test expect(a, ψ) ≈ expect(a, ψ')
+    ψ = fock(10, 3)
+    @test norm(ψ' * a) ≈ 2
+    @test expect(a' * a, ψ' * a) ≈ 16
 
     # REPL show
     a = destroy(N)
@@ -102,11 +120,26 @@ end
     a_isherm = ishermitian(a)
     @test opstring == "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
+    a = spre(a)
+    opstring = sprint((t, s) -> show(t, "text/plain", s), a)
+    datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
+    a_dims = a.dims
+    a_size = size(a)
+    a_isherm = ishermitian(a)
+    @test opstring == "Quantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
+
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
     ψ_dims = ψ.dims
     ψ_size = size(ψ)
     @test opstring == "Quantum Object:   type=Ket   dims=$ψ_dims   size=$ψ_size\n$datastring"
+
+    ψ = ψ'
+    opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
+    datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
+    ψ_dims = ψ.dims
+    ψ_size = size(ψ)
+    @test opstring == "Quantum Object:   type=Bra   dims=$ψ_dims   size=$ψ_size\n$datastring"
 end
 
 @testset "Time Evolution and partial trace" begin

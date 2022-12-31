@@ -59,6 +59,164 @@ function DiscreteLindbladJumpCallback()
 end
 
 """
+    function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
+                ψ0::QuantumObject{<:AbstractArray{T}, KetQuantumObject},
+                t_l::AbstractVector;  
+                e_ops::AbstractVector = [], 
+                alg = LinearExponential(), 
+                H_t = nothing, 
+                params::AbstractVector = [],
+                progress::Bool = true,
+                callbacks = [],
+                kwargs...)
+
+Time evolution of a closed quantum system using Schrödinger equation.
+"""
+function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
+    t_l::AbstractVector;
+    e_ops::AbstractVector=[],
+    alg=LinearExponential(krylov=:adaptive, m=10),
+    H_t=nothing,
+    params::AbstractVector=[],
+    progress::Bool=true,
+    callbacks=[],
+    kwargs...) where {T}
+
+    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    Hdims = H.dims
+
+    tspan = (t_l[1], t_l[end])
+
+    H0 = -1im * H.data
+    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
+    isa(H0, SparseMatrixCSC) && (H0 = transpose(sparse(transpose(H0))))
+    ψ0 = ψ0.data
+
+    progr = Progress(length(t_l), showspeed=true, enabled=progress)
+
+    is_time_dependent = !(H_t === nothing)
+
+    saved_values = SavedValues(Float64, Vector{Float64})
+    function save_func(u, t, integrator)
+        next!(progr)
+        map(op -> expect(op, QuantumObject(normalize!(u), dims=Hdims)), e_ops)
+    end
+    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
+    cb2 = AutoAbstol(false; init_curmax=0.0)
+    cb = CallbackSet(cb1, cb2, callbacks...)
+
+    if typeof(alg) <: LinearExponential
+        is_time_dependent && error("The Hamiltonian must to be time independent when using LinearExponential algorithm.")
+        A = DiffEqArrayOperator(H0)
+        prob = ODEProblem(A, ψ0, tspan, params; kwargs...)
+        sol = solve(prob, alg, dt=(t_l[2] - t_l[1]), callback=cb)
+    else
+        if !is_time_dependent
+            dudt! = (du, u, p, t) -> mul!(du, H0, u)
+        else
+            dudt! = (du, u, p, t) -> mul!(du, H0 - 1im * H_t(t).data, u)
+        end
+        prob = ODEProblem(dudt!, ψ0, tspan, params; kwargs...)
+        sol = solve(prob, alg, callback=cb)
+    end
+
+    ψt_len = length(sol.u[1])
+    ψt_len == prod(Hdims) ? ψt = [QuantumObject(normalize!(ϕ), dims=Hdims) for ϕ in sol.u] : ψt = []
+
+    return TimeEvolutionSol(sol.t, ψt, hcat(saved_values.saveval...))
+end
+
+"""
+    function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType}, 
+            ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
+            t_l::AbstractVector, c_ops::AbstractVector; 
+            e_ops::AbstractVector = [], 
+            alg = LinearExponential(krylov=:simple), 
+            H_t = nothing, 
+            params::AbstractVector = [],
+            progress::Bool = true,
+            callbacks = [],
+            kwargs...)
+
+Time evolution of an open quantum system using master equation.
+"""
+function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
+    ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
+    t_l::AbstractVector, c_ops::AbstractVector;
+    e_ops::AbstractVector=[],
+    alg=LinearExponential(krylov=:adaptive, m=15),
+    H_t=nothing,
+    params::AbstractVector=[],
+    progress::Bool=true,
+    callbacks=[],
+    kwargs...) where {T,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    StateOpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+
+    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    Hdims = H.dims
+    Hsize = prod(Hdims)
+
+    tspan = (t_l[1], t_l[end])
+
+    progr = Progress(length(t_l), showspeed=true, enabled=progress)
+
+    ψ0_data = ψ0.data
+    if isket(ψ0)
+        ρ0 = reshape(ψ0_data * ψ0_data', length(ψ0)^2)
+    elseif isbra(ψ0)
+        ρ0 = reshape(ψ0_data' * ψ0_data, length(ψ0)^2)
+    else
+        ρ0 = reshape(ψ0_data, length(ψ0))
+    end
+
+    L = liouvillian(H, c_ops).data
+    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
+    isa(L, SparseMatrixCSC) && (L = transpose(sparse(transpose(L))))
+
+    p = [Dict("L" => L), params...]
+
+    is_time_dependent = !(H_t === nothing)
+
+    saved_values = SavedValues(Float64, Vector{ComplexF64})
+    function save_func(u, t, integrator)
+        next!(progr)
+        map(op -> expect(op, QuantumObject(reshape(u, Hsize, Hsize), OperatorQuantumObject, Hdims)), e_ops)
+    end
+    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
+    cb2 = AutoAbstol(false; init_curmax=0.0)
+    cb = CallbackSet(cb1, cb2, callbacks...)
+
+    if typeof(alg) <: LinearExponential
+        is_time_dependent && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
+        A = DiffEqArrayOperator(L)
+        prob = ODEProblem(A, ρ0, tspan, p; kwargs...)
+        sol = solve(prob, alg, dt=(t_l[2] - t_l[1]), callback=cb)
+    else
+        if !is_time_dependent
+            dudt! = (du, u, p, t) -> mul!(du, p[1]["L"], u)
+        else
+            if H_t(0.0).type <: OperatorQuantumObject
+                @warn string("To speed up the calculation, it is always better to define ",
+                    "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog = 1
+                dudt! = (du, u, p, t) -> mul!(du, p[1]["L"] + liouvillian(H_t(t)).data, u)
+            else
+                dudt! = (du, u, p, t) -> mul!(du, p[1]["L"] + H_t(t).data, u)
+            end
+        end
+        prob = ODEProblem(dudt!, ρ0, tspan, p; kwargs...)
+        sol = solve(prob, alg, callback=cb)
+    end
+
+    ρt_len = isqrt(length(sol.u[1]))
+    ρt_len == prod(Hdims) ? ρt = [QuantumObject(reshape(ϕ, ρt_len, ρt_len), dims=Hdims) for ϕ in sol.u] : ρt = []
+
+    # length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ρt, [])
+
+    return TimeEvolutionSol(sol.t, ρt, hcat(saved_values.saveval...))
+end
+
+"""
     function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}, 
             ψ0::QuantumObject{<:AbstractArray{T}, KetQuantumObject}, 
             t_l::AbstractVector, c_ops::AbstractVector;
@@ -164,164 +322,6 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     e_ops_expect = sum(sol.u, dims=3) ./ n_traj
 
     return TimeEvolutionSol(t_l, [], e_ops_expect)
-end
-
-"""
-    function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType}, 
-            ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
-            t_l::AbstractVector, c_ops::AbstractVector; 
-            e_ops::AbstractVector = [], 
-            alg = LinearExponential(krylov=:simple), 
-            H_t = nothing, 
-            params::AbstractVector = [],
-            progress::Bool = true,
-            callbacks = [],
-            kwargs...)
-
-Time evolution of an open quantum system using master equation.
-"""
-function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
-    t_l::AbstractVector, c_ops::AbstractVector;
-    e_ops::AbstractVector=[],
-    alg=LinearExponential(krylov=:adaptive, m=15),
-    H_t=nothing,
-    params::AbstractVector=[],
-    progress::Bool=true,
-    callbacks=[],
-    kwargs...) where {T,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
-
-    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    Hdims = H.dims
-    Hsize = prod(Hdims)
-
-    tspan = (t_l[1], t_l[end])
-
-    progr = Progress(length(t_l), showspeed=true, enabled=progress)
-
-    ψ0_data = ψ0.data
-    if isket(ψ0)
-        ρ0 = reshape(ψ0_data * ψ0_data', length(ψ0)^2)
-    elseif isbra(ψ0)
-        ρ0 = reshape(ψ0_data' * ψ0_data, length(ψ0)^2)
-    else
-        ρ0 = reshape(ψ0_data, length(ψ0))
-    end
-
-    L = liouvillian(H, c_ops).data
-    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    isa(L, SparseMatrixCSC) && (L = transpose(sparse(transpose(L))))
-
-    p = [Dict("L" => L), params...]
-
-    is_time_dependent = !(H_t === nothing)
-
-    saved_values = SavedValues(Float64, Vector{ComplexF64})
-    function save_func(u, t, integrator)
-        next!(progr)
-        map(op -> expect(op, QuantumObject(reshape(u, Hsize, Hsize), OperatorQuantumObject, Hdims)), e_ops)
-    end
-    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
-    cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb = CallbackSet(cb1, cb2, callbacks...)
-
-    if typeof(alg) <: LinearExponential
-        is_time_dependent && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
-        A = DiffEqArrayOperator(L)
-        prob = ODEProblem(A, ρ0, tspan, p; kwargs...)
-        sol = solve(prob, alg, dt=(t_l[2] - t_l[1]), callback=cb)
-    else
-        if !is_time_dependent
-            dudt! = (du, u, p, t) -> mul!(du, p[1]["L"], u)
-        else
-            if H_t(0.0).type <: OperatorQuantumObject
-                @warn string("To speed up the calculation, it is always better to define ",
-                    "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog = 1
-                dudt! = (du, u, p, t) -> mul!(du, p[1]["L"] + liouvillian(H_t(t)).data, u)
-            else
-                dudt! = (du, u, p, t) -> mul!(du, p[1]["L"] + H_t(t).data, u)
-            end
-        end
-        prob = ODEProblem(dudt!, ρ0, tspan, p; kwargs...)
-        sol = solve(prob, alg, callback=cb)
-    end
-
-    ρt_len = isqrt(length(sol.u[1]))
-    ρt_len == prod(Hdims) ? ρt = [QuantumObject(reshape(ϕ, ρt_len, ρt_len), dims=Hdims) for ϕ in sol.u] : ρt = []
-
-    # length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ρt, [])
-
-    return TimeEvolutionSol(sol.t, ρt, hcat(saved_values.saveval...))
-end
-
-"""
-    function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
-                ψ0::QuantumObject{<:AbstractArray{T}, KetQuantumObject},
-                t_l::AbstractVector;  
-                e_ops::AbstractVector = [], 
-                alg = LinearExponential(), 
-                H_t = nothing, 
-                params::AbstractVector = [],
-                progress::Bool = true,
-                callbacks = [],
-                kwargs...)
-
-Time evolution of a closed quantum system using Schrödinger equation.
-"""
-function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
-    t_l::AbstractVector;
-    e_ops::AbstractVector=[],
-    alg=LinearExponential(krylov=:adaptive, m=10),
-    H_t=nothing,
-    params::AbstractVector=[],
-    progress::Bool=true,
-    callbacks=[],
-    kwargs...) where {T}
-
-    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    Hdims = H.dims
-
-    tspan = (t_l[1], t_l[end])
-
-    H0 = -1im * H.data
-    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    isa(H0, SparseMatrixCSC) && (H0 = transpose(sparse(transpose(H0))))
-    ψ0 = ψ0.data
-
-    progr = Progress(length(t_l), showspeed=true, enabled=progress)
-
-    is_time_dependent = !(H_t === nothing)
-
-    saved_values = SavedValues(Float64, Vector{Float64})
-    function save_func(u, t, integrator)
-        next!(progr)
-        map(op -> expect(op, QuantumObject(normalize!(u), dims=Hdims)), e_ops)
-    end
-    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
-    cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb = CallbackSet(cb1, cb2, callbacks...)
-
-    if typeof(alg) <: LinearExponential
-        is_time_dependent && error("The Hamiltonian must to be time independent when using LinearExponential algorithm.")
-        A = DiffEqArrayOperator(H0)
-        prob = ODEProblem(A, ψ0, tspan, params; kwargs...)
-        sol = solve(prob, alg, dt=(t_l[2] - t_l[1]), callback=cb)
-    else
-        if !is_time_dependent
-            dudt! = (du, u, p, t) -> mul!(du, H0, u)
-        else
-            dudt! = (du, u, p, t) -> mul!(du, H0 - 1im * H_t(t).data, u)
-        end
-        prob = ODEProblem(dudt!, ψ0, tspan, params; kwargs...)
-        sol = solve(prob, alg, callback=cb)
-    end
-
-    ψt_len = length(sol.u[1])
-    ψt_len == prod(Hdims) ? ψt = [QuantumObject(normalize!(ϕ), dims=Hdims) for ϕ in sol.u] : ψt = []
-
-    return TimeEvolutionSol(sol.t, ψt, hcat(saved_values.saveval...))
 end
 
 

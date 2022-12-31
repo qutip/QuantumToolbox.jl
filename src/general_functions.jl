@@ -22,13 +22,9 @@ end
 Returns the gaussian function ``\exp \left[- \frac{(x - \mu)^2}{2 \sigma^2} \right]``,
 where ``\mu`` and ``\sigma^2`` are the mean and the variance respectively.
 """
-function gaussian(x::AbstractVector{T}, μ::Real, σ::Real) where {T}
-    return @. exp(-0.5 * (x - μ)^2 / σ^2)
-end
+gaussian(x::AbstractVector{T}, μ::Real, σ::Real) where {T} = @. exp(-0.5 * (x - μ)^2 / σ^2)
 
-function gaussian(x::Real, μ::Real, σ::Real)
-    return exp(-0.5 * (x - μ)^2 / σ^2)
-end
+gaussian(x::Real, μ::Real, σ::Real) = exp(-0.5 * (x - μ)^2 / σ^2)
 
 @doc raw"""
     ptrace(QO::QuantumObject, sel::Vector{Int})
@@ -155,17 +151,10 @@ julia> entropy_vn(ρ, base=2)
 function entropy_vn(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}; base::Int=0, tol::Real=1e-15) where {T}
     vals = eigvals(ρ)
     indexes = abs.(vals) .> tol
-    if 1 ∈ indexes
-        nzvals = vals[indexes]
-        if base != 0
-            logvals = log.(base, Complex.(nzvals))
-        else
-            logvals = log.(Complex.(nzvals))
-        end
-        return -real(sum(nzvals .* logvals))
-    else
-        return 0
-    end
+    1 ∉ indexes && return 0 
+    nzvals = vals[indexes]
+    logvals = base != 0 ? log.(base, Complex.(nzvals)) : log.(Complex.(nzvals))
+    return -real(sum(nzvals .* logvals))
 end
 
 """
@@ -184,12 +173,12 @@ function entanglement(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::Vector{
 end
 
 @doc raw"""
-    expect(op::QuantumObject, ψ::QuantumObject)
+    expect(O::QuantumObject, ψ::QuantumObject)
 
-Expectation value of the operator `op` with the state `ψ`. The latter
+Expectation value of the operator `O` with the state `ψ`. The latter
 can be a [`KetQuantumObject`](@ref), [`BraQuantumObject`](@ref) or a [`OperatorQuantumObject`](@ref).
-If `ψ` is a density matrix, the function calculates ``\Tr \left[ \hat{op} \hat{\psi} \right]``, while if `ψ`
-is a state, the function calculates ``\mel{\psi}{\hat{op}}{\psi}``.
+If `ψ` is a density matrix, the function calculates ``\Tr \left[ \hat{O} \hat{\psi} \right]``, while if `ψ`
+is a state, the function calculates ``\mel{\psi}{\hat{O}}{\psi}``.
 
 The function returns a real number if the operator is hermitian, and returns a complex number otherwise.
 
@@ -204,21 +193,18 @@ julia> expect(a' * a, ψ) ≈ 3
 true
 ```
 """
-function expect(op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T}
+function expect(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T}
     ψd = ψ.data
-    opd = op.data
-    ishermitian(op) && return real(dot(ψd, opd * ψd))
-    return dot(ψd, opd * ψd)
+    Od = O.data
+    return ishermitian(O) ? real(dot(ψd, Od * ψd)) : dot(ψd, Od * ψd)
 end
-function expect(op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T}
+function expect(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T}
     ψd = ψ.data'
-    opd = op.data
-    ishermitian(op) && return real(dot(ψd, opd * ψd))
-    return dot(ψd, opd * ψd)
+    Od = O.data
+    return ishermitian(O) ? real(dot(ψd, Od * ψd)) : dot(ψd, Od * ψd)
 end
-function expect(op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T}
-    ishermitian(op) && return real(tr(op * ρ))
-    return tr(op * ρ)
+function expect(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T}
+    return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
 end
 
 @doc raw"""

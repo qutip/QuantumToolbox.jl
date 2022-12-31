@@ -33,9 +33,29 @@ Abstract type representing a super-operator ``\hat{\mathcal{O}}``.
 abstract type SuperOperatorQuantumObject <: QuantumObjectType end
 
 @doc raw"""
-    QuantumObject
+    mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
+        data::MT
+        type::Type{ObjType}
+        dims::Vector{Int}
+    end
 
 Julia struct representing any quantum operator.
+
+# Examples
+
+```jldoctest; setup=(using QuPhys)
+julia> a = destroy(20)
+Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
+⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢
+
+julia> a isa QuantumObject
+true
+```
 """
 mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
     data::MT
@@ -77,12 +97,47 @@ Transform the ket state ``\ket{\psi}`` into a pure density matrix ``\hat{\rho} =
 """
 ket2dm(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * ψ'
 
+"""
+    isbra(A::QuantumObject)
+
+Checks if the [`QuantumObject`](@ref) `A` is a [`BraQuantumObject`](@ref) state.
+"""
 isbra(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: BraQuantumObject
+
+"""
+    isket(A::QuantumObject)
+
+Checks if the [`QuantumObject`](@ref) `A` is a [`KetQuantumObject`](@ref) state.
+"""
 isket(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: KetQuantumObject
+
+"""
+    isoper(A::QuantumObject)
+
+Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorQuantumObject`](@ref) state.
+"""
 isoper(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: OperatorQuantumObject
+
+"""
+    issuper(A::QuantumObject)
+
+Checks if the [`QuantumObject`](@ref) `A` is a [`SuperOperatorQuantumObject`](@ref) state.
+"""
 issuper(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: SuperOperatorQuantumObject
+
+"""
+    size(A::QuantumObject)
+
+Returns the size of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
+"""
 Base.size(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = size(A.data)
 Base.size(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<:QuantumObjectType} = size(A.data, inds...)
+
+"""
+    length(A::QuantumObject)
+
+Returns the length of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
+"""
 Base.length(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = length(A.data)
 
 SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = QuantumObject(sparse(A.data), OpType, A.dims)
@@ -170,6 +225,11 @@ LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T},OpType}, n::T1) where {T,
     QuantumObject(^(A.data, n), OpType, A.dims)
 LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T},OpType}, n::T1) where {T,T1<:Number,OpType<:QuantumObjectType} =
     QuantumObject(/(A.data, n), OpType, A.dims)
+LinearAlgebra.dot(A::QuantumObject{<:AbstractArray{T1},OpType},
+    B::QuantumObject{<:AbstractArray{T2},OpType}) where {T1<:Number,T2<:Number,OpType<:KetQuantumObject} =
+    LinearAlgebra.dot(A.data, B.data)
+
+
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(adjoint(A.data), OpType, A.dims)
 LinearAlgebra.transpose(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
@@ -179,8 +239,55 @@ LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},KetQuantumObject}) whe
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} =
     QuantumObject(adjoint(A.data), KetQuantumObject, A.dims)
 
+"""
+    tr(A::QuantumObject})
+
+Returns the trace of `A`.
+
+# Examples
+
+```jldoctest; setup=(using QuPhys)
+julia> a = destroy(20)
+Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
+⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢
+
+julia> tr(a' * a)
+190.0 + 0.0im
+```
+"""
 LinearAlgebra.tr(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = tr(A.data)
 
+"""
+    norm(A::QuantumObject)
+
+Returns the norm of `A`.
+
+# Examples
+
+```jldoctest; setup=(using QuPhys)
+julia> ψ = fock(10, 2)
+Quantum Object:   type=Ket   dims=[10]   size=(10,)
+10-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 1.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+
+julia> norm(ψ)
+1.0
+```
+"""
 LinearAlgebra.norm(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = norm(A.data)
 LinearAlgebra.normalize(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
     QuantumObject(normalize(A.data), OpType, A.dims)
@@ -191,6 +298,49 @@ LinearAlgebra.ishermitian(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,
 LinearAlgebra.issymmetric(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = issymmetric(A.data)
 LinearAlgebra.isposdef(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = isposdef(A.data)
 
+@doc raw"""
+    kron(A::QuantumObject, B::QuantumObject)
+
+Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B}``.
+
+# Examples
+
+```
+julia> a = destroy(20)
+Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
+⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢
+
+julia> kron(a, a)
+Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=false
+400×400 SparseMatrixCSC{ComplexF64, Int64} with 361 stored entries:
+⠀⠀⠘⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠦
+```
+"""
 function LinearAlgebra.kron(A::QuantumObject{<:AbstractArray{T1},OpType}, B::QuantumObject{<:AbstractArray{T2},OpType}) where
 {T1,T2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
 
