@@ -157,7 +157,7 @@ end
     psi0 = kron(fock(N, 0), fock(2, 0))
     t_l = LinRange(0, 1000, 1000)
     e_ops = [a_d * a]
-    sol = sesolve(H, psi0, t_l, e_ops=e_ops, progress=false)
+    sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=LinearExponential(krylov=:adaptive, m=15), progress=false)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
     sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=Vern7(), progress=false, abstol=1e-7, reltol=1e-5)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
@@ -191,7 +191,7 @@ end
     psi0_2 = normalize(fock(2, 0) + fock(2, 1))
     psi0 = kron(psi0_1, psi0_2)
     t_l = LinRange(0, 20 / γ1, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], alg=LinearExponential(krylov=:adaptive, m=15), progress=false)
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
     @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
 

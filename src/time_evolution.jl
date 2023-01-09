@@ -59,24 +59,24 @@ function DiscreteLindbladJumpCallback()
 end
 
 """
-    function sesolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject},
-                ψ0::QuantumObject{<:AbstractArray{T}, KetQuantumObject},
+    function sesolve(H::QuantumObject,
+                ψ0::QuantumObject,
                 t_l::AbstractVector;  
-                e_ops::AbstractVector = [], 
-                alg = LinearExponential(), 
-                H_t = nothing, 
-                params::AbstractVector = [],
-                progress::Bool = true,
-                callbacks = [],
+                e_ops::AbstractVector=[], 
+                alg=Vern7(),
+                H_t=nothing, 
+                params::AbstractVector=[],
+                progress::Bool=true,
+                callbacks=[],
                 kwargs...)
 
-Time evolution of a closed quantum system using Schrödinger equation.
+Time evolution of a closed quantum system using the Schrödinger equation.
 """
 function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
     t_l::AbstractVector;
     e_ops::AbstractVector=[],
-    alg=LinearExponential(krylov=:adaptive, m=10),
+    alg=Vern7(),
     H_t=nothing,
     params::AbstractVector=[],
     progress::Bool=true,
@@ -89,15 +89,13 @@ function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     tspan = (t_l[1], t_l[end])
 
     H0 = -1im * H.data
-    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    isa(H0, SparseMatrixCSC) && (H0 = transpose(sparse(transpose(H0))))
     ψ0 = ψ0.data
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
 
     is_time_dependent = !(H_t === nothing)
 
-    saved_values = SavedValues(Float64, Vector{Float64})
+    saved_values = SavedValues(Float64, Vector{ComplexF64})
     function save_func(u, t, integrator)
         next!(progr)
         map(op -> expect(op, QuantumObject(normalize!(u), dims=Hdims)), e_ops)
@@ -128,13 +126,13 @@ function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
 end
 
 """
-    function mesolve(H::QuantumObject{<:AbstractArray{T}, HOpType}, 
-            ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
-            t_l::AbstractVector, c_ops::AbstractVector; 
-            e_ops::AbstractVector = [], 
-            alg = LinearExponential(krylov=:simple), 
-            H_t = nothing, 
-            params::AbstractVector = [],
+    function mesolve(H::QuantumObject,
+            ψ0::QuantumObject,
+            t_l::AbstractVector, c_ops::AbstractVector=[]; 
+            e_ops::AbstractVector=[], 
+            alg=Vern7(), 
+            H_t=nothing, 
+            params::AbstractVector=[],
             progress::Bool = true,
             callbacks = [],
             kwargs...)
@@ -143,15 +141,15 @@ Time evolution of an open quantum system using master equation.
 """
 function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
     ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
-    t_l::AbstractVector, c_ops::AbstractVector;
+    t_l::AbstractVector, c_ops::AbstractVector=[];
     e_ops::AbstractVector=[],
-    alg=LinearExponential(krylov=:adaptive, m=15),
+    alg=Vern7(),
     H_t=nothing,
     params::AbstractVector=[],
     progress::Bool=true,
     callbacks=[],
     kwargs...) where {T,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     Hdims = H.dims
@@ -161,18 +159,9 @@ function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
 
-    ψ0_data = ψ0.data
-    if isket(ψ0)
-        ρ0 = reshape(ψ0_data * ψ0_data', length(ψ0)^2)
-    elseif isbra(ψ0)
-        ρ0 = reshape(ψ0_data' * ψ0_data, length(ψ0)^2)
-    else
-        ρ0 = reshape(ψ0_data, length(ψ0))
-    end
+    ρ0 = isket(ψ0) ? reshape(ψ0.data * ψ0.data', length(ψ0)^2) : reshape(ψ0.data, length(ψ0))
 
     L = liouvillian(H, c_ops).data
-    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    isa(L, SparseMatrixCSC) && (L = transpose(sparse(transpose(L))))
 
     p = [Dict("L" => L), params...]
 
@@ -211,24 +200,22 @@ function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
     ρt_len = isqrt(length(sol.u[1]))
     ρt_len == prod(Hdims) ? ρt = [QuantumObject(reshape(ϕ, ρt_len, ρt_len), dims=Hdims) for ϕ in sol.u] : ρt = []
 
-    # length(e_ops) == 0 && return TimeEvolutionSol(sol.t, ρt, [])
-
     return TimeEvolutionSol(sol.t, ρt, hcat(saved_values.saveval...))
 end
 
 """
-    function mcsolve(H::QuantumObject{<:AbstractArray{T}, OperatorQuantumObject}, 
-            ψ0::QuantumObject{<:AbstractArray{T}, KetQuantumObject}, 
+    function mcsolve(H::QuantumObject,
+            ψ0::QuantumObject,
             t_l::AbstractVector, c_ops::AbstractVector;
-            e_ops::AbstractVector = [], 
-            n_traj::Int = 1,
-            batch_size::Int = min(10, n_traj),
-            alg = AutoVern7(KenCarp4(autodiff=false)),
-            ensemble_method = EnsembleThreads(), 
-            H_t = nothing,
-            progress::Bool = true,
-            jump_interp_pts::Int = 0,
-            callbacks = [],
+            e_ops::AbstractVector=[],
+            n_traj::Int=1,
+            batch_size::Int=min(Threads.nthreads(), n_traj),
+            alg=AutoVern7(KenCarp4(autodiff=false)),
+            ensemble_method=EnsembleThreads(),
+            H_t=nothing,
+            progress::Bool=true,
+            jump_interp_pts::Int=0,
+            callbacks=[],
             kwargs...)
 
 Time evolution of an open quantum system using quantum trajectories.
@@ -258,8 +245,6 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
         H_eff += -0.5im * c_op' * c_op
     end
     H_eff = -1im * H_eff.data
-    # Since SparseArrays use CSC matrices, the transpose operation make it faster.
-    isa(H_eff, SparseMatrixCSC) && (H_eff = transpose(sparse(transpose(H_eff))))
     ψ0 = ψ0.data
     c_ops = map(op -> op.data, c_ops)
 
@@ -439,12 +424,12 @@ function _DFDIncreaseReduceAffect!(integrator)
 end
 
 """
-    function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
+    function dfd_mesolve(H::Function, ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function, e_ops::Function, maxdims::AbstractVector;
-        tol_list::AbstractVector = [],
+        tol_list::AbstractVector=[],
         alg = Vern7(),
-        progress::Bool = true,
-        callbacks::AbstractVector = [],
+        progress::Bool=true,
+        callbacks::AbstractVector=[],
         kwargs...)
 
 Time evolution of an open quantum system using master equation, dynamically changing the dimension of the Hilbert subspaces.
@@ -455,7 +440,7 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T},StateOpT
     alg=Vern7(),
     progress::Bool=true,
     callbacks::AbstractVector=[],
-    kwargs...) where {T,StateOpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+    kwargs...) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
 
     dim_list = copy(ψ0.dims)
     length(dim_list) != length(maxdims) && throw(DimensionMismatch("'dim_list' and 'maxdims' do not have the same dimension."))
@@ -465,14 +450,7 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T},StateOpT
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
 
-    ψ0_data = ψ0.data
-    if isket(ψ0)
-        ρ0 = reshape(ψ0_data * ψ0_data', length(ψ0)^2)
-    elseif isbra(ψ0)
-        ρ0 = reshape(ψ0_data' * ψ0_data, length(ψ0)^2)
-    else
-        ρ0 = reshape(ψ0_data, length(ψ0))
-    end
+    ρ0 = isket(ψ0) ? reshape(ψ0.data * ψ0.data', length(ψ0)^2) : reshape(ψ0.data, length(ψ0))
 
     L = liouvillian(H(dim_list), c_ops(dim_list)).data
 
@@ -516,11 +494,7 @@ function liouvillian(H::QuantumObject{<:AbstractArray{T},OpType},
 
     L = isoper(H) ? -1im * (spre(H) - spost(H)) : H
     for c_op in c_ops
-        if isoper(c_op)
-            L += lindblad_dissipator(c_op)
-        elseif issuper(c_op)
-            L += c_op
-        end
+        isoper(c_op) ? L += lindblad_dissipator(c_op) : L += c_op
     end
     L
 end
@@ -556,7 +530,7 @@ function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOpera
         S, T = -(L_0 - 1im * n_i * ω * I + L_m_d * S) \ L_p_d, -(L_0 + 1im * n_i * ω * I + L_p_d * T) \ L_m_d
     end
 
-    QuantumObject(droptol!(sparse(L_0 + L_m * S + L_p * T), 1e-12), SuperOperatorQuantumObject, L₀.dims)
+    QuantumObject(L_0 + L_m * S + L_p * T, SuperOperatorQuantumObject, L₀.dims)
 end
 
 function steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject};

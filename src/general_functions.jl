@@ -193,17 +193,17 @@ julia> expect(a' * a, ψ) ≈ 3
 true
 ```
 """
-function expect(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T}
+function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2}
     ψd = ψ.data
     Od = O.data
     return ishermitian(O) ? real(dot(ψd, Od * ψd)) : dot(ψd, Od * ψd)
 end
-function expect(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T}
+function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T2},BraQuantumObject}) where {T1,T2}
     ψd = ψ.data'
     Od = O.data
     return ishermitian(O) ? real(dot(ψd, Od * ψd)) : dot(ψd, Od * ψd)
 end
-function expect(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T}
+function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2}
     return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
 end
 
