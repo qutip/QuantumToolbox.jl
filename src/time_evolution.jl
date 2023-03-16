@@ -488,6 +488,55 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T},StateOpT
 end
 
 
+function arnoldi_lindblad(H::QuantumObject{<:AbstractArray{T1}, HOpType},
+    T::Real, c_ops::AbstractVector;
+    nev::Integer=1,
+    ρ0 = nothing,
+    alg=Vern7(),
+    H_t = nothing,
+    params::AbstractVector = [],
+    progress::Bool=true,
+    callbacks = [],
+    krylovdim::Integer=30,
+    maxiter::Integer=200,
+    eigstol=1e-4, kwargs...) where {T1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+
+    L = liouvillian(H, c_ops).data
+    if ρ0 === nothing
+        ρ0 = rand_dm(prod(H.dims)).data
+    end
+    ρ0 = reshape(ρ0, length(ρ0))
+
+    p = [Dict("L" => L), params...]
+
+    if H_t === nothing
+        dudt! = (du,u,p,t) -> mul!(du, p[1]["L"], u)
+    else
+        if H_t(0.0).type <: OperatorQuantumObject
+            @warn string("To speed up the calculation, it is always better to define ",
+            "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog=1
+            dudt! = (du,u,p,t) -> mul!(du, p[1]["L"] + liouvillian(H_t(t)).data, u)
+        else
+            dudt! = (du,u,p,t) -> mul!(du, p[1]["L"] + H_t(t).data, u)
+        end
+    end
+
+    prog = ProgressUnknown("Applications:", showspeed = true, enabled=progress)
+    cb1 = AutoAbstol(false, init_curmax=0.0)
+    cb = CallbackSet(cb1, callbacks...)
+    prob = ODEProblem(dudt!, ρ0, (0, T), p; kwargs...)
+    arnoldi_lindblad_solve = ρ -> (next!(prog); solve(remake(prob, u0=ρ), alg, saveat=[T], callback=cb).u[end])
+    Lmap = LinearMap{eltype(ρ0)}(x -> arnoldi_lindblad_solve(x), size(L, 1))
+
+    vals, vecs, info = eigsolve(Lmap, ρ0, nev, krylovdim=krylovdim, maxiter=maxiter, tol=eigstol)
+    finish!(prog)
+    vals = map(x -> dot(x, L * x), vecs) # How to solve it when the dynamics is time-dependent?
+    vecs = map(x -> QuantumObject(reshape(x, prod(H.dims), prod(H.dims)), dims=H.dims), vecs)
+
+    vals, vecs, info
+end
+
+
 ### LIOUVILLIAN AND STEADYSTATE ###
 function liouvillian(H::QuantumObject{<:AbstractArray{T},OpType},
     c_ops::AbstractVector) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
@@ -558,7 +607,7 @@ function _steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumOb
     L_tmp[1, [N * (i - 1) + i for i in 1:N]] .+= weight
 
     rho_ss_vec = L_tmp \ v0
-    rho_ss = droptol!(sparse(reshape(rho_ss_vec, N, N)), 1e-12)
+    rho_ss = reshape(rho_ss_vec, N, N)
     QuantumObject(rho_ss, OperatorQuantumObject, L.dims)
 end
 

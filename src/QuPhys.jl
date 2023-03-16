@@ -26,7 +26,7 @@ export wigner
 export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid
 export ptrace, entropy_vn, entanglement
 export mesolve, mcsolve, sesolve, dfd_mesolve
-export liouvillian, liouvillian_floquet, steadystate, steadystate_floquet
+export liouvillian, liouvillian_floquet, steadystate, steadystate_floquet, arnoldi_lindblad
 export bdf, get_bdf_blocks
 
 end
