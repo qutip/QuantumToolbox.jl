@@ -10,6 +10,34 @@ struct TimeEvolutionSol
     expect::AbstractArray
 end
 
+function _save_func_sesolve(u, t, integrator)
+    internal_params = integrator.p[1]
+    progr = internal_params["progr"]
+    e_ops = internal_params["e_ops"]
+    expvals = internal_params["expvals"]
+    expvals[:, progr.counter+1] .= map(op -> dot(u, op.data, u), e_ops)
+    next!(progr)
+end
+
+function _save_func_mesolve(u, t, integrator)
+    internal_params = integrator.p[1]
+    progr = internal_params["progr"]
+    e_ops = internal_params["e_ops"]
+    expvals = internal_params["expvals"]
+    expvals[:, progr.counter+1] .= map(op -> tr(op.data * reshape(u, isqrt(length(u)), :)), e_ops)
+    next!(progr)
+end
+
+function _save_func_mcsolve(u, t, integrator)
+    internal_params = integrator.p[1]
+    save_it = internal_params["save_it"]
+    e_ops = internal_params["e_ops"]
+    expvals = internal_params["expvals"]
+    ψ = normalize(u)
+    expvals[:, save_it[]+1] .= map(op -> dot(ψ, op.data, ψ), e_ops)
+    save_it[]+=1
+end
+
 function LindbladJumpAffect!(integrator)
     ψ = integrator.u
     internal_params = integrator.p[1]
@@ -93,36 +121,34 @@ function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
 
+    expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
+    p = [Dict("H" => H0, "e_ops" => e_ops, "expvals" => expvals, "progr" => progr), params...]
+
     is_time_dependent = !(H_t === nothing)
 
-    saved_values = SavedValues(Float64, Vector{ComplexF64})
-    function save_func(u, t, integrator)
-        next!(progr)
-        map(op -> expect(op, QuantumObject(normalize!(u), dims=Hdims)), e_ops)
-    end
-    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
+    cb1 = FunctionCallingCallback(_save_func_sesolve, funcat=t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
     cb = CallbackSet(cb1, cb2, callbacks...)
 
     if typeof(alg) <: LinearExponential
         is_time_dependent && error("The Hamiltonian must to be time independent when using LinearExponential algorithm.")
         A = DiffEqArrayOperator(H0)
-        prob = ODEProblem(A, ψ0, tspan, params; kwargs...)
+        prob = ODEProblem(A, ψ0, tspan, p; kwargs...)
         sol = solve(prob, alg, dt=(t_l[2] - t_l[1]), callback=cb)
     else
         if !is_time_dependent
-            dudt! = (du, u, p, t) -> mul!(du, H0, u)
+            dudt! = (du, u, p, t) -> mul!(du, p[1]["H"], u)
         else
-            dudt! = (du, u, p, t) -> mul!(du, H0 - 1im * H_t(t).data, u)
+            dudt! = (du, u, p, t) -> mul!(du, p[1]["H"] - 1im * H_t(t).data, u)
         end
-        prob = ODEProblem(dudt!, ψ0, tspan, params; kwargs...)
+        prob = ODEProblem(dudt!, ψ0, tspan, p; kwargs...)
         sol = solve(prob, alg, callback=cb)
     end
 
     ψt_len = length(sol.u[1])
     ψt_len == prod(Hdims) ? ψt = [QuantumObject(normalize!(ϕ), dims=Hdims) for ϕ in sol.u] : ψt = []
 
-    return TimeEvolutionSol(sol.t, ψt, hcat(saved_values.saveval...))
+    return TimeEvolutionSol(sol.t, ψt, sol.prob.p[1]["expvals"])
 end
 
 """
@@ -163,16 +189,12 @@ function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
 
     L = liouvillian(H, c_ops).data
 
-    p = [Dict("L" => L), params...]
+    expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
+    p = [Dict("L" => L, "e_ops" => e_ops, "expvals" => expvals, "progr" => progr), params...]
 
     is_time_dependent = !(H_t === nothing)
 
-    saved_values = SavedValues(Float64, Vector{ComplexF64})
-    function save_func(u, t, integrator)
-        next!(progr)
-        map(op -> expect(op, QuantumObject(reshape(u, Hsize, Hsize), OperatorQuantumObject, Hdims)), e_ops)
-    end
-    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
+    cb1 = FunctionCallingCallback(_save_func_mesolve, funcat=t_l)
     cb2 = AutoAbstol(false; init_curmax=0.0)
     cb = CallbackSet(cb1, cb2, callbacks...)
 
@@ -200,7 +222,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
     ρt_len = isqrt(length(sol.u[1]))
     ρt_len == prod(Hdims) ? ρt = [QuantumObject(reshape(ϕ, ρt_len, ρt_len), dims=Hdims) for ϕ in sol.u] : ρt = []
 
-    return TimeEvolutionSol(sol.t, ρt, hcat(saved_values.saveval...))
+    return TimeEvolutionSol(sol.t, ρt, sol.prob.p[1]["expvals"])
 end
 
 """
@@ -213,6 +235,7 @@ end
             alg=AutoVern7(KenCarp4(autodiff=false)),
             ensemble_method=EnsembleThreads(),
             H_t=nothing,
+            params::AbstractVector=[],
             progress::Bool=true,
             jump_interp_pts::Int=0,
             callbacks=[],
@@ -229,8 +252,9 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     alg=AutoVern7(KenCarp4(autodiff=false)),
     ensemble_method=EnsembleThreads(),
     H_t=nothing,
+    params::AbstractVector=[],
     progress::Bool=true,
-    jump_interp_pts::Int=0,
+    jump_interp_pts::Int=-1,
     callbacks=[],
     kwargs...) where {T}
 
@@ -255,17 +279,16 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     end
 
     function prob_func(prob, i, repeat)
-        params = copy(prob.p)
-        params[1]["random_n"] = rand()
+        expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
+        params = [Dict("H" => H_eff, "c_ops" => c_ops, "e_ops" => e_ops, "random_n" => rand(), "expvals" => expvals, "save_it" => Ref{Int32}(0)), params...]
         remake(prob, p=params)
     end
     function output_func(sol, i)
         put!(channel, true)
         if e_ops_len == 0
-            # res = hcat(sol.u...)
-            res = [QuantumObject(ϕ, dims=Hdims) for ϕ in sol.u]
+            res = map(ϕ -> QuantumObject(ϕ, dims=Hdims), sol.u)
         else
-            res = hcat(map(i -> map(op -> expect(op, QuantumObject(normalize!(sol.u[i]), dims=Hdims)), e_ops), eachindex(t_l))...)
+            res = sol.prob.p[1]["expvals"]
         end
         (res, false)
     end
@@ -289,16 +312,14 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
         dudt! = (du, u, p, t) -> mul!(du, p[1]["H"], u)
     end
 
-    cb1 = jump_interp_pts == -1 ? DiscreteLindbladJumpCallback() : ContinuousLindbladJumpCallback(jump_interp_pts)
-    cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb = CallbackSet(cb1, cb2, callbacks...)
+    cb1 = FunctionCallingCallback(_save_func_mcsolve, funcat=t_l)
+    cb2 = jump_interp_pts == -1 ? DiscreteLindbladJumpCallback() : ContinuousLindbladJumpCallback(jump_interp_pts)
+    cb3 = AutoAbstol(false; init_curmax=0.0)
+    cb = CallbackSet(cb1, cb2, cb3, callbacks...)
 
-    p = [Dict("H" => H_eff, "c_ops" => c_ops, "random_n" => rand())]
-
-    prob = ODEProblem(dudt!, ψ0, tspan, p, callback=cb; kwargs...)
+    prob = ODEProblem(dudt!, ψ0, tspan, callback=cb; kwargs...)
     ensemble_prob = EnsembleProblem(prob, prob_func=prob_func, output_func=output_func, reduction=reduction)
-    sol = solve(ensemble_prob, alg, ensemble_method, trajectories=n_traj,
-        batch_size=batch_size, saveat=t_l)
+    sol = solve(ensemble_prob, alg, ensemble_method, trajectories=n_traj, batch_size=batch_size)
 
     put!(channel, false)
 
@@ -485,55 +506,6 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T},StateOpT
     ρt = [QuantumObject(reshape(ϕ, isqrt(length(ϕ)), :)) for ϕ in sol.u]
 
     TimeEvolutionSol(sol.t, ρt, hcat(saved_values.saveval...))
-end
-
-
-function arnoldi_lindblad(H::QuantumObject{<:AbstractArray{T1}, HOpType},
-    T::Real, c_ops::AbstractVector;
-    nev::Integer=1,
-    ρ0 = nothing,
-    alg=Vern7(),
-    H_t = nothing,
-    params::AbstractVector = [],
-    progress::Bool=true,
-    callbacks = [],
-    krylovdim::Integer=30,
-    maxiter::Integer=200,
-    eigstol=1e-4, kwargs...) where {T1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-
-    L = liouvillian(H, c_ops).data
-    if ρ0 === nothing
-        ρ0 = rand_dm(prod(H.dims)).data
-    end
-    ρ0 = reshape(ρ0, length(ρ0))
-
-    p = [Dict("L" => L), params...]
-
-    if H_t === nothing
-        dudt! = (du,u,p,t) -> mul!(du, p[1]["L"], u)
-    else
-        if H_t(0.0).type <: OperatorQuantumObject
-            @warn string("To speed up the calculation, it is always better to define ",
-            "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog=1
-            dudt! = (du,u,p,t) -> mul!(du, p[1]["L"] + liouvillian(H_t(t)).data, u)
-        else
-            dudt! = (du,u,p,t) -> mul!(du, p[1]["L"] + H_t(t).data, u)
-        end
-    end
-
-    prog = ProgressUnknown("Applications:", showspeed = true, enabled=progress)
-    cb1 = AutoAbstol(false, init_curmax=0.0)
-    cb = CallbackSet(cb1, callbacks...)
-    prob = ODEProblem(dudt!, ρ0, (0, T), p; kwargs...)
-    arnoldi_lindblad_solve = ρ -> (next!(prog); solve(remake(prob, u0=ρ), alg, saveat=[T], callback=cb).u[end])
-    Lmap = LinearMap{eltype(ρ0)}(x -> arnoldi_lindblad_solve(x), size(L, 1))
-
-    vals, vecs, info = eigsolve(Lmap, ρ0, nev, krylovdim=krylovdim, maxiter=maxiter, tol=eigstol)
-    finish!(prog)
-    vals = map(x -> dot(x, L * x), vecs) # How to solve it when the dynamics is time-dependent?
-    vecs = map(x -> QuantumObject(reshape(x, prod(H.dims), prod(H.dims)), dims=H.dims), vecs)
-
-    vals, vecs, info
 end
 
 
