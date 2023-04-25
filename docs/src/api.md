@@ -37,6 +37,7 @@ entropy_vn
 entanglement
 expect
 wigner
+get_coherence
 ```
 
 ## [Quantum states, operators and super-operators](@id API: Quantum states, operators and super-operators)
@@ -70,4 +71,6 @@ sesolve
 mesolve
 mcsolve
 dfd_mesolve
+dsf_mesolve
+dsf_mcsolve
 ```

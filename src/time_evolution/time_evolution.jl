@@ -70,24 +70,20 @@ function LindbladJumpAffect!(integrator)
     integrator.p[1]["random_n"] = rand()
 end
 
-function ContinuousLindbladJumpCallback(interp_points::Int=0)
-    function LindbladJumpCondition(u, t, integrator)
-        integrator.p[1]["random_n"] - norm(u)^2
-    end
+function ContinuousLindbladJumpCallback(interp_points::Int=0; affect_func::Function=LindbladJumpAffect!)
+    LindbladJumpCondition(u, t, integrator) = integrator.p[1]["random_n"] - norm(u)^2
 
-    ContinuousCallback(LindbladJumpCondition, LindbladJumpAffect!, nothing, interp_points=interp_points, save_positions=(false, false))
+    ContinuousCallback(LindbladJumpCondition, affect_func, nothing, interp_points=interp_points, save_positions=(false, false))
 end
 
-function DiscreteLindbladJumpCallback()
-    function LindbladJumpCondition(u, t, integrator)
-        norm(u)^2 < integrator.p[1]["random_n"]
-    end
+function DiscreteLindbladJumpCallback(;affect_func::Function=LindbladJumpAffect!)
+    LindbladJumpCondition(u, t, integrator) = norm(u)^2 < integrator.p[1]["random_n"]
 
-    DiscreteCallback(LindbladJumpCondition, LindbladJumpAffect!, save_positions=(false, false))
+    DiscreteCallback(LindbladJumpCondition, affect_func, save_positions=(false, false))
 end
 
 """
-    function sesolve(H::QuantumObject,
+    sesolve(H::QuantumObject,
                 ψ0::QuantumObject,
                 t_l::AbstractVector;  
                 e_ops::AbstractVector=[], 
@@ -146,13 +142,13 @@ function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     end
 
     ψt_len = length(sol.u[1])
-    ψt_len == prod(Hdims) ? ψt = [QuantumObject(normalize!(ϕ), dims=Hdims) for ϕ in sol.u] : ψt = []
+    ψt_len == prod(Hdims) ? ψt = [QuantumObject(normalize!(ϕ), dims=Hdims) for ϕ in sol.u] : ψt = sol.u
 
     return TimeEvolutionSol(sol.t, ψt, sol.prob.p[1]["expvals"])
 end
 
 """
-    function mesolve(H::QuantumObject,
+    mesolve(H::QuantumObject,
             ψ0::QuantumObject,
             t_l::AbstractVector, c_ops::AbstractVector=[]; 
             e_ops::AbstractVector=[], 
@@ -179,7 +175,6 @@ function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     Hdims = H.dims
-    Hsize = prod(Hdims)
 
     tspan = (t_l[1], t_l[end])
 
@@ -220,13 +215,13 @@ function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
     end
 
     ρt_len = isqrt(length(sol.u[1]))
-    ρt_len == prod(Hdims) ? ρt = [QuantumObject(reshape(ϕ, ρt_len, ρt_len), dims=Hdims) for ϕ in sol.u] : ρt = []
+    ρt_len == prod(Hdims) ? ρt = [QuantumObject(reshape(ϕ, ρt_len, ρt_len), dims=Hdims) for ϕ in sol.u] : ρt = sol.u
 
     return TimeEvolutionSol(sol.t, ρt, sol.prob.p[1]["expvals"])
 end
 
 """
-    function mcsolve(H::QuantumObject,
+    mcsolve(H::QuantumObject,
             ψ0::QuantumObject,
             t_l::AbstractVector, c_ops::AbstractVector;
             e_ops::AbstractVector=[],
@@ -237,7 +232,7 @@ end
             H_t=nothing,
             params::AbstractVector=[],
             progress::Bool=true,
-            jump_interp_pts::Int=0,
+            jump_interp_pts::Int=10,
             callbacks=[],
             kwargs...)
 
@@ -254,7 +249,7 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     H_t=nothing,
     params::AbstractVector=[],
     progress::Bool=true,
-    jump_interp_pts::Int=-1,
+    jump_interp_pts::Int=10,
     callbacks=[],
     kwargs...) where {T}
 
@@ -264,13 +259,7 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     tspan = (t_l[1], t_l[end])
     e_ops_len = length(e_ops)
 
-    H_eff = H
-    for c_op in c_ops
-        H_eff += -0.5im * c_op' * c_op
-    end
-    H_eff = -1im * H_eff.data
     ψ0 = ψ0.data
-    c_ops = map(op -> op.data, c_ops)
 
     progr = Progress(n_traj, showspeed=true, enabled=progress)
     channel = RemoteChannel(() -> Channel{Bool}(), 1)
@@ -279,9 +268,16 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     end
 
     function prob_func(prob, i, repeat)
+        H_eff = copy(H.data)
+        for c_op in c_ops
+            H_eff += -0.5im * c_op.data' * c_op.data
+        end
+        H_eff = -1im * H_eff
+        c_ops0 = map(op -> op.data, c_ops)
+        
         expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-        params = [Dict("H" => H_eff, "c_ops" => c_ops, "e_ops" => e_ops, "random_n" => rand(), "expvals" => expvals, "save_it" => Ref{Int32}(0)), params...]
-        remake(prob, p=params)
+        p = [Dict("H" => H_eff, "c_ops" => c_ops0, "e_ops" => e_ops, "random_n" => rand(), "expvals" => expvals, "save_it" => Ref{Int32}(0)), params...]
+        remake(prob, p=p)
     end
     function output_func(sol, i)
         put!(channel, true)
@@ -328,184 +324,6 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     e_ops_expect = sum(sol.u, dims=3) ./ n_traj
 
     return TimeEvolutionSol(t_l, [], e_ops_expect)
-end
-
-
-
-
-### DYNAMICAL FOCK DIMENSION ###
-function _reduce_dims(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::AbstractVector, reduce::AbstractVector) where {T,OpType<:OperatorQuantumObject}
-    rd = QO.dims
-    nd = length(rd)
-    reduce_l = zero(rd)
-    reduce_l[sel] .= reduce
-    rd_new = rd .- reduce_l
-
-    if nd == 1
-        ρmat = similar(QO.data, repeat(rd_new, 2)...)
-        copyto!(ρmat, view(QO.data, repeat([1:n for n in rd_new], 2)...))
-    else
-        ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
-        ρmat2 = similar(QO.data, repeat(rd_new, 2)...)
-        copyto!(ρmat2, view(ρmat, repeat([1:n for n in rd_new], 2)...))
-        ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
-    end
-
-    QuantumObject(ρmat, OperatorQuantumObject, rd_new)
-end
-
-function _increase_dims(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::AbstractVector, increase::AbstractVector) where {T,OpType<:OperatorQuantumObject}
-    rd = QO.dims
-    nd = length(rd)
-    incr_l = zero(rd)
-    incr_l[sel] .= increase
-    rd_new = rd .+ incr_l
-
-    if nd == 1
-        ρmat = similar(QO.data, repeat(rd_new, 2)...)
-        selectdim(ρmat, sel[1], rd[1]+1:rd_new[1]) .= 0
-        selectdim(ρmat, sel[1] + nd, rd[1]+1:rd_new[1]) .= 0
-        copyto!(view(ρmat, repeat([1:n for n in rd], 2)...), QO.data)
-    else
-        ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
-        ρmat2 = similar(QO.data, repeat(rd_new, 2)...)
-        for i in eachindex(sel)
-            selectdim(ρmat2, sel[i], rd[i]+1:rd_new[i]) .= 0
-            selectdim(ρmat2, sel[i] + nd, rd[i]+1:rd_new[i]) .= 0
-        end
-        copyto!(view(ρmat2, repeat([1:n for n in rd], 2)...), ρmat)
-        ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
-    end
-
-    QuantumObject(ρmat, OperatorQuantumObject, rd_new)
-end
-
-function _DFDIncreaseReduceCondition(u, t, integrator)
-    internal_params = integrator.p[1]
-    dim_list = internal_params["dim_list"]
-    maxdims = internal_params["maxdims"]
-    tol_list = internal_params["tol_list"]
-    increase_list = internal_params["increase_list"]
-    reduce_list = internal_params["reduce_list"]
-    pillow_list = internal_params["pillow_list"]
-    # Here I use copy(u) otherwise I have an error.
-    ρt = QuantumObject(reshape(copy(u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
-
-    condition = false
-    @inbounds for i in 1:length(dim_list)
-        maxdim_i = maxdims[i]
-        dim_i = dim_list[i]
-        if dim_i < maxdim_i && dim_i > 2 && maxdim_i != 0
-            ρi = ptrace(ρt, [i]).data
-            pillow_i = min(max(round(Int, 0.02 * dim_i), 1), 20)
-            pillow_list[i] = pillow_i
-            @views res = sum(abs.(ρi[diagind(ρi)[end-pillow_i:end]])) * sqrt(dim_i) / pillow_i
-            if res > tol_list[i]
-                push!(increase_list, i)
-                condition = true
-            elseif res < tol_list[i] * 1e-2 && dim_i > 3
-                push!(reduce_list, i)
-                condition = true
-            end
-        end
-    end
-    condition
-end
-
-function _DFDIncreaseReduceAffect!(integrator)
-    internal_params = integrator.p[1]
-    H = internal_params["H"]
-    c_ops = internal_params["c_ops"]
-    dim_list = internal_params["dim_list"]
-    increase_list = internal_params["increase_list"]
-    reduce_list = internal_params["reduce_list"]
-    pillow_list = internal_params["pillow_list"]
-    # Here I use copy(integrator.u) otherwise I have an error.
-    ρt = QuantumObject(reshape(copy(integrator.u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
-
-    @views pillow_increase = pillow_list[increase_list]
-    @views pillow_reduce = pillow_list[reduce_list]
-    if length(increase_list) > 0
-        ρt = _increase_dims(ρt, increase_list, pillow_increase)
-        dim_list[increase_list] .+= pillow_increase
-    end
-    if length(reduce_list) > 0
-        ρt = _reduce_dims(ρt, reduce_list, pillow_reduce)
-        dim_list[reduce_list] .-= pillow_reduce
-    end
-
-    deleteat!(increase_list, 1:length(increase_list))
-    deleteat!(reduce_list, 1:length(reduce_list))
-
-    L = liouvillian(H(dim_list), c_ops(dim_list)).data
-    newsize = size(L, 1)
-    resize!(integrator, newsize)
-    internal_params["L"] = L
-    integrator.u = reshape(ρt.data, newsize)
-end
-
-"""
-    function dfd_mesolve(H::Function, ψ0::QuantumObject,
-        t_l::AbstractVector, c_ops::Function, e_ops::Function, maxdims::AbstractVector;
-        tol_list::AbstractVector=[],
-        alg = Vern7(),
-        progress::Bool=true,
-        callbacks::AbstractVector=[],
-        kwargs...)
-
-Time evolution of an open quantum system using master equation, dynamically changing the dimension of the Hilbert subspaces.
-"""
-function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
-    t_l::AbstractVector, c_ops::Function, e_ops::Function, maxdims::AbstractVector;
-    tol_list::AbstractVector=[],
-    alg=Vern7(),
-    progress::Bool=true,
-    callbacks::AbstractVector=[],
-    kwargs...) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-
-    dim_list = copy(ψ0.dims)
-    length(dim_list) != length(maxdims) && throw(DimensionMismatch("'dim_list' and 'maxdims' do not have the same dimension."))
-    H(dim_list).dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-
-    tspan = (t_l[1], t_l[end])
-
-    progr = Progress(length(t_l), showspeed=true, enabled=progress)
-
-    ρ0 = isket(ψ0) ? reshape(ψ0.data * ψ0.data', length(ψ0)^2) : reshape(ψ0.data, length(ψ0))
-
-    L = liouvillian(H(dim_list), c_ops(dim_list)).data
-
-    length(tol_list) == 0 && (tol_list = [1e-8 for d in dim_list])
-    reduce_list = Int16[]
-    increase_list = Int16[]
-    pillow_list = ones(Int16, length(dim_list))
-
-    saved_values = SavedValues(Float64, Vector{ComplexF64})
-    function save_func(u, t, integrator)
-        internal_params = integrator.p[1]
-        e_ops = internal_params["e_ops"]
-        dim_list = internal_params["dim_list"]
-        next!(progr)
-        # Here I use copy(u) otherwise I have an error.
-        ρt = QuantumObject(reshape(copy(u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
-        map(op -> expect(op, ρt), e_ops(dim_list))
-    end
-    cb1 = SavingCallback(save_func, saved_values, saveat=t_l)
-    cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb_increasereduce = DiscreteCallback(_DFDIncreaseReduceCondition, _DFDIncreaseReduceAffect!, save_positions=(false, false))
-    cb = CallbackSet(cb1, cb2, cb_increasereduce, callbacks...)
-
-    params = [Dict("L" => L, "H" => H, "c_ops" => c_ops, "e_ops" => e_ops,
-        "dim_list" => dim_list, "maxdims" => maxdims, "tol_list" => tol_list,
-        "reduce_list" => reduce_list, "increase_list" => increase_list, "pillow_list" => pillow_list)]
-
-    dudt! = (du, u, p, t) -> mul!(du, p[1]["L"], u)
-    prob = ODEProblem(dudt!, ρ0, tspan, params; kwargs...)
-    sol = solve(prob, alg, callback=cb)
-
-    ρt = [QuantumObject(reshape(ϕ, isqrt(length(ϕ)), :)) for ϕ in sol.u]
-
-    TimeEvolutionSol(sol.t, ρt, hcat(saved_values.saveval...))
 end
 
 

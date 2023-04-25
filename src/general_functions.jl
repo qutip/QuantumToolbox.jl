@@ -208,6 +208,25 @@ function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ρ:
 end
 
 @doc raw"""
+    get_coherence(ψ::QuantumObject)
+
+Get the coherence value ``\alpha`` by measuring the expectation value of the destruction
+operator ``\hat{a}`` on the state ``\ket{\psi}``.
+
+It returns both ``\alpha`` and the state 
+``\ket{\delta_\psi} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger )``. The
+latter corresponds to the quantum fulctuations around the coherent state ``\ket{\alpha}``.
+"""
+function get_coherence(ψ::QuantumObject{<:AbstractArray{T}, StateOpType}) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    a = destroy(size(ψ,1))
+    α = expect(a, ψ)
+    D = exp(α*a' - conj(α)*a)
+
+    α, D' * ψ
+end
+
+
+@doc raw"""
     wigner(state::QuantumObject, xvec::AbstractVector, yvec::AbstractVector; g::Real=√2)
 
 Generates the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution)

@@ -11,7 +11,8 @@ using Distributed
 include("quantum_object.jl")
 include("quantum_operators.jl")
 include("general_functions.jl")
-include("time_evolution.jl")
+include("time_evolution/time_evolution.jl")
+include("time_evolution/time_evolution_dynamical.jl")
 include("permutation.jl")
 
 export QuantumObject, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
@@ -25,7 +26,9 @@ export expect
 export wigner
 export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid
 export ptrace, entropy_vn, entanglement
-export mesolve, mcsolve, sesolve, dfd_mesolve
+export get_coherence
+export mesolve, mcsolve, sesolve
+export dfd_mesolve, dsf_mesolve, dsf_mcsolve
 export liouvillian, liouvillian_floquet, steadystate, steadystate_floquet, arnoldi_lindblad
 export bdf, get_bdf_blocks
 
