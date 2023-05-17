@@ -57,7 +57,7 @@ acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
 
 # Examples
 
-```jldoctest; setup=(using QuPhys)
+```
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
@@ -81,7 +81,7 @@ acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ket{n+1}``.
 
 # Examples
 
-```jldoctest; setup=(using QuPhys)
+```
 julia> a_d = create(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:

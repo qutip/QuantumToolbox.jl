@@ -104,7 +104,7 @@ function spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     ω_l = -ω_max:dω:ω_max
 
     T = 2π/(ω_l[2]-ω_l[1])
-    τ_l = range(0,T,length(ω_l))
+    τ_l = range(0,T, length=length(ω_l))
 
     ρss = steadystate(H, c_ops)
     corr = correlation_2op_1t(H, ρss, τ_l, A, B, c_ops; alg=alg, H_t=H_t,

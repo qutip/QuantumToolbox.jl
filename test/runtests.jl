@@ -284,7 +284,7 @@ end
     
     α0 = 1.5
     ρ0   = coherent(N0, α0)
-    sol0 = mesolve(H0, ρ0, tlist, c_ops0, e_ops=[a0'*a0, a0], abstol=1e-8, reltol=1e-5, saveat = [tlist[end]])
+    sol0 = mesolve(H0, ρ0, tlist, c_ops0, e_ops=[a0'*a0, a0], progress=false, abstol=1e-8, reltol=1e-5, saveat = [tlist[end]])
 
     N = 5
     a        = destroy(N)
@@ -304,8 +304,8 @@ end
     ψ0  = fock(N, 0)
     α0_l = [α0]
     
-    sol_dsf_me = dsf_mesolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, abstol=1e-8, reltol=1e-5, saveat=[tlist[end]])
-    sol_dsf_mc = dsf_mcsolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, n_traj=500, saveat=[tlist[end]], abstol=1e-8, reltol=1e-6)
+    sol_dsf_me = dsf_mesolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, abstol=1e-8, reltol=1e-5, saveat=[tlist[end]])
+    sol_dsf_mc = dsf_mcsolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, n_traj=500, saveat=[tlist[end]], abstol=1e-8, reltol=1e-6)
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.05
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.05
 
@@ -324,7 +324,7 @@ end
     c_ops0 = [√κ*a10, √κ*a20]
 
     ρ0   = kron(coherent(N0, α0), coherent(N0, α0))
-    sol0 = mesolve(H0, ρ0, tlist, c_ops0, e_ops=[a10'*a10, a20'*a20], abstol=1e-7, reltol=1e-5, saveat=[tlist[end]])
+    sol0 = mesolve(H0, ρ0, tlist, c_ops0, e_ops=[a10'*a10, a20'*a20], progress=false, abstol=1e-7, reltol=1e-5, saveat=[tlist[end]])
 
     N = 5
     a1 = kron(destroy(N), eye(N))
@@ -345,8 +345,8 @@ end
     ψ0  = kron(fock(N, 0), fock(N, 0))
     α0_l = [α0, α0]
 
-    sol_dsf_me = dsf_mesolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, saveat = [tlist[end]], abstol=1e-9, reltol=1e-7)
-    sol_dsf_mc = dsf_mcsolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, n_traj=500, saveat=[tlist[end]], abstol=1e-9, reltol=1e-7)
+    sol_dsf_me = dsf_mesolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, saveat = [tlist[end]], abstol=1e-9, reltol=1e-7)
+    sol_dsf_mc = dsf_mcsolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, n_traj=500, saveat=[tlist[end]], abstol=1e-9, reltol=1e-7)
 
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.05
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.05
@@ -453,7 +453,6 @@ end
 end
 
 @testset "Correlations and Spectrum" begin
-    using QuPhys
     a = destroy(10)
     H = a' * a
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']

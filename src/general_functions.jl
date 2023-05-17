@@ -34,7 +34,7 @@ with the indices present in the `sel` vector.
 
 # Examples
 Two qubits in the state ``\ket{\psi} = \ket{e,g}``:
-```jldoctest; setup=(using QuPhys)
+```
 julia> ψ = kron(fock(2,0), fock(2,1))
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
@@ -51,7 +51,7 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 ```
 
 or in an entangled state ``\ket{\psi} = \frac{1}{\sqrt{2}} \left( \ket{e,e} + \ket{g,g} \right)``:
-```jldoctest; setup=(using QuPhys)
+```
 julia> ψ = 1 / √2 * (kron(fock(2,0), fock(2,0)) + kron(fock(2,1), fock(2,1)))
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
@@ -119,7 +119,7 @@ matrix ``\hat{\rho}``.
 # Examples
 
 Pure state:
-```jldoctest; setup=(using QuPhys)
+```
 julia> ψ = fock(2,0)
 Quantum Object:   type=Ket   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
@@ -137,7 +137,7 @@ julia> entropy_vn(ρ, base=2)
 ```
 
 Mixed state:
-```jldoctest; setup=(using QuPhys)
+```
 julia> ρ = 1 / 2 * ( ket2dm(fock(2,0)) + ket2dm(fock(2,1)) )
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
@@ -184,7 +184,7 @@ The function returns a real number if the operator is hermitian, and returns a c
 
 # Examples
 
-```jldoctest; setup=(using QuPhys)
+```
 julia> ψ = 1 / √2 * (fock(10,2) + fock(10,4));
 
 julia> a = destroy(10);

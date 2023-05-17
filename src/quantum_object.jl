@@ -43,7 +43,7 @@ Julia struct representing any quantum operator.
 
 # Examples
 
-```jldoctest; setup=(using QuPhys)
+```
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
@@ -257,7 +257,7 @@ Returns the trace of `A`.
 
 # Examples
 
-```jldoctest; setup=(using QuPhys)
+```
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
@@ -280,7 +280,7 @@ Returns the norm of `A`.
 
 # Examples
 
-```jldoctest; setup=(using QuPhys)
+```
 julia> ψ = fock(10, 2)
 Quantum Object:   type=Ket   dims=[10]   size=(10,)
 10-element Vector{ComplexF64}:
@@ -405,7 +405,7 @@ end
 Calculates the eigenvalues and eigenvectors of the [`QuantumObject`](@ref) `A` using
 the Julia [LinearAlgebra](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/) package.
 
-```jldoctest; setup=(using QuPhys)
+```
 julia> a = destroy(5);
 
 julia> H = a + a'
