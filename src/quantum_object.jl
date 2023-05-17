@@ -90,6 +90,12 @@ function QuantumObject(A::AbstractMatrix{T}; type::Type{ObjType}=OperatorQuantum
     QuantumObject(A, type, dims)
 end
 
+function QuantumObject(A::QuantumObject{<:AbstractArray}; type::Type{ObjType}=A.type, dims=A.dims) where
+    {ObjType<:QuantumObjectType}
+
+    QuantumObject(A.data, type, dims)
+end
+
 @doc raw"""
     ket2dm(ψ::QuantumObject)
 
@@ -145,6 +151,8 @@ SparseArrays.nnz(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<
 SparseArrays.nonzeros(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<:QuantumObjectType} = nonzeros(A.data)
 SparseArrays.rowvals(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<:QuantumObjectType} = rowvals(A.data)
 SparseArrays.droptol!(A::QuantumObject{<:SparseMatrixCSC{T},OpType}, tol::Real) where {T,OpType<:QuantumObjectType} = (droptol!(A.data, tol); return A)
+SparseArrays.dropzeros(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<:QuantumObjectType} = QuantumObject(dropzeros(A.data), OpType, A.dims)
+SparseArrays.dropzeros!(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<:QuantumObjectType} = (dropzeros!(A.data); return A)
 
 Base.isequal(A::QuantumObject{<:AbstractArray{T},OpType}, B::QuantumObject{<:AbstractArray{T},OpType}) where
 {T,OpType<:QuantumObjectType} = isequal(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
@@ -238,6 +246,9 @@ LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},KetQuantumObject}) whe
     QuantumObject(adjoint(A.data), BraQuantumObject, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} =
     QuantumObject(adjoint(A.data), KetQuantumObject, A.dims)
+
+LinearAlgebra.inv(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    QuantumObject(sparse(inv(Matrix(A.data))), OpType, A.dims)
 
 """
     tr(A::QuantumObject})

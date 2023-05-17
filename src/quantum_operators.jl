@@ -133,11 +133,12 @@ Pauli operator ``\hat{\sigma}_z = \comm{\hat{\sigma}_+}{\hat{\sigma}_-}``.
 sigmaz() = sigmap() * sigmam() - sigmam() * sigmap()
 
 @doc raw"""
-    eye(N::Int)
+    eye(N::Int; type=KetQuantumObject, dims=[N])
 
 Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
 """
-eye(N::Int) = QuantumObject(I(N))
+eye(N::Int; type::Type{ObjType}=OperatorQuantumObject, dims::Vector{Int}=[N]) where 
+    {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(I(N), type, dims)
 
 @doc raw"""
     fock(N::Int, pos::Int; dims::Vector{Int}=[N])

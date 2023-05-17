@@ -451,3 +451,16 @@ end
     @test length(block_indices) == 4
     @test sum(block_sizes .== 100) == 4
 end
+
+@testset "Correlations and Spectrum" begin
+    using QuPhys
+    a = destroy(10)
+    H = a' * a
+    c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
+
+    ω_l, spec = spectrum(H, 2, 500, a', a, c_ops, abstol=1e-7, reltol=1e-5)
+
+    test_func = maximum(real.(spec)) * (0.1/2)^2 ./ ((ω_l .- 1).^2 .+ (0.1/2)^2)
+    idxs = test_func .> 0.0001
+    @test sum(abs2.(spec[idxs] .- test_func[idxs])) / sum(abs2.(test_func[idxs])) < 0.01
+end

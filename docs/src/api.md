@@ -74,3 +74,9 @@ dfd_mesolve
 dsf_mesolve
 dsf_mcsolve
 ```
+
+## [Correlations and Spectrum](@id API: Correlations and Spectrum)
+```@docs
+correlation_2op_1t
+spectrum
+```

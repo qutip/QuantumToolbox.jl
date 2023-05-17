@@ -96,8 +96,8 @@ end
 
 Time evolution of a closed quantum system using the Schrödinger equation.
 """
-function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
+function sesolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector;
     e_ops::AbstractVector=[],
     alg=Vern7(),
@@ -105,7 +105,7 @@ function sesolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     params::AbstractVector=[],
     progress::Bool=true,
     callbacks=[],
-    kwargs...) where {T}
+    kwargs...) where {T1,T2}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     Hdims = H.dims
@@ -161,8 +161,8 @@ end
 
 Time evolution of an open quantum system using master equation.
 """
-function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
+function mesolve(H::QuantumObject{<:AbstractArray{T1},HOpType},
+    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     t_l::AbstractVector, c_ops::AbstractVector=[];
     e_ops::AbstractVector=[],
     alg=Vern7(),
@@ -170,7 +170,7 @@ function mesolve(H::QuantumObject{<:AbstractArray{T},HOpType},
     params::AbstractVector=[],
     progress::Bool=true,
     callbacks=[],
-    kwargs...) where {T,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    kwargs...) where {T1,T2,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
@@ -238,8 +238,8 @@ end
 
 Time evolution of an open quantum system using quantum trajectories.
 """
-function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
+function mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector, c_ops::AbstractVector;
     e_ops::AbstractVector=[],
     n_traj::Int=1,
@@ -251,7 +251,7 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
     progress::Bool=true,
     jump_interp_pts::Int=10,
     callbacks=[],
-    kwargs...) where {T}
+    kwargs...) where {T1,T2}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     Hdims = H.dims
@@ -343,9 +343,9 @@ liouvillian(H::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{
     liouvillian(H, [])
 
 function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    Lₚ::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    Lₘ::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    ω::Real; n_max::Int=4, solver::Type{LSolver}=LiouvillianDirectSolver) where {T1,LSolver<:LiouvillianSolver}
+    Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
+    Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
+    ω::Real; n_max::Int=4, solver::Type{LSolver}=LiouvillianDirectSolver) where {T1,T2,T3,LSolver<:LiouvillianSolver}
 
     ((L₀.dims == Lₚ.dims) && (L₀.dims == Lₘ.dims)) || throw(ErrorException("The operators are not of the same Hilbert dimension."))
 
@@ -353,9 +353,9 @@ function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperat
 end
 
 function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    Lₚ::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    Lₘ::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    ω::Real, solver::Type{LiouvillianDirectSolver}; n_max::Int=4) where {T1}
+    Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
+    Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
+    ω::Real, solver::Type{LiouvillianDirectSolver}; n_max::Int=4) where {T1,T2,T3}
 
     L_0 = L₀.data
     L_p = Lₚ.data
@@ -378,8 +378,8 @@ function steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObj
     _steadystate(L, solver)
 end
 
-function steadystate(H::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, c_ops::Vector,
-    solver::Type{SSSolver}=SteadyStateDirectSolver) where {T,SSSolver<:SteadyStateSolver}
+function steadystate(H::QuantumObject{<:AbstractArray{T},OpType}, c_ops::Vector,
+    solver::Type{SSSolver}=SteadyStateDirectSolver) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},SSSolver<:SteadyStateSolver}
 
     L = liouvillian(H, c_ops)
     steadystate(L, solver=solver)
@@ -401,16 +401,32 @@ function _steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumOb
     QuantumObject(rho_ss, OperatorQuantumObject, L.dims)
 end
 
-function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T},OpType1},
-    c_ops::Vector, H_p::QuantumObject{<:AbstractArray{T},OpType2},
-    H_m::QuantumObject{<:AbstractArray{T},OpType3},
+function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
+    c_ops::Vector, H_p::QuantumObject{<:AbstractArray{T2},OpType2},
+    H_m::QuantumObject{<:AbstractArray{T3},OpType3},
     ω::Real; n_max::Int=4, lf_solver::Type{LSolver}=LiouvillianDirectSolver,
-    ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     LSolver<:LiouvillianSolver,SSSolver<:SteadyStateSolver}
 
     L_0 = liouvillian(H_0, c_ops)
+    L_p = liouvillian(H_p)
+    L_m = liouvillian(H_m)
+
+    steadystate(liouvillian_floquet(L_0, L_p, L_m, ω, n_max=n_max, solver=lf_solver), solver=ss_solver)
+end
+
+function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
+    H_p::QuantumObject{<:AbstractArray{T2},OpType2},
+    H_m::QuantumObject{<:AbstractArray{T3},OpType3},
+    ω::Real; n_max::Int=4, lf_solver::Type{LSolver}=LiouvillianDirectSolver,
+    ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    LSolver<:LiouvillianSolver,SSSolver<:SteadyStateSolver}
+
+    L_0 = liouvillian(H_0)
     L_p = liouvillian(H_p)
     L_m = liouvillian(H_m)
 

@@ -7,6 +7,9 @@ using Distributed
 @reexport using SparseArrays
 @reexport using OrdinaryDiffEq
 @reexport using DiffEqCallbacks
+using Graphs
+import Graphs.Parallel
+using FFTW
 
 include("quantum_object.jl")
 include("quantum_operators.jl")
@@ -14,6 +17,7 @@ include("general_functions.jl")
 include("time_evolution/time_evolution.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 include("permutation.jl")
+include("correlations.jl")
 
 export QuantumObject, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
 export isket, isbra, isoper, issuper, ket2dm
@@ -31,5 +35,6 @@ export mesolve, mcsolve, sesolve
 export dfd_mesolve, dsf_mesolve, dsf_mcsolve
 export liouvillian, liouvillian_floquet, steadystate, steadystate_floquet, arnoldi_lindblad
 export bdf, get_bdf_blocks
+export correlation_2op_1t, spectrum
 
 end
