@@ -328,6 +328,13 @@ end
 
 
 ### LIOUVILLIAN AND STEADYSTATE ###
+@doc raw"""
+    liouvillian(H::QuantumObject, c_ops::AbstractVector)
+
+Construct the Liouvillian superoperator for a system Hamiltonian and a set of collapse operators:
+``\mathcal{L} \cdot = -i[\hat{H}, \cdot] + \sum_i \mathcal{D}[\hat{O}_i] \cdot``,
+where ``\mathcal{D}[\hat{O}_i] \cdot = \hat{O}_i \cdot \hat{O}_i^\dagger - \frac{1}{2} \hat{O}_i^\dagger \hat{O}_i \cdot - \frac{1}{2} \cdot \hat{O}_i^\dagger \hat{O}_i``.
+"""
 function liouvillian(H::QuantumObject{<:AbstractArray{T},OpType},
     c_ops::AbstractVector) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
@@ -350,6 +357,52 @@ function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperat
     ((L₀.dims == Lₚ.dims) && (L₀.dims == Lₘ.dims)) || throw(ErrorException("The operators are not of the same Hilbert dimension."))
 
     _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, solver, n_max=n_max)
+end
+
+@doc raw"""
+    liouvillian_generalized(H::QuantumObject, fields::Vector, 
+    κ_list::Vector, ω_list::Vector, T_list::Vector; N_trunc::Int=size(H,1), tol::Float64=0.0)
+
+Constructs the generalized Liouvillian for a system coupled to a bath of harmonic oscillators.
+
+See, e.g., Settineri, Alessio, et al. "Dissipation and thermal noise in hybrid quantum systems in the ultrastrong-coupling regime." Physical Review A 98.5 (2018): 053834.
+"""
+function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuantumObject}, fields::Vector, 
+    κ_list::Vector{<:Number}, ω_list::Vector{<:Number}, T_list::Vector{<:Real}; N_trunc::Int=size(H,1), tol::Real=1e-14)
+
+    (length(fields) == length(κ_list) == length(ω_list) == length(T_list)) || throw(DimensionMismatch("The number of fields, κs, ωs and Ts must be the same."))
+
+    E, U = eigen(H)
+    U = QuantumObject(U, dims=H.dims)
+
+    H_d = droptol!(sparse(U' * H * U), tol)
+    H_d = QuantumObject(H_d[1:N_trunc,1:N_trunc])
+
+    Ω = droptol!(sparse((E' .- E)[1:N_trunc,1:N_trunc]), tol)
+    Ω = triu(Ω, 1)
+
+    L = liouvillian(H_d)
+
+    for i in eachindex(fields)
+        X_op = droptol!(sparse(U' * fields[i] * U), tol)
+        X_op = X_op[1:N_trunc,1:N_trunc]
+
+        # # P₀ = QuantumObject( (Ω ./ ω_list[i]) .* droptol!(sparse(triu(X_op, 1)), tol) )
+        # P₀ = QuantumObject( droptol!(sparse(triu(X_op, 1)), tol) )
+        # P₁ = QuantumObject( n_th.(Ω, T_list[i]) .* P₀.data )
+        # P₂ = QuantumObject( (1 .+ n_th.(Ω, T_list[i])) .* P₀.data )
+
+        # Nikki Master Equation
+        N_th = n_th.(Ω, T_list[i])
+        P₀ = QuantumObject( droptol!(sparse(triu(X_op, 1)), tol) )
+        P₁ = QuantumObject( (Ω ./ ω_list[i]) .* N_th .* P₀.data )
+        P₂ = QuantumObject( (Ω ./ ω_list[i]) .* (1 .+ N_th) .* P₀.data )
+
+        L += κ_list[i] / 2 * ( sprepost(P₁', P₀) + sprepost(P₀', P₁) - spre(P₀ * P₁') - spost(P₁ * P₀') )
+        L += κ_list[i] / 2 * ( sprepost(P₂, P₀') + sprepost(P₀, P₂') - spre(P₀' * P₂) - spost(P₂' * P₀) )
+    end
+
+    return E, U, L
 end
 
 function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
@@ -396,9 +449,10 @@ function _steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumOb
 
     L_tmp[1, [N * (i - 1) + i for i in 1:N]] .+= weight
 
-    rho_ss_vec = L_tmp \ v0
-    rho_ss = reshape(rho_ss_vec, N, N)
-    QuantumObject(rho_ss, OperatorQuantumObject, L.dims)
+    ρss_vec = L_tmp \ v0
+    ρss = reshape(ρss_vec, N, N)
+    ρss = (ρss + ρss') / 2 # Hermitianize
+    QuantumObject(ρss, OperatorQuantumObject, L.dims)
 end
 
 function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},

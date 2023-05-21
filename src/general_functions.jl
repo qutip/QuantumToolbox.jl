@@ -261,6 +261,18 @@ function wigner(state::QuantumObject{<:AbstractArray{T1},OpType}, xvec::Abstract
     return @. real(w0) * exp(-B * 0.5) * (g * g * 0.5 / π)
 end
 
+@doc raw"""
+    n_th(ω::Number, T::Real)
+
+Gives the mean number of excitations in a mode with frequency ω at temperature T:
+``n_{\rm th} (\omega, T) = \frac{1}{e^{\omega/T} - 1}``
+"""
+function n_th(ω::Real, T::Real)::Float64
+    (T == 0 || ω == 0) && return 0.0
+    abs(ω / T) > 50 && return 0.0
+    return 1 / (exp(ω / T) - 1)
+end
+
 function _wig_laguerre_val(L, x, c)
     if length(c) == 1
         y0 = c[1]

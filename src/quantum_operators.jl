@@ -31,8 +31,8 @@ of the density matrix operator respectively, ``\mathcal{O} \left( \hat{A}, \hat{
 Since the density matrix is vectorized, this super-operator is always
 a matrix, obtained from ``\mathcal{O} \left(\hat{A}, \hat{B}\right) \boldsymbol{\cdot} = \text{spre}(A) * \text{spost}(B)``.
 """
-sprepost(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
-         B::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = spre(A) * spost(B)
+sprepost(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+         B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = spre(A) * spost(B)
 
 @doc raw"""
     lindblad_dissipator(O::QuantumObject)
@@ -133,7 +133,7 @@ Pauli operator ``\hat{\sigma}_z = \comm{\hat{\sigma}_+}{\hat{\sigma}_-}``.
 sigmaz() = sigmap() * sigmam() - sigmam() * sigmap()
 
 @doc raw"""
-    eye(N::Int; type=KetQuantumObject, dims=[N])
+    eye(N::Int; type=OperatorQuantumObject, dims=[N])
 
 Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
 """

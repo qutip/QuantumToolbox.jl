@@ -2,27 +2,10 @@ function bdf(A::SparseMatrixCSC{T,M}) where {T,M}
     n = LinearAlgebra.checksquare(A)
 
     G = DiGraph(abs.(A) .> 0)
-    # G = Graph(A+A')
-    v1 = 1
-    S = Parallel.bfs_tree(G, v1)
-    V = vcat([v1], map(i->dst(i), edges(S)))
-    m = length(V)
-    m == n && return (spdiagm(ones(n)), A, [n])
-    i = 1:n
-    V_c = setdiff(i, V)
-
-    block_sizes = [m]
+    idxs = connected_components(G)
+    P = sparse(1:n, reduce(vcat, idxs), ones(n), n, n)
+    block_sizes = map(length, idxs)
     
-    while m < n
-        v1 = V_c[1]
-        S = Parallel.bfs_tree(G, v1)
-        V = vcat(V, [v1], map(i->dst(i), edges(S)))
-        V_c = setdiff(i, V)
-        m = length(V)
-        push!(block_sizes, m-sum(block_sizes))
-    end
-    
-    P = sparse(i, V, ones(n), n, n)
     P, P * A * P', block_sizes
 end
 

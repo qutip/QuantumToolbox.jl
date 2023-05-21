@@ -329,15 +329,15 @@ end
     N = 5
     a1 = kron(destroy(N), eye(N))
     a2 = kron(eye(N), destroy(N))
-    function H_dsf(op_list::AbstractVector)
+    function H_dsf2(op_list::AbstractVector)
         a1, a2 = op_list
         Δ*a1'*a1 + Δ*a2'*a2 + U*a1'^2*a1^2 + U*a2'^2*a2^2 + F*(a1 + a1') + J*(a1'*a2 + a1*a2')
     end
-    function c_ops_dsf(op_list::AbstractVector)
+    function c_ops_dsf2(op_list::AbstractVector)
         a1, a2 = op_list
         [√κ * a1, √κ * a2]
     end
-    function e_ops_dsf(op_list::AbstractVector)
+    function e_ops_dsf2(op_list::AbstractVector)
         a1, a2 = op_list
         [a1' * a1, a2' * a2]
     end
@@ -345,13 +345,46 @@ end
     ψ0  = kron(fock(N, 0), fock(N, 0))
     α0_l = [α0, α0]
 
-    sol_dsf_me = dsf_mesolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, saveat = [tlist[end]], abstol=1e-9, reltol=1e-7)
-    sol_dsf_mc = dsf_mcsolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, n_traj=500, saveat=[tlist[end]], abstol=1e-9, reltol=1e-7)
+    sol_dsf_me = dsf_mesolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, saveat = [tlist[end]], abstol=1e-9, reltol=1e-7)
+    sol_dsf_mc = dsf_mcsolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, n_traj=500, saveat=[tlist[end]], abstol=1e-9, reltol=1e-7)
 
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.05
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.05
     @test abs(sum(sol0.expect[2,:] .- sol_dsf_me.expect[2,:])) / length(tlist) < 0.05
     @test abs(sum(sol0.expect[2,:] .- sol_dsf_mc.expect[2,:])) / length(tlist) < 0.05
+end
+
+@testset "Generalized Master Equation" begin
+    N_c = 30
+    N_trunc = 10
+    tol=1e-14
+    
+    a = kron(destroy(N_c), eye(2))
+    sm = kron(eye(N_c), sigmam())
+    sp = sm'
+    sx = sm + sp
+    sz = sp * sm - sm * sp
+    
+    H = 1 * a' * a + 1 * sz / 2 + 0.5 * (a + a') * sx
+    
+    ωlist = [1, 1]
+    fields = [a + a', sx]
+    γlist = [0.01, 0.01]
+    Tlist = [0, 0.0]
+    
+    E, U, L1 = liouvillian_generalized(H, fields, γlist, ωlist, Tlist, N_trunc=N_trunc, tol=tol)
+    Ω = droptol!(sparse((E' .- E)[1:N_trunc,1:N_trunc]), tol)
+    
+    H_d = QuantumObject(droptol!(sparse(U' * H * U)[1:N_trunc,1:N_trunc], tol))
+    Xp = QuantumObject( Ω .* droptol!(triu(sparse(U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
+    a2 = QuantumObject( droptol!(sparse(U' * a * U).data[1:N_trunc,1:N_trunc], tol))
+    sm2 = QuantumObject( droptol!(sparse(U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
+    
+    # Standard liouvillian case
+    c_ops = [sqrt(γlist[1]) * a2, sqrt(γlist[2]) * sm2] 
+    L2 = liouvillian(H_d, c_ops)
+
+    @test (expect(Xp'*Xp, steadystate(L1)) < 1e-10 && expect(Xp'*Xp, steadystate(L2)) > 1e-3)
 end
 
 @testset "Eigenvalues and Operators" begin
@@ -457,9 +490,13 @@ end
     H = a' * a
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
 
-    ω_l, spec = spectrum(H, 2, 500, a', a, c_ops, abstol=1e-7, reltol=1e-5)
+    ω_l1, spec1 = spectrum(H, 3, 1000, a', a, c_ops, solver=FFTCorrelation(), progress=false, abstol=1e-7, reltol=1e-5)
+    ω_l2, spec2 = spectrum(H, 3, 1000, a', a, c_ops, progress=false, abstol=1e-7, reltol=1e-5)
+    spec1 = spec1 ./ maximum(spec1)
+    spec2 = spec2 ./ maximum(spec2)
 
-    test_func = maximum(real.(spec)) * (0.1/2)^2 ./ ((ω_l .- 1).^2 .+ (0.1/2)^2)
-    idxs = test_func .> 0.0001
-    @test sum(abs2.(spec[idxs] .- test_func[idxs])) / sum(abs2.(test_func[idxs])) < 0.01
+    test_func = maximum(real.(spec1)) * (0.1/2)^2 ./ ((ω_l1 .- 1).^2 .+ (0.1/2)^2)
+    idxs = test_func .> 0.05
+    @test sum(abs2.(spec1[idxs] .- test_func[idxs])) / sum(abs2.(test_func[idxs])) < 0.01
+    @test sum(abs2.(spec2[idxs] .- test_func[idxs])) / sum(abs2.(test_func[idxs])) < 0.01
 end

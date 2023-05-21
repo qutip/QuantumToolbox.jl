@@ -8,7 +8,6 @@ using Distributed
 @reexport using OrdinaryDiffEq
 @reexport using DiffEqCallbacks
 using Graphs
-import Graphs.Parallel
 using FFTW
 
 include("quantum_object.jl")
@@ -30,11 +29,12 @@ export expect
 export wigner
 export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid
 export ptrace, entropy_vn, entanglement
-export get_coherence
+export get_coherence, n_th
 export mesolve, mcsolve, sesolve
 export dfd_mesolve, dsf_mesolve, dsf_mcsolve
-export liouvillian, liouvillian_floquet, steadystate, steadystate_floquet, arnoldi_lindblad
+export liouvillian, liouvillian_floquet, liouvillian_generalized, steadystate, steadystate_floquet, arnoldi_lindblad
 export bdf, get_bdf_blocks
-export correlation_2op_1t, spectrum
+export FFTCorrelation, ExponentialSeries
+export correlation_3op_2t, correlation_2op_2t, correlation_2op_1t, spectrum
 
 end

@@ -38,6 +38,7 @@ entanglement
 expect
 wigner
 get_coherence
+n_th
 ```
 
 ## [Quantum states, operators and super-operators](@id API: Quantum states, operators and super-operators)
@@ -67,6 +68,8 @@ cosm
 ## [Time evolution](@id API: Time evolution)
 
 ```@docs
+liouvillian
+liouvillian_generalized
 sesolve
 mesolve
 mcsolve
@@ -77,6 +80,8 @@ dsf_mcsolve
 
 ## [Correlations and Spectrum](@id API: Correlations and Spectrum)
 ```@docs
+correlation_3op_2t
+correlation_2op_2t
 correlation_2op_1t
 spectrum
 ```
