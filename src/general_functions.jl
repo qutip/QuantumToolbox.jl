@@ -249,16 +249,17 @@ function wigner(state::QuantumObject{<:AbstractArray{T1},OpType}, xvec::Abstract
 
     B = abs.(A2)
     B .*= B
-    w0 = (2 * ρ[1, end]) .* ones(eltype(A2), size(A2)...)
+    w0 = similar(A2)
+    w0 .= 2 * ρ[1, end]
     L = M - 1
 
-    ρ = ρ .* (2 * ones(M, M) - diagm(ones(M)))
     while L > 0
         L -= 1
-        w0 = _wig_laguerre_val(L, B, diag(ρ, L)) .+ w0 .* A2 .* (L + 1)^(-0.5)
+        ρdiag = (L == 0) ? _wig_laguerre_val(L, B, diag(ρ, L)) : _wig_laguerre_val(L, B, 2*diag(ρ, L))
+        @. w0 = ρdiag + w0 * A2 / √(L + 1)
     end
 
-    return @. real(w0) * exp(-B * 0.5) * (g * g * 0.5 / π)
+    return @. real(w0) * exp(-B / 2) * (g * g / (2π))
 end
 
 @doc raw"""
