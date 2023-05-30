@@ -146,10 +146,14 @@ eye(N::Int; type::Type{ObjType}=OperatorQuantumObject, dims::Vector{Int}=[N]) wh
 Generates a fock state ``\ket{\psi}`` of dimension `N`. It is also possible
 to specify the list of dimensions `dims` if different subsystems are present.
 """
-function fock(N::Int, pos::Int; dims::Vector{Int}=[N])
-    array = zeros(N)
-    array[pos+1] = 1
-    QuantumObject(Array{ComplexF64}(array), KetQuantumObject, dims)
+function fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)
+    if sparse
+        return QuantumObject(sparsevec([1], [1.0+0im], N), KetQuantumObject, dims)
+    else
+        array = zeros(ComplexF64, N)
+        array[pos+1] = 1
+        return QuantumObject(array, KetQuantumObject, dims)
+    end
 end
 
 """

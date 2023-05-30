@@ -225,43 +225,6 @@ function get_coherence(ψ::QuantumObject{<:AbstractArray{T}, StateOpType}) where
     α, D' * ψ
 end
 
-
-@doc raw"""
-    wigner(state::QuantumObject, xvec::AbstractVector, yvec::AbstractVector; g::Real=√2)
-
-Generates the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution)
-of `state` at points `xvec + 1im * yvec`. The `g` parameter is a scaling factor related to the value of ``\hbar`` in the
-commutation relation ``[x, y] = i \hbar`` via ``\hbar=2/g^2`` giving the default value ``\hbar=1``.
-"""
-function wigner(state::QuantumObject{<:AbstractArray{T1},OpType}, xvec::AbstractVector{T2},
-    yvec::AbstractVector{T2}; g::Real=√2) where {T1,T2,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
-
-    if isket(state)
-        ρ = (state * state').data
-    elseif isbra(state)
-        ρ = (state' * state).data
-    else
-        ρ = state.data
-    end
-    M = size(ρ, 1)
-    X, Y = meshgrid(xvec, yvec)
-    A2 = g * (X + 1im * Y)
-
-    B = abs.(A2)
-    B .*= B
-    w0 = similar(A2)
-    w0 .= 2 * ρ[1, end]
-    L = M - 1
-
-    while L > 0
-        L -= 1
-        ρdiag = (L == 0) ? _wig_laguerre_val(L, B, diag(ρ, L)) : _wig_laguerre_val(L, B, 2*diag(ρ, L))
-        @. w0 = ρdiag + w0 * A2 / √(L + 1)
-    end
-
-    return @. real(w0) * exp(-B / 2) * (g * g / (2π))
-end
-
 @doc raw"""
     n_th(ω::Number, T::Real)
 
@@ -272,23 +235,4 @@ function n_th(ω::Real, T::Real)::Float64
     (T == 0 || ω == 0) && return 0.0
     abs(ω / T) > 50 && return 0.0
     return 1 / (exp(ω / T) - 1)
-end
-
-function _wig_laguerre_val(L, x, c)
-    if length(c) == 1
-        y0 = c[1]
-        y1 = 0
-    elseif length(c) == 2
-        y0 = c[1]
-        y1 = c[2]
-    else
-        k = length(c)
-        y0 = c[end-1]
-        y1 = c[end]
-        for i in range(3, length(c), step=1)
-            k -= 1
-            y0, y1 = @. c[end+1-i] - y1 * ((k - 1) * (L + k - 1) / ((L + k) * k))^0.5, y0 - y1 * ((L + 2 * k - 1) - x) * ((L + k) * k)^(-0.5)
-        end
-    end
-    return @. y0 - y1 * ((L + 1) - x) * (L + 1)^(-0.5)
 end

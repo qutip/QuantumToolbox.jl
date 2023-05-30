@@ -186,6 +186,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     push!(amps, -expect(A, ρss) * expect(B, ρss))
     push!(rates, 0)
     idxs = sortperm(rates, by=abs)
+    # For stability reasons, we take the modulus of the amplitudes
     amps, rates = abs.(amps[idxs]), rates[idxs]
     idxs = amps .> solver.tol
     amps, rates = amps[idxs], rates[idxs]

@@ -447,7 +447,14 @@ end
     xvec = LinRange(-3, 3, 300)
     yvec = LinRange(-3, 3, 300)
 
-    wig = wigner(ψ, xvec, yvec)
+    wig = wigner(ψ, xvec, yvec, solver=WignerLaguerre(tol=1e-6))
+    wig2 = wigner(droptol!(sparse(ket2dm(ψ)), 1e-6), xvec, yvec, solver=WignerLaguerre(parallel=false))
+    wig3 = wigner(droptol!(sparse(ket2dm(ψ)), 1e-6), xvec, yvec, solver=WignerLaguerre(parallel=true))
+    wig4 = wigner(ψ, xvec, yvec, solver=WignerClenshaw())
+
+    @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 1e-3
+    @test sqrt(sum(abs.(wig3 .- wig)) / length(wig)) < 1e-3
+    @test sqrt(sum(abs.(wig4 .- wig)) / length(wig)) < 1e-3
 
     X, Y = meshgrid(xvec, yvec)
     wig_tmp1 = gaussian(xvec / √2, real(α), 1 / 2)

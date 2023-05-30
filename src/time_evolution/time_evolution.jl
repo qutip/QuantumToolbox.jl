@@ -15,7 +15,7 @@ function _save_func_sesolve(u, t, integrator)
     progr = internal_params["progr"]
     e_ops = internal_params["e_ops"]
     expvals = internal_params["expvals"]
-    expvals[:, progr.counter+1] .= map(op -> dot(u, op.data, u), e_ops)
+    expvals[:, progr.counter+1] .= map(op -> dot(u, op.data * u), e_ops)
     next!(progr)
 end
 

@@ -147,12 +147,12 @@ Returns the length of the matrix or vector corresponding to the [`QuantumObject`
 Base.length(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = length(A.data)
 
 SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = QuantumObject(sparse(A.data), OpType, A.dims)
-SparseArrays.nnz(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<:QuantumObjectType} = nnz(A.data)
-SparseArrays.nonzeros(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<:QuantumObjectType} = nonzeros(A.data)
-SparseArrays.rowvals(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<:QuantumObjectType} = rowvals(A.data)
-SparseArrays.droptol!(A::QuantumObject{<:SparseMatrixCSC{T},OpType}, tol::Real) where {T,OpType<:QuantumObjectType} = (droptol!(A.data, tol); return A)
-SparseArrays.dropzeros(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<:QuantumObjectType} = QuantumObject(dropzeros(A.data), OpType, A.dims)
-SparseArrays.dropzeros!(A::QuantumObject{<:SparseMatrixCSC{T},OpType}) where {T,OpType<:QuantumObjectType} = (dropzeros!(A.data); return A)
+SparseArrays.nnz(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} = nnz(A.data)
+SparseArrays.nonzeros(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} = nonzeros(A.data)
+SparseArrays.rowvals(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} = rowvals(A.data)
+SparseArrays.droptol!(A::QuantumObject{<:AbstractSparseArray,OpType}, tol::Real) where {OpType<:QuantumObjectType} = (droptol!(A.data, tol); return A)
+SparseArrays.dropzeros(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} = QuantumObject(dropzeros(A.data), OpType, A.dims)
+SparseArrays.dropzeros!(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} = (dropzeros!(A.data); return A)
 
 Base.isequal(A::QuantumObject{<:AbstractArray{T},OpType}, B::QuantumObject{<:AbstractArray{T},OpType}) where
 {T,OpType<:QuantumObjectType} = isequal(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
