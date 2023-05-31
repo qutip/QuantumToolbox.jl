@@ -141,7 +141,7 @@ eye(N::Int; type::Type{ObjType}=OperatorQuantumObject, dims::Vector{Int}=[N]) wh
     {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(I(N), type, dims)
 
 @doc raw"""
-    fock(N::Int, pos::Int; dims::Vector{Int}=[N])
+    fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)
 
 Generates a fock state ``\ket{\psi}`` of dimension `N`. It is also possible
 to specify the list of dimensions `dims` if different subsystems are present.

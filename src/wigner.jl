@@ -87,7 +87,7 @@ function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::Abstract
                      _genlaguerre(m, n - m, B))
             end
         end
-        W .= sum(Wtot, dims=3)
+        W .= dropdims(sum(Wtot, dims=3), dims=3)
     else
         for i in Iterators.filter(x->x[2]>=x[1], zip(rows, cols, vals))
             m, n, ρmn = i
