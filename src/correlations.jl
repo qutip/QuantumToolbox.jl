@@ -165,7 +165,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     kwargs...) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     
     (H.dims == A.dims == B.dims) || throw(DimensionMismatch("The dimensions of H, A and B must be the same"))
-    Hdims = prod(H.dims)
+    Hdims = [prod(H.dims), prod(H.dims)]
 
     L = liouvillian(H, c_ops)
 
