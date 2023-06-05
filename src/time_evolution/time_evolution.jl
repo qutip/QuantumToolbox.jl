@@ -466,7 +466,7 @@ end
 function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
     c_ops::Vector, H_p::QuantumObject{<:AbstractArray{T2},OpType2},
     H_m::QuantumObject{<:AbstractArray{T3},OpType3},
-    ω::Real; n_max::Int=4, lf_solver::Type{LSolver}=LiouvillianDirectSolver,
+    ω::Real; n_max::Int=4, lf_solver::LSolver=LiouvillianDirectSolver(),
     ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},

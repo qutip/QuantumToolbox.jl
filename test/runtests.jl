@@ -2,10 +2,6 @@ using QuPhys
 using Test
 
 
-@testset "QuPhys.jl" begin
-    # Write your tests here.
-end
-
 @testset "QuantumObjects" begin
     a = rand(ComplexF64, 10)
     @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
@@ -147,17 +143,15 @@ end
 
     # Broadcasting
     a = destroy(20)
-    for op in (:(+), :(-), :(*), :(^))
-        @eval begin
-            A = broadcast($op, a, a)
-            @test A.data == broadcast($op, a.data, a.data) && A.type == a.type && A.dims == a.dims
+    for op in ((+), (-), (*), (^))
+        A = broadcast(op, a, a)
+        @test A.data == broadcast(op, a.data, a.data) && A.type == a.type && A.dims == a.dims
 
-            A = broadcast($op, 2.1, a)
-            @test A.data == broadcast($op, 2.1, a.data) && A.type == a.type && A.dims == a.dims
+        A = broadcast(op, 2.1, a)
+        @test A.data == broadcast(op, 2.1, a.data) && A.type == a.type && A.dims == a.dims
 
-            A = broadcast($op, a, 2.1)
-            @test A.data == broadcast($op, a.data, 2.1) && A.type == a.type && A.dims == a.dims
-        end
+        A = broadcast(op, a, 2.1)
+        @test A.data == broadcast(op, a.data, 2.1) && A.type == a.type && A.dims == a.dims
     end
 end
 
@@ -418,9 +412,10 @@ end
     H_c = a_d * a + 0.5 * (sz * cosm(2 * η * (a + a_d)) + sy * sinm(2 * η * (a + a_d)))
 
     vals_d, vecs_d = eigen(H_d)
-    vals_c, vecs_c = eigen(Hermitian(H_c))
+    vals_c, vecs_c = eigen((H_c))
+    sort!(vals_c, by=real)
 
-    @test sum(vals_d[1:20] .- vals_c[1:20]) / 20 < 1e-3
+    @test sum(vals_d[1:20] .- real.(vals_c[1:20])) / 20 < 1e-3
 end
 
 @testset "Steadystate" begin

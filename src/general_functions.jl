@@ -23,6 +23,7 @@ Converts a sparse QuantumObject to a dense QuantumObject.
 """
 sparse_to_dense(A::QuantumObject{<:AbstractArray{T}}) where T = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
 sparse_to_dense(A::AbstractSparseArray) = Array(A)
+sparse_to_dense(A::AbstractArray) = A
 
 """
     dense_to_sparse(A::QuantumObject)
