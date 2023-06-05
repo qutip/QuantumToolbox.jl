@@ -139,6 +139,29 @@ Returns the size of the matrix or vector corresponding to the [`QuantumObject`](
 Base.size(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = size(A.data)
 Base.size(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<:QuantumObjectType} = size(A.data, inds...)
 
+Base.getindex(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<:QuantumObjectType} = getindex(A.data, inds...)
+Base.setindex!(A::QuantumObject{<:AbstractArray{T},OpType}, val, inds...) where {T,OpType<:QuantumObjectType} = setindex!(A.data, val, inds...)
+
+"""
+    Broadcasting
+"""
+Base.broadcastable(x::QuantumObject) = x.data
+for op in (:(+), :(-), :(*), :(/), :(^))
+    @eval begin
+        function Base.Broadcast.broadcasted(::typeof($op), x::QuantumObject, y::QuantumObject)
+            return QuantumObject(broadcast($op, x.data, y.data), x.type, x.dims)
+        end
+
+        function Base.Broadcast.broadcasted(::typeof($op), x::QuantumObject, y::Number)
+            return QuantumObject(broadcast($op, x.data, y), x.type, x.dims)
+        end
+
+        function Base.Broadcast.broadcasted(::typeof($op), x::Number, y::QuantumObject)
+            return QuantumObject(broadcast($op, x, y.data), y.type, y.dims)
+        end
+    end
+end
+
 """
     length(A::QuantumObject)
 
@@ -304,7 +327,6 @@ LinearAlgebra.normalize(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,Op
     QuantumObject(normalize(A.data), OpType, A.dims)
 LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
     (normalize!(A.data); A)
-LinearAlgebra.getindex(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<:QuantumObjectType} = getindex(A.data, inds...)
 LinearAlgebra.ishermitian(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = ishermitian(A.data)
 LinearAlgebra.issymmetric(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = issymmetric(A.data)
 LinearAlgebra.isposdef(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = isposdef(A.data)
@@ -441,7 +463,7 @@ true
 ```
 """
 LinearAlgebra.eigen(A::QuantumObject{<:AbstractArray{T},OpType}; kwargs...) where
-{T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigen(Array(A.data); kwargs...)
+{T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigen(sparse_to_dense(A.data); kwargs...)
 
 """
     LinearAlgebra.eigvals(A::QuantumObject; kwargs...)
@@ -449,4 +471,4 @@ LinearAlgebra.eigen(A::QuantumObject{<:AbstractArray{T},OpType}; kwargs...) wher
 Same as [`eigen(A::QuantumObject; kwargs...)`](@ref) but for only the eigenvalues.
 """
 LinearAlgebra.eigvals(A::QuantumObject{<:AbstractArray{T},OpType}; kwargs...) where
-{T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigvals(Array(A.data); kwargs...)
+{T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigvals(sparse_to_dense(A.data); kwargs...)

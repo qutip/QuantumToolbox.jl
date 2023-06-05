@@ -16,6 +16,32 @@ function meshgrid(x::AbstractVector{T}, y::AbstractVector{T}) where {T}
     X, Y
 end
 
+"""
+    sparse_to_dense(A::QuantumObject)
+
+Converts a sparse QuantumObject to a dense QuantumObject.
+"""
+sparse_to_dense(A::QuantumObject{<:AbstractArray{T}}) where T = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
+sparse_to_dense(A::AbstractSparseArray) = Array(A)
+
+"""
+    dense_to_sparse(A::QuantumObject)
+
+Converts a dense QuantumObject to a sparse QuantumObject.
+"""
+dense_to_sparse(A::QuantumObject{<:AbstractArray{T}}) where T = QuantumObject(dense_to_sparse(A.data), A.type, A.dims)
+function dense_to_sparse(A::AbstractMatrix, tol::Real=1e-10)
+    idxs = findall(abs.(A) .> tol)
+    row_indices = getindex.(idxs, 1)
+    col_indices = getindex.(idxs, 2)
+    vals = getindex(A, idxs)
+    return sparse(row_indices, col_indices, vals, size(A)...)
+end
+function dense_to_sparse(A::Vector, tol::Real=1e-10)
+    idxs = findall(abs.(A) .> tol)
+    return sparse(idxs, vals, length(A))
+end
+
 @doc raw"""
     gaussian(x, μ::Real, σ::Real)
 

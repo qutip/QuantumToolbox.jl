@@ -165,7 +165,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     kwargs...) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     
     (H.dims == A.dims == B.dims) || throw(DimensionMismatch("The dimensions of H, A and B must be the same"))
-    Hdims = [prod(H.dims), prod(H.dims)]
+    Hdims = H.dims
 
     L = liouvillian(H, c_ops)
 
@@ -175,13 +175,13 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
 
     vals, vecs = eigen(L)
     # The steadystate should be always the last eigenvector
-    ρss = QuantumObject(reshape(vecs[:,end], Hdims...), dims=A.dims)
+    ρss = QuantumObject(reshape(vecs[:,end], prod(Hdims), prod(Hdims)), dims=Hdims)
     ρss /= tr(ρss)
     ρss = (ρss + ρss') / 2 # Make sure it's hermitian
     ρ0 = B.data * ρss.data
     v = vecs \ reshape(ρ0, :)
     
-    amps = map(i->tr(A.data * reshape(v[i] * vecs[:,i], Hdims...)), 1:length(vals))
+    amps = map(i->tr(A.data * reshape(v[i] * vecs[:,i], prod(Hdims), prod(Hdims))), 1:length(vals))
     rates = vals
     push!(amps, -expect(A, ρss) * expect(B, ρss))
     push!(rates, 0)

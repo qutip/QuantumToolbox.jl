@@ -20,7 +20,7 @@ Since the density matrix is vectorized, this super-operator is always
 a matrix, obtained from ``\mathcal{O} \left(\hat{O}\right) \boldsymbol{\cdot} = \hat{O}^T \otimes \hat{\mathbb{1}}``.
 """
 spost(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} =
-    QuantumObject(kron(sparse(transpose(O.data)), I(size(O, 1))), SuperOperatorQuantumObject, O.dims)
+    QuantumObject(kron(sparse(transpose(sparse(O.data))), I(size(O, 1))), SuperOperatorQuantumObject, O.dims)
 
 @doc raw"""
     sprepost(A::QuantumObject, B::QuantumObject)

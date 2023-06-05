@@ -31,6 +31,8 @@ LinearAlgebra.eigvals
 ```@docs
 row_major_reshape
 meshgrid
+sparse_to_dense
+dense_to_sparse
 gaussian
 ptrace
 entropy_vn

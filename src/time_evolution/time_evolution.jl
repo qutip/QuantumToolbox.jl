@@ -1,5 +1,7 @@
 abstract type LiouvillianSolver end
-abstract type LiouvillianDirectSolver <: LiouvillianSolver end
+struct LiouvillianDirectSolver <: LiouvillianSolver 
+    tol::Real
+end
 
 abstract type SteadyStateSolver end
 abstract type SteadyStateDirectSolver <: SteadyStateSolver end
@@ -9,6 +11,8 @@ struct TimeEvolutionSol
     states::AbstractArray
     expect::AbstractArray
 end
+
+LiouvillianDirectSolver(;tol=1e-14) = LiouvillianDirectSolver(tol)
 
 function _save_func_sesolve(u, t, integrator)
     internal_params = integrator.p[1]
@@ -352,7 +356,7 @@ liouvillian(H::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{
 function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
     Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
-    ω::Real; n_max::Int=4, solver::Type{LSolver}=LiouvillianDirectSolver) where {T1,T2,T3,LSolver<:LiouvillianSolver}
+    ω::Real; n_max::Int=4, solver::LSolver=LiouvillianDirectSolver()) where {T1,T2,T3,LSolver<:LiouvillianSolver}
 
     ((L₀.dims == Lₚ.dims) && (L₀.dims == Lₘ.dims)) || throw(ErrorException("The operators are not of the same Hilbert dimension."))
 
@@ -408,21 +412,25 @@ end
 function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
     Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
-    ω::Real, solver::Type{LiouvillianDirectSolver}; n_max::Int=4) where {T1,T2,T3}
+    ω::Real, solver::LiouvillianDirectSolver; n_max::Int=4) where {T1,T2,T3}
 
     L_0 = L₀.data
     L_p = Lₚ.data
     L_m = Lₘ.data
-    S = T = spzeros(T1, size(L_0)...)
 
-    L_p_d = Matrix(L_p)
-    L_m_d = Matrix(L_m)
+    L_0_d = sparse_to_dense(L_0)
+    L_p_d = sparse_to_dense(L_p)
+    L_m_d = sparse_to_dense(L_m)
 
-    for n_i in n_max:-1:1
-        S, T = -(L_0 - 1im * n_i * ω * I + L_m_d * S) \ L_p_d, -(L_0 + 1im * n_i * ω * I + L_p_d * T) \ L_m_d
+    n_i = n_max
+    S, T = -(L_0_d - 1im * n_i * ω * I) \ L_p_d, -(L_0_d + 1im * n_i * ω * I) \ L_m_d
+
+    for n_i in n_max-1:-1:1
+        S, T = -(L_0_d - 1im * n_i * ω * I + L_m_d * S) \ L_p_d, -(L_0_d + 1im * n_i * ω * I + L_p_d * T) \ L_m_d
     end
 
-    QuantumObject(L_0 + L_m * S + L_p * T, SuperOperatorQuantumObject, L₀.dims)
+    solver.tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperatorQuantumObject, L₀.dims)
+    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, solver.tol), SuperOperatorQuantumObject, L₀.dims)
 end
 
 function steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject};
@@ -442,9 +450,9 @@ function _steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumOb
     solver::Type{SteadyStateDirectSolver}) where {T}
 
     L_tmp = copy(L.data)
-    N = prod(L.dims) # floor(Int, √(size(L_tmp, 1)))
-    weight = sum(abs.(L_tmp)) / length(L_tmp)
-    v0 = zeros(ComplexF64, N^2)
+    N = prod(L.dims)
+    weight = norm(L_tmp, 1) / length(L_tmp)
+    v0 = zeros(ComplexF64, N^2) # This is not scalable for GPU arrays
     v0[1] = weight
 
     L_tmp[1, [N * (i - 1) + i for i in 1:N]] .+= weight

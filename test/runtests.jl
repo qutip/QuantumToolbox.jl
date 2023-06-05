@@ -144,6 +144,21 @@ end
     ψ = coherent(30, 3)
     α, δψ = get_coherence(ψ)
     @test isapprox(abs(α), 3, atol=1e-5) && abs2(δψ[1]) > 0.999
+
+    # Broadcasting
+    a = destroy(20)
+    for op in (:(+), :(-), :(*), :(^))
+        @eval begin
+            A = broadcast($op, a, a)
+            @test A.data == broadcast($op, a.data, a.data) && A.type == a.type && A.dims == a.dims
+
+            A = broadcast($op, 2.1, a)
+            @test A.data == broadcast($op, 2.1, a.data) && A.type == a.type && A.dims == a.dims
+
+            A = broadcast($op, a, 2.1)
+            @test A.data == broadcast($op, a.data, 2.1) && A.type == a.type && A.dims == a.dims
+        end
+    end
 end
 
 @testset "Time Evolution and partial trace" begin
