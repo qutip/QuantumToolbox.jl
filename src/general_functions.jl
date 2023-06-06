@@ -44,14 +44,12 @@ function dense_to_sparse(A::Vector, tol::Real=1e-10)
 end
 
 @doc raw"""
-    gaussian(x, μ::Real, σ::Real)
+    gaussian(x::Number, μ::Number, σ::Number)
 
 Returns the gaussian function ``\exp \left[- \frac{(x - \mu)^2}{2 \sigma^2} \right]``,
 where ``\mu`` and ``\sigma^2`` are the mean and the variance respectively.
 """
-gaussian(x::AbstractVector{T}, μ::Real, σ::Real) where {T} = @. exp(-0.5 * (x - μ)^2 / σ^2)
-
-gaussian(x::Real, μ::Real, σ::Real) = exp(-0.5 * (x - μ)^2 / σ^2)
+gaussian(x::Number, μ::Number, σ::Number) = exp(-0.5 * (x - μ)^2 / σ^2)
 
 @doc raw"""
     ptrace(QO::QuantumObject, sel::Vector{Int})

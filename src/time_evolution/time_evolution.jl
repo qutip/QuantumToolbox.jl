@@ -379,17 +379,15 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
     E, U = eigen(H)
     U = QuantumObject(U, dims=H.dims)
 
-    H_d = droptol!(sparse(U' * H * U), tol)
-    H_d = QuantumObject(H_d[1:N_trunc,1:N_trunc])
+    H_d = QuantumObject(dense_to_sparse((U' * H * U).data[1:N_trunc, 1:N_trunc], tol))
 
-    Ω = droptol!(sparse((E' .- E)[1:N_trunc,1:N_trunc]), tol)
+    Ω = dense_to_sparse((E' .- E)[1:N_trunc,1:N_trunc], tol)
     Ω = triu(Ω, 1)
 
     L = liouvillian(H_d)
 
     for i in eachindex(fields)
-        X_op = droptol!(sparse(U' * fields[i] * U), tol)
-        X_op = X_op[1:N_trunc,1:N_trunc]
+        X_op = dense_to_sparse((U' * fields[i] * U).data[1:N_trunc, 1:N_trunc], tol)
 
         # # P₀ = QuantumObject( (Ω ./ ω_list[i]) .* droptol!(sparse(triu(X_op, 1)), tol) )
         # P₀ = QuantumObject( droptol!(sparse(triu(X_op, 1)), tol) )
@@ -398,7 +396,7 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
 
         # Nikki Master Equation
         N_th = n_th.(Ω, T_list[i])
-        P₀ = QuantumObject( droptol!(sparse(triu(X_op, 1)), tol) )
+        P₀ = QuantumObject( triu(X_op, 1) )
         P₁ = QuantumObject( (Ω ./ ω_list[i]) .* N_th .* P₀.data )
         P₂ = QuantumObject( (Ω ./ ω_list[i]) .* (1 .+ N_th) .* P₀.data )
 

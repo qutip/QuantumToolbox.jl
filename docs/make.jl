@@ -27,6 +27,7 @@ makedocs(;
     pages=[
         "index.md",
         "api.md",
+        "Benchmark Results" => "../../benchmark/results.md",
     ],
 )
 

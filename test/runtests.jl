@@ -394,6 +394,20 @@ end
     L2 = liouvillian(H_d, c_ops)
 
     @test (expect(Xp'*Xp, steadystate(L1)) < 1e-10 && expect(Xp'*Xp, steadystate(L2)) > 1e-3)
+
+    H = 1 * a' * a + 1 * sz / 2 + 1e-5 * (a * sp + a' * sm)
+
+    Tlist = [0.2, 0.0]
+
+    E, U, L1 = liouvillian_generalized(H, fields, γlist, ωlist, Tlist, N_trunc=N_trunc, tol=tol)
+    Ω = droptol!(sparse((E' .- E)[1:N_trunc,1:N_trunc]), tol)
+
+    H_d = QuantumObject(droptol!(sparse(U' * H * U)[1:N_trunc,1:N_trunc], tol))
+    Xp = QuantumObject( Ω .* droptol!(triu(sparse(U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
+    a2 = QuantumObject( droptol!(sparse(U' * a * U).data[1:N_trunc,1:N_trunc], tol))
+    sm2 = QuantumObject( droptol!(sparse(U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
+
+    @test abs(expect(Xp'*Xp, steadystate(L1)) - n_th(1, Tlist[1])) / n_th(1, Tlist[1]) < 1e-4
 end
 
 @testset "Eigenvalues and Operators" begin
@@ -467,8 +481,8 @@ end
     @test sqrt(sum(abs.(wig4 .- wig)) / length(wig)) < 1e-3
 
     X, Y = meshgrid(xvec, yvec)
-    wig_tmp1 = gaussian(xvec / √2, real(α), 1 / 2)
-    wig_tmp2 = gaussian(yvec / √2, imag(α), 1 / 2)
+    wig_tmp1 = gaussian.(xvec / √2, real(α), 1 / 2)
+    wig_tmp2 = gaussian.(yvec / √2, imag(α), 1 / 2)
     wig2 = maximum(wig) * reshape(kron(wig_tmp1, wig_tmp2), 300, 300)
 
     @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 0.1
