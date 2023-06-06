@@ -51,9 +51,10 @@ jobs:
           version: '1'
 
       - name: Install dependencies
-        run: |
-          julia -e 'using Pkg; Pkg.add("PkgBenchmark")'
-          julia -e 'using Pkg; Pkg.instantiate()'
+        uses: julia-actions/julia-buildpkg@v1
+
+      - name: Install PkgBenchmark
+        run: julia -e 'using Pkg; Pkg.add("PkgBenchmark")'
 
       - name: Run benchmarks
         run: julia -e 'using PkgBenchmark; result = benchmarkpkg("QuPhys"); PkgBenchmark.export_markdown("benchmark/results.md", result)'
