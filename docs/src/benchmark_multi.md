@@ -3,7 +3,6 @@ CurrentModule = QuPhys
 ```
 
 ```@eval
-using Pkg
 using PkgBenchmark
 using Markdown
 
