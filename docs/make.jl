@@ -27,7 +27,10 @@ makedocs(;
     pages=[
         "index.md",
         "api.md",
-        "Benchmark Results" => "../../benchmark/results.md",
+        "Benchmark Report" => [
+            "Single Core" =>"benchmark_single.md",
+            "Multi VS Single Core" =>"benchmark_multi.md",
+        ],
     ],
 )
 

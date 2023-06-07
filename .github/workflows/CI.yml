@@ -68,7 +68,6 @@ jobs:
   #         git push
   docs:
     name: Documentation
-    # needs: benchmark
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -142,9 +142,7 @@ Base.size(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<
 Base.getindex(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<:QuantumObjectType} = getindex(A.data, inds...)
 Base.setindex!(A::QuantumObject{<:AbstractArray{T},OpType}, val, inds...) where {T,OpType<:QuantumObjectType} = setindex!(A.data, val, inds...)
 
-"""
-    Broadcasting
-"""
+#    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
 for op in (:(+), :(-), :(*), :(/), :(^))
     @eval begin
