@@ -28,8 +28,8 @@ makedocs(;
         "index.md",
         "api.md",
         "Benchmark Report" => [
-            "Single Core" =>"benchmark_single.md",
-            "Multi VS Single Core" =>"benchmark_multi.md",
+            "Multi Threads" =>"benchmark_single.md",
+            "Multi VS Single Thread" =>"benchmark_comparison.md",
         ],
     ],
 )

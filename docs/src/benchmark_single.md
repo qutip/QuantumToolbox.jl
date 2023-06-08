@@ -6,8 +6,9 @@ CurrentModule = QuPhys
 using PkgBenchmark
 using Markdown
 
+nthreads = Sys.CPU_THREADS
 
-config1 = BenchmarkConfig(env = Dict("JULIA_NUM_THREADS" => 1))
+config1 = BenchmarkConfig(env = Dict("JULIA_NUM_THREADS" => nthreads))
 
 result1 = benchmarkpkg("QuPhys", config1)
 

@@ -62,7 +62,7 @@ function _wigner(ρ::AbstractArray, xvec::AbstractVector, yvec::AbstractVector,
 
     while L > 0
         L -= 1
-        ρdiag = (L == 0) ? _wig_laguerre_clenshaw(L, B, diag(ρ, L)) : _wig_laguerre_clenshaw(L, B, 2*diag(ρ, L))
+        ρdiag = _wig_laguerre_clenshaw(L, B, (1 + Int(L!=0))*diag(ρ, L))
         @. W = ρdiag + W * A / √(L + 1)
     end
 
@@ -80,12 +80,8 @@ function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::Abstract
             m, n, ρmn = iter[i]
             m, n = m-1, n-1
 
-            if m==n
-                @. Wtot[:,:,i] = real(ρmn * (-1)^m * _genlaguerre(m, 0, B))
-            else
-                @. Wtot[:,:,i] = 2 * real(ρmn * (-1)^m * (2 * A)^(n - m) * sqrt(factorial(big(m)) / factorial(big(n))) *
-                     _genlaguerre(m, n - m, B))
-            end
+            @. Wtot[:,:,i] = (1 + Int(m!=n)) * real(ρmn * (-1)^m * (2 * A)^(n - m) * sqrt(gamma(m+1) / gamma(n+1)) *
+            _genlaguerre(m, n - m, B))
         end
         W .= dropdims(sum(Wtot, dims=3), dims=3)
     else
@@ -93,12 +89,8 @@ function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::Abstract
             m, n, ρmn = i
             m, n = m-1, n-1
 
-            if m==n
-                @. W += real(ρmn * (-1)^m * _genlaguerre(m, 0, B))
-            else
-                @. W += 2 * real(ρmn * (-1)^m * (2 * A)^(n - m) * sqrt(factorial(big(m)) / factorial(big(n))) *
-                     _genlaguerre(m, n - m, B))
-            end
+            @. W += (1 + Int(m!=n)) * real(ρmn * (-1)^m * (2 * A)^(n - m) * sqrt(gamma(m+1) / gamma(n+1)) *
+            _genlaguerre(m, n - m, B))
         end
     end
 
@@ -118,7 +110,7 @@ function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray,
             abs(ρmn) > tol && (@. W += real(ρmn * (-1)^m * _genlaguerre(m, 0, B)))
             for n in m+1:M-1
                 ρmn = ρ[m+1, n+1]
-                abs(ρmn) > tol && (@. W += 2 * real(ρmn * (-1)^m * (2 * A)^(n - m) * sqrt(factorial(big(m)) / factorial(big(n))) *
+                abs(ρmn) > tol && (@. W += 2 * real(ρmn * (-1)^m * (2 * A)^(n - m) * sqrt(gamma(m+1) / gamma(n+1)) *
                      _genlaguerre(m, n - m, B)))
             end
         end
@@ -129,7 +121,7 @@ end
 
 _genlaguerre(n::Integer, α::Integer, x::T) where {T} = binomial(n+α,n) * HypergeometricFunctions.M(-n, α+1, x)
 
-function _wig_laguerre_clenshaw(L, x, c)
+function _wig_laguerre_clenshaw(L::Int, x::AbstractArray{T1}, c::AbstractVector{T2}) where {T1<:Real, T2<:BlasFloat}
     if length(c) == 1
         y0 = c[1]
         y1 = 0
@@ -138,12 +130,22 @@ function _wig_laguerre_clenshaw(L, x, c)
         y1 = c[2]
     else
         k = length(c)
-        y0 = c[end-1]
-        y1 = c[end]
+        y0 = similar(x, T2); y0 .= c[end-1]
+        y1 = similar(x, T2); y1 .= c[end]
+        # y0 = c[end-1]
+        # y1 = c[end]
         for i in range(3, length(c), step=1)
             k -= 1
-            y0, y1 = @. c[end+1-i] - y1 * ((k - 1) * (L + k - 1) / ((L + k) * k))^0.5, y0 - y1 * ((L + 2 * k - 1) - x) * ((L + k) * k)^(-0.5)
+            y0_old = copy(y0)
+            @. y0 = c[end+1-i] - y1 * sqrt((k - 1) * (L + k - 1) / ((L + k) * k))
+            @. y1 = y0_old - y1 * ((L + 2 * k - 1) - x) / sqrt((L + k) * k)
+            
+            
+            # y0, y1 = @. c[end+1-i] - y1 * sqrt((k - 1) * (L + k - 1) / ((L + k) * k)), y0 - y1 * ((L + 2 * k - 1) - x) / sqrt((L + k) * k)
+
+            # y0, y1 = @. c[end+1-i] - y1 * ((k - 1) * (L + k - 1) / ((L + k) * k))^0.5, y0 - y1 * ((L + 2 * k - 1) - x) * ((L + k) * k)^(-0.5)
         end
     end
-    return @. y0 - y1 * ((L + 1) - x) * (L + 1)^(-0.5)
+    return @. y0 - y1 * (L + 1 - x) / sqrt(L + 1)
+    # return @. y0 - y1 * ((L + 1) - x) * (L + 1)^(-0.5)
 end

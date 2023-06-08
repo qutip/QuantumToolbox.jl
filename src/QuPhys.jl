@@ -10,6 +10,9 @@ using Distributed
 using Graphs
 using FFTW
 using HypergeometricFunctions
+using SpecialFunctions
+
+using LinearAlgebra: BlasFloat, BlasComplex
 
 include("quantum_object.jl")
 include("quantum_operators.jl")

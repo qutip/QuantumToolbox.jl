@@ -46,7 +46,7 @@ SUITE["timeevolution"]["mcsolve_serial"] = @benchmarkable mcsolve($H, $ψ0, $tli
 SUITE["timeevolution"]["mcsolve_parallel"] = @benchmarkable mcsolve($H, $ψ0, $tlist, $c_ops, e_ops=$e_ops, progress=false, n_traj=500, saveat=[$tlist[end]])
 
 # Entanglement
-ψ = normalize( kron(fock(10, 0), fock(5, 2)) + kron(fock(10, 1), fock(5, 1)) )
+ψ = normalize( kron(fock(20, 0), fock(10, 2)) + kron(fock(20, 1), fock(10, 1)) )
 ρ = ket2dm(ψ)
 ρ1 = ptrace(ρ, [1])
 
@@ -62,25 +62,26 @@ SUITE["entanglement"]["entropy_vn"] = @benchmarkable entropy_vn($ρ1)
 # Wigner
 α = 0.5 + 0.8im
 ψ = coherent(30, α)
-ψ2 = normalize(fock(10, 1) + fock(10, 3))
+ρ = dense_to_sparse(ket2dm(ψ), 1e-6)
+ψ2 = dense_to_sparse(normalize(fock(20, 1) + fock(20, 3)))
 xvec = LinRange(-3, 3, 300)
 yvec = LinRange(-3, 3, 300)
 
 wigner(ψ, xvec, yvec, solver=WignerLaguerre(tol=1e-6)) # precompile
-wigner(droptol!(sparse(ket2dm(ψ)), 1e-6), xvec, yvec, solver=WignerLaguerre(parallel=false)) # precompile
-wigner(droptol!(sparse(ket2dm(ψ)), 1e-6), xvec, yvec, solver=WignerLaguerre(parallel=true)) # precompile
+wigner(ρ, xvec, yvec, solver=WignerLaguerre(parallel=false)) # precompile
+wigner(ρ, xvec, yvec, solver=WignerLaguerre(parallel=true)) # precompile
 wigner(ψ, xvec, yvec, solver=WignerClenshaw()) # precompile
 
 SUITE["wigner"] = BenchmarkGroup()
-SUITE["wigner"]["wigner_laguerre"] = @benchmarkable wigner($ψ, $xvec, $yvec, solver=WignerLaguerre(tol=1e-6))
-SUITE["wigner"]["wigner_laguerre_sparse"] = @benchmarkable wigner(droptol!(sparse(ket2dm($ψ)), 1e-6), $xvec, $yvec, solver=WignerLaguerre(parallel=false))
-SUITE["wigner"]["wigner_laguerre_sparse_parallel"] = @benchmarkable wigner(droptol!(sparse(ket2dm($ψ)), 1e-6), $xvec, $yvec, solver=WignerLaguerre(parallel=true))
 SUITE["wigner"]["wigner_clenshaw"] = @benchmarkable wigner($ψ, $xvec, $yvec, solver=WignerClenshaw())
+SUITE["wigner"]["wigner_laguerre"] = @benchmarkable wigner($ψ, $xvec, $yvec, solver=WignerLaguerre(tol=1e-6))
+SUITE["wigner"]["wigner_laguerre_sparse"] = @benchmarkable wigner($ρ, $xvec, $yvec, solver=WignerLaguerre(parallel=false))
+SUITE["wigner"]["wigner_laguerre_sparse_parallel"] = @benchmarkable wigner($ρ, $xvec, $yvec, solver=WignerLaguerre(parallel=true))
 SUITE["wigner"]["wigner_laguerre_fock"] = @benchmarkable wigner($ψ2, $xvec, $yvec, solver=WignerLaguerre())
 SUITE["wigner"]["wigner_clenshaw_fock"] = @benchmarkable wigner($ψ2, $xvec, $yvec, solver=WignerClenshaw())
 
 # Permutation
-N = 20
+N = 50
 Δ = 0
 G = 5
 tg = 0
@@ -103,3 +104,16 @@ blocks_list, block_indices = get_bdf_blocks(L_bd, block_sizes) # precompile
 SUITE["permutation"] = BenchmarkGroup()
 SUITE["permutation"]["bdf"] = @benchmarkable bdf($L)
 SUITE["permutation"]["get_bdf_blocks"] = @benchmarkable get_bdf_blocks($L_bd, $block_sizes)
+
+# Correlation and spectrum
+a = destroy(10)
+H = a' * a
+c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
+
+spectrum(H, 3, 1000, a', a, c_ops, solver=FFTCorrelation(), 
+        progress=false, abstol=1e-7, reltol=1e-5) # precompile
+spectrum(H, 3, 1000, a', a, c_ops) # precompile
+
+SUITE["spectrum"] = BenchmarkGroup()
+SUITE["spectrum"]["spectrum_fft"] = @benchmarkable spectrum($H, 3, 1000, $(a'), $a, $c_ops, solver=FFTCorrelation(), progress=false, abstol=1e-7, reltol=1e-5)
+SUITE["spectrum"]["spectrum_exponential_series"] = @benchmarkable spectrum($H, 3, 1000, $(a'), $a, $c_ops)

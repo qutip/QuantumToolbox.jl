@@ -468,12 +468,13 @@ end
 @testset "Wigner" begin
     α = 0.5 + 0.8im
     ψ = coherent(30, α)
+    ρ = dense_to_sparse(ket2dm(ψ), 1e-6)
     xvec = LinRange(-3, 3, 300)
     yvec = LinRange(-3, 3, 300)
 
     wig = wigner(ψ, xvec, yvec, solver=WignerLaguerre(tol=1e-6))
-    wig2 = wigner(droptol!(sparse(ket2dm(ψ)), 1e-6), xvec, yvec, solver=WignerLaguerre(parallel=false))
-    wig3 = wigner(droptol!(sparse(ket2dm(ψ)), 1e-6), xvec, yvec, solver=WignerLaguerre(parallel=true))
+    wig2 = wigner(ρ, xvec, yvec, solver=WignerLaguerre(parallel=false))
+    wig3 = wigner(ρ, xvec, yvec, solver=WignerLaguerre(parallel=true))
     wig4 = wigner(ψ, xvec, yvec, solver=WignerClenshaw())
 
     @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 1e-3
@@ -522,7 +523,7 @@ end
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
 
     ω_l1, spec1 = spectrum(H, 3, 1000, a', a, c_ops, solver=FFTCorrelation(), progress=false, abstol=1e-7, reltol=1e-5)
-    ω_l2, spec2 = spectrum(H, 3, 1000, a', a, c_ops, progress=false, abstol=1e-7, reltol=1e-5)
+    ω_l2, spec2 = spectrum(H, 3, 1000, a', a, c_ops)
     spec1 = spec1 ./ maximum(spec1)
     spec2 = spec2 ./ maximum(spec2)
 

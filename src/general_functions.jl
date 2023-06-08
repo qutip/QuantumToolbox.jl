@@ -30,7 +30,7 @@ sparse_to_dense(A::AbstractArray) = A
 
 Converts a dense QuantumObject to a sparse QuantumObject.
 """
-dense_to_sparse(A::QuantumObject{<:AbstractArray{T}}) where T = QuantumObject(dense_to_sparse(A.data), A.type, A.dims)
+dense_to_sparse(A::QuantumObject{<:AbstractArray{T}}, tol::Real=1e-10) where T = QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
 function dense_to_sparse(A::AbstractMatrix, tol::Real=1e-10)
     idxs = findall(abs.(A) .> tol)
     row_indices = getindex.(idxs, 1)
@@ -40,7 +40,8 @@ function dense_to_sparse(A::AbstractMatrix, tol::Real=1e-10)
 end
 function dense_to_sparse(A::Vector, tol::Real=1e-10)
     idxs = findall(abs.(A) .> tol)
-    return sparse(idxs, vals, length(A))
+    vals = getindex(A, idxs)
+    return sparsevec(idxs, vals, length(A))
 end
 
 @doc raw"""

@@ -14,6 +14,7 @@ OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
 julia = "1.6"
