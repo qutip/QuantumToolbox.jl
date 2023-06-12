@@ -42,7 +42,7 @@ function _wigner(ρ::AbstractArray, xvec::AbstractVector{T}, yvec::AbstractVecto
     g = convert(T, g)
     X, Y = meshgrid(xvec, yvec)
     A = g / 2 * (X + 1im * Y)
-    W = similar(A)
+    W = similar(A, T)
     W .= 0
 
     return _wigner_laguerre(ρ, A, W, g, solver)
