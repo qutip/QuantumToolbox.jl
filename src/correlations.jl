@@ -108,15 +108,11 @@ end
 
 @doc raw"""
     spectrum(H::QuantumObject,
-        ω_list::AbstractVector,
-        A::QuantumObject,
-        B::QuantumObject,
-        c_ops::AbstractVector=[];
-        alg=Vern7(),
-        H_t=nothing,
-        params::AbstractVector=[],
-        progress::Bool=true,
-        callbacks=[],
+    ω_list::AbstractVector,
+    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
+    c_ops::AbstractVector=[];
+    solver::MySolver=ExponentialSeries(),
         kwargs...)
 
 Returns the emission spectrum ``S(\omega) = \int_{-\infty}^\infty \expval{\hat{A}(\tau) \hat{B}(0)} e^{-i \omega \tau} d \tau``.
@@ -170,10 +166,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
 
     L = liouvillian(H, c_ops)
 
-    Nsamples = length(ω_list)
-    ω_max = abs(maximum(ω_list))
-    dω = 2*ω_max/(Nsamples-1)
-    ω_l = -ω_max:dω:ω_max
+    ω_l = ω_list
 
     vals, vecs = eigen(L)
     # The steadystate should be always the last eigenvector
