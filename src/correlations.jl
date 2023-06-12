@@ -108,7 +108,7 @@ end
 
 @doc raw"""
     spectrum(H::QuantumObject,
-        ω_max::Real, Nsamples::Integer,
+        ω_list::AbstractVector,
         A::QuantumObject,
         B::QuantumObject,
         c_ops::AbstractVector=[];
@@ -122,7 +122,7 @@ end
 Returns the emission spectrum ``S(\omega) = \int_{-\infty}^\infty \expval{\hat{A}(\tau) \hat{B}(0)} e^{-i \omega \tau} d \tau``.
 """
 function spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ω_max::Real, Nsamples::Integer,
+    ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
     c_ops::AbstractVector=[];
@@ -130,23 +130,24 @@ function spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     kwargs...) where {T1,T2,T3,
             HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}, MySolver<:SpectrumSolver}
     
-    return _spectrum(H, ω_max, Nsamples, A, B, c_ops, solver; kwargs...)
+    return _spectrum(H, ω_list, A, B, c_ops, solver; kwargs...)
 end
 
 function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ω_max::Real, Nsamples::Integer,
+    ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
     c_ops::AbstractVector,
     solver::FFTCorrelation;
     kwargs...) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     
-    ω_max = abs(ω_max)
+    Nsamples = length(ω_list)
+    ω_max = abs(maximum(ω_list))
     dω = 2*ω_max/(Nsamples-1)
     ω_l = -ω_max:dω:ω_max
 
     T = 2π/(ω_l[2]-ω_l[1])
-    τ_l = range(0,T, length=length(ω_l))
+    τ_l = range(0, T, length=length(ω_l))
 
     ρss = steadystate(H, c_ops)
     corr = correlation_2op_1t(H, ρss, τ_l, A, B, c_ops; kwargs...)
@@ -157,7 +158,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
 end
 
 function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ω_max::Real, Nsamples::Integer,
+    ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
     c_ops::AbstractVector,
@@ -169,7 +170,8 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
 
     L = liouvillian(H, c_ops)
 
-    ω_max = abs(ω_max)
+    Nsamples = length(ω_list)
+    ω_max = abs(maximum(ω_list))
     dω = 2*ω_max/(Nsamples-1)
     ω_l = -ω_max:dω:ω_max
 

@@ -36,12 +36,13 @@ function wigner(state::QuantumObject{<:AbstractArray{T},OpType}, xvec::AbstractV
     return _wigner(ρ, xvec, yvec, g, solver)
 end
 
-function _wigner(ρ::AbstractArray, xvec::AbstractVector, yvec::AbstractVector,
-    g::Real, solver::WignerLaguerre)
+function _wigner(ρ::AbstractArray, xvec::AbstractVector{T}, yvec::AbstractVector{T},
+    g::Real, solver::WignerLaguerre) where {T <: BlasFloat}
     
+    g = convert(T, g)
     X, Y = meshgrid(xvec, yvec)
     A = g / 2 * (X + 1im * Y)
-    W = similar(A, Float64)
+    W = similar(A)
     W .= 0
 
     return _wigner_laguerre(ρ, A, W, g, solver)
@@ -79,8 +80,9 @@ function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::Abstract
         Threads.@threads for i in eachindex(iter)
             m, n, ρmn = iter[i]
             m, n = m-1, n-1
+            Γ_mn = (1 + Int(m!=n)) * sqrt(gamma(m+1) / gamma(n+1))
 
-            @. Wtot[:,:,i] = (1 + Int(m!=n)) * real(ρmn * (-1)^m * (2 * A)^(n - m) * sqrt(gamma(m+1) / gamma(n+1)) *
+            @. Wtot[:,:,i] = real(ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn *
             _genlaguerre(m, n - m, B))
         end
         W .= dropdims(sum(Wtot, dims=3), dims=3)
@@ -88,8 +90,9 @@ function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::Abstract
         for i in Iterators.filter(x->x[2]>=x[1], zip(rows, cols, vals))
             m, n, ρmn = i
             m, n = m-1, n-1
+            Γ_mn = (1 + Int(m!=n)) * sqrt(gamma(m+1) / gamma(n+1))
 
-            @. W += (1 + Int(m!=n)) * real(ρmn * (-1)^m * (2 * A)^(n - m) * sqrt(gamma(m+1) / gamma(n+1)) *
+            @. W += real(ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn *
             _genlaguerre(m, n - m, B))
         end
     end
@@ -110,7 +113,9 @@ function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray,
             abs(ρmn) > tol && (@. W += real(ρmn * (-1)^m * _genlaguerre(m, 0, B)))
             for n in m+1:M-1
                 ρmn = ρ[m+1, n+1]
-                abs(ρmn) > tol && (@. W += 2 * real(ρmn * (-1)^m * (2 * A)^(n - m) * sqrt(gamma(m+1) / gamma(n+1)) *
+                Γ_mn = sqrt(gamma(m+1) / gamma(n+1))
+
+                abs(ρmn) > tol && (@. W += 2 * real(ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn *
                      _genlaguerre(m, n - m, B)))
             end
         end
@@ -119,7 +124,25 @@ function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray,
     return @. W * g^2 * exp(-B / 2) / (2π)
 end
 
-_genlaguerre(n::Integer, α::Integer, x::T) where {T} = binomial(n+α,n) * HypergeometricFunctions.M(-n, α+1, x)
+# function _genlaguerre(n::Int, α::Int, x::T) where {T<:BlasFloat}
+#     t = binomial(n+α,n)
+#     L = t
+#     for k = 1:n
+#         t *= (-x) * (n-k+1) /  (k * (k+α))
+#         L += t
+#     end
+#     return L
+# end
+# This is a little bit slower, but it supports GPU
+function _genlaguerre(n::Int, α::Number, x::T) where {T <: BlasFloat}
+    α = convert(T, α)
+    p0, p1 = one(T), -x+(α+1)
+    n == 0 && return p0
+    for k = one(T):n-1
+        p1, p0 = ((2k+α+1)/(k+1) - x/(k+1))*p1 - (k+α)/(k+1)*p0, p1
+    end
+    p1
+end
 
 function _wig_laguerre_clenshaw(L::Int, x::AbstractArray{T1}, c::AbstractVector{T2}) where {T1<:Real, T2<:BlasFloat}
     if length(c) == 1
@@ -132,20 +155,12 @@ function _wig_laguerre_clenshaw(L::Int, x::AbstractArray{T1}, c::AbstractVector{
         k = length(c)
         y0 = similar(x, T2); y0 .= c[end-1]
         y1 = similar(x, T2); y1 .= c[end]
-        # y0 = c[end-1]
-        # y1 = c[end]
         for i in range(3, length(c), step=1)
             k -= 1
             y0_old = copy(y0)
             @. y0 = c[end+1-i] - y1 * sqrt((k - 1) * (L + k - 1) / ((L + k) * k))
             @. y1 = y0_old - y1 * ((L + 2 * k - 1) - x) / sqrt((L + k) * k)
-            
-            
-            # y0, y1 = @. c[end+1-i] - y1 * sqrt((k - 1) * (L + k - 1) / ((L + k) * k)), y0 - y1 * ((L + 2 * k - 1) - x) / sqrt((L + k) * k)
-
-            # y0, y1 = @. c[end+1-i] - y1 * ((k - 1) * (L + k - 1) / ((L + k) * k))^0.5, y0 - y1 * ((L + 2 * k - 1) - x) * ((L + k) * k)^(-0.5)
         end
     end
     return @. y0 - y1 * (L + 1 - x) / sqrt(L + 1)
-    # return @. y0 - y1 * ((L + 1) - x) * (L + 1)^(-0.5)
 end

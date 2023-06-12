@@ -9,7 +9,6 @@ using Distributed
 @reexport using DiffEqCallbacks
 using Graphs
 using FFTW
-using HypergeometricFunctions
 using SpecialFunctions
 
 using LinearAlgebra: BlasFloat, BlasComplex
@@ -32,7 +31,7 @@ export destroy, create, eye, projection, rand_dm
 export sinm, cosm
 export expect
 export WignerClenshaw, WignerLaguerre, wigner
-export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid, sparse_to_dense, dense_to_sparse
+export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid, sparse_to_dense, dense_to_sparse, get_data
 export ptrace, entropy_vn, entanglement
 export get_coherence, n_th
 export mesolve, mcsolve, sesolve

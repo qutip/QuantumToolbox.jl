@@ -44,6 +44,14 @@ function dense_to_sparse(A::Vector, tol::Real=1e-10)
     return sparsevec(idxs, vals, length(A))
 end
 
+"""
+    get_data(A::QuantumObject)
+
+Returns the data of a QuantumObject.
+"""
+get_data(A::QuantumObject) = A.data
+
+
 @doc raw"""
     gaussian(x::Number, μ::Number, σ::Number)
 
