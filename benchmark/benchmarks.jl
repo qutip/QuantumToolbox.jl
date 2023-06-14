@@ -37,8 +37,8 @@ mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, progress=false, n_traj=500, saveat=[t
 
 SUITE["timeevolution"] = BenchmarkGroup()
 SUITE["timeevolution"]["liouvillian"] = @benchmarkable liouvillian($H, $c_ops)
-SUITE["timeevolution"]["liouvillian_generalized"] = @benchmarkable liouvillian_generalized($H, fields, γ_list, ω_list, T_list)
-SUITE["timeevolution"]["liouvillian_generalized_trunc"] = @benchmarkable liouvillian_generalized($H, fields, γ_list, ω_list, T_list, N_trunc=10)
+SUITE["timeevolution"]["liouvillian_generalized"] = @benchmarkable liouvillian_generalized($H, $fields, $γ_list, $ω_list, $T_list)
+SUITE["timeevolution"]["liouvillian_generalized_trunc"] = @benchmarkable liouvillian_generalized($H, $fields, $γ_list, $ω_list, $T_list, N_trunc=10)
 SUITE["timeevolution"]["steadystate"] = @benchmarkable steadystate($H, $c_ops)
 SUITE["timeevolution"]["steadystate_floquet"] = @benchmarkable steadystate_floquet($H, $c_ops, -1im * 0.5 * F * $(a+a'), 1im * 0.5 * F * $(a+a'), $ω)
 SUITE["timeevolution"]["mesolve"] = @benchmarkable mesolve($H, $ψ0, $tlist, $c_ops, e_ops=$e_ops, progress=false, saveat=[$tlist[end]])
@@ -110,10 +110,11 @@ a = destroy(10)
 H = a' * a
 c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
 
-spectrum(H, 3, 1000, a', a, c_ops, solver=FFTCorrelation(), 
+ω_list = range(0, 3, length=1000)
+spectrum(H, ω_list, a', a, c_ops, solver=FFTCorrelation(), 
         progress=false, abstol=1e-7, reltol=1e-5) # precompile
-spectrum(H, 3, 1000, a', a, c_ops) # precompile
+spectrum(H, ω_list, a', a, c_ops) # precompile
 
 SUITE["spectrum"] = BenchmarkGroup()
-SUITE["spectrum"]["spectrum_fft"] = @benchmarkable spectrum($H, 3, 1000, $(a'), $a, $c_ops, solver=FFTCorrelation(), progress=false, abstol=1e-7, reltol=1e-5)
-SUITE["spectrum"]["spectrum_exponential_series"] = @benchmarkable spectrum($H, 3, 1000, $(a'), $a, $c_ops)
+SUITE["spectrum"]["spectrum_fft"] = @benchmarkable spectrum($H, $ω_list, $(a'), $a, $c_ops, solver=FFTCorrelation(), progress=false, abstol=1e-7, reltol=1e-5)
+SUITE["spectrum"]["spectrum_exponential_series"] = @benchmarkable spectrum($H, $ω_list, $(a'), $a, $c_ops)

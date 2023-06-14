@@ -48,9 +48,10 @@ function _wigner(ρ::AbstractArray, xvec::AbstractVector{T}, yvec::AbstractVecto
     return _wigner_laguerre(ρ, A, W, g, solver)
 end
 
-function _wigner(ρ::AbstractArray, xvec::AbstractVector, yvec::AbstractVector,
-    g::Real, solver::WignerClenshaw)
+function _wigner(ρ::AbstractArray, xvec::AbstractVector{T}, yvec::AbstractVector{T},
+    g::Real, solver::WignerClenshaw) where {T <: BlasFloat}
     
+    g = convert(T, g)
     M = size(ρ, 1)
     X, Y = meshgrid(xvec, yvec)
     A = g * (X + 1im * Y)
@@ -67,7 +68,7 @@ function _wigner(ρ::AbstractArray, xvec::AbstractVector, yvec::AbstractVector,
         @. W = ρdiag + W * A / √(L + 1)
     end
 
-    return @. real(W) * exp(-B / 2) * (g^2 / (2π))
+    return @. real(W) * exp(-B / 2) * g^2 / 2 / π
 end
 
 function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::AbstractArray, g::Real, solver::WignerLaguerre)
@@ -97,7 +98,7 @@ function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::Abstract
         end
     end
 
-    return @. W * g^2 * exp(-B / 2) / (2π)
+    return @. W * g^2 * exp(-B / 2) / 2 / π
 end
 
 function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray, g::Real, solver::WignerLaguerre)
@@ -121,7 +122,7 @@ function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray,
         end
     end
 
-    return @. W * g^2 * exp(-B / 2) / (2π)
+    return @. W * g^2 * exp(-B / 2) / 2 / π
 end
 
 # function _genlaguerre(n::Int, α::Int, x::T) where {T<:BlasFloat}

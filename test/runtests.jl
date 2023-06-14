@@ -522,7 +522,7 @@ end
     H = a' * a
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
 
-    ω_l = range(0, 3, 1000)
+    ω_l = range(0, 3, length=1000)
     ω_l1, spec1 = spectrum(H, ω_l, a', a, c_ops, solver=FFTCorrelation(), progress=false, abstol=1e-7, reltol=1e-5)
     ω_l2, spec2 = spectrum(H, ω_l, a', a, c_ops)
     spec1 = spec1 ./ maximum(spec1)
