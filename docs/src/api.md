@@ -41,6 +41,9 @@ expect
 wigner
 get_coherence
 n_th
+get_data
+mat2vec
+vec2mat
 ```
 
 ## [Quantum states, operators and super-operators](@id API: Quantum states, operators and super-operators)
@@ -70,14 +73,16 @@ cosm
 ## [Time evolution](@id API: Time evolution)
 
 ```@docs
-liouvillian
-liouvillian_generalized
+sesolveProblem
+mesolveProblem
 sesolve
 mesolve
 mcsolve
 dfd_mesolve
 dsf_mesolve
 dsf_mcsolve
+liouvillian
+liouvillian_generalized
 ```
 
 ## [Correlations and Spectrum](@id API: Correlations and Spectrum)

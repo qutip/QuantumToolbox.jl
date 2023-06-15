@@ -31,12 +31,14 @@ export destroy, create, eye, projection, rand_dm
 export sinm, cosm
 export expect
 export WignerClenshaw, WignerLaguerre, wigner
-export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid, sparse_to_dense, dense_to_sparse, get_data
+export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid, sparse_to_dense, dense_to_sparse
+export get_data, mat2vec, vec2mat
 export ptrace, entropy_vn, entanglement
 export get_coherence, n_th
+export sesolveProblem, mesolveProblem
 export mesolve, mcsolve, sesolve
 export dfd_mesolve, dsf_mesolve, dsf_mcsolve
-export liouvillian, liouvillian_floquet, liouvillian_generalized, steadystate, steadystate_floquet, arnoldi_lindblad
+export liouvillian, liouvillian_floquet, liouvillian_generalized, steadystate, steadystate_floquet
 export LiouvillianDirectSolver, SteadyStateDirectSolver
 export bdf, get_bdf_blocks
 export FFTCorrelation, ExponentialSeries

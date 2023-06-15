@@ -23,6 +23,8 @@ Converts a sparse QuantumObject to a dense QuantumObject.
 """
 sparse_to_dense(A::QuantumObject{<:AbstractArray{T}}) where T = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
 sparse_to_dense(A::AbstractSparseArray) = Array(A)
+sparse_to_dense(A::Adjoint{T, <:AbstractMatrix}) where {T<:BlasFloat} = Array(A)
+sparse_to_dense(A::Transpose{T, <:AbstractMatrix}) where {T<:BlasFloat} = Array(A)
 sparse_to_dense(A::AbstractArray) = A
 
 """
@@ -50,6 +52,24 @@ end
 Returns the data of a QuantumObject.
 """
 get_data(A::QuantumObject) = A.data
+
+
+"""
+    mat2vec(A::AbstractMatrix)
+
+Converts a matrix to a vector.
+"""
+mat2vec(A::AbstractMatrix) = reshape(A, :)
+
+"""
+    vec2mat(A::AbstractVector)
+
+Converts a vector to a matrix.
+"""
+function vec2mat(A::AbstractVector)
+    newsize = isqrt(length(A))
+    reshape(A, newsize, newsize)
+end
 
 
 @doc raw"""

@@ -68,9 +68,9 @@ function QuantumObject(A::AbstractVector{T}; type::Type{ObjType}=KetQuantumObjec
 
     dims === nothing ? dims = [length(A)] : nothing
     prod(dims) != length(A) && throw(DimensionMismatch("The dims parameter does not fit the dimension of the Vector."))
-    if !(norm(A) ≈ 1)
-        @warn "The norm of the input data is not one."
-    end
+    # if !(norm(A) ≈ 1)
+    #     @warn "The norm of the input data is not one."
+    # end
     ObjType <: KetQuantumObject ? QuantumObject(A, type, dims) : QuantumObject(transpose(A), type, dims)
 end
 

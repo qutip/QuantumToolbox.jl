@@ -4,7 +4,7 @@ using Test
 
 @testset "QuantumObjects" begin
     a = rand(ComplexF64, 10)
-    @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
+    # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
     a2 = QuantumObject(a, type=BraQuantumObject)
     a3 = QuantumObject(a, type=KetQuantumObject)
     @test isket(a2) == false
@@ -204,11 +204,11 @@ end
     psi0_2 = normalize(fock(2, 0) + fock(2, 1))
     psi0 = kron(psi0_1, psi0_2)
     t_l = LinRange(0, 20 / γ1, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], alg=LinearExponential(krylov=:adaptive, m=15), progress=false)
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], 
+    alg=LinearExponential(krylov=:adaptive, m=20), saveat=[t_l[300]], progress=false)
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
     @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
-
-    @test expect(sp1 * sm1, sol_me.states[300]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[300], [1]))
+    @test expect(sp1 * sm1, sol_me.states[1]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[1], [1]))
 end
 
 @testset "Dynamical Fock Dimension mesolve" begin
@@ -222,7 +222,7 @@ end
     c_ops0 = [√κ * a0]
     e_ops0 = [a0' * a0]
     ψ00 = fock(N0, 0)
-    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, alg=Vern7(), progress=false, saveat=[t_l[end]])
+    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, progress=false)
 
     function H_dfd(dims::AbstractVector)
         a = destroy(dims[1])
@@ -239,7 +239,7 @@ end
     maxdims = [150]
     ψ0 = fock(3, 0)
     sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, e_ops_dfd, maxdims, progress=false,
-        saveat=[t_l[end]], abstol=1e-9, reltol=1e-7)
+            abstol=1e-9, reltol=1e-7)
 
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
 
@@ -293,7 +293,7 @@ end
     
     α0 = 1.5
     ρ0   = coherent(N0, α0)
-    sol0 = mesolve(H0, ρ0, tlist, c_ops0, e_ops=[a0'*a0, a0], progress=false, abstol=1e-8, reltol=1e-5, saveat = [tlist[end]])
+    sol0 = mesolve(H0, ρ0, tlist, c_ops0, e_ops=[a0'*a0, a0], progress=false)
 
     N = 5
     a        = destroy(N)
@@ -313,8 +313,8 @@ end
     ψ0  = fock(N, 0)
     α0_l = [α0]
     
-    sol_dsf_me = dsf_mesolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, abstol=1e-8, reltol=1e-5, saveat=[tlist[end]])
-    sol_dsf_mc = dsf_mcsolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, n_traj=500, saveat=[tlist[end]], abstol=1e-8, reltol=1e-6)
+    sol_dsf_me = dsf_mesolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false)
+    sol_dsf_mc = dsf_mcsolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, n_traj=500)
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.05
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.05
 
@@ -333,7 +333,7 @@ end
     c_ops0 = [√κ*a10, √κ*a20]
 
     ρ0   = kron(coherent(N0, α0), coherent(N0, α0))
-    sol0 = mesolve(H0, ρ0, tlist, c_ops0, e_ops=[a10'*a10, a20'*a20], progress=false, abstol=1e-7, reltol=1e-5, saveat=[tlist[end]])
+    sol0 = mesolve(H0, ρ0, tlist, c_ops0, e_ops=[a10'*a10, a20'*a20], progress=false)
 
     N = 5
     a1 = kron(destroy(N), eye(N))
@@ -354,8 +354,8 @@ end
     ψ0  = kron(fock(N, 0), fock(N, 0))
     α0_l = [α0, α0]
 
-    sol_dsf_me = dsf_mesolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, saveat = [tlist[end]], abstol=1e-9, reltol=1e-7)
-    sol_dsf_mc = dsf_mcsolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, n_traj=500, saveat=[tlist[end]], abstol=1e-9, reltol=1e-7)
+    sol_dsf_me = dsf_mesolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, abstol=1e-9, reltol=1e-7)
+    sol_dsf_mc = dsf_mcsolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, n_traj=500, abstol=1e-9, reltol=1e-7)
 
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.05
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.05
@@ -523,7 +523,7 @@ end
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
 
     ω_l = range(0, 3, length=1000)
-    ω_l1, spec1 = spectrum(H, ω_l, a', a, c_ops, solver=FFTCorrelation(), progress=false, abstol=1e-7, reltol=1e-5)
+    ω_l1, spec1 = spectrum(H, ω_l, a', a, c_ops, solver=FFTCorrelation(), progress=false)
     ω_l2, spec2 = spectrum(H, ω_l, a', a, c_ops)
     spec1 = spec1 ./ maximum(spec1)
     spec2 = spec2 ./ maximum(spec2)
