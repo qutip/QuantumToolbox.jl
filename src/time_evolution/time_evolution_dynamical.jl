@@ -404,6 +404,54 @@ function _DSF_mcsolve_Affect!(integrator)
     integrator.u = U.data' * integrator.u
 end
 
+
+
+function LindbladJumpAffect2!(integrator)
+    ψ = integrator.u
+    internal_params = integrator.p[1]
+    c_ops = internal_params["c_ops"]
+
+    if length(c_ops) == 1
+        integrator.u = normalize!(c_ops[1] * ψ)
+    else
+        collaps_idx = 1
+        r2 = rand()
+        dp = 0
+        c_op_ψ_l = Vector{Float64}(undef, length(c_ops))
+        @inbounds for i in eachindex(c_ops)
+            c_op_ψ = c_ops[i] * ψ
+            res = real(dot(c_op_ψ, c_op_ψ))
+            c_op_ψ_l[i] = res
+            dp += res
+        end
+        prob = 0
+        @inbounds for i in eachindex(c_ops)
+            res = c_op_ψ_l[i]
+            prob += res / dp
+            if prob >= r2
+                collaps_idx = i
+                break
+            end
+        end
+        integrator.u = normalize!(c_ops[collaps_idx] * ψ)
+    end
+    integrator.p[1]["random_n"] = rand()
+end
+
+function ContinuousLindbladJumpCallback2(interp_points::Int=0; affect_func::Function=LindbladJumpAffect2!)
+    LindbladJumpCondition(u, t, integrator) = integrator.p[1]["random_n"] - real(dot(u, u))
+
+    ContinuousCallback(LindbladJumpCondition, affect_func, nothing, interp_points=interp_points, save_positions=(false, false))
+end
+
+function DiscreteLindbladJumpCallback2(;affect_func::Function=LindbladJumpAffect2!)
+    LindbladJumpCondition(u, t, integrator) = real(dot(u, u)) < integrator.p[1]["random_n"]
+
+    DiscreteCallback(LindbladJumpCondition, affect_func, save_positions=(false, false))
+end
+
+
+
 """
     dsf_mcsolve(H::Function, α0_l::Vector{<:Number},
         δ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
@@ -500,7 +548,7 @@ function dsf_mcsolve(H::Function, α0_l::Vector{<:Number},
 
     cb1 = FunctionCallingCallback(_save_func_mcsolve_dsf, funcat=t_l)
     cb2 = DiscreteCallback(_DSF_mcsolve_Condition, _DSF_mcsolve_Affect!, save_positions=(false,false))
-    cb3 = jump_interp_pts == -1 ? DiscreteLindbladJumpCallback(affect_func=LindbladJumpAffect_dsf!) : ContinuousLindbladJumpCallback(jump_interp_pts, affect_func=LindbladJumpAffect_dsf!)
+    cb3 = jump_interp_pts == -1 ? DiscreteLindbladJumpCallback2(affect_func=LindbladJumpAffect_dsf!) : ContinuousLindbladJumpCallback2(jump_interp_pts, affect_func=LindbladJumpAffect_dsf!)
     cb4 = AutoAbstol(false; init_curmax=0.0)
     cb = CallbackSet(cb1, cb2, cb3, cb4, callbacks...)
 
@@ -510,9 +558,9 @@ function dsf_mcsolve(H::Function, α0_l::Vector{<:Number},
 
     put!(channel, false)
 
-    e_ops_len == 0 && return TimeEvolutionSol(t_l, sol.u, [])
+    e_ops_len == 0 && return TimeEvolutionSol(Vector{Float64}(t_l), sol.u, [])
 
-    e_ops_expect = sum(sol.u, dims=3) ./ n_traj
+    e_ops_expect = dropdims(sum(sol.u, dims=3), dims=3) ./ n_traj
 
-    return TimeEvolutionSol(t_l, [], e_ops_expect)
+    return TimeEvolutionSol(Vector{Float64}(t_l), [], e_ops_expect)
 end

@@ -75,6 +75,8 @@ cosm
 ```@docs
 sesolveProblem
 mesolveProblem
+mcsolveProblem
+mcsolveEnsembleProblem
 sesolve
 mesolve
 mcsolve
@@ -83,6 +85,7 @@ dsf_mesolve
 dsf_mcsolve
 liouvillian
 liouvillian_generalized
+steadystate_floquet
 ```
 
 ## [Correlations and Spectrum](@id API: Correlations and Spectrum)

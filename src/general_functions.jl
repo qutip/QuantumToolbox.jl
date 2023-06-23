@@ -21,10 +21,11 @@ end
 
 Converts a sparse QuantumObject to a dense QuantumObject.
 """
-sparse_to_dense(A::QuantumObject{<:AbstractArray{T}}) where T = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
+sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
 sparse_to_dense(A::AbstractSparseArray) = Array(A)
-sparse_to_dense(A::Adjoint{T, <:AbstractMatrix}) where {T<:BlasFloat} = Array(A)
-sparse_to_dense(A::Transpose{T, <:AbstractMatrix}) where {T<:BlasFloat} = Array(A)
+for op in (:Transpose, :Adjoint)
+    @eval sparse_to_dense(A::$op{T, <:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
+end
 sparse_to_dense(A::AbstractArray) = A
 
 """
@@ -32,7 +33,7 @@ sparse_to_dense(A::AbstractArray) = A
 
 Converts a dense QuantumObject to a sparse QuantumObject.
 """
-dense_to_sparse(A::QuantumObject{<:AbstractArray{T}}, tol::Real=1e-10) where T = QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
+dense_to_sparse(A::QuantumObject{<:AbstractVecOrMat}, tol::Real=1e-10) = QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
 function dense_to_sparse(A::AbstractMatrix, tol::Real=1e-10)
     idxs = findall(abs.(A) .> tol)
     row_indices = getindex.(idxs, 1)
@@ -40,7 +41,7 @@ function dense_to_sparse(A::AbstractMatrix, tol::Real=1e-10)
     vals = getindex(A, idxs)
     return sparse(row_indices, col_indices, vals, size(A)...)
 end
-function dense_to_sparse(A::Vector, tol::Real=1e-10)
+function dense_to_sparse(A::AbstractVector, tol::Real=1e-10)
     idxs = findall(abs.(A) .> tol)
     vals = getindex(A, idxs)
     return sparsevec(idxs, vals, length(A))
@@ -59,7 +60,16 @@ get_data(A::QuantumObject) = A.data
 
 Converts a matrix to a vector.
 """
-mat2vec(A::AbstractMatrix) = reshape(A, :)
+mat2vec(A::AbstractMatrix) = vec(A) # reshape(A, :)
+function mat2vec(A::AbstractSparseMatrix)
+    i, j, v = findnz(A)
+    return sparsevec(i .+ (j .- 1) .* size(A, 1), v, prod(size(A)))
+end
+for op in (:Transpose, :Adjoint)
+    @eval mat2vec(A::$op{T, <:AbstractSparseMatrix}) where {T<:BlasFloat} = mat2vec(sparse(A))
+    @eval mat2vec(A::$op{T, <:AbstractMatrix}) where {T<:BlasFloat} = mat2vec(Matrix(A))
+end
+
 
 """
     vec2mat(A::AbstractVector)
@@ -250,12 +260,12 @@ true
 function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2}
     ψd = ψ.data
     Od = O.data
-    return ishermitian(O) ? real(dot(ψd, Od * ψd)) : dot(ψd, Od * ψd)
+    return ishermitian(O) ? real(dot(ψd, Od, ψd)) : dot(ψd, Od, ψd)
 end
 function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T2},BraQuantumObject}) where {T1,T2}
     ψd = ψ.data'
     Od = O.data
-    return ishermitian(O) ? real(dot(ψd, Od * ψd)) : dot(ψd, Od * ψd)
+    return ishermitian(O) ? real(dot(ψd, Od, ψd)) : dot(ψd, Od, ψd)
 end
 function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2}
     return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)

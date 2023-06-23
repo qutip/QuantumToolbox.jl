@@ -6,421 +6,428 @@ end
 abstract type SteadyStateSolver end
 abstract type SteadyStateDirectSolver <: SteadyStateSolver end
 
-struct TimeEvolutionSol
-    times::AbstractVector
-    states::AbstractArray
-    expect::AbstractArray
+struct TimeEvolutionSol{TT<:Vector{<:Real}, TS<:AbstractVector, TE<:Matrix{ComplexF64}}
+    times::TT
+    states::TS
+    expect::TE
+end
+
+struct TimeEvolutionMCSol{TT<:AbstractVector, TS<:AbstractVector, TE<:Matrix{ComplexF64}, 
+                TEA<:Array{ComplexF64, 3}, TJT<:AbstractVector, TJW<:AbstractVector}
+    times::TT
+    states::TS
+    expect::TE
+    expect_all::TEA
+    jump_times::TJT
+    jump_which::TJW
 end
 
 LiouvillianDirectSolver(;tol=1e-14) = LiouvillianDirectSolver(tol)
 
-mutable struct SesolveParams{LT<:AbstractArray, TE<:AbstractArray, T<:BlasFloat}
-    U::LT # Liouvillian
-    e_ops::Vector{TE} # expectation operators
-    expvals::Matrix{T} # expectation values
-    progr::Progress # progress bar
-end
-
-mutable struct MesolveParams{LT<:AbstractArray, TE<:AbstractArray, T<:BlasFloat}
-    L::LT # Liouvillian
-    e_ops::Vector{TE} # expectation operators
-    expvals::Matrix{T} # expectation values
-    progr::Progress # progress bar
-end
-
-function _save_func_sesolve(u, t, integrator)
-    internal_params = integrator.p[1]
-    progr = internal_params.progr
-    e_ops = internal_params.e_ops
-    expvals = internal_params.expvals
+function _save_func_sesolve(integrator)
+    internal_params = integrator.p
+    progr = internal_params[:progr]
+    e_ops = internal_params[:e_ops]
+    expvals = internal_params[:expvals]
 
     if !isempty(e_ops)
-        _expect = op -> dot(u, op, u)
-        @. expvals[:, progr.counter+1] = _expect(e_ops)
+        ψ = integrator.u
+        _expect = op -> dot(ψ, op, ψ)
+        @. expvals[:, progr.counter+1] = _expect.(e_ops)
     end
     next!(progr)
+    u_modified!(integrator, false)
 end
 
-function _save_func_mesolve(u, t, integrator)
-    internal_params = integrator.p[1]
-    progr = internal_params.progr
-    e_ops = internal_params.e_ops
-    expvals = internal_params.expvals
+function _save_func_mesolve(integrator)
+    internal_params = integrator.p
+    progr = internal_params[:progr]
+    e_ops = internal_params[:e_ops]
+    expvals = internal_params[:expvals]
 
     if !isempty(e_ops)
         # This is equivalent to tr(op * ρ), when both are matrices.
         # The advantage of using this convention is that I don't need
         # to reshape u to make it a matrix, but I reshape the e_ops once.
-        # Attention! dot(u, op) is different from dot(op, u), since this function
-        # automatically conjugates the left vector, which leads to wrong results for
-        # non-hermitian operators.
         
-        _expect = op -> dot(op, u)
-        @. expvals[:, progr.counter+1] = _expect(e_ops)
+        ρ = integrator.u
+        _expect = op -> dot(op, ρ)
+        @. expvals[:, progr.counter+1] = _expect.(e_ops)
     end
     next!(progr)
+    u_modified!(integrator, false)
 end
 
-function _save_func_mcsolve(u, t, integrator)
-    internal_params = integrator.p[1]
-    save_it = internal_params["save_it"]
-    e_ops = internal_params["e_ops"]
-    expvals = internal_params["expvals"]
-    ψ = normalize(u)
-    expvals[:, save_it[]+1] .= map(op -> dot(ψ, op.data, ψ), e_ops)
-    save_it[]+=1
+function _save_func_mcsolve(integrator)
+    internal_params = integrator.p
+    save_it = internal_params[:save_it]
+    e_ops = internal_params[:e_ops]
+    expvals = internal_params[:expvals]
+    cache_mc = internal_params[:cache_mc]
+
+    if !isempty(e_ops)
+        cache_mc .= integrator.u
+        normalize!(cache_mc)
+        ψ = cache_mc
+        _expect = op -> dot(ψ, op, ψ)
+        @. expvals[:, save_it[]+1] = _expect.(e_ops)
+    end
+    save_it[] += 1
+    u_modified!(integrator, false)
 end
 
 function LindbladJumpAffect!(integrator)
+    internal_params = integrator.p
+    c_ops = internal_params[:c_ops]
+    cache_mc = internal_params[:cache_mc]
+    weights_mc = internal_params[:weights_mc]
+    cumsum_weights_mc = internal_params[:cumsum_weights_mc]
+    random_n = internal_params[:random_n]
+    jump_times = internal_params[:jump_times]
+    jump_which = internal_params[:jump_which]
     ψ = integrator.u
-    internal_params = integrator.p[1]
-    c_ops = internal_params["c_ops"]
 
-    if length(c_ops) == 1
-        integrator.u = normalize!(c_ops[1] * ψ)
-    else
-        collaps_idx = 1
-        r2 = rand()
-        dp = 0
-        c_op_ψ_l = Vector{Float64}(undef, length(c_ops))
-        @inbounds for i in eachindex(c_ops)
-            c_op_ψ = c_ops[i] * ψ
-            res = real(dot(c_op_ψ, c_op_ψ))
-            c_op_ψ_l[i] = res
-            dp += res
-        end
-        prob = 0
-        @inbounds for i in eachindex(c_ops)
-            res = c_op_ψ_l[i]
-            prob += res / dp
-            if prob >= r2
-                collaps_idx = i
-                break
-            end
-        end
-        integrator.u = normalize!(c_ops[collaps_idx] * ψ)
+    @inbounds for i in eachindex(weights_mc)
+        mul!(cache_mc, c_ops[i], ψ)
+        weights_mc[i] = real(dot(cache_mc, cache_mc))
     end
-    integrator.p[1]["random_n"] = rand()
+    cumsum!(cumsum_weights_mc, weights_mc)
+    collaps_idx = getindex(1:length(weights_mc), findfirst(>(rand()*sum(weights_mc)), cumsum_weights_mc))
+    mul!(cache_mc, c_ops[collaps_idx], ψ)
+    normalize!(cache_mc)
+    integrator.u .= cache_mc
+
+    push!(jump_times, integrator.t)
+    push!(jump_which, collaps_idx)
+    random_n[] = rand()
 end
 
 function ContinuousLindbladJumpCallback(interp_points::Int=0; affect_func::Function=LindbladJumpAffect!)
-    LindbladJumpCondition(u, t, integrator) = integrator.p[1]["random_n"] - norm(u)^2
+    LindbladJumpCondition(u, t, integrator) = integrator.p[:random_n][] - real(dot(u, u))
 
     ContinuousCallback(LindbladJumpCondition, affect_func, nothing, interp_points=interp_points, save_positions=(false, false))
 end
 
 function DiscreteLindbladJumpCallback(;affect_func::Function=LindbladJumpAffect!)
-    LindbladJumpCondition(u, t, integrator) = norm(u)^2 < integrator.p[1]["random_n"]
+    LindbladJumpCondition(u, t, integrator) = real(dot(u, u)) < integrator.p[:random_n][]
 
     DiscreteCallback(LindbladJumpCondition, affect_func, save_positions=(false, false))
 end
 
+function _mcsolve_prob_func(prob, i, repeat)
+    internal_params = prob.p
+
+    prm = merge(internal_params, (U = deepcopy(internal_params[:U]), expvals = similar(internal_params[:expvals]), 
+                cache_mc = similar(internal_params[:cache_mc]), weights_mc = similar(internal_params[:weights_mc]), 
+                cumsum_weights_mc = similar(internal_params[:weights_mc]), random_n = Ref(rand()), save_it = Ref{Int32}(0),
+                :jump_times => similar(internal_params[:jump_times]), :jump_which => similar(internal_params[:jump_which])))
+
+    remake(prob, p=prm)
+end
+
+function _mcsolve_output_func(sol, i)
+    internal_params = sol.prob.p
+    put!(internal_params[:progr_channel], true)
+    (sol, false)
+end
+
+function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
+    sol_i = sol[i]
+    expvals_all[i, :, :] .= sol_i.prob.p[:expvals]
+    push!(times, sol_i.t)
+    push!(states, sol_i.u)
+    push!(jump_times, sol_i.prob.p[:jump_times])
+    push!(jump_which, sol_i.prob.p[:jump_which])
+end
+
+
+
+
+
+#######################################
+
+
+
 """
     sesolveProblem(H::QuantumObject,
     ψ0::QuantumObject,
-    t_l::AbstractVector,
-    alg;
+    t_l::AbstractVector;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7()
     e_ops::AbstractVector=[],
     H_t::Union{Nothing,Function}=nothing,
-    params::AbstractVector=[],
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
     progress::Bool=true,
     kwargs...)
 
 Generates the ODEProblem for the Schrödinger time evolution of a quantum system.
+
+# Arguments
+- `H::QuantumObject`: The Hamiltonian of the system.
+- `ψ0::QuantumObject`: The initial state of the system.
+- `t_l::AbstractVector`: The time list of the evolution.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
+- `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
+- `H_t::Union{Nothing,Function}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
+- `params::Dict{Symbol, Any}`: The parameters of the system.
+- `progress::Bool`: Whether to show the progress bar.
+- `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+
+# Returns
+- `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
 """
 function sesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-    t_l::AbstractVector,
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAdaptiveAlgorithm;
-    e_ops::AbstractVector=[],
-    H_t::Union{Nothing,Function}=nothing,
-    params::AbstractVector=[],
-    progress::Bool=true,
-    kwargs...) where {T1,T2}
-
-    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-
-    is_time_dependent = !(H_t === nothing)
-
-    ϕ0 = get_data(ψ0)
-    U = -1im * H.data
-
-    progr = Progress(length(t_l), showspeed=true, enabled=progress)
-    expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = get_data.(e_ops)
-    p = [SesolveParams(U, e_ops2, expvals, progr), params...]
-
-    cb1 = FunctionCallingCallback(_save_func_sesolve, funcat=t_l)
-    if haskey(kwargs, :callback)
-        kwargs2 = merge(kwargs, Dict(:callback => CallbackSet(cb1, kwargs[:callback])))
-    else
-        kwargs2 = merge(kwargs, Dict(:callback => cb1))
-    end
-    !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, Dict(:abstol => 1e-7)))
-    !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, Dict(:reltol => 1e-5)))
-    !haskey(kwargs2, :saveat) && (kwargs2 = merge(kwargs2, Dict(:saveat => [t_l[end]])))
-
-    tspan = (t_l[1], t_l[end])
-    if !is_time_dependent
-        dudt! = (du, u, p, t) -> mul!(du, p[1].U, u)
-    else
-        dudt! = (du, u, p, t) -> mul!(du, p[1].U - 1im * H_t(t).data, u)
-    end
-
-    ODEProblem(dudt!, ϕ0, tspan, p; kwargs2...)
-end
-
-function sesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-    t_l::AbstractVector,
-    alg::OrdinaryDiffEq.OrdinaryDiffEqExponentialAlgorithm;
-    e_ops::AbstractVector=[],
-    H_t::Union{Nothing,Function}=nothing,
-    params::AbstractVector=[],
-    progress::Bool=true,
-    kwargs...) where {T1,T2}
-
-    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-
-    is_time_dependent = !(H_t === nothing)
-    is_time_dependent && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
-
-    ϕ0 = get_data(ψ0)
-    U = -1im * H.data
-
-    progr = Progress(length(t_l), showspeed=true, enabled=progress)
-    expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = get_data.(e_ops)
-    p = [SesolveParams(U, e_ops2, expvals, progr), params...]
-
-    cb1 = FunctionCallingCallback(_save_func_sesolve, funcat=t_l)
-    if haskey(kwargs, :callback)
-        kwargs2 = merge(kwargs, Dict(:callback => CallbackSet(cb1, kwargs[:callback])))
-    else
-        kwargs2 = merge(kwargs, Dict(:callback => cb1))
-    end
-    kwargs2 = merge(kwargs2, Dict(:dt => t_l[2] - t_l[1]))
-    !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, Dict(:abstol => 1e-7)))
-    !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, Dict(:reltol => 1e-5)))
-    !haskey(kwargs2, :saveat) && (kwargs2 = merge(kwargs2, Dict(:saveat => [t_l[end]])))
-
-    tspan = (t_l[1], t_l[end])
-    A = DiffEqArrayOperator(U)
-    ODEProblem(A, ϕ0, tspan, p; kwargs2...)
-end
-
-"""
-    mesolveProblem(H::QuantumObject,
-    ψ0::QuantumObject,
-    t_l::AbstractVector, c_ops::AbstractVector,
-    alg;
-    e_ops::AbstractVector=[],
-    H_t::Union{Nothing,Function}=nothing,
-    params::AbstractVector=[],
-    progress::Bool=true,
-    kwargs...)
-
-Generates the ODEProblem for the master equation time evolution of an open quantum system.
-"""
-function mesolveProblem(H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
-    t_l::AbstractVector, c_ops::AbstractVector,
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAdaptiveAlgorithm;
-    e_ops::AbstractVector=[],
-    H_t::Union{Nothing,Function}=nothing,
-    params::AbstractVector=[],
-    progress::Bool=true,
-    kwargs...) where {T1,T2,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-
-    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-
-    is_time_dependent = !(H_t === nothing)
-
-    ρ0 = isket(ψ0) ? mat2vec(ket2dm(ψ0).data) : mat2vec(ψ0.data)
-    L = liouvillian(H, c_ops).data
-
-    progr = Progress(length(t_l), showspeed=true, enabled=progress)
-    expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = isempty(e_ops) ? Vector{Vector}([]) : map(op -> mat2vec(sparse_to_dense(get_data(op)')), e_ops)
-    p = [MesolveParams(L, e_ops2, expvals, progr), params...]
-
-    cb1 = FunctionCallingCallback(_save_func_mesolve, funcat=t_l)
-    if haskey(kwargs, :callback)
-        kwargs2 = merge(kwargs, Dict(:callback => CallbackSet(cb1, kwargs[:callback])))
-    else
-        kwargs2 = merge(kwargs, Dict(:callback => cb1))
-    end
-    !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, Dict(:abstol => 1e-7)))
-    !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, Dict(:reltol => 1e-5)))
-    !haskey(kwargs2, :saveat) && (kwargs2 = merge(kwargs2, Dict(:saveat => [t_l[end]])))
-
-    tspan = (t_l[1], t_l[end])
-    if !is_time_dependent
-        dudt! = (du, u, p, t) -> mul!(du, p[1].L, u)
-    else
-        if isoper(H_t(0.0))
-            @warn string("To speed up the calculation, it is always better to define ",
-                "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog = 1
-            dudt! = (du, u, p, t) -> mul!(du, p[1].L + liouvillian(H_t(t)).data, u)
-        else
-            dudt! = (du, u, p, t) -> mul!(du, p[1].L + H_t(t).data, u)
-        end
-    end
-    
-    ODEProblem(dudt!, ρ0, tspan, p; kwargs2...)
-end
-
-function mesolveProblem(H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
-    t_l::AbstractVector, c_ops::AbstractVector,
-    alg::OrdinaryDiffEq.OrdinaryDiffEqExponentialAlgorithm;
-    e_ops::AbstractVector=[],
-    H_t::Union{Nothing,Function}=nothing,
-    params::AbstractVector=[],
-    progress::Bool=true,
-    kwargs...) where {T1,T2,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-
-    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-
-    is_time_dependent = !(H_t === nothing)
-    is_time_dependent && error("The Liouvillian must to be time independent when using LinearExponential algorith.")
-
-    ρ0 = isket(ψ0) ? mat2vec(ket2dm(ψ0).data) : mat2vec(ψ0.data)
-    L = liouvillian(H, c_ops).data
-
-    progr = Progress(length(t_l), showspeed=true, enabled=progress)
-    expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = map(op -> mat2vec(sparse_to_dense(get_data(op))), e_ops)
-    p = [MesolveParams(L, e_ops2, expvals, progr), params...]
-
-    cb1 = FunctionCallingCallback(_save_func_mesolve, funcat=t_l)
-    if haskey(kwargs, :callback)
-        kwargs2 = merge(kwargs, Dict(:callback => CallbackSet(cb1, kwargs[:callback])))
-    else
-        kwargs2 = merge(kwargs, Dict(:callback => cb1))
-    end
-    kwargs2 = merge(kwargs2, Dict(:dt => t_l[2] - t_l[1]))
-    !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, Dict(:abstol => 1e-7)))
-    !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, Dict(:reltol => 1e-5)))
-    !haskey(kwargs2, :saveat) && (kwargs2 = merge(kwargs2, Dict(:saveat => [t_l[end]])))
-
-    tspan = (t_l[1], t_l[end])
-    A = DiffEqArrayOperator(L)
-    ODEProblem(A, ρ0, tspan, p; kwargs2...)
-end
-
-
-
-
-"""
-    sesolve(H::QuantumObject,
-                ψ0::QuantumObject,
-                t_l::AbstractVector;
-                alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
-                e_ops::AbstractVector=[], 
-                H_t=nothing, 
-                params::AbstractVector=[],
-                progress::Bool=true,
-                callbacks=[],
-                kwargs...)
-
-Time evolution of a closed quantum system using the Schrödinger equation.
-"""
-function sesolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
     e_ops::AbstractVector=[],
     H_t::Union{Nothing,Function}=nothing,
-    params::AbstractVector=[],
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
     progress::Bool=true,
     kwargs...) where {T1,T2}
 
-    prob = sesolveProblem(H, ψ0, t_l, alg; e_ops=e_ops,
-            H_t=H_t, params=params, progress=progress, kwargs...)
-    sol = solve(prob, alg)
+    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
 
-    ψt = length(sol.u[1]) == prod(H.dims) ? map(ϕ -> QuantumObject(ϕ, dims=H.dims), sol.u) : sol.u
+    is_time_dependent = !(H_t === nothing)
 
-    return TimeEvolutionSol(sol.t, ψt, sol.prob.p[1].expvals)
+    ϕ0 = get_data(ψ0)
+    U = -1im * get_data(H)
+
+    progr = Progress(length(t_l), showspeed=true, enabled=progress)
+    expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
+    e_ops2 = isempty(e_ops) ? Vector{Vector}([]) : get_data.(e_ops)
+    p = merge((U = U, e_ops = e_ops2, expvals = expvals, progr = progr), params)
+
+    kwargs2 = kwargs
+    if !isempty(e_ops) || progress
+        cb1 = PresetTimeCallback(t_l, _save_func_sesolve, save_positions=(false, false))
+        kwargs2 = merge(kwargs2, haskey(kwargs2, :callback) ? 
+                    Dict(:callback => CallbackSet(cb1, kwargs2[:callback])) : Dict(:callback => cb1))
+    end
+    !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, Dict(:abstol => 1e-7)))
+    !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, Dict(:reltol => 1e-5)))
+    !haskey(kwargs2, :saveat) && (kwargs2 = merge(kwargs2, Dict(:saveat => [t_l[end]])))
+
+    tspan = (t_l[1], t_l[end])
+
+    if isa(alg, OrdinaryDiffEq.OrdinaryDiffEqExponentialAlgorithm)
+        is_time_dependent && error("The Liouvillian must be time independent when using LinearExponential algorithm.")
+        kwargs2 = merge(kwargs2, Dict(:dt => t_l[2] - t_l[1]))
+        A = DiffEqArrayOperator(U)
+
+        return ODEProblem(A, ϕ0, tspan, p; kwargs2...)
+    else
+        if !is_time_dependent
+            dudt! = (du, u, p, t) -> mul!(du, p[:U], u)
+        else
+            dudt! = (du, u, p, t) -> mul!(du, p[:U] - 1im * H_t(t).data, u)
+        end
+
+        return ODEProblem(dudt!, ϕ0, tspan, p; kwargs2...)
+    end
 end
 
-"""
-    mesolve(H::QuantumObject,
-            ψ0::QuantumObject,
-            t_l::AbstractVector, c_ops::AbstractVector=[]; 
-            alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
-            e_ops::AbstractVector=[], 
-            H_t=nothing, 
-            params::AbstractVector=[],
-            progress::Bool = true,
-            callbacks = [],
-            kwargs...)
 
-Time evolution of an open quantum system using master equation.
 """
-function mesolve(H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    mesolveProblem(H::QuantumObject,
+    ψ0::QuantumObject,
     t_l::AbstractVector, c_ops::AbstractVector=[];
-    alg::OrdinaryDiffEqAlgorithm=Vern7(),
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
     e_ops::AbstractVector=[],
     H_t::Union{Nothing,Function}=nothing,
-    params::AbstractVector=[],
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    progress::Bool=true,
+    kwargs...)
+
+Generates the ODEProblem for the master equation time evolution of an open quantum system.
+
+# Arguments
+- `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
+- `ψ0::QuantumObject`: The initial state of the system.
+- `t_l::AbstractVector`: The time list of the evolution.
+- `c_ops::AbstractVector=[]`: The list of the collapse operators.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7()`: The algorithm used for the time evolution.
+- `e_ops::AbstractVector=[]`: The list of the operators for which the expectation values are calculated.
+- `H_t::Union{Nothing,Function}=nothing`: The time-dependent Hamiltonian or Liouvillian.
+- `params::Dict{Symbol, Any}=Dict{Symbol, Any}()`: The parameters of the time evolution.
+- `progress::Bool=true`: Whether to show the progress bar.
+- `kwargs...`: The keyword arguments for the ODEProblem.
+
+# Returns
+- `prob::ODEProblem`: The ODEProblem for the master equation time evolution.
+"""
+function mesolveProblem(H::QuantumObject{<:AbstractArray{T1},HOpType},
+    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    t_l::AbstractVector, c_ops::AbstractVector=[];
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::AbstractVector=[],
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
     progress::Bool=true,
     kwargs...) where {T1,T2,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
 
-    prob = mesolveProblem(H, ψ0, t_l, c_ops, alg; e_ops=e_ops,
-            H_t=H_t, params=params, progress=progress, kwargs...)
-    sol = solve(prob, alg)
+    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
 
-    ρt = length(sol.u[1]) == prod(H.dims)^2 ? map(ϕ -> QuantumObject(reshape(ϕ, prod(H.dims), prod(H.dims)), dims=H.dims), sol.u) : sol.u
+    is_time_dependent = !(H_t === nothing)
 
-    return TimeEvolutionSol(sol.t, ρt, sol.prob.p[1].expvals)
+    ρ0 = isket(ψ0) ? mat2vec(ket2dm(ψ0).data) : mat2vec(ψ0.data)
+    L = liouvillian(H, c_ops).data
+
+    progr = Progress(length(t_l), showspeed=true, enabled=progress)
+    expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
+    e_ops2 = isempty(e_ops) ? Vector{Vector}([]) : map(op -> mat2vec(get_data(op)'), e_ops)
+    p = merge((L = L, e_ops = e_ops2, expvals = expvals, progr = progr), params)
+
+    kwargs2 = kwargs
+    if !isempty(e_ops) || progress
+        cb1 = PresetTimeCallback(t_l, _save_func_mesolve, save_positions=(false, false))
+        kwargs2 = merge(kwargs2, haskey(kwargs2, :callback) ? 
+                    Dict(:callback => CallbackSet(cb1, kwargs2[:callback])) : Dict(:callback => cb1))
+    end
+    !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, Dict(:abstol => 1e-7)))
+    !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, Dict(:reltol => 1e-5)))
+    !haskey(kwargs2, :saveat) && (kwargs2 = merge(kwargs2, Dict(:saveat => [t_l[end]])))
+
+    tspan = (t_l[1], t_l[end])
+    if isa(alg, OrdinaryDiffEq.OrdinaryDiffEqExponentialAlgorithm)
+        is_time_dependent && error("The Liouvillian must be time independent when using LinearExponential algorithm.")
+        kwargs2 = merge(kwargs2, Dict(:dt => t_l[2] - t_l[1]))
+        A = DiffEqArrayOperator(L)
+
+        return ODEProblem(A, ρ0, tspan, p; kwargs2...)
+    else  
+        if !is_time_dependent
+            dudt! = (du, u, p, t) -> mul!(du, p[:L], u)
+        else
+            if isoper(H_t(0.0))
+                @warn string("To speed up the calculation, it is always better to define ",
+                    "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog = 1
+                dudt! = (du, u, p, t) -> mul!(du, p[:L] + liouvillian(H_t(t)).data, u)
+            else
+                dudt! = (du, u, p, t) -> mul!(du, p[:L] + H_t(t).data, u)
+            end
+        end
+
+        return ODEProblem(dudt!, ρ0, tspan, p; kwargs2...)
+    end
+end
+
+
+"""
+    mcsolveProblem(H::QuantumObject,
+    ψ0::QuantumObject,
+    t_l::AbstractVector, c_ops::AbstractVector;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::AbstractVector=[],
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    jump_interp_pts::Int=-1,
+    kwargs...)
+
+Generates the ODEProblem for a single trajectory of the Monte Carlo wave function
+time evolution of an open quantum system.
+
+# Arguments
+- `H::QuantumObject`: Hamiltonian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `c_ops::AbstractVector`: List of collapse operators.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function}`: Time-dependent part of the Hamiltonian.
+- `params::Dict{Symbol, Any}`: Dictionary of parameters to pass to the solver.
+- `jump_interp_pts::Int`: Number of points to use for interpolation of the jump times.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+# Returns
+- `prob::ODEProblem`: The ODEProblem for the Monte Carlo wave function time evolution.
+
+# Notes
+When `jump_interp_pts` is set to -1, a `DiscreteCallback` is used to detect the jump times.
+When `jump_interp_pts` is set to a positive integer, a `ContinuousCallback` is used to detect the jump times.
+"""
+function mcsolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    t_l::AbstractVector, c_ops::AbstractVector;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::AbstractVector=[],
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    jump_interp_pts::Int=-1,
+    kwargs...) where {T1,T2}
+
+    H_eff = H - T1(0.5im) * mapreduce(op -> op' * op, +, c_ops)
+
+    cb1 = jump_interp_pts == -1 ? DiscreteLindbladJumpCallback() : ContinuousLindbladJumpCallback(jump_interp_pts)
+    kwargs2 = kwargs
+    kwargs2 = merge(kwargs2, haskey(kwargs2, :callback) ? 
+                Dict(:callback => CallbackSet(cb1, kwargs2[:callback])) : Dict(:callback => cb1))
+    if !isempty(e_ops)
+        cb2 = PresetTimeCallback(t_l, _save_func_mcsolve, save_positions=(false, false))
+        kwargs2 = merge(kwargs2, Dict(:callback => CallbackSet(kwargs2[:callback], cb2)))
+    end
+
+    expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
+    cache_mc = similar(ψ0.data)
+    weights_mc = Array{Float64}(undef, length(c_ops))
+    cumsum_weights_mc = similar(weights_mc)
+    params2 = merge(params, Dict(:expvals => expvals, :e_ops => get_data.(e_ops), :save_it => Ref{Int32}(0), 
+                                :random_n => Ref(rand()), :c_ops => get_data.(c_ops), :cache_mc => cache_mc, 
+                                :weights_mc => weights_mc, :cumsum_weights_mc => cumsum_weights_mc,
+                                :jump_times => Float64[], :jump_which => Int16[]))
+
+    return sesolveProblem(H_eff, ψ0, t_l; alg=alg, H_t=H_t, params=params2, progress=false, kwargs2...)
 end
 
 """
-    mcsolve(H::QuantumObject,
-            ψ0::QuantumObject,
-            t_l::AbstractVector, c_ops::AbstractVector;
-            e_ops::AbstractVector=[],
-            n_traj::Int=1,
-            batch_size::Int=min(Threads.nthreads(), n_traj),
-            alg=AutoVern7(KenCarp4(autodiff=false)),
-            ensemble_method=EnsembleThreads(),
-            H_t=nothing,
-            params::AbstractVector=[],
-            progress::Bool=true,
-            jump_interp_pts::Int=10,
-            callbacks=[],
-            kwargs...)
+    mcsolveEnsembleProblem(H::QuantumObject,
+    ψ0::QuantumObject,
+    t_l::AbstractVector, c_ops::AbstractVector;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::AbstractVector=[],
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    progress::Bool=true,
+    n_traj::Int=1,
+    jump_interp_pts::Int=-1,
+    kwargs...)
 
-Time evolution of an open quantum system using quantum trajectories.
+Generates the ODEProblem for an ensemble of trajectories of the Monte Carlo wave function
+time evolution of an open quantum system.
+
+# Arguments
+- `H::QuantumObject`: Hamiltonian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `c_ops::AbstractVector`: List of collapse operators.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function}`: Time-dependent part of the Hamiltonian.
+- `params::Dict{Symbol, Any}`: Dictionary of parameters to pass to the solver.
+- `progress::Bool`: Whether to show a progress bar.
+- `n_traj::Int`: Number of trajectories to use.
+- `jump_interp_pts::Int`: Number of points to use for interpolation of the jump times.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+# Returns
+- `prob::EnsembleProblem with ODEProblem`: The Ensemble ODEProblem for the Monte Carlo
+wave function time evolution.
+
+# Notes
+When `jump_interp_pts` is set to -1, a `DiscreteCallback` is used to detect the jump times.
+When `jump_interp_pts` is set to a positive integer, a `ContinuousCallback` is used to detect the jump times.
 """
-function mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+function mcsolveEnsembleProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector, c_ops::AbstractVector;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
     e_ops::AbstractVector=[],
-    n_traj::Int=1,
-    batch_size::Int=min(Threads.nthreads(), n_traj),
-    alg=AutoVern7(KenCarp4(autodiff=false)),
-    ensemble_method=EnsembleThreads(),
-    H_t=nothing,
-    params::AbstractVector=[],
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
     progress::Bool=true,
-    jump_interp_pts::Int=10,
-    callbacks=[],
+    n_traj::Int=1,
+    jump_interp_pts::Int=-1,
     kwargs...) where {T1,T2}
-
-    H.dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    Hdims = H.dims
-
-    tspan = (t_l[1], t_l[end])
-    e_ops_len = length(e_ops)
-
-    ψ0 = ψ0.data
 
     progr = Progress(n_traj, showspeed=true, enabled=progress)
     channel = RemoteChannel(() -> Channel{Bool}(), 1)
@@ -428,63 +435,182 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         next!(progr)
     end
 
-    function prob_func(prob, i, repeat)
-        H_eff = copy(H.data)
-        for c_op in c_ops
-            H_eff += -0.5im * c_op.data' * c_op.data
-        end
-        H_eff = -1im * H_eff
-        c_ops0 = map(op -> op.data, c_ops)
-        
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-        p = [Dict("H" => H_eff, "c_ops" => c_ops0, "e_ops" => e_ops, "random_n" => rand(), "expvals" => expvals, "save_it" => Ref{Int32}(0)), params...]
-        remake(prob, p=p)
-    end
-    function output_func(sol, i)
-        put!(channel, true)
-        if e_ops_len == 0
-            res = map(ϕ -> QuantumObject(ϕ, dims=Hdims), sol.u)
-        else
-            res = sol.prob.p[1]["expvals"]
-        end
-        (res, false)
-    end
-    function reduction(u, batch, I)
-        if e_ops_len == 0
-            tmp = hcat(batch...)
-            length(u) == 0 && return tmp, false
-            res = hcat(u, tmp)
-        else
-            tmp = sum(cat(batch..., dims=3), dims=3)
-            length(u) == 0 && return tmp, false
-            res = sum(cat(u, tmp, dims=3), dims=3)
-        end
-        return res, false
-    end
+    params2 = merge(params, Dict(:progr_channel => channel))
 
-    is_time_dependent = !(H_t === nothing)
-    if is_time_dependent
-        dudt! = (du, u, p, t) -> mul!(du, p[1]["H"] - 1im * H_t(t).data, u)
-    else
-        dudt! = (du, u, p, t) -> mul!(du, p[1]["H"], u)
-    end
+    prob_mc = mcsolveProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops, 
+                H_t=H_t, params=params2, jump_interp_pts=jump_interp_pts, kwargs...)
 
-    cb1 = FunctionCallingCallback(_save_func_mcsolve, funcat=t_l)
-    cb2 = jump_interp_pts == -1 ? DiscreteLindbladJumpCallback() : ContinuousLindbladJumpCallback(jump_interp_pts)
-    cb3 = AutoAbstol(false; init_curmax=0.0)
-    cb = CallbackSet(cb1, cb2, cb3, callbacks...)
 
-    prob = ODEProblem(dudt!, ψ0, tspan, callback=cb; kwargs...)
-    ensemble_prob = EnsembleProblem(prob, prob_func=prob_func, output_func=output_func, reduction=reduction)
-    sol = solve(ensemble_prob, alg, ensemble_method, trajectories=n_traj, batch_size=batch_size)
+    ensemble_prob = EnsembleProblem(prob_mc, prob_func=_mcsolve_prob_func, 
+                            output_func=_mcsolve_output_func, safetycopy=false)
 
-    put!(channel, false)
+    return ensemble_prob
+end
 
-    e_ops_len == 0 && return TimeEvolutionSol(t_l, sol.u, [])
 
-    e_ops_expect = sum(sol.u, dims=3) ./ n_traj
+"""
+    sesolve(H::QuantumObject,
+        ψ0::QuantumObject,
+        t_l::AbstractVector;
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+        e_ops::AbstractVector=[],
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        progress::Bool=true,
+        kwargs...)
 
-    return TimeEvolutionSol(t_l, [], e_ops_expect)
+Time evolution of a closed quantum system using the Schrödinger equation.
+
+# Arguments
+- `H::QuantumObject`: Hamiltonian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function}`: Time-dependent part of the Hamiltonian.
+- `params::Dict{Symbol, Any}`: Dictionary of parameters to pass to the solver.
+- `progress::Bool`: Whether to show a progress bar.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+- Returns
+- `sol::TimeEvolutionSol`: The solution of the time evolution.
+"""
+function sesolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    t_l::AbstractVector;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::AbstractVector=[],
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    progress::Bool=true,
+    kwargs...) where {T1,T2}
+
+    prob = sesolveProblem(H, ψ0, t_l; alg=alg, e_ops=e_ops,
+            H_t=H_t, params=params, progress=progress, kwargs...)
+    sol = solve(prob, alg)
+
+    ψt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(ϕ, dims = H.dims), sol.u) : sol.u
+
+    return TimeEvolutionSol(sol.t, ψt, sol.prob.p[:expvals])
+end
+
+"""
+    mesolve(H::QuantumObject,
+        ψ0::QuantumObject,
+        t_l::AbstractVector, c_ops::AbstractVector=[];
+        alg::OrdinaryDiffEqAlgorithm=Vern7(),
+        e_ops::AbstractVector=[],
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        progress::Bool=true,
+        kwargs...)
+
+Time evolution of an open quantum system using master equation.
+
+# Arguments
+- `H::QuantumObject`: Hamiltonian of Liouvillian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `c_ops::AbstractVector`: List of collapse operators.
+- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function}`: Time-dependent part of the Hamiltonian.
+- `params::Dict{Symbol, Any}`: Dictionary of parameters to pass to the solver.
+- `progress::Bool`: Whether to show a progress bar.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+# Returns
+- `sol::TimeEvolutionSol`: The solution of the time evolution.
+"""
+function mesolve(H::QuantumObject{<:AbstractArray{T1},HOpType},
+    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    t_l::AbstractVector, c_ops::AbstractVector=[];
+    alg::OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::AbstractVector=[],
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    progress::Bool=true,
+    kwargs...) where {T1,T2,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+
+    prob = mesolveProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops,
+            H_t=H_t, params=params, progress=progress, kwargs...)
+    sol = solve(prob, alg)
+
+    ρt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(vec2mat(ϕ), dims=H.dims), sol.u) : sol.u
+
+    return TimeEvolutionSol(sol.t, ρt, sol.prob.p[:expvals])
+end
+
+"""
+    mcsolve(H::QuantumObject,
+        ψ0::QuantumObject,
+        t_l::AbstractVector, c_ops::AbstractVector;
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+        e_ops::AbstractVector=[],
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        progress::Bool=true,
+        n_traj::Int=1,
+        ensemble_method=EnsembleThreads(),
+        jump_interp_pts::Int=-1,
+        kwargs...)
+
+Time evolution of an open quantum system using quantum trajectories.
+
+# Arguments
+- `H::QuantumObject`: Hamiltonian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `c_ops::AbstractVector`: List of collapse operators.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function}`: Time-dependent part of the Hamiltonian.
+- `params::Dict{Symbol, Any}`: Dictionary of parameters to pass to the solver.
+- `progress::Bool`: Whether to show a progress bar.
+- `n_traj::Int`: Number of trajectories to use.
+- `ensemble_method`: Ensemble method to use.
+- `jump_interp_pts::Int`: Number of points to use for interpolation of jump times.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+# Returns
+- `sol::TimeEvolutionMCSol`: The solution of the time evolution.
+
+# Notes
+`ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`.
+When `jump_interp_pts` is set to -1, a `DiscreteCallback` is used to detect the jump times.
+When `jump_interp_pts` is set to a positive integer, a `ContinuousCallback` is used to detect the jump times.
+"""
+function mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    t_l::AbstractVector, c_ops::AbstractVector;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::AbstractVector=[],
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    progress::Bool=true,
+    n_traj::Int=1,
+    ensemble_method=EnsembleThreads(),
+    jump_interp_pts::Int=-1,
+    kwargs...) where {T1,T2}
+
+
+    ens_prob_mc = mcsolveEnsembleProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops, 
+                H_t=H_t, params=params, progress=progress, n_traj=n_traj, 
+                jump_interp_pts=jump_interp_pts, kwargs...)
+
+    sol = solve(ens_prob_mc, alg, ensemble_method, trajectories=n_traj)
+    put!(sol[1].prob.p[:progr_channel], false)
+
+    expvals_all = Array{ComplexF64}(undef, length(sol), length(e_ops), length(t_l))
+    times = Vector{Vector{Float64}}([])
+    states = []
+    jump_times = Vector{Vector{Float64}}([])
+    jump_which = Vector{Vector{Int16}}([])
+    foreach(i -> _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which), eachindex(sol))
+    expvals = dropdims(sum(expvals_all, dims=1), dims=1) ./ length(sol)
+
+    TimeEvolutionMCSol(times, states, expvals, expvals_all, jump_times, jump_which)
 end
 
 
@@ -621,6 +747,22 @@ function _steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumOb
     QuantumObject(ρss, OperatorQuantumObject, L.dims)
 end
 
+@doc raw"""
+    steadystate_floquet(H_0::QuantumObject,
+        c_ops::Vector, H_p::QuantumObject,
+        H_m::QuantumObject,
+        ω::Real; n_max::Int=4, lf_solver::LSolver=LiouvillianDirectSolver(),
+        ss_solver::Type{SSSolver}=SteadyStateDirectSolver)
+
+Calculates the steady state of a periodically driven system.
+Here `H_0` is the Hamiltonian or the Liouvillian of the undriven system.
+Considering a monochromatic drive at frequency ``\\omega``, we divide it into two parts,
+`H_p` and `H_m`, where `H_p` oscillates
+as ``e^{i \\omega t}`` and `H_m` oscillates as ``e^{-i \\omega t}``.
+`n_max` is the number of iterations used to obtain the effective Liouvillian,
+`lf_solver` is the solver used to solve the effective Liouvillian,
+and `ss_solver` is the solver used to solve the steady state.
+"""
 function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
     c_ops::Vector, H_p::QuantumObject{<:AbstractArray{T2},OpType2},
     H_m::QuantumObject{<:AbstractArray{T3},OpType3},
@@ -631,22 +773,6 @@ function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
     LSolver<:LiouvillianSolver,SSSolver<:SteadyStateSolver}
 
     L_0 = liouvillian(H_0, c_ops)
-    L_p = liouvillian(H_p)
-    L_m = liouvillian(H_m)
-
-    steadystate(liouvillian_floquet(L_0, L_p, L_m, ω, n_max=n_max, solver=lf_solver), solver=ss_solver)
-end
-
-function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
-    H_p::QuantumObject{<:AbstractArray{T2},OpType2},
-    H_m::QuantumObject{<:AbstractArray{T3},OpType3},
-    ω::Real; n_max::Int=4, lf_solver::Type{LSolver}=LiouvillianDirectSolver,
-    ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    LSolver<:LiouvillianSolver,SSSolver<:SteadyStateSolver}
-
-    L_0 = liouvillian(H_0)
     L_p = liouvillian(H_p)
     L_m = liouvillian(H_m)
 

@@ -139,7 +139,7 @@ function _genlaguerre(n::Int, α::Number, x::T) where {T <: BlasFloat}
     α = convert(T, α)
     p0, p1 = one(T), -x+(α+1)
     n == 0 && return p0
-    for k = one(T):n-1
+    for k = 1:n-1
         p1, p0 = ((2k+α+1)/(k+1) - x/(k+1))*p1 - (k+α)/(k+1)*p0, p1
     end
     p1

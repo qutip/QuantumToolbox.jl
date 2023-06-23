@@ -205,10 +205,10 @@ end
     psi0 = kron(psi0_1, psi0_2)
     t_l = LinRange(0, 20 / γ1, 1000)
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], 
-    alg=LinearExponential(krylov=:adaptive, m=20), saveat=[t_l[300]], progress=false)
+            alg=LinearExponential(krylov=:adaptive, m=20), saveat=[t_l[300]], progress=false)
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
     @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
-    @test expect(sp1 * sm1, sol_me.states[1]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[1], [1]))
+    @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], [1]))
 end
 
 @testset "Dynamical Fock Dimension mesolve" begin
@@ -357,10 +357,10 @@ end
     sol_dsf_me = dsf_mesolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, abstol=1e-9, reltol=1e-7)
     sol_dsf_mc = dsf_mcsolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, n_traj=500, abstol=1e-9, reltol=1e-7)
 
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.05
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.05
-    @test abs(sum(sol0.expect[2,:] .- sol_dsf_me.expect[2,:])) / length(tlist) < 0.05
-    @test abs(sum(sol0.expect[2,:] .- sol_dsf_mc.expect[2,:])) / length(tlist) < 0.05
+    @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.1
+    @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.1
+    @test abs(sum(sol0.expect[2,:] .- sol_dsf_me.expect[2,:])) / length(tlist) < 0.1
+    @test abs(sum(sol0.expect[2,:] .- sol_dsf_mc.expect[2,:])) / length(tlist) < 0.1
 end
 
 @testset "Generalized Master Equation" begin

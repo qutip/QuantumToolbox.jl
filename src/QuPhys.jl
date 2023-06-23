@@ -35,8 +35,8 @@ export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid, sparse_to_dense
 export get_data, mat2vec, vec2mat
 export ptrace, entropy_vn, entanglement
 export get_coherence, n_th
-export sesolveProblem, mesolveProblem
-export mesolve, mcsolve, sesolve
+export sesolveProblem, mesolveProblem, mcsolveProblem, mcsolveEnsembleProblem
+export sesolve, mesolve, mcsolve
 export dfd_mesolve, dsf_mesolve, dsf_mcsolve
 export liouvillian, liouvillian_floquet, liouvillian_generalized, steadystate, steadystate_floquet
 export LiouvillianDirectSolver, SteadyStateDirectSolver
