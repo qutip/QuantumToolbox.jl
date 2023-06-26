@@ -26,9 +26,9 @@ LiouvillianDirectSolver(;tol=1e-14) = LiouvillianDirectSolver(tol)
 
 function _save_func_sesolve(integrator)
     internal_params = integrator.p
-    progr = internal_params[:progr]
-    e_ops = internal_params[:e_ops]
-    expvals = internal_params[:expvals]
+    progr = internal_params.progr
+    e_ops = internal_params.e_ops
+    expvals = internal_params.expvals
 
     if !isempty(e_ops)
         ψ = integrator.u
@@ -41,9 +41,9 @@ end
 
 function _save_func_mesolve(integrator)
     internal_params = integrator.p
-    progr = internal_params[:progr]
-    e_ops = internal_params[:e_ops]
-    expvals = internal_params[:expvals]
+    progr = internal_params.progr
+    e_ops = internal_params.e_ops
+    expvals = internal_params.expvals
 
     if !isempty(e_ops)
         # This is equivalent to tr(op * ρ), when both are matrices.
@@ -60,10 +60,10 @@ end
 
 function _save_func_mcsolve(integrator)
     internal_params = integrator.p
-    save_it = internal_params[:save_it]
-    e_ops = internal_params[:e_ops]
-    expvals = internal_params[:expvals]
-    cache_mc = internal_params[:cache_mc]
+    save_it = internal_params.save_it
+    e_ops = internal_params.e_ops
+    expvals = internal_params.expvals
+    cache_mc = internal_params.cache_mc
 
     if !isempty(e_ops)
         cache_mc .= integrator.u
@@ -78,13 +78,13 @@ end
 
 function LindbladJumpAffect!(integrator)
     internal_params = integrator.p
-    c_ops = internal_params[:c_ops]
-    cache_mc = internal_params[:cache_mc]
-    weights_mc = internal_params[:weights_mc]
-    cumsum_weights_mc = internal_params[:cumsum_weights_mc]
-    random_n = internal_params[:random_n]
-    jump_times = internal_params[:jump_times]
-    jump_which = internal_params[:jump_which]
+    c_ops = internal_params.c_ops
+    cache_mc = internal_params.cache_mc
+    weights_mc = internal_params.weights_mc
+    cumsum_weights_mc = internal_params.cumsum_weights_mc
+    random_n = internal_params.random_n
+    jump_times = internal_params.jump_times
+    jump_which = internal_params.jump_which
     ψ = integrator.u
 
     @inbounds for i in eachindex(weights_mc)
@@ -103,13 +103,13 @@ function LindbladJumpAffect!(integrator)
 end
 
 function ContinuousLindbladJumpCallback(interp_points::Int=0; affect_func::Function=LindbladJumpAffect!)
-    LindbladJumpCondition(u, t, integrator) = integrator.p[:random_n][] - real(dot(u, u))
+    LindbladJumpCondition(u, t, integrator) = integrator.p.random_n[] - real(dot(u, u))
 
     ContinuousCallback(LindbladJumpCondition, affect_func, nothing, interp_points=interp_points, save_positions=(false, false))
 end
 
 function DiscreteLindbladJumpCallback(;affect_func::Function=LindbladJumpAffect!)
-    LindbladJumpCondition(u, t, integrator) = real(dot(u, u)) < integrator.p[:random_n][]
+    LindbladJumpCondition(u, t, integrator) = real(dot(u, u)) < integrator.p.random_n[]
 
     DiscreteCallback(LindbladJumpCondition, affect_func, save_positions=(false, false))
 end
@@ -117,27 +117,27 @@ end
 function _mcsolve_prob_func(prob, i, repeat)
     internal_params = prob.p
 
-    prm = merge(internal_params, (U = deepcopy(internal_params[:U]), expvals = similar(internal_params[:expvals]), 
-                cache_mc = similar(internal_params[:cache_mc]), weights_mc = similar(internal_params[:weights_mc]), 
-                cumsum_weights_mc = similar(internal_params[:weights_mc]), random_n = Ref(rand()), save_it = Ref{Int32}(0),
-                :jump_times => similar(internal_params[:jump_times]), :jump_which => similar(internal_params[:jump_which])))
+    prm = merge(internal_params, (U = deepcopy(internal_params.U), expvals = similar(internal_params.expvals), 
+                cache_mc = similar(internal_params.cache_mc), weights_mc = similar(internal_params.weights_mc), 
+                cumsum_weights_mc = similar(internal_params.weights_mc), random_n = Ref(rand()), save_it = Ref{Int32}(0),
+                :jump_times => similar(internal_params.jump_times), :jump_which => similar(internal_params.jump_which)))
 
     remake(prob, p=prm)
 end
 
 function _mcsolve_output_func(sol, i)
     internal_params = sol.prob.p
-    put!(internal_params[:progr_channel], true)
+    put!(internal_params.progr_channel, true)
     (sol, false)
 end
 
 function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
     sol_i = sol[i]
-    expvals_all[i, :, :] .= sol_i.prob.p[:expvals]
+    expvals_all[i, :, :] .= sol_i.prob.p.expvals
     push!(times, sol_i.t)
-    push!(states, sol_i.u)
-    push!(jump_times, sol_i.prob.p[:jump_times])
-    push!(jump_which, sol_i.prob.p[:jump_which])
+    push!(states, QuantumObject.(sol_i.u, dims=sol_i.prob.p.Hdims))
+    push!(jump_times, sol_i.prob.p.jump_times)
+    push!(jump_which, sol_i.prob.p.jump_which)
 end
 
 
@@ -150,14 +150,14 @@ end
 
 """
     sesolveProblem(H::QuantumObject,
-    ψ0::QuantumObject,
-    t_l::AbstractVector;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7()
-    e_ops::AbstractVector=[],
-    H_t::Union{Nothing,Function}=nothing,
-    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
-    progress::Bool=true,
-    kwargs...)
+        ψ0::QuantumObject,
+        t_l::AbstractVector;
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7()
+        e_ops::AbstractVector=[],
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        progress::Bool=true,
+        kwargs...)
 
 Generates the ODEProblem for the Schrödinger time evolution of a quantum system.
 
@@ -194,8 +194,8 @@ function sesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObje
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = isempty(e_ops) ? Vector{Vector}([]) : get_data.(e_ops)
-    p = merge((U = U, e_ops = e_ops2, expvals = expvals, progr = progr), params)
+    e_ops2 = get_data.(e_ops)
+    p = merge((U = U, e_ops = e_ops2, expvals = expvals, progr = progr, Hdims = H.dims), params)
 
     kwargs2 = kwargs
     if !isempty(e_ops) || progress
@@ -217,9 +217,9 @@ function sesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObje
         return ODEProblem(A, ϕ0, tspan, p; kwargs2...)
     else
         if !is_time_dependent
-            dudt! = (du, u, p, t) -> mul!(du, p[:U], u)
+            dudt! = (du, u, p, t) -> mul!(du, p.U, u)
         else
-            dudt! = (du, u, p, t) -> mul!(du, p[:U] - 1im * H_t(t).data, u)
+            dudt! = (du, u, p, t) -> mul!(du, p.U - 1im * H_t(t).data, u)
         end
 
         return ODEProblem(dudt!, ϕ0, tspan, p; kwargs2...)
@@ -229,14 +229,14 @@ end
 
 """
     mesolveProblem(H::QuantumObject,
-    ψ0::QuantumObject,
-    t_l::AbstractVector, c_ops::AbstractVector=[];
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
-    e_ops::AbstractVector=[],
-    H_t::Union{Nothing,Function}=nothing,
-    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
-    progress::Bool=true,
-    kwargs...)
+        ψ0::QuantumObject,
+        t_l::AbstractVector, c_ops::AbstractVector=[];
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+        e_ops::AbstractVector=[],
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        progress::Bool=true,
+        kwargs...)
 
 Generates the ODEProblem for the master equation time evolution of an open quantum system.
 
@@ -275,8 +275,8 @@ function mesolveProblem(H::QuantumObject{<:AbstractArray{T1},HOpType},
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = isempty(e_ops) ? Vector{Vector}([]) : map(op -> mat2vec(get_data(op)'), e_ops)
-    p = merge((L = L, e_ops = e_ops2, expvals = expvals, progr = progr), params)
+    e_ops2 = map(op -> mat2vec(get_data(op)'), e_ops)
+    p = merge((L = L, e_ops = e_ops2, expvals = expvals, progr = progr, Hdims = H.dims), params)
 
     kwargs2 = kwargs
     if !isempty(e_ops) || progress
@@ -297,14 +297,14 @@ function mesolveProblem(H::QuantumObject{<:AbstractArray{T1},HOpType},
         return ODEProblem(A, ρ0, tspan, p; kwargs2...)
     else  
         if !is_time_dependent
-            dudt! = (du, u, p, t) -> mul!(du, p[:L], u)
+            dudt! = (du, u, p, t) -> mul!(du, p.L, u)
         else
             if isoper(H_t(0.0))
                 @warn string("To speed up the calculation, it is always better to define ",
                     "the time-dependent part as a SuperOperator, and not as an Operator.") maxlog = 1
-                dudt! = (du, u, p, t) -> mul!(du, p[:L] + liouvillian(H_t(t)).data, u)
+                dudt! = (du, u, p, t) -> mul!(du, p.L + liouvillian(H_t(t)).data, u)
             else
-                dudt! = (du, u, p, t) -> mul!(du, p[:L] + H_t(t).data, u)
+                dudt! = (du, u, p, t) -> mul!(du, p.L + H_t(t).data, u)
             end
         end
 
@@ -315,14 +315,14 @@ end
 
 """
     mcsolveProblem(H::QuantumObject,
-    ψ0::QuantumObject,
-    t_l::AbstractVector, c_ops::AbstractVector;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
-    e_ops::AbstractVector=[],
-    H_t::Union{Nothing,Function}=nothing,
-    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
-    jump_interp_pts::Int=-1,
-    kwargs...)
+        ψ0::QuantumObject,
+        t_l::AbstractVector, c_ops::AbstractVector;
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+        e_ops::AbstractVector=[],
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        jump_interp_pts::Int=-1,
+        kwargs...)
 
 Generates the ODEProblem for a single trajectory of the Monte Carlo wave function
 time evolution of an open quantum system.
@@ -381,16 +381,16 @@ end
 
 """
     mcsolveEnsembleProblem(H::QuantumObject,
-    ψ0::QuantumObject,
-    t_l::AbstractVector, c_ops::AbstractVector;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
-    e_ops::AbstractVector=[],
-    H_t::Union{Nothing,Function}=nothing,
-    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
-    progress::Bool=true,
-    n_traj::Int=1,
-    jump_interp_pts::Int=-1,
-    kwargs...)
+        ψ0::QuantumObject,
+        t_l::AbstractVector, c_ops::AbstractVector;
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+        e_ops::AbstractVector=[],
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        progress::Bool=true,
+        n_traj::Int=1,
+        jump_interp_pts::Int=-1,
+        kwargs...)
 
 Generates the ODEProblem for an ensemble of trajectories of the Monte Carlo wave function
 time evolution of an open quantum system.
@@ -487,11 +487,20 @@ function sesolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
 
     prob = sesolveProblem(H, ψ0, t_l; alg=alg, e_ops=e_ops,
             H_t=H_t, params=params, progress=progress, kwargs...)
+    
+    return sesolve(prob; alg=alg, kwargs...)
+end
+
+function sesolve(prob::ODEProblem;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    kwargs...)
+
     sol = solve(prob, alg)
 
-    ψt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(ϕ, dims = H.dims), sol.u) : sol.u
+    Hdims = sol.prob.p.Hdims
+    ψt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(ϕ, dims = Hdims), sol.u) : sol.u
 
-    return TimeEvolutionSol(sol.t, ψt, sol.prob.p[:expvals])
+    return TimeEvolutionSol(sol.t, ψt, sol.prob.p.expvals)
 end
 
 """
@@ -535,11 +544,20 @@ function mesolve(H::QuantumObject{<:AbstractArray{T1},HOpType},
 
     prob = mesolveProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops,
             H_t=H_t, params=params, progress=progress, kwargs...)
+    
+    return mesolve(prob; alg=alg, kwargs...)
+end
+
+function mesolve(prob::ODEProblem;
+    alg::OrdinaryDiffEqAlgorithm=Vern7(),
+    kwargs...)
+
     sol = solve(prob, alg)
 
-    ρt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(vec2mat(ϕ), dims=H.dims), sol.u) : sol.u
+    Hdims = sol.prob.p.Hdims
+    ρt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(vec2mat(ϕ), dims=Hdims), sol.u) : sol.u
 
-    return TimeEvolutionSol(sol.t, ρt, sol.prob.p[:expvals])
+    return TimeEvolutionSol(sol.t, ρt, sol.prob.p.expvals)
 end
 
 """
@@ -599,10 +617,19 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
                 H_t=H_t, params=params, progress=progress, n_traj=n_traj, 
                 jump_interp_pts=jump_interp_pts, kwargs...)
 
-    sol = solve(ens_prob_mc, alg, ensemble_method, trajectories=n_traj)
-    put!(sol[1].prob.p[:progr_channel], false)
+    return mcsolve(ens_prob_mc; alg=alg, n_traj=n_traj, ensemble_method=ensemble_method, kwargs...)
+end
 
-    expvals_all = Array{ComplexF64}(undef, length(sol), length(e_ops), length(t_l))
+function mcsolve(ens_prob_mc::EnsembleProblem;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    n_traj::Int=1,
+    ensemble_method=EnsembleThreads(),
+    kwargs...)
+
+    sol = solve(ens_prob_mc, alg, ensemble_method, trajectories=n_traj)
+    put!(sol[1].prob.p.progr_channel, false)
+
+    expvals_all = Array{ComplexF64}(undef, length(sol), size(sol[1].prob.p.expvals)...)
     times = Vector{Vector{Float64}}([])
     states = []
     jump_times = Vector{Vector{Float64}}([])
@@ -612,7 +639,6 @@ function mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
 
     TimeEvolutionMCSol(times, states, expvals, expvals_all, jump_times, jump_which)
 end
-
 
 ### LIOUVILLIAN AND STEADYSTATE ###
 @doc raw"""

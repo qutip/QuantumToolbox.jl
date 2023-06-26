@@ -387,6 +387,9 @@ LinearAlgebra.triu(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
 LinearAlgebra.tril(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(tril(A.data, k), OpType, A.dims)
 
+LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
+    QuantumObject(sqrt(A.data), OpType, A.dims)
+
 LinearAlgebra.exp(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
     QuantumObject(exp(A.data), OpType, A.dims)
 

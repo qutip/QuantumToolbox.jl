@@ -131,40 +131,34 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
  0.0+0.0im  0.5+0.0im
 ```
 """
-function ptrace(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::Vector{Int}) where
-{T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
-
+function ptrace(QO::QuantumObject{<:AbstractArray{T1},OpType}, sel::Vector{T2}) where
+    {T1,T2<:Int,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+    
     rd = QO.dims
     nd = length(rd)
-    dkeep = rd[sel]
-    qtrace = filter(e -> e ∉ sel, 1:nd)
-    dtrace = rd[qtrace]
 
     nd == 1 && return QO
 
+    dkeep = rd[sel]
+    qtrace = filter!(e -> e ∉ sel, Vector(1:nd))
+    dtrace = @view(rd[qtrace])
+
     if isket(QO) || isbra(QO)
-        vmat = row_major_reshape(QO.data, prod(rd), 1)
-        vmat = row_major_reshape(vmat, rd...)
-        topermute = Int64[]
-        append!(topermute, sel)
-        append!(topermute, qtrace)
+        vmat = reshape(QO.data, reverse(rd)...)
+        topermute = vcat(sel, qtrace)
         reverse!(topermute)
         vmat = PermutedDimsArray(vmat, topermute)
-        vmat = row_major_reshape(vmat, prod(dkeep), prod(dtrace))
+        vmat = reshape(vmat, prod(dkeep), prod(dtrace))
         return QuantumObject(vmat * vmat', OperatorQuantumObject, dkeep)
     elseif isoper(QO)
-        ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
-        topermute = Int64[]
-        append!(topermute, qtrace)
-        append!(topermute, [nd + q for q in qtrace])
-        append!(topermute, sel)
-        append!(topermute, [nd + q for q in sel])
+        ρmat = reshape(QO.data, reverse!(repeat(rd, 2))...)
+        topermute = vcat([nd + q for q in qtrace], qtrace, [nd + q for q in sel], sel)
         reverse!(topermute)
         ρmat = PermutedDimsArray(ρmat, topermute)
-        ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
+        ρmat = reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
         dims = size(ρmat)
-        res = [tr(@view(ρmat[:, :, i, j])) for i in 1:dims[3] for j in 1:dims[4]]
-        return QuantumObject(row_major_reshape(res, dims[3:length(dims)]...), OperatorQuantumObject, dkeep)
+        res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
+        return QuantumObject(res, OperatorQuantumObject, dkeep)
     end
 end
 

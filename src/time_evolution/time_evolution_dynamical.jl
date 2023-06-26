@@ -1,125 +1,162 @@
 ### DYNAMICAL FOCK DIMENSION ###
 
-function _save_func_dfd_mesolve(u, t, integrator)
-    internal_params = integrator.p[1]
-    progr = internal_params["progr"]
-    e_ops = internal_params["e_ops"]
-    dim_list = internal_params["dim_list"]
-    expvals = internal_params["expvals"]
-    
-    ρt = reshape(copy(u), prod(dim_list), :)
-    expvals[:, progr.counter+1] .= map(op -> tr(op.data * ρt), e_ops(dim_list))
-    next!(progr)
-end
-
-function _reduce_dims(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::AbstractVector, reduce::AbstractVector) where {T,OpType<:OperatorQuantumObject}
+function _reduce_dims(QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, sel::AbstractVector, reduce::AbstractVector) where {T}
     rd = QO.dims
     nd = length(rd)
-    reduce_l = zero(rd)
-    reduce_l[sel] .= reduce
-    rd_new = rd .- reduce_l
+    rd_new = zero(rd)
+    rd_new[sel] .= reduce
+    @. rd_new = rd - rd_new
 
     if nd == 1
-        ρmat = similar(QO.data, repeat(rd_new, 2)...)
-        copyto!(ρmat, view(QO.data, repeat([1:n for n in rd_new], 2)...))
+        ρmat = similar(QO.data, rd_new[1], rd_new[1])
+        copyto!(ρmat, view(QO.data, 1:rd_new[1], 1:rd_new[1]))
     else
-        ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
-        ρmat2 = similar(QO.data, repeat(rd_new, 2)...)
-        copyto!(ρmat2, view(ρmat, repeat([1:n for n in rd_new], 2)...))
-        ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
+        ρmat = reshape(QO.data, reverse!(repeat(rd, 2))...)
+        ρmat2 = similar(QO.data, reverse!(repeat(rd_new, 2))...)
+        copyto!(ρmat2, view(ρmat, reverse!(repeat([1:n for n in rd_new], 2))...))
+        ρmat = reshape(ρmat2, prod(rd_new), prod(rd_new))
     end
 
     QuantumObject(ρmat, OperatorQuantumObject, rd_new)
 end
 
-function _increase_dims(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::AbstractVector, increase::AbstractVector) where {T,OpType<:OperatorQuantumObject}
+function _increase_dims(QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, sel::AbstractVector, increase::AbstractVector) where {T}
     rd = QO.dims
     nd = length(rd)
-    incr_l = zero(rd)
-    incr_l[sel] .= increase
-    rd_new = rd .+ incr_l
+    rd_new = zero(rd)
+    rd_new[sel] .= increase
+    @. rd_new = rd + rd_new
 
     if nd == 1
-        ρmat = similar(QO.data, repeat(rd_new, 2)...)
-        selectdim(ρmat, sel[1], rd[1]+1:rd_new[1]) .= 0
-        selectdim(ρmat, sel[1] + nd, rd[1]+1:rd_new[1]) .= 0
-        copyto!(view(ρmat, repeat([1:n for n in rd], 2)...), QO.data)
+        ρmat = similar(QO.data, rd_new[1], rd_new[1])
+        selectdim(ρmat, 1, rd[1]+1:rd_new[1]) .= 0
+        selectdim(ρmat, 2, rd[1]+1:rd_new[1]) .= 0
+        copyto!(view(ρmat, 1:rd[1], 1:rd[1]), QO.data)
     else
-        ρmat = row_major_reshape(QO.data, repeat(rd, 2)...)
-        ρmat2 = similar(QO.data, repeat(rd_new, 2)...)
+        ρmat2 = similar(QO.data, reverse!(repeat(rd_new, 2))...)
+        ρmat = reshape(QO.data, reverse!(repeat(rd, 2))...)
         for i in eachindex(sel)
-            selectdim(ρmat2, sel[i], rd[i]+1:rd_new[i]) .= 0
-            selectdim(ρmat2, sel[i] + nd, rd[i]+1:rd_new[i]) .= 0
+            selectdim(ρmat2, nd-sel[i]+1, rd[sel[i]]+1:rd_new[sel[i]]) .= 0
+            selectdim(ρmat2, 2*nd-sel[i]+1, rd[sel[i]]+1:rd_new[sel[i]]) .= 0
         end
-        copyto!(view(ρmat2, repeat([1:n for n in rd], 2)...), ρmat)
-        ρmat = reshape(PermutedDimsArray(ρmat2, length(size(ρmat2)):-1:1), prod(rd_new), prod(rd_new))
+        copyto!(view(ρmat2, reverse!(repeat([1:n for n in rd], 2))...), ρmat)
+        ρmat = reshape(ρmat2, prod(rd_new), prod(rd_new))
     end
 
     QuantumObject(ρmat, OperatorQuantumObject, rd_new)
 end
+
+_dfd_set_pillow = dim -> min(max(round(Int, 0.02 * dim), 1), 20)
 
 function _DFDIncreaseReduceCondition(u, t, integrator)
-    internal_params = integrator.p[1]
-    dim_list = internal_params["dim_list"]
-    maxdims = internal_params["maxdims"]
-    tol_list = internal_params["tol_list"]
-    increase_list = internal_params["increase_list"]
-    reduce_list = internal_params["reduce_list"]
-    pillow_list = internal_params["pillow_list"]
-    # Here I use copy(u) otherwise I have an error.
-    ρt = QuantumObject(reshape(copy(u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
-
-    condition = false
-    @inbounds for i in 1:length(dim_list)
+    internal_params = integrator.p
+    dim_list = internal_params.dim_list
+    maxdims = internal_params.maxdims
+    tol_list = internal_params.tol_list
+    increase_list = internal_params.increase_list
+    reduce_list = internal_params.reduce_list
+    pillow_list = internal_params.pillow_list
+    
+    @inbounds for i in eachindex(dim_list)
         maxdim_i = maxdims[i]
         dim_i = dim_list[i]
+        pillow_i = pillow_list[i]
         if dim_i < maxdim_i && dim_i > 2 && maxdim_i != 0
+            # Here I use copy(u) otherwise I have an error.
+            ρt = QuantumObject(vec2mat(copy(integrator.u)), OperatorQuantumObject, dim_list)
+
             ρi = ptrace(ρt, [i]).data
-            pillow_i = min(max(round(Int, 0.02 * dim_i), 1), 20)
-            pillow_list[i] = pillow_i
-            @views res = sum(abs.(ρi[diagind(ρi)[end-pillow_i:end]])) * sqrt(dim_i) / pillow_i
+            @views res = norm(ρi[diagind(ρi)[end-pillow_i:end]], 1) * sqrt(dim_i) / pillow_i
             if res > tol_list[i]
-                push!(increase_list, i)
-                condition = true
+                increase_list[i] = true
             elseif res < tol_list[i] * 1e-2 && dim_i > 3
-                push!(reduce_list, i)
-                condition = true
+                reduce_list[i] = true
             end
         end
     end
-    condition
+    any(increase_list) || any(reduce_list)
 end
 
 function _DFDIncreaseReduceAffect!(integrator)
-    internal_params = integrator.p[1]
-    H = internal_params["H"]
-    c_ops = internal_params["c_ops"]
-    dim_list = internal_params["dim_list"]
-    increase_list = internal_params["increase_list"]
-    reduce_list = internal_params["reduce_list"]
-    pillow_list = internal_params["pillow_list"]
+    internal_params = integrator.p
+    H = internal_params.H_fun
+    c_ops = internal_params.c_ops_fun
+    e_ops = internal_params.e_ops_fun
+    dim_list = internal_params.dim_list
+    increase_list = internal_params.increase_list
+    reduce_list = internal_params.reduce_list
+    pillow_list = internal_params.pillow_list
+    dim_list_evo_times = internal_params.dim_list_evo_times
+    dim_list_evo = internal_params.dim_list_evo
+    
     # Here I use copy(integrator.u) otherwise I have an error.
-    ρt = QuantumObject(reshape(copy(integrator.u), prod(dim_list), prod(dim_list)), OperatorQuantumObject, dim_list)
+    ρt = QuantumObject(vec2mat(copy(integrator.u)), OperatorQuantumObject, dim_list)
 
     @views pillow_increase = pillow_list[increase_list]
     @views pillow_reduce = pillow_list[reduce_list]
-    if length(increase_list) > 0
-        ρt = _increase_dims(ρt, increase_list, pillow_increase)
-        dim_list[increase_list] .+= pillow_increase
+    dim_increase = findall(increase_list)
+    dim_reduce = findall(reduce_list)
+
+    if length(dim_increase) > 0
+        ρt = _increase_dims(ρt, dim_increase, pillow_increase)
+        dim_list[dim_increase] .+= pillow_increase
     end
-    if length(reduce_list) > 0
-        ρt = _reduce_dims(ρt, reduce_list, pillow_reduce)
-        dim_list[reduce_list] .-= pillow_reduce
+    if length(dim_reduce) > 0
+        ρt = _reduce_dims(ρt, dim_reduce, pillow_reduce)
+        dim_list[dim_reduce] .-= pillow_reduce
     end
 
-    deleteat!(increase_list, 1:length(increase_list))
-    deleteat!(reduce_list, 1:length(reduce_list))
+    @. pillow_list = _dfd_set_pillow(dim_list)
+    increase_list .= false
+    reduce_list .= false
+    push!(dim_list_evo_times, integrator.t)
+    push!(dim_list_evo, dim_list)
 
+    e_ops2 = map(op -> mat2vec(get_data(op)'), e_ops(dim_list))
     L = liouvillian(H(dim_list), c_ops(dim_list)).data
-    newsize = size(L, 1)
-    resize!(integrator, newsize)
-    internal_params["L"] = L
-    integrator.u = reshape(ρt.data, newsize)
+    resize!(integrator, size(L, 1))
+    integrator.p = merge(internal_params, (L = L, e_ops = e_ops2))
+    integrator.u = mat2vec(ρt.data)
+end
+
+function dfd_mesolveProblem(H::Function, ψ0::QuantumObject{<:AbstractArray{T1},StateOpType},
+    t_l::AbstractVector, c_ops::Function, maxdims::Vector{T2};
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::Union{Nothing, Function}=nothing, 
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    progress::Bool=true,
+    tol_list::AbstractVector=[],
+    kwargs...) where {T1,T2<:Int,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+
+    length(ψ0.dims) != length(maxdims) && throw(DimensionMismatch("'dim_list' and 'maxdims' do not have the same dimension."))
+
+    e_ops === nothing && (e_ops = dim_list -> [])
+
+    dim_list = deepcopy(ψ0.dims)
+    H₀ = H(dim_list)
+    c_ops₀ = c_ops(dim_list)
+    e_ops₀ = e_ops(dim_list)
+
+    length(tol_list) != length(dim_list) && (tol_list = [1e-8 for d in dim_list])
+    dim_list_evo_times = [0.0]
+    dim_list_evo = [dim_list]
+    reduce_list = zeros(Bool, length(dim_list))
+    increase_list = zeros(Bool, length(dim_list))
+    pillow_list = _dfd_set_pillow.(dim_list)
+
+    params2 = merge(params, Dict(:H_fun => H, :c_ops_fun => c_ops, :e_ops_fun => e_ops,
+                        :dim_list => dim_list, :maxdims => maxdims, :tol_list => tol_list,
+                        :reduce_list => reduce_list, :increase_list => increase_list, :pillow_list => pillow_list,
+                        :dim_list_evo_times => dim_list_evo_times, :dim_list_evo => dim_list_evo))
+
+    cb_dfd = DiscreteCallback(_DFDIncreaseReduceCondition, _DFDIncreaseReduceAffect!, save_positions=(false, false))
+    kwargs2 = kwargs
+    kwargs2 = merge(kwargs2, haskey(kwargs2, :callback) ? 
+                    Dict(:callback => CallbackSet(cb_dfd, kwargs2[:callback])) : Dict(:callback => cb_dfd))
+
+    mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops=e_ops₀, alg=alg, H_t=H_t, progress=progress,
+                                params=params2, kwargs2...)
 end
 
 """
@@ -135,49 +172,23 @@ end
 Time evolution of an open quantum system using master equation, dynamically changing the dimension of the Hilbert subspaces.
 """
 function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
-    t_l::AbstractVector, c_ops::Function, e_ops::Function, maxdims::AbstractVector;
-    tol_list::AbstractVector=[],
-    alg=Vern7(),
-    params::AbstractVector=[],
+    t_l::AbstractVector, c_ops::Function, maxdims::AbstractVector;
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::Union{Nothing, Function}=nothing, 
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
     progress::Bool=true,
-    callbacks::AbstractVector=[],
+    tol_list::AbstractVector=[],
     kwargs...) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    
+    dfd_prob = dfd_mesolveProblem(H, ψ0, t_l, c_ops, maxdims; alg=alg, e_ops=e_ops, H_t=H_t, params=params,
+                                    progress=progress, tol_list=tol_list, kwargs...)
 
-    dim_list = copy(ψ0.dims)
-    length(dim_list) != length(maxdims) && throw(DimensionMismatch("'dim_list' and 'maxdims' do not have the same dimension."))
-    H(dim_list).dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    sol = solve(dfd_prob, alg)
 
-    tspan = (t_l[1], t_l[end])
+    ρt = map(i -> QuantumObject(vec2mat(sol.u[i]), dims=sol.prob.p.dim_list_evo[searchsortedlast(sol.prob.p.dim_list_evo_times, sol.t[i])]), eachindex(sol.t))
 
-    progr = Progress(length(t_l), showspeed=true, enabled=progress)
-
-    ρ0 = isket(ψ0) ? reshape(ψ0.data * ψ0.data', length(ψ0)^2) : reshape(ψ0.data, length(ψ0))
-
-    L = liouvillian(H(dim_list), c_ops(dim_list)).data
-
-    length(tol_list) == 0 && (tol_list = [1e-8 for d in dim_list])
-    reduce_list = Int16[]
-    increase_list = Int16[]
-    pillow_list = ones(Int16, length(dim_list))
-
-    cb1 = FunctionCallingCallback(_save_func_dfd_mesolve, funcat=t_l)
-    cb2 = AutoAbstol(false; init_curmax=0.0)
-    cb_increasereduce = DiscreteCallback(_DFDIncreaseReduceCondition, _DFDIncreaseReduceAffect!, save_positions=(false, false))
-    cb = CallbackSet(cb1, cb2, cb_increasereduce, callbacks...)
-
-    expvals = Array{ComplexF64}(undef, length(e_ops(dim_list)), length(t_l))
-    p = [Dict("L" => L, "H" => H, "c_ops" => c_ops, "e_ops" => e_ops,
-        "dim_list" => dim_list, "maxdims" => maxdims, "tol_list" => tol_list,
-        "reduce_list" => reduce_list, "increase_list" => increase_list, "pillow_list" => pillow_list,
-        "expvals" => expvals, "progr" => progr), params...]
-
-    dudt! = (du, u, p, t) -> mul!(du, p[1]["L"], u)
-    prob = ODEProblem(dudt!, ρ0, tspan, p; kwargs...)
-    sol = solve(prob, alg, callback=cb)
-
-    ρt = [QuantumObject(reshape(ϕ, isqrt(length(ϕ)), :)) for ϕ in sol.u]
-
-    TimeEvolutionSol(sol.t, ρt, sol.prob.p[1]["expvals"])
+    return TimeEvolutionSol(sol.t, ρt, sol.prob.p.expvals)
 end
 
 # Dynamical Shifted Fock mesolve

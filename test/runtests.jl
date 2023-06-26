@@ -172,7 +172,7 @@ end
     e_ops = [a_d * a]
     sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=LinearExponential(krylov=:adaptive, m=15), progress=false)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
-    sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=Vern7(), progress=false, abstol=1e-7, reltol=1e-5)
+    sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=Vern7(), progress=false)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
 
     a = destroy(N)
@@ -214,7 +214,7 @@ end
 @testset "Dynamical Fock Dimension mesolve" begin
     ### DYNAMICAL FOCK DIMENSION ###
     F, Δ, κ = 5, 0.25, 1
-    t_l = LinRange(0, 15, 100)
+    t_l = range(0, 15, length=100)
 
     N0 = 140
     a0 = destroy(N0)
@@ -238,8 +238,7 @@ end
     end
     maxdims = [150]
     ψ0 = fock(3, 0)
-    sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, e_ops_dfd, maxdims, progress=false,
-            abstol=1e-9, reltol=1e-7)
+    sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, maxdims, e_ops=e_ops_dfd, progress=false)
 
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
 
@@ -252,7 +251,7 @@ end
     c_ops0 = [√κ * a0, √κ * a1]
     e_ops0 = [a0' * a0, a1' * a1]
     ψ00 = kron(fock(N0, 0), fock(N1, 15))
-    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, alg=Vern7(), progress=false, saveat=[t_l[end]])
+    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, progress=false)
 
     function H_dfd2(dims::AbstractVector)
         a = kron(destroy(dims[1]), eye(dims[2]))
@@ -271,7 +270,7 @@ end
     end
     maxdims = [50, 50]
     ψ0 = kron(fock(3, 0), fock(20, 15))
-    sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, e_ops_dfd2, maxdims, progress=false, saveat=[t_l[end]])
+    sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, maxdims, e_ops=e_ops_dfd2, progress=false)
 
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) +
           sum(abs.((sol.expect[2, :] .- sol0.expect[2, :]) ./ (sol0.expect[2, :] .+ 1e-16))) < 0.01
