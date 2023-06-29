@@ -1,40 +1,52 @@
 ### DYNAMICAL FOCK DIMENSION ###
 
 function _reduce_dims(QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, sel::AbstractVector, reduce::AbstractVector) where {T}
-    rd = QO.dims
+    ρmat, rd_new = _reduce_dims(QO.data, QO.dims, sel, reduce)
+
+    QuantumObject(ρmat, OperatorQuantumObject, rd_new)
+end
+
+function _reduce_dims(QO::AbstractArray{T}, dims::Vector{<:Integer}, sel::AbstractVector, reduce::AbstractVector) where {T}
+    rd = dims
     nd = length(rd)
     rd_new = zero(rd)
     rd_new[sel] .= reduce
     @. rd_new = rd - rd_new
 
     if nd == 1
-        ρmat = similar(QO.data, rd_new[1], rd_new[1])
-        copyto!(ρmat, view(QO.data, 1:rd_new[1], 1:rd_new[1]))
+        ρmat = similar(QO, rd_new[1], rd_new[1])
+        copyto!(ρmat, view(QO, 1:rd_new[1], 1:rd_new[1]))
     else
-        ρmat = reshape(QO.data, reverse!(repeat(rd, 2))...)
-        ρmat2 = similar(QO.data, reverse!(repeat(rd_new, 2))...)
+        ρmat = reshape(QO, reverse!(repeat(rd, 2))...)
+        ρmat2 = similar(QO, reverse!(repeat(rd_new, 2))...)
         copyto!(ρmat2, view(ρmat, reverse!(repeat([1:n for n in rd_new], 2))...))
         ρmat = reshape(ρmat2, prod(rd_new), prod(rd_new))
     end
 
-    QuantumObject(ρmat, OperatorQuantumObject, rd_new)
+    ρmat, rd_new
 end
 
 function _increase_dims(QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, sel::AbstractVector, increase::AbstractVector) where {T}
-    rd = QO.dims
+    ρmat, rd_new = _increase_dims(QO.data, QO.dims, sel, increase)
+
+    QuantumObject(ρmat, OperatorQuantumObject, rd_new)
+end
+
+function _increase_dims(QO::AbstractArray{T}, dims::Vector{<:Integer}, sel::AbstractVector, increase::AbstractVector) where {T}
+    rd = dims
     nd = length(rd)
     rd_new = zero(rd)
     rd_new[sel] .= increase
     @. rd_new = rd + rd_new
 
     if nd == 1
-        ρmat = similar(QO.data, rd_new[1], rd_new[1])
+        ρmat = similar(QO, rd_new[1], rd_new[1])
         selectdim(ρmat, 1, rd[1]+1:rd_new[1]) .= 0
         selectdim(ρmat, 2, rd[1]+1:rd_new[1]) .= 0
-        copyto!(view(ρmat, 1:rd[1], 1:rd[1]), QO.data)
+        copyto!(view(ρmat, 1:rd[1], 1:rd[1]), QO)
     else
-        ρmat2 = similar(QO.data, reverse!(repeat(rd_new, 2))...)
-        ρmat = reshape(QO.data, reverse!(repeat(rd, 2))...)
+        ρmat2 = similar(QO, reverse!(repeat(rd_new, 2))...)
+        ρmat = reshape(QO, reverse!(repeat(rd, 2))...)
         for i in eachindex(sel)
             selectdim(ρmat2, nd-sel[i]+1, rd[sel[i]]+1:rd_new[sel[i]]) .= 0
             selectdim(ρmat2, 2*nd-sel[i]+1, rd[sel[i]]+1:rd_new[sel[i]]) .= 0
@@ -43,7 +55,7 @@ function _increase_dims(QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObje
         ρmat = reshape(ρmat2, prod(rd_new), prod(rd_new))
     end
 
-    QuantumObject(ρmat, OperatorQuantumObject, rd_new)
+    ρmat, rd_new
 end
 
 _dfd_set_pillow = dim -> min(max(round(Int, 0.02 * dim), 1), 20)
@@ -56,16 +68,17 @@ function _DFDIncreaseReduceCondition(u, t, integrator)
     increase_list = internal_params.increase_list
     reduce_list = internal_params.reduce_list
     pillow_list = internal_params.pillow_list
+    dfd_ρt_cache = internal_params.dfd_ρt_cache
+    
+    # I need this cache because I can't reshape directly the integrator.u
+    copyto!(dfd_ρt_cache, integrator.u)
     
     @inbounds for i in eachindex(dim_list)
         maxdim_i = maxdims[i]
         dim_i = dim_list[i]
         pillow_i = pillow_list[i]
         if dim_i < maxdim_i && dim_i > 2 && maxdim_i != 0
-            # Here I use copy(u) otherwise I have an error.
-            ρt = QuantumObject(vec2mat(copy(integrator.u)), OperatorQuantumObject, dim_list)
-
-            ρi = ptrace(ρt, [i]).data
+            ρi = _ptrace_oper(vec2mat(dfd_ρt_cache), dim_list, [i])[1]
             @views res = norm(ρi[diagind(ρi)[end-pillow_i:end]], 1) * sqrt(dim_i) / pillow_i
             if res > tol_list[i]
                 increase_list[i] = true
@@ -88,21 +101,21 @@ function _DFDIncreaseReduceAffect!(integrator)
     pillow_list = internal_params.pillow_list
     dim_list_evo_times = internal_params.dim_list_evo_times
     dim_list_evo = internal_params.dim_list_evo
+    dfd_ρt_cache = internal_params.dfd_ρt_cache
     
-    # Here I use copy(integrator.u) otherwise I have an error.
-    ρt = QuantumObject(vec2mat(copy(integrator.u)), OperatorQuantumObject, dim_list)
-
+    ρt = vec2mat(dfd_ρt_cache)
+    
     @views pillow_increase = pillow_list[increase_list]
     @views pillow_reduce = pillow_list[reduce_list]
     dim_increase = findall(increase_list)
     dim_reduce = findall(reduce_list)
 
     if length(dim_increase) > 0
-        ρt = _increase_dims(ρt, dim_increase, pillow_increase)
+        ρt = _increase_dims(ρt, dim_list, dim_increase, pillow_increase)[1]
         dim_list[dim_increase] .+= pillow_increase
     end
     if length(dim_reduce) > 0
-        ρt = _reduce_dims(ρt, dim_reduce, pillow_reduce)
+        ρt = _reduce_dims(ρt, dim_list, dim_reduce, pillow_reduce)[1]
         dim_list[dim_reduce] .-= pillow_reduce
     end
 
@@ -114,9 +127,11 @@ function _DFDIncreaseReduceAffect!(integrator)
 
     e_ops2 = map(op -> mat2vec(get_data(op)'), e_ops(dim_list))
     L = liouvillian(H(dim_list), c_ops(dim_list)).data
+
     resize!(integrator, size(L, 1))
-    integrator.p = merge(internal_params, (L = L, e_ops = e_ops2))
-    integrator.u = mat2vec(ρt.data)
+    integrator.u .= mat2vec(ρt)
+    integrator.p = merge(internal_params, (L = L, e_ops = e_ops2, 
+                            dfd_ρt_cache = similar(integrator.u)))
 end
 
 function dfd_mesolveProblem(H::Function, ψ0::QuantumObject{<:AbstractArray{T1},StateOpType},
@@ -148,7 +163,8 @@ function dfd_mesolveProblem(H::Function, ψ0::QuantumObject{<:AbstractArray{T1},
     params2 = merge(params, Dict(:H_fun => H, :c_ops_fun => c_ops, :e_ops_fun => e_ops,
                         :dim_list => dim_list, :maxdims => maxdims, :tol_list => tol_list,
                         :reduce_list => reduce_list, :increase_list => increase_list, :pillow_list => pillow_list,
-                        :dim_list_evo_times => dim_list_evo_times, :dim_list_evo => dim_list_evo))
+                        :dim_list_evo_times => dim_list_evo_times, :dim_list_evo => dim_list_evo,
+                        :dfd_ρt_cache => similar(ψ0.data, length(ψ0.data)^2)))
 
     cb_dfd = DiscreteCallback(_DFDIncreaseReduceCondition, _DFDIncreaseReduceAffect!, save_positions=(false, false))
     kwargs2 = kwargs

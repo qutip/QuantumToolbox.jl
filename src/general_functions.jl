@@ -134,31 +134,14 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 function ptrace(QO::QuantumObject{<:AbstractArray{T1},OpType}, sel::Vector{T2}) where
     {T1,T2<:Int,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     
-    rd = QO.dims
-    nd = length(rd)
-
-    nd == 1 && return QO
-
-    dkeep = rd[sel]
-    qtrace = filter!(e -> e ∉ sel, Vector(1:nd))
-    dtrace = @view(rd[qtrace])
+    length(QO.dims) == 1 && return QO
 
     if isket(QO) || isbra(QO)
-        vmat = reshape(QO.data, reverse(rd)...)
-        topermute = vcat(sel, qtrace)
-        reverse!(topermute)
-        vmat = PermutedDimsArray(vmat, topermute)
-        vmat = reshape(vmat, prod(dkeep), prod(dtrace))
-        return QuantumObject(vmat * vmat', OperatorQuantumObject, dkeep)
+        ρtr, dkeep = _ptrace_braorket(QO.data, QO.dims, sel)
+        return QuantumObject(ρtr, dims=dkeep)
     elseif isoper(QO)
-        ρmat = reshape(QO.data, reverse!(repeat(rd, 2))...)
-        topermute = vcat([nd + q for q in qtrace], qtrace, [nd + q for q in sel], sel)
-        reverse!(topermute)
-        ρmat = PermutedDimsArray(ρmat, topermute)
-        ρmat = reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
-        dims = size(ρmat)
-        res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
-        return QuantumObject(res, OperatorQuantumObject, dkeep)
+        ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sel)
+        return QuantumObject(ρtr, dims=dkeep)
     end
 end
 
@@ -293,4 +276,51 @@ function n_th(ω::Real, T::Real)::Float64
     (T == 0 || ω == 0) && return 0.0
     abs(ω / T) > 50 && return 0.0
     return 1 / (exp(ω / T) - 1)
+end
+
+
+
+
+
+function _ptrace_braorket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
+    {T1,T2<:Integer}
+    
+    rd = dims
+    nd = length(rd)
+
+    nd == 1 && return QO, rd
+
+    dkeep = rd[sel]
+    qtrace = filter!(e -> e ∉ sel, Vector(1:nd))
+    dtrace = @view(rd[qtrace])
+
+    vmat = reshape(QO, reverse(rd)...)
+    topermute = vcat(sel, qtrace)
+    reverse!(topermute)
+    vmat = PermutedDimsArray(vmat, topermute)
+    vmat = reshape(vmat, prod(dkeep), prod(dtrace))
+
+    return vmat * vmat', dkeep
+end
+
+function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
+    {T1,T2<:Integer}
+    
+    rd = dims
+    nd = length(rd)
+
+    nd == 1 && return QO, rd
+
+    dkeep = rd[sel]
+    qtrace = filter!(e -> e ∉ sel, Vector(1:nd))
+    dtrace = @view(rd[qtrace])
+
+    ρmat = reshape(QO, reverse!(repeat(rd, 2))...)
+    topermute = vcat([nd + q for q in qtrace], qtrace, [nd + q for q in sel], sel)
+    reverse!(topermute)
+    ρmat = PermutedDimsArray(ρmat, topermute)
+    ρmat = reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
+    res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
+
+    return res, dkeep
 end

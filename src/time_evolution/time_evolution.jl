@@ -194,7 +194,7 @@ function sesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObje
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = get_data.(e_ops)
+    e_ops2 = length(e_ops) == 0 ? Vector{Matrix{T1}}([]) : get_data.(e_ops)
     p = merge((U = U, e_ops = e_ops2, expvals = expvals, progr = progr, Hdims = H.dims), params)
 
     kwargs2 = kwargs
@@ -275,7 +275,7 @@ function mesolveProblem(H::QuantumObject{<:AbstractArray{T1},HOpType},
 
     progr = Progress(length(t_l), showspeed=true, enabled=progress)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = map(op -> mat2vec(get_data(op)'), e_ops)
+    e_ops2 = length(e_ops) == 0 ? Vector{Vector{T1}}([]) : map(op -> mat2vec(get_data(op)'), e_ops)
     p = merge((L = L, e_ops = e_ops2, expvals = expvals, progr = progr, Hdims = H.dims), params)
 
     kwargs2 = kwargs
