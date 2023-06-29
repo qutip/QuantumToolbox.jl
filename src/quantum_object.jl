@@ -90,12 +90,6 @@ function QuantumObject(A::AbstractMatrix{T}; type::Type{ObjType}=OperatorQuantum
     QuantumObject(A, type, dims)
 end
 
-function QuantumObject(A::QuantumObject{<:AbstractArray}; type::Type{ObjType}=A.type, dims=A.dims) where
-    {ObjType<:QuantumObjectType}
-
-    QuantumObject(A.data, type, dims)
-end
-
 @doc raw"""
     ket2dm(ψ::QuantumObject)
 
@@ -378,45 +372,50 @@ function LinearAlgebra.kron(A::QuantumObject{<:AbstractArray{T1},OpType}, B::Qua
     QuantumObject(kron(A.data, B.data), OpType, vcat(A.dims, B.dims))
 end
 
-LinearAlgebra.triu!(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
+LinearAlgebra.triu!(A::QuantumObject{<:AbstractArray{T},OpType}, k::Integer=0) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (triu!(A.data, k); A)
-LinearAlgebra.tril!(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
+LinearAlgebra.tril!(A::QuantumObject{<:AbstractArray{T},OpType}, k::Integer=0) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (tril!(A.data, k); A)
-LinearAlgebra.triu(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
+LinearAlgebra.triu(A::QuantumObject{<:AbstractArray{T},OpType}, k::Integer=0) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(triu(A.data, k), OpType, A.dims)
-LinearAlgebra.tril(A::QuantumObject{<:AbstractArray{T},OpType}, k::Int=0) where
+LinearAlgebra.tril(A::QuantumObject{<:AbstractArray{T},OpType}, k::Integer=0) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(tril(A.data, k), OpType, A.dims)
 
 LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
     QuantumObject(sqrt(A.data), OpType, A.dims)
 
-LinearAlgebra.exp(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    QuantumObject(exp(A.data), OpType, A.dims)
+LinearAlgebra.exp(A::QuantumObject{<:AbstractMatrix{T},OpType}) where {T,OpType<:QuantumObjectType} =
+    QuantumObject(dense_to_sparse(exp(A.data)), OpType, A.dims)
 
-function LinearAlgebra.exp(A::SparseMatrixCSC{T,M}; threshold=1e-14, nonzero_tol=1e-20) where {T,M}
-    rows = checksquare(A) # Throws exception if not square
+LinearAlgebra.exp(A::QuantumObject{<:AbstractSparseMatrix{T},OpType}) where {T,OpType<:QuantumObjectType} =
+    QuantumObject(_spexp(A.data), OpType, A.dims)
+
+function _spexp(A::SparseMatrixCSC{T,M}; threshold=1e-14, nonzero_tol=1e-20) where {T,M}
+    m = checksquare(A) # Throws exception if not square
 
     mat_norm = norm(A, Inf)
-    mat_norm == 0 && return eye(rows).data
+    mat_norm == 0 && return eye(m).data
     scaling_factor = nextpow(2, mat_norm) # Native routine, faster
     A = A ./ scaling_factor
     delta = 1
 
-    P = spdiagm(0 => ones(T, rows))
+    P = spdiagm(0 => ones(T, m))
     next_term = P
     n = 1
 
     while delta > threshold
-        next_term = T(1 / n) * A * next_term
-        droptol!(next_term, nonzero_tol)
+        next_term *= A / n
+        if nnz(next_term) / length(next_term) > 0.25
+            tidyup!(next_term, nonzero_tol)
+        end
         delta = norm(next_term, Inf)
-        copyto!(P, P + next_term)
-        n = n + 1
+        P += next_term
+        n += 1
     end
     for n = 1:log2(scaling_factor)
         P = P * P
-        if nnz(P) / length(P) < 0.25
-            droptol!(P, nonzero_tol)
+        if nnz(P) / length(P) > 0.25
+            tidyup!(P, nonzero_tol)
         end
     end
     P

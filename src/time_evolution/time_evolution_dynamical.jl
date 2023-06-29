@@ -1,11 +1,5 @@
 ### DYNAMICAL FOCK DIMENSION ###
 
-function _reduce_dims(QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, sel::AbstractVector, reduce::AbstractVector) where {T}
-    ρmat, rd_new = _reduce_dims(QO.data, QO.dims, sel, reduce)
-
-    QuantumObject(ρmat, OperatorQuantumObject, rd_new)
-end
-
 function _reduce_dims(QO::AbstractArray{T}, dims::Vector{<:Integer}, sel::AbstractVector, reduce::AbstractVector) where {T}
     rd = dims
     nd = length(rd)
@@ -23,13 +17,7 @@ function _reduce_dims(QO::AbstractArray{T}, dims::Vector{<:Integer}, sel::Abstra
         ρmat = reshape(ρmat2, prod(rd_new), prod(rd_new))
     end
 
-    ρmat, rd_new
-end
-
-function _increase_dims(QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, sel::AbstractVector, increase::AbstractVector) where {T}
-    ρmat, rd_new = _increase_dims(QO.data, QO.dims, sel, increase)
-
-    QuantumObject(ρmat, OperatorQuantumObject, rd_new)
+    ρmat
 end
 
 function _increase_dims(QO::AbstractArray{T}, dims::Vector{<:Integer}, sel::AbstractVector, increase::AbstractVector) where {T}
@@ -55,7 +43,7 @@ function _increase_dims(QO::AbstractArray{T}, dims::Vector{<:Integer}, sel::Abst
         ρmat = reshape(ρmat2, prod(rd_new), prod(rd_new))
     end
 
-    ρmat, rd_new
+    ρmat
 end
 
 _dfd_set_pillow = dim -> min(max(round(Int, 0.02 * dim), 1), 20)
@@ -111,11 +99,11 @@ function _DFDIncreaseReduceAffect!(integrator)
     dim_reduce = findall(reduce_list)
 
     if length(dim_increase) > 0
-        ρt = _increase_dims(ρt, dim_list, dim_increase, pillow_increase)[1]
+        ρt = _increase_dims(ρt, dim_list, dim_increase, pillow_increase)
         dim_list[dim_increase] .+= pillow_increase
     end
     if length(dim_reduce) > 0
-        ρt = _reduce_dims(ρt, dim_list, dim_reduce, pillow_reduce)[1]
+        ρt = _reduce_dims(ρt, dim_list, dim_reduce, pillow_reduce)
         dim_list[dim_reduce] .-= pillow_reduce
     end
 
@@ -141,12 +129,12 @@ function dfd_mesolveProblem(H::Function, ψ0::QuantumObject{<:AbstractArray{T1},
     H_t::Union{Nothing,Function}=nothing,
     params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
     progress::Bool=true,
-    tol_list::AbstractVector=[],
-    kwargs...) where {T1,T2<:Int,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    tol_list::Vector{<:Number}=Float64[],
+    kwargs...) where {T1,T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
 
     length(ψ0.dims) != length(maxdims) && throw(DimensionMismatch("'dim_list' and 'maxdims' do not have the same dimension."))
 
-    e_ops === nothing && (e_ops = dim_list -> [])
+    e_ops === nothing && (e_ops = dim_list -> Vector{Vector{T1}}([]))
 
     dim_list = deepcopy(ψ0.dims)
     H₀ = H(dim_list)
@@ -176,26 +164,27 @@ function dfd_mesolveProblem(H::Function, ψ0::QuantumObject{<:AbstractArray{T1},
 end
 
 """
-    dfd_mesolve(H::Function, ψ0::QuantumObject,
-        t_l::AbstractVector, c_ops::Function, e_ops::Function, maxdims::AbstractVector;
-        tol_list::AbstractVector=[],
-        alg = Vern7(),
-        params::AbstractVector=[],
+    function dfd_mesolve(H::Function, ψ0::QuantumObject,
+        t_l::AbstractVector, c_ops::Function, maxdims::AbstractVector;
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+        e_ops::Union{Nothing, Function}=nothing, 
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
         progress::Bool=true,
-        callbacks::AbstractVector=[],
+        tol_list::Vector{<:Number}=Float64[],
         kwargs...)
 
 Time evolution of an open quantum system using master equation, dynamically changing the dimension of the Hilbert subspaces.
 """
-function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
-    t_l::AbstractVector, c_ops::Function, maxdims::AbstractVector;
+function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T1},StateOpType},
+    t_l::AbstractVector, c_ops::Function, maxdims::Vector{T2};
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
     e_ops::Union{Nothing, Function}=nothing, 
     H_t::Union{Nothing,Function}=nothing,
     params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
     progress::Bool=true,
-    tol_list::AbstractVector=[],
-    kwargs...) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    tol_list::Vector{<:Number}=Float64[],
+    kwargs...) where {T1,T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     
     dfd_prob = dfd_mesolveProblem(H, ψ0, t_l, c_ops, maxdims; alg=alg, e_ops=e_ops, H_t=H_t, params=params,
                                     progress=progress, tol_list=tol_list, kwargs...)
@@ -207,34 +196,24 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T},StateOpT
     return TimeEvolutionSol(sol.t, ρt, sol.prob.p.expvals)
 end
 
+
+
+
 # Dynamical Shifted Fock mesolve
 
-function _save_func_mesolve_dsf(u, t, integrator)
-    internal_params = integrator.p[1]
-    progr = internal_params["progr"]
-    op_l = internal_params["op_l"]
-    αt_list = internal_params["αt_list"]
-    e_ops = internal_params["e_ops"]
-    expvals = internal_params["expvals"]
-    op1 = op_l[1]
-    
-    expvals[:, progr.counter+1] .= map(op -> tr(op.data * reshape(u, isqrt(length(u)), :)), e_ops(op_l .+ αt_list))
-    next!(progr)
-end
+
+
 
 function _DSF_mesolve_Condition(u, t, integrator)
-    internal_params = integrator.p[1]
-    op_l = internal_params["op_l"]
-    δα_list = internal_params["δα_list"]
-    op1 = op_l[1]
-    # integrator.u or just u?
-    ρt = reshape(integrator.u, size(op1)...)
+    internal_params = integrator.p
+    op_l_vec = internal_params.op_l_vec
+    δα_list = internal_params.δα_list
 
     condition = false
-    @inbounds for i in eachindex(op_l)
-        op = op_l[i]
+    @inbounds for i in eachindex(δα_list)
+        op_vec = op_l_vec[i]
         δα = δα_list[i]
-        Δα = tr(op.data * ρt)
+        Δα = dot(op_vec, integrator.u)
         if δα < abs(Δα)
             condition = true
         end
@@ -243,90 +222,111 @@ function _DSF_mesolve_Condition(u, t, integrator)
 end
 
 function _DSF_mesolve_Affect!(integrator)
-    internal_params = integrator.p[1]
-    op_l = internal_params["op_l"]
-    αt_list = internal_params["αt_list"]
-    δα_list = internal_params["δα_list"]
-    H = internal_params["H"]
-    c_ops = internal_params["c_ops"]
-    L = internal_params["L"]
-    op1 = op_l[1]
+    internal_params = integrator.p
+    op_l = internal_params.op_l
+    op_l_vec = internal_params.op_l_vec
+    αt_list = internal_params.αt_list
+    δα_list = internal_params.δα_list
+    H = internal_params.H_fun
+    c_ops = internal_params.c_ops_fun
+    e_ops = internal_params.e_ops_fun
+    e_ops_vec = internal_params.e_ops
+    L = internal_params.L
+    dsf_cache = internal_params.dsf_cache
 
-    ρt  = reshape(integrator.u, size(op1)...)
-
-    U = QuantumObject(spdiagm(ones(ComplexF64, size(op1, 1))), OperatorQuantumObject, op1.dims)
-    @inbounds for i in eachindex(op_l)
+    for i in eachindex(op_l)
         op = op_l[i]
+        op_vec = op_l_vec[i]
         αt = αt_list[i]
         δα = δα_list[i]
-        Δα = tr(op.data * ρt)
+        Δα = dot(op_vec, integrator.u)
 
         if δα < abs(Δα)
-            U *= exp(Δα*op' - conj(Δα)*op)
+            Dᵢ = exp(Δα*op' - conj(Δα)*op)
+            copyto!(dsf_cache, integrator.u)
+            mul!(integrator.u, sprepost(Dᵢ', Dᵢ).data, dsf_cache)
+
             αt_list[i] += Δα
         end
     end
 
     op_l2 = op_l .+ αt_list
-    copyto!(L, liouvillian(H(op_l2), c_ops(op_l2)).data)
-    integrator.u = sprepost(U', U).data * integrator.u
+    e_ops2 = e_ops(op_l2)
+    _mat2vec_data = op -> mat2vec(get_data(op)')
+    @. e_ops_vec = _mat2vec_data(e_ops2)
+    copyto!(internal_params.L, liouvillian(H(op_l2), c_ops(op_l2)).data)
+end
+
+function dsf_mesolveProblem(H::Function,
+    ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
+    t_l::AbstractVector, c_ops::Function,
+    op_list::AbstractVector,
+    α0_l::Vector{<:Number}=zeros(length(op_list));
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::Union{Nothing, Function}=nothing,
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    progress::Bool=true,
+    δα_list::Vector{<:Real}=Float64[],
+    kwargs...) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+
+    e_ops === nothing && (e_ops = op_list -> Vector{QuantumObject{Matrix{ComplexF64}, OperatorQuantumObject}}([]))
+
+    op_l = deepcopy(op_list)
+    H₀ = H(op_l)
+    c_ops₀ = c_ops(op_l)
+    e_ops₀ = e_ops(op_l .+ α0_l)
+
+    αt_list  = convert(Vector{T}, α0_l)
+    length(δα_list) != length(op_l) ? δα_list = [0.3 for op in op_l] : nothing
+    op_l_vec = map(op -> mat2vec(get_data(op)'), op_l)
+
+    params2 = merge(params, Dict(:H_fun => H, :c_ops_fun => c_ops, :e_ops_fun => e_ops,
+                    :op_l => op_l, :op_l_vec => op_l_vec, :αt_list => αt_list, :δα_list => δα_list,
+                    :dsf_cache => similar(ψ0.data, length(ψ0.data)^2)))
+
+    cb_dsf = DiscreteCallback(_DSF_mesolve_Condition, _DSF_mesolve_Affect!, save_positions=(false, false))
+    kwargs2 = kwargs
+    kwargs2 = merge(kwargs2, haskey(kwargs2, :callback) ? 
+                    Dict(:callback => CallbackSet(cb_dsf, kwargs2[:callback])) : Dict(:callback => cb_dsf))
+
+    mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops=e_ops₀, alg=alg, H_t=H_t, progress=progress,
+                                params=params2, kwargs2...)
 end
 
 """
-    dsf_mesolve(H::Function, α0_l::Vector{<:Number},
-        ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
-        t_l::AbstractVector, c_ops::Function, e_ops::Function, op_list::AbstractVector;
-        δα_list::AbstractVector = [],
-        alg = Vern7(),
-        params::AbstractVector=[],
-        progress = true,
-        callbacks = [],
+    function dsf_mesolve(H::Function,
+        ψ0::QuantumObject,
+        t_l::AbstractVector, c_ops::Function,
+        op_list::AbstractVector,
+        α0_l::Vector{<:Number}=zeros(length(op_list));
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+        e_ops::Union{Nothing, Function}=nothing,
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        progress::Bool=true,
+        δα_list::Vector{<:Number}=Float64[],
         kwargs...)
 
 Time evolution of an open quantum system using master equation and the Dynamical Shifted Fock algorithm.
 """
-function dsf_mesolve(H::Function, α0_l::Vector{<:Number},
+function dsf_mesolve(H::Function,
     ψ0::QuantumObject{<:AbstractArray{T}, StateOpType},
-    t_l::AbstractVector, c_ops::Function, e_ops::Function, op_list::AbstractVector;
-    δα_list::AbstractVector = [],
-    alg = Vern7(),
-    params::AbstractVector=[],
-    progress = true,
-    callbacks = [],
+    t_l::AbstractVector, c_ops::Function,
+    op_list::AbstractVector,
+    α0_l::Vector{<:Number}=zeros(length(op_list));
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Vern7(),
+    e_ops::Union{Nothing, Function}=nothing,
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    progress::Bool=true,
+    δα_list::Vector{<:Real}=Float64[],
     kwargs...) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
 
-    op_l = deepcopy(op_list)
-    H(op_l).dims != ψ0.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    Hdims = H(op_l).dims
-
-    tspan = (t_l[1], t_l[end])
-
-    progr = Progress(length(t_l), showspeed=true, enabled=progress)
-
-    ρ0 = isket(ψ0) ? reshape(ψ0.data * ψ0.data', length(ψ0)^2) : reshape(ψ0.data, length(ψ0))
-
-    L = liouvillian(H(op_l), c_ops(op_l)).data
-
-    αt_list  = convert(Vector{ComplexF64}, α0_l)
-    length(δα_list) == 0 ? δα_list = [0.1 for op in op_l] : nothing
-    expvals = Array{ComplexF64}(undef, length(e_ops(op_l)), length(t_l))
-    p = [Dict("L" => L, "H" => H, "c_ops" => c_ops, "e_ops" => e_ops,
-    "op_l" => op_l, "αt_list" => αt_list, "δα_list" => δα_list,
-    "expvals" => expvals, "progr" => progr), params...]
-
-    cb1 = FunctionCallingCallback(_save_func_mesolve_dsf, funcat=t_l)
-    cb2 = DiscreteCallback(_DSF_mesolve_Condition, _DSF_mesolve_Affect!, save_positions=(false,false))
-    cb3 = AutoAbstol(false; init_curmax=0.0)
-    cb = CallbackSet(cb1, cb2, cb3, callbacks...)
-
-    dudt! = (du, u, p, t) -> mul!(du, p[1]["L"], u)
-    prob = ODEProblem(dudt!, ρ0, tspan, p; kwargs...)
-    sol = solve(prob, alg, callback=cb)
-
-    ρt_len = isqrt(length(sol.u[1]))
-    ρt_len == prod(Hdims) ? ρt = [QuantumObject(reshape(ϕ, ρt_len, ρt_len), dims=Hdims) for ϕ in sol.u] : ρt = sol.u
-
-    TimeEvolutionSol(sol.t, ρt, sol.prob.p[1]["expvals"])
+    dsf_prob = dsf_mesolveProblem(H, ψ0, t_l, c_ops, op_list, α0_l; alg=alg, e_ops=e_ops, H_t=H_t,
+                                    params=params, progress=progress, δα_list=δα_list, kwargs...)
+    
+    return mesolve(dsf_prob; alg=alg, kwargs...)
 end
 
 # Dynamical Shifted Fock mcsolve

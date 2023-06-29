@@ -153,6 +153,17 @@ using Test
         A = broadcast(op, a, 2.1)
         @test A.data == broadcast(op, a.data, 2.1) && A.type == a.type && A.dims == a.dims
     end
+
+    # tidyup tests
+    ρ1 = rand_dm(20)
+    ρ2 = dense_to_sparse(ρ1)
+    @test tidyup!(ρ2, 0.1) == ρ2 != ρ1
+    @test dense_to_sparse(tidyup!(ρ1, 0.1)) == ρ2
+
+    ρ1 = rand_dm(20)
+    ρ2 = dense_to_sparse(ρ1)
+    @test tidyup(ρ2, 0.1) != ρ2
+    @test dense_to_sparse(tidyup(ρ1, 0.1)) == tidyup(ρ2, 0.1)
 end
 
 @testset "Time Evolution and partial trace" begin
@@ -224,23 +235,53 @@ end
     ψ00 = fock(N0, 0)
     sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, progress=false)
 
-    function H_dfd(dims::AbstractVector)
+    function H_dfd0(dims::AbstractVector)
         a = destroy(dims[1])
         Δ * a' * a + F * (a + a')
     end
-    function c_ops_dfd(dims::AbstractVector)
+    function c_ops_dfd0(dims::AbstractVector)
         a = destroy(dims[1])
         [√κ * a]
     end
-    function e_ops_dfd(dims::AbstractVector)
+    function e_ops_dfd0(dims::AbstractVector)
         a = destroy(dims[1])
         [a' * a]
     end
     maxdims = [150]
     ψ0 = fock(3, 0)
-    sol = dfd_mesolve(H_dfd, ψ0, t_l, c_ops_dfd, maxdims, e_ops=e_ops_dfd, progress=false)
+    sol = dfd_mesolve(H_dfd0, ψ0, t_l, c_ops_dfd0, maxdims, e_ops=e_ops_dfd0, progress=false)
 
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
+
+    ######################
+
+    F = 0
+    H0 = Δ * a0' * a0 + F * (a0 + a0')
+    c_ops0 = [√κ * a0]
+    e_ops0 = [a0' * a0]
+    ψ00 = fock(N0, 50)
+    sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, progress=false)
+
+    function H_dfd1(dims::AbstractVector)
+        a = destroy(dims[1])
+        Δ * a' * a + F * (a + a')
+    end
+    function c_ops_dfd1(dims::AbstractVector)
+        a = destroy(dims[1])
+        [√κ * a]
+    end
+    function e_ops_dfd1(dims::AbstractVector)
+        a = destroy(dims[1])
+        [a' * a]
+    end
+    maxdims = [150]
+    ψ0 = fock(70, 50)
+    sol = dfd_mesolve(H_dfd1, ψ0, t_l, c_ops_dfd1, maxdims, e_ops=e_ops_dfd1, progress=false)
+
+    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
+
+
+    ######################
 
     F, Δ, κ, J = 1.5, 0.25, 1, 0.05
     N0 = 25
@@ -312,7 +353,7 @@ end
     ψ0  = fock(N, 0)
     α0_l = [α0]
     
-    sol_dsf_me = dsf_mesolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false)
+    sol_dsf_me = dsf_mesolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, e_ops=e_ops_dsf, progress=false)
     sol_dsf_mc = dsf_mcsolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, n_traj=500)
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.05
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.05
@@ -353,7 +394,7 @@ end
     ψ0  = kron(fock(N, 0), fock(N, 0))
     α0_l = [α0, α0]
 
-    sol_dsf_me = dsf_mesolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, abstol=1e-9, reltol=1e-7)
+    sol_dsf_me = dsf_mesolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false, abstol=1e-9, reltol=1e-7)
     sol_dsf_mc = dsf_mcsolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, n_traj=500, abstol=1e-9, reltol=1e-7)
 
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.1
@@ -381,12 +422,12 @@ end
     Tlist = [0, 0.0]
     
     E, U, L1 = liouvillian_generalized(H, fields, γlist, ωlist, Tlist, N_trunc=N_trunc, tol=tol)
-    Ω = droptol!(sparse((E' .- E)[1:N_trunc,1:N_trunc]), tol)
+    Ω = dense_to_sparse((E' .- E)[1:N_trunc,1:N_trunc], tol)
     
-    H_d = QuantumObject(droptol!(sparse(U' * H * U)[1:N_trunc,1:N_trunc], tol))
-    Xp = QuantumObject( Ω .* droptol!(triu(sparse(U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
-    a2 = QuantumObject( droptol!(sparse(U' * a * U).data[1:N_trunc,1:N_trunc], tol))
-    sm2 = QuantumObject( droptol!(sparse(U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
+    H_d = QuantumObject(dense_to_sparse((U' * H * U)[1:N_trunc,1:N_trunc], tol))
+    Xp = QuantumObject( Ω .* dense_to_sparse(triu((U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
+    a2 = QuantumObject( dense_to_sparse((U' * a * U).data[1:N_trunc,1:N_trunc], tol))
+    sm2 = QuantumObject( dense_to_sparse((U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
     
     # Standard liouvillian case
     c_ops = [sqrt(γlist[1]) * a2, sqrt(γlist[2]) * sm2] 
@@ -399,12 +440,12 @@ end
     Tlist = [0.2, 0.0]
 
     E, U, L1 = liouvillian_generalized(H, fields, γlist, ωlist, Tlist, N_trunc=N_trunc, tol=tol)
-    Ω = droptol!(sparse((E' .- E)[1:N_trunc,1:N_trunc]), tol)
+    Ω = dense_to_sparse((E' .- E)[1:N_trunc,1:N_trunc], tol)
 
-    H_d = QuantumObject(droptol!(sparse(U' * H * U)[1:N_trunc,1:N_trunc], tol))
-    Xp = QuantumObject( Ω .* droptol!(triu(sparse(U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
-    a2 = QuantumObject( droptol!(sparse(U' * a * U).data[1:N_trunc,1:N_trunc], tol))
-    sm2 = QuantumObject( droptol!(sparse(U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
+    H_d = QuantumObject(dense_to_sparse((U' * H * U)[1:N_trunc,1:N_trunc], tol))
+    Xp = QuantumObject( Ω .* dense_to_sparse(triu((U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
+    a2 = QuantumObject( dense_to_sparse((U' * a * U).data[1:N_trunc,1:N_trunc], tol))
+    sm2 = QuantumObject( dense_to_sparse((U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
 
     @test abs(expect(Xp'*Xp, steadystate(L1)) - n_th(1, Tlist[1])) / n_th(1, Tlist[1]) < 1e-4
 end

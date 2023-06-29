@@ -138,7 +138,7 @@ sigmaz() = sigmap() * sigmam() - sigmam() * sigmap()
 Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
 """
 eye(N::Int; type::Type{ObjType}=OperatorQuantumObject, dims::Vector{Int}=[N]) where 
-    {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(I(N), type, dims)
+    {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(Diagonal(ones(ComplexF64, N)), type, dims)
 
 @doc raw"""
     fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)

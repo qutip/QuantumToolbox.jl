@@ -35,17 +35,36 @@ Converts a dense QuantumObject to a sparse QuantumObject.
 """
 dense_to_sparse(A::QuantumObject{<:AbstractVecOrMat}, tol::Real=1e-10) = QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
 function dense_to_sparse(A::AbstractMatrix, tol::Real=1e-10)
-    idxs = findall(abs.(A) .> tol)
+    idxs = findall(@. abs(A) > tol)
     row_indices = getindex.(idxs, 1)
     col_indices = getindex.(idxs, 2)
     vals = getindex(A, idxs)
     return sparse(row_indices, col_indices, vals, size(A)...)
 end
 function dense_to_sparse(A::AbstractVector, tol::Real=1e-10)
-    idxs = findall(abs.(A) .> tol)
+    idxs = findall(@. abs(A) > tol)
     vals = getindex(A, idxs)
     return sparsevec(idxs, vals, length(A))
 end
+
+"""
+    tidyup(A::QuantumObject, tol::Real=1e-14)
+
+Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
+"""
+tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2=1e-14) where {T, T2<:Real} = QuantumObject(tidyup(A.data, tol), A.type, A.dims)
+tidyup(A::AbstractArray{T}, tol::T2=1e-14) where {T, T2<:Real} = @. T(abs(A) > tol) * A
+tidyup(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T, T2<:Real} = droptol!(copy(A), tol)
+
+"""
+    tidyup!(A::QuantumObject, tol::Real=1e-14)
+
+Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
+In-place version of [`tidyup`](#tidyup).
+"""
+tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2=1e-14) where {T, T2<:Real} = (tidyup!(A.data, tol); A)
+tidyup!(A::AbstractArray{T}, tol::T2=1e-14) where {T, T2<:Real} = @. A = T(abs(A) > tol) * A
+tidyup!(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T, T2<:Real} = droptol!(A, tol)
 
 """
     get_data(A::QuantumObject)

@@ -33,6 +33,8 @@ row_major_reshape
 meshgrid
 sparse_to_dense
 dense_to_sparse
+tidyup
+tidyup!
 gaussian
 ptrace
 entropy_vn

@@ -31,7 +31,7 @@ export destroy, create, eye, projection, rand_dm
 export sinm, cosm
 export expect
 export WignerClenshaw, WignerLaguerre, wigner
-export row_major_reshape, chop_op, gaussian, trunc_op, meshgrid, sparse_to_dense, dense_to_sparse
+export row_major_reshape, tidyup, tidyup!, gaussian, trunc_op, meshgrid, sparse_to_dense, dense_to_sparse
 export get_data, mat2vec, vec2mat
 export ptrace, entropy_vn, entanglement
 export get_coherence, n_th

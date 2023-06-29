@@ -12,8 +12,8 @@ struct TimeEvolutionSol{TT<:Vector{<:Real}, TS<:AbstractVector, TE<:Matrix{Compl
     expect::TE
 end
 
-struct TimeEvolutionMCSol{TT<:AbstractVector, TS<:AbstractVector, TE<:Matrix{ComplexF64}, 
-                TEA<:Array{ComplexF64, 3}, TJT<:AbstractVector, TJW<:AbstractVector}
+struct TimeEvolutionMCSol{TT<:Vector{<:Vector{<:Real}}, TS<:AbstractVector, TE<:Matrix{ComplexF64}, 
+                TEA<:Array{ComplexF64, 3}, TJT<:Vector{<:Vector{<:Real}}, TJW<:Vector{<:Vector{<:Integer}}}
     times::TT
     states::TS
     expect::TE
@@ -133,9 +133,11 @@ end
 
 function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
     sol_i = sol[i]
+    sol_u = haskey(sol_i.prob.kwargs, :save_idxs) ? sol_i.u : QuantumObject.(sol_i.u, dims=sol_i.prob.p.Hdims)
+
     expvals_all[i, :, :] .= sol_i.prob.p.expvals
     push!(times, sol_i.t)
-    push!(states, QuantumObject.(sol_i.u, dims=sol_i.prob.p.Hdims))
+    push!(states, sol_u)
     push!(jump_times, sol_i.prob.p.jump_times)
     push!(jump_which, sol_i.prob.p.jump_which)
 end
@@ -631,7 +633,7 @@ function mcsolve(ens_prob_mc::EnsembleProblem;
 
     expvals_all = Array{ComplexF64}(undef, length(sol), size(sol[1].prob.p.expvals)...)
     times = Vector{Vector{Float64}}([])
-    states = []
+    states = haskey(sol[1].prob.kwargs, :save_idxs) ? Vector{Vector{eltype(sol[1].u[1])}}([]) : Vector{Vector{QuantumObject}}([])
     jump_times = Vector{Vector{Float64}}([])
     jump_which = Vector{Vector{Int16}}([])
     foreach(i -> _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which), eachindex(sol))
