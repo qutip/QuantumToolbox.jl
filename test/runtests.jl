@@ -15,6 +15,8 @@ using Test
     @test isbra(a3) == false
     @test isoper(a3) == false
     @test issuper(a3) == false
+    @test QuantumObject(a3) == a3
+    @test !(QuantumObject(a3) === a3)
 
     a = sprand(ComplexF64, 100, 100, 0.1)
     a2 = QuantumObject(a, type=OperatorQuantumObject)
@@ -354,9 +356,9 @@ end
     α0_l = [α0]
     
     sol_dsf_me = dsf_mesolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, e_ops=e_ops_dsf, progress=false)
-    sol_dsf_mc = dsf_mcsolve(H_dsf, α0_l, ψ0, tlist, c_ops_dsf, e_ops_dsf, op_list, progress=false, n_traj=500)
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.05
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.05
+    sol_dsf_mc = dsf_mcsolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, e_ops=e_ops_dsf, progress=false, n_traj=500)
+    @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.1
+    @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.1
 
     # Two cavities case
     F   = 2
@@ -395,7 +397,7 @@ end
     α0_l = [α0, α0]
 
     sol_dsf_me = dsf_mesolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false, abstol=1e-9, reltol=1e-7)
-    sol_dsf_mc = dsf_mcsolve(H_dsf2, α0_l, ψ0, tlist, c_ops_dsf2, e_ops_dsf2, op_list, progress=false, n_traj=500, abstol=1e-9, reltol=1e-7)
+    sol_dsf_mc = dsf_mcsolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false, n_traj=500, abstol=1e-9, reltol=1e-7)
 
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.1
     @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.1

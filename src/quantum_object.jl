@@ -90,6 +90,12 @@ function QuantumObject(A::AbstractMatrix{T}; type::Type{ObjType}=OperatorQuantum
     QuantumObject(A, type, dims)
 end
 
+function QuantumObject(A::QuantumObject{<:AbstractArray}; type::Type{ObjType}=A.type, dims=A.dims) where
+    {ObjType<:QuantumObjectType}
+
+    QuantumObject(A.data, type, dims)
+end
+
 @doc raw"""
     ket2dm(ψ::QuantumObject)
 
