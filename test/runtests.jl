@@ -469,9 +469,37 @@ end
 
     vals_d, vecs_d = eigen(H_d)
     vals_c, vecs_c = eigen((H_c))
+    vals2, vecs2 = eigsolve(H_d, sigma=-0.9, k=10, krylovdim=30)
     sort!(vals_c, by=real)
+    sort!(vals2, by=real)
 
     @test sum(vals_d[1:20] .- real.(vals_c[1:20])) / 20 < 1e-3
+    @test sum(vals_d[1:10] .- real.(vals2[1:10])) / 20 < 1e-3
+
+
+    N = 5
+    a = kron(destroy(N), eye(N))
+    a_d = a'
+    b = kron(eye(N), destroy(N))
+    b_d = b'
+
+    ωc = 1
+    ωb = 1
+    g = 0.01
+    κ = 0.1
+    n_th = 0.01
+
+    H = ωc * a_d * a + ωb * b_d * b + g * (a + a_d) * (b + b_d)
+    c_ops = [√((1+n_th)*κ) * a, √κ * b, √(n_th*κ) * a_d]
+    L = liouvillian(H, c_ops).data
+
+    vals, vecs = eigsolve(L, sigma=0.01, k=10, krylovdim=50)
+    vals2, vecs2 = eigen(sparse_to_dense(L))
+    idxs = sortperm(vals2, by=abs)
+    vals2 = vals2[idxs][1:10]
+    vecs2 = vecs2[:, idxs][:, 1:10]
+
+    @test isapprox(sum(abs2, vals), sum(abs2, vals2), atol=1e-7)
 end
 
 @testset "Steadystate" begin

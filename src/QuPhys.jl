@@ -11,6 +11,9 @@ using ExponentialUtilities
 using Graphs
 using FFTW
 using SpecialFunctions
+using LinearSolve
+using LinearMaps
+using IncompleteLU
 
 using LinearAlgebra: BlasFloat, BlasComplex
 
@@ -22,6 +25,7 @@ include("time_evolution/time_evolution_dynamical.jl")
 include("permutation.jl")
 include("correlations.jl")
 include("wigner.jl")
+include("eigsolve.jl")
 
 export QuantumObject, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
 export isket, isbra, isoper, issuper, ket2dm
@@ -44,5 +48,6 @@ export LiouvillianDirectSolver, SteadyStateDirectSolver
 export bdf, get_bdf_blocks
 export FFTCorrelation, ExponentialSeries
 export correlation_3op_2t, correlation_2op_2t, correlation_2op_1t, spectrum
+export eigsolve
 
 end

@@ -22,8 +22,6 @@ length
 LinearAlgebra.tr
 LinearAlgebra.norm
 LinearAlgebra.kron
-LinearAlgebra.eigen
-LinearAlgebra.eigvals
 ```
 
 ## [General functions](@id API: General functions)
@@ -96,4 +94,11 @@ correlation_3op_2t
 correlation_2op_2t
 correlation_2op_1t
 spectrum
+```
+
+## [Eigenvalues and eigenvectors](@id API: Eigenvalues and eigenvectors)
+```@docs
+LinearAlgebra.eigen
+LinearAlgebra.eigvals
+eigsolve
 ```
