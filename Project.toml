@@ -28,6 +28,7 @@ LinearMaps = "3"
 LinearSolve = "2"
 OrdinaryDiffEq = "6.30"
 ProgressMeter = "1.7"
+Reexport = "1"
 SpecialFunctions = "2.2"
 julia = "1.7"
 
