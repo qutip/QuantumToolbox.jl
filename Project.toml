@@ -18,6 +18,14 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
 julia = "1.6"
+DiffEqCallbacks = "2.24"
+ExponentialUtilities = "1.22"
+FFTW = "1.5"
+Graphs = "1.7.4"
+OrdinaryDiffEq = "6.30"
+ProgressMeter = "1.7"
+SpecialFunctions = "2.2"
+
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
