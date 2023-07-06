@@ -26,6 +26,7 @@ FFTW = "1.5"
 Graphs = "1.7.4"
 OrdinaryDiffEq = "6.30"
 ProgressMeter = "1.7"
+Reexport = "1"
 SpecialFunctions = "2.2"
 julia = "1.7"
 
