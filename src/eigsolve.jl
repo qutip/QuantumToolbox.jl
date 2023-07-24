@@ -113,8 +113,8 @@ function _permuteschur!(T::AbstractMatrix{S}, Q::AbstractMatrix{S}, order::Abstr
     return T, Q
 end
 
-function _eigsolve(A, b::AbstractVector, k::Integer = min(4, size(A, 1)), 
-    m::Integer = min(10, size(A, 1)); tol::Real = 1e-8, maxiter::Integer = 200)
+function _eigsolve(A, b::AbstractVector, k::Integer = 1, 
+    m::Integer = max(20, 2*k+1); tol::Real = 1e-8, maxiter::Integer = 200)
 
     Ks = ExponentialUtilities.arnoldi(A, b, m = m)
     V = Ks.V
@@ -204,8 +204,8 @@ Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi met
 The keyword arguments are passed to the linear solver.
 """
 function eigsolve(A::QuantumObject{<:AbstractMatrix}; v0::Union{Nothing,AbstractVector}=nothing, 
-    sigma::Union{Nothing, Real}=nothing, k::Integer = min(4, size(A, 1)), 
-    krylovdim::Integer = min(10, size(A, 1)), tol::Real = 1e-8, maxiter::Integer = 200,
+    sigma::Union{Nothing, Real}=nothing, k::Integer = 1,
+    krylovdim::Integer = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Integer = 200,
     solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, showinfo::Bool=false, kwargs...)
 
     return eigsolve(A.data; v0=v0, sigma=sigma, k=k, krylovdim=krylovdim, tol=tol, 
@@ -214,8 +214,8 @@ end
 
 
 function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing, 
-    sigma::Union{Nothing, Real}=nothing, k::Integer = min(4, size(A, 1)), 
-    krylovdim::Integer = min(10, size(A, 1)), tol::Real = 1e-8, maxiter::Integer = 200,
+    sigma::Union{Nothing, Real}=nothing, k::Integer = 1, 
+    krylovdim::Integer = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Integer = 200,
     solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, showinfo::Bool=false, kwargs...)
 
     T = eltype(A)

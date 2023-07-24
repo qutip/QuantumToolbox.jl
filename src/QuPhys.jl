@@ -12,10 +12,14 @@ using Graphs
 using FFTW
 using SpecialFunctions
 using LinearSolve
-using LinearMaps
+using LinearMaps: LinearMap
 using IncompleteLU
 
 using LinearAlgebra: BlasFloat, BlasComplex
+
+# Setting the number of threads to 1 allows
+# to achieve better performances for more massive parallelizations
+BLAS.set_num_threads(1)
 
 include("quantum_object.jl")
 include("quantum_operators.jl")
