@@ -22,7 +22,7 @@ struct TimeEvolutionMCSol{TT<:Vector{<:Vector{<:Real}}, TS<:AbstractVector, TE<:
     jump_which::TJW
 end
 
-LiouvillianDirectSolver(;tol=1e-14) = LiouvillianDirectSolver(tol)
+LiouvillianDirectSolver(;tol=1e-8) = LiouvillianDirectSolver(tol)
 
 function _save_func_sesolve(integrator)
     internal_params = integrator.p
@@ -689,6 +689,19 @@ function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperat
     _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, solver, n_max=n_max)
 end
 
+function liouvillian_floquet(H::QuantumObject{<:AbstractArray{T1},OpType1},
+    c_ops::AbstractVector,
+    Hₚ::QuantumObject{<:AbstractArray{T2},OpType2},
+    Hₘ::QuantumObject{<:AbstractArray{T3},OpType3},
+    ω::Real; n_max::Int=4, solver::LSolver=LiouvillianDirectSolver()) where {T1,T2,T3,
+                                                                            OpType1<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
+                                                                            OpType2<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
+                                                                            OpType3<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
+                                                                            LSolver<:LiouvillianSolver}
+
+    liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, solver=solver, n_max=n_max)
+end
+
 @doc raw"""
     liouvillian_generalized(H::QuantumObject, fields::Vector, 
     κ_list::Vector, ω_list::Vector, T_list::Vector; N_trunc::Int=size(H,1), tol::Float64=0.0)
@@ -742,18 +755,16 @@ function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOpera
     ω::Real, solver::LiouvillianDirectSolver; n_max::Int=4) where {T1,T2,T3}
 
     L_0 = L₀.data
-    L_p = Lₚ.data
-    L_m = Lₘ.data
-
-    L_0_d = sparse_to_dense(L_0)
-    L_p_d = sparse_to_dense(L_p)
-    L_m_d = sparse_to_dense(L_m)
+    L_p = sparse_to_dense(Lₚ.data)
+    L_m = sparse_to_dense(Lₘ.data)
 
     n_i = n_max
-    S, T = -(L_0_d - 1im * n_i * ω * I) \ L_p_d, -(L_0_d + 1im * n_i * ω * I) \ L_m_d
+    S = -(L_0 - 1im * n_i * ω * I) \ L_p
+    T = -(L_0 + 1im * n_i * ω * I) \ L_m
 
     for n_i in n_max-1:-1:1
-        S, T = -(L_0_d - 1im * n_i * ω * I + L_m_d * S) \ L_p_d, -(L_0_d + 1im * n_i * ω * I + L_p_d * T) \ L_m_d
+        S = -(L_0 - 1im * n_i * ω * I + L_m * S) \ L_p
+        T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m
     end
 
     solver.tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperatorQuantumObject, L₀.dims)

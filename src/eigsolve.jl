@@ -248,6 +248,84 @@ function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing,
 end
 
 """
+    eigsolve_al(H::QuantumObject,
+        T::Real, c_ops::AbstractVector=[];
+        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
+        H_t::Union{Nothing,Function}=nothing,
+        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        progress::Bool=true,
+        ρ0::Union{Nothing, AbstractMatrix} = nothing,
+        k::Integer=1,
+        krylovdim::Integer=min(10, size(H, 1)),
+        maxiter::Integer=200,
+        eigstol::Real=1e-3,
+        showinfo::Bool=false,
+        kwargs...)
+
+Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnoldi-Lindblad method.
+
+# Arguments
+- `H`: The Hamiltonian (or directly the Liouvillian) of the system.
+- `T`: The time at which to evaluate the time evolution
+- `c_ops`: A vector of collapse operators
+- `alg`: The differential equation solver algorithm
+- `H_t`: A function `H_t(t)` that returns the additional term at time `t`
+- `params`: A dictionary of additional parameters
+- `progress`: Whether to show a progress bar
+- `ρ0`: The initial density matrix. If not specified, a random density matrix is used
+- `k`: The number of eigenvalues to compute
+- `krylovdim`: The dimension of the Krylov subspace
+- `maxiter`: The maximum number of iterations for the eigsolver
+- `eigstol`: The tolerance for the eigsolver
+- `showinfo`: Whether to show information about the eigsolver
+- `kwargs`: Additional keyword arguments passed to the differential equation solver
+
+# Returns
+- `vals`: The eigenvalues
+- `vecs`: The eigenvectors
+
+# References
+- [1] Minganti, F., & Huybrechts, D. (2022). Arnoldi-Lindblad time evolution: 
+Faster-than-the-clock algorithm for the spectrum of time-independent 
+and Floquet open quantum systems. Quantum, 6, 649.
+"""
+function eigsolve_al(H::QuantumObject{<:AbstractArray{T1},HOpType},
+    T::Real, c_ops::AbstractVector=[];
+    alg::OrdinaryDiffEqAlgorithm=Tsit5(),
+    H_t::Union{Nothing,Function}=nothing,
+    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    progress::Bool=true,
+    ρ0::Union{Nothing, AbstractMatrix} = nothing,
+    k::Integer=1,
+    krylovdim::Integer=min(10, size(H, 1)),
+    maxiter::Integer=200,
+    eigstol::Real=1e-3,
+    showinfo::Bool=false,
+    kwargs...) where {T1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+
+    if ρ0 === nothing
+        ρ0 = rand_dm(prod(H.dims)).data
+    end
+
+    L = liouvillian(H, c_ops)
+    prob = mesolveProblem(L, QuantumObject(ρ0, dims=H.dims), [0,T]; alg=alg,
+            H_t=H_t, params=params, progress=false, kwargs...)
+
+    prog = ProgressUnknown("Applications:", showspeed = true, enabled=progress)
+    arnoldi_lindblad_solve = ρ -> (next!(prog); solve(remake(prob, u0=ρ), alg).u[end])
+    Lmap = LinearMap{eltype(ρ0)}(arnoldi_lindblad_solve, size(L, 1))
+
+    vals, vecs, info = _eigsolve(Lmap, mat2vec(ρ0), k, krylovdim, maxiter=maxiter, tol=eigstol)
+    finish!(prog)
+    showinfo && println(info[1], " iterations, ", info[2], " applications of A")
+
+    vals = map(x -> dot(x, L.data, x), eachcol(vecs)) # How to solve it when the dynamics is time-dependent?
+    vecs = map(x -> (y = vec2mat(x); QuantumObject(y * exp(-1im*angle(tr(y))), dims=H.dims)), eachcol(vecs))
+
+    return vals, vecs
+end
+
+"""
     LinearAlgebra.eigen(A::QuantumObject; kwargs...)
 
 Calculates the eigenvalues and eigenvectors of the [`QuantumObject`](@ref) `A` using

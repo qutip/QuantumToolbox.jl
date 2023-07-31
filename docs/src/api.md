@@ -101,4 +101,5 @@ spectrum
 LinearAlgebra.eigen
 LinearAlgebra.eigvals
 eigsolve
+eigsolve_al
 ```
