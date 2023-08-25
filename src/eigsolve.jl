@@ -258,7 +258,7 @@ end
         k::Integer=1,
         krylovdim::Integer=min(10, size(H, 1)),
         maxiter::Integer=200,
-        eigstol::Real=1e-3,
+        eigstol::Real=1e-6,
         showinfo::Bool=false,
         kwargs...)
 
@@ -299,7 +299,7 @@ function eigsolve_al(H::QuantumObject{<:AbstractArray{T1},HOpType},
     k::Integer=1,
     krylovdim::Integer=min(10, size(H, 1)),
     maxiter::Integer=200,
-    eigstol::Real=1e-3,
+    eigstol::Real=1e-6,
     showinfo::Bool=false,
     kwargs...) where {T1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
