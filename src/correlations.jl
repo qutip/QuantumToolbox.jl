@@ -153,7 +153,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     return ω_l, 2 .* real.(S)
 end
 
-function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
+function QuPhys._spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
@@ -169,25 +169,19 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     ω_l = ω_list
 
     vals, vecs = eigen(L)
-    # The steadystate should be always the last eigenvector
-    ρss = QuantumObject(reshape(vecs[:,end], prod(Hdims), prod(Hdims)), dims=Hdims)
-    ρss /= tr(ρss)
-    ρss = (ρss + ρss') / 2 # Make sure it's hermitian
+    ρss = steadystate(L)
     ρ0 = B.data * ρss.data
-    v = vecs \ reshape(ρ0, :)
+    v = vecs \ mat2vec(ρ0)
     
-    amps = map(i->tr(A.data * reshape(v[i] * vecs[:,i], prod(Hdims), prod(Hdims))), 1:length(vals))
+    amps = map(i->tr(A.data * reshape(v[i] * vecs[:,i], prod(Hdims), prod(Hdims))), eachindex(vals))
     rates = vals
-    push!(amps, -expect(A, ρss) * expect(B, ρss))
-    push!(rates, 0)
     idxs = sortperm(rates, by=abs)
     # For stability reasons, we take the modulus of the amplitudes
     amps, rates = abs.(amps[idxs]), rates[idxs]
-    idxs = amps .> solver.tol
+    idxs = @. abs(amps) > solver.tol
     amps, rates = amps[idxs], rates[idxs]
     
-    spec = real.(transpose(amps) * (2 ./ (transpose(1im .* ω_l) .- rates)))[1,:]
-    # spec2 = map(ω->real(sum(amps .* (2 ./ (1im * ω .- rates)))), ω_l)
+    spec = map(ω->2*real(sum(@. amps * (1 / (1im * ω - rates)))), ω_l)
 
     return ω_l, spec
 end
