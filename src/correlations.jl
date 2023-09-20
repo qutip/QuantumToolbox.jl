@@ -153,7 +153,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     return ω_l, 2 .* real.(S)
 end
 
-function QuPhys._spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
+function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},

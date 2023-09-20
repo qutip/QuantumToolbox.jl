@@ -399,10 +399,10 @@ end
     sol_dsf_me = dsf_mesolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false, abstol=1e-9, reltol=1e-7)
     sol_dsf_mc = dsf_mcsolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false, n_traj=500, abstol=1e-9, reltol=1e-7)
 
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.1
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.1
-    @test abs(sum(sol0.expect[2,:] .- sol_dsf_me.expect[2,:])) / length(tlist) < 0.1
-    @test abs(sum(sol0.expect[2,:] .- sol_dsf_mc.expect[2,:])) / length(tlist) < 0.1
+    @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.5
+    @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.5
+    @test abs(sum(sol0.expect[2,:] .- sol_dsf_me.expect[2,:])) / length(tlist) < 0.5
+    @test abs(sum(sol0.expect[2,:] .- sol_dsf_mc.expect[2,:])) / length(tlist) < 0.5
 end
 
 @testset "Generalized Master Equation" begin

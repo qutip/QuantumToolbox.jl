@@ -710,7 +710,7 @@ Constructs the generalized Liouvillian for a system coupled to a bath of harmoni
 
 See, e.g., Settineri, Alessio, et al. "Dissipation and thermal noise in hybrid quantum systems in the ultrastrong-coupling regime." Physical Review A 98.5 (2018): 053834.
 """
-function QuPhys.liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuantumObject}, fields::Vector, 
+function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuantumObject}, fields::Vector, 
     κ_list::Vector{<:Number}, ω_list::Vector{<:Number}, T_list::Vector{<:Real}; N_trunc::Int=size(H,1), tol::Real=1e-14)
 
     (length(fields) == length(κ_list) == length(ω_list) == length(T_list)) || throw(DimensionMismatch("The number of fields, κs, ωs and Ts must be the same."))
