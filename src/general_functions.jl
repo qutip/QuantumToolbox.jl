@@ -151,12 +151,12 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 ```
 """
 function ptrace(QO::QuantumObject{<:AbstractArray{T1},OpType}, sel::Vector{T2}) where
-    {T1,T2<:Int,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+    {T1,T2<:Int,OpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     
     length(QO.dims) == 1 && return QO
 
     if isket(QO) || isbra(QO)
-        ρtr, dkeep = _ptrace_braorket(QO.data, QO.dims, sel)
+        ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sel)
         return QuantumObject(ρtr, dims=dkeep)
     elseif isoper(QO)
         ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sel)
@@ -301,7 +301,7 @@ end
 
 
 
-function _ptrace_braorket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
+function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
     {T1,T2<:Integer}
     
     rd = dims
@@ -314,8 +314,7 @@ function _ptrace_braorket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::V
     dtrace = @view(rd[qtrace])
 
     vmat = reshape(QO, reverse(rd)...)
-    topermute = vcat(sel, qtrace)
-    reverse!(topermute)
+    topermute = nd+1 .- vcat(sel, qtrace)
     vmat = PermutedDimsArray(vmat, topermute)
     vmat = reshape(vmat, prod(dkeep), prod(dtrace))
 
@@ -335,10 +334,10 @@ function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vecto
     dtrace = @view(rd[qtrace])
 
     ρmat = reshape(QO, reverse!(repeat(rd, 2))...)
-    topermute = vcat([nd + q for q in qtrace], qtrace, [nd + q for q in sel], sel)
+    topermute = 2*nd+1 .- vcat(qtrace, qtrace .+ nd, sel, sel .+ nd)
     reverse!(topermute)
     ρmat = PermutedDimsArray(ρmat, topermute)
-    ρmat = reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
+    ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
     res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
 
     return res, dkeep
