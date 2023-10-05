@@ -418,12 +418,10 @@ end
     
     H = 1 * a' * a + 1 * sz / 2 + 0.5 * (a + a') * sx
     
-    ωlist = [1, 1]
-    fields = [a + a', sx]
-    γlist = [0.01, 0.01]
+    fields = [sqrt(0.01) * (a + a'), sqrt(0.01) * sx]
     Tlist = [0, 0.0]
     
-    E, U, L1 = liouvillian_generalized(H, fields, γlist, ωlist, Tlist, N_trunc=N_trunc, tol=tol)
+    E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc=N_trunc, tol=tol)
     Ω = dense_to_sparse((E' .- E)[1:N_trunc,1:N_trunc], tol)
     
     H_d = QuantumObject(dense_to_sparse((U' * H * U)[1:N_trunc,1:N_trunc], tol))
@@ -432,7 +430,7 @@ end
     sm2 = QuantumObject( dense_to_sparse((U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
     
     # Standard liouvillian case
-    c_ops = [sqrt(γlist[1]) * a2, sqrt(γlist[2]) * sm2] 
+    c_ops = [sqrt(0.01) * a2, sqrt(0.01) * sm2] 
     L2 = liouvillian(H_d, c_ops)
 
     @test (expect(Xp'*Xp, steadystate(L1)) < 1e-10 && expect(Xp'*Xp, steadystate(L2)) > 1e-3)
@@ -441,7 +439,7 @@ end
 
     Tlist = [0.2, 0.0]
 
-    E, U, L1 = liouvillian_generalized(H, fields, γlist, ωlist, Tlist, N_trunc=N_trunc, tol=tol)
+    E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc=N_trunc, tol=tol)
     Ω = dense_to_sparse((E' .- E)[1:N_trunc,1:N_trunc], tol)
 
     H_d = QuantumObject(dense_to_sparse((U' * H * U)[1:N_trunc,1:N_trunc], tol))

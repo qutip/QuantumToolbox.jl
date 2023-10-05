@@ -704,20 +704,20 @@ end
 
 @doc raw"""
     liouvillian_generalized(H::QuantumObject, fields::Vector, 
-    κ_list::Vector, ω_list::Vector, T_list::Vector; N_trunc::Int=size(H,1), tol::Float64=0.0)
+    T_list::Vector; N_trunc::Int=size(H,1), tol::Float64=0.0)
 
 Constructs the generalized Liouvillian for a system coupled to a bath of harmonic oscillators.
 
 See, e.g., Settineri, Alessio, et al. "Dissipation and thermal noise in hybrid quantum systems in the ultrastrong-coupling regime." Physical Review A 98.5 (2018): 053834.
 """
 function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuantumObject}, fields::Vector, 
-    κ_list::Vector{<:Number}, ω_list::Vector{<:Number}, T_list::Vector{<:Real}; N_trunc::Int=size(H,1), tol::Real=1e-14)
+    T_list::Vector{<:Real}; N_trunc::Int=size(H,1), tol::Real=1e-12)
 
-    (length(fields) == length(κ_list) == length(ω_list) == length(T_list)) || throw(DimensionMismatch("The number of fields, κs, ωs and Ts must be the same."))
+    (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
     dims = N_trunc == size(H,1) ? H.dims : [N_trunc]
     E, U = eigen(H)
-    E = E[1:N_trunc]
+    E = real.(E[1:N_trunc])
     U = QuantumObject(U, dims=H.dims)
 
     H_d = QuantumObject(spdiagm(complex(E)), dims=dims)
@@ -736,13 +736,13 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
         # Nikki Master Equation
         N_th = n_th.(Ω, T_list[i])
         Sp₀ = QuantumObject( triu(X_op, 1), dims=dims )
-        Sp₁ = QuantumObject( droptol!( (@. (Ω / ω_list[i]) * N_th * Sp₀.data), tol), dims=dims )
-        Sp₂ = QuantumObject( droptol!( (@. (Ω / ω_list[i]) * (1 + N_th) * Sp₀.data), tol), dims=dims )
+        Sp₁ = QuantumObject( droptol!( (@. Ω * N_th * Sp₀.data), tol), dims=dims )
+        Sp₂ = QuantumObject( droptol!( (@. Ω * (1 + N_th) * Sp₀.data), tol), dims=dims )
         S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
 
-        L += κ_list[i] / 2 * ( sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁) - spre(Sp₀ * Sp₁') - spost(Sp₁ * Sp₀') )
-        L += κ_list[i] / 2 * ( sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂') - spre(Sp₀' * Sp₂) - spost(Sp₂' * Sp₀) )
-        L += κ_list[i] * T_list[i] / (4 * ω_list[i]) * ( 4 * sprepost(S0, S0) - 2 * spre(S0 * S0) - 2 * spost(S0 * S0) )
+        L += 1 / 2 * ( sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁) - spre(Sp₀ * Sp₁') - spost(Sp₁ * Sp₀') )
+        L += 1 / 2 * ( sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂') - spre(Sp₀' * Sp₂) - spost(Sp₂' * Sp₀) )
+        L += T_list[i] / 4 * ( 4 * sprepost(S0, S0) - 2 * spre(S0 * S0) - 2 * spost(S0 * S0) )
     end
 
     return E, U, L
