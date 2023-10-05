@@ -21,24 +21,22 @@ c_ops = [sqrt(γ*(nth+1))*a, sqrt(γ*nth)*a', sqrt(γ)*sm]
 e_ops = [a'*a, sz]
 ψ0 = kron(fock(10, 4), fock(2, 1))
 tlist = range(0, 10/γ, 1000)
-fields = [a+a', sm+sp]
-γ_list = [γ, γ]
-ω_list = [ω, ω]
+fields = [sqrt(γ)*(a+a'), sqrt(γ)*(sm+sp)]
 T_list = [T, 0]
 
 liouvillian(H, c_ops) # precompile
 steadystate(H, c_ops) # precompile
 steadystate_floquet(H, c_ops, -1im * 0.5 * F * (a+a'), 1im * 0.5 * F * (a+a'), 1) # precompile
-liouvillian_generalized(H, fields, γ_list, ω_list, T_list, N_trunc=10) # precompile
-liouvillian_generalized(H, fields, γ_list, ω_list, T_list) # precompile
+liouvillian_generalized(H, fields, T_list, N_trunc=10) # precompile
+liouvillian_generalized(H, fields, T_list) # precompile
 mesolve(H, ψ0, tlist, c_ops, e_ops=e_ops, progress=false, saveat=[tlist[end]]) # precompile
 mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, progress=false, ensemble_method=EnsembleSerial(), n_traj=500, saveat=[tlist[end]]) # precompile
 mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, progress=false, n_traj=500, saveat=[tlist[end]]) # precompile
 
 SUITE["timeevolution"] = BenchmarkGroup()
 SUITE["timeevolution"]["liouvillian"] = @benchmarkable liouvillian($H, $c_ops)
-SUITE["timeevolution"]["liouvillian_generalized"] = @benchmarkable liouvillian_generalized($H, $fields, $γ_list, $ω_list, $T_list)
-SUITE["timeevolution"]["liouvillian_generalized_trunc"] = @benchmarkable liouvillian_generalized($H, $fields, $γ_list, $ω_list, $T_list, N_trunc=10)
+SUITE["timeevolution"]["liouvillian_generalized"] = @benchmarkable liouvillian_generalized($H, $fields, $T_list)
+SUITE["timeevolution"]["liouvillian_generalized_trunc"] = @benchmarkable liouvillian_generalized($H, $fields, $T_list, N_trunc=10)
 SUITE["timeevolution"]["steadystate"] = @benchmarkable steadystate($H, $c_ops)
 SUITE["timeevolution"]["steadystate_floquet"] = @benchmarkable steadystate_floquet($H, $c_ops, -1im * 0.5 * F * $(a+a'), 1im * 0.5 * F * $(a+a'), $ω)
 SUITE["timeevolution"]["mesolve"] = @benchmarkable mesolve($H, $ψ0, $tlist, $c_ops, e_ops=$e_ops, progress=false, saveat=[$tlist[end]])
