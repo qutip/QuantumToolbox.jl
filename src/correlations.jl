@@ -183,7 +183,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     amps = map(i->v[i] * tr(A.data * vec2mat(@view(vecs[:,i]))), eachindex(rates))
     idxs = findall(x -> abs(x) > solver.tol, amps)
     amps, rates = amps[idxs], rates[idxs]
-    @. amps = abs(amps)
+    # @. amps = abs(amps)
     # idxs = findall(x -> real(x) < 0, amps)
     # @. amps[idxs] -= 2*real(amps[idxs])
     

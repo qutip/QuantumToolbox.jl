@@ -704,14 +704,14 @@ end
 
 @doc raw"""
     liouvillian_generalized(H::QuantumObject, fields::Vector, 
-    T_list::Vector; N_trunc::Int=size(H,1), tol::Float64=0.0)
+    T_list::Vector; N_trunc::Int=size(H,1), tol::Float64=0.0, σ_filter::Union{Nothing, Real}=nothing)
 
 Constructs the generalized Liouvillian for a system coupled to a bath of harmonic oscillators.
 
 See, e.g., Settineri, Alessio, et al. "Dissipation and thermal noise in hybrid quantum systems in the ultrastrong-coupling regime." Physical Review A 98.5 (2018): 053834.
 """
 function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuantumObject}, fields::Vector, 
-    T_list::Vector{<:Real}; N_trunc::Int=size(H,1), tol::Real=1e-12)
+    T_list::Vector{<:Real}; N_trunc::Int=size(H,1), tol::Real=1e-12, σ_filter::Union{Nothing, Real}=nothing)
 
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
@@ -722,26 +722,40 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
 
     H_d = QuantumObject(spdiagm(complex(E)), dims=dims)
 
-    Ω = dense_to_sparse(E' .- E, tol)
-    Ω = triu(Ω, 1)
+    Ω = E' .- E
+    Ωp = triu(dense_to_sparse(Ω, tol), 1)
 
     L = liouvillian(H_d)
 
     for i in eachindex(fields)
+        # The operator that couples the system to the bath in the eigenbasis
         X_op = dense_to_sparse((U' * fields[i] * U).data[1:N_trunc, 1:N_trunc], tol)
         if ishermitian(fields[i])
             X_op = (X_op + X_op') / 2 # Make sure it's hermitian
         end
 
-        # Nikki Master Equation
-        N_th = n_th.(Ω, T_list[i])
+        # Filter in the Hilbert space
+        σ = σ_filter == nothing ? 20 * sum(abs2, X_op) / length(X_op) : σ_filter
+        F1 = QuantumObject(gaussian.(Ω, 0, 2*κc), dims=dims)
+        F1 = dense_to_sparse(F1, tol)
+        
+        # Filter in the Liouville space
+        M1 = ones(N_trunc, N_trunc)
+        Ω1 = kron(Ω, M1)
+        Ω2 = kron(M1, Ω)
+        Ωdiff = Ω1 .- Ω2
+        F2 = QuantumObject(gaussian.(Ωdiff, 0, 2*κc), SuperOperatorQuantumObject, dims)
+        F2 = dense_to_sparse(F2, tol)
+
+        # Ohmic reservoir
+        N_th = n_th.(Ωp, T_list[i])
         Sp₀ = QuantumObject( triu(X_op, 1), dims=dims )
-        Sp₁ = QuantumObject( droptol!( (@. Ω * N_th * Sp₀.data), tol), dims=dims )
-        Sp₂ = QuantumObject( droptol!( (@. Ω * (1 + N_th) * Sp₀.data), tol), dims=dims )
+        Sp₁ = QuantumObject( droptol!( (@. Ωp * N_th * Sp₀.data), tol), dims=dims )
+        Sp₂ = QuantumObject( droptol!( (@. Ωp * (1 + N_th) * Sp₀.data), tol), dims=dims )
         S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
 
-        L += 1 / 2 * ( sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁) - spre(Sp₀ * Sp₁') - spost(Sp₁ * Sp₀') )
-        L += 1 / 2 * ( sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂') - spre(Sp₀' * Sp₂) - spost(Sp₂' * Sp₀) )
+        L += 1 / 2 * ( F2 .* (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁)) - spre(F1 .* (Sp₀ * Sp₁')) - spost(F1 .* (Sp₁ * Sp₀')) )
+        L += 1 / 2 * ( F2 .* (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂')) - spre(F1 .* (Sp₀' * Sp₂)) - spost(F1 .* (Sp₂' * Sp₀)) )
         L += T_list[i] / 4 * ( 4 * sprepost(S0, S0) - 2 * spre(S0 * S0) - 2 * spost(S0 * S0) )
     end
 
