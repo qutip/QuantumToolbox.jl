@@ -107,7 +107,7 @@ end
 Returns the gaussian function ``\exp \left[- \frac{(x - \mu)^2}{2 \sigma^2} \right]``,
 where ``\mu`` and ``\sigma^2`` are the mean and the variance respectively.
 """
-gaussian(x::Number, μ::Number, σ::Number) = exp(-0.5 * (x - μ)^2 / σ^2)
+gaussian(x::Number, μ::Number, σ::Number) = exp(-(x - μ)^2 / (2 * σ^2))
 
 @doc raw"""
     ptrace(QO::QuantumObject, sel::Vector{Int})

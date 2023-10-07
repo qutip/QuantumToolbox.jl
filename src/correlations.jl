@@ -168,18 +168,24 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
 
     ω_l = ω_list
 
-    vals, vecs = eigen(L)
-    ρss = steadystate(L)
-    ρ0 = B.data * ρss.data
+    rates, vecs = eigen(L)
+
+    # Get the steady state and update the corresponding vector
+    ss_idx = argmin(abs2.(rates))
+    ρss = vec2mat(@view(vecs[:,ss_idx]))
+    ρss2 = (ρss + ρss') / 2
+    ρss2 ./= tr(ρss2)
+    ρss .= ρss2
+
+    ρ0 = B.data * ρss
     v = vecs \ mat2vec(ρ0)
     
-    amps = map(i->tr(A.data * reshape(v[i] * vecs[:,i], prod(Hdims), prod(Hdims))), eachindex(vals))
-    rates = vals
-    idxs = sortperm(rates, by=abs)
-    # For stability reasons, we take the modulus of the amplitudes
-    amps, rates = abs.(amps[idxs]), rates[idxs]
-    idxs = @. abs(amps) > solver.tol
+    amps = map(i->v[i] * tr(A.data * vec2mat(@view(vecs[:,i]))), eachindex(rates))
+    idxs = findall(x -> abs(x) > solver.tol, amps)
     amps, rates = amps[idxs], rates[idxs]
+    @. amps = abs(amps)
+    # idxs = findall(x -> real(x) < 0, amps)
+    # @. amps[idxs] -= 2*real(amps[idxs])
     
     spec = map(ω->2*real(sum(@. amps * (1 / (1im * ω - rates)))), ω_l)
 

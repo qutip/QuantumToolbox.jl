@@ -157,6 +157,14 @@ for op in (:(+), :(-), :(*), :(/), :(^))
         function Base.Broadcast.broadcasted(::typeof($op), x::Number, y::QuantumObject)
             return QuantumObject(broadcast($op, x, y.data), y.type, y.dims)
         end
+
+        function Base.Broadcast.broadcasted(::typeof($op), x::QuantumObject, y::AbstractArray)
+            return QuantumObject(broadcast($op, x.data, y), x.type, x.dims)
+        end
+
+        function Base.Broadcast.broadcasted(::typeof($op), x::AbstractArray, y::QuantumObject)
+            return QuantumObject(broadcast($op, x, y.data), y.type, y.dims)
+        end
     end
 end
 
