@@ -735,8 +735,8 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
         end
 
         # Filter in the Hilbert space
-        σ = σ_filter == nothing ? 20 * sum(abs2, X_op) / length(X_op) : σ_filter
-        F1 = QuantumObject(gaussian.(Ω, 0, 2*κc), dims=dims)
+        σ = σ_filter == nothing ? 10 * sum(abs2, X_op) / length(X_op) : σ_filter
+        F1 = QuantumObject(gaussian.(Ω, 0, σ), dims=dims)
         F1 = dense_to_sparse(F1, tol)
         
         # Filter in the Liouville space
@@ -744,7 +744,7 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
         Ω1 = kron(Ω, M1)
         Ω2 = kron(M1, Ω)
         Ωdiff = Ω1 .- Ω2
-        F2 = QuantumObject(gaussian.(Ωdiff, 0, 2*κc), SuperOperatorQuantumObject, dims)
+        F2 = QuantumObject(gaussian.(Ωdiff, 0, σ), SuperOperatorQuantumObject, dims)
         F2 = dense_to_sparse(F2, tol)
 
         # Ohmic reservoir
