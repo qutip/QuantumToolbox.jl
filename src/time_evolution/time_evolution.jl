@@ -22,7 +22,7 @@ struct TimeEvolutionMCSol{TT<:Vector{<:Vector{<:Real}}, TS<:AbstractVector, TE<:
     jump_which::TJW
 end
 
-LiouvillianDirectSolver(;tol=1e-8) = LiouvillianDirectSolver(tol)
+LiouvillianDirectSolver(;tol=1e-16) = LiouvillianDirectSolver(tol)
 
 function _save_func_sesolve(integrator)
     internal_params = integrator.p
@@ -735,7 +735,7 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
         end
 
         # Filter in the Hilbert space
-        σ = σ_filter == nothing ? 10 * sum(abs2, X_op) / length(X_op) : σ_filter
+        σ = isnothing(σ_filter) ? 500 * norm(X_op) / length(X_op) : σ_filter
         F1 = QuantumObject(gaussian.(Ω, 0, σ), dims=dims)
         F1 = dense_to_sparse(F1, tol)
         
@@ -768,16 +768,17 @@ function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOpera
     ω::Real, solver::LiouvillianDirectSolver; n_max::Int=4) where {T1,T2,T3}
 
     L_0 = L₀.data
-    L_p = sparse_to_dense(Lₚ.data)
-    L_m = sparse_to_dense(Lₘ.data)
+    L_p = Lₚ.data
+    L_m = Lₘ.data
+    L_p_dense = sparse_to_dense(Lₚ.data)
+    L_m_dense = sparse_to_dense(Lₘ.data)
 
-    n_i = n_max
-    S = -(L_0 - 1im * n_i * ω * I) \ L_p
-    T = -(L_0 + 1im * n_i * ω * I) \ L_m
+    S = -(L_0 - 1im * n_max * ω * I) \ L_p_dense
+    T = -(L_0 + 1im * n_max * ω * I) \ L_m_dense
 
     for n_i in n_max-1:-1:1
-        S = -(L_0 - 1im * n_i * ω * I + L_m * S) \ L_p
-        T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m
+        S = -(L_0 - 1im * n_i * ω * I + L_m * S) \ L_p_dense
+        T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m_dense
     end
 
     solver.tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperatorQuantumObject, L₀.dims)
