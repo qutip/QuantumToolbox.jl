@@ -725,6 +725,19 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
     Ω = E' .- E
     Ωp = triu(dense_to_sparse(Ω, tol), 1)
 
+    # Filter in the Hilbert space
+    σ = isnothing(σ_filter) ? 500 * maximum([norm(field) / length(field) for field in fields]) : σ_filter
+    F1 = QuantumObject(gaussian.(Ω, 0, σ), dims=dims)
+    F1 = dense_to_sparse(F1, tol)
+    
+    # Filter in the Liouville space
+    M1 = ones(N_trunc, N_trunc)
+    Ω1 = kron(Ω, M1)
+    Ω2 = kron(M1, Ω)
+    Ωdiff = Ω1 .- Ω2
+    F2 = QuantumObject(gaussian.(Ωdiff, 0, σ), SuperOperatorQuantumObject, dims)
+    F2 = dense_to_sparse(F2, tol)
+
     L = liouvillian(H_d)
 
     for i in eachindex(fields)
@@ -733,19 +746,6 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
         if ishermitian(fields[i])
             X_op = (X_op + X_op') / 2 # Make sure it's hermitian
         end
-
-        # Filter in the Hilbert space
-        σ = isnothing(σ_filter) ? 500 * norm(X_op) / length(X_op) : σ_filter
-        F1 = QuantumObject(gaussian.(Ω, 0, σ), dims=dims)
-        F1 = dense_to_sparse(F1, tol)
-        
-        # Filter in the Liouville space
-        M1 = ones(N_trunc, N_trunc)
-        Ω1 = kron(Ω, M1)
-        Ω2 = kron(M1, Ω)
-        Ωdiff = Ω1 .- Ω2
-        F2 = QuantumObject(gaussian.(Ωdiff, 0, σ), SuperOperatorQuantumObject, dims)
-        F2 = dense_to_sparse(F2, tol)
 
         # Ohmic reservoir
         N_th = n_th.(Ωp, T_list[i])
@@ -756,7 +756,6 @@ function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuant
 
         L += 1 / 2 * ( F2 .* (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁)) - spre(F1 .* (Sp₀ * Sp₁')) - spost(F1 .* (Sp₁ * Sp₀')) )
         L += 1 / 2 * ( F2 .* (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂')) - spre(F1 .* (Sp₀' * Sp₂)) - spost(F1 .* (Sp₂' * Sp₀)) )
-        L += T_list[i] / 4 * ( 4 * sprepost(S0, S0) - 2 * spre(S0 * S0) - 2 * spost(S0 * S0) )
     end
 
     return E, U, L
