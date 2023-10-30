@@ -384,8 +384,10 @@ function _DSF_mcsolve_Affect!(integrator)
 
             Aᵢ = -Δα*op.data' + conj(Δα)*op.data
             dsf_cache .= integrator.u
-            Ks = arnoldi(Aᵢ, dsf_cache)
-            expv!(integrator.u, one(αt), Ks, cache=expv_cache)
+            # Ks = arnoldi(Aᵢ, dsf_cache)
+            # expv!(integrator.u, one(αt), Ks, cache=expv_cache)
+            arnoldi!(expv_cache, Aᵢ, dsf_cache)
+            expv!(integrator.u, expv_cache, one(αt), dsf_cache)
 
 
             αt_list[i] += Δα
@@ -404,8 +406,8 @@ end
 function _dsf_mcsolve_prob_func(prob, i, repeat)
     internal_params = prob.p
 
-    expv_cache_mem = internal_params.expv_cache.mem
-    expv_cache = ExpvCache{eltype(expv_cache_mem)}(length(expv_cache_mem))
+    # expv_cache_mem = internal_params.expv_cache.mem
+    # expv_cache = ExpvCache{eltype(expv_cache_mem)}(length(expv_cache_mem))
 
     prm = merge(internal_params, (U = deepcopy(internal_params.U), e_ops = deepcopy(internal_params.e_ops), 
                 c_ops = deepcopy(internal_params.c_ops), expvals = similar(internal_params.expvals), 
@@ -413,7 +415,7 @@ function _dsf_mcsolve_prob_func(prob, i, repeat)
                 cumsum_weights_mc = similar(internal_params.weights_mc), random_n = Ref(rand()), save_it = Ref{Int32}(0),
                 jump_times = similar(internal_params.jump_times), jump_which = similar(internal_params.jump_which),
                 αt_list = deepcopy(internal_params.αt_list), dsf_cache1 = similar(internal_params.dsf_cache1),
-                dsf_cache2 = similar(internal_params.dsf_cache2), expv_cache = expv_cache))
+                dsf_cache2 = similar(internal_params.dsf_cache2), expv_cache = deepcopy(internal_params.expv_cache)))
 
     remake(prob, p=prm)
 end
@@ -431,7 +433,7 @@ function dsf_mcsolveEnsembleProblem(H::Function,
     δα_list::Vector{<:Real}=Float64[],
     n_traj::Integer=1,
     jump_interp_pts::Integer=10,
-    krylov_dim::Integer=cld(prod(ψ0.dims), 4),
+    krylov_dim::Integer=min(30,cld(length(ψ0.data), 3)),
     kwargs...) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
 
     e_ops === nothing && (e_ops = op_list -> Vector{QuantumObject{Matrix{ComplexF64}, OperatorQuantumObject}}([]))
@@ -442,8 +444,9 @@ function dsf_mcsolveEnsembleProblem(H::Function,
     e_ops₀ = e_ops(op_l .+ α0_l)
 
     αt_list  = convert(Vector{T}, α0_l)
-    length(δα_list) != length(op_l) ? δα_list = [0.2 for op in op_l] : nothing
-    expv_cache = ExpvCache{T}(krylov_dim)
+    length(δα_list) != length(op_l) ? δα_list = [0.1 for op in op_l] : nothing
+    # expv_cache = ExpvCache{T}(krylov_dim)
+    expv_cache = arnoldi(H₀.data, ψ0.data, krylov_dim)
 
     params2 = merge(params, Dict(:H_fun => H, :c_ops_fun => c_ops, :e_ops_fun => e_ops,
                     :op_l => op_l, :αt_list => αt_list, :δα_list => δα_list,
@@ -475,7 +478,7 @@ end
         n_traj::Integer=1,
         ensemble_method=EnsembleThreads(),
         jump_interp_pts::Integer=10,
-        krylov_dim::Integer=cld(prod(ψ0.dims), 4),
+        krylov_dim::Integer=min(30,cld(length(ψ0.data), 3)),
         kwargs...)
 
 Time evolution of a quantum system using the Monte Carlo wave function method
@@ -495,7 +498,7 @@ function dsf_mcsolve(H::Function,
     n_traj::Integer=1,
     ensemble_method=EnsembleThreads(),
     jump_interp_pts::Integer=10,
-    krylov_dim::Integer=cld(prod(ψ0.dims), 4),
+    krylov_dim::Integer=min(30,cld(length(ψ0.data), 3)),
     kwargs...) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
 
 

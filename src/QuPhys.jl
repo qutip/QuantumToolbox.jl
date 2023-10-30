@@ -7,7 +7,6 @@ using Distributed
 @reexport using SparseArrays
 @reexport using OrdinaryDiffEq
 @reexport using DiffEqCallbacks
-using ExponentialUtilities
 using Graphs
 using FFTW
 using SpecialFunctions
@@ -29,6 +28,7 @@ include("time_evolution/time_evolution_dynamical.jl")
 include("permutation.jl")
 include("correlations.jl")
 include("wigner.jl")
+include("arnoldi.jl")
 include("eigsolve.jl")
 
 export QuantumObject, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol

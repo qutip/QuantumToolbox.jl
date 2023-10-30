@@ -357,8 +357,9 @@ end
     
     sol_dsf_me = dsf_mesolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, e_ops=e_ops_dsf, progress=false)
     sol_dsf_mc = dsf_mcsolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, e_ops=e_ops_dsf, progress=false, n_traj=500)
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.1
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.1
+    val_ss = abs2(sol0.expect[1,end])
+    @test sum(abs2.(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / (val_ss * length(tlist)) < 0.1
+    @test sum(abs2.(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / (val_ss * length(tlist)) < 0.1
 
     # Two cavities case
     F   = 2
@@ -396,13 +397,14 @@ end
     ψ0  = kron(fock(N, 0), fock(N, 0))
     α0_l = [α0, α0]
 
-    sol_dsf_me = dsf_mesolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false, abstol=1e-9, reltol=1e-7)
-    sol_dsf_mc = dsf_mcsolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false, n_traj=500, abstol=1e-9, reltol=1e-7)
+    sol_dsf_me = dsf_mesolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false)
+    sol_dsf_mc = dsf_mcsolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false, n_traj=500)
 
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / length(tlist) < 0.5
-    @test abs(sum(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / length(tlist) < 0.5
-    @test abs(sum(sol0.expect[2,:] .- sol_dsf_me.expect[2,:])) / length(tlist) < 0.5
-    @test abs(sum(sol0.expect[2,:] .- sol_dsf_mc.expect[2,:])) / length(tlist) < 0.5
+    val_ss = abs2(sol0.expect[1,end])
+    @test sum(abs2.(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / (val_ss * length(tlist)) < 0.6
+    @test sum(abs2.(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / (val_ss * length(tlist)) < 0.6
+    @test sum(abs2.(sol0.expect[2,:] .- sol_dsf_me.expect[2,:])) / (val_ss * length(tlist)) < 0.6
+    @test sum(abs2.(sol0.expect[2,:] .- sol_dsf_mc.expect[2,:])) / (val_ss * length(tlist)) < 0.6
 end
 
 @testset "Generalized Master Equation" begin
@@ -501,7 +503,7 @@ end
     @test isapprox(sum(abs2, vals), sum(abs2, vals2), atol=1e-7)
     @test isapprox(abs2(vals2[1]), abs2(vals3[1]), atol=1e-7)
     @test isapprox(vec2mat(vecs[:, 1]) * exp(-1im*angle(vecs[1,1])), vec2mat(vecs2[:, 1]), atol=1e-7)
-    @test isapprox(vec2mat(vecs[:, 1]) * exp(-1im*angle(vecs[1,1])), vecs3[1].data, atol=1e-5)
+    @test isapprox(vec2mat(vecs[:, 1]) * exp(-1im*angle(vecs[1,1])), vec2mat(vecs3[:, 1]), atol=1e-5)
 end
 
 @testset "Steadystate" begin

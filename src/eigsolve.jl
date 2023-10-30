@@ -3,7 +3,18 @@ using LinearAlgebra.BLAS: libblastrampoline
 using LinearAlgebra: chkstride1, checksquare
 using LinearAlgebra.LAPACK: chklapackerror
 using Base: require_one_based_indexing
-using ExponentialUtilities: arnoldi_step!
+
+struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}}
+    vals::T1
+    vecs::T2
+    iter::Int
+    numops::Int
+    converged::Bool
+end
+
+Base.iterate(res::EigsolveResult) = (res.vals, Val(:vecs))
+Base.iterate(res::EigsolveResult, ::Val{:vecs}) = (res.vecs, Val(:done))
+Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
 for (hseqr, elty) in
     ((:zhseqr_,:ComplexF64),
@@ -15,7 +26,7 @@ for (hseqr, elty) in
         # *     ..
         # *     .. Array Arguments ..
         #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
-        function _hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Integer, ihi::Integer,
+        function _hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
                         H::AbstractMatrix{$elty}, Z::AbstractMatrix{$elty})
             require_one_based_indexing(H, Z)
             chkstride1(H)
@@ -57,7 +68,7 @@ for (hseqr, elty) in
         # *     ..
         # *     .. Array Arguments ..
         #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
-        function _hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Integer, ihi::Integer,
+        function _hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
                         H::AbstractMatrix{$elty}, Z::AbstractMatrix{$elty})
             require_one_based_indexing(H, Z)
             chkstride1(H)
@@ -113,12 +124,22 @@ function _permuteschur!(T::AbstractMatrix{S}, Q::AbstractMatrix{S}, order::Abstr
     return T, Q
 end
 
-function _eigsolve(A, b::AbstractVector, k::Integer = 1, 
-    m::Integer = max(20, 2*k+1); tol::Real = 1e-8, maxiter::Integer = 200)
+function _eigsolve(A, b::AbstractVector{T}, k::Int = 1, 
+    m::Int = max(20, 2*k+1); tol::Real = 1e-8, maxiter::Int = 200) where T <: BlasFloat
 
-    Ks = ExponentialUtilities.arnoldi(A, b, m = m)
-    V = Ks.V
-    H = Ks.H
+    n = size(A, 2)
+    V = similar(b, n, m+1)
+    H = zeros(T, m+1, m)
+
+    arnoldi_init!(A, b, V, H)
+
+    for i = 2:m
+        β = arnoldi_step!(A, V, H, i)
+        if β < tol
+            return _eigsolve_happy(V, H, i, k) # happy breakdown
+        end
+    end
+
     f = ones(eltype(A), m)
 
     Vₘ = view(V, :, 1:m)
@@ -144,7 +165,7 @@ function _eigsolve(A, b::AbstractVector, k::Integer = 1,
     M = typeof(cache0)
 
     numops = m
-    iter = 1
+    iter = 0
     while iter < maxiter && count(x -> abs(x) < tol, f) < k
         # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
 
@@ -168,7 +189,11 @@ function _eigsolve(A, b::AbstractVector, k::Integer = 1,
         # println( A * view(V, :, 1:k) ≈ view(V, :, 1:k) * M(view(H, 1:k, 1:k)) + qₘ * M(transpose(view(transpose(βeₘ) * Uₘ, 1:k))) )     # SHOULD BE TRUE
 
         for j in k+1:m
-            β = arnoldi_step!(j, m, A, V, H, size(V, 1), 0)
+            β = arnoldi_step!(A, V, H, j)
+            if β < tol
+                numops += j-k-1
+                break
+            end
         end
 
         numops += m-k-1
@@ -181,7 +206,6 @@ function _eigsolve(A, b::AbstractVector, k::Integer = 1,
     Tₘ, Uₘ, values = _hseqr!(F.H.data, Uₘ)
     sortperm!(sorted_vals, values, by = abs, rev = true)
     _permuteschur!(Tₘ, Uₘ, sorted_vals)
-    mul!(f, Uₘᵥ, β)
 
     vals = diag(view(Hₘ, 1:k, 1:k))
     select = Vector{BlasInt}(undef, 0)
@@ -189,62 +213,94 @@ function _eigsolve(A, b::AbstractVector, k::Integer = 1,
     @inbounds for i in 1:size(VR, 2)
         normalize!(view(VR, :, i))
     end
+    mul!(cache1, Vₘ, M(Uₘ * VR))
+    vecs = cache1[:, 1:k]
+
+    return EigsolveResult(vals, vecs, iter, numops, (iter < maxiter))
+end
+
+function _eigsolve_happy(V::AbstractMatrix{T}, H::AbstractMatrix{T},
+        m::Int, k::Int) where T <: BlasFloat
+    
+    Vₘ = view(V, :, 1:m)
+    Hₘ = view(H, 1:m, 1:m)
+    Uₘ = one(Hₘ)
+
+    sorted_vals = Array{Int16}(undef, m)
+
+    F = hessenberg!(Hₘ)
+    copyto!(Uₘ, F.H.data)
+    LAPACK.orghr!(1, m, Uₘ, F.τ)
+    Tₘ, Uₘ, values = _hseqr!(F.H.data, Uₘ)
+    sortperm!(sorted_vals, values, by = abs, rev = true)
+    _permuteschur!(Tₘ, Uₘ, sorted_vals)
+
+    vals = diag(Hₘ)[1:k]
+    select = Vector{BlasInt}(undef, 0)
+    VR = LAPACK.trevc!('R', 'A', select, Tₘ)
+    @inbounds for i in 1:size(VR, 2)
+        normalize!(view(VR, :, i))
+    end
+    M = typeof(Vₘ.parent)
     vecs = (Vₘ * M(Uₘ * VR))[:, 1:k]
 
-    return vals, vecs, (iter, numops)
+    iter = 0
+    numops = m
+
+    return EigsolveResult(vals, vecs, iter, numops, true)
 end
 
 """
     function eigsolve(A::QuantumObject; v0::Union{Nothing,AbstractVector}=nothing, 
-        sigma::Union{Nothing, Real}=nothing, k::Integer = min(4, size(A, 1)), 
-        krylovdim::Integer = min(10, size(A, 1)), tol::Real = 1e-8, maxiter::Integer = 200,
-        solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, showinfo::Bool=false, kwargs...)
+        sigma::Union{Nothing, Real}=nothing, k::Int = min(4, size(A, 1)), 
+        krylovdim::Int = min(10, size(A, 1)), tol::Real = 1e-8, maxiter::Int = 200,
+        solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, kwargs...)
 
 Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi method.
 The keyword arguments are passed to the linear solver.
 """
 function eigsolve(A::QuantumObject{<:AbstractMatrix}; v0::Union{Nothing,AbstractVector}=nothing, 
-    sigma::Union{Nothing, Real}=nothing, k::Integer = 1,
-    krylovdim::Integer = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Integer = 200,
-    solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, showinfo::Bool=false, kwargs...)
+    sigma::Union{Nothing, Real}=nothing, k::Int = 1,
+    krylovdim::Int = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Int = 200,
+    solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, kwargs...)
 
     return eigsolve(A.data; v0=v0, sigma=sigma, k=k, krylovdim=krylovdim, tol=tol, 
-                    maxiter=maxiter, solver=solver, showinfo=showinfo, kwargs...)
+                    maxiter=maxiter, solver=solver, kwargs...)
 end
 
 
 function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing, 
-    sigma::Union{Nothing, Real}=nothing, k::Integer = 1, 
-    krylovdim::Integer = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Integer = 200,
-    solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, showinfo::Bool=false, kwargs...)
+    sigma::Union{Nothing, Real}=nothing, k::Int = 1, 
+    krylovdim::Int = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Int = 200,
+    solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, kwargs...)
 
     T = eltype(A)
     isH = ishermitian(A)
     v0 === nothing && (v0 = normalize!(rand(eltype(T), size(A, 1))))
 
     if sigma === nothing
-        vals, vecs, info = _eigsolve(A, v0, k, krylovdim, tol = tol, maxiter = maxiter)
-        showinfo && println(info[1], " iterations, ", info[2], " applications of A")
+        res = _eigsolve(A, v0, k, krylovdim, tol = tol, maxiter = maxiter)
+        vals = similar(res.vals)
+        vals .= res.vals
     else
         Aₛ = A - sigma * I
         solver === nothing && (solver = isH ? KrylovJL_CG() : KrylovJL_GMRES())
-        !haskey(kwargs, :Pl) && (kwargs = merge(kwargs, Dict(:Pl => ilu(Aₛ, τ=0.001))))
+        condition = !haskey(kwargs, :Pl) && typeof(A) <: AbstractSparseMatrix
+        condition && (kwargs = merge(kwargs, Dict(:Pl => ilu(Aₛ, τ=0.001))))
+        !haskey(kwargs, :atol) && (kwargs = merge(kwargs, Dict(:atol => tol)))
 
         prob = LinearProblem(Aₛ, v0)
         linsolve = init(prob, solver; kwargs...)
         Amap = LinearMap{T}((y,x) -> _map_ldiv(linsolve, y, x), length(v0))
 
-        vals, vecs, info = _eigsolve(Amap, v0, k, krylovdim, tol = tol, maxiter = maxiter)
-        showinfo && println(info[1], " iterations, ", info[2], " applications of A")
-        @. vals = (1 + sigma * vals) / vals
+        res = _eigsolve(Amap, v0, k, krylovdim, tol = tol, maxiter = maxiter)
+        vals = similar(res.vals)
+        @. vals = (1 + sigma * res.vals) / res.vals
     end
 
     isH && (vals = real.(vals))
 
-    vals = vals[1:k]
-    vecs = vecs[:, 1:k]
-
-    return vals, vecs
+    return EigsolveResult(vals, res.vecs, res.iter, res.numops, res.converged)
 end
 
 """
@@ -255,11 +311,10 @@ end
         params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
         progress::Bool=true,
         ρ0::Union{Nothing, AbstractMatrix} = nothing,
-        k::Integer=1,
-        krylovdim::Integer=min(10, size(H, 1)),
-        maxiter::Integer=200,
+        k::Int=1,
+        krylovdim::Int=min(10, size(H, 1)),
+        maxiter::Int=200,
         eigstol::Real=1e-6,
-        showinfo::Bool=false,
         kwargs...)
 
 Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnoldi-Lindblad method.
@@ -277,12 +332,10 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - `krylovdim`: The dimension of the Krylov subspace
 - `maxiter`: The maximum number of iterations for the eigsolver
 - `eigstol`: The tolerance for the eigsolver
-- `showinfo`: Whether to show information about the eigsolver
 - `kwargs`: Additional keyword arguments passed to the differential equation solver
 
 # Returns
-- `vals`: The eigenvalues
-- `vecs`: The eigenvectors
+- `EigsolveResult`: A struct containing the eigenvalues, the eigenvectors, and some information about the eigsolver
 
 # References
 - [1] Minganti, F., & Huybrechts, D. (2022). Arnoldi-Lindblad time evolution: 
@@ -296,11 +349,10 @@ function eigsolve_al(H::QuantumObject{<:AbstractArray{T1},HOpType},
     params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
     progress::Bool=true,
     ρ0::Union{Nothing, AbstractMatrix} = nothing,
-    k::Integer=1,
-    krylovdim::Integer=min(10, size(H, 1)),
-    maxiter::Integer=200,
+    k::Int=1,
+    krylovdim::Int=min(10, size(H, 1)),
+    maxiter::Int=200,
     eigstol::Real=1e-6,
-    showinfo::Bool=false,
     kwargs...) where {T1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     if ρ0 === nothing
@@ -310,19 +362,25 @@ function eigsolve_al(H::QuantumObject{<:AbstractArray{T1},HOpType},
     L = liouvillian(H, c_ops)
     prob = mesolveProblem(L, QuantumObject(ρ0, dims=H.dims), [0,T]; alg=alg,
             H_t=H_t, params=params, progress=false, kwargs...)
+    integrator = init(prob, alg)
 
-    prog = ProgressUnknown("Applications:", showspeed = true, enabled=progress)
-    arnoldi_lindblad_solve = ρ -> (next!(prog); solve(remake(prob, u0=ρ), alg).u[end])
+    prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
+    arnoldi_lindblad_solve = ρ -> (next!(prog); reinit!(integrator, ρ); solve!(integrator); integrator.u)
     Lmap = LinearMap{eltype(ρ0)}(arnoldi_lindblad_solve, size(L, 1))
 
-    vals, vecs, info = _eigsolve(Lmap, mat2vec(ρ0), k, krylovdim, maxiter=maxiter, tol=eigstol)
+    res = _eigsolve(Lmap, mat2vec(ρ0), k, krylovdim, maxiter=maxiter, tol=eigstol)
     finish!(prog)
-    showinfo && println(info[1], " iterations, ", info[2], " applications of A")
 
-    vals = map(x -> dot(x, L.data, x), eachcol(vecs)) # How to solve it when the dynamics is time-dependent?
-    vecs = map(x -> (y = vec2mat(x); QuantumObject(y * exp(-1im*angle(tr(y))), dims=H.dims)), eachcol(vecs))
+    vals = similar(res.vals)
+    vecs = similar(res.vecs)
 
-    return vals, vecs
+    for i in eachindex(res.vals)
+        vec = view(res.vecs, :, i)
+        vals[i] = dot(vec, L.data, vec)
+        @. vecs[:,i] = vec * exp(-1im*angle(vec[1]))
+    end
+
+    return EigsolveResult(vals, vecs, res.iter, res.numops, res.converged)
 end
 
 """
