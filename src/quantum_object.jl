@@ -103,6 +103,8 @@ Transform the ket state ``\ket{\psi}`` into a pure density matrix ``\hat{\rho} =
 """
 ket2dm(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * ψ'
 
+ket2dm(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = ρ
+
 """
     isbra(A::QuantumObject)
 

@@ -308,7 +308,7 @@ end
         T::Real, c_ops::AbstractVector=[];
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         H_t::Union{Nothing,Function}=nothing,
-        params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+        params::NamedTuple=NamedTuple(),
         progress::Bool=true,
         ρ0::Union{Nothing, AbstractMatrix} = nothing,
         k::Int=1,
@@ -346,30 +346,26 @@ function eigsolve_al(H::QuantumObject{<:AbstractArray{T1},HOpType},
     T::Real, c_ops::AbstractVector=[];
     alg::OrdinaryDiffEqAlgorithm=Tsit5(),
     H_t::Union{Nothing,Function}=nothing,
-    params::Dict{Symbol, Any}=Dict{Symbol, Any}(),
+    params::NamedTuple=NamedTuple(),
     progress::Bool=true,
-    ρ0::Union{Nothing, AbstractMatrix} = nothing,
+    ρ0::AbstractMatrix = rand_dm(prod(H.dims)).data,
     k::Int=1,
     krylovdim::Int=min(10, size(H, 1)),
     maxiter::Int=200,
     eigstol::Real=1e-6,
     kwargs...) where {T1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
-    if ρ0 === nothing
-        ρ0 = rand_dm(prod(H.dims)).data
-    end
-
     L = liouvillian(H, c_ops)
     prob = mesolveProblem(L, QuantumObject(ρ0, dims=H.dims), [0,T]; alg=alg,
             H_t=H_t, params=params, progress=false, kwargs...)
     integrator = init(prob, alg)
 
-    prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
-    arnoldi_lindblad_solve = ρ -> (next!(prog); reinit!(integrator, ρ); solve!(integrator); integrator.u)
+    # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
+    arnoldi_lindblad_solve = ρ -> (reinit!(integrator, ρ); solve!(integrator); integrator.u)
     Lmap = LinearMap{eltype(ρ0)}(arnoldi_lindblad_solve, size(L, 1))
 
     res = _eigsolve(Lmap, mat2vec(ρ0), k, krylovdim, maxiter=maxiter, tol=eigstol)
-    finish!(prog)
+    # finish!(prog)
 
     vals = similar(res.vals)
     vecs = similar(res.vecs)

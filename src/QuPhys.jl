@@ -2,7 +2,6 @@ module QuPhys
 
 using Reexport
 using Distributed
-@reexport using ProgressMeter
 @reexport using LinearAlgebra
 @reexport using SparseArrays
 @reexport using OrdinaryDiffEq
@@ -24,6 +23,9 @@ include("quantum_object.jl")
 include("quantum_operators.jl")
 include("general_functions.jl")
 include("time_evolution/time_evolution.jl")
+include("time_evolution/mesolve.jl")
+include("time_evolution/sesolve.jl")
+include("time_evolution/mcsolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 include("permutation.jl")
 include("correlations.jl")
@@ -44,8 +46,6 @@ export row_major_reshape, tidyup, tidyup!, gaussian, trunc_op, meshgrid, sparse_
 export get_data, mat2vec, vec2mat
 export ptrace, entropy_vn, entanglement
 export get_coherence, n_th
-export sesolveProblem, mesolveProblem, mcsolveProblem, mcsolveEnsembleProblem
-export sesolve, mesolve, mcsolve
 export dfd_mesolve, dsf_mesolve, dsf_mcsolve
 export liouvillian, liouvillian_floquet, liouvillian_generalized, steadystate, steadystate_floquet
 export LiouvillianDirectSolver, SteadyStateDirectSolver

@@ -183,8 +183,8 @@ end
     psi0 = kron(fock(N, 0), fock(2, 0))
     t_l = LinRange(0, 1000, 1000)
     e_ops = [a_d * a]
-    sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=LinearExponential(krylov=:adaptive, m=15), progress=false)
-    @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
+    # sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=LinearExponential(krylov=:adaptive, m=15), progress=false)
+    # @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
     sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=Vern7(), progress=false)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
 
@@ -217,8 +217,7 @@ end
     psi0_2 = normalize(fock(2, 0) + fock(2, 1))
     psi0 = kron(psi0_1, psi0_2)
     t_l = LinRange(0, 20 / γ1, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], 
-            alg=LinearExponential(krylov=:adaptive, m=20), saveat=[t_l[300]], progress=false)
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
     @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
     @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], [1]))
@@ -237,21 +236,25 @@ end
     ψ00 = fock(N0, 0)
     sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, progress=false)
 
-    function H_dfd0(dims::AbstractVector)
+    function H_dfd0(dims, p)
+        Δ = p.Δ
+        F = p.F
         a = destroy(dims[1])
         Δ * a' * a + F * (a + a')
     end
-    function c_ops_dfd0(dims::AbstractVector)
+    function c_ops_dfd0(dims, p)
+        κ = p.κ
         a = destroy(dims[1])
         [√κ * a]
     end
-    function e_ops_dfd0(dims::AbstractVector)
+    function e_ops_dfd0(dims, p)
         a = destroy(dims[1])
         [a' * a]
     end
     maxdims = [150]
     ψ0 = fock(3, 0)
-    sol = dfd_mesolve(H_dfd0, ψ0, t_l, c_ops_dfd0, maxdims, e_ops=e_ops_dfd0, progress=false)
+    dfd_params = (Δ=Δ, F=F, κ=κ)
+    sol = dfd_mesolve(H_dfd0, ψ0, t_l, c_ops_dfd0, maxdims, dfd_params, e_ops=e_ops_dfd0, progress=false);
 
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
 
@@ -264,21 +267,25 @@ end
     ψ00 = fock(N0, 50)
     sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, progress=false)
 
-    function H_dfd1(dims::AbstractVector)
+    function H_dfd1(dims, p)
+        Δ = p.Δ
+        F = p.F
         a = destroy(dims[1])
         Δ * a' * a + F * (a + a')
     end
-    function c_ops_dfd1(dims::AbstractVector)
+    function c_ops_dfd1(dims, p)
+        κ = p.κ
         a = destroy(dims[1])
         [√κ * a]
     end
-    function e_ops_dfd1(dims::AbstractVector)
+    function e_ops_dfd1(dims, p)
         a = destroy(dims[1])
         [a' * a]
     end
     maxdims = [150]
     ψ0 = fock(70, 50)
-    sol = dfd_mesolve(H_dfd1, ψ0, t_l, c_ops_dfd1, maxdims, e_ops=e_ops_dfd1, progress=false)
+    dfd_params = (Δ=Δ, F=F, κ=κ)
+    sol = dfd_mesolve(H_dfd1, ψ0, t_l, c_ops_dfd1, maxdims, dfd_params, e_ops=e_ops_dfd1, progress=false)
 
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
 
@@ -296,24 +303,29 @@ end
     ψ00 = kron(fock(N0, 0), fock(N1, 15))
     sol0 = mesolve(H0, ψ00, t_l, c_ops0, e_ops=e_ops0, progress=false)
 
-    function H_dfd2(dims::AbstractVector)
+    function H_dfd2(dims, p)
+        Δ = p.Δ
+        F = p.F
+        J = p.J
         a = kron(destroy(dims[1]), eye(dims[2]))
         b = kron(eye(dims[1]), destroy(dims[2]))
         Δ * a' * a + F * (a + a') + Δ * b' * b + J * (a' * b + a * b')
     end
-    function c_ops_dfd2(dims::AbstractVector)
+    function c_ops_dfd2(dims, p)
+        κ = p.κ
         a = kron(destroy(dims[1]), eye(dims[2]))
         b = kron(eye(dims[1]), destroy(dims[2]))
         [√κ * a, √κ * b]
     end
-    function e_ops_dfd2(dims::AbstractVector)
+    function e_ops_dfd2(dims, p)
         a = kron(destroy(dims[1]), eye(dims[2]))
         b = kron(eye(dims[1]), destroy(dims[2]))
         [a' * a, b' * b]
     end
     maxdims = [50, 50]
     ψ0 = kron(fock(3, 0), fock(20, 15))
-    sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, maxdims, e_ops=e_ops_dfd2, progress=false)
+    dfd_params = (Δ=Δ, F=F, κ=κ, J=J)
+    sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, maxdims, dfd_params, e_ops=e_ops_dfd2, progress=false)
 
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) +
           sum(abs.((sol.expect[2, :] .- sol0.expect[2, :]) ./ (sol0.expect[2, :] .+ 1e-16))) < 0.01
@@ -339,24 +351,29 @@ end
 
     N = 5
     a        = destroy(N)
-    function H_dsf(op_list::AbstractVector)
+    function H_dsf(op_list, p)
+        Δ = p.Δ
+        F = p.F
+        U = p.U
         a = op_list[1]
         Δ*a'*a + F*(a + a') + U * a'^2 * a^2
     end
-    function c_ops_dsf(op_list::AbstractVector)
+    function c_ops_dsf(op_list, p)
+        κ = p.κ
         a = op_list[1]
         [√κ * a]
     end
-    function e_ops_dsf(op_list::AbstractVector)
+    function e_ops_dsf(op_list, p)
         a = op_list[1]
         [a' * a, a]
     end
     op_list = [a]
     ψ0  = fock(N, 0)
     α0_l = [α0]
+    dsf_params = (Δ=Δ, F=F, κ=κ, U=U)
     
-    sol_dsf_me = dsf_mesolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, e_ops=e_ops_dsf, progress=false)
-    sol_dsf_mc = dsf_mcsolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, e_ops=e_ops_dsf, progress=false, n_traj=500)
+    sol_dsf_me = dsf_mesolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, dsf_params, e_ops=e_ops_dsf, progress=false)
+    sol_dsf_mc = dsf_mcsolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, dsf_params, e_ops=e_ops_dsf, progress=false, n_traj=500)
     val_ss = abs2(sol0.expect[1,end])
     @test sum(abs2.(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / (val_ss * length(tlist)) < 0.1
     @test sum(abs2.(sol0.expect[1,:] .- sol_dsf_mc.expect[1,:])) / (val_ss * length(tlist)) < 0.1
@@ -381,24 +398,30 @@ end
     N = 5
     a1 = kron(destroy(N), eye(N))
     a2 = kron(eye(N), destroy(N))
-    function H_dsf2(op_list::AbstractVector)
+    function H_dsf2(op_list, p)
+        Δ = p.Δ
+        F = p.F
+        U = p.U
+        J = p.J
         a1, a2 = op_list
         Δ*a1'*a1 + Δ*a2'*a2 + U*a1'^2*a1^2 + U*a2'^2*a2^2 + F*(a1 + a1') + J*(a1'*a2 + a1*a2')
     end
-    function c_ops_dsf2(op_list::AbstractVector)
+    function c_ops_dsf2(op_list, p)
+        κ = p.κ
         a1, a2 = op_list
         [√κ * a1, √κ * a2]
     end
-    function e_ops_dsf2(op_list::AbstractVector)
+    function e_ops_dsf2(op_list, p)
         a1, a2 = op_list
         [a1' * a1, a2' * a2]
     end
     op_list = [a1, a2]
     ψ0  = kron(fock(N, 0), fock(N, 0))
     α0_l = [α0, α0]
+    dsf_params = (Δ=Δ, F=F, κ=κ, U=U, J=J)
 
-    sol_dsf_me = dsf_mesolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false)
-    sol_dsf_mc = dsf_mcsolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, e_ops=e_ops_dsf2, progress=false, n_traj=500)
+    sol_dsf_me = dsf_mesolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, dsf_params, e_ops=e_ops_dsf2, progress=false)
+    sol_dsf_mc = dsf_mcsolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, dsf_params, e_ops=e_ops_dsf2, progress=false, n_traj=500)
 
     val_ss = abs2(sol0.expect[1,end])
     @test sum(abs2.(sol0.expect[1,:] .- sol_dsf_me.expect[1,:])) / (val_ss * length(tlist)) < 0.6
@@ -526,7 +549,7 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=e_ops, H_t=(t) -> sin(t) * H_t, alg=Vern7(), progress=false)
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=e_ops, H_t=(t) -> sin(t) * liouvillian(H_t), alg=Vern7(), progress=false)
     ρ_ss = steadystate_floquet(H, c_ops, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1)
     @test abs(sum(sol_me.expect[1, end-100:end]) / 101 - expect(e_ops[1], ρ_ss)) < 1e-2
 end

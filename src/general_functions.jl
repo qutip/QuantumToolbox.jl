@@ -342,3 +342,32 @@ function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vecto
 
     return res, dkeep
 end
+
+function _matrix_to_vector(::Type{M}) where M <: DenseMatrix
+    T = hasproperty(M, :body) ? M.body : M
+    par = T.parameters
+    npar = length(par)
+    (2 ≤ npar ≤ 3) || error("Type $M is not supported.")
+    if npar == 2
+      S = T.name.wrapper{par[1], 1}
+    else
+      S = T.name.wrapper{par[1], 1, par[3]}
+    end
+    return S
+end
+
+function _matrix_to_vector(::Type{M}) where M <: SparseMatrixCSC
+    T = M
+    par = T.parameters
+    npar = length(par)
+    (2 == npar) || error("Type $M is not supported.")
+    return SparseVector{par[1], par[2]}
+end
+
+function _matrix_to_vector(::Type{M}) where M <: Union{Adjoint{<:BlasFloat,<:SparseMatrixCSC}, Transpose{<:BlasFloat,<:SparseMatrixCSC}}
+    T = M.parameters[2]
+    par = T.parameters
+    npar = length(par)
+    (2 == npar) || error("Type $M is not supported.")
+    return SparseVector{par[1], par[2]}
+end
