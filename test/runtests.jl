@@ -496,8 +496,8 @@ end
     sort!(vals_c, by=real)
     sort!(vals2, by=real)
 
-    @test sum(vals_d[1:20] .- real.(vals_c[1:20])) / 20 < 1e-3
-    @test sum(vals_d[1:10] .- real.(vals2[1:10])) / 20 < 1e-3
+    @test sum(real.(vals_d[1:20]) .- real.(vals_c[1:20])) / 20 < 1e-3
+    @test sum(real.(vals_d[1:10]) .- real.(vals2[1:10])) / 20 < 1e-3
 
 
     N = 5

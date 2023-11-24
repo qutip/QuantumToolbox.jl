@@ -1,6 +1,6 @@
 abstract type LiouvillianSolver end
-struct LiouvillianDirectSolver <: LiouvillianSolver 
-    tol::Real
+struct LiouvillianDirectSolver{T<:Real} <: LiouvillianSolver 
+    tol::T
 end
 
 abstract type SteadyStateSolver end
@@ -58,8 +58,9 @@ where ``\mathcal{D}[\hat{O}_i] \cdot = \hat{O}_i \cdot \hat{O}_i^\dagger - \frac
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
 """
-function liouvillian(H::QuantumObject{<:AbstractArray{T},OpType},
-    c_ops::AbstractVector, Id_cache=I(prod(H.dims))) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+function liouvillian(H::QuantumObject{MT,OpType},
+    c_ops::Vector{QuantumObject{MT,OperatorQuantumObject}}=Vector{QuantumObject{MT,OperatorQuantumObject}}([]),
+    Id_cache=I(prod(H.dims))) where {MT<:AbstractMatrix,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     L = isoper(H) ? -1im * (spre(H, Id_cache) - spost(H, Id_cache)) : H
     for c_op in c_ops
@@ -69,7 +70,7 @@ function liouvillian(H::QuantumObject{<:AbstractArray{T},OpType},
 end
 
 
-liouvillian(H::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = isoper(H) ? -1im * (spre(H) - spost(H)) : H
+# liouvillian(H::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = isoper(H) ? -1im * (spre(H) - spost(H)) : H
 
 function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
@@ -144,7 +145,7 @@ function liouvillian_generalized(H::QuantumObject{MT, OperatorQuantumObject}, fi
         Sp₀ = QuantumObject( triu(X_op, 1), dims=dims )
         Sp₁ = QuantumObject( droptol!( (@. Ωp * N_th * Sp₀.data), tol), dims=dims )
         Sp₂ = QuantumObject( droptol!( (@. Ωp * (1 + N_th) * Sp₀.data), tol), dims=dims )
-        S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
+        # S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
 
         L += 1 / 2 * ( F2 .* (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁)) - spre(F1 .* (Sp₀ * Sp₁')) - spost(F1 .* (Sp₁ * Sp₀')) )
         L += 1 / 2 * ( F2 .* (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂')) - spre(F1 .* (Sp₀' * Sp₂)) - spost(F1 .* (Sp₂' * Sp₀)) )
@@ -223,7 +224,7 @@ as ``e^{i \\omega t}`` and `H_m` oscillates as ``e^{-i \\omega t}``.
 and `ss_solver` is the solver used to solve the steady state.
 """
 function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
-    c_ops::Vector, H_p::QuantumObject{<:AbstractArray{T2},OpType2},
+    c_ops::AbstractVector, H_p::QuantumObject{<:AbstractArray{T2},OpType2},
     H_m::QuantumObject{<:AbstractArray{T3},OpType3},
     ω::Real; n_max::Int=4, lf_solver::LSolver=LiouvillianDirectSolver(),
     ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
@@ -232,6 +233,22 @@ function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
     LSolver<:LiouvillianSolver,SSSolver<:SteadyStateSolver}
 
     L_0 = liouvillian(H_0, c_ops)
+    L_p = liouvillian(H_p)
+    L_m = liouvillian(H_m)
+
+    steadystate(liouvillian_floquet(L_0, L_p, L_m, ω, n_max=n_max, solver=lf_solver), solver=ss_solver)
+end
+
+function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
+    H_p::QuantumObject{<:AbstractArray{T2},OpType2},
+    H_m::QuantumObject{<:AbstractArray{T3},OpType3},
+    ω::Real; n_max::Int=4, lf_solver::LSolver=LiouvillianDirectSolver(),
+    ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    LSolver<:LiouvillianSolver,SSSolver<:SteadyStateSolver}
+
+    L_0 = liouvillian(H_0)
     L_p = liouvillian(H_p)
     L_m = liouvillian(H_m)
 
