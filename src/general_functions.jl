@@ -343,7 +343,15 @@ function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vecto
     return res, dkeep
 end
 
-function _matrix_to_vector(::Type{M}) where M <: DenseMatrix
+function sparse_to_dense(::Type{M}) where M <: SparseMatrixCSC
+    T = M
+    par = T.parameters
+    npar = length(par)
+    (2 == npar) || error("Type $M is not supported.")
+    return Matrix{par[1]}
+end
+
+function mat2vec(::Type{M}) where M <: DenseMatrix
     T = hasproperty(M, :body) ? M.body : M
     par = T.parameters
     npar = length(par)
@@ -356,7 +364,7 @@ function _matrix_to_vector(::Type{M}) where M <: DenseMatrix
     return S
 end
 
-function _matrix_to_vector(::Type{M}) where M <: SparseMatrixCSC
+function mat2vec(::Type{M}) where M <: SparseMatrixCSC
     T = M
     par = T.parameters
     npar = length(par)
@@ -364,7 +372,7 @@ function _matrix_to_vector(::Type{M}) where M <: SparseMatrixCSC
     return SparseVector{par[1], par[2]}
 end
 
-function _matrix_to_vector(::Type{M}) where M <: Union{Adjoint{<:BlasFloat,<:SparseMatrixCSC}, Transpose{<:BlasFloat,<:SparseMatrixCSC}}
+function mat2vec(::Type{M}) where M <: Union{Adjoint{<:BlasFloat,<:SparseMatrixCSC}, Transpose{<:BlasFloat,<:SparseMatrixCSC}}
     T = M.parameters[2]
     par = T.parameters
     npar = length(par)

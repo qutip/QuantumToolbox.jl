@@ -69,7 +69,7 @@ function mesolveProblem(H::QuantumObject{<:AbstractArray{T1},HOpType},
     # progr = Progress(length(t_l), showspeed=true, enabled=show_progress)
     progr = ODEProgress(0)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = Vector{_matrix_to_vector(Te)}(undef, length(e_ops))
+    e_ops2 = Vector{mat2vec(Te)}(undef, length(e_ops))
     for i in eachindex(e_ops)
         e_ops2[i] = mat2vec(get_data(e_ops[i]'))
     end

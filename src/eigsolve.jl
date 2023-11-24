@@ -420,8 +420,16 @@ julia> expect(H, ψ_1) ≈ E[1]
 true
 ```
 """
-LinearAlgebra.eigen(A::QuantumObject{<:AbstractArray{T},OpType}; kwargs...) where
-{T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigen(sparse_to_dense(A.data); kwargs...)
+function LinearAlgebra.eigen(A::QuantumObject{MT,OpType}; kwargs...) where
+        {MT<:AbstractMatrix,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+
+    F = eigen(sparse_to_dense(A.data); kwargs...)
+    # This fixes a type inference issue. But doesn't work for GPU arrays
+    E::mat2vec(sparse_to_dense(MT)) = F.values
+    U::sparse_to_dense(MT) = F.vectors
+
+    Eigen(E, U)
+end
 
 """
     LinearAlgebra.eigvals(A::QuantumObject; kwargs...)

@@ -102,15 +102,15 @@ Constructs the generalized Liouvillian for a system coupled to a bath of harmoni
 
 See, e.g., Settineri, Alessio, et al. "Dissipation and thermal noise in hybrid quantum systems in the ultrastrong-coupling regime." Physical Review A 98.5 (2018): 053834.
 """
-function liouvillian_generalized(H::QuantumObject{<:AbstractArray, OperatorQuantumObject}, fields::Vector, 
-    T_list::Vector{<:Real}; N_trunc::Int=size(H,1), tol::Real=1e-12, σ_filter::Union{Nothing, Real}=nothing)
+function liouvillian_generalized(H::QuantumObject{MT, OperatorQuantumObject}, fields::Vector, 
+    T_list::Vector{<:Real}; N_trunc::Int=size(H,1), tol::Real=1e-12, σ_filter::Union{Nothing, Real}=nothing) where {MT<:AbstractMatrix}
 
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
     dims = N_trunc == size(H,1) ? H.dims : [N_trunc]
-    E, U = eigen(H)
-    E = real.(E[1:N_trunc])
-    U = QuantumObject(U, dims=H.dims)
+    E2, U2 = eigen(H)
+    E = real.(E2[1:N_trunc])
+    U = QuantumObject(U2, dims=H.dims)
 
     H_d = QuantumObject(spdiagm(complex(E)), dims=dims)
 
