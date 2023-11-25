@@ -58,9 +58,11 @@ where ``\mathcal{D}[\hat{O}_i] \cdot = \hat{O}_i \cdot \hat{O}_i^\dagger - \frac
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
 """
-function liouvillian(H::QuantumObject{MT,OpType},
-    c_ops::Vector{QuantumObject{MT,OperatorQuantumObject}}=Vector{QuantumObject{MT,OperatorQuantumObject}}([]),
-    Id_cache=I(prod(H.dims))) where {MT<:AbstractMatrix,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+function liouvillian(H::QuantumObject{MT1,OpType1},
+    c_ops::Vector{QuantumObject{MT2,OpType2}}=Vector{QuantumObject{MT1,OpType1}}([]),
+    Id_cache=I(prod(H.dims))) where {MT1<:AbstractMatrix,MT2<:AbstractMatrix,
+                                    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+                                    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     L = isoper(H) ? -1im * (spre(H, Id_cache) - spost(H, Id_cache)) : H
     for c_op in c_ops
