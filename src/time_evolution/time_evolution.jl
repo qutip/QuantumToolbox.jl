@@ -115,7 +115,7 @@ function liouvillian_generalized(H::QuantumObject{MT, OperatorQuantumObject}, fi
     E = real.(E2[1:N_trunc])
     U = QuantumObject(U2, dims=H.dims)
 
-    H_d = QuantumObject(spdiagm(complex(E)), dims=dims)
+    H_d = QuantumObject(Diagonal(complex(E)), dims=dims)
 
     Ω = E' .- E
     Ωp = triu(dense_to_sparse(Ω, tol), 1)
@@ -126,7 +126,9 @@ function liouvillian_generalized(H::QuantumObject{MT, OperatorQuantumObject}, fi
     F1 = dense_to_sparse(F1, tol)
     
     # Filter in the Liouville space
-    M1 = ones(N_trunc, N_trunc)
+    # M1 = ones(N_trunc, N_trunc)
+    M1 = similar(E, N_trunc, N_trunc)
+    M1 .= 1
     Ω1 = kron(Ω, M1)
     Ω2 = kron(M1, Ω)
     Ωdiff = Ω1 .- Ω2

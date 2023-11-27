@@ -38,7 +38,7 @@ Since the density matrix is vectorized, this super-operator is always
 a matrix, obtained from ``\mathcal{O} \left(\hat{A}, \hat{B}\right) \boldsymbol{\cdot} = \text{spre}(A) * \text{spost}(B)``.
 """
 sprepost(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-         B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = QuantumObject(kron(sparse(transpose(B.data)), A.data), SuperOperatorQuantumObject, A.dims)
+         B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = QuantumObject(kron(transpose(sparse(B.data)), A.data), SuperOperatorQuantumObject, A.dims)
 
 @doc raw"""
     lindblad_dissipator(O::QuantumObject, Id_cache=I(size(O,1))

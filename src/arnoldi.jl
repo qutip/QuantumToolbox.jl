@@ -20,6 +20,7 @@ function arnoldi_init!(A, b::AbstractVector{T}, V::AbstractMatrix{T}, H::Abstrac
     v₂ = view(V, :, 2)
     v₁ .= b
     normalize!(v₁)
+
     mul!(v₂, A, v₁)
     H[1,1] = dot(v₁, v₂)
     axpy!(-H[1,1], v₁, v₂)
@@ -57,7 +58,7 @@ function arnoldi!(AS::ArnoldiSpace{<:AbstractMatrix{T1}, <:AbstractMatrix{T1}}, 
     return AS
 end
 
-function arnoldi(A, b::AbstractVector{T}, m::Integer; tol::Real=1e-15) where T <: BlasFloat
+function arnoldi(A, b::AbstractVector{T}, m::Integer) where T <: BlasFloat
     n = size(A, 2)
     V = similar(b, n, m+1)
     H = zeros(T, m+1, m)
@@ -68,7 +69,7 @@ end
 ### EXPV TOOLS ###
 
 function expv!(x::AbstractVector{T1}, AS::ArnoldiSpace{<:AbstractMatrix{T1}, <:AbstractMatrix{T1}},
-    t::T2, b::AbstractVector{T1}) where {T1 <: BlasFloat, T2 <: BlasFloat}
+    t::T2, b::AbstractVector{T1}) where {T1 <: BlasFloat, T2 <: Union{BlasFloat, BlasInt}}
 
     H = AS.H
     V = AS.V
@@ -78,22 +79,21 @@ function expv!(x::AbstractVector{T1}, AS::ArnoldiSpace{<:AbstractMatrix{T1}, <:A
     Vm = view(V, :, 1:m)
     lmul!(t, Hm)
 
-    # expH = LinearAlgebra.exp!(Hm)
-    expH = exp(Hm)
+    expH = LinearAlgebra.exp!(Hm)
+    # expH = exp(Hm)
 
-    cache1 = view(x, 1:m)
-    cache2 = view(H, 1, :)
-    cache3 = view(H, 2, :)
+    β = norm(b)
+    expHe = view(expH, :, 1)
+    cache = similar(x, m)
+    cache .= expHe # just in case expHe is different from cache (e.g., with CUDA)
+    mul!(x, Vm, cache)
+    lmul!(β, x)
 
-    mul!(cache1, Vm', b)
-    cache2 .= cache1 # just in case cache1 is different from cache2 (e.g., with CUDA)
-    mul!(cache3, expH, cache2)
-    mul!(x, Vm, cache3)
 
     return x
 end
 
-function expv!(x::AbstractVector{T1}, A, t::T2, b::AbstractVector{T1}; m::Int=min(30, cld(2*length(b), 3))) where {T1 <: BlasFloat, T2 <: BlasFloat}
+function expv!(x::AbstractVector{T1}, A, t::T2, b::AbstractVector{T1}; m::Int=min(30, cld(2*length(b), 3))) where {T1 <: BlasFloat, T2 <: Union{BlasFloat, BlasInt}}
     AS = arnoldi(A, b, m)
     expv!(x, AS, t, b)
 end

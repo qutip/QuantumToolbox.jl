@@ -22,11 +22,19 @@ end
 Converts a sparse QuantumObject to a dense QuantumObject.
 """
 sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
-sparse_to_dense(A::AbstractSparseArray) = Array(A)
+sparse_to_dense(A::MT) where {MT<:AbstractSparseMatrix} = Array(A)
 for op in (:Transpose, :Adjoint)
     @eval sparse_to_dense(A::$op{T, <:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
 end
-sparse_to_dense(A::AbstractArray) = A
+sparse_to_dense(A::MT) where {MT<:AbstractArray} = A
+
+function sparse_to_dense(::Type{M}) where M <: SparseMatrixCSC
+    T = M
+    par = T.parameters
+    npar = length(par)
+    (2 == npar) || error("Type $M is not supported.")
+    return Matrix{par[1]}
+end
 
 """
     dense_to_sparse(A::QuantumObject)
@@ -34,14 +42,14 @@ sparse_to_dense(A::AbstractArray) = A
 Converts a dense QuantumObject to a sparse QuantumObject.
 """
 dense_to_sparse(A::QuantumObject{<:AbstractVecOrMat}, tol::Real=1e-10) = QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
-function dense_to_sparse(A::AbstractMatrix, tol::Real=1e-10)
+function dense_to_sparse(A::MT, tol::Real=1e-10) where {MT<:AbstractMatrix}
     idxs = findall(@. abs(A) > tol)
     row_indices = getindex.(idxs, 1)
     col_indices = getindex.(idxs, 2)
     vals = getindex(A, idxs)
     return sparse(row_indices, col_indices, vals, size(A)...)
 end
-function dense_to_sparse(A::AbstractVector, tol::Real=1e-10)
+function dense_to_sparse(A::VT, tol::Real=1e-10) where {VT<:AbstractVector}
     idxs = findall(@. abs(A) > tol)
     vals = getindex(A, idxs)
     return sparsevec(idxs, vals, length(A))
@@ -79,8 +87,8 @@ get_data(A::QuantumObject) = A.data
 
 Converts a matrix to a vector.
 """
-mat2vec(A::AbstractMatrix) = vec(A) # reshape(A, :)
-function mat2vec(A::AbstractSparseMatrix)
+mat2vec(A::MT) where {MT<:AbstractMatrix} = vec(A) # reshape(A, :)
+function mat2vec(A::MT) where {MT<:AbstractSparseMatrix}
     i, j, v = findnz(A)
     return sparsevec(i .+ (j .- 1) .* size(A, 1), v, prod(size(A)))
 end
@@ -341,14 +349,6 @@ function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vecto
     res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
 
     return res, dkeep
-end
-
-function sparse_to_dense(::Type{M}) where M <: SparseMatrixCSC
-    T = M
-    par = T.parameters
-    npar = length(par)
-    (2 == npar) || error("Type $M is not supported.")
-    return Matrix{par[1]}
 end
 
 function mat2vec(::Type{M}) where M <: DenseMatrix
