@@ -276,7 +276,7 @@ function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing,
 
     T = eltype(A)
     isH = ishermitian(A)
-    v0 === nothing && (v0 = normalize!(rand(eltype(T), size(A, 1))))
+    v0 === nothing && (v0 = normalize!(rand(T, size(A, 1))))
 
     if sigma === nothing
         res = _eigsolve(A, v0, k, krylovdim, tol = tol, maxiter = maxiter)
@@ -284,13 +284,16 @@ function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing,
         vals .= res.vals
     else
         Aₛ = A - sigma * I
-        solver === nothing && (solver = isH ? KrylovJL_CG() : KrylovJL_GMRES())
-        condition = !haskey(kwargs, :Pl) && typeof(A) <: AbstractSparseMatrix
-        condition && (kwargs = merge(kwargs, Dict(:Pl => ilu(Aₛ, τ=0.001))))
-        !haskey(kwargs, :atol) && (kwargs = merge(kwargs, Dict(:atol => tol)))
+        solver === nothing && (solver = isH ? KrylovJL_MINRES() : KrylovJL_GMRES())
+
+        kwargs2 = (;kwargs...)
+        condition = !haskey(kwargs2, :Pl) && typeof(A) <: SparseMatrixCSC
+        condition && (kwargs2 = merge(kwargs2, (Pl = ilu(Aₛ, τ=0.001),)))
+
+        !haskey(kwargs2, :atol) && (kwargs2 = merge(kwargs2, (atol = tol,)))
 
         prob = LinearProblem(Aₛ, v0)
-        linsolve = init(prob, solver; kwargs...)
+        linsolve = init(prob, solver; kwargs2...)
         Amap = LinearMap{T}((y,x) -> _map_ldiv(linsolve, y, x), length(v0))
 
         res = _eigsolve(Amap, v0, k, krylovdim, tol = tol, maxiter = maxiter)
@@ -298,10 +301,13 @@ function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing,
         @. vals = (1 + sigma * res.vals) / res.vals
     end
 
-    isH && (vals = real.(vals))
+    # isH && (vals = real.(vals))
 
     return EigsolveResult(vals, res.vecs, res.iter, res.numops, res.converged)
 end
+
+
+
 
 """
     eigsolve_al(H::QuantumObject,
@@ -326,7 +332,6 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - `alg`: The differential equation solver algorithm
 - `H_t`: A function `H_t(t)` that returns the additional term at time `t`
 - `params`: A dictionary of additional parameters
-- `progress`: Whether to show a progress bar
 - `ρ0`: The initial density matrix. If not specified, a random density matrix is used
 - `k`: The number of eigenvalues to compute
 - `krylovdim`: The dimension of the Krylov subspace
@@ -347,7 +352,6 @@ function eigsolve_al(H::QuantumObject{MT1,HOpType},
     alg::OrdinaryDiffEqAlgorithm=Tsit5(),
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
-    progress::Bool=true,
     ρ0::AbstractMatrix = rand_dm(prod(H.dims)).data,
     k::Int=1,
     krylovdim::Int=min(10, size(H, 1)),
@@ -363,8 +367,14 @@ function eigsolve_al(H::QuantumObject{MT1,HOpType},
     integrator = init(prob, alg)
 
     # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
-    arnoldi_lindblad_solve = ρ -> (reinit!(integrator, ρ); solve!(integrator); integrator.u)
-    Lmap = LinearMap{eltype(ρ0)}(arnoldi_lindblad_solve, size(L, 1))
+
+    function arnoldi_lindblad_solve(ρ)
+        reinit!(integrator, ρ)
+        solve!(integrator)
+        integrator.u
+    end
+    
+    Lmap = LinearMap{eltype(MT1)}(arnoldi_lindblad_solve, size(L, 1), ismutating=false)
 
     res = _eigsolve(Lmap, mat2vec(ρ0), k, krylovdim, maxiter=maxiter, tol=eigstol)
     # finish!(prog)

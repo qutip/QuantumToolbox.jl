@@ -48,16 +48,18 @@ Generates the ODEProblem for the master equation time evolution of an open quant
 # Returns
 - `prob::ODEProblem`: The ODEProblem for the master equation time evolution.
 """
-function mesolveProblem(H::QuantumObject{<:AbstractArray{T1},HOpType},
+function mesolveProblem(H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     t_l,
-    c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix{ComplexF64}, OperatorQuantumObject}[];
+    c_ops::Vector{QuantumObject{Tc, COpType}}=QuantumObject{MT1, HOpType}[];
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix{ComplexF64}, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
-    kwargs...) where {T1,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,
+    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
+    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators don't have the same Hilbert dimension."))
 
@@ -120,16 +122,18 @@ Time evolution of an open quantum system using master equation.
 # Returns
 - `sol::TimeEvolutionSol`: The solution of the time evolution.
 """
-function mesolve(H::QuantumObject{<:AbstractArray{T1},HOpType},
+function mesolve(H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     t_l::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix{ComplexF64}, OperatorQuantumObject}[];
+    c_ops::Vector{QuantumObject{Tc, COpType}}=QuantumObject{MT1, HOpType}[];
     alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix{ComplexF64}, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
-    kwargs...) where {T1,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,
+    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
+    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     prob = mesolveProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops,
             H_t=H_t, params=params, kwargs...)
