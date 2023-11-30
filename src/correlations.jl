@@ -173,11 +173,12 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
 
     # Get the steady state and update the corresponding vector
     ss_idx = argmin(abs2.(rates))
-    ρss = vec2mat(@view(vecs[:,ss_idx]))
-    ρss2 = (ρss + ρss') / 2
-    ρss2 ./= tr(ρss2)
-    ρss .= ρss2
-
+    # ρss = vec2mat(@view(vecs[:,ss_idx]))
+    # ρss2 = (ρss + ρss') / 2
+    # ρss2 ./= tr(ρss2)
+    # ρss .= ρss2
+    ρss = steadystate(L).data
+    
     ρ0 = B.data * ρss
     v = vecs \ mat2vec(ρ0)
     
