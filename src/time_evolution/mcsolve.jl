@@ -110,16 +110,16 @@ time evolution of an open quantum system.
 # Returns
 - `prob::ODEProblem`: The ODEProblem for the Monte Carlo wave function time evolution.
 """
-function mcsolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+function mcsolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
+    c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[];
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
     jump_callback::TJC=DiscreteLindbladJumpCallback(),
-    kwargs...) where {T1,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
+    kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
     H_eff = H - T2(0.5im) * mapreduce(op -> op' * op, +, c_ops)
 
@@ -211,18 +211,18 @@ time evolution of an open quantum system.
 - `prob::EnsembleProblem with ODEProblem`: The Ensemble ODEProblem for the Monte Carlo
 wave function time evolution.
 """
-function mcsolveEnsembleProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+function mcsolveEnsembleProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
+    c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[];
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
     jump_callback::TJC=DiscreteLindbladJumpCallback(),
     prob_func::Function=_mcsolve_prob_func,
     output_func::Function=_mcsolve_output_func,
-    kwargs...) where {T1,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
+    kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
     prob_mc = mcsolveProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops, 
                 H_t=H_t, params=params, jump_callback=jump_callback, kwargs...)
@@ -270,18 +270,18 @@ Time evolution of an open quantum system using quantum trajectories.
 # Notes
 `ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`.
 """
-function mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+function mcsolve(H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
+    c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[];
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
     n_traj::Int=1,
     ensemble_method=EnsembleThreads(),
     jump_callback::TJC=DiscreteLindbladJumpCallback(),
-    kwargs...) where {T1,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
+    kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
     ens_prob_mc = mcsolveEnsembleProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops, 
                 H_t=H_t, params=params, jump_callback=jump_callback, kwargs...)

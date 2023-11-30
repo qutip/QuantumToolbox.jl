@@ -45,14 +45,14 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 # Returns
 - `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
 """
-function sesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+function sesolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix{ComplexF64}, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{MT2, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
-    kwargs...) where {T1,T2,Te<:AbstractMatrix}
+    kwargs...) where {MT1<:AbstractMatrix,T2,MT2<:AbstractMatrix}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators don't have the same Hilbert dimension."))
 
@@ -64,7 +64,7 @@ function sesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObje
     # progr = Progress(length(t_l), showspeed=true, enabled=show_progress)
     progr = ODEProgress(0)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = Vector{Te}(undef, length(e_ops))
+    e_ops2 = Vector{MT2}(undef, length(e_ops))
     for i in eachindex(e_ops)
         e_ops2[i] = get_data(e_ops[i])
     end
@@ -114,14 +114,14 @@ Time evolution of a closed quantum system using the Schrödinger equation.
 - Returns
 - `sol::TimeEvolutionSol`: The solution of the time evolution.
 """
-function sesolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+function sesolve(H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix{ComplexF64}, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{MT2, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
-    kwargs...) where {T1,T2,Te<:AbstractMatrix}
+    kwargs...) where {MT1<:AbstractMatrix,T2,MT2<:AbstractMatrix}
 
     prob = sesolveProblem(H, ψ0, t_l; alg=alg, e_ops=e_ops,
             H_t=H_t, params=params, kwargs...)
