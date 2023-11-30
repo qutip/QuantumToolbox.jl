@@ -2,9 +2,10 @@ abstract type SpectrumSolver end
 struct FFTCorrelation <: SpectrumSolver end
 struct ExponentialSeries <: SpectrumSolver
     tol::Real
+    calc_steadystate::Bool
 end
 
-ExponentialSeries(;tol=1e-14) = ExponentialSeries(tol)
+ExponentialSeries(;tol=1e-14,calc_steadystate=false) = ExponentialSeries(tol,calc_steadystate)
 
 @doc raw"""
     correlation_3op_2t(H::QuantumObject,
@@ -163,7 +164,6 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     kwargs...) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     
     (H.dims == A.dims == B.dims) || throw(DimensionMismatch("The dimensions of H, A and B must be the same"))
-    Hdims = H.dims
 
     L = liouvillian(H, c_ops)
 
@@ -172,12 +172,21 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     rates, vecs = eigen(L)
 
     # Get the steady state and update the corresponding vector
-    ss_idx = argmin(abs2.(rates))
+    # ss_idx = argmin(abs2.(rates))
     # ρss = vec2mat(@view(vecs[:,ss_idx]))
     # ρss2 = (ρss + ρss') / 2
     # ρss2 ./= tr(ρss2)
     # ρss .= ρss2
-    ρss = steadystate(L).data
+    # ρss = steadystate(L).data # This solves the problem when multiple states have zero eigenvalue
+    if solver.calc_steadystate
+        ρss = steadystate(L).data
+    else
+        ss_idx = argmin(abs2.(rates))
+        ρss = vec2mat(@view(vecs[:,ss_idx]))
+        ρss2 = (ρss + ρss') / 2
+        ρss2 ./= tr(ρss2)
+        ρss .= ρss2
+    end
     
     ρ0 = B.data * ρss
     v = vecs \ mat2vec(ρ0)

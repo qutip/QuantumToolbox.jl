@@ -135,7 +135,7 @@ function _eigsolve(A, b::AbstractVector{T}, k::Int = 1,
 
     for i = 2:m
         β = arnoldi_step!(A, V, H, i)
-        if β < tol
+        if β < tol && i > k
             return _eigsolve_happy(V, H, i, k) # happy breakdown
         end
     end
@@ -170,12 +170,15 @@ function _eigsolve(A, b::AbstractVector{T}, k::Int = 1,
         # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
 
         F = hessenberg!(Hₘ)
-        copyto!(Uₘ, F.H.data)
+        copyto!(Uₘ, Hₘ)
         LAPACK.orghr!(1, m, Uₘ, F.τ)
-        Tₘ, Uₘ, values = _hseqr!(F.H.data, Uₘ)
+        Tₘ, Uₘ, values = _hseqr!(Hₘ, Uₘ)
+        
         sortperm!(sorted_vals, values, by = abs, rev = true)
         _permuteschur!(Tₘ, Uₘ, sorted_vals)
+
         mul!(f, Uₘᵥ, β)
+
 
         # println( A * Vₘ * Uₘ ≈ Vₘ * Uₘ * M(Tₘ) + qₘ * M(transpose(βeₘ)) * Uₘ )     # SHOULD BE TRUE
 
