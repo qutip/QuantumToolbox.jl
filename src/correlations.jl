@@ -123,7 +123,7 @@ function spectrum(H::QuantumObject{MT1,HOpType},
     ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    c_ops::Vector{QuantumObject{MT2,COpType}}=Vector{QuantumObject{MT1,HOpType}}([]),
+    c_ops::Vector{QuantumObject{MT2,COpType}}=Vector{QuantumObject{MT1,HOpType}}([]);
     solver::MySolver=ExponentialSeries(),
     kwargs...) where {MT1<:AbstractMatrix,MT2<:AbstractMatrix,T2,T3,
             HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
