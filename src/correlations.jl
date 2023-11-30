@@ -119,14 +119,16 @@ end
 
 Returns the emission spectrum ``S(\omega) = \int_{-\infty}^\infty \expval{\hat{A}(\tau) \hat{B}(0)} e^{-i \omega \tau} d \tau``.
 """
-function spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
+function spectrum(H::QuantumObject{MT1,HOpType},
     ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    c_ops::AbstractVector=[];
+    c_ops::Vector{QuantumObject{MT2,COpType}}=Vector{QuantumObject{MT1,HOpType}}([]);
     solver::MySolver=ExponentialSeries(),
-    kwargs...) where {T1,T2,T3,
-            HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}, MySolver<:SpectrumSolver}
+    kwargs...) where {MT1<:AbstractMatrix,MT2<:AbstractMatrix,T2,T3,
+            HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+            COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+            MySolver<:SpectrumSolver}
     
     return _spectrum(H, ω_list, A, B, c_ops, solver; kwargs...)
 end
@@ -135,7 +137,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    c_ops::AbstractVector,
+    c_ops,
     solver::FFTCorrelation;
     kwargs...) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     
@@ -159,7 +161,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    c_ops::AbstractVector,
+    c_ops,
     solver::ExponentialSeries;
     kwargs...) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     
