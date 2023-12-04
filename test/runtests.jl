@@ -549,7 +549,12 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=e_ops, H_t=(t) -> sin(t) * liouvillian(H_t), alg=Vern7(), progress=false)
+    function H_t_f(t,p)
+        copyto!(p.L_t_cache2.data, p.L_t.data)
+        lmul!(sin(t), p.L_t_cache2)
+    end
+    L_t = liouvillian(H_t)
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=e_ops, H_t=H_t_f, alg=Vern7(), progress=false, params=(L_t=L_t, L_t_cache2=deepcopy(L_t)))
     ρ_ss = steadystate_floquet(H, c_ops, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1)
     @test abs(sum(sol_me.expect[1, end-100:end]) / 101 - expect(e_ops[1], ρ_ss)) < 1e-2
 end

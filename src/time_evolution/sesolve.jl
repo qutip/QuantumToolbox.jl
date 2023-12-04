@@ -18,7 +18,13 @@ function _save_func_sesolve(integrator)
 end
 
 sesolve_ti_dudt!(du, u, p, t) = mul!(du, p.U, u)
-sesolve_td_dudt!(du, u, p, t) = mul!(du, p.U - 1im * p.H_t(t), u)
+# sesolve_td_dudt!(du, u, p, t) = mul!(du, p.U - 1im * p.H_t(t), u)
+function sesolve_td_dudt!(du, u, p, t)
+    U_t = p.H_t_cache
+    copyto!(U_t, p.U)
+    axpy!(-1im, p.H_t(t,p).data, U_t)
+    mul!(du, U_t, u)
+end
 
 """
     sesolveProblem(H::QuantumObject,
@@ -61,6 +67,8 @@ function sesolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     ϕ0 = get_data(ψ0)
     U = -1im * get_data(H)
 
+    H_t_cache = deepcopy(U)
+
     # progr = Progress(length(t_l), showspeed=true, enabled=show_progress)
     progr = ODEProgress(0)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
@@ -68,7 +76,7 @@ function sesolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     for i in eachindex(e_ops)
         e_ops2[i] = get_data(e_ops[i])
     end
-    p = (U = U, e_ops = e_ops2, expvals = expvals, progr = progr, Hdims = H.dims, H_t = H_t, is_empty_e_ops = isempty(e_ops), params...)
+    p = (U = U, e_ops = e_ops2, expvals = expvals, progr = progr, Hdims = H.dims, H_t = H_t, H_t_cache=H_t_cache, is_empty_e_ops = isempty(e_ops), params...)
 
     default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
     kwargs2 = merge(default_values, kwargs)
