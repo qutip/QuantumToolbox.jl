@@ -1,3 +1,5 @@
+export Lattice, mb, TFIM, nn
+
 using QuPhys
 
 sx = sigmax()
