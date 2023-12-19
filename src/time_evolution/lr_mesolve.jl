@@ -1,4 +1,4 @@
-export lr_mesolve, lr_mesolveProblem, lr_mesolveOptions, LRTimeEvolutionSol
+export lr_mesolve, lr_mesolveProblem, lr_mesolveOptions, LRTimeEvolutionSol, LRMesolveOptions
 
 #=======================================================#
 #                   STRUCT DEFINITIONS
@@ -433,12 +433,6 @@ function lr_mesolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     return lr_mesolve(prob; kwargs...)
 end
 
-function lr_mesolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, z::AbstractArray{T2, 2}, B::AbstractArray{T2, 2}, t_l::AbstractVector, c_ops::AbstractVector=[];
-    e_ops::Tuple=(), f_ops::Tuple=(), opt::LRMesolveOptions{AlgType}=LRMesolveOptions{AlgType}(), kwargs...) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
-    
-    prob = lr_mesolveProblem(H, z, B, t_l, c_ops; e_ops=e_ops, f_ops=f_ops, opt=opt, kwargs...);
-    return lr_mesolve(prob; kwargs...)
-end
 
 #=======================================================#
 #                  OUTPUT GENNERATION

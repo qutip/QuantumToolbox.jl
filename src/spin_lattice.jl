@@ -1,6 +1,4 @@
-export Lattice, mb, TFIM, nn
-
-using QuPhys
+export Lattice, mb, TFIM, nn, sx, sy, sz, sm, sp, pbc, obc
 
 sx = sigmax()
 sy = -sigmay()
