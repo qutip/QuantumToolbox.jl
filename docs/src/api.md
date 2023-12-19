@@ -75,10 +75,12 @@ cosm
 ```@docs
 sesolveProblem
 mesolveProblem
+lr_mesolveProblem
 mcsolveProblem
 mcsolveEnsembleProblem
 sesolve
 mesolve
+lr_mesolve
 mcsolve
 dfd_mesolve
 dsf_mesolve
