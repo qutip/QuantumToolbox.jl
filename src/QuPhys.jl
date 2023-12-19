@@ -24,12 +24,14 @@ include("quantum_operators.jl")
 include("general_functions.jl")
 include("time_evolution/time_evolution.jl")
 include("time_evolution/mesolve.jl")
+include("time_evolution/lr_mesolve.jl")
 include("time_evolution/sesolve.jl")
 include("time_evolution/mcsolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 include("permutation.jl")
 include("correlations.jl")
 include("wigner.jl")
+include("spin_lattice.jl")
 include("arnoldi.jl")
 include("eigsolve.jl")
 
@@ -53,5 +55,4 @@ export bdf, get_bdf_blocks
 export FFTCorrelation, ExponentialSeries
 export correlation_3op_2t, correlation_2op_2t, correlation_2op_1t, spectrum
 export eigsolve, eigsolve_al
-
 end
