@@ -79,8 +79,8 @@ function expv!(x::AbstractVector{T1}, AS::ArnoldiSpace{<:AbstractMatrix{T1}, <:A
     Vm = view(V, :, 1:m)
     lmul!(t, Hm)
 
-    expH = LinearAlgebra.exp!(Hm)
-    # expH = exp(Hm)
+    # expH = LinearAlgebra.exp!(Hm)
+    expH = exp(Hm)
 
     β = norm(b)
     expHe = view(expH, :, 1)

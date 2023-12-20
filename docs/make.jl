@@ -27,10 +27,9 @@ makedocs(;
     pages=[
         "index.md",
         "api.md",
-        "Benchmark Report" => [
-            "Multi Threads" =>"benchmark_single.md",
-            "Multi VS Single Thread" =>"benchmark_comparison.md",
-        ],
+        "Users Guide" => [
+            "Low Rank Master Equation" => "lowrank.md",
+        ]
     ],
 )
 

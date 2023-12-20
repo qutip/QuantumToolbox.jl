@@ -89,7 +89,7 @@ end
         e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
         H_t::Union{Nothing,Function}=nothing,
         params::NamedTuple=NamedTuple(),
-        jump_callback::TJC=DiscreteLindbladJumpCallback(),
+        jump_callback::TJC=ContinuousLindbladJumpCallback(),
         kwargs...)
 
 Generates the ODEProblem for a single trajectory of the Monte Carlo wave function
@@ -118,7 +118,7 @@ function mcsolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
-    jump_callback::TJC=DiscreteLindbladJumpCallback(),
+    jump_callback::TJC=ContinuousLindbladJumpCallback(),
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
     H_eff = H - T2(0.5im) * mapreduce(op -> op' * op, +, c_ops)
@@ -185,7 +185,7 @@ end
         e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
         H_t::Union{Nothing,Function}=nothing,
         params::NamedTuple=NamedTuple(),
-        jump_callback::TJC=DiscreteLindbladJumpCallback(),
+        jump_callback::TJC=ContinuousLindbladJumpCallback(),
         prob_func::Function=_mcsolve_prob_func,
         output_func::Function=_mcsolve_output_func,
         kwargs...)
@@ -219,7 +219,7 @@ function mcsolveEnsembleProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
-    jump_callback::TJC=DiscreteLindbladJumpCallback(),
+    jump_callback::TJC=ContinuousLindbladJumpCallback(),
     prob_func::Function=_mcsolve_prob_func,
     output_func::Function=_mcsolve_output_func,
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
@@ -245,7 +245,7 @@ end
         params::NamedTuple=NamedTuple(),
         n_traj::Int=1,
         ensemble_method=EnsembleThreads(),
-        jump_callback::TJC=DiscreteLindbladJumpCallback(),
+        jump_callback::TJC=ContinuousLindbladJumpCallback(),
         kwargs...)
 
 Time evolution of an open quantum system using quantum trajectories.
@@ -280,7 +280,7 @@ function mcsolve(H::QuantumObject{MT1,OperatorQuantumObject},
     params::NamedTuple=NamedTuple(),
     n_traj::Int=1,
     ensemble_method=EnsembleThreads(),
-    jump_callback::TJC=DiscreteLindbladJumpCallback(),
+    jump_callback::TJC=ContinuousLindbladJumpCallback(),
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
     ens_prob_mc = mcsolveEnsembleProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops, 

@@ -105,3 +105,13 @@ LinearAlgebra.eigvals
 eigsolve
 eigsolve_al
 ```
+
+## [Low Rank internal APIs](@id API: Low Rank internal APIs)
+```@docs
+_calculate_expectation!
+_adjM_condition_variational
+_adjM_affect!
+_adjM_condition_ratio
+_pinv!
+dBdz!
+```

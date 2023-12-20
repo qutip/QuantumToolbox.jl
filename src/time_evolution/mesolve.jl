@@ -21,11 +21,18 @@ end
 
 mesolve_ti_dudt!(du, u, p, t) = mul!(du, p.L, u)
 # mesolve_td_dudt!(du, u, p, t) = mul!(du, p.L + p.H_t(t,p).data, u)
+function axpyz!(a,X::MT,Y::MT,Z::MT) where {MT<:AbstractMatrix}
+    @. Z = a * X + Y
+    Z
+end
 function mesolve_td_dudt!(du, u, p, t)
-    L_t = p.H_t_cache
-    copyto!(L_t, p.L)
-    axpy!(1, p.H_t(t,p).data, L_t)
-    mul!(du, L_t, u)
+    L_t_cache = p.L_t_cache
+    L = p.L
+    L_t = p.H_t(t,p).data
+    # copyto!(L_t_cache, L)
+    # axpy!(1, L_t, L_t_cache)
+    axpyz!(1, L, L_t, L_t_cache)
+    mul!(du, L_t_cache, u)
 end
     
 """
@@ -74,7 +81,7 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
     ρ0 = mat2vec(ket2dm(ψ0).data)
     L = liouvillian(H, c_ops).data
 
-    H_t_cache = deepcopy(L)
+    L_t_cache = is_time_dependent ? L + H_t(1e-4,params).data : deepcopy(L)
 
     # progr = Progress(length(t_l), showspeed=true, enabled=show_progress)
     progr = ODEProgress(0)
@@ -83,13 +90,13 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
     for i in eachindex(e_ops)
         e_ops2[i] = mat2vec(get_data(e_ops[i]'))
     end
-    p = (L = L, progr = progr, Hdims = H.dims, e_ops = e_ops2, expvals = expvals, H_t = H_t, H_t_cache=H_t_cache, is_empty_e_ops = isempty(e_ops), params...)
+    p = (L = L, progr = progr, Hdims = H.dims, e_ops = e_ops2, expvals = expvals, H_t = H_t, L_t_cache=L_t_cache, is_empty_e_ops = isempty(e_ops), params...)
 
     default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops)
         cb1 = PresetTimeCallback(t_l, _save_func_mesolve, save_positions=(false, false))
-        kwargs2 = haskey(kwargs, :callback) ? merge(kwargs2, (callback=CallbackSet(cb1, kwargs2.callback),)) : merge(kwargs2, (callback=cb1,))
+        kwargs2 = haskey(kwargs, :callback) ? merge(kwargs2, (callback=CallbackSet(kwargs2.callback, cb1),)) : merge(kwargs2, (callback=cb1,))
     end
 
     tspan = (t_l[1], t_l[end])

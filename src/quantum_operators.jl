@@ -26,7 +26,7 @@ The optional argument `Id_cache` can be used to pass a precomputed identity matr
 the same function is applied multiple times with a known Hilbert space dimension.
 """
 spost(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache=I(size(O,1))) where {T} =
-    QuantumObject(kron(sparse(transpose(O.data)), Id_cache), SuperOperatorQuantumObject, O.dims)
+    QuantumObject(kron(sparse(transpose(sparse(O.data))), Id_cache), SuperOperatorQuantumObject, O.dims) # TODO: fix the sparse conversion
 
 @doc raw"""
     sprepost(A::QuantumObject, B::QuantumObject)
@@ -38,7 +38,7 @@ Since the density matrix is vectorized, this super-operator is always
 a matrix, obtained from ``\mathcal{O} \left(\hat{A}, \hat{B}\right) \boldsymbol{\cdot} = \text{spre}(A) * \text{spost}(B)``.
 """
 sprepost(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-         B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = QuantumObject(kron(transpose(sparse(B.data)), A.data), SuperOperatorQuantumObject, A.dims)
+         B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = QuantumObject(kron(sparse(transpose(sparse(B.data))), A.data), SuperOperatorQuantumObject, A.dims) # TODO: fix the sparse conversion
 
 @doc raw"""
     lindblad_dissipator(O::QuantumObject, Id_cache=I(size(O,1))

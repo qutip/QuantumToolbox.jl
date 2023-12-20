@@ -82,7 +82,7 @@ function sesolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops)
         cb1 = PresetTimeCallback(t_l, _save_func_sesolve, save_positions=(false, false))
-        kwargs2 = haskey(kwargs2, :callback) ? merge(kwargs2, (callback=CallbackSet(cb1, kwargs2.callback),)) : merge(kwargs2, (callback=cb1,))
+        kwargs2 = haskey(kwargs2, :callback) ? merge(kwargs2, (callback=CallbackSet(kwargs2.callback, cb1),)) : merge(kwargs2, (callback=cb1,))
     end
 
     tspan = (t_l[1], t_l[end])

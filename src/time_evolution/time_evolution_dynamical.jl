@@ -232,6 +232,11 @@ function _DSF_mesolve_Affect!(integrator)
     dsf_params = internal_params.dsf_params
     expv_cache = internal_params.expv_cache
     dsf_identity = internal_params.dsf_identity
+    dsf_kron_cache_left = internal_params.dsf_kron_cache_left
+    dsf_kron_cache_left_dag = internal_params.dsf_kron_cache_left_dag
+    dsf_kron_cache_right = internal_params.dsf_kron_cache_right
+    dsf_kron_cache_right_dag = internal_params.dsf_kron_cache_right_dag
+    dsf_kron_cache_full = internal_params.dsf_kron_cache_full
 
     for i in eachindex(op_l)
         op = op_l[i]
@@ -246,7 +251,10 @@ function _DSF_mesolve_Affect!(integrator)
             # mul!(integrator.u, sprepost(Dᵢ', Dᵢ).data, dsf_cache)
 
             # This is equivalent to the code above, assuming that transpose(op) = adjoint(op)
-            Aᵢ = kron(Δα * op.data - conj(Δα) * op.data', dsf_identity) + kron(dsf_identity, conj(Δα) * op.data - Δα * op.data')
+            # Aᵢ = kron(Δα * op.data - conj(Δα) * op.data', dsf_identity) + kron(dsf_identity, conj(Δα) * op.data - Δα * op.data')
+            @. dsf_kron_cache_full[i] = Δα * dsf_kron_cache_left[i] - conj(Δα) * dsf_kron_cache_left_dag[i] + conj(Δα) * dsf_kron_cache_right[i] - Δα * dsf_kron_cache_right_dag[i]
+            Aᵢ = dsf_kron_cache_full[i]
+
             dsf_cache .= integrator.u
             arnoldi!(expv_cache, Aᵢ, dsf_cache)
             expv!(integrator.u, expv_cache, one(αt), dsf_cache)
@@ -286,12 +294,20 @@ function dsf_mesolveProblem(H::Function,
     # Create the Krylov subspace with kron(H₀.data, H₀.data) just for initialize
     expv_cache = arnoldi(kron(H₀.data, H₀.data), mat2vec(ket2dm(ψ0).data), krylov_dim)
     dsf_identity = I(prod(H₀.dims))
+    dsf_kron_cache_left = map(op->kron(op.data, dsf_identity), op_l)
+    dsf_kron_cache_left_dag = map(op->kron(sparse(op.data'), dsf_identity), op_l)
+    dsf_kron_cache_right = map(op->kron(dsf_identity, op.data), op_l)
+    dsf_kron_cache_right_dag = map(op->kron(dsf_identity, sparse(op.data')), op_l)
+    dsf_kron_cache_full = @. dsf_kron_cache_left + dsf_kron_cache_left_dag + dsf_kron_cache_right + dsf_kron_cache_right_dag
 
     params2 = params
     params2 = merge(params, (H_fun = H, c_ops_fun = c_ops, e_ops_fun = e_ops,
                     op_l = op_l, op_l_vec = op_l_vec, αt_list = αt_list, δα_list = δα_list,
                     dsf_cache = similar(ψ0.data, length(ψ0.data)^2), expv_cache=expv_cache,
-                    dsf_identity=dsf_identity, dsf_params = dsf_params))
+                    dsf_identity=dsf_identity, dsf_params = dsf_params,
+                    dsf_kron_cache_left=dsf_kron_cache_left, dsf_kron_cache_left_dag=dsf_kron_cache_left_dag,
+                    dsf_kron_cache_right=dsf_kron_cache_right, dsf_kron_cache_right_dag=dsf_kron_cache_right_dag,
+                    dsf_kron_cache_full=dsf_kron_cache_full))
 
     cb_dsf = DiscreteCallback(_DSF_mesolve_Condition, _DSF_mesolve_Affect!, save_positions=(false, false))
     kwargs2 = (;kwargs...)
@@ -452,7 +468,7 @@ function dsf_mcsolveEnsembleProblem(H::Function,
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
     δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
-    jump_callback::TJC=DiscreteLindbladJumpCallback(),
+    jump_callback::TJC=ContinuousLindbladJumpCallback(),
     krylov_dim::Int=min(5,cld(length(ψ0.data), 3)),
     kwargs...) where {T,TOl,TJC<:LindbladJumpCallbackType}
 
@@ -463,6 +479,7 @@ function dsf_mcsolveEnsembleProblem(H::Function,
 
     αt_list  = convert(Vector{T}, α0_l)
     expv_cache = arnoldi(H₀.data, ψ0.data, krylov_dim)
+
 
     params2 = merge(params, (H_fun = H, c_ops_fun = c_ops, e_ops_fun = e_ops,
                     op_l = op_l, αt_list = αt_list, δα_list = δα_list,
@@ -492,7 +509,7 @@ end
         δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
         n_traj::Int=1,
         ensemble_method=EnsembleThreads(),
-        jump_callback::LindbladJumpCallbackType=DiscreteLindbladJumpCallback(),
+        jump_callback::LindbladJumpCallbackType=ContinuousLindbladJumpCallback(),
         krylov_dim::Int=min(5,cld(length(ψ0.data), 3)),
         kwargs...)
 
@@ -512,7 +529,7 @@ function dsf_mcsolve(H::Function,
     δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
     n_traj::Int=1,
     ensemble_method=EnsembleThreads(),
-    jump_callback::TJC=DiscreteLindbladJumpCallback(),
+    jump_callback::TJC=ContinuousLindbladJumpCallback(),
     krylov_dim::Int=min(5,cld(length(ψ0.data), 3)),
     kwargs...) where {T,TOl,TJC<:LindbladJumpCallbackType}
 
