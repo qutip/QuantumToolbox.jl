@@ -8,7 +8,8 @@ DocMeta.setdocmeta!(QuPhys, :DocTestSetup, :(using QuPhys); recursive=true)
 makedocs(;
     modules=[QuPhys],
     authors="Alberto Mercurio",
-    repo="https://github.com/albertomercurio/QuPhys.jl/blob/{commit}{path}#{line}",
+    # repo="https://github.com/albertomercurio/QuPhys.jl/blob/{commit}{path}#{line}",
+    repo = Remotes.GitHub("albertomercurio", "QuPhys.jl"),
     sitename="QuPhys.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
