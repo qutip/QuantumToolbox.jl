@@ -262,6 +262,8 @@ Time evolution of an open quantum system using quantum trajectories.
 - `n_traj::Int`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
+- `prob_func::Function`: Function to use for generating the ODEProblem.
+- `output_func::Function`: Function to use for generating the output of a single trajectory.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
 # Returns
@@ -281,10 +283,13 @@ function mcsolve(H::QuantumObject{MT1,OperatorQuantumObject},
     n_traj::Int=1,
     ensemble_method=EnsembleThreads(),
     jump_callback::TJC=ContinuousLindbladJumpCallback(),
+    prob_func::Function=_mcsolve_prob_func,
+    output_func::Function=_mcsolve_output_func,
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
     ens_prob_mc = mcsolveEnsembleProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops, 
-                H_t=H_t, params=params, jump_callback=jump_callback, kwargs...)
+                H_t=H_t, params=params, jump_callback=jump_callback, prob_func=prob_func,
+                output_func=output_func, kwargs...)
 
     return mcsolve(ens_prob_mc; alg=alg, n_traj=n_traj, ensemble_method=ensemble_method, kwargs...)
 end
