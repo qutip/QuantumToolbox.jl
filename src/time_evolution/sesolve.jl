@@ -20,10 +20,12 @@ end
 sesolve_ti_dudt!(du, u, p, t) = mul!(du, p.U, u)
 # sesolve_td_dudt!(du, u, p, t) = mul!(du, p.U - 1im * p.H_t(t), u)
 function sesolve_td_dudt!(du, u, p, t)
-    U_t = p.H_t_cache
-    copyto!(U_t, p.U)
-    axpy!(-1im, p.H_t(t,p).data, U_t)
-    mul!(du, U_t, u)
+    U_t_cache = p.H_t_cache
+    H_t = p.H_t(t,p).data
+    # copyto!(U_t_cache, p.U)
+    # axpy!(-1im, H_t, U_t_cache)
+    axpyz!(-1im, H_t, p.U, U_t_cache)
+    mul!(du, U_t_cache, u)
 end
 
 """

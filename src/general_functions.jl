@@ -36,6 +36,8 @@ function sparse_to_dense(::Type{M}) where M <: SparseMatrixCSC
     return Matrix{par[1]}
 end
 
+sparse_to_dense(::Type{M}) where M <: AbstractMatrix = M
+
 """
     dense_to_sparse(A::QuantumObject)
 

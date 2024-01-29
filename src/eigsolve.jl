@@ -1,8 +1,16 @@
 using LinearAlgebra.BLAS: @blasfunc, BlasReal, BlasInt, BlasFloat, BlasComplex
-using LinearAlgebra.BLAS: libblastrampoline
-using LinearAlgebra: chkstride1, checksquare
-using LinearAlgebra.LAPACK: chklapackerror
-using Base: require_one_based_indexing
+using LinearAlgebra: checksquare
+
+if VERSION < v"1.10"
+    using LinearAlgebra.BLAS: libblastrampoline
+    using LinearAlgebra: chkstride1
+    using LinearAlgebra.LAPACK: chklapackerror
+    using Base: require_one_based_indexing
+else
+    using LinearAlgebra.LAPACK: hseqr!
+end
+
+
 
 struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}}
     vals::T1
@@ -16,6 +24,7 @@ Base.iterate(res::EigsolveResult) = (res.vals, Val(:vecs))
 Base.iterate(res::EigsolveResult, ::Val{:vecs}) = (res.vecs, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
+if VERSION < v"1.10"
 for (hseqr, elty) in
     ((:zhseqr_,:ComplexF64),
      (:chseqr_,:ComplexF32))
@@ -26,7 +35,7 @@ for (hseqr, elty) in
         # *     ..
         # *     .. Array Arguments ..
         #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
-        function _hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
+        function hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
                         H::AbstractMatrix{$elty}, Z::AbstractMatrix{$elty})
             require_one_based_indexing(H, Z)
             chkstride1(H)
@@ -68,7 +77,7 @@ for (hseqr, elty) in
         # *     ..
         # *     .. Array Arguments ..
         #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
-        function _hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
+        function hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
                         H::AbstractMatrix{$elty}, Z::AbstractMatrix{$elty})
             require_one_based_indexing(H, Z)
             chkstride1(H)
@@ -100,8 +109,9 @@ for (hseqr, elty) in
         end
     end
 end
-_hseqr!(H::StridedMatrix{T}, Z::StridedMatrix{T}) where {T<:BlasFloat} = _hseqr!('S', 'V', 1, size(H, 1), H, Z)
-_hseqr!(H::StridedMatrix{T}) where {T<:BlasFloat} = _hseqr!('S', 'I', 1, size(H, 1), H, similar(H))
+hseqr!(H::StridedMatrix{T}, Z::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'V', 1, size(H, 1), H, Z)
+hseqr!(H::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'I', 1, size(H, 1), H, similar(H))
+end
 
 function _map_ldiv(linsolve, y, x)
     linsolve.b .= x
@@ -172,7 +182,7 @@ function _eigsolve(A, b::AbstractVector{T}, k::Int = 1,
         F = hessenberg!(Hₘ)
         copyto!(Uₘ, Hₘ)
         LAPACK.orghr!(1, m, Uₘ, F.τ)
-        Tₘ, Uₘ, values = _hseqr!(Hₘ, Uₘ)
+        Tₘ, Uₘ, values = hseqr!(Hₘ, Uₘ)
         
         sortperm!(sorted_vals, values, by = abs, rev = true)
         _permuteschur!(Tₘ, Uₘ, sorted_vals)
@@ -206,7 +216,7 @@ function _eigsolve(A, b::AbstractVector{T}, k::Int = 1,
     F = hessenberg!(Hₘ)
     copyto!(Uₘ, F.H.data)
     LAPACK.orghr!(1, m, Uₘ, F.τ)
-    Tₘ, Uₘ, values = _hseqr!(F.H.data, Uₘ)
+    Tₘ, Uₘ, values = hseqr!(F.H.data, Uₘ)
     sortperm!(sorted_vals, values, by = abs, rev = true)
     _permuteschur!(Tₘ, Uₘ, sorted_vals)
 
@@ -234,7 +244,7 @@ function _eigsolve_happy(V::AbstractMatrix{T}, H::AbstractMatrix{T},
     F = hessenberg!(Hₘ)
     copyto!(Uₘ, F.H.data)
     LAPACK.orghr!(1, m, Uₘ, F.τ)
-    Tₘ, Uₘ, values = _hseqr!(F.H.data, Uₘ)
+    Tₘ, Uₘ, values = hseqr!(F.H.data, Uₘ)
     sortperm!(sorted_vals, values, by = abs, rev = true)
     _permuteschur!(Tₘ, Uₘ, sorted_vals)
 

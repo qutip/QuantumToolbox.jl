@@ -66,7 +66,7 @@ function _mcsolve_output_func(sol, i)
 end
 
 function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
-    sol_i = sol[i]
+    sol_i = sol[:,i]
     sol_u = haskey(sol_i.prob.kwargs, :save_idxs) ? sol_i.u : QuantumObject.(sol_i.u, dims=sol_i.prob.p.Hdims)
 
     expvals_all[i, :, :] .= sol_i.prob.p.expvals
@@ -302,9 +302,9 @@ function mcsolve(ens_prob_mc::EnsembleProblem;
 
     sol = solve(ens_prob_mc, alg, ensemble_method, trajectories=n_traj)
 
-    expvals_all = Array{ComplexF64}(undef, length(sol), size(sol[1].prob.p.expvals)...)
+    expvals_all = Array{ComplexF64}(undef, length(sol), size(sol[:,1].prob.p.expvals)...)
     times = Vector{Vector{Float64}}([])
-    states = haskey(sol[1].prob.kwargs, :save_idxs) ? Vector{Vector{eltype(sol[1].u[1])}}([]) : Vector{Vector{QuantumObject}}([])
+    states = haskey(sol[:,1].prob.kwargs, :save_idxs) ? Vector{Vector{eltype(sol[:,1].u[1])}}([]) : Vector{Vector{QuantumObject}}([])
     jump_times = Vector{Vector{Float64}}([])
     jump_which = Vector{Vector{Int16}}([])
     foreach(i -> _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which), eachindex(sol))

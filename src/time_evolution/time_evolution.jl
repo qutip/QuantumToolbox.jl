@@ -27,10 +27,17 @@ LiouvillianDirectSolver(;tol=1e-16) = LiouvillianDirectSolver(tol)
 # It is needed to keep track of the index for saving the expectation values
 mutable struct ODEProgress{T<:Integer}
     counter::T
+    # max_counts::T
+    # start_time::T2
 end
 
 function next!(p::ODEProgress)
     p.counter += 1
+    # prog = round(100 * p.counter / p.max_counts, digits=2)
+    # eta = round((time() - p.start_time) / p.counter * (p.max_counts - p.counter), digits=2)
+    # # convert eta into a string in hours, minutes and seconds
+    # eta_str = string(round(Int, eta / 3600), "h ", round(Int, (eta % 3600) / 60), "m ", round(Int, eta % 60), "s")
+    # print("\rProgress: $prog%  ---  ETA: $eta_str")
 end
 
 abstract type LindbladJumpCallbackType end
