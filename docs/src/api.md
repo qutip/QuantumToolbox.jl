@@ -23,6 +23,8 @@ length
 LinearAlgebra.tr
 LinearAlgebra.norm
 LinearAlgebra.kron
+tensor
+⊗
 ```
 
 ## [General functions](@id API: General functions)

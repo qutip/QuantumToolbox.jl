@@ -41,6 +41,7 @@ export spre, spost, sprepost, lindblad_dissipator
 export fock, basis, coherent
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection, rand_dm
+export tensor, ⊗
 export sinm, cosm
 export expect
 export WignerClenshaw, WignerLaguerre, wigner

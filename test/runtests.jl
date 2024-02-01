@@ -176,8 +176,8 @@ end
     sm = kron(eye(N), sigmam())
     sp = sm'
     sx = kron(eye(N), sigmax())
-    sy = kron(eye(N), sigmay())
-    sz = kron(eye(N), sigmaz())
+    sy = tensor(eye(N), sigmay())
+    sz = eye(N) ⊗ sigmaz()
     η = 0.01
     H = a_d * a + 0.5 * sz - 1im * η * (a - a_d) * sx
     psi0 = kron(fock(N, 0), fock(2, 0))
@@ -650,7 +650,7 @@ end
 
     # Define initial state
     ϕ = Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject}}(undef, M)
-    ϕ[1] = kron(repeat([basis(2,0)],N_modes)...)
+    ϕ[1] = tensor(repeat([basis(2,0)],N_modes)...)
     global i=1
     for j in 1:N_modes
         global i+=1

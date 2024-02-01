@@ -395,6 +395,82 @@ function LinearAlgebra.kron(A::QuantumObject{<:AbstractArray{T1},OpType}, B::Qua
     QuantumObject(kron(A.data, B.data), OpType, vcat(A.dims, B.dims))
 end
 
+@doc raw"""
+    tensor(A1::QuantumObject, A2::QuantumObject, ...)
+
+Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A}_1 \otimes \hat{A}_2 \otimes \cdots``.
+
+# Examples
+
+```
+julia> x = sigmax()
+Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+2×2 SparseMatrixCSC{ComplexF64, Int64} with 2 stored entries:
+     ⋅      1.0+0.0im
+ 1.0+0.0im      ⋅
+
+julia> x_list = fill(x, 3);
+
+julia> tensor(x_list...)
+Quantum Object:   type=Operator   dims=[2, 2, 2]   size=(8, 8)   ishermitian=true
+8×8 SparseMatrixCSC{ComplexF64, Int64} with 8 stored entries:
+     ⋅          ⋅          ⋅      …      ⋅          ⋅      1.0+0.0im
+     ⋅          ⋅          ⋅             ⋅      1.0+0.0im      ⋅    
+     ⋅          ⋅          ⋅         1.0+0.0im      ⋅          ⋅    
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅    
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅    
+     ⋅          ⋅      1.0+0.0im  …      ⋅          ⋅          ⋅    
+     ⋅      1.0+0.0im      ⋅             ⋅          ⋅          ⋅    
+ 1.0+0.0im      ⋅          ⋅             ⋅          ⋅          ⋅
+```
+"""
+tensor(A::QuantumObject...) = kron(A...)
+
+@doc raw"""
+    ⊗(A::QuantumObject, B::QuantumObject)
+
+Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B}``.
+
+# Examples
+
+```
+julia> a = destroy(20)
+Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
+⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢
+
+julia> a ⊗ a
+Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=false
+400×400 SparseMatrixCSC{ComplexF64, Int64} with 361 stored entries:
+⠀⠀⠘⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠦
+```
+"""
+⊗(A::QuantumObject, B::QuantumObject) = kron(A, B)
+
 LinearAlgebra.triu!(A::QuantumObject{<:AbstractArray{T},OpType}, k::Integer=0) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (triu!(A.data, k); A)
 LinearAlgebra.tril!(A::QuantumObject{<:AbstractArray{T},OpType}, k::Integer=0) where
