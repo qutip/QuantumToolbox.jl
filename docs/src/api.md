@@ -12,6 +12,7 @@ KetQuantumObject
 OperatorQuantumObject
 SuperOperatorQuantumObject
 QuantumObject
+Qobj
 ket2dm
 isbra
 isket

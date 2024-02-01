@@ -97,6 +97,13 @@ function QuantumObject(A::QuantumObject{<:AbstractArray}; type::Type{ObjType}=A.
 end
 
 @doc raw"""
+    Qobj(A::AbstractArray; type::QuantumObjectType, dims::Vector{Int})
+
+Generate `QuantumObject`
+"""
+Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
+
+@doc raw"""
     ket2dm(ψ::QuantumObject)
 
 Transform the ket state ``\ket{\psi}`` into a pure density matrix ``\hat{\rho} = \dyad{\psi}``.

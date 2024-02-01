@@ -35,7 +35,7 @@ include("spin_lattice.jl")
 include("arnoldi.jl")
 include("eigsolve.jl")
 
-export QuantumObject, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
+export QuantumObject, Qobj, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
 export isket, isbra, isoper, issuper, ket2dm
 export spre, spost, sprepost, lindblad_dissipator
 export fock, basis, coherent
