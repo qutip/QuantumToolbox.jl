@@ -5,8 +5,8 @@ using Test
 @testset "QuantumObjects" begin
     a = rand(ComplexF64, 10)
     # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
-    a2 = QuantumObject(a, type=BraQuantumObject)
-    a3 = QuantumObject(a, type=KetQuantumObject)
+    a2 = Qobj(a, type=BraQuantumObject)
+    a3 = Qobj(a, type=KetQuantumObject)
     @test isket(a2) == false
     @test isbra(a2) == true
     @test isoper(a2) == false
@@ -15,12 +15,12 @@ using Test
     @test isbra(a3) == false
     @test isoper(a3) == false
     @test issuper(a3) == false
-    @test QuantumObject(a3) == a3
-    @test !(QuantumObject(a3) === a3)
+    @test Qobj(a3) == a3
+    @test !(Qobj(a3) === a3)
 
     a = sprand(ComplexF64, 100, 100, 0.1)
-    a2 = QuantumObject(a, type=OperatorQuantumObject)
-    a3 = QuantumObject(a, type=SuperOperatorQuantumObject)
+    a2 = Qobj(a, type=OperatorQuantumObject)
+    a3 = Qobj(a, type=SuperOperatorQuantumObject)
 
     @test isket(a2) == false
     @test isbra(a2) == false
@@ -32,7 +32,7 @@ using Test
     @test issuper(a3) == true
 
     a = Array(a)
-    a4 = QuantumObject(a)
+    a4 = Qobj(a)
     a5 = sparse(a4)
     @test isequal(a5, a2)
     @test (a5 == a3) == false
@@ -60,11 +60,11 @@ using Test
     @test norm(a) ≈ 1
     @test norm(a') ≈ 1
 
-    ψ = QuantumObject(normalize(rand(ComplexF64, N)))
+    ψ = Qobj(normalize(rand(ComplexF64, N)))
     @test dot(ψ, ψ) ≈ norm(ψ)
     @test dot(ψ, ψ) ≈ ψ' * ψ
 
-    a = QuantumObject(rand(ComplexF64, N))
+    a = Qobj(rand(ComplexF64, N))
     @test (norm(a) ≈ 1) == false
     @test (norm(normalize(a)) ≈ 1) == true
     @test (norm(a) ≈ 1) == false # Again, to be sure that it is still non-normalized
@@ -176,8 +176,8 @@ end
     sm = kron(eye(N), sigmam())
     sp = sm'
     sx = kron(eye(N), sigmax())
-    sy = kron(eye(N), sigmay())
-    sz = kron(eye(N), sigmaz())
+    sy = tensor(eye(N), sigmay())
+    sz = eye(N) ⊗ sigmaz()
     η = 0.01
     H = a_d * a + 0.5 * sz - 1im * η * (a - a_d) * sx
     psi0 = kron(fock(N, 0), fock(2, 0))
@@ -449,10 +449,10 @@ end
     E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc=N_trunc, tol=tol)
     Ω = dense_to_sparse((E' .- E)[1:N_trunc,1:N_trunc], tol)
     
-    H_d = QuantumObject(dense_to_sparse((U' * H * U)[1:N_trunc,1:N_trunc], tol))
-    Xp = QuantumObject( Ω .* dense_to_sparse(triu((U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
-    a2 = QuantumObject( dense_to_sparse((U' * a * U).data[1:N_trunc,1:N_trunc], tol))
-    sm2 = QuantumObject( dense_to_sparse((U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
+    H_d = Qobj(dense_to_sparse((U' * H * U)[1:N_trunc,1:N_trunc], tol))
+    Xp = Qobj( Ω .* dense_to_sparse(triu((U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
+    a2 = Qobj( dense_to_sparse((U' * a * U).data[1:N_trunc,1:N_trunc], tol))
+    sm2 = Qobj( dense_to_sparse((U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
     
     # Standard liouvillian case
     c_ops = [sqrt(0.01) * a2, sqrt(0.01) * sm2] 
@@ -467,10 +467,10 @@ end
     E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc=N_trunc, tol=tol)
     Ω = dense_to_sparse((E' .- E)[1:N_trunc,1:N_trunc], tol)
 
-    H_d = QuantumObject(dense_to_sparse((U' * H * U)[1:N_trunc,1:N_trunc], tol))
-    Xp = QuantumObject( Ω .* dense_to_sparse(triu((U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
-    a2 = QuantumObject( dense_to_sparse((U' * a * U).data[1:N_trunc,1:N_trunc], tol))
-    sm2 = QuantumObject( dense_to_sparse((U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
+    H_d = Qobj(dense_to_sparse((U' * H * U)[1:N_trunc,1:N_trunc], tol))
+    Xp = Qobj( Ω .* dense_to_sparse(triu((U' * (a + a') * U).data[1:N_trunc,1:N_trunc], 1), tol))
+    a2 = Qobj( dense_to_sparse((U' * a * U).data[1:N_trunc,1:N_trunc], tol))
+    sm2 = Qobj( dense_to_sparse((U' * sm * U).data[1:N_trunc,1:N_trunc], tol))
 
     @test abs(expect(Xp'*Xp, steadystate(L1)) - n_th(1, Tlist[1])) / n_th(1, Tlist[1]) < 1e-4
 end
@@ -650,7 +650,7 @@ end
 
     # Define initial state
     ϕ = Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject}}(undef, M)
-    ϕ[1] = kron(repeat([basis(2,0)],N_modes)...)
+    ϕ[1] = tensor(repeat([basis(2,0)],N_modes)...)
     global i=1
     for j in 1:N_modes
         global i+=1
@@ -663,14 +663,14 @@ end
         end
     end
     for i in i+1:M
-        ϕ[i] = QuantumObject(rand(ComplexF64,size(ϕ[1])[1]), dims=ϕ[1].dims)
+        ϕ[i] = Qobj(rand(ComplexF64,size(ϕ[1])[1]), dims=ϕ[1].dims)
         normalize!(ϕ[i])
     end
     z  = hcat(broadcast(x->x.data, ϕ)...)
     B  = Matrix(Diagonal([1+0im; zeros(M-1)]))
     S  = z'*z 
     B = B / tr(S*B)
-    ρ = QuantumObject(z*B*z', dims=ones(Int,N_modes)*N_cut)
+    ρ = Qobj(z*B*z', dims=ones(Int,N_modes)*N_cut)
 
     # Define Hamiltonian and collapse operators
     Jx = 0.9 

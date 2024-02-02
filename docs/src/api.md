@@ -12,6 +12,7 @@ KetQuantumObject
 OperatorQuantumObject
 SuperOperatorQuantumObject
 QuantumObject
+Qobj
 ket2dm
 isbra
 isket
@@ -22,6 +23,8 @@ length
 LinearAlgebra.tr
 LinearAlgebra.norm
 LinearAlgebra.kron
+tensor
+⊗
 ```
 
 ## [General functions](@id API: General functions)
