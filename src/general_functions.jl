@@ -347,8 +347,13 @@ function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vecto
     topermute = 2*nd+1 .- vcat(qtrace, qtrace .+ nd, sel, sel .+ nd)
     reverse!(topermute)
     ρmat = PermutedDimsArray(ρmat, topermute)
-    ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
-    res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
+
+    ## TODO: Check if it works always
+    
+    # ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
+    # res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
+    ρmat = reshape(ρmat, prod(dkeep), prod(dkeep), prod(dtrace), prod(dtrace))
+    res = dropdims(mapslices(tr, ρmat, dims=(3,4)), dims=(3,4))
 
     return res, dkeep
 end
