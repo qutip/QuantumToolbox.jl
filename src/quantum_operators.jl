@@ -157,7 +157,7 @@ to specify the list of dimensions `dims` if different subsystems are present.
 """
 function fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)
     if sparse
-        return QuantumObject(sparsevec([pos], [1.0+0im], N), KetQuantumObject, dims)
+        return QuantumObject(sparsevec([pos+1], [1.0+0im], N), KetQuantumObject, dims)
     else
         array = zeros(ComplexF64, N)
         array[pos+1] = 1
