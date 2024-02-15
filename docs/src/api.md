@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = QuPhys
+CurrentModule = QuantumToolbox
 ```
 
 # [API](@id API)

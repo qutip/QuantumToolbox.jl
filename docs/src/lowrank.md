@@ -5,7 +5,7 @@ We start by importing the packages
 ```@example lowrank
 using Plots
 using LaTeXStrings
-using QuPhys;
+using QuantumToolbox;
 ```
 
 Define lattice

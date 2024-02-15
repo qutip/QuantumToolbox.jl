@@ -1,4 +1,4 @@
-using QuPhys
+using QuantumToolbox
 using Test
 
 

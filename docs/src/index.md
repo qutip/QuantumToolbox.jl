@@ -1,10 +1,10 @@
 ```@meta
-CurrentModule = QuPhys
+CurrentModule = QuantumToolbox
 ```
 
 # Introduction
 
-[QuPhys](https://github.com/albertomercurio/QuPhys.jl) is a Julia package for numerical simulation of quantum systems.
+[QuantumToolbox](https://github.com/albertomercurio/QuantumToolbox.jl) is a Julia package for numerical simulation of quantum systems.
 
 ```@index
 ```

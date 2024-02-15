@@ -1,19 +1,19 @@
-using QuPhys
+using QuantumToolbox
 using Documenter
 
 ENV["GKSwstype"] = "100" # enable headless mode for GR to suppress warnings when plotting
 
-DocMeta.setdocmeta!(QuPhys, :DocTestSetup, :(using QuPhys); recursive=true)
+DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive=true)
 
 makedocs(;
-    modules=[QuPhys],
+    modules=[QuantumToolbox],
     authors="Alberto Mercurio",
-    # repo="https://github.com/albertomercurio/QuPhys.jl/blob/{commit}{path}#{line}",
-    repo = Remotes.GitHub("albertomercurio", "QuPhys.jl"),
-    sitename="QuPhys.jl",
+    # repo="https://github.com/albertomercurio/QuantumToolbox.jl/blob/{commit}{path}#{line}",
+    repo = Remotes.GitHub("albertomercurio", "QuantumToolbox.jl"),
+    sitename="QuantumToolbox.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://albertomercurio.github.io/QuPhys.jl",
+        canonical="https://albertomercurio.github.io/QuantumToolbox.jl",
         edit_link="main",
         assets=String[],
         mathengine = MathJax3(Dict(
@@ -35,6 +35,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/albertomercurio/QuPhys.jl",
+    repo="github.com/albertomercurio/QuantumToolbox.jl",
     devbranch="main",
 )

@@ -1,4 +1,4 @@
-module QuPhys
+module QuantumToolbox
 
 using Reexport
 using Distributed
