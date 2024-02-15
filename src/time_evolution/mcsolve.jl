@@ -87,7 +87,7 @@ end
         c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
-        H_t::Union{Nothing,Function}=nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         jump_callback::TJC=ContinuousLindbladJumpCallback(),
         kwargs...)
@@ -102,7 +102,7 @@ time evolution of an open quantum system.
 - `c_ops::Vector`: List of collapse operators.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function}`: Time-dependent part of the Hamiltonian.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
@@ -116,7 +116,7 @@ function mcsolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[];
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     jump_callback::TJC=ContinuousLindbladJumpCallback(),
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
@@ -145,7 +145,7 @@ function mcsolveProblem(H_eff::QuantumObject{<:AbstractArray{T1},OperatorQuantum
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector,
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm,
-    H_t::Union{Nothing,Function},
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum},
     params::NamedTuple,
     jump_callback::DiscreteLindbladJumpCallback;
     kwargs...) where {T1,T2}
@@ -162,7 +162,7 @@ function mcsolveProblem(H_eff::QuantumObject{<:AbstractArray{T1},OperatorQuantum
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector,
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm,
-    H_t::Union{Nothing,Function},
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum},
     params::NamedTuple,
     jump_callback::ContinuousLindbladJumpCallback;
     kwargs...) where {T1,T2}
@@ -183,7 +183,7 @@ end
         c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
-        H_t::Union{Nothing,Function}=nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         jump_callback::TJC=ContinuousLindbladJumpCallback(),
         prob_func::Function=_mcsolve_prob_func,
@@ -200,7 +200,7 @@ time evolution of an open quantum system.
 - `c_ops::Vector`: List of collapse operators.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function}`: Time-dependent part of the Hamiltonian.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
 - `prob_func::Function`: Function to use for generating the ODEProblem.
@@ -217,7 +217,7 @@ function mcsolveEnsembleProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[];
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     jump_callback::TJC=ContinuousLindbladJumpCallback(),
     prob_func::Function=_mcsolve_prob_func,
@@ -241,7 +241,7 @@ end
         c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
-        H_t::Union{Nothing,Function}=nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         n_traj::Int=1,
         ensemble_method=EnsembleThreads(),
@@ -257,7 +257,7 @@ Time evolution of an open quantum system using quantum trajectories.
 - `c_ops::Vector`: List of collapse operators.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function}`: Time-dependent part of the Hamiltonian.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `n_traj::Int`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use.
@@ -278,7 +278,7 @@ function mcsolve(H::QuantumObject{MT1,OperatorQuantumObject},
     c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[];
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     n_traj::Int=1,
     ensemble_method=EnsembleThreads(),

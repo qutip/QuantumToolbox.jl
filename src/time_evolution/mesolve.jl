@@ -20,19 +20,10 @@ function _save_func_mesolve(integrator)
 end
 
 mesolve_ti_dudt!(du, u, p, t) = mul!(du, p.L, u)
-# mesolve_td_dudt!(du, u, p, t) = mul!(du, p.L + p.H_t(t,p).data, u)
-function axpyz!(a,X::MT,Y::MT,Z::MT) where {MT<:AbstractMatrix}
-    @. Z = a * X + Y
-    Z
-end
 function mesolve_td_dudt!(du, u, p, t)
-    L_t_cache = p.L_t_cache
-    L = p.L
-    L_t = p.H_t(t,p).data
-    # copyto!(L_t_cache, L)
-    # axpy!(1, L_t, L_t_cache)
-    axpyz!(1, L, L_t, L_t_cache)
-    mul!(du, L_t_cache, u)
+    mul!(du, p.L, u)
+    L_t = p.H_t(t,p)
+    mul!(du, L_t, u, 1, 1)
 end
     
 """
@@ -41,7 +32,7 @@ end
         t_l::AbstractVector, c_ops::AbstractVector=[];
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::AbstractVector=[],
-        H_t::Union{Nothing,Function}=nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         kwargs...)
 
@@ -54,7 +45,7 @@ Generates the ODEProblem for the master equation time evolution of an open quant
 - `c_ops::AbstractVector=[]`: The list of the collapse operators.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm used for the time evolution.
 - `e_ops::AbstractVector=[]`: The list of the operators for which the expectation values are calculated.
-- `H_t::Union{Nothing,Function}=nothing`: The time-dependent Hamiltonian or Liouvillian.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing`: The time-dependent Hamiltonian or Liouvillian.
 - `params::NamedTuple=NamedTuple()`: The parameters of the time evolution.
 - `kwargs...`: The keyword arguments for the ODEProblem.
 
@@ -67,7 +58,7 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
     c_ops::Vector{QuantumObject{Tc, COpType}}=QuantumObject{MT1, HOpType}[];
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
@@ -81,8 +72,6 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
     ρ0 = mat2vec(ket2dm(ψ0).data)
     L = liouvillian(H, c_ops).data
 
-    L_t_cache = is_time_dependent ? L + H_t(1e-4,params).data : deepcopy(L)
-
     # progr = Progress(length(t_l), showspeed=true, enabled=show_progress)
     progr = ODEProgress(0)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
@@ -90,7 +79,7 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
     for i in eachindex(e_ops)
         e_ops2[i] = mat2vec(get_data(e_ops[i]'))
     end
-    p = (L = L, progr = progr, Hdims = H.dims, e_ops = e_ops2, expvals = expvals, H_t = H_t, L_t_cache=L_t_cache, is_empty_e_ops = isempty(e_ops), params...)
+    p = (L = L, progr = progr, Hdims = H.dims, e_ops = e_ops2, expvals = expvals, H_t = H_t, is_empty_e_ops = isempty(e_ops), params...)
 
     default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
     kwargs2 = merge(default_values, kwargs)
@@ -117,7 +106,7 @@ end
         t_l::AbstractVector, c_ops::AbstractVector=[];
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::AbstractVector=[],
-        H_t::Union{Nothing,Function}=nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         kwargs...)
 
@@ -130,7 +119,7 @@ Time evolution of an open quantum system using master equation.
 - `c_ops::AbstractVector`: List of collapse operators.
 - `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function}`: Time-dependent part of the Hamiltonian.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Named Tuple of parameters to pass to the solver.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
@@ -143,7 +132,7 @@ function mesolve(H::QuantumObject{MT1,HOpType},
     c_ops::Vector{QuantumObject{Tc, COpType}}=QuantumObject{MT1, HOpType}[];
     alg::OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},

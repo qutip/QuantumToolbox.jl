@@ -1,3 +1,5 @@
+export TimeDependentOperatorSum
+
 abstract type LiouvillianSolver end
 struct LiouvillianDirectSolver{T<:Real} <: LiouvillianSolver 
     tol::T
@@ -50,6 +52,42 @@ struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType
 end
 
 ContinuousLindbladJumpCallback(;interp_points::Int=10) = ContinuousLindbladJumpCallback(interp_points)
+
+## Time dependent sum of operators
+
+mutable struct TimeDependentOperatorSum{MT,CT,CFT}
+    operators::MT
+    coefficients::CT
+    coefficient_functions::CFT
+end
+
+function TimeDependentOperatorSum(coefficient_functions, operators::Vector; params=nothing, init_time=0.0)
+    # promote the type of the coefficients and the operators. Remember that the coefficient_functions si a vector of functions and the operators is a vector of QuantumObjects
+    T = promote_type(mapreduce(x->eltype(x.data), promote_type, operators),
+                mapreduce(eltype, promote_type, [f(init_time,params) for f in coefficient_functions]))
+
+    coefficients = T[f(init_time, params) for f in coefficient_functions]
+    return TimeDependentOperatorSum(operators, coefficients, coefficient_functions)
+end
+
+function update_coefficients!(A::TimeDependentOperatorSum, t, params)
+    @inbounds @simd for i in 1:length(A.coefficient_functions)
+        A.coefficients[i] = A.coefficient_functions[i](t, params)
+    end
+end
+
+(A::TimeDependentOperatorSum)(t, params) = (update_coefficients!(A, t, params); A)
+
+@inline function LinearAlgebra.mul!(y::AbstractVector{T}, A::TimeDependentOperatorSum, x::AbstractVector, α, β) where T
+    # Note that β is applied only to the first term
+    mul!(y, A.operators[1], x, α*A.coefficients[1], β)
+    @inbounds for i in 2:length(A.operators)
+        mul!(y, A.operators[i], x, α*A.coefficients[i], 1)
+    end
+    y
+end
+
+@inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} = mul!(y, A.data, x, α, β)
 
 #######################################
     

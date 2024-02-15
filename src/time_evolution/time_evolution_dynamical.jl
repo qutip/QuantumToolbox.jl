@@ -99,6 +99,8 @@ function _DFDIncreaseReduceAffect!(integrator)
     dim_increase = findall(increase_list)
     dim_reduce = findall(reduce_list)
 
+    println(integrator.t, " ", increase_list, " ", reduce_list)
+
     if length(dim_increase) > 0
         ρt = _increase_dims(ρt, dim_list, dim_increase, pillow_increase)
         dim_list[dim_increase] .+= pillow_increase
@@ -128,7 +130,7 @@ function dfd_mesolveProblem(H::Function, ψ0::QuantumObject{<:AbstractArray{T1},
     dfd_params::NamedTuple=NamedTuple();
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Function=(dim_list) -> Vector{Vector{T1}}([]),
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     tol_list::Vector{<:Number}=fill(1e-8, length(maxdims)),
     kwargs...) where {T1,T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
@@ -166,7 +168,7 @@ end
         dfd_params::NamedTuple=NamedTuple();
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Function=(dim_list) -> Vector{Vector{T1}}([]),
-        H_t::Union{Nothing,Function}=nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         tol_list::Vector{<:Number}=fill(1e-8, length(maxdims)),
         kwargs...)
@@ -178,7 +180,7 @@ function dfd_mesolve(H::Function, ψ0::QuantumObject{<:AbstractArray{T1},StateOp
     dfd_params::NamedTuple=NamedTuple();
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Function=(dim_list) -> Vector{Vector{T1}}([]),
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     tol_list::Vector{<:Number}=fill(1e-8, length(maxdims)),
     kwargs...) where {T1,T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
@@ -278,7 +280,7 @@ function dsf_mesolveProblem(H::Function,
     dsf_params::NamedTuple=NamedTuple();
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Function=(op_list,p) -> Vector{TOl}([]),
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
     krylov_dim::Int=min(5,cld(length(ket2dm(ψ0).data), 3)),
@@ -325,7 +327,7 @@ end
         dsf_params::NamedTuple=NamedTuple();
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Function=(op_list,p) -> Vector{TOl}([]),
-        H_t::Union{Nothing,Function}=nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         δα_list::Vector{<:Number}=fill(0.2, length(op_list)),
         krylov_dim::Int=min(5,cld(length(ket2dm(ψ0).data), 3)),
@@ -341,7 +343,7 @@ function dsf_mesolve(H::Function,
     dsf_params::NamedTuple=NamedTuple();
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Function=(op_list,p) -> Vector{TOl}([]),
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
     krylov_dim::Int=min(5,cld(length(ket2dm(ψ0).data), 3)),
@@ -361,7 +363,7 @@ function dsf_mesolve(H::Function,
     dsf_params::NamedTuple=NamedTuple();
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Function=(op_list,p) -> Vector{TOl}([]),
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
     krylov_dim::Int=min(5,cld(length(ket2dm(ψ0).data), 3)),
@@ -465,7 +467,7 @@ function dsf_mcsolveEnsembleProblem(H::Function,
     dsf_params::NamedTuple=NamedTuple();
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Function=(op_list,p) -> Vector{TOl}([]),
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
     jump_callback::TJC=ContinuousLindbladJumpCallback(),
@@ -504,7 +506,7 @@ end
         dsf_params::NamedTuple=NamedTuple();
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Function=(op_list,p) -> Vector{TOl}([]),
-        H_t::Union{Nothing,Function}=nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
         n_traj::Int=1,
@@ -524,7 +526,7 @@ function dsf_mcsolve(H::Function,
     dsf_params::NamedTuple=NamedTuple();
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
     e_ops::Function=(op_list,p) -> Vector{TOl}([]),
-    H_t::Union{Nothing,Function}=nothing,
+    H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
     n_traj::Int=1,
