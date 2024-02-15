@@ -99,8 +99,6 @@ function _DFDIncreaseReduceAffect!(integrator)
     dim_increase = findall(increase_list)
     dim_reduce = findall(reduce_list)
 
-    println(integrator.t, " ", increase_list, " ", reduce_list)
-
     if length(dim_increase) > 0
         ρt = _increase_dims(ρt, dim_list, dim_increase, pillow_increase)
         dim_list[dim_increase] .+= pillow_increase

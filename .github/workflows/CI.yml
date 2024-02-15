@@ -55,6 +55,6 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using QuPhys
-            DocMeta.setdocmeta!(QuPhys, :DocTestSetup, :(using QuPhys); recursive=true)
-            doctest(QuPhys)'
+            using QuantumToolbox
+            DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive=true)
+            doctest(QuantumToolbox)'
