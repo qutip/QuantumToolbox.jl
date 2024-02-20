@@ -53,41 +53,7 @@ end
 
 ContinuousLindbladJumpCallback(;interp_points::Int=10) = ContinuousLindbladJumpCallback(interp_points)
 
-## Time dependent sum of operators
-
-# mutable struct TimeDependentOperatorSum{MT,CT,CFT}
-#     operators::MT
-#     coefficients::CT
-#     coefficient_functions::CFT
-# end
-
-# function TimeDependentOperatorSum(coefficient_functions, operators::Vector; params=nothing, init_time=0.0)
-#     # promote the type of the coefficients and the operators. Remember that the coefficient_functions si a vector of functions and the operators is a vector of QuantumObjects
-#     T = promote_type(mapreduce(x->eltype(x.data), promote_type, operators),
-#                 mapreduce(eltype, promote_type, [f(init_time,params) for f in coefficient_functions]))
-
-#     coefficients = T[f(init_time, params) for f in coefficient_functions]
-#     return TimeDependentOperatorSum(operators, coefficients, coefficient_functions)
-# end
-
-# function update_coefficients!(A::TimeDependentOperatorSum, t, params)
-#     @inbounds @simd for i in 1:length(A.coefficient_functions)
-#         A.coefficients[i] = A.coefficient_functions[i](t, params)
-#     end
-# end
-
-# (A::TimeDependentOperatorSum)(t, params) = (update_coefficients!(A, t, params); A)
-
-# @inline function LinearAlgebra.mul!(y::AbstractVector{T}, A::TimeDependentOperatorSum, x::AbstractVector, α, β) where T
-#     # Note that β is applied only to the first term
-#     mul!(y, A.operators[1], x, α*A.coefficients[1], β)
-#     @inbounds for i in 2:length(A.operators)
-#         mul!(y, A.operators[i], x, α*A.coefficients[i], 1)
-#     end
-#     y
-# end
-
-# @inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} = mul!(y, A.data, x, α, β)
+## Sum of operators
 
 mutable struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}}
     coefficients::CT
@@ -107,6 +73,8 @@ end
 Base.size(A::OperatorSum) = size(A.operators[1])
 Base.size(A::OperatorSum, inds...) = size(A.operators[1], inds...)
 Base.length(A::OperatorSum) = length(A.operators[1])
+Base.copy(A::OperatorSum) = OperatorSum(copy(A.coefficients), copy(A.operators))
+Base.deepcopy(A::OperatorSum) = OperatorSum(deepcopy(A.coefficients), deepcopy(A.operators))
 
 function update_coefficients!(A::OperatorSum, coefficients)
     length(A.coefficients) == length(coefficients) || throw(DimensionMismatch("The number of coefficients must be the same as the number of operators."))
@@ -117,6 +85,7 @@ end
     # Note that β is applied only to the first term
     mul!(y, A.operators[1], x, α*A.coefficients[1], β)
     @inbounds for i in 2:length(A.operators)
+        A.coefficients[i] == 0 && continue
         mul!(y, A.operators[i], x, α*A.coefficients[i], 1)
     end
     y

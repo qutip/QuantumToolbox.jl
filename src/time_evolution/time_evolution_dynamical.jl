@@ -232,14 +232,17 @@ function _DSF_mesolve_Affect!(integrator)
     dsf_params = internal_params.dsf_params
     expv_cache = internal_params.expv_cache
     dsf_identity = internal_params.dsf_identity
-    dsf_kron_cache_left = internal_params.dsf_kron_cache_left
-    dsf_kron_cache_left_dag = internal_params.dsf_kron_cache_left_dag
-    dsf_kron_cache_right = internal_params.dsf_kron_cache_right
-    dsf_kron_cache_right_dag = internal_params.dsf_kron_cache_right_dag
-    dsf_kron_cache_full = internal_params.dsf_kron_cache_full
+    # dsf_displace_cache_left = internal_params.dsf_displace_cache_left
+    # dsf_displace_cache_left_dag = internal_params.dsf_displace_cache_left_dag
+    # dsf_displace_cache_right = internal_params.dsf_displace_cache_right
+    # dsf_displace_cache_right_dag = internal_params.dsf_displace_cache_right_dag
+    dsf_displace_cache_full = internal_params.dsf_displace_cache_full
+
+    op_l_length = length(op_l)
+    dsf_displace_cache_full.coefficients .= 0
 
     for i in eachindex(op_l)
-        op = op_l[i]
+        # op = op_l[i]
         op_vec = op_l_vec[i]
         αt = αt_list[i]
         δα = δα_list[i]
@@ -252,16 +255,26 @@ function _DSF_mesolve_Affect!(integrator)
 
             # This is equivalent to the code above, assuming that transpose(op) = adjoint(op)
             # Aᵢ = kron(Δα * op.data - conj(Δα) * op.data', dsf_identity) + kron(dsf_identity, conj(Δα) * op.data - Δα * op.data')
-            @. dsf_kron_cache_full[i] = Δα * dsf_kron_cache_left[i] - conj(Δα) * dsf_kron_cache_left_dag[i] + conj(Δα) * dsf_kron_cache_right[i] - Δα * dsf_kron_cache_right_dag[i]
-            Aᵢ = dsf_kron_cache_full[i]
 
-            dsf_cache .= integrator.u
-            arnoldi!(expv_cache, Aᵢ, dsf_cache)
-            expv!(integrator.u, expv_cache, one(αt), dsf_cache)
+            # @. dsf_displace_cache_full[i] = Δα * dsf_displace_cache_left[i] - conj(Δα) * dsf_displace_cache_left_dag[i] + conj(Δα) * dsf_displace_cache_right[i] - Δα * dsf_displace_cache_right_dag[i]
+            # Aᵢ = dsf_displace_cache_full[i]
+
+            # dsf_cache .= integrator.u
+            # arnoldi!(expv_cache, Aᵢ, dsf_cache)
+            # expv!(integrator.u, expv_cache, one(αt), dsf_cache)
+
+            dsf_displace_cache_full.coefficients[i] = Δα
+            dsf_displace_cache_full.coefficients[i + op_l_length] = -conj(Δα)
+            dsf_displace_cache_full.coefficients[i + 2*op_l_length] = conj(Δα)
+            dsf_displace_cache_full.coefficients[i + 3*op_l_length] = -Δα
 
             αt_list[i] += Δα
         end
     end
+
+    dsf_cache .= integrator.u
+    arnoldi!(expv_cache, dsf_displace_cache_full, dsf_cache)
+    expv!(integrator.u, expv_cache, 1, dsf_cache)
 
     op_l2 = op_l .+ αt_list
     e_ops2 = e_ops(op_l2, dsf_params)
@@ -294,20 +307,18 @@ function dsf_mesolveProblem(H::Function,
     # Create the Krylov subspace with kron(H₀.data, H₀.data) just for initialize
     expv_cache = arnoldi(kron(H₀.data, H₀.data), mat2vec(ket2dm(ψ0).data), krylov_dim)
     dsf_identity = I(prod(H₀.dims))
-    dsf_kron_cache_left = map(op->kron(op.data, dsf_identity), op_l)
-    dsf_kron_cache_left_dag = map(op->kron(sparse(op.data'), dsf_identity), op_l)
-    dsf_kron_cache_right = map(op->kron(dsf_identity, op.data), op_l)
-    dsf_kron_cache_right_dag = map(op->kron(dsf_identity, sparse(op.data')), op_l)
-    dsf_kron_cache_full = @. dsf_kron_cache_left + dsf_kron_cache_left_dag + dsf_kron_cache_right + dsf_kron_cache_right_dag
+    dsf_displace_cache_left = map(op->Qobj(kron(op.data, dsf_identity)), op_l)
+    dsf_displace_cache_left_dag = map(op->Qobj(kron(sparse(op.data'), dsf_identity)), op_l)
+    dsf_displace_cache_right = map(op->Qobj(kron(dsf_identity, op.data)), op_l)
+    dsf_displace_cache_right_dag = map(op->Qobj(kron(dsf_identity, sparse(op.data'))), op_l)
+    dsf_displace_cache_full = OperatorSum(zeros(length(op_l) * 4), vcat(dsf_displace_cache_left, dsf_displace_cache_left_dag, dsf_displace_cache_right, dsf_displace_cache_right_dag))
 
     params2 = params
     params2 = merge(params, (H_fun = H, c_ops_fun = c_ops, e_ops_fun = e_ops,
                     op_l = op_l, op_l_vec = op_l_vec, αt_list = αt_list, δα_list = δα_list,
                     dsf_cache = similar(ψ0.data, length(ψ0.data)^2), expv_cache=expv_cache,
                     dsf_identity=dsf_identity, dsf_params = dsf_params,
-                    dsf_kron_cache_left=dsf_kron_cache_left, dsf_kron_cache_left_dag=dsf_kron_cache_left_dag,
-                    dsf_kron_cache_right=dsf_kron_cache_right, dsf_kron_cache_right_dag=dsf_kron_cache_right_dag,
-                    dsf_kron_cache_full=dsf_kron_cache_full))
+                    dsf_displace_cache_full=dsf_displace_cache_full))
 
     cb_dsf = DiscreteCallback(_DSF_mesolve_Condition, _DSF_mesolve_Affect!, save_positions=(false, false))
     kwargs2 = (;kwargs...)
@@ -412,6 +423,10 @@ function _DSF_mcsolve_Affect!(integrator)
     dsf_cache = internal_params.dsf_cache2
     expv_cache = internal_params.expv_cache
     dsf_params = internal_params.dsf_params
+    dsf_displace_cache_full = internal_params.dsf_displace_cache_full
+
+    op_l_length = length(op_l)
+    dsf_displace_cache_full.coefficients .= 0
 
     for i in eachindex(op_l)
         op = op_l[i]
@@ -424,15 +439,21 @@ function _DSF_mcsolve_Affect!(integrator)
             # dsf_cache .= integrator.u
             # mul!(integrator.u, Dᵢ.data', dsf_cache)
 
-            Aᵢ = -Δα*op.data' + conj(Δα)*op.data
-            dsf_cache .= integrator.u
-            arnoldi!(expv_cache, Aᵢ, dsf_cache)
-            expv!(integrator.u, expv_cache, one(αt), dsf_cache)
+            # Aᵢ = -Δα*op.data' + conj(Δα)*op.data
+            # dsf_cache .= integrator.u
+            # arnoldi!(expv_cache, Aᵢ, dsf_cache)
+            # expv!(integrator.u, expv_cache, one(αt), dsf_cache)
 
+            dsf_displace_cache_full.coefficients[i] = conj(Δα)
+            dsf_displace_cache_full.coefficients[i + op_l_length] = -Δα
 
             αt_list[i] += Δα
         end
     end
+
+    dsf_cache .= integrator.u
+    arnoldi!(expv_cache, dsf_displace_cache_full, dsf_cache)
+    expv!(integrator.u, expv_cache, 1, dsf_cache)
 
     op_l2 = op_l .+ αt_list
     e_ops2 = e_ops(op_l2, dsf_params)
@@ -452,7 +473,9 @@ function _dsf_mcsolve_prob_func(prob, i, repeat)
                 cumsum_weights_mc = similar(internal_params.weights_mc), random_n = Ref(rand()), progr_mc = ODEProgress(0),
                 jump_times = similar(internal_params.jump_times), jump_which = similar(internal_params.jump_which),
                 αt_list = deepcopy(internal_params.αt_list), dsf_cache1 = similar(internal_params.dsf_cache1),
-                dsf_cache2 = similar(internal_params.dsf_cache2), expv_cache = deepcopy(internal_params.expv_cache)))
+                dsf_cache2 = similar(internal_params.dsf_cache2), expv_cache = deepcopy(internal_params.expv_cache),
+                # dsf_displace_cache_full = deepcopy(internal_params.dsf_displace_cache_full),
+                dsf_displace_cache_full = OperatorSum(deepcopy(internal_params.dsf_displace_cache_full.coefficients), internal_params.dsf_displace_cache_full.operators)))
 
     remake(prob, p=prm)
 end
@@ -480,11 +503,15 @@ function dsf_mcsolveEnsembleProblem(H::Function,
     αt_list  = convert(Vector{T}, α0_l)
     expv_cache = arnoldi(H₀.data, ψ0.data, krylov_dim)
 
+    dsf_displace_cache = map(op->Qobj(op.data), op_l)
+    dsf_displace_cache_dag = map(op->Qobj(sparse(op.data')), op_l)
+    dsf_displace_cache_full = OperatorSum(zeros(length(op_l) * 2), vcat(dsf_displace_cache, dsf_displace_cache_dag))
+
 
     params2 = merge(params, (H_fun = H, c_ops_fun = c_ops, e_ops_fun = e_ops,
                     op_l = op_l, αt_list = αt_list, δα_list = δα_list,
                     dsf_cache1 = similar(ψ0.data), dsf_cache2 = similar(ψ0.data),
-                    expv_cache = expv_cache, dsf_params=dsf_params))
+                    expv_cache = expv_cache, dsf_params=dsf_params, dsf_displace_cache_full=dsf_displace_cache_full))
 
     cb_dsf = DiscreteCallback(_DSF_mcsolve_Condition, _DSF_mcsolve_Affect!, save_positions=(false, false))
     kwargs2 = (;kwargs...)
