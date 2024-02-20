@@ -549,10 +549,6 @@ end
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
-    # function H_t_f(t,p)
-    #     copyto!(p.L_t_cache2.data, p.L_t.data)
-    #     lmul!(sin(t), p.L_t_cache2)
-    # end
     H_t_f = TimeDependentOperatorSum([(t,p) -> sin(t)], [liouvillian(H_t)])
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=e_ops, H_t=H_t_f, alg=Vern7(), progress=false)
     ρ_ss = steadystate_floquet(H, c_ops, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1)

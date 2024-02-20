@@ -1,4 +1,4 @@
-export TimeDependentOperatorSum
+export OperatorSum, TimeDependentOperatorSum
 
 abstract type LiouvillianSolver end
 struct LiouvillianDirectSolver{T<:Real} <: LiouvillianSolver 
@@ -55,36 +55,99 @@ ContinuousLindbladJumpCallback(;interp_points::Int=10) = ContinuousLindbladJumpC
 
 ## Time dependent sum of operators
 
-mutable struct TimeDependentOperatorSum{MT,CT,CFT}
-    operators::MT
+# mutable struct TimeDependentOperatorSum{MT,CT,CFT}
+#     operators::MT
+#     coefficients::CT
+#     coefficient_functions::CFT
+# end
+
+# function TimeDependentOperatorSum(coefficient_functions, operators::Vector; params=nothing, init_time=0.0)
+#     # promote the type of the coefficients and the operators. Remember that the coefficient_functions si a vector of functions and the operators is a vector of QuantumObjects
+#     T = promote_type(mapreduce(x->eltype(x.data), promote_type, operators),
+#                 mapreduce(eltype, promote_type, [f(init_time,params) for f in coefficient_functions]))
+
+#     coefficients = T[f(init_time, params) for f in coefficient_functions]
+#     return TimeDependentOperatorSum(operators, coefficients, coefficient_functions)
+# end
+
+# function update_coefficients!(A::TimeDependentOperatorSum, t, params)
+#     @inbounds @simd for i in 1:length(A.coefficient_functions)
+#         A.coefficients[i] = A.coefficient_functions[i](t, params)
+#     end
+# end
+
+# (A::TimeDependentOperatorSum)(t, params) = (update_coefficients!(A, t, params); A)
+
+# @inline function LinearAlgebra.mul!(y::AbstractVector{T}, A::TimeDependentOperatorSum, x::AbstractVector, α, β) where T
+#     # Note that β is applied only to the first term
+#     mul!(y, A.operators[1], x, α*A.coefficients[1], β)
+#     @inbounds for i in 2:length(A.operators)
+#         mul!(y, A.operators[i], x, α*A.coefficients[i], 1)
+#     end
+#     y
+# end
+
+# @inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} = mul!(y, A.data, x, α, β)
+
+mutable struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}}
     coefficients::CT
-    coefficient_functions::CFT
-end
-
-function TimeDependentOperatorSum(coefficient_functions, operators::Vector; params=nothing, init_time=0.0)
-    # promote the type of the coefficients and the operators. Remember that the coefficient_functions si a vector of functions and the operators is a vector of QuantumObjects
-    T = promote_type(mapreduce(x->eltype(x.data), promote_type, operators),
-                mapreduce(eltype, promote_type, [f(init_time,params) for f in coefficient_functions]))
-
-    coefficients = T[f(init_time, params) for f in coefficient_functions]
-    return TimeDependentOperatorSum(operators, coefficients, coefficient_functions)
-end
-
-function update_coefficients!(A::TimeDependentOperatorSum, t, params)
-    @inbounds @simd for i in 1:length(A.coefficient_functions)
-        A.coefficients[i] = A.coefficient_functions[i](t, params)
+    operators::OT
+    function OperatorSum(coefficients::CT, operators::OT) where {CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}}
+        length(coefficients) == length(operators) || throw(DimensionMismatch("The number of coefficients must be the same as the number of operators."))
+        # Check if all the operators have the same dimensions
+        dims = size(operators[1])
+        mapreduce(x->size(x) == dims, &, operators) || throw(DimensionMismatch("All the operators must have the same dimensions."))
+        T = promote_type(mapreduce(x->eltype(x.data), promote_type, operators),
+                mapreduce(eltype, promote_type, coefficients))
+        coefficients2 = T.(coefficients)
+        new{Vector{T},OT}(coefficients2, operators)
     end
 end
 
-(A::TimeDependentOperatorSum)(t, params) = (update_coefficients!(A, t, params); A)
+Base.size(A::OperatorSum) = size(A.operators[1])
+Base.size(A::OperatorSum, inds...) = size(A.operators[1], inds...)
+Base.length(A::OperatorSum) = length(A.operators[1])
 
-@inline function LinearAlgebra.mul!(y::AbstractVector{T}, A::TimeDependentOperatorSum, x::AbstractVector, α, β) where T
+function update_coefficients!(A::OperatorSum, coefficients)
+    length(A.coefficients) == length(coefficients) || throw(DimensionMismatch("The number of coefficients must be the same as the number of operators."))
+    A.coefficients .= coefficients
+end
+
+@inline function LinearAlgebra.mul!(y::AbstractVector{T}, A::OperatorSum, x::AbstractVector, α, β) where T
     # Note that β is applied only to the first term
     mul!(y, A.operators[1], x, α*A.coefficients[1], β)
     @inbounds for i in 2:length(A.operators)
         mul!(y, A.operators[i], x, α*A.coefficients[i], 1)
     end
     y
+end
+
+mutable struct TimeDependentOperatorSum{CFT,OST<:OperatorSum}
+    coefficient_functions::CFT
+    operator_sum::OST
+end
+
+function TimeDependentOperatorSum(coefficient_functions, operators::Vector{<:QuantumObject}; params=nothing, init_time=0.0)
+    # promote the type of the coefficients and the operators. Remember that the coefficient_functions si a vector of functions and the operators is a vector of QuantumObjects
+    coefficients = [f(init_time, params) for f in coefficient_functions]
+    operator_sum = OperatorSum(coefficients, operators)
+    return TimeDependentOperatorSum(coefficient_functions, operator_sum)
+end
+
+Base.size(A::TimeDependentOperatorSum) = size(A.operator_sum)
+Base.size(A::TimeDependentOperatorSum, inds...) = size(A.operator_sum, inds...)
+Base.length(A::TimeDependentOperatorSum) = length(A.operator_sum)
+
+function update_coefficients!(A::TimeDependentOperatorSum, t, params)
+    @inbounds @simd for i in 1:length(A.coefficient_functions)
+        A.operator_sum.coefficients[i] = A.coefficient_functions[i](t, params)
+    end
+end
+
+(A::TimeDependentOperatorSum)(t, params) = (update_coefficients!(A, t, params); A)
+
+@inline function LinearAlgebra.mul!(y::AbstractVector, A::TimeDependentOperatorSum, x::AbstractVector, α, β)
+    mul!(y, A.operator_sum, x, α, β)
 end
 
 @inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} = mul!(y, A.data, x, α, β)
