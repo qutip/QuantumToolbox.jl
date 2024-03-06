@@ -29,15 +29,15 @@ function _increase_dims(QO::AbstractArray{T}, dims::Vector{<:Integer}, sel::Abst
 
     if nd == 1
         ρmat = similar(QO, rd_new[1], rd_new[1])
-        selectdim(ρmat, 1, rd[1]+1:rd_new[1]) .= 0
-        selectdim(ρmat, 2, rd[1]+1:rd_new[1]) .= 0
+        fill!(selectdim(ρmat, 1, rd[1]+1:rd_new[1]), 0)
+        fill!(selectdim(ρmat, 2, rd[1]+1:rd_new[1]), 0)
         copyto!(view(ρmat, 1:rd[1], 1:rd[1]), QO)
     else
         ρmat2 = similar(QO, reverse!(repeat(rd_new, 2))...)
         ρmat = reshape(QO, reverse!(repeat(rd, 2))...)
         for i in eachindex(sel)
-            selectdim(ρmat2, nd-sel[i]+1, rd[sel[i]]+1:rd_new[sel[i]]) .= 0
-            selectdim(ρmat2, 2*nd-sel[i]+1, rd[sel[i]]+1:rd_new[sel[i]]) .= 0
+            fill!(selectdim(ρmat2, nd-sel[i]+1, rd[sel[i]]+1:rd_new[sel[i]]), 0)
+            fill!(selectdim(ρmat2, 2*nd-sel[i]+1, rd[sel[i]]+1:rd_new[sel[i]]), 0)
         end
         copyto!(view(ρmat2, reverse!(repeat([1:n for n in rd], 2))...), ρmat)
         ρmat = reshape(ρmat2, prod(rd_new), prod(rd_new))
@@ -109,8 +109,8 @@ function _DFDIncreaseReduceAffect!(integrator)
     end
 
     @. pillow_list = _dfd_set_pillow(dim_list)
-    increase_list .= false
-    reduce_list .= false
+    fill!(increase_list, false)
+    fill!(reduce_list, false)
     push!(dim_list_evo_times, integrator.t)
     push!(dim_list_evo, dim_list)
 
@@ -118,7 +118,7 @@ function _DFDIncreaseReduceAffect!(integrator)
     L = liouvillian(H(dim_list, dfd_params), c_ops(dim_list, dfd_params)).data
 
     resize!(integrator, size(L, 1))
-    integrator.u .= mat2vec(ρt)
+    copyto!(integrator.u, mat2vec(ρt))
     integrator.p = merge(internal_params, (L = L, e_ops = e_ops2, 
                             dfd_ρt_cache = similar(integrator.u)))
 end
@@ -232,14 +232,10 @@ function _DSF_mesolve_Affect!(integrator)
     dsf_params = internal_params.dsf_params
     expv_cache = internal_params.expv_cache
     dsf_identity = internal_params.dsf_identity
-    # dsf_displace_cache_left = internal_params.dsf_displace_cache_left
-    # dsf_displace_cache_left_dag = internal_params.dsf_displace_cache_left_dag
-    # dsf_displace_cache_right = internal_params.dsf_displace_cache_right
-    # dsf_displace_cache_right_dag = internal_params.dsf_displace_cache_right_dag
     dsf_displace_cache_full = internal_params.dsf_displace_cache_full
 
     op_l_length = length(op_l)
-    dsf_displace_cache_full.coefficients .= 0
+    fill!(dsf_displace_cache_full.coefficients, 0)
 
     for i in eachindex(op_l)
         # op = op_l[i]
@@ -272,7 +268,7 @@ function _DSF_mesolve_Affect!(integrator)
         end
     end
 
-    dsf_cache .= integrator.u
+    copyto!(dsf_cache, integrator.u)
     arnoldi!(expv_cache, dsf_displace_cache_full, dsf_cache)
     expv!(integrator.u, expv_cache, 1, dsf_cache)
 
@@ -394,7 +390,7 @@ function _DSF_mcsolve_Condition(u, t, integrator)
     δα_list = internal_params.δα_list
     ψt = internal_params.dsf_cache1
     
-    ψt .= integrator.u
+    copyto!(ψt, integrator.u)
     normalize!(ψt)
 
     condition = false
@@ -426,7 +422,7 @@ function _DSF_mcsolve_Affect!(integrator)
     dsf_displace_cache_full = internal_params.dsf_displace_cache_full
 
     op_l_length = length(op_l)
-    dsf_displace_cache_full.coefficients .= 0
+    fill!(dsf_displace_cache_full.coefficients, 0)
 
     for i in eachindex(op_l)
         op = op_l[i]
@@ -451,7 +447,7 @@ function _DSF_mcsolve_Affect!(integrator)
         end
     end
 
-    dsf_cache .= integrator.u
+    copyto!(dsf_cache, integrator.u)
     arnoldi!(expv_cache, dsf_displace_cache_full, dsf_cache)
     expv!(integrator.u, expv_cache, 1, dsf_cache)
 
@@ -461,7 +457,7 @@ function _DSF_mcsolve_Affect!(integrator)
     @. e_ops0 = get_data(e_ops2)
     @. c_ops0 = get_data(c_ops2)
     H_eff = H(op_l2, dsf_params).data - lmul!(convert(eltype(ψt), 0.5im), mapreduce(op -> op' * op, +, c_ops0))
-    internal_params.U .= lmul!(-1im, H_eff)
+    mul!(internal_params.U, -1im, H_eff)
 end
 
 function _dsf_mcsolve_prob_func(prob, i, repeat)
@@ -474,7 +470,6 @@ function _dsf_mcsolve_prob_func(prob, i, repeat)
                 jump_times = similar(internal_params.jump_times), jump_which = similar(internal_params.jump_which),
                 αt_list = deepcopy(internal_params.αt_list), dsf_cache1 = similar(internal_params.dsf_cache1),
                 dsf_cache2 = similar(internal_params.dsf_cache2), expv_cache = deepcopy(internal_params.expv_cache),
-                # dsf_displace_cache_full = deepcopy(internal_params.dsf_displace_cache_full),
                 dsf_displace_cache_full = OperatorSum(deepcopy(internal_params.dsf_displace_cache_full.coefficients), internal_params.dsf_displace_cache_full.operators)))
 
     remake(prob, p=prm)
