@@ -9,7 +9,7 @@ function _save_func_mcsolve(integrator)
         expvals = internal_params.expvals
         cache_mc = internal_params.cache_mc
 
-        cache_mc .= integrator.u
+        copyto!(cache_mc, integrator.u)
         normalize!(cache_mc)
         ψ = cache_mc
         _expect = op -> dot(ψ, op, ψ)
@@ -38,7 +38,7 @@ function LindbladJumpAffect!(integrator)
     collaps_idx = getindex(1:length(weights_mc), findfirst(>(rand()*sum(weights_mc)), cumsum_weights_mc))
     mul!(cache_mc, c_ops[collaps_idx], ψ)
     normalize!(cache_mc)
-    integrator.u .= cache_mc
+    copyto!(integrator.u, cache_mc)
 
     push!(jump_times, integrator.t)
     push!(jump_which, collaps_idx)
@@ -69,7 +69,7 @@ function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_t
     sol_i = sol[:,i]
     sol_u = haskey(sol_i.prob.kwargs, :save_idxs) ? sol_i.u : QuantumObject.(sol_i.u, dims=sol_i.prob.p.Hdims)
 
-    expvals_all[i, :, :] .= sol_i.prob.p.expvals
+    copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
     push!(times, sol_i.t)
     push!(states, sol_u)
     push!(jump_times, sol_i.prob.p.jump_times)
