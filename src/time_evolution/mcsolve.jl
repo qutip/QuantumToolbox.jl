@@ -40,9 +40,16 @@ function LindbladJumpAffect!(integrator)
     normalize!(cache_mc)
     copyto!(integrator.u, cache_mc)
 
-    push!(jump_times, integrator.t)
-    push!(jump_which, collaps_idx)
+    # push!(jump_times, integrator.t)
+    # push!(jump_which, collaps_idx)
     random_n[] = rand()
+    jump_times[internal_params.jump_times_which_idx[]] = integrator.t
+    jump_which[internal_params.jump_times_which_idx[]] = collaps_idx
+    internal_params.jump_times_which_idx[] += 1
+    if internal_params.jump_times_which_idx[] > length(jump_times)
+        resize!(jump_times, length(jump_times) + internal_params.jump_times_which_init_size)
+        resize!(jump_which, length(jump_which) + internal_params.jump_times_which_init_size)
+    end
 end
 
 LindbladJumpContinuousCondition(u, t, integrator) = integrator.p.random_n[] - real(dot(u, u))
@@ -54,28 +61,29 @@ function _mcsolve_prob_func(prob, i, repeat)
     seeds = internal_params.seeds
     !isnothing(seeds) && Random.seed!(seeds[i])
 
-    prm = merge(internal_params, (U = deepcopy(internal_params.U),
-                expvals = similar(internal_params.expvals),
+    prm = merge(internal_params, (expvals = similar(internal_params.expvals),
                 cache_mc = similar(internal_params.cache_mc), weights_mc = similar(internal_params.weights_mc), 
-                cumsum_weights_mc = similar(internal_params.weights_mc), random_n = Ref(rand()), progr_mc = ODEProgress(0),
+                cumsum_weights_mc = similar(internal_params.weights_mc), random_n = Ref(rand()), progr_mc = ODEProgress(0), jump_times_which_idx = Ref(1),
                 jump_times = similar(internal_params.jump_times), jump_which = similar(internal_params.jump_which)))
 
     remake(prob, p=prm)
 end
 
 function _mcsolve_output_func(sol, i)
+    resize!(sol.prob.p.jump_times, sol.prob.p.jump_times_which_idx[]-1)
+    resize!(sol.prob.p.jump_which, sol.prob.p.jump_times_which_idx[]-1)
     (sol, false)
 end
 
 function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
     sol_i = sol[:,i]
-    sol_u = haskey(sol_i.prob.kwargs, :save_idxs) ? sol_i.u : QuantumObject.(sol_i.u, dims=sol_i.prob.p.Hdims)
+    sol_u = haskey(sol_i.prob.kwargs, :save_idxs) ? sol_i.u : [QuantumObject(sol_i.u[i], dims=sol_i.prob.p.Hdims) for i in 1:length(sol_i.u)]
 
     copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
-    push!(times, sol_i.t)
-    push!(states, sol_u)
-    push!(jump_times, sol_i.prob.p.jump_times)
-    push!(jump_which, sol_i.prob.p.jump_which)
+    times[i] = sol_i.t
+    states[i] = sol_u
+    jump_times[i] = sol_i.prob.p.jump_times
+    jump_which[i] = sol_i.prob.p.jump_which
 end
 
 
@@ -129,16 +137,24 @@ function mcsolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     for i in eachindex(e_ops)
         e_ops2[i] = get_data(e_ops[i])
     end
+
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
     cache_mc = similar(ψ0.data)
     weights_mc = Array{Float64}(undef, length(c_ops))
     cumsum_weights_mc = similar(weights_mc)
+
+    jump_times_which_init_size = 200
+    jump_times = Vector{Float64}(undef, jump_times_which_init_size)
+    jump_which = Vector{Int16}(undef, jump_times_which_init_size)
+
     params2 = (expvals = expvals, e_ops_mc = e_ops2,
                 is_empty_e_ops_mc = isempty(e_ops),
                 progr_mc = ODEProgress(0), seeds = seeds,
                 random_n = Ref(rand()), c_ops = get_data.(c_ops), cache_mc = cache_mc, 
                 weights_mc = weights_mc, cumsum_weights_mc = cumsum_weights_mc,
-                jump_times = Float64[], jump_which = Int16[], params...)
+                jump_times = jump_times, jump_which = jump_which,
+                jump_times_which_init_size=jump_times_which_init_size,
+                jump_times_which_idx = Ref(1), params...)
 
     mcsolveProblem(H_eff, ψ0, t_l, alg, H_t, params2, jump_callback; kwargs...)
 end
@@ -312,10 +328,11 @@ function mcsolve(ens_prob_mc::EnsembleProblem;
     sol = solve(ens_prob_mc, alg, ensemble_method, trajectories=n_traj)
 
     expvals_all = Array{ComplexF64}(undef, length(sol), size(sol[:,1].prob.p.expvals)...)
-    times = Vector{Vector{Float64}}([])
-    states = haskey(sol[:,1].prob.kwargs, :save_idxs) ? Vector{Vector{eltype(sol[:,1].u[1])}}([]) : Vector{Vector{QuantumObject}}([])
-    jump_times = Vector{Vector{Float64}}([])
-    jump_which = Vector{Vector{Int16}}([])
+    times = Vector{Vector{Float64}}(undef, length(sol))
+    states = haskey(sol[:,1].prob.kwargs, :save_idxs) ? Vector{Vector{eltype(sol[:,1].u[1])}}(undef, length(sol)) : Vector{Vector{QuantumObject}}(undef, length(sol))
+    jump_times = Vector{Vector{Float64}}(undef, length(sol))
+    jump_which = Vector{Vector{Int16}}(undef, length(sol))
+
     foreach(i -> _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which), eachindex(sol))
     expvals = dropdims(sum(expvals_all, dims=1), dims=1) ./ length(sol)
 
