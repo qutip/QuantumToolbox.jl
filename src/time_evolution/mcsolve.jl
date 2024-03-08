@@ -58,6 +58,8 @@ LindbladJumpDiscreteCondition(u, t, integrator) = real(dot(u, u)) < integrator.p
 
 function _mcsolve_prob_func(prob, i, repeat)
     internal_params = prob.p
+    seeds = internal_params.seeds
+    !isnothing(seeds) && Random.seed!(seeds[i])
 
     prm = merge(internal_params, (expvals = similar(internal_params.expvals),
                 cache_mc = similar(internal_params.cache_mc), weights_mc = similar(internal_params.weights_mc), 
@@ -86,8 +88,6 @@ end
 
 
 
-
-
 """
     mcsolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
@@ -112,6 +112,7 @@ time evolution of an open quantum system.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
+- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
@@ -126,6 +127,7 @@ function mcsolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
+    seeds::Union{Nothing, Vector{Int}}=nothing,
     jump_callback::TJC=ContinuousLindbladJumpCallback(),
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
@@ -147,7 +149,7 @@ function mcsolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
 
     params2 = (expvals = expvals, e_ops_mc = e_ops2,
                 is_empty_e_ops_mc = isempty(e_ops),
-                progr_mc = ODEProgress(0),
+                progr_mc = ODEProgress(0), seeds = seeds,
                 random_n = Ref(rand()), c_ops = get_data.(c_ops), cache_mc = cache_mc, 
                 weights_mc = weights_mc, cumsum_weights_mc = cumsum_weights_mc,
                 jump_times = jump_times, jump_which = jump_which,
@@ -218,6 +220,7 @@ time evolution of an open quantum system.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
+- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
 - `prob_func::Function`: Function to use for generating the ODEProblem.
 - `output_func::Function`: Function to use for generating the output of a single trajectory.
@@ -236,13 +239,13 @@ function mcsolveEnsembleProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     jump_callback::TJC=ContinuousLindbladJumpCallback(),
+    seeds::Union{Nothing, Vector{Int}}=nothing,
     prob_func::Function=_mcsolve_prob_func,
     output_func::Function=_mcsolve_output_func,
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
     prob_mc = mcsolveProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops, 
-                H_t=H_t, params=params, jump_callback=jump_callback, kwargs...)
-
+                H_t=H_t, params=params, seeds=seeds, jump_callback=jump_callback, kwargs...)
 
     ensemble_prob = EnsembleProblem(prob_mc, prob_func=prob_func,
                             output_func=output_func, safetycopy=false)
@@ -275,6 +278,7 @@ Time evolution of an open quantum system using quantum trajectories.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
+- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
 - `n_traj::Int`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
@@ -296,6 +300,7 @@ function mcsolve(H::QuantumObject{MT1,OperatorQuantumObject},
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
+    seeds::Union{Nothing, Vector{Int}}=nothing,
     n_traj::Int=1,
     ensemble_method=EnsembleThreads(),
     jump_callback::TJC=ContinuousLindbladJumpCallback(),
@@ -303,8 +308,12 @@ function mcsolve(H::QuantumObject{MT1,OperatorQuantumObject},
     output_func::Function=_mcsolve_output_func,
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
+    if !isnothing(seeds) && length(seeds)!=n_traj
+        throw(ArgumentError("Length of seed must match n_traj ($n_traj), but got $(length(seed))"))
+    end 
+
     ens_prob_mc = mcsolveEnsembleProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops, 
-                H_t=H_t, params=params, jump_callback=jump_callback, prob_func=prob_func,
+                H_t=H_t, params=params, seeds=seeds, jump_callback=jump_callback, prob_func=prob_func,
                 output_func=output_func, kwargs...)
 
     return mcsolve(ens_prob_mc; alg=alg, n_traj=n_traj, ensemble_method=ensemble_method, kwargs...)

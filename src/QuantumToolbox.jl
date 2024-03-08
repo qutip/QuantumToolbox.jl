@@ -6,6 +6,7 @@ using Distributed
 @reexport using SparseArrays
 @reexport using OrdinaryDiffEq
 @reexport using DiffEqCallbacks
+using Random
 using Graphs
 using FFTW
 using SpecialFunctions
