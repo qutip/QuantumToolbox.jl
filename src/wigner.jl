@@ -81,7 +81,9 @@ function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::Abstract
         Threads.@threads for i in eachindex(iter)
             m, n, ρmn = iter[i]
             m, n = m-1, n-1
-            Γ_mn = (1 + Int(m!=n)) * sqrt(gamma(m+1) / gamma(n+1))
+            # Γ_mn = (1 + Int(m!=n)) * sqrt(gamma(m+1) / gamma(n+1))
+            Γ_mn = (1 + Int(m!=n)) * sqrt( exp(loggamma(m+1) - loggamma(n+1)) ) # Is this a good trick?
+            Γ_mn = check_inf(Γ_mn)
 
             @. Wtot[:,:,i] = real(ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn *
             _genlaguerre(m, n - m, B))
@@ -91,7 +93,9 @@ function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::Abstract
         for i in Iterators.filter(x->x[2]>=x[1], zip(rows, cols, vals))
             m, n, ρmn = i
             m, n = m-1, n-1
-            Γ_mn = (1 + Int(m!=n)) * sqrt(gamma(m+1) / gamma(n+1))
+            # Γ_mn = (1 + Int(m!=n)) * sqrt(gamma(m+1) / gamma(n+1))
+            Γ_mn = (1 + Int(m!=n)) * sqrt( exp(loggamma(m+1) - loggamma(n+1)) ) # Is this a good trick?
+            Γ_mn = check_inf(Γ_mn)
 
             @. W += real(ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn *
             _genlaguerre(m, n - m, B))
@@ -114,7 +118,9 @@ function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray,
             abs(ρmn) > tol && (@. W += real(ρmn * (-1)^m * _genlaguerre(m, 0, B)))
             for n in m+1:M-1
                 ρmn = ρ[m+1, n+1]
-                Γ_mn = sqrt(gamma(m+1) / gamma(n+1))
+                # Γ_mn = sqrt(gamma(m+1) / gamma(n+1))
+                Γ_mn = sqrt( exp(loggamma(m+1) - loggamma(n+1)) ) # Is this a good trick?
+                Γ_mn = check_inf(Γ_mn)
 
                 abs(ρmn) > tol && (@. W += 2 * real(ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn *
                      _genlaguerre(m, n - m, B)))
@@ -144,6 +150,15 @@ function _genlaguerre(n::Int, α::Number, x::T) where {T <: BlasFloat}
     end
     p1
 end
+
+function check_inf(x::T) where T
+    if isinf(x)
+        return x > zero(T) ? floatmax(T) : -floatmax(T)
+    else
+        return x
+    end
+end
+
 
 function _wig_laguerre_clenshaw(L::Int, x::AbstractArray{T1}, c::AbstractVector{T2}) where {T1<:Real, T2<:BlasFloat}
     if length(c) == 1
