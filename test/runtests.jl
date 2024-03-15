@@ -171,13 +171,13 @@ end
 @testset "Time Evolution and partial trace" begin
     N = 10
 
-    a_d = kron(create(N), eye(2))
+    a_d = kron(create(N), qeye(2))
     a = a_d'
-    sm = kron(eye(N), sigmam())
+    sm = kron(qeye(N), sigmam())
     sp = sm'
-    sx = kron(eye(N), sigmax())
-    sy = tensor(eye(N), sigmay())
-    sz = eye(N) ⊗ sigmaz()
+    sx = kron(qeye(N), sigmax())
+    sy = tensor(qeye(N), sigmay())
+    sz = qeye(N) ⊗ sigmaz()
     η = 0.01
     H = a_d * a + 0.5 * sz - 1im * η * (a - a_d) * sx
     psi0 = kron(fock(N, 0), fock(2, 0))
@@ -199,12 +199,12 @@ end
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=e_ops, progress=false)
     @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
 
-    sp1 = kron(sigmap(), eye(2))
+    sp1 = kron(sigmap(), qeye(2))
     sm1 = sp1'
     sx1 = sm1 + sp1
     sy1 = 1im * (sm1 - sp1)
     sz1 = sp1 * sm1 - sm1 * sp1
-    sp2 = kron(eye(2), sigmap())
+    sp2 = kron(qeye(2), sigmap())
     sm2 = sp2'
     sx2 = sm2 + sp2
     sy2 = 1im * (sm2 - sp2)
@@ -295,8 +295,8 @@ end
     F, Δ, κ, J = 1.5, 0.25, 1, 0.05
     N0 = 25
     N1 = 20
-    a0 = kron(destroy(N0), eye(N1))
-    a1 = kron(eye(N0), destroy(N1))
+    a0 = kron(destroy(N0), qeye(N1))
+    a1 = kron(qeye(N0), destroy(N1))
     H0 = Δ * a0' * a0 + F * (a0 + a0') + Δ * a1' * a1 + J * (a0' * a1 + a0 * a1')
     c_ops0 = [√κ * a0, √κ * a1]
     e_ops0 = [a0' * a0, a1' * a1]
@@ -307,19 +307,19 @@ end
         Δ = p.Δ
         F = p.F
         J = p.J
-        a = kron(destroy(dims[1]), eye(dims[2]))
-        b = kron(eye(dims[1]), destroy(dims[2]))
+        a = kron(destroy(dims[1]), qeye(dims[2]))
+        b = kron(qeye(dims[1]), destroy(dims[2]))
         Δ * a' * a + F * (a + a') + Δ * b' * b + J * (a' * b + a * b')
     end
     function c_ops_dfd2(dims, p)
         κ = p.κ
-        a = kron(destroy(dims[1]), eye(dims[2]))
-        b = kron(eye(dims[1]), destroy(dims[2]))
+        a = kron(destroy(dims[1]), qeye(dims[2]))
+        b = kron(qeye(dims[1]), destroy(dims[2]))
         [√κ * a, √κ * b]
     end
     function e_ops_dfd2(dims, p)
-        a = kron(destroy(dims[1]), eye(dims[2]))
-        b = kron(eye(dims[1]), destroy(dims[2]))
+        a = kron(destroy(dims[1]), qeye(dims[2]))
+        b = kron(qeye(dims[1]), destroy(dims[2]))
         [a' * a, b' * b]
     end
     maxdims = [50, 50]
@@ -387,8 +387,8 @@ end
     tlist = LinRange(0,15,300)
 
     N0     = 20
-    a10     = kron(destroy(N0), eye(N0))
-    a20     = kron(eye(N0), destroy(N0))
+    a10     = kron(destroy(N0), qeye(N0))
+    a20     = kron(qeye(N0), destroy(N0))
     H0     = Δ*a10'*a10 + Δ*a20'*a20 + U*a10'^2*a10^2 + U*a20'^2*a20^2 + F*(a10+a10') + J*(a10'*a20 + a10*a20')
     c_ops0 = [√κ*a10, √κ*a20]
 
@@ -396,8 +396,8 @@ end
     sol0 = mesolve(H0, ρ0, tlist, c_ops0, e_ops=[a10'*a10, a20'*a20], progress=false)
 
     N = 5
-    a1 = kron(destroy(N), eye(N))
-    a2 = kron(eye(N), destroy(N))
+    a1 = kron(destroy(N), qeye(N))
+    a2 = kron(qeye(N), destroy(N))
     function H_dsf2(op_list, p)
         Δ = p.Δ
         F = p.F
@@ -435,8 +435,8 @@ end
     N_trunc = 10
     tol=1e-14
     
-    a = kron(destroy(N_c), eye(2))
-    sm = kron(eye(N_c), sigmam())
+    a = kron(destroy(N_c), qeye(2))
+    sm = kron(qeye(N_c), sigmam())
     sp = sm'
     sx = sm + sp
     sz = sp * sm - sm * sp
@@ -477,14 +477,14 @@ end
 
 @testset "Eigenvalues and Operators" begin
     N = 30
-    a = kron(destroy(N), eye(2))
+    a = kron(destroy(N), qeye(2))
     a_d = a'
 
-    sm = kron(eye(N), sigmam())
+    sm = kron(qeye(N), sigmam())
     sp = sm'
-    sx = kron(eye(N), sigmax())
-    sy = kron(eye(N), sigmay())
-    sz = kron(eye(N), sigmaz())
+    sx = kron(qeye(N), sigmax())
+    sy = kron(qeye(N), sigmay())
+    sz = kron(qeye(N), sigmaz())
 
     η = 0.2
     H_d = a_d * a + 0.5 * sz - 1im * η * (a - a_d) * sx + η^2
@@ -501,9 +501,9 @@ end
 
 
     N = 5
-    a = kron(destroy(N), eye(N))
+    a = kron(destroy(N), qeye(N))
     a_d = a'
-    b = kron(eye(N), destroy(N))
+    b = kron(qeye(N), destroy(N))
     b_d = b'
 
     ωc = 1

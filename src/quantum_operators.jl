@@ -150,6 +150,14 @@ eye(N::Int; type::Type{ObjType}=OperatorQuantumObject, dims::Vector{Int}=[N]) wh
     {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(Diagonal(ones(ComplexF64, N)), type, dims)
 
 @doc raw"""
+    qeye(N::Int; type=OperatorQuantumObject, dims=[N])
+
+Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
+"""
+qeye(N::Int; type::Type{ObjType}=OperatorQuantumObject, dims::Vector{Int}=[N]) where 
+    {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eye(N, type=type, dims=dims)
+
+@doc raw"""
     fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)
 
 Generates a fock state ``\ket{\psi}`` of dimension `N`. It is also possible

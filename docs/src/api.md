@@ -64,6 +64,7 @@ sigmax
 sigmay
 sigmaz
 eye
+qeye
 fock
 basis
 coherent
