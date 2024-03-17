@@ -248,12 +248,10 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractMatrix, OperatorQuantumO
         [pt_dims[n,     mask[n]] for n in 1:nsys]; # origin   value in mask
         [pt_dims[n, 3 - mask[n]] for n in 1:nsys]  # opposite value in mask (1 -> 2, and 2 -> 1)
     ]
-    return reshape(
-        permutedims(
-            reshape(ρ.data, (ρ.dims..., ρ.dims...)), 
-            pt_idx
-        ), 
-        size(ρ)
+    return QuantumObject(
+        reshape(permutedims(reshape(ρ.data, (ρ.dims..., ρ.dims...)), pt_idx), size(ρ)),
+        OperatorQuantumObject,
+        ρ.dims
     )
 end
 
