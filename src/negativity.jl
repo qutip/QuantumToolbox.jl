@@ -12,6 +12,29 @@ and ``\Vert X \Vert_1=\Tr\sqrt{X^\dagger X}`` is the trace norm.
 
 # Returns
 - `N::Real`: The value of negativity.
+
+# Examples
+
+```
+julia> Ψ = 1 / √2 * ( basis(2,0) ⊗ basis(2,0) + basis(2,1) ⊗ basis(2,1) )
+Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
+4-element Vector{ComplexF64}:
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 0.7071067811865475 + 0.0im
+
+julia> ρ = ket2dm(Ψ)
+Quantum Object:   type=Operator   dims=[2, 2]   size=(4, 4)   ishermitian=true
+4×4 Matrix{ComplexF64}:
+ 0.5+0.0im  0.0+0.0im  0.0+0.0im  0.5+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.5+0.0im  0.0+0.0im  0.0+0.0im  0.5+0.0im
+
+julia> negativity(ρ, 2)
+0.4999999999999998
+```
 """
 function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool=false)
     mask = fill(false, length(ρ.dims))
@@ -30,8 +53,6 @@ function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool=false)
         return (tr_norm - 1) / 2
     end
 end
-
-
 
 @doc raw"""
     partial_transpose(ρ::QuantumObject, mask::Vector{Bool})
