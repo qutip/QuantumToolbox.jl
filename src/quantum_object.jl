@@ -153,7 +153,7 @@ Base.size(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<
 
 Returns the elements type of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
 """
-Base.eltype(A::QuantumObject, inds...) = eltype(A.data)
+Base.eltype(A::QuantumObject) = eltype(A.data)
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
