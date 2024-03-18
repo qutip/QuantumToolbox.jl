@@ -1,10 +1,43 @@
 @doc raw"""
+    negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool=false)
+
+Compute the [negativity](https://en.wikipedia.org/wiki/Negativity_(quantum_mechanics))
+
+# Arguments
+- `ρ::QuantumObject`: The density matrix (`ρ.type` must be `OperatorQuantumObject`).
+- `subsys::Int`: an index that indicates which subsystem to compute the negativity for.
+- `logarithmic::Bool`: choose whether to calculate logarithmic negativity or not. Default as `false`
+
+# Returns
+- `N::Real`: The value of negativity.
+"""
+function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool=false)
+    mask = fill(false, length(ρ.dims))
+    try
+        mask[subsys] = true
+    catch
+        error("Invalid index of subsys: $subsys")
+    end
+
+    ρ_pt = partial_transpose(ρ, mask)
+    tr_norm = sum(sqrt.(eigvals(ρ_pt' * ρ_pt)))
+
+    if logarithmic
+        return log2(tr_norm)
+    else
+        return (tr_norm - 1) / 2
+    end
+end
+
+
+
+@doc raw"""
     partial_transpose(ρ::QuantumObject, mask::Vector{Bool})
 
 Return the partial transpose of a density matrix ``\rho``, where `mask` is an array/vector with length that equals the length of `ρ.dims`. The elements in `mask` are boolean (`true` or `false`) which indicates whether or not the corresponding subsystem should be transposed.
 
 # Arguments
-- `ρ::QuantumObject`: The density matrix (the type must be `OperatorQuantumObject`).
+- `ρ::QuantumObject`: The density matrix (`ρ.type` must be `OperatorQuantumObject`).
 - `mask::Vector{Bool}`: A boolean vector selects which subsystems should be transposed.
 
 # Returns
@@ -21,8 +54,8 @@ end
 function _partial_transpose(ρ::QuantumObject{<:AbstractMatrix, OperatorQuantumObject}, mask::Vector{Bool})
     mask2 = [1 + Int(i) for i in mask]
     # mask2 has elements with values equal to 1 or 2
-    # 1 - the subsystem don't need to be transposed
-    # 2 - the subsystem need be transposed
+    #   1 - the subsystem don't need to be transposed
+    #   2 - the subsystem need be transposed
 
     nsys = length(mask2)
     pt_dims = reshape(Vector(1:(2 * nsys)), (nsys, 2))
