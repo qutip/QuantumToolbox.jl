@@ -19,6 +19,7 @@ isket
 isoper
 issuper
 size
+eltype
 length
 LinearAlgebra.tr
 LinearAlgebra.norm

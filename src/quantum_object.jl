@@ -148,8 +148,12 @@ Returns the size of the matrix or vector corresponding to the [`QuantumObject`](
 Base.size(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = size(A.data)
 Base.size(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<:QuantumObjectType} = size(A.data, inds...)
 
-Base.getindex(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<:QuantumObjectType} = getindex(A.data, inds...)
-Base.setindex!(A::QuantumObject{<:AbstractArray{T},OpType}, val, inds...) where {T,OpType<:QuantumObjectType} = setindex!(A.data, val, inds...)
+"""
+    eltype(A::QuantumObject)
+
+Returns the elements type of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
+"""
+Base.eltype(A::QuantumObject, inds...) = eltype(A.data)
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
