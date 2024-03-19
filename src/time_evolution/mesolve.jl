@@ -72,13 +72,10 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
     ρ0 = mat2vec(ket2dm(ψ0).data)
     L = liouvillian(H, c_ops).data
 
-    # progr = Progress(length(t_l), showspeed=true, enabled=show_progress)
     progr = ODEProgress(0)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = Vector{mat2vec(Te)}(undef, length(e_ops))
-    for i in eachindex(e_ops)
-        e_ops2[i] = mat2vec(get_data(e_ops[i]'))
-    end
+    e_ops2 = @. mat2vec(adjoint(get_data(e_ops)))
+    
     p = (L = L, progr = progr, Hdims = H.dims, e_ops = e_ops2, expvals = expvals, H_t = H_t, is_empty_e_ops = isempty(e_ops), params...)
 
     default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
