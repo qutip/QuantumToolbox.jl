@@ -39,6 +39,8 @@ tidyup
 tidyup!
 gaussian
 ptrace
+partial_transpose
+negativity
 entropy_vn
 entanglement
 expect
