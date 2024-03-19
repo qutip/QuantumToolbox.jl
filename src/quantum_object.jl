@@ -2,6 +2,7 @@ using LinearAlgebra
 using LinearAlgebra: checksquare, BlasFloat, BlasComplex, BlasReal, BlasInt
 import LinearAlgebra
 
+abstract type AbstractQuantumObject end
 abstract type QuantumObjectType end
 
 @doc raw"""
@@ -57,7 +58,7 @@ julia> a isa QuantumObject
 true
 ```
 """
-mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
+mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: AbstractQuantumObject
     data::MT
     type::Type{ObjType}
     dims::Vector{Int}
@@ -489,6 +490,8 @@ LinearAlgebra.tril(A::QuantumObject{<:AbstractArray{T},OpType}, k::Integer=0) wh
 
 LinearAlgebra.lmul!(a::Number, B::QuantumObject{<:AbstractArray}) = (lmul!(a, B.data); B)
 LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.data, a); B)
+
+@inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} = mul!(y, A.data, x, α, β)
 
 
 LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =

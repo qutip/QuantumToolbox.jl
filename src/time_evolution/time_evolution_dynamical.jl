@@ -59,7 +59,7 @@ function _DFDIncreaseReduceCondition(u, t, integrator)
     dfd_ρt_cache = internal_params.dfd_ρt_cache
     
     # I need this cache because I can't reshape directly the integrator.u
-    copyto!(dfd_ρt_cache, integrator.u)
+    copyto!(dfd_ρt_cache, u)
     
     @inbounds for i in eachindex(dim_list)
         maxdim_i = maxdims[i]
@@ -210,7 +210,7 @@ function _DSF_mesolve_Condition(u, t, integrator)
     @inbounds for i in eachindex(δα_list)
         op_vec = op_l_vec[i]
         δα = δα_list[i]
-        Δα = dot(op_vec, integrator.u)
+        Δα = dot(op_vec, u)
         if δα < abs(Δα)
             condition = true
         end
@@ -388,16 +388,14 @@ function _DSF_mcsolve_Condition(u, t, integrator)
     internal_params = integrator.p
     op_l = internal_params.op_l
     δα_list = internal_params.δα_list
-    ψt = internal_params.dsf_cache1
-    
-    copyto!(ψt, integrator.u)
-    normalize!(ψt)
+
+    ψt = u
 
     condition = false
     @inbounds for i in eachindex(op_l)
         op = op_l[i]
         δα = δα_list[i]
-        Δα = dot(ψt, op.data, ψt)
+        Δα = dot(ψt, op.data, ψt) / dot(ψt, ψt)
         if δα < abs(Δα)
             condition = true
         end
@@ -420,6 +418,9 @@ function _DSF_mcsolve_Affect!(integrator)
     expv_cache = internal_params.expv_cache
     dsf_params = internal_params.dsf_params
     dsf_displace_cache_full = internal_params.dsf_displace_cache_full
+
+    copyto!(ψt, integrator.u)
+    normalize!(ψt)
 
     op_l_length = length(op_l)
     fill!(dsf_displace_cache_full.coefficients, 0)

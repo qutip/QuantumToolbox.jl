@@ -55,14 +55,15 @@ ContinuousLindbladJumpCallback(;interp_points::Int=10) = ContinuousLindbladJumpC
 
 ## Sum of operators
 
-mutable struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}}
+mutable struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}} <: AbstractQuantumObject
     coefficients::CT
     operators::OT
     function OperatorSum(coefficients::CT, operators::OT) where {CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}}
         length(coefficients) == length(operators) || throw(DimensionMismatch("The number of coefficients must be the same as the number of operators."))
         # Check if all the operators have the same dimensions
-        dims = size(operators[1])
-        mapreduce(x->size(x) == dims, &, operators) || throw(DimensionMismatch("All the operators must have the same dimensions."))
+        dims = operators[1].dims
+        optype = operators[1].type
+        mapreduce(x->x.dims == dims && x.type == optype, &, operators) || throw(DimensionMismatch("All the operators must have the same dimensions."))
         T = promote_type(mapreduce(x->eltype(x.data), promote_type, operators),
                 mapreduce(eltype, promote_type, coefficients))
         coefficients2 = T.(coefficients)
@@ -118,8 +119,6 @@ end
 @inline function LinearAlgebra.mul!(y::AbstractVector, A::TimeDependentOperatorSum, x::AbstractVector, α, β)
     mul!(y, A.operator_sum, x, α, β)
 end
-
-@inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} = mul!(y, A.data, x, α, β)
 
 #######################################
     
