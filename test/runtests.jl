@@ -220,7 +220,7 @@ end
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=[sp1 * sm1, sp2 * sm2], progress=false)
     @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
-    @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], [1]))
+    @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], 1))
 end
 
 @testset "Dynamical Fock Dimension mesolve" begin
@@ -560,7 +560,7 @@ end
     e = fock(2, 0)
     state = normalize(kron(g, e) + kron(e, g))
     rho = state * state'
-    @test entanglement(state, [1]) / log(2) ≈ 1
+    @test entanglement(state, 1) / log(2) ≈ 1
 end
 
 @testset "Negativity and Partial Transpose" begin
