@@ -74,7 +74,7 @@ function partial_transpose(ρ::QuantumObject{T, OperatorQuantumObject}, mask::Ve
 end
 
 # for dense matrices
-function _partial_transpose(ρ::QuantumObject{<:AbstractMatrix, OperatorQuantumObject}, mask::Vector{Bool})
+function _partial_transpose(ρ::QuantumObject{<:AbstractArray, OperatorQuantumObject}, mask::Vector{Bool})
     mask2 = [1 + Int(i) for i in mask]
     # mask2 has elements with values equal to 1 or 2
     #   1 - the subsystem don't need to be transposed
