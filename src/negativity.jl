@@ -45,7 +45,7 @@ function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool=false)
     end
 
     ρ_pt = partial_transpose(ρ, mask)
-    tr_norm = sum(sqrt, (eigvals(ρ_pt' * ρ_pt)))
+    tr_norm = sum(sqrt, eigvals(ρ_pt' * ρ_pt))
 
     if logarithmic
         return log2(tr_norm)
