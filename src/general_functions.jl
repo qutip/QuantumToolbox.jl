@@ -173,6 +173,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray{T1},OpType}, sel::Vector{T2}) 
         return QuantumObject(ρtr, dims=dkeep)
     end
 end
+ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, [sel])
 
 @doc raw"""
     entropy_vn(ρ::QuantumObject; base::Int=0, tol::Real=1e-15)
@@ -241,6 +242,7 @@ function entanglement(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::Vector{
     entropy = entropy_vn(ρ_tr)
     return (entropy > 0) * entropy
 end
+entanglement(QO::QuantumObject, sel::Int) = entanglement(QO, [sel])
 
 @doc raw"""
     expect(O::QuantumObject, ψ::QuantumObject)
