@@ -58,6 +58,9 @@ function lindblad_dissipator(O::QuantumObject{<:AbstractArray{T},OperatorQuantum
     return sprepost(O, O') - spre(Od_O, Id_cache) / 2 - spost(Od_O, Id_cache) / 2
 end
 
+# It is already a SuperOperator
+lindblad_dissipator(O::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject}, Id_cache) where {T} = O
+
 @doc raw"""
     destroy(N::Int)
 

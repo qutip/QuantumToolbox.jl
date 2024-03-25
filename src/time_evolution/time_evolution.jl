@@ -140,15 +140,17 @@ function liouvillian(H::QuantumObject{MT1,OpType1},
                                     OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
                                     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
-    L = isoper(H) ? -1im * (spre(H, Id_cache) - spost(H, Id_cache)) : H
+    L = liouvillian(H, Id_cache)
     for c_op in c_ops
-        isoper(c_op) ? L += lindblad_dissipator(c_op, Id_cache) : L += c_op
+        L += lindblad_dissipator(c_op, Id_cache)
     end
     L
 end
 
+liouvillian(H::QuantumObject{MT1,OperatorQuantumObject}, Id_cache::Diagonal=I(prod(H.dims))) where {MT1<:AbstractMatrix} = -1im * (spre(H, Id_cache) - spost(H, Id_cache))
 
-# liouvillian(H::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = isoper(H) ? -1im * (spre(H) - spost(H)) : H
+liouvillian(H::QuantumObject{MT1,SuperOperatorQuantumObject}, Id_cache::Diagonal) where {MT1<:AbstractMatrix} = H
+
 
 function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
