@@ -12,7 +12,7 @@ function _save_func_mesolve(integrator)
         # to reshape u to make it a matrix, but I reshape the e_ops once.
         
         ρ = integrator.u
-        _expect = op -> dot(ρ, op)
+        _expect = op -> dot(op, ρ)
         @. expvals[:, progr.counter+1] = _expect(e_ops)
     end
     next!(progr)
@@ -74,7 +74,7 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
 
     progr = ODEProgress(0)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-    e_ops2 = @. mat2vec(get_data(e_ops))
+    e_ops2 = @. mat2vec(adjoint(get_data(e_ops)))
     
     p = (L = L, progr = progr, Hdims = H.dims, e_ops = e_ops2, expvals = expvals, H_t = H_t, is_empty_e_ops = isempty(e_ops), params...)
 
