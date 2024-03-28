@@ -17,6 +17,9 @@ jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} ( ${{ matrix.group }} )
     runs-on: ${{ matrix.os }}
+    permissions: # needed to allow julia-actions/cache to delete old caches that it has created
+      actions: write
+      contents: read
     if: ${{ !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
@@ -50,3 +53,5 @@ jobs:
       - uses: codecov/codecov-action@v4
         with:
           verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
