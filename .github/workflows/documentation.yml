@@ -1,0 +1,38 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags: 
+      - '*'
+  pull_request:
+    branches:
+      - 'main'
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: '1'
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-docdeploy@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          julia --project=docs -e '
+            using Documenter: DocMeta, doctest
+            using QuantumToolbox
+            DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive=true)
+            doctest(QuantumToolbox)'
