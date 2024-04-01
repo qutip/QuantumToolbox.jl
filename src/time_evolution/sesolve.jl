@@ -32,6 +32,7 @@ end
         e_ops::AbstractVector=[],
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
+        progress_bar::Bool=true,
         kwargs...)
 
 Generates the ODEProblem for the Schrödinger time evolution of a quantum system.
@@ -44,6 +45,7 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 - `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
+- `progress_bar::Bool`: Whether to show the progress bar.
 - `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
 
 # Returns
@@ -56,6 +58,7 @@ function sesolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     e_ops::Vector{QuantumObject{MT2, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
+    progress_bar::Bool=true,
     kwargs...) where {MT1<:AbstractMatrix,T2,MT2<:AbstractMatrix}
 
     H.dims != ψ0.dims && throw(ErrorException("The two operators don't have the same Hilbert dimension."))
@@ -65,7 +68,7 @@ function sesolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     ϕ0 = get_data(ψ0)
     U = -1im * get_data(H)
 
-    progr = ODEProgress(0)
+    progr = ProgressBar(length(t_l), enable=progress_bar)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
     e_ops2 = get_data.(e_ops)
 
@@ -98,6 +101,7 @@ end
         e_ops::AbstractVector=[],
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
+        progress_bar::Bool=true,
         kwargs...)
 
 Time evolution of a closed quantum system using the Schrödinger equation.
@@ -110,6 +114,7 @@ Time evolution of a closed quantum system using the Schrödinger equation.
 - `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
+- `progress_bar::Bool`: Whether to show the progress bar.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
 - Returns
@@ -122,10 +127,11 @@ function sesolve(H::QuantumObject{MT1,OperatorQuantumObject},
     e_ops::Vector{QuantumObject{MT2, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
+    progress_bar::Bool=true,
     kwargs...) where {MT1<:AbstractMatrix,T2,MT2<:AbstractMatrix}
 
     prob = sesolveProblem(H, ψ0, t_l; alg=alg, e_ops=e_ops,
-            H_t=H_t, params=params, kwargs...)
+            H_t=H_t, params=params, progress_bar=progress_bar, kwargs...)
     
     return sesolve(prob, alg; kwargs...)
 end
