@@ -34,6 +34,7 @@ end
         e_ops::AbstractVector=[],
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
+        progress_bar::Bool=true,
         kwargs...)
 
 Generates the ODEProblem for the master equation time evolution of an open quantum system.
@@ -47,6 +48,7 @@ Generates the ODEProblem for the master equation time evolution of an open quant
 - `e_ops::AbstractVector=[]`: The list of the operators for which the expectation values are calculated.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing`: The time-dependent Hamiltonian or Liouvillian.
 - `params::NamedTuple=NamedTuple()`: The parameters of the time evolution.
+- `progress_bar::Bool=true`: Whether to show the progress bar.
 - `kwargs...`: The keyword arguments for the ODEProblem.
 
 # Returns
@@ -60,6 +62,7 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
+    progress_bar::Bool=true,
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
@@ -72,7 +75,7 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
     ρ0 = mat2vec(ket2dm(ψ0).data)
     L = liouvillian(H, c_ops).data
 
-    progr = ODEProgress(0)
+    progr = ProgressBar(length(t_l), enable=progress_bar)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
     e_ops2 = @. mat2vec(adjoint(get_data(e_ops)))
     
@@ -105,6 +108,7 @@ end
         e_ops::AbstractVector=[],
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
+        progress_bar::Bool=true,
         kwargs...)
 
 Time evolution of an open quantum system using master equation.
@@ -118,6 +122,7 @@ Time evolution of an open quantum system using master equation.
 - `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Named Tuple of parameters to pass to the solver.
+- `progress_bar::Bool`: Whether to show the progress bar.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
 # Returns
@@ -131,13 +136,14 @@ function mesolve(H::QuantumObject{MT1,HOpType},
     e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
+    progress_bar::Bool=true,
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
     COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     prob = mesolveProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops,
-            H_t=H_t, params=params, kwargs...)
+            H_t=H_t, params=params, progress_bar=progress_bar, kwargs...)
     
     return mesolve(prob, alg; kwargs...)
 end
