@@ -34,6 +34,20 @@ Abstract type representing a super-operator ``\hat{\mathcal{O}}``.
 abstract type SuperOperatorQuantumObject <: QuantumObjectType end
 
 @doc raw"""
+    OperatorBraQuantumObject <: QuantumObjectType
+
+Abstract type representing a bra state in the super-operator formalism ``\langle\langle\rho|``.
+"""
+abstract type OperatorBraQuantumObject <: QuantumObjectType end
+
+@doc raw"""
+    OperatorKetQuantumObject <: QuantumObjectType
+
+Abstract type representing a ket state in the super-operator formalism ``|\rho\rangle\rangle``.
+"""
+abstract type OperatorKetQuantumObject <: QuantumObjectType end
+
+@doc raw"""
     mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
         data::MT
         type::Type{ObjType}
@@ -135,6 +149,20 @@ Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorQuantumObject`](@ref) s
 isoper(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: OperatorQuantumObject
 
 """
+    isoperbra(A::QuantumObject)
+
+Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBraQuantumObject`](@ref) state.
+"""
+isoperbra(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: OperatorBraQuantumObject
+
+"""
+    isoperket(A::QuantumObject)
+
+Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKetQuantumObject`](@ref) state.
+"""
+isoperket(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: OperatorKetQuantumObject
+
+"""
     issuper(A::QuantumObject)
 
 Checks if the [`QuantumObject`](@ref) `A` is a [`SuperOperatorQuantumObject`](@ref) state.
@@ -213,7 +241,7 @@ LinearAlgebra.Hermitian(A::QuantumObject{<:AbstractArray{T},OpType}, uplo::Symbo
     QuantumObject(Hermitian(A.data, uplo), A.type, A.dims)
 
 function Base.show(io::IO, ::MIME"text/plain", QO::QuantumObject{<:AbstractArray{T},OpType}) where
-{T,OpType<:Union{BraQuantumObject,KetQuantumObject,SuperOperatorQuantumObject}}
+{T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject,SuperOperatorQuantumObject}}
 
     op_data = QO.data
     op_dims = QO.dims
@@ -222,6 +250,10 @@ function Base.show(io::IO, ::MIME"text/plain", QO::QuantumObject{<:AbstractArray
         op_type = "Ket"
     elseif op_type <: BraQuantumObject
         op_type = "Bra"
+    elseif op_type <: OperatorKetQuantumObject
+        op_type = "Operator-Ket"
+    elseif op_type <: OperatorBraQuantumObject
+        op_type = "Operator-Bra"
     else
         op_type = "SuperOperator"
     end

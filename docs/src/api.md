@@ -10,6 +10,8 @@ CurrentModule = QuantumToolbox
 BraQuantumObject
 KetQuantumObject
 OperatorQuantumObject
+OperatorBraQuantumObject
+OperatorKetQuantumObject
 SuperOperatorQuantumObject
 QuantumObject
 Qobj
@@ -17,6 +19,8 @@ ket2dm
 isbra
 isket
 isoper
+isoperbra
+isoperket
 issuper
 size
 eltype
