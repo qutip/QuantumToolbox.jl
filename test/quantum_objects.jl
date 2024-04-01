@@ -1,10 +1,25 @@
 using QuantumToolbox
 
+# unsupported size of array
+for a in [rand(ComplexF64, 3, 2), rand(ComplexF64, 2, 2, 2)]
+    for t in [Nothing, KetQuantumObject, BraQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject]
+        @test_throws DomainError Qobj(a, type=t)
+    end
+end
+
 N = 10
 a = rand(ComplexF64, 10)
 # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
-a2 = Qobj(a, type=BraQuantumObject)
-a3 = Qobj(a, type=KetQuantumObject)
+@test_throws DomainError Qobj(a,  type=BraQuantumObject)
+@test_throws DomainError Qobj(a,  type=OperatorQuantumObject)
+@test_throws DomainError Qobj(a,  type=SuperOperatorQuantumObject)
+@test_throws DomainError Qobj(a', type=KetQuantumObject)
+@test_throws DomainError Qobj(a', type=OperatorQuantumObject)
+@test_throws DomainError Qobj(a', type=SuperOperatorQuantumObject)
+@test_throws DimensionMismatch Qobj(a, dims=[2])
+@test_throws DimensionMismatch Qobj(a', dims=[2])
+a2 = Qobj(a')
+a3 = Qobj(a)
 @test isket(a2) == false
 @test isbra(a2) == true
 @test isoper(a2) == false
@@ -15,9 +30,10 @@ a3 = Qobj(a, type=KetQuantumObject)
 @test issuper(a3) == false
 @test Qobj(a3) == a3
 @test !(Qobj(a3) === a3)
+@test isket(Qobj(Matrix([2 3])')) == true
 
 a = sprand(ComplexF64, 100, 100, 0.1)
-a2 = Qobj(a, type=OperatorQuantumObject)
+a2 = Qobj(a)
 a3 = Qobj(a, type=SuperOperatorQuantumObject)
 
 @test isket(a2) == false
