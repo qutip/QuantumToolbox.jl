@@ -36,6 +36,7 @@ include("spin_lattice.jl")
 include("arnoldi.jl")
 include("eigsolve.jl")
 include("negativity.jl")
+include("progress_bar.jl")
 
 export QuantumObject, Qobj, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, OperatorBraQuantumObject, OperatorKetQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
 export isket, isbra, isoper, isoperbra, isoperket, issuper, ket2dm

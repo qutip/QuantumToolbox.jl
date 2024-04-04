@@ -467,7 +467,7 @@ function _dsf_mcsolve_prob_func(prob, i, repeat)
     prm = merge(internal_params, (U = copy(internal_params.U), e_ops_mc = copy(internal_params.e_ops_mc),
                 c_ops = copy(internal_params.c_ops), expvals = similar(internal_params.expvals), 
                 cache_mc = similar(internal_params.cache_mc), weights_mc = similar(internal_params.weights_mc), 
-                cumsum_weights_mc = similar(internal_params.weights_mc), random_n = Ref(rand()), progr_mc = ODEProgress(0), jump_times_which_idx = Ref(1),
+                cumsum_weights_mc = similar(internal_params.weights_mc), random_n = Ref(rand()), progr_mc = ProgressBar(size(internal_params.expvals, 2), enable=false), jump_times_which_idx = Ref(1),
                 jump_times = similar(internal_params.jump_times), jump_which = similar(internal_params.jump_which),
                 αt_list = copy(internal_params.αt_list), dsf_cache1 = similar(internal_params.dsf_cache1),
                 dsf_cache2 = similar(internal_params.dsf_cache2), expv_cache = copy(internal_params.expv_cache),
