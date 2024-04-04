@@ -78,31 +78,62 @@ mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: Ab
     dims::Vector{Int}
 end
 
-function QuantumObject(A::AbstractVector{T}; type::Type{ObjType}=KetQuantumObject, dims=nothing) where
-{T,ObjType<:Union{BraQuantumObject,KetQuantumObject}}
+function QuantumObject(A::AbstractArray{T, N}; type::Type{ObjType}=Nothing, dims=nothing) where {T,N,ObjType<:Union{Nothing,QuantumObjectType}}
 
-    dims === nothing ? dims = [length(A)] : nothing
-    prod(dims) != length(A) && throw(DimensionMismatch("The dims parameter does not fit the dimension of the Vector."))
-    # if !(norm(A) ≈ 1)
-    #     @warn "The norm of the input data is not one."
-    # end
-    ObjType <: KetQuantumObject ? QuantumObject(A, type, dims) : QuantumObject(transpose(A), type, dims)
-end
-
-function QuantumObject(A::AbstractMatrix{T}; type::Type{ObjType}=OperatorQuantumObject, dims=nothing) where
-{T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-
-    n = checksquare(A)
-    if type <: SuperOperatorQuantumObject
-        sqrt(n) - isqrt(n) != 0 ? throw(DomainError(n, "The dimension of the matrix is not compatible with the SuperOperator type")) : nothing
-        dims === nothing ? dims = [isqrt(n)] : nothing
-        prod(dims) != isqrt(n) && throw(DimensionMismatch("The dims parameter does not fit the dimension of the Matrix."))
+    # only accept 1D- and 2D-array
+    if N == 1
+        Size = (length(A), 1)
     else
-        dims === nothing ? dims = [n] : nothing
-        prod(dims) != n && throw(DimensionMismatch("The dims parameter does not fit the dimension of the Matrix."))
+        Size = size(A)
+        N > 2 ? throw(DomainError(Size, "The dimension of the array is not compatible with Quantum Object")) : nothing
     end
 
-    QuantumObject(A, type, dims)
+    # decide QuantumObjectType from the size of A
+    if type == Nothing
+        if Size[1] == Size[2]
+            type = OperatorQuantumObject
+        elseif Size[2] == 1
+            type = KetQuantumObject
+        elseif Size[1] == 1
+            type = BraQuantumObject
+        else
+            throw(DomainError(Size, "The dimension of the array is not compatible with Quantum Object"))
+        end
+    end
+
+    # decide dims from the size of A and the given type
+    if dims === nothing 
+        if (type <: KetQuantumObject) || (type <: OperatorQuantumObject)
+            dims = [Size[1]]
+        elseif type <: SuperOperatorQuantumObject
+            dims = [isqrt(Size[1])]
+        elseif type <: BraQuantumObject
+            dims = [Size[2]]
+        end
+    end
+
+    _check_QuantumObject(type, prod(dims), Size[1], Size[2])
+    return QuantumObject(A, type, dims)
+end
+
+function _check_QuantumObject(type::Type{KetQuantumObject}, prod_dims::Int, m::Int, n::Int)
+    (n != 1) ? throw(DomainError((m, n), "The dimension of the array is not compatible with Ket type")) : nothing
+    prod_dims != m ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
+end
+
+function _check_QuantumObject(type::Type{BraQuantumObject}, prod_dims::Int, m::Int, n::Int)
+    (m != 1) ? throw(DomainError((m, n), "The dimension of the array is not compatible with Bra type")) : nothing
+    prod_dims != n ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
+end
+
+function _check_QuantumObject(type::Type{OperatorQuantumObject}, prod_dims::Int, m::Int, n::Int)
+    (m != n) ? throw(DomainError((m, n), "The dimension of the array is not compatible with Operator type")) : nothing
+    prod_dims != m ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
+end
+
+function _check_QuantumObject(type::Type{SuperOperatorQuantumObject}, prod_dims::Int, m::Int, n::Int)
+    (m != n) ? throw(DomainError((m, n), "The dimension of the array is not compatible with SuperOperator type")) : nothing
+    prod_dims != sqrt(m) ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
 end
 
 function QuantumObject(A::QuantumObject{<:AbstractArray}; type::Type{ObjType}=A.type, dims=A.dims) where

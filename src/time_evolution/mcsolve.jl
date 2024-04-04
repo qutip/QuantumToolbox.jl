@@ -63,7 +63,7 @@ function _mcsolve_prob_func(prob, i, repeat)
 
     prm = merge(internal_params, (expvals = similar(internal_params.expvals),
                 cache_mc = similar(internal_params.cache_mc), weights_mc = similar(internal_params.weights_mc), 
-                cumsum_weights_mc = similar(internal_params.weights_mc), random_n = Ref(rand()), progr_mc = ODEProgress(0), jump_times_which_idx = Ref(1),
+                cumsum_weights_mc = similar(internal_params.weights_mc), random_n = Ref(rand()), progr_mc = ProgressBar(size(internal_params.expvals, 2), enable=false), jump_times_which_idx = Ref(1),
                 jump_times = similar(internal_params.jump_times), jump_which = similar(internal_params.jump_which)))
 
     remake(prob, p=prm)
@@ -149,7 +149,7 @@ function mcsolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
 
     params2 = (expvals = expvals, e_ops_mc = e_ops2,
                 is_empty_e_ops_mc = isempty(e_ops),
-                progr_mc = ODEProgress(0), seeds = seeds,
+                progr_mc = ProgressBar(length(t_l), enable=false), seeds = seeds,
                 random_n = Ref(rand()), c_ops = get_data.(c_ops), cache_mc = cache_mc, 
                 weights_mc = weights_mc, cumsum_weights_mc = cumsum_weights_mc,
                 jump_times = jump_times, jump_which = jump_which,
