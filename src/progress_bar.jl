@@ -14,7 +14,6 @@ function ProgressBar(max_counts; enable=true, bar_width=30)
 end
 
 function next!(p::ProgressBar)
-    p.counter[] >= p.max_counts && return
 
     lock(p.lock)
 
@@ -28,26 +27,26 @@ function next!(p::ProgressBar)
     start_time = p.start_time
     
     percentage = counter / max_counts
-    precentage_100 = round(100 * percentage, digits=2)
+    percentage_100 = lpad(round(100 * percentage, digits=1), 5, " ")
     progress = floor(Int, bar_width * percentage)
 
-    # Calculate the elapsed time is seconds
-    elapsed_time = time() - start_time
+    # Calculate the elapsed time in seconds
+    elapsed_time = floor(Int, time() - start_time)
     # Convert the elapsed time into a string in hours, minutes and seconds
-    elapsed_time_str = string(floor(Int, elapsed_time / 3600), "h ", floor(Int, (elapsed_time % 3600) / 60), "m ", floor(Int, elapsed_time % 60), "s")
+    elapsed_time_str = string(elapsed_time ÷ 3600, "h ", lpad((elapsed_time % 3600) ÷ 60, 2, "0"), "m ", lpad(elapsed_time % 60, 2, "0"), "s")
 
     # Calculate the estimated time of arrival
-    eta = elapsed_time / counter * (max_counts - counter)
+    eta = floor(Int, elapsed_time ÷ counter * (max_counts - counter))
     # convert eta into a string in hours, minutes and seconds
-    eta_str = string(floor(Int, eta / 3600), "h ", floor(Int, (eta % 3600) / 60), "m ", floor(Int, eta % 60), "s")
+    eta_str = string(eta ÷ 3600, "h ", lpad((eta % 3600) ÷ 60, 2, "0"), "m ", lpad(eta % 60, 2, "0"), "s")
 
     # Construct the progress bar string
     bar = "[" * repeat("=", progress) * repeat(" ", bar_width - progress) * "]"
 
-    print("\rProgress: $bar $precentage_100%  --- Elapsed Time: $elapsed_time_str  (ETA: $eta_str)     ")
+    print("\rProgress: $bar $percentage_100% --- Elapsed Time: $elapsed_time_str (ETA: $eta_str)")
     flush(stdout)
 
     unlock(p.lock)
 
-    return
+    p.counter[] >= p.max_counts ? print("\n") : nothing
 end
