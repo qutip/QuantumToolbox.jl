@@ -1,7 +1,7 @@
 @testset "Quantum Objects" begin
     # unsupported size of array
     for a in [rand(ComplexF64, 3, 2), rand(ComplexF64, 2, 2, 2)]
-        for t in [Nothing, KetQuantumObject, BraQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject]
+        for t in [Nothing, KetQuantumObject, BraQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject, OperatorBraQuantumObject, OperatorKetQuantumObject]
             @test_throws DomainError Qobj(a, type=t)
         end
     end
@@ -12,9 +12,11 @@
     @test_throws DomainError Qobj(a,  type=BraQuantumObject)
     @test_throws DomainError Qobj(a,  type=OperatorQuantumObject)
     @test_throws DomainError Qobj(a,  type=SuperOperatorQuantumObject)
+    @test_throws DomainError Qobj(a,  type=OperatorBraQuantumObject)
     @test_throws DomainError Qobj(a', type=KetQuantumObject)
     @test_throws DomainError Qobj(a', type=OperatorQuantumObject)
     @test_throws DomainError Qobj(a', type=SuperOperatorQuantumObject)
+    @test_throws DomainError Qobj(a', type=OperatorKetQuantumObject)
     @test_throws DimensionMismatch Qobj(a, dims=[2])
     @test_throws DimensionMismatch Qobj(a', dims=[2])
     a2 = Qobj(a')
@@ -23,10 +25,14 @@
     @test isbra(a2) == true
     @test isoper(a2) == false
     @test issuper(a2) == false
+    @test isoperket(a2) == false
+    @test isoperbra(a2) == false
     @test isket(a3) == true
     @test isbra(a3) == false
     @test isoper(a3) == false
     @test issuper(a3) == false
+    @test isoperket(a3) == false
+    @test isoperbra(a3) == false
     @test Qobj(a3) == a3
     @test !(Qobj(a3) === a3)
     @test isket(Qobj(Matrix([2 3])')) == true
@@ -39,10 +45,48 @@
     @test isbra(a2) == false
     @test isoper(a2) == true
     @test issuper(a2) == false
+    @test isoperket(a2) == false
+    @test isoperbra(a2) == false
     @test isket(a3) == false
     @test isbra(a3) == false
     @test isoper(a3) == false
     @test issuper(a3) == true
+    @test isoperket(a3) == false
+    @test isoperbra(a3) == false
+    @test_throws DimensionMismatch Qobj(a, dims=[2])
+    @test_throws DimensionMismatch Qobj(a, dims=[2])
+
+    # Operator-Ket, Operator-Bra tests
+    H  = 0.3 * sigmax() + 0.7 * sigmaz()
+    L  = liouvillian(H)
+    a4 = rand(ComplexF64, 2, 2)
+    ρ  = Qobj(a4)
+    ρ_ket = Qobj(mat2vec(a4), type=OperatorKetQuantumObject)
+    ρ_bra = ρ_ket'
+    @test ρ_bra == Qobj(mat2vec(a4)', type=OperatorBraQuantumObject)
+    @test isket(ρ_ket) == false
+    @test isbra(ρ_ket) == false
+    @test isoper(ρ_ket) == false
+    @test issuper(ρ_ket) == false
+    @test isoperket(ρ_ket) == true
+    @test isoperbra(ρ_ket) == false
+    @test isket(ρ_bra) == false
+    @test isbra(ρ_bra) == false
+    @test isoper(ρ_bra) == false
+    @test issuper(ρ_bra) == false
+    @test isoperket(ρ_bra) == false
+    @test isoperbra(ρ_bra) == true
+    @test ρ_bra.dims == [2]
+    @test ρ_ket.dims == [2]
+    @test H * ρ ≈ spre(H)  * ρ
+    @test ρ * H ≈ spost(H) * ρ
+    @test H * ρ * H ≈ sprepost(H, H) * ρ
+    @test (L * ρ_ket).dims == [2]
+    @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
+    @test (ρ_bra * L')' == L * ρ_ket
+    @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
+    @test_throws DimensionMismatch Qobj(ρ_ket.data, type=OperatorKetQuantumObject, dims=[4])
+    @test_throws DimensionMismatch Qobj(ρ_bra.data, type=OperatorBraQuantumObject, dims=[4])
 
     a = Array(a)
     a4 = Qobj(a)
@@ -60,6 +104,7 @@
 
     @test transpose(transpose(a2)) == a2
     @test transpose(a2).data == transpose(a2.data)
+    @test adjoint(a2) ≈ transpose(conj(a2))
     @test adjoint(adjoint(a2)) == a2
     @test adjoint(a2).data == adjoint(a2.data)
 
@@ -151,6 +196,20 @@
     ψ_dims = ψ.dims
     ψ_size = size(ψ)
     @test opstring == "Quantum Object:   type=Bra   dims=$ψ_dims   size=$ψ_size\n$datastring"
+
+    ψ2 = Qobj(rand(ComplexF64, 4), type=OperatorKetQuantumObject)
+    opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
+    datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
+    ψ2_dims = ψ2.dims
+    ψ2_size = size(ψ2)
+    @test opstring == "Quantum Object:   type=Operator-Ket   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+
+    ψ2 = ψ2'
+    opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
+    datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
+    ψ2_dims = ψ2.dims
+    ψ2_size = size(ψ2)
+    @test opstring == "Quantum Object:   type=Operator-Bra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
     ψ = coherent(30, 3)
     α, δψ = get_coherence(ψ)
