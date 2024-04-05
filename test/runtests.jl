@@ -16,6 +16,7 @@ core_tests = [
     "low_rank_dynamics.jl",
     "negativity_and_partial_transpose.jl",
     "permutation.jl",
+    "progress_bar.jl",
     "quantum_objects.jl",
     "steady_state.jl",
     "time_evolution_and_partial_trace.jl",
