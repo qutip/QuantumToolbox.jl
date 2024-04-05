@@ -5,8 +5,8 @@ const GROUP = get(ENV, "GROUP", "All")
 
 const testdir = dirname(@__FILE__)
 
-# Put them in alphabetical order
-tests = [
+# Put core tests in alphabetical order
+core_tests = [
     "correlations_and_spectrum.jl",
     "dynamical_fock_dimension_mesolve.jl",
     "dynamical-shifted-fock.jl",
@@ -23,7 +23,7 @@ tests = [
 ]
 
 if (GROUP == "All") || (GROUP == "Core")
-    for test in tests
+    for test in core_tests
         include(joinpath(testdir, test))
     end
 end

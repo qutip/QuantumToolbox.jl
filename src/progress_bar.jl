@@ -1,4 +1,4 @@
-export ProgressBar
+export ProgressBar, next!
 
 struct ProgressBar{CT,T1<:Integer, T2<:Real}
     counter::CT
@@ -9,11 +9,11 @@ struct ProgressBar{CT,T1<:Integer, T2<:Real}
     lock::ReentrantLock
 end
 
-function ProgressBar(max_counts; enable=true, bar_width=30)
+function ProgressBar(max_counts::Int; enable::Bool=true, bar_width::Int=30)
     return ProgressBar(Ref{Int64}(0), max_counts, enable, bar_width, time(), ReentrantLock())
 end
 
-function next!(p::ProgressBar)
+function next!(p::ProgressBar, io::IO=stdout)
 
     lock(p.lock)
 
@@ -43,10 +43,10 @@ function next!(p::ProgressBar)
     # Construct the progress bar string
     bar = "[" * repeat("=", progress) * repeat(" ", bar_width - progress) * "]"
 
-    print("\rProgress: $bar $percentage_100% --- Elapsed Time: $elapsed_time_str (ETA: $eta_str)")
-    flush(stdout)
+    print(io, "\rProgress: $bar $percentage_100% --- Elapsed Time: $elapsed_time_str (ETA: $eta_str)")
+    flush(io)
 
     unlock(p.lock)
 
-    p.counter[] >= p.max_counts ? print("\n") : nothing
+    p.counter[] >= p.max_counts ? print(io, "\n") : nothing
 end

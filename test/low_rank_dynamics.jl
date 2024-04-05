@@ -66,7 +66,9 @@
         p0         = 0.,
         atol_inv   = 1e-6,
         adj_condition="variational",
-        Δt = 0.2, )
+        Δt = 0.2, 
+        progress = false
+    )
     lrsol = lr_mesolve(H, z, B, tl, c_ops; e_ops=e_ops, f_ops=(f_entropy,), opt=opt)
 
     # Test
