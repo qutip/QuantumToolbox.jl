@@ -1,5 +1,6 @@
 using Test
 using QuantumToolbox
+using Aqua
 
 const GROUP = get(ENV, "GROUP", "All")
 
@@ -7,6 +8,7 @@ const testdir = dirname(@__FILE__)
 
 # Put core tests in alphabetical order
 core_tests = [
+    "aqua.jl",
     "correlations_and_spectrum.jl",
     "dynamical_fock_dimension_mesolve.jl",
     "dynamical-shifted-fock.jl",

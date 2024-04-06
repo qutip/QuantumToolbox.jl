@@ -48,7 +48,7 @@ export tensor, ⊗
 export sinm, cosm
 export expect
 export WignerClenshaw, WignerLaguerre, wigner
-export row_major_reshape, tidyup, tidyup!, gaussian, trunc_op, meshgrid, sparse_to_dense, dense_to_sparse
+export row_major_reshape, tidyup, tidyup!, gaussian, meshgrid, sparse_to_dense, dense_to_sparse
 export get_data, mat2vec, vec2mat
 export ptrace, entropy_vn, entanglement
 export negativity, partial_transpose
