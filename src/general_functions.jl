@@ -115,7 +115,7 @@ end
 
 Convert a quantum object from vector (`OperatorKetQuantumObject`-type) to matrix (`OperatorQuantumObject`-type)
 """
-vec2mat(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} = QuantumObject(vec2mat(A.data), OperatorQuantumObject, A.dims)
+vec2mat(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} = QuantumObject(vec2mat(A.data), OperatorQuantumObject(), A.dims)
 
 @doc raw"""
     gaussian(x::Number, μ::Number, σ::Number)
@@ -400,4 +400,4 @@ end
 
 Convert a quantum object from matrix (`OperatorQuantumObject`-type) to vector (`OperatorKetQuantumObject`-type)
 """
-mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = QuantumObject(mat2vec(A.data), OperatorKetQuantumObject, A.dims)
+mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = QuantumObject(mat2vec(A.data), OperatorKetQuantumObject(), A.dims)

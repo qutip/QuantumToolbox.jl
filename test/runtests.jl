@@ -7,16 +7,20 @@ const GROUP = get(ENV, "GROUP", "All")
 
 const testdir = dirname(@__FILE__)
 
+# Put quality tests in alphabetical order
+quality_tests = [
+    "aqua.jl",
+    "jet.jl",
+]
+
 # Put core tests in alphabetical order
 core_tests = [
-    "aqua.jl",
     "correlations_and_spectrum.jl",
     "dynamical_fock_dimension_mesolve.jl",
     "dynamical-shifted-fock.jl",
     "eigenvalues_and_operators.jl",
     "entanglement.jl",
     "generalized_master_equation.jl",
-    "jet.jl",
     "low_rank_dynamics.jl",
     "negativity_and_partial_transpose.jl",
     "permutation.jl",
@@ -28,6 +32,10 @@ core_tests = [
 ]
 
 if (GROUP == "All") || (GROUP == "Core")
+    for test in quality_tests
+        include(joinpath(testdir, test))
+    end
+
     for test in core_tests
         include(joinpath(testdir, test))
     end
