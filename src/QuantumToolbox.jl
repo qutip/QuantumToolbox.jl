@@ -38,8 +38,8 @@ include("eigsolve.jl")
 include("negativity.jl")
 include("progress_bar.jl")
 
-export QuantumObject, Qobj, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
-export isket, isbra, isoper, issuper, ket2dm
+export QuantumObject, Qobj, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, OperatorBraQuantumObject, OperatorKetQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
+export isket, isbra, isoper, isoperbra, isoperket, issuper, ket2dm
 export spre, spost, sprepost, lindblad_dissipator
 export fock, basis, coherent
 export sigmam, sigmap, sigmax, sigmay, sigmaz

@@ -110,6 +110,12 @@ function vec2mat(A::AbstractVector)
     reshape(A, newsize, newsize)
 end
 
+@doc raw"""
+    vec2mat(A::QuantumObject)
+
+Convert a quantum object from vector (`OperatorKetQuantumObject`-type) to matrix (`OperatorQuantumObject`-type)
+"""
+vec2mat(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} = QuantumObject(vec2mat(A.data), OperatorQuantumObject, A.dims)
 
 @doc raw"""
     gaussian(x::Number, μ::Number, σ::Number)
@@ -388,3 +394,10 @@ function mat2vec(::Type{M}) where M <: Union{Adjoint{<:BlasFloat,<:SparseMatrixC
     (2 == npar) || error("Type $M is not supported.")
     return SparseVector{par[1], par[2]}
 end
+
+@doc raw"""
+    mat2vec(A::QuantumObject)
+
+Convert a quantum object from matrix (`OperatorQuantumObject`-type) to vector (`OperatorKetQuantumObject`-type)
+"""
+mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = QuantumObject(mat2vec(A.data), OperatorKetQuantumObject, A.dims)

@@ -34,6 +34,20 @@ Abstract type representing a super-operator ``\hat{\mathcal{O}}``.
 abstract type SuperOperatorQuantumObject <: QuantumObjectType end
 
 @doc raw"""
+    OperatorBraQuantumObject <: QuantumObjectType
+
+Abstract type representing a bra state in the super-operator formalism ``\langle\langle\rho|``.
+"""
+abstract type OperatorBraQuantumObject <: QuantumObjectType end
+
+@doc raw"""
+    OperatorKetQuantumObject <: QuantumObjectType
+
+Abstract type representing a ket state in the super-operator formalism ``|\rho\rangle\rangle``.
+"""
+abstract type OperatorKetQuantumObject <: QuantumObjectType end
+
+@doc raw"""
     mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
         data::MT
         type::Type{ObjType}
@@ -91,10 +105,12 @@ function QuantumObject(A::AbstractArray{T, N}; type::Type{ObjType}=Nothing, dims
     if dims === nothing 
         if (type <: KetQuantumObject) || (type <: OperatorQuantumObject)
             dims = [Size[1]]
-        elseif type <: SuperOperatorQuantumObject
+        elseif (type <: SuperOperatorQuantumObject) || (type <: OperatorKetQuantumObject)
             dims = [isqrt(Size[1])]
         elseif type <: BraQuantumObject
             dims = [Size[2]]
+        elseif type <: OperatorBraQuantumObject
+            dims = [isqrt(Size[2])]
         end
     end
 
@@ -120,6 +136,16 @@ end
 function _check_QuantumObject(type::Type{SuperOperatorQuantumObject}, prod_dims::Int, m::Int, n::Int)
     (m != n) ? throw(DomainError((m, n), "The dimension of the array is not compatible with SuperOperator type")) : nothing
     prod_dims != sqrt(m) ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
+end
+
+function _check_QuantumObject(type::Type{OperatorKetQuantumObject}, prod_dims::Int, m::Int, n::Int)
+    (n != 1) ? throw(DomainError((m, n), "The dimension of the array is not compatible with Operator-Ket type")) : nothing
+    prod_dims != sqrt(m) ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
+end
+
+function _check_QuantumObject(type::Type{OperatorBraQuantumObject}, prod_dims::Int, m::Int, n::Int)
+    (m != 1) ? throw(DomainError((m, n), "The dimension of the array is not compatible with Operator-Bra type")) : nothing
+    prod_dims != sqrt(n) ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
 end
 
 function QuantumObject(A::QuantumObject{<:AbstractArray}; type::Type{ObjType}=A.type, dims=A.dims) where
@@ -164,6 +190,20 @@ isket(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjec
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorQuantumObject`](@ref) state.
 """
 isoper(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: OperatorQuantumObject
+
+"""
+    isoperbra(A::QuantumObject)
+
+Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBraQuantumObject`](@ref) state.
+"""
+isoperbra(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: OperatorBraQuantumObject
+
+"""
+    isoperket(A::QuantumObject)
+
+Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKetQuantumObject`](@ref) state.
+"""
+isoperket(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = A.type <: OperatorKetQuantumObject
 
 """
     issuper(A::QuantumObject)
@@ -244,7 +284,7 @@ LinearAlgebra.Hermitian(A::QuantumObject{<:AbstractArray{T},OpType}, uplo::Symbo
     QuantumObject(Hermitian(A.data, uplo), A.type, A.dims)
 
 function Base.show(io::IO, ::MIME"text/plain", QO::QuantumObject{<:AbstractArray{T},OpType}) where
-{T,OpType<:Union{BraQuantumObject,KetQuantumObject,SuperOperatorQuantumObject}}
+{T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject,SuperOperatorQuantumObject}}
 
     op_data = QO.data
     op_dims = QO.dims
@@ -253,6 +293,10 @@ function Base.show(io::IO, ::MIME"text/plain", QO::QuantumObject{<:AbstractArray
         op_type = "Ket"
     elseif op_type <: BraQuantumObject
         op_type = "Bra"
+    elseif op_type <: OperatorKetQuantumObject
+        op_type = "Operator-Ket"
+    elseif op_type <: OperatorBraQuantumObject
+        op_type = "Operator-Bra"
     else
         op_type = "SuperOperator"
     end
@@ -305,16 +349,40 @@ function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},BraQuantumObjec
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     A.data * B.data
 end
+function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2}
+    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    QuantumObject(vec2mat(A.data * mat2vec(B.data)), OperatorQuantumObject, A.dims)
+end
+function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
+    B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject}) where {T1,T2}
+    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.data * B.data
+end
+function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject}) where {T1,T2}
+    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    QuantumObject(A.data * B.data, OperatorKetQuantumObject, A.dims)
+end
+function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
+    B::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject}) where {T1,T2}
+    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    QuantumObject(A.data * B.data, OperatorBraQuantumObject, A.dims)
+end
 
 LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T},OpType}, n::T1) where {T,T1<:Number,OpType<:QuantumObjectType} =
     QuantumObject(^(A.data, n), OpType, A.dims)
 LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T},OpType}, n::T1) where {T,T1<:Number,OpType<:QuantumObjectType} =
     QuantumObject(/(A.data, n), OpType, A.dims)
-LinearAlgebra.dot(A::QuantumObject{<:AbstractArray{T1},OpType},
-    B::QuantumObject{<:AbstractArray{T2},OpType}) where {T1<:Number,T2<:Number,OpType<:KetQuantumObject} =
+function LinearAlgebra.dot(A::QuantumObject{<:AbstractArray{T1},OpType}, B::QuantumObject{<:AbstractArray{T2},OpType}) where 
+{T1<:Number,T2<:Number,OpType<:Union{KetQuantumObject,OperatorKetQuantumObject}} 
+
+    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     LinearAlgebra.dot(A.data, B.data)
+end
 
-
+Base.conj(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
+    QuantumObject(conj(A.data), OpType, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(adjoint(A.data), OpType, A.dims)
 LinearAlgebra.transpose(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
@@ -323,6 +391,10 @@ LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},KetQuantumObject}) whe
     QuantumObject(adjoint(A.data), BraQuantumObject, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} =
     QuantumObject(adjoint(A.data), KetQuantumObject, A.dims)
+LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} =
+    QuantumObject(adjoint(A.data), OperatorBraQuantumObject, A.dims)
+LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorBraQuantumObject}) where {T} =
+    QuantumObject(adjoint(A.data), OperatorKetQuantumObject, A.dims)
 
 LinearAlgebra.inv(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(sparse(inv(Matrix(A.data))), OpType, A.dims)
