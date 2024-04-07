@@ -1,6 +1,7 @@
 using Test
 using QuantumToolbox
 using Aqua
+using JET
 
 const GROUP = get(ENV, "GROUP", "All")
 
@@ -15,6 +16,7 @@ core_tests = [
     "eigenvalues_and_operators.jl",
     "entanglement.jl",
     "generalized_master_equation.jl",
+    "JET.jl",
     "low_rank_dynamics.jl",
     "negativity_and_partial_transpose.jl",
     "permutation.jl",
