@@ -239,7 +239,7 @@ function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOpera
         T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m_dense
     end
 
-    solver.tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperatorQuantumObject, L₀.dims)
+    solver.tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperatorQuantumObject(), L₀.dims)
     return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, solver.tol), SuperOperatorQuantumObject(), L₀.dims)
 end
 

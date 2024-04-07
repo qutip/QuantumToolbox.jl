@@ -166,18 +166,24 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
  0.0+0.0im  0.5+0.0im
 ```
 """
-function ptrace(QO::QuantumObject{<:AbstractArray{T1},OpType}, sel::Vector{T2}) where
-    {T1,T2<:Int,OpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+function ptrace(QO::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, sel::Vector{T2}) where
+    {T1,T2<:Integer}
     
     length(QO.dims) == 1 && return QO
 
-    if isket(QO) || isbra(QO)
-        ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sel)
-        return QuantumObject(ρtr, dims=dkeep)
-    elseif isoper(QO)
-        ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sel)
-        return QuantumObject(ρtr, dims=dkeep)
-    end
+    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sel)
+    return QuantumObject(ρtr, dims=dkeep)
+end
+
+ptrace(QO::QuantumObject{<:AbstractArray{T1},BraQuantumObject}, sel::Vector{T2}) where {T1,T2<:Integer} = ptrace(QO', sel)
+
+function ptrace(QO::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, sel::Vector{T2}) where
+    {T1,T2<:Integer}
+    
+    length(QO.dims) == 1 && return QO
+
+    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sel)
+    return QuantumObject(ρtr, dims=dkeep)
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, [sel])
 
