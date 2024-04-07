@@ -1,4 +1,4 @@
-export lr_mesolve, lr_mesolveProblem, lr_mesolveOptions, LRTimeEvolutionSol, LRMesolveOptions
+export lr_mesolve, lr_mesolveProblem, LRTimeEvolutionSol, LRMesolveOptions
 
 #=======================================================#
 #                   STRUCT DEFINITIONS

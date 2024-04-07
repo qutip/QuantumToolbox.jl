@@ -19,19 +19,26 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
-DiffEqCallbacks = "2.24, <3.2.0, >=3.5.0"
+Aqua = "0.6, 0.7, 0.8"
+DiffEqCallbacks = "2.24, 3"
+Distributed = "<0.0.1, 1"
 FFTW = "1.5"
 Graphs = "1.7.4"
 IncompleteLU = "0.2"
+LinearAlgebra = "<0.0.1, 1"
 LinearMaps = "3"
 LinearSolve = "2"
 OrdinaryDiffEq = "6.30"
+Random = "<0.0.1, 1"
 Reexport = "1"
+SparseArrays = "<0.0.1, 1"
 SpecialFunctions = "2.2"
+Test = "<0.0.1, 1"
 julia = "1.7"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 
 [targets]
-test = ["Test"]
+test = ["Test", "Aqua"]
