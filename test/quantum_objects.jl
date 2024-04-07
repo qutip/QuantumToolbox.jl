@@ -59,11 +59,11 @@
     # Operator-Ket, Operator-Bra tests
     H  = 0.3 * sigmax() + 0.7 * sigmaz()
     L  = liouvillian(H)
-    a4 = rand(ComplexF64, 2, 2)
-    ρ  = Qobj(a4)
-    ρ_ket = Qobj(mat2vec(a4), type=OperatorKetQuantumObject)
+    ρ  = Qobj(rand(ComplexF64, 2, 2))
+    ρ_ket = mat2vec(ρ)
     ρ_bra = ρ_ket'
-    @test ρ_bra == Qobj(mat2vec(a4)', type=OperatorBraQuantumObject)
+    @test ρ_bra == Qobj(mat2vec(ρ.data)', type=OperatorBraQuantumObject)
+    @test ρ == vec2mat(ρ_ket)
     @test isket(ρ_ket) == false
     @test isbra(ρ_ket) == false
     @test isoper(ρ_ket) == false
