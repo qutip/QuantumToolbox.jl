@@ -1,4 +1,5 @@
 using Test
+using Pkg
 using QuantumToolbox
 
 const GROUP = get(ENV, "GROUP", "All")
@@ -27,4 +28,12 @@ if (GROUP == "All") || (GROUP == "Core")
     for test in core_tests
         include(joinpath(testdir, test))
     end
+end
+
+if (GROUP == "All") || (GROUP == "Code-Quality")
+    Pkg.activate("code-quality")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+    include(joinpath(testdir, "code-quality/aqua.jl"))
+    include(joinpath(testdir, "code-quality/jet.jl"))
 end
