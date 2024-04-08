@@ -368,7 +368,7 @@ end
         Additional keyword arguments for the ODEProblem.
 """
 function lr_mesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, z::AbstractArray{T2, 2}, B::AbstractArray{T2, 2}, t_l::AbstractVector, c_ops::AbstractVector=[]; 
-    e_ops::Tuple=(), f_ops::Tuple=(), opt::LRMesolveOptions{AlgType}=LRMesolveOptions{AlgType}(), kwargs...) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
+    e_ops::Tuple=(), f_ops::Tuple=(), opt::LRMesolveOptions{AlgType}=LRMesolveOptions(), kwargs...) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
     
     # Formulation of problem
     H -= 0.5im*sum([Γ'*Γ for Γ in c_ops])
@@ -426,7 +426,7 @@ function lr_mesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumO
   end
 
 function lr_mesolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, z::AbstractArray{T2, 2}, B::AbstractArray{T2, 2}, t_l::AbstractVector, c_ops::AbstractVector=[];
-    e_ops::Tuple=(), f_ops::Tuple=(), opt::LRMesolveOptions{AlgType}=LRMesolveOptions{AlgType}(), kwargs...) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
+    e_ops::Tuple=(), f_ops::Tuple=(), opt::LRMesolveOptions{AlgType}=LRMesolveOptions(), kwargs...) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
     
     prob = lr_mesolveProblem(H, z, B, t_l, c_ops; e_ops=e_ops, f_ops=f_ops, opt=opt, kwargs...);
     return lr_mesolve(prob; kwargs...)

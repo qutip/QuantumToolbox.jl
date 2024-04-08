@@ -88,7 +88,7 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractArray, OperatorQuantumOb
     ]
     return QuantumObject(
         reshape(PermutedDimsArray(reshape(ρ.data, (ρ.dims..., ρ.dims...)), pt_idx), size(ρ)),
-        OperatorQuantumObject,
+        OperatorQuantumObject(),
         ρ.dims
     )
 end
@@ -130,7 +130,7 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray, OperatorQua
 
     return QuantumObject(
         sparse(I_pt, J_pt, V_pt, M, N),
-        OperatorQuantumObject,
+        OperatorQuantumObject(),
         ρ.dims
     )
 end

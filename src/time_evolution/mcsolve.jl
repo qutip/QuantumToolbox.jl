@@ -309,7 +309,7 @@ function mcsolve(H::QuantumObject{MT1,OperatorQuantumObject},
     kwargs...) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
 
     if !isnothing(seeds) && length(seeds)!=n_traj
-        throw(ArgumentError("Length of seed must match n_traj ($n_traj), but got $(length(seed))"))
+        throw(ArgumentError("Length of seeds must match n_traj ($n_traj), but got $(length(seeds))"))
     end 
 
     ens_prob_mc = mcsolveEnsembleProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops, 

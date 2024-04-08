@@ -1,6 +1,6 @@
 using Test
+using Pkg
 using QuantumToolbox
-using Aqua
 
 const GROUP = get(ENV, "GROUP", "All")
 
@@ -8,7 +8,6 @@ const testdir = dirname(@__FILE__)
 
 # Put core tests in alphabetical order
 core_tests = [
-    "aqua.jl",
     "correlations_and_spectrum.jl",
     "dynamical_fock_dimension_mesolve.jl",
     "dynamical-shifted-fock.jl",
@@ -29,4 +28,10 @@ if (GROUP == "All") || (GROUP == "Core")
     for test in core_tests
         include(joinpath(testdir, test))
     end
+end
+
+if (GROUP == "All") || (GROUP == "Code-Quality")
+    Pkg.add(["Aqua", "JET"])
+    include(joinpath(testdir, "aqua.jl"))
+    include(joinpath(testdir, "jet.jl"))
 end

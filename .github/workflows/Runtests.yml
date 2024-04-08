@@ -28,6 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # for core tests
         version:
           - '1.8'
           - '1.9'
@@ -40,6 +41,14 @@ jobs:
           - x64
         group:
           - Core
+
+        # for code quality tests
+        include:
+          - version: '1'
+            os: 'ubuntu-latest'
+            arch: 'x64'
+            group: 'Code-Quality'
+
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
