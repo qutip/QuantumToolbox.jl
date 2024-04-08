@@ -55,7 +55,7 @@ Constructor representing a super-operator ``\hat{\mathcal{O}}``.
 struct SuperOperatorQuantumObject <: QuantumObjectType end
 
 @doc raw"""
-    const SuperOperator = OperatorQuantumObject()
+    const SuperOperator = SuperOperatorQuantumObject()
 
 A constant representing the type of [`SuperOperatorQuantumObject`](@ref)
 """
