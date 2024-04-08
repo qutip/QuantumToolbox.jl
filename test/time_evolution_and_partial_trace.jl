@@ -12,6 +12,8 @@
     e_ops = [a_d * a]
     sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=Vern7(), progress_bar=false)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
+    @test ptrace(sol.states[end], 1) ≈ ptrace(ket2dm(sol.states[end]), 1)
+    @test ptrace(sol.states[end]', 1) ≈ ptrace(sol.states[end], 1)
 
     a = destroy(N)
     a_d = a'
