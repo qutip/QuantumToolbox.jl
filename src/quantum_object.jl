@@ -13,11 +13,25 @@ Constructor representing a bra state ``\bra{\psi}``.
 struct BraQuantumObject <: QuantumObjectType end
 
 @doc raw"""
+    const Bra = BraQuantumObject()
+
+A constant representing the type of [`BraQuantumObject`](@ref)
+"""
+const Bra = BraQuantumObject()
+
+@doc raw"""
     KetQuantumObject <: QuantumObjectType
 
 Constructor representing a ket state ``\ket{\psi}``.
 """
 struct KetQuantumObject <: QuantumObjectType end
+
+@doc raw"""
+    const Ket = KetQuantumObject()
+
+A constant representing the type of [`KetQuantumObject`](@ref)
+"""
+const Ket = KetQuantumObject()
 
 @doc raw"""
     OperatorQuantumObject <: QuantumObjectType
@@ -27,11 +41,25 @@ Constructor representing an operator ``\hat{O}``.
 struct OperatorQuantumObject <: QuantumObjectType end
 
 @doc raw"""
+    const Operator = OperatorQuantumObject()
+
+A constant representing the type of [`OperatorQuantumObject`](@ref)
+"""
+const Operator = OperatorQuantumObject()
+
+@doc raw"""
     SuperOperatorQuantumObject <: QuantumObjectType
 
 Constructor representing a super-operator ``\hat{\mathcal{O}}``.
 """
 struct SuperOperatorQuantumObject <: QuantumObjectType end
+
+@doc raw"""
+    const SuperOperator = OperatorQuantumObject()
+
+A constant representing the type of [`SuperOperatorQuantumObject`](@ref)
+"""
+const SuperOperator = SuperOperatorQuantumObject()
 
 @doc raw"""
     OperatorBraQuantumObject <: QuantumObjectType
@@ -41,11 +69,25 @@ Constructor representing a bra state in the super-operator formalism ``\langle\l
 struct OperatorBraQuantumObject <: QuantumObjectType end
 
 @doc raw"""
+    const OperatorBra = OperatorBraQuantumObject()
+
+A constant representing the type of [`OperatorBraQuantumObject`](@ref)
+"""
+const OperatorBra = OperatorBraQuantumObject()
+
+@doc raw"""
     OperatorKetQuantumObject <: QuantumObjectType
 
 Constructor representing a ket state in the super-operator formalism ``|\rho\rangle\rangle``.
 """
 struct OperatorKetQuantumObject <: QuantumObjectType end
+
+@doc raw"""
+    const OperatorKet = OperatorKetQuantumObject()
+
+A constant representing the type of [`OperatorKetQuantumObject`](@ref)
+"""
+const OperatorKet = OperatorKetQuantumObject()
 
 @doc raw"""
     mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
@@ -91,11 +133,11 @@ function QuantumObject(A::AbstractArray{T, N}; type::ObjType=nothing, dims=nothi
     # decide QuantumObjectType from the size of A
     if type === nothing
         if Size[1] == Size[2]
-            type = OperatorQuantumObject()
+            type = Operator
         elseif Size[2] == 1
-            type = KetQuantumObject()
+            type = Ket
         elseif Size[1] == 1
-            type = BraQuantumObject()
+            type = Bra
         else
             throw(DomainError(Size, "The dimension of the array is not compatible with Quantum Object"))
         end
@@ -332,17 +374,17 @@ end
 function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    QuantumObject(A.data * B.data, KetQuantumObject(), A.dims)
+    QuantumObject(A.data * B.data, Ket, A.dims)
 end
 function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},BraQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    QuantumObject(A.data * B.data, BraQuantumObject(), A.dims)
+    QuantumObject(A.data * B.data, Bra, A.dims)
 end
 function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},BraQuantumObject}) where {T1,T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    QuantumObject(A.data * B.data, OperatorQuantumObject(), A.dims)
+    QuantumObject(A.data * B.data, Operator, A.dims)
 end
 function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},BraQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2}
@@ -352,7 +394,7 @@ end
 function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    QuantumObject(vec2mat(A.data * mat2vec(B.data)), OperatorQuantumObject(), A.dims)
+    QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator, A.dims)
 end
 function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject}) where {T1,T2}
@@ -362,12 +404,12 @@ end
 function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject}) where {T1,T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    QuantumObject(A.data * B.data, OperatorKetQuantumObject(), A.dims)
+    QuantumObject(A.data * B.data, OperatorKet, A.dims)
 end
 function LinearAlgebra.:(*)(A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject}) where {T1,T2}
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-    QuantumObject(A.data * B.data, OperatorBraQuantumObject(), A.dims)
+    QuantumObject(A.data * B.data, OperatorBra, A.dims)
 end
 
 LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T},OpType}, n::T1) where {T,T1<:Number,OpType<:QuantumObjectType} =
@@ -388,13 +430,13 @@ LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpTy
 LinearAlgebra.transpose(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(transpose(A.data), OpType(), A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} =
-    QuantumObject(adjoint(A.data), BraQuantumObject(), A.dims)
+    QuantumObject(adjoint(A.data), Bra, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} =
-    QuantumObject(adjoint(A.data), KetQuantumObject(), A.dims)
+    QuantumObject(adjoint(A.data), Ket, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} =
-    QuantumObject(adjoint(A.data), OperatorBraQuantumObject(), A.dims)
+    QuantumObject(adjoint(A.data), OperatorBra, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorBraQuantumObject}) where {T} =
-    QuantumObject(adjoint(A.data), OperatorKetQuantumObject(), A.dims)
+    QuantumObject(adjoint(A.data), OperatorKet, A.dims)
 
 LinearAlgebra.inv(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(sparse(inv(Matrix(A.data))), OpType(), A.dims)

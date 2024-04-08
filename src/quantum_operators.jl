@@ -11,7 +11,7 @@ The optional argument `Id_cache` can be used to pass a precomputed identity matr
 the same function is applied multiple times with a known Hilbert space dimension.
 """
 spre(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache=I(size(O,1))) where {T} =
-    QuantumObject(kron(Id_cache, O.data), SuperOperatorQuantumObject(), O.dims)
+    QuantumObject(kron(Id_cache, O.data), SuperOperator, O.dims)
 
 @doc raw"""
     spost(O::QuantumObject)
@@ -26,7 +26,7 @@ The optional argument `Id_cache` can be used to pass a precomputed identity matr
 the same function is applied multiple times with a known Hilbert space dimension.
 """
 spost(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache=I(size(O,1))) where {T} =
-    QuantumObject(kron(sparse(transpose(sparse(O.data))), Id_cache), SuperOperatorQuantumObject(), O.dims) # TODO: fix the sparse conversion
+    QuantumObject(kron(sparse(transpose(sparse(O.data))), Id_cache), SuperOperator, O.dims) # TODO: fix the sparse conversion
 
 @doc raw"""
     sprepost(A::QuantumObject, B::QuantumObject)
@@ -38,7 +38,7 @@ Since the density matrix is vectorized, this super-operator is always
 a matrix, obtained from ``\mathcal{O} \left(\hat{A}, \hat{B}\right) \boldsymbol{\cdot} = \text{spre}(A) * \text{spost}(B)``.
 """
 sprepost(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-         B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = QuantumObject(kron(sparse(transpose(sparse(B.data))), A.data), SuperOperatorQuantumObject(), A.dims) # TODO: fix the sparse conversion
+         B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = QuantumObject(kron(sparse(transpose(sparse(B.data))), A.data), SuperOperator, A.dims) # TODO: fix the sparse conversion
 
 @doc raw"""
     lindblad_dissipator(O::QuantumObject, Id_cache=I(size(O,1))
@@ -83,7 +83,7 @@ julia> fock(20, 3)' * a * fock(20, 4)
 2.0 + 0.0im
 ```
 """
-destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:N-1))), OperatorQuantumObject(), [N])
+destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:N-1))), Operator, [N])
 
 @doc raw"""
     create(N::Int)
@@ -107,7 +107,7 @@ julia> fock(20, 4)' * a_d * fock(20, 3)
 2.0 + 0.0im
 ```
 """
-create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:N-1))), OperatorQuantumObject(), [N])
+create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:N-1))), Operator, [N])
 
 @doc raw"""
     sigmap()
@@ -149,7 +149,7 @@ sigmaz() = sigmap() * sigmam() - sigmam() * sigmap()
 
 Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
 """
-eye(N::Int; type::ObjType=OperatorQuantumObject(), dims::Vector{Int}=[N]) where 
+eye(N::Int; type::ObjType=Operator, dims::Vector{Int}=[N]) where 
     {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(Diagonal(ones(ComplexF64, N)), type, dims)
 
 @doc raw"""
@@ -157,7 +157,7 @@ eye(N::Int; type::ObjType=OperatorQuantumObject(), dims::Vector{Int}=[N]) where
 
 Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
 """
-qeye(N::Int; type::ObjType=OperatorQuantumObject(), dims::Vector{Int}=[N]) where 
+qeye(N::Int; type::ObjType=Operator, dims::Vector{Int}=[N]) where 
     {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eye(N, type=type, dims=dims)
 
 @doc raw"""
@@ -168,11 +168,11 @@ to specify the list of dimensions `dims` if different subsystems are present.
 """
 function fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)
     if sparse
-        return QuantumObject(sparsevec([pos+1], [1.0+0im], N), KetQuantumObject(), dims)
+        return QuantumObject(sparsevec([pos+1], [1.0+0im], N), Ket, dims)
     else
         array = zeros(ComplexF64, N)
         array[pos+1] = 1
-        return QuantumObject(array, KetQuantumObject(), dims)
+        return QuantumObject(array, Ket, dims)
     end
 end
 

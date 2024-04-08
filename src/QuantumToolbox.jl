@@ -39,6 +39,7 @@ include("negativity.jl")
 include("progress_bar.jl")
 
 export QuantumObject, Qobj, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, OperatorBraQuantumObject, OperatorKetQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
+export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 export isket, isbra, isoper, isoperbra, isoperket, issuper, ket2dm
 export spre, spost, sprepost, lindblad_dissipator
 export fock, basis, coherent

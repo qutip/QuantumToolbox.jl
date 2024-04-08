@@ -8,11 +8,17 @@ CurrentModule = QuantumToolbox
 
 ```@docs
 BraQuantumObject
+Bra
 KetQuantumObject
+Ket
 OperatorQuantumObject
+Operator
 OperatorBraQuantumObject
+OperatorBra
 OperatorKetQuantumObject
+OperatorKet
 SuperOperatorQuantumObject
+SuperOperator
 QuantumObject
 Qobj
 ket2dm
