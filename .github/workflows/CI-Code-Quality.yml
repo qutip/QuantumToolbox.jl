@@ -43,12 +43,12 @@ jobs:
       # - uses: julia-actions/julia-buildpkg@v1
       - name: Create and set up the code-quality environment
         run: |
-          julia --project=test/code-quality -e '
+          julia --color=yes --project=test/code-quality -e '
             import Pkg
             Pkg.develop(path=".") # Develop the QuantumToolbox package
             Pkg.instantiate()
             Pkg.precompile()
           '
       - name: Run the code-quality tests
-        run: julia --project=test/code-quality test/code-quality/runtests.jl
+        run: julia --color=yes --project=test/code-quality test/code-quality/runtests.jl
 
