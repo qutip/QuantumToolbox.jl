@@ -1,4 +1,4 @@
-name: Code Quality Tests
+name: Runtests
 
 on:
   push:
@@ -28,10 +28,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [1]
-        os: [ubuntu-latest]
-        arch: [x64]
-        group: ['Code Quality']
+        # for core tests
+        version:
+          - '1.8'
+          - '1.9'
+          - '1.10'
+        os:
+          - ubuntu-latest
+          - macOS-latest
+          - windows-latest
+        arch:
+          - x64
+        group:
+          - Core
+
+        # for code quality tests
+        include:
+          - version: '1'
+            os: 'ubuntu-latest'
+            arch: 'x64'
+            group: 'Code-Quality'
 
     steps:
       - uses: actions/checkout@v4
@@ -40,15 +56,15 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v1
-      # - uses: julia-actions/julia-buildpkg@v1
-      - name: Create and set up the code-quality environment
-        run: |
-          julia --color=yes --project=test/code-quality -e '
-            import Pkg
-            Pkg.develop(path=".") # Develop the QuantumToolbox package
-            Pkg.instantiate()
-            Pkg.precompile()
-          '
-      - name: Run the code-quality tests
-        run: julia --color=yes --project=test/code-quality test/code-quality/runtests.jl
-
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+        env:
+          GROUP: ${{ matrix.group }}
+      - uses: julia-actions/julia-processcoverage@v1
+        with:
+          directories: src
+      - uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
