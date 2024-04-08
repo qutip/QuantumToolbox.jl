@@ -44,7 +44,7 @@ jobs:
 
         # for code quality
         include:
-          - julia-version: '1'
+          - version: '1'
             os: 'ubuntu-latest'
             arch: 'x64'
             group: 'Code Quality'
