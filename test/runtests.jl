@@ -31,9 +31,7 @@ if (GROUP == "All") || (GROUP == "Core")
 end
 
 if (GROUP == "All") || (GROUP == "Code-Quality")
-    Pkg.activate("code-quality")
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.instantiate()
-    include(joinpath(testdir, "code-quality/aqua.jl"))
-    include(joinpath(testdir, "code-quality/jet.jl"))
+    Pkg.add(["Aqua", "JET"])
+    include(joinpath(testdir, "aqua.jl"))
+    include(joinpath(testdir, "jet.jl"))
 end
