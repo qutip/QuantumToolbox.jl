@@ -1,0 +1,54 @@
+name: Code Quality Tests
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    branches:
+      - 'main'
+    paths-ignore:
+      - 'docs/**'
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} ( ${{ matrix.group }} )
+    runs-on: ${{ matrix.os }}
+    permissions: # needed to allow julia-actions/cache to delete old caches that it has created
+      actions: write
+      contents: read
+    if: ${{ !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [1]
+        os: [ubuntu-latest]
+        arch: [x64]
+        group: ['Code Quality']
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/cache@v1
+      # - uses: julia-actions/julia-buildpkg@v1
+      - name: Create and set up the code-quality environment
+        run: |
+          julia --project=test/code-quality -e '
+            import Pkg
+            Pkg.develop(path=".") # Develop the QuantumToolbox package
+            Pkg.instantiate()
+            Pkg.precompile()
+          '
+      - name: Run the code-quality tests
+        run: julia --project=test/code-quality test/code-quality/runtests.jl
+

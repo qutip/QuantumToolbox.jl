@@ -42,13 +42,6 @@ jobs:
         group:
           - Core
 
-        # for code quality
-        include:
-          - version: '1'
-            os: 'ubuntu-latest'
-            arch: 'x64'
-            group: 'Code Quality'
-
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
