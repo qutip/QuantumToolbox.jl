@@ -1,7 +1,5 @@
 using Test
 using QuantumToolbox
-using Aqua
-using JET
 
 const GROUP = get(ENV, "GROUP", "All")
 
@@ -26,6 +24,8 @@ core_tests = [
 ]
 
 if (GROUP == "All") || (GROUP == "Code Quality")
+    using Aqua
+    using JET
     include(joinpath(testdir, "aqua.jl"))
     include(joinpath(testdir, "jet.jl"))
 end
