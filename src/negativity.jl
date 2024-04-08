@@ -6,7 +6,7 @@ where ``\rho^{\Gamma}`` is the partial transpose of ``\rho`` with respect to the
 and ``\Vert X \Vert_1=\Tr\sqrt{X^\dagger X}`` is the trace norm.
 
 # Arguments
-- `ρ::QuantumObject`: The density matrix (`ρ.type` must be `OperatorQuantumObject`).
+- `ρ::QuantumObject`: The density matrix (`ρ.type` must be [`OperatorQuantumObject`](@ref)).
 - `subsys::Int`: an index that indicates which subsystem to compute the negativity for.
 - `logarithmic::Bool`: choose whether to calculate logarithmic negativity or not. Default as `false`
 
@@ -60,7 +60,7 @@ end
 Return the partial transpose of a density matrix ``\rho``, where `mask` is an array/vector with length that equals the length of `ρ.dims`. The elements in `mask` are boolean (`true` or `false`) which indicates whether or not the corresponding subsystem should be transposed.
 
 # Arguments
-- `ρ::QuantumObject`: The density matrix (`ρ.type` must be `OperatorQuantumObject`).
+- `ρ::QuantumObject`: The density matrix (`ρ.type` must be [`OperatorQuantumObject`](@ref)).
 - `mask::Vector{Bool}`: A boolean vector selects which subsystems should be transposed.
 
 # Returns
@@ -88,7 +88,7 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractArray, OperatorQuantumOb
     ]
     return QuantumObject(
         reshape(PermutedDimsArray(reshape(ρ.data, (ρ.dims..., ρ.dims...)), pt_idx), size(ρ)),
-        OperatorQuantumObject(),
+        Operator,
         ρ.dims
     )
 end
@@ -130,7 +130,7 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray, OperatorQua
 
     return QuantumObject(
         sparse(I_pt, J_pt, V_pt, M, N),
-        OperatorQuantumObject(),
+        Operator,
         ρ.dims
     )
 end

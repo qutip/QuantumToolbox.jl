@@ -194,7 +194,7 @@ function liouvillian_generalized(H::QuantumObject{MT, OperatorQuantumObject}, fi
     Ω1 = kron(Ω, M1)
     Ω2 = kron(M1, Ω)
     Ωdiff = Ω1 .- Ω2
-    F2 = QuantumObject(gaussian.(Ωdiff, 0, σ), SuperOperatorQuantumObject(), dims)
+    F2 = QuantumObject(gaussian.(Ωdiff, 0, σ), SuperOperator, dims)
     F2 = dense_to_sparse(F2, tol)
 
     L = liouvillian(H_d)
@@ -239,8 +239,8 @@ function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOpera
         T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m_dense
     end
 
-    solver.tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperatorQuantumObject(), L₀.dims)
-    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, solver.tol), SuperOperatorQuantumObject(), L₀.dims)
+    solver.tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator, L₀.dims)
+    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, solver.tol), SuperOperator, L₀.dims)
 end
 
 function steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject};
@@ -270,7 +270,7 @@ function _steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumOb
     ρss_vec = L_tmp \ v0
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    QuantumObject(ρss, OperatorQuantumObject(), L.dims)
+    QuantumObject(ρss, Operator, L.dims)
 end
 
 @doc raw"""
