@@ -202,14 +202,14 @@
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
     ψ2_dims = ψ2.dims
     ψ2_size = size(ψ2)
-    @test opstring == "Quantum Object:   type=Operator-Ket   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+    @test opstring == "Quantum Object:   type=OperatorKet   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
     ψ2 = ψ2'
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
     ψ2_dims = ψ2.dims
     ψ2_size = size(ψ2)
-    @test opstring == "Quantum Object:   type=Operator-Bra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+    @test opstring == "Quantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
     ψ = coherent(30, 3)
     α, δψ = get_coherence(ψ)

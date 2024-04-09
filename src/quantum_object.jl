@@ -181,12 +181,12 @@ function _check_QuantumObject(type::SuperOperatorQuantumObject, prod_dims::Int, 
 end
 
 function _check_QuantumObject(type::OperatorKetQuantumObject, prod_dims::Int, m::Int, n::Int)
-    (n != 1) ? throw(DomainError((m, n), "The dimension of the array is not compatible with Operator-Ket type")) : nothing
+    (n != 1) ? throw(DomainError((m, n), "The dimension of the array is not compatible with OperatorKet type")) : nothing
     prod_dims != sqrt(m) ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
 end
 
 function _check_QuantumObject(type::OperatorBraQuantumObject, prod_dims::Int, m::Int, n::Int)
-    (m != 1) ? throw(DomainError((m, n), "The dimension of the array is not compatible with Operator-Bra type")) : nothing
+    (m != 1) ? throw(DomainError((m, n), "The dimension of the array is not compatible with OperatorBra type")) : nothing
     prod_dims != sqrt(n) ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
 end
 
@@ -336,9 +336,9 @@ function Base.show(io::IO, ::MIME"text/plain", QO::QuantumObject{<:AbstractArray
     elseif op_type isa BraQuantumObject
         op_type = "Bra"
     elseif op_type isa OperatorKetQuantumObject
-        op_type = "Operator-Ket"
+        op_type = "OperatorKet"
     elseif op_type isa OperatorBraQuantumObject
-        op_type = "Operator-Bra"
+        op_type = "OperatorBra"
     else
         op_type = "SuperOperator"
     end
