@@ -114,7 +114,7 @@ julia> a isa QuantumObject
 true
 ```
 """
-mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: AbstractQuantumObject
+struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: AbstractQuantumObject
     data::MT
     type::ObjType
     dims::Vector{Int}
