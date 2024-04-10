@@ -36,11 +36,9 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 # Examples
 One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-type eigenvectors by:
 ```
-julia> result = eigenstates(sigmax())
+julia> result = eigenstates(sigmax());
 
-julia> λ, ψ = result
-
-julia> λ, ψ, T = result
+julia> λ, ψ, T = result;
 
 julia> λ
 2-element Vector{ComplexF64}:
@@ -489,8 +487,8 @@ Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
      ⋅              ⋅      1.73205+0.0im          ⋅      2.0+0.0im
      ⋅              ⋅              ⋅          2.0+0.0im      ⋅
 
-julia> E, U = eigen(H)
-Eigen{ComplexF64, Float64, Matrix{ComplexF64}, Vector{Float64}}
+julia> E, ψ, U = eigen(H)
+EigsolveResult:   type=Operator   dims=[5]
 values:
 5-element Vector{Float64}:
  -2.8569700138728
@@ -506,9 +504,7 @@ vectors:
  -0.638838-0.0im  -0.303127-0.0im     -0.303127-0.0im  0.638838+0.0im
   0.447214+0.0im   0.447214+0.0im     -0.447214-0.0im  0.447214-0.0im
 
-julia> ψ_1 = QuantumObject(U[:,1], dims=H.dims);
-
-julia> expect(H, ψ_1) ≈ E[1]
+julia> expect(H, ψ[1]) ≈ E[1]
 true
 ```
 """
