@@ -534,7 +534,7 @@ Calculate the eigenenergies
 
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues
-- `sparse::Bool`: if `false` call [`eigenvals(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
+- `sparse::Bool`: if `false` call [`eigvals(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
 - `kwargs`: Additional keyword arguments passed to the solver
 
 # Returns
@@ -556,7 +556,7 @@ Calculate the eigenvalues and corresponding eigenvectors
 
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues and eigenvectors
-- `sparse::Bool`: if `false` call [`eigenvals(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
+- `sparse::Bool`: if `false` call [`eigen(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
 - `kwargs`: Additional keyword arguments passed to the solver
 
 # Returns
