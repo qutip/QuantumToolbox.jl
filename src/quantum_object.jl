@@ -11,6 +11,7 @@ abstract type QuantumObjectType end
 Constructor representing a bra state ``\bra{\psi}``.
 """
 struct BraQuantumObject <: QuantumObjectType end
+Base.show(io::IO, T::BraQuantumObject) = print(io, "Bra")
 
 @doc raw"""
     const Bra = BraQuantumObject()
@@ -25,6 +26,7 @@ const Bra = BraQuantumObject()
 Constructor representing a ket state ``\ket{\psi}``.
 """
 struct KetQuantumObject <: QuantumObjectType end
+Base.show(io::IO, T::KetQuantumObject) = print(io, "Ket")
 
 @doc raw"""
     const Ket = KetQuantumObject()
@@ -39,6 +41,7 @@ const Ket = KetQuantumObject()
 Constructor representing an operator ``\hat{O}``.
 """
 struct OperatorQuantumObject <: QuantumObjectType end
+Base.show(io::IO, T::OperatorQuantumObject) = print(io, "Operator")
 
 @doc raw"""
     const Operator = OperatorQuantumObject()
@@ -53,6 +56,7 @@ const Operator = OperatorQuantumObject()
 Constructor representing a super-operator ``\hat{\mathcal{O}}``.
 """
 struct SuperOperatorQuantumObject <: QuantumObjectType end
+Base.show(io::IO, T::SuperOperatorQuantumObject) = print(io, "SuperOperator")
 
 @doc raw"""
     const SuperOperator = SuperOperatorQuantumObject()
@@ -67,6 +71,7 @@ const SuperOperator = SuperOperatorQuantumObject()
 Constructor representing a bra state in the super-operator formalism ``\langle\langle\rho|``.
 """
 struct OperatorBraQuantumObject <: QuantumObjectType end
+Base.show(io::IO, T::OperatorBraQuantumObject) = print(io, "OperatorBra")
 
 @doc raw"""
     const OperatorBra = OperatorBraQuantumObject()
@@ -81,6 +86,7 @@ const OperatorBra = OperatorBraQuantumObject()
 Constructor representing a ket state in the super-operator formalism ``|\rho\rangle\rangle``.
 """
 struct OperatorKetQuantumObject <: QuantumObjectType end
+Base.show(io::IO, T::OperatorKetQuantumObject) = print(io, "OperatorKet")
 
 @doc raw"""
     const OperatorKet = OperatorKetQuantumObject()
@@ -325,33 +331,17 @@ LinearAlgebra.Hermitian(A::QuantumObject{<:AbstractArray{T},OpType}, uplo::Symbo
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(Hermitian(A.data, uplo), A.type, A.dims)
 
-function Base.show(io::IO, ::MIME"text/plain", QO::QuantumObject{<:AbstractArray{T},OpType}) where
+function Base.show(io::IO, QO::QuantumObject{<:AbstractArray{T},OpType}) where
 {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject,SuperOperatorQuantumObject}}
-
     op_data = QO.data
-    op_dims = QO.dims
-    op_type = QO.type
-    if op_type isa KetQuantumObject
-        op_type = "Ket"
-    elseif op_type isa BraQuantumObject
-        op_type = "Bra"
-    elseif op_type isa OperatorKetQuantumObject
-        op_type = "OperatorKet"
-    elseif op_type isa OperatorBraQuantumObject
-        op_type = "OperatorBra"
-    else
-        op_type = "SuperOperator"
-    end
-    println(io, "Quantum Object:   type=", op_type, "   dims=", op_dims, "   size=", size(op_data))
-    show(io, "text/plain", op_data)
+    println(io, "Quantum Object:   type=", QO.type, "   dims=", QO.dims, "   size=", size(op_data))
+    show(io, MIME("text/plain"), op_data)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", QO::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:OperatorQuantumObject}
+function Base.show(io::IO, QO::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:OperatorQuantumObject}
     op_data = QO.data
-    op_dims = QO.dims
-    op_type = "Operator"
-    println(io, "Quantum Object:   type=", op_type, "   dims=", op_dims, "   size=", size(op_data), "   ishermitian=", ishermitian(op_data))
-    show(io, "text/plain", op_data)
+    println(io, "Quantum Object:   type=", QO.type, "   dims=", QO.dims, "   size=", size(op_data), "   ishermitian=", ishermitian(op_data))
+    show(io, MIME("text/plain"), op_data)
 end
 
 for op in (:(+), :(-), :(*))
