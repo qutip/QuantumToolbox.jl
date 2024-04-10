@@ -11,7 +11,7 @@ abstract type QuantumObjectType end
 Constructor representing a bra state ``\bra{\psi}``.
 """
 struct BraQuantumObject <: QuantumObjectType end
-Base.show(io::IO, ::MIME"text/plain", T::BraQuantumObject) print(io, "Bra")
+Base.show(io::IO, ::MIME"text/plain", T::BraQuantumObject) = print(io, "Bra")
 
 @doc raw"""
     const Bra = BraQuantumObject()
@@ -26,7 +26,7 @@ const Bra = BraQuantumObject()
 Constructor representing a ket state ``\ket{\psi}``.
 """
 struct KetQuantumObject <: QuantumObjectType end
-Base.show(io::IO, ::MIME"text/plain", T::KetQuantumObject) print(io, "Ket")
+Base.show(io::IO, ::MIME"text/plain", T::KetQuantumObject) = print(io, "Ket")
 
 @doc raw"""
     const Ket = KetQuantumObject()
@@ -41,7 +41,7 @@ const Ket = KetQuantumObject()
 Constructor representing an operator ``\hat{O}``.
 """
 struct OperatorQuantumObject <: QuantumObjectType end
-Base.show(io::IO, ::MIME"text/plain", T::OperatorQuantumObject) print(io, "Operator")
+Base.show(io::IO, ::MIME"text/plain", T::OperatorQuantumObject) = print(io, "Operator")
 
 @doc raw"""
     const Operator = OperatorQuantumObject()
@@ -56,7 +56,7 @@ const Operator = OperatorQuantumObject()
 Constructor representing a super-operator ``\hat{\mathcal{O}}``.
 """
 struct SuperOperatorQuantumObject <: QuantumObjectType end
-Base.show(io::IO, ::MIME"text/plain", T::SuperOperatorQuantumObject) print(io, "SuperOperator")
+Base.show(io::IO, ::MIME"text/plain", T::SuperOperatorQuantumObject) = print(io, "SuperOperator")
 
 @doc raw"""
     const SuperOperator = SuperOperatorQuantumObject()
@@ -71,7 +71,7 @@ const SuperOperator = SuperOperatorQuantumObject()
 Constructor representing a bra state in the super-operator formalism ``\langle\langle\rho|``.
 """
 struct OperatorBraQuantumObject <: QuantumObjectType end
-Base.show(io::IO, ::MIME"text/plain", T::OperatorBraQuantumObject) print(io, "OperatorBra")
+Base.show(io::IO, ::MIME"text/plain", T::OperatorBraQuantumObject) = print(io, "OperatorBra")
 
 @doc raw"""
     const OperatorBra = OperatorBraQuantumObject()
@@ -86,7 +86,7 @@ const OperatorBra = OperatorBraQuantumObject()
 Constructor representing a ket state in the super-operator formalism ``|\rho\rangle\rangle``.
 """
 struct OperatorKetQuantumObject <: QuantumObjectType end
-Base.show(io::IO, ::MIME"text/plain", T::OperatorKetQuantumObject) print(io, "OperatorKet")
+Base.show(io::IO, ::MIME"text/plain", T::OperatorKetQuantumObject) = print(io, "OperatorKet")
 
 @doc raw"""
     const OperatorKet = OperatorKetQuantumObject()
