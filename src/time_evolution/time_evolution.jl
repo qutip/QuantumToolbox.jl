@@ -173,9 +173,9 @@ function liouvillian_generalized(H::QuantumObject{MT, OperatorQuantumObject}, fi
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
     dims = N_trunc == size(H,1) ? H.dims : [N_trunc]
-    E2, U2 = eigen(H)
-    E = real.(E2[1:N_trunc])
-    U = QuantumObject(U2, dims=H.dims)
+    result = eigen(H)
+    E = real.(result.values[1:N_trunc])
+    U = QuantumObject(result.vectors, result.type, result.dims)
 
     H_d = QuantumObject(Diagonal(complex(E)), dims=dims)
 

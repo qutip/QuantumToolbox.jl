@@ -60,5 +60,5 @@ export LiouvillianDirectSolver, SteadyStateDirectSolver
 export bdf, get_bdf_blocks
 export FFTCorrelation, ExponentialSeries
 export correlation_3op_2t, correlation_2op_2t, correlation_2op_1t, spectrum
-export eigsolve, eigsolve_al
+export EigsolveResult, eigenenergies, eigenstates, eigsolve, eigsolve_al
 end
