@@ -32,7 +32,7 @@ function next!(p::ProgressBar, io::IO=stdout)
     elapsed_time_str = string(elapsed_time ÷ 3600, "h ", lpad((elapsed_time % 3600) ÷ 60, 2, "0"), "m ", lpad(elapsed_time % 60, 2, "0"), "s")
 
     # Calculate the estimated time of arrival
-    eta = floor(Int, elapsed_time ÷ counter * (max_counts - counter))
+    eta = floor(Int, elapsed_time / counter * (max_counts - counter))
     # convert eta into a string in hours, minutes and seconds
     eta_str = string(eta ÷ 3600, "h ", lpad((eta % 3600) ÷ 60, 2, "0"), "m ", lpad(eta % 60, 2, "0"), "s")
 
