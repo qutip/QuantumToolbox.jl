@@ -76,7 +76,7 @@ function sesolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
 
     default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
     kwargs2 = merge(default_values, kwargs)
-    if !isempty(e_ops)
+    if !isempty(e_ops) || progress_bar
         cb1 = PresetTimeCallback(t_l, _save_func_sesolve, save_positions=(false, false))
         kwargs2 = haskey(kwargs2, :callback) ? merge(kwargs2, (callback=CallbackSet(kwargs2.callback, cb1),)) : merge(kwargs2, (callback=cb1,))
     end
