@@ -165,7 +165,7 @@ function check_inf(x::T) where T
 end
 
 
-function _wig_laguerre_clenshaw!(res, L::Int, x::AbstractArray{T1}, c::AbstractVector{T2}, y0, y1, y0_old) where {T1<:Real, T2<:BlasFloat}
+function _wig_laguerre_clenshaw!(res, L::Int, x, c, y0, y1, y0_old)
     length(c) == 1 && return c[1]
     length(c) == 2 && return @. c[1] - c[2] * (L + 1 - x) / sqrt(L + 1)
 
