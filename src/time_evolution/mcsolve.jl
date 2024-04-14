@@ -13,7 +13,7 @@ function _save_func_mcsolve(integrator)
         normalize!(cache_mc)
         ψ = cache_mc
         _expect = op -> dot(ψ, op, ψ)
-        @. expvals[:, progr.counter+1] = _expect(e_ops)
+        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
     end
     next!(progr)
     u_modified!(integrator, false)

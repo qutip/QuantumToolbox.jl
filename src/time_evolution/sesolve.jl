@@ -11,7 +11,7 @@ function _save_func_sesolve(integrator)
 
         ψ = integrator.u
         _expect = op -> dot(ψ, op, ψ)
-        @. expvals[:, progr.counter+1] = _expect(e_ops)
+        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
     end
     next!(progr)
     u_modified!(integrator, false)

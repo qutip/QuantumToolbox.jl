@@ -1,23 +1,19 @@
 export ProgressBar, next!
 
-struct ProgressBar{CT,T1<:Integer, T2<:Real}
+mutable struct ProgressBar{CT,T1<:Integer, T2<:Real}
     counter::CT
     max_counts::T1
     enable::Bool
     bar_width::T1
     start_time::T2
-    lock::ReentrantLock
 end
 
 function ProgressBar(max_counts::Int; enable::Bool=true, bar_width::Int=30)
-    return ProgressBar(Ref{Int64}(0), max_counts, enable, bar_width, time(), ReentrantLock())
+    return ProgressBar(Threads.Atomic{Int}(0), max_counts, enable, bar_width, time())
 end
 
 function next!(p::ProgressBar, io::IO=stdout)
-
-    lock(p.lock)
-
-    p.counter[] += 1
+    Threads.atomic_add!(p.counter, 1)
 
     !p.enable && return
 
@@ -46,7 +42,5 @@ function next!(p::ProgressBar, io::IO=stdout)
     print(io, "\rProgress: $bar $percentage_100% --- Elapsed Time: $elapsed_time_str (ETA: $eta_str)")
     flush(io)
 
-    unlock(p.lock)
-
-    p.counter[] >= p.max_counts ? print(io, "\n") : nothing
+    counter >= p.max_counts ? print(io, "\n") : nothing
 end
