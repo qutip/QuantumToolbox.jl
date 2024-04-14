@@ -24,14 +24,14 @@ core_tests = [
     "wigner.jl",
 ]
 
-if (GROUP == "All") || (GROUP == "Core")
-    for test in core_tests
-        include(joinpath(testdir, test))
-    end
-end
-
 if (GROUP == "All") || (GROUP == "Code-Quality")
     Pkg.add(["Aqua", "JET"])
     include(joinpath(testdir, "aqua.jl"))
     include(joinpath(testdir, "jet.jl"))
+end
+
+if (GROUP == "All") || (GROUP == "Core")
+    for test in core_tests
+        include(joinpath(testdir, test))
+    end
 end

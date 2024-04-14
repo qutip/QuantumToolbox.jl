@@ -13,7 +13,7 @@ function _save_func_mesolve(integrator)
         
         ρ = integrator.u
         _expect = op -> dot(op, ρ)
-        @. expvals[:, progr.counter+1] = _expect(e_ops)
+        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
     end
     next!(progr)
     u_modified!(integrator, false)
@@ -83,7 +83,7 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
 
     default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
     kwargs2 = merge(default_values, kwargs)
-    if !isempty(e_ops)
+    if !isempty(e_ops) || progress_bar
         cb1 = PresetTimeCallback(t_l, _save_func_mesolve, save_positions=(false, false))
         kwargs2 = haskey(kwargs, :callback) ? merge(kwargs2, (callback=CallbackSet(kwargs2.callback, cb1),)) : merge(kwargs2, (callback=cb1,))
     end

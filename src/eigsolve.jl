@@ -328,7 +328,6 @@ end
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         H_t::Union{Nothing,Function}=nothing,
         params::NamedTuple=NamedTuple(),
-        progress::Bool=true,
         ρ0::Union{Nothing, AbstractMatrix} = nothing,
         k::Int=1,
         krylovdim::Int=min(10, size(H, 1)),
@@ -376,7 +375,7 @@ function eigsolve_al(H::QuantumObject{MT1,HOpType},
 
     L = liouvillian(H, c_ops)
     prob = mesolveProblem(L, QuantumObject(ρ0, dims=H.dims), [0,T]; alg=alg,
-            H_t=H_t, params=params, progress=false, kwargs...)
+            H_t=H_t, params=params, progress_bar=false, kwargs...)
     integrator = init(prob, alg)
 
     # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
