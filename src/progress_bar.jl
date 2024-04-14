@@ -13,6 +13,8 @@ function ProgressBar(max_counts::Int; enable::Bool=true, bar_width::Int=30)
 end
 
 function next!(p::ProgressBar, io::IO=stdout)
+    p.counter[] >= p.max_counts && return
+
     Threads.atomic_add!(p.counter, 1)
 
     !p.enable && return
@@ -40,7 +42,8 @@ function next!(p::ProgressBar, io::IO=stdout)
     bar = "[" * repeat("=", progress) * repeat(" ", bar_width - progress) * "]"
 
     print(io, "\rProgress: $bar $percentage_100% --- Elapsed Time: $elapsed_time_str (ETA: $eta_str)")
-    flush(io)
 
-    counter >= p.max_counts ? print(io, "\n") : nothing
+    counter == p.max_counts && print(io, "\n")
+
+    flush(io)
 end
