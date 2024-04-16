@@ -68,13 +68,8 @@ end
 
 Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1, T2} = ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
-function Base.iterate(res::EigsolveResult{T1,T2,ObjType}, ::Val{:vector_list}) where {T1,T2,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} 
-    if res.type isa OperatorQuantumObject
-        return ([QuantumObject(res.vectors[:, k], Ket, res.dims) for k in 1:length(res.values)], Val(:vectors))
-    else
-        return ([QuantumObject(res.vectors[:, k], OperatorKet, res.dims) for k in 1:length(res.values)], Val(:vectors))
-    end
-end
+Base.iterate(res::EigsolveResult{T1,T2,OperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} = ([QuantumObject(res.vectors[:, k], Ket, res.dims) for k in 1:length(res.values)], Val(:vectors))
+Base.iterate(res::EigsolveResult{T1,T2,SuperOperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} = ([QuantumObject(res.vectors[:, k], OperatorKet, res.dims) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
