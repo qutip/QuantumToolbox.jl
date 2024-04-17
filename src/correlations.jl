@@ -171,7 +171,8 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
 
     ω_l = ω_list
 
-    rates, vecs = eigen(L)
+    result = eigen(L)
+    rates, vecs = result.values, result.vectors
 
     # Get the steady state and update the corresponding vector
     # ss_idx = argmin(abs2.(rates))

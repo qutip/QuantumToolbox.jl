@@ -150,7 +150,7 @@
     @test nnz(X) == 0
 
     # Eigenvalues
-    @test eigvals(a_d * a) ≈ 0:9
+    @test eigenenergies(a_d * a) ≈ 0:9
 
     # Random density matrix
     ρ = rand_dm(10)

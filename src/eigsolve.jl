@@ -11,18 +11,76 @@ else
 end
 
 
+@doc raw"""
+    struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
+        values::T1
+        vectors::T2
+        type::ObjType
+        dims::Vector{Int}
+        iter::Int
+        numops::Int
+        converged::Bool
+    end
 
-struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}}
-    vals::T1
-    vecs::T2
+A struct containing the eigenvalues, the eigenvectors, and some information from the solver
+
+# Fields
+- `values::AbstractVector`: the eigenvalues
+- `vectors::AbstractMatrix`: the transformation matrix (eigenvectors)
+- `type::Union{Nothing,QuantumObjectType}`: the type of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
+- `dims::Vector{Int}`: the `dims` of [`QuantumObject`](@ref)
+- `iter::Int`: the number of iteration during the solving process
+- `numops::Int` : number of times the linear map was applied in krylov methods
+- `converged::Bool`: Whether the result is converged
+
+# Examples
+One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-type eigenvectors by:
+```
+julia> result = eigenstates(sigmax());
+
+julia> λ, ψ, T = result;
+
+julia> λ
+2-element Vector{ComplexF64}:
+ -1.0 + 0.0im
+  1.0 + 0.0im
+
+julia> ψ
+2-element Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject}}:
+ QuantumObject{Vector{ComplexF64}, KetQuantumObject}(ComplexF64[-0.7071067811865475 + 0.0im, 0.7071067811865475 + 0.0im], KetQuantumObject(), [2])
+ QuantumObject{Vector{ComplexF64}, KetQuantumObject}(ComplexF64[0.7071067811865475 + 0.0im, 0.7071067811865475 + 0.0im], KetQuantumObject(), [2])
+
+julia> T
+2×2 Matrix{ComplexF64}:
+ -0.707107+0.0im  0.707107+0.0im
+  0.707107+0.0im  0.707107+0.0im
+ ```
+"""
+struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
+    values::T1
+    vectors::T2
+    type::ObjType
+    dims::Vector{Int}
     iter::Int
     numops::Int
     converged::Bool
 end
 
-Base.iterate(res::EigsolveResult) = (res.vals, Val(:vecs))
-Base.iterate(res::EigsolveResult, ::Val{:vecs}) = (res.vecs, Val(:done))
+Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
+Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1, T2} = ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
+Base.iterate(res::EigsolveResult{T1,T2,OperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} = ([QuantumObject(res.vectors[:, k], Ket, res.dims) for k in 1:length(res.values)], Val(:vectors))
+Base.iterate(res::EigsolveResult{T1,T2,SuperOperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} = ([QuantumObject(res.vectors[:, k], OperatorKet, res.dims) for k in 1:length(res.values)], Val(:vectors))
+Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
+
+function Base.show(io::IO, res::EigsolveResult)
+    println(io, "EigsolveResult:   type=", res.type, "   dims=", res.dims)
+    println(io, "values:")
+    show(io, MIME("text/plain"), res.values)
+    print(io, "\n")
+    println(io, "vectors:")
+    show(io, MIME("text/plain"), res.vectors)
+end
 
 if VERSION < v"1.10"
 for (hseqr, elty) in
@@ -134,8 +192,8 @@ function _permuteschur!(T::AbstractMatrix{S}, Q::AbstractMatrix{S}, order::Abstr
     return T, Q
 end
 
-function _eigsolve(A, b::AbstractVector{T}, k::Int = 1, 
-    m::Int = max(20, 2*k+1); tol::Real = 1e-8, maxiter::Int = 200) where T <: BlasFloat
+function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k::Int = 1, 
+    m::Int = max(20, 2*k+1); tol::Real = 1e-8, maxiter::Int = 200) where {T<:BlasFloat,ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     n = size(A, 2)
     V = similar(b, n, m+1)
@@ -146,7 +204,7 @@ function _eigsolve(A, b::AbstractVector{T}, k::Int = 1,
     for i = 2:m
         β = arnoldi_step!(A, V, H, i)
         if β < tol && i > k
-            return _eigsolve_happy(V, H, i, k) # happy breakdown
+            return _eigsolve_happy(V, H, i, k, type, dims) # happy breakdown
         end
     end
 
@@ -229,11 +287,11 @@ function _eigsolve(A, b::AbstractVector{T}, k::Int = 1,
     mul!(cache1, Vₘ, M(Uₘ * VR))
     vecs = cache1[:, 1:k]
 
-    return EigsolveResult(vals, vecs, iter, numops, (iter < maxiter))
+    return EigsolveResult(vals, vecs, type, dims, iter, numops, (iter < maxiter))
 end
 
 function _eigsolve_happy(V::AbstractMatrix{T}, H::AbstractMatrix{T},
-        m::Int, k::Int) where T <: BlasFloat
+        m::Int, k::Int, type::ObjType, dims::Vector{Int}) where {T<:BlasFloat,ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
     
     Vₘ = view(V, :, 1:m)
     Hₘ = view(H, 1:m, 1:m)
@@ -260,10 +318,10 @@ function _eigsolve_happy(V::AbstractMatrix{T}, H::AbstractMatrix{T},
     iter = 0
     numops = m
 
-    return EigsolveResult(vals, vecs, iter, numops, true)
+    return EigsolveResult(vals, vecs, type, dims, iter, numops, true)
 end
 
-"""
+@doc raw"""
     function eigsolve(A::QuantumObject; v0::Union{Nothing,AbstractVector}=nothing, 
         sigma::Union{Nothing, Real}=nothing, k::Int = min(4, size(A, 1)), 
         krylovdim::Int = min(10, size(A, 1)), tol::Real = 1e-8, maxiter::Int = 200,
@@ -277,12 +335,14 @@ function eigsolve(A::QuantumObject{<:AbstractMatrix}; v0::Union{Nothing,Abstract
     krylovdim::Int = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Int = 200,
     solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, kwargs...)
 
-    return eigsolve(A.data; v0=v0, sigma=sigma, k=k, krylovdim=krylovdim, tol=tol, 
+    return eigsolve(A.data; v0=v0, type=A.type, dims=A.dims, sigma=sigma, k=k, krylovdim=krylovdim, tol=tol, 
                     maxiter=maxiter, solver=solver, kwargs...)
 end
 
 
 function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing, 
+    type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}=nothing, 
+    dims::Vector{Int}=Int[],
     sigma::Union{Nothing, Real}=nothing, k::Int = 1, 
     krylovdim::Int = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Int = 200,
     solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, kwargs...)
@@ -292,9 +352,9 @@ function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing,
     v0 === nothing && (v0 = normalize!(rand(T, size(A, 1))))
 
     if sigma === nothing
-        res = _eigsolve(A, v0, k, krylovdim, tol = tol, maxiter = maxiter)
-        vals = similar(res.vals)
-        vals .= res.vals
+        res = _eigsolve(A, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
+        vals = similar(res.values)
+        vals .= res.values
     else
         Aₛ = A - sigma * I
         solver === nothing && (solver = isH ? KrylovJL_MINRES() : KrylovJL_GMRES())
@@ -309,20 +369,20 @@ function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing,
         linsolve = init(prob, solver; kwargs2...)
         Amap = LinearMap{T}((y,x) -> _map_ldiv(linsolve, y, x), length(v0))
 
-        res = _eigsolve(Amap, v0, k, krylovdim, tol = tol, maxiter = maxiter)
-        vals = similar(res.vals)
-        @. vals = (1 + sigma * res.vals) / res.vals
+        res = _eigsolve(Amap, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
+        vals = similar(res.values)
+        @. vals = (1 + sigma * res.values) / res.values
     end
 
     # isH && (vals = real.(vals))
 
-    return EigsolveResult(vals, res.vecs, res.iter, res.numops, res.converged)
+    return EigsolveResult(vals, res.vectors, res.type, res.dims, res.iter, res.numops, res.converged)
 end
 
 
 
 
-"""
+@doc raw"""
     eigsolve_al(H::QuantumObject,
         T::Real, c_ops::AbstractVector=[];
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
@@ -388,22 +448,22 @@ function eigsolve_al(H::QuantumObject{MT1,HOpType},
     
     Lmap = LinearMap{eltype(MT1)}(arnoldi_lindblad_solve, size(L, 1), ismutating=false)
 
-    res = _eigsolve(Lmap, mat2vec(ρ0), k, krylovdim, maxiter=maxiter, tol=eigstol)
+    res = _eigsolve(Lmap, mat2vec(ρ0), L.type, L.dims, k, krylovdim, maxiter=maxiter, tol=eigstol)
     # finish!(prog)
 
-    vals = similar(res.vals)
-    vecs = similar(res.vecs)
+    vals = similar(res.values)
+    vecs = similar(res.vectors)
 
-    for i in eachindex(res.vals)
-        vec = view(res.vecs, :, i)
+    for i in eachindex(res.values)
+        vec = view(res.vectors, :, i)
         vals[i] = dot(vec, L.data, vec)
         @. vecs[:,i] = vec * exp(-1im*angle(vec[1]))
     end
 
-    return EigsolveResult(vals, vecs, res.iter, res.numops, res.converged)
+    return EigsolveResult(vals, vecs, res.type, res.dims, res.iter, res.numops, res.converged)
 end
 
-"""
+@doc raw"""
     LinearAlgebra.eigen(A::QuantumObject; kwargs...)
 
 Calculates the eigenvalues and eigenvectors of the [`QuantumObject`](@ref) `A` using
@@ -421,8 +481,8 @@ Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
      ⋅              ⋅      1.73205+0.0im          ⋅      2.0+0.0im
      ⋅              ⋅              ⋅          2.0+0.0im      ⋅
 
-julia> E, U = eigen(H)
-Eigen{ComplexF64, Float64, Matrix{ComplexF64}, Vector{Float64}}
+julia> E, ψ, U = eigen(H)
+EigsolveResult:   type=Operator   dims=[5]
 values:
 5-element Vector{Float64}:
  -2.8569700138728
@@ -438,9 +498,7 @@ vectors:
  -0.638838-0.0im  -0.303127-0.0im     -0.303127-0.0im  0.638838+0.0im
   0.447214+0.0im   0.447214+0.0im     -0.447214-0.0im  0.447214-0.0im
 
-julia> ψ_1 = QuantumObject(U[:,1], dims=H.dims);
-
-julia> expect(H, ψ_1) ≈ E[1]
+julia> expect(H, ψ[1]) ≈ E[1]
 true
 ```
 """
@@ -452,13 +510,57 @@ function LinearAlgebra.eigen(A::QuantumObject{MT,OpType}; kwargs...) where
     E::mat2vec(sparse_to_dense(MT)) = F.values
     U::sparse_to_dense(MT) = F.vectors
 
-    Eigen(E, U)
+    EigsolveResult(E, U, A.type, A.dims, 0, 0, true)
 end
 
-"""
+@doc raw"""
     LinearAlgebra.eigvals(A::QuantumObject; kwargs...)
 
 Same as [`eigen(A::QuantumObject; kwargs...)`](@ref) but for only the eigenvalues.
 """
 LinearAlgebra.eigvals(A::QuantumObject{<:AbstractArray{T},OpType}; kwargs...) where
 {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigvals(sparse_to_dense(A.data); kwargs...)
+
+@doc raw"""
+    eigenenergies(A::QuantumObject; sparse::Bool=false, kwargs...)
+
+Calculate the eigenenergies
+
+# Arguments
+- `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues
+- `sparse::Bool`: if `false` call [`eigvals(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
+- `kwargs`: Additional keyword arguments passed to the solver
+
+# Returns
+- `::Vector{<:Number}`: a list of eigenvalues
+"""
+function eigenenergies(A::QuantumObject{<:AbstractArray{T},OpType}; sparse::Bool=false, kwargs...) where
+{T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    if !sparse
+        return eigvals(A; kwargs...)
+    else
+        return eigsolve(A; kwargs...).values
+    end
+end
+
+@doc raw"""
+    eigenstates(A::QuantumObject; sparse::Bool=false, kwargs...)
+
+Calculate the eigenvalues and corresponding eigenvectors
+
+# Arguments
+- `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues and eigenvectors
+- `sparse::Bool`: if `false` call [`eigen(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
+- `kwargs`: Additional keyword arguments passed to the solver
+
+# Returns
+- `::EigsolveResult`: containing the eigenvalues, the eigenvectors, and some information from the solver. see also [`EigsolveResult`](@ref)
+"""
+function eigenstates(A::QuantumObject{<:AbstractArray{T},OpType}; sparse::Bool=false, kwargs...) where
+{T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    if !sparse
+        return eigen(A; kwargs...)
+    else
+        return eigsolve(A; kwargs...)
+    end
+end

@@ -117,6 +117,9 @@ spectrum
 
 ## [Eigenvalues and eigenvectors](@id API: Eigenvalues and eigenvectors)
 ```@docs
+EigsolveResult
+eigenenergies
+eigenstates
 LinearAlgebra.eigen
 LinearAlgebra.eigvals
 eigsolve
