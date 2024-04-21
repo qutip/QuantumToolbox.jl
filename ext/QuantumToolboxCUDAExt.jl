@@ -5,9 +5,13 @@ import CUDA: cu, CuArray
 import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR
 import SparseArrays: SparseVector, SparseMatrixCSC
 
+CuArray(A::QuantumObject{Tq}) where Tq<:Union{Vector,Matrix} = QuantumObject(CuArray(A.data), A.type, A.dims)
 CuArray{T}(A::QuantumObject{Tq}) where {T,Tq<:Union{Vector,Matrix}} = QuantumObject(CuArray{T}(A.data), A.type, A.dims)
+CuSparseVector(A::QuantumObject{<:SparseVector}) = QuantumObject(CuSparseVector(A.data), A.type, A.dims)
 CuSparseVector{T}(A::QuantumObject{<:SparseVector}) where T = QuantumObject(CuSparseVector{T}(A.data), A.type, A.dims)
+CuSparseMatrixCSC(A::QuantumObject{<:SparseMatrixCSC}) = QuantumObject(CuSparseMatrixCSC(A.data), A.type, A.dims)
 CuSparseMatrixCSC{T}(A::QuantumObject{<:SparseMatrixCSC}) where T = QuantumObject(CuSparseMatrixCSC{T}(A.data), A.type, A.dims)
+CuSparseMatrixCSR(A::QuantumObject{<:SparseMatrixCSC}) = QuantumObject(CuSparseMatrixCSR(A.data), A.type, A.dims)
 CuSparseMatrixCSR{T}(A::QuantumObject{<:SparseMatrixCSC}) where T = QuantumObject(CuSparseMatrixCSR{T}(A.data), A.type, A.dims)
 
 cu(A::QuantumObject; word_size::Int=32) = ((word_size == 64) || (word_size == 32)) ? cu(A, Val(word_size)) : throw(DomainError(word_size, "The word size should be 32 or 64."))
