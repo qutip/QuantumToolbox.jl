@@ -1,0 +1,25 @@
+steps:
+  - label: "QuantumToolboxCUDAExt"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+      - JuliaCI/julia-test#v1:
+          test_args: "--quickfail"
+      - JuliaCI/julia-coverage#v1:
+          dirs:
+            - src
+            - ext
+    agents:
+      queue: "juliagpu"
+      cuda: "*"
+    env:
+      GROUP: "CUDA_Ext"
+      SECRET_CODECOV_TOKEN: # "encrypted codecov token"
+    timeout_in_minutes: 60
+    if: | 
+        // Don't run Buildkite if the commit message includes the text [skip tests]
+        // Don't run Buildkite for PR draft
+        // Only run Buildkite when new commits and PR are made to main branch
+        build.message !~ /\[skip tests\]/ &&
+        !build.pull_request.draft         &&
+        (build.branch =~ /main/ || build.pull_request.base_branch =~ /main/)
