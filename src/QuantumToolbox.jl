@@ -1,5 +1,6 @@
 module QuantumToolbox
 
+using Pkg
 using Reexport
 using Distributed
 @reexport using LinearAlgebra
@@ -20,6 +21,7 @@ using LinearAlgebra: BlasFloat, BlasComplex
 # to achieve better performances for more massive parallelizations
 BLAS.set_num_threads(1)
 
+include("versioninfo.jl")
 include("quantum_object.jl")
 include("quantum_operators.jl")
 include("general_functions.jl")
