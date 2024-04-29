@@ -54,7 +54,7 @@ function versioninfo(io::IO=stdout)
         """BLAS     : $(basename(BLAS_info.libname)) ($(BLAS_info.interface))"""
     )
     println(io,
-        """Threads  : $(Threads.nthreads()) on $(Sys.CPU_THREADS) virtual cores"""
+        """Threads  : $(Threads.nthreads()) (on $(Sys.CPU_THREADS) virtual cores)"""
     )
     print(io, "\n")
 end
