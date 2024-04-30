@@ -14,7 +14,8 @@ function versioninfo(io::IO=stdout)
         " QuantumToolbox.jl: Quantum Toolbox in Julia\n",
         "≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡\n",
         "Copyright © QuTiP team 2022 and later.\n",
-        "Current admin team: Alberto Mercurio, Yi-Te Huang\n",
+        "Current admin team:\n",
+        "    Alberto Mercurio, Luca Gravina, Yi-Te Huang\n"
     )
 
     # print package informations
