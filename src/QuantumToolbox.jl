@@ -1,6 +1,6 @@
 module QuantumToolbox
 
-using Pkg
+import Pkg
 using Reexport
 using Distributed
 @reexport using LinearAlgebra
