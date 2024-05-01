@@ -31,6 +31,8 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
 end
 
 if (GROUP == "All") || (GROUP == "Core")
+    QuantumToolbox.about()
+
     for test in core_tests
         include(joinpath(testdir, test))
     end
