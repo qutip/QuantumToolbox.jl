@@ -96,7 +96,7 @@ A constant representing the type of [`OperatorKetQuantumObject`](@ref)
 const OperatorKet = OperatorKetQuantumObject()
 
 @doc raw"""
-    mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
+    struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
         data::MT
         type::ObjType
         dims::Vector{Int}
@@ -120,7 +120,7 @@ julia> a isa QuantumObject
 true
 ```
 """
-mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: AbstractQuantumObject
+struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: AbstractQuantumObject
     data::MT
     type::ObjType
     dims::Vector{Int}

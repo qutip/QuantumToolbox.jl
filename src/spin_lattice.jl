@@ -7,7 +7,7 @@ sm = (sx - 1im*sy)/2
 sp = (sx + 1im*sy)/2
 
 #Lattice structure
-Base.@kwdef mutable struct Lattice{TN<:Integer, TLI<:LinearIndices, TCI<:CartesianIndices}
+Base.@kwdef struct Lattice{TN<:Integer, TLI<:LinearIndices, TCI<:CartesianIndices}
     Nx::TN
     Ny::TN
     N::TN = Nx*Ny
@@ -18,9 +18,7 @@ end
 #Definition of many-body operators
 function mb(s::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, i::Integer, N::Integer) where {T1}
     T = s.dims[1]
-    op = kron(kron(eye(T^(i-1)), s), eye(T^(N-i)))
-    op.dims=ones(Int,N)*2
-    op
+    QuantumObject(kron(eye(T^(i-1)), s, eye(T^(N-i))); dims=fill(2, N))
 end
 mb(s::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, i::Integer, latt::Lattice) where {T1} = mb(s, i, latt.N)
 mb(s::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, row::Integer, col::Integer, latt::Lattice) where {T1} = mb(s, latt.idx[row,col], latt.N)
