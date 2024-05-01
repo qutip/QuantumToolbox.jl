@@ -1,21 +1,35 @@
 module QuantumToolbox
 
-import Pkg
-using Reexport
-using Distributed
+# Re-export: 
+#   1. basic functions in LinearAlgebra and SparseArrays 
+#   2. the solvers in ODE and LinearSolve
+import Reexport: @reexport
 @reexport using LinearAlgebra
 @reexport using SparseArrays
 @reexport using OrdinaryDiffEq
-@reexport using DiffEqCallbacks
-using Random
-using Graphs
-using FFTW
-using SpecialFunctions
-using LinearSolve
-using LinearMaps: LinearMap
-using IncompleteLU
+@reexport using LinearSolve
 
-using LinearAlgebra: BlasFloat, BlasComplex
+# other functions in LinearAlgebra
+import LinearAlgebra: BlasReal, BlasInt, BlasFloat, BlasComplex, checksquare
+import LinearAlgebra.BLAS: @blasfunc
+if VERSION < v"1.10"
+    import LinearAlgebra: chkstride1
+    import LinearAlgebra.BLAS: libblastrampoline
+    import LinearAlgebra.LAPACK: chklapackerror
+    import Base: require_one_based_indexing
+else
+    import LinearAlgebra.LAPACK: hseqr!
+end
+
+# other dependencies (in alphabetical order)
+import DiffEqCallbacks: DiscreteCallback, PeriodicCallback, PresetTimeCallback
+import FFTW: fft, fftshift
+import Graphs: connected_components, DiGraph
+import IncompleteLU: ilu
+import LinearMaps: LinearMap
+import Pkg
+import Random
+import SpecialFunctions: loggamma
 
 # Setting the number of threads to 1 allows
 # to achieve better performances for more massive parallelizations
@@ -39,28 +53,4 @@ include("arnoldi.jl")
 include("eigsolve.jl")
 include("negativity.jl")
 include("progress_bar.jl")
-
-export QuantumObject, Qobj, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, OperatorBraQuantumObject, OperatorKetQuantumObject, SuperOperatorQuantumObject, TimeEvolutionSol
-export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
-export isket, isbra, isoper, isoperbra, isoperket, issuper, ket2dm
-export spre, spost, sprepost, lindblad_dissipator
-export fock, basis, coherent
-export sigmam, sigmap, sigmax, sigmay, sigmaz
-export destroy, create, eye, qeye, projection, rand_dm
-export tensor, ⊗
-export sinm, cosm
-export expect
-export WignerClenshaw, WignerLaguerre, wigner
-export row_major_reshape, tidyup, tidyup!, gaussian, meshgrid, sparse_to_dense, dense_to_sparse
-export get_data, mat2vec, vec2mat
-export ptrace, entropy_vn, entanglement
-export negativity, partial_transpose
-export get_coherence, n_th
-export dfd_mesolve, dsf_mesolve, dsf_mcsolve
-export liouvillian, liouvillian_floquet, liouvillian_generalized, steadystate, steadystate_floquet
-export LiouvillianDirectSolver, SteadyStateDirectSolver
-export bdf, get_bdf_blocks
-export FFTCorrelation, ExponentialSeries
-export correlation_3op_2t, correlation_2op_2t, correlation_2op_1t, spectrum
-export EigsolveResult, eigenenergies, eigenstates, eigsolve, eigsolve_al
 end

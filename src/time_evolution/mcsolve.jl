@@ -1,4 +1,5 @@
-export mcsolveProblem, mcsolveEnsembleProblem, mcsolve, ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
+export mcsolveProblem, mcsolveEnsembleProblem, mcsolve
+export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
 
 function _save_func_mcsolve(integrator)
     internal_params = integrator.p

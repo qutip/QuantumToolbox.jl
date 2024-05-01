@@ -1,5 +1,9 @@
+export WignerSolver, WignerClenshaw, WignerLaguerre, wigner
+
 abstract type WignerSolver end
+
 struct WignerClenshaw <: WignerSolver end
+
 struct WignerLaguerre <: WignerSolver
     parallel::Bool
     tol::Float64

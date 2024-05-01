@@ -5,7 +5,6 @@ version = "0.8.0"
 
 [deps]
 DiffEqCallbacks = "459566f4-90b8-5000-8ac3-15dfb0a30def"
-Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 IncompleteLU = "40713840-3770-5561-ab4c-a76e7d0d7895"
@@ -21,7 +20,6 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
 DiffEqCallbacks = "2, 3"
-Distributed = "<0.0.1, 1"
 FFTW = "1.5"
 Graphs = "1.7"
 IncompleteLU = "0.2"

@@ -1,3 +1,5 @@
+export dfd_mesolve, dsf_mesolve, dsf_mcsolve
+
 ### DYNAMICAL FOCK DIMENSION ###
 
 function _reduce_dims(QO::AbstractArray{T}, dims::Vector{<:Integer}, sel::AbstractVector, reduce::AbstractVector) where {T}

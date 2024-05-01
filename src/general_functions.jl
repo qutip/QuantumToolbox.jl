@@ -1,3 +1,10 @@
+export get_data, get_coherence, expect, ptrace
+export mat2vec, vec2mat
+export entropy_vn, entanglement
+export gaussian, n_th
+
+export row_major_reshape, tidyup, tidyup!, meshgrid, sparse_to_dense, dense_to_sparse
+
 """
     row_major_reshape(Q::AbstractArray, shapes...)
 

@@ -1,3 +1,9 @@
+export spre, spost, sprepost, lindblad_dissipator
+export fock, basis, coherent
+export sigmam, sigmap, sigmax, sigmay, sigmaz
+export destroy, create, eye, qeye, projection, rand_dm
+export sinm, cosm
+
 @doc raw"""
     spre(O::QuantumObject, Id_cache=I(size(O,1)))
 
