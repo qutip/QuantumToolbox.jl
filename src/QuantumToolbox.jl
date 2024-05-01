@@ -1,21 +1,34 @@
 module QuantumToolbox
 
-import Pkg
-using Reexport
-using Distributed
+# Re-export: 
+#   1. basic functions in LinearAlgebra and SparseArrays 
+#   2. the solvers in ODE and LinearSolve
+import Reexport: @reexport
 @reexport using LinearAlgebra
 @reexport using SparseArrays
 @reexport using OrdinaryDiffEq
-@reexport using DiffEqCallbacks
-using Random
-using Graphs
-using FFTW
-using SpecialFunctions
-using LinearSolve
-using LinearMaps: LinearMap
-using IncompleteLU
+@reexport using LinearSolve
 
-using LinearAlgebra: BlasFloat, BlasComplex
+# other functions in LinearAlgebra
+import LinearAlgebra: BlasReal, BlasInt, BlasFloat, BlasComplex, checksquare
+import LinearAlgebra.BLAS: @blasfunc
+if VERSION < v"1.10"
+    import LinearAlgebra: chkstride1
+    import LinearAlgebra.BLAS: libblastrampoline
+    import LinearAlgebra.LAPACK: chklapackerror
+    import Base: require_one_based_indexing
+else
+    import LinearAlgebra.LAPACK: hseqr!
+end
+
+# other dependencies (in alphabetical order)
+import DiffEqCallbacks: DiscreteCallback, PeriodicCallback, PresetTimeCallback
+import FFTW: fft, fftshift
+import Graphs: connected_components, DiGraph
+import IncompleteLU: ilu
+import LinearMaps: LinearMap
+import Pkg
+import SpecialFunctions: loggamma
 
 # Setting the number of threads to 1 allows
 # to achieve better performances for more massive parallelizations

@@ -1,7 +1,3 @@
-using LinearAlgebra
-using LinearAlgebra: checksquare, BlasFloat, BlasComplex, BlasReal, BlasInt
-import LinearAlgebra
-
 abstract type AbstractQuantumObject end
 abstract type QuantumObjectType end
 
