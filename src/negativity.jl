@@ -1,3 +1,5 @@
+export negativity, partial_transpose
+
 @doc raw"""
     negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool=false)
 

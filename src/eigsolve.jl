@@ -1,3 +1,6 @@
+export EigsolveResult
+export eigenenergies, eigenstates, eigsolve, eigsolve_al
+
 @doc raw"""
     struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
         values::T1

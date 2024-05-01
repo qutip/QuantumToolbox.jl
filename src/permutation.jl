@@ -1,3 +1,5 @@
+export bdf, get_bdf_blocks
+
 function bdf(A::SparseMatrixCSC{T,M}) where {T,M}
     n = LinearAlgebra.checksquare(A)
 
