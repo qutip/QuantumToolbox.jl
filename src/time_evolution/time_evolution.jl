@@ -39,7 +39,7 @@ ContinuousLindbladJumpCallback(;interp_points::Int=10) = ContinuousLindbladJumpC
 
 ## Sum of operators
 
-mutable struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}} <: AbstractQuantumObject
+struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}} <: AbstractQuantumObject
     coefficients::CT
     operators::OT
     function OperatorSum(coefficients::CT, operators::OT) where {CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}}
@@ -76,7 +76,7 @@ end
     y
 end
 
-mutable struct TimeDependentOperatorSum{CFT,OST<:OperatorSum}
+struct TimeDependentOperatorSum{CFT,OST<:OperatorSum}
     coefficient_functions::CFT
     operator_sum::OST
 end
