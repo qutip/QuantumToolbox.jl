@@ -28,6 +28,7 @@ import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import LinearMaps: LinearMap
 import Pkg
+import Random
 import SpecialFunctions: loggamma
 
 # Setting the number of threads to 1 allows
