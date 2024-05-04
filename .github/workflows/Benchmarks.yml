@@ -45,16 +45,16 @@ jobs:
             Pkg.instantiate();
             include("runbenchmarks.jl")'
 
-      - name: Store benchmark result
+      - name: Parse & Upload Benchmark Results
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          name: Julia benchmark result
+          name: Benchmark results
           tool: "julia"
           output-file-path: benchmarks/benchmarks_output.json
+          summary-always: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: ${{ github.event_name != 'pull_request' }}
-          # Show alert with commit comment on detecting possible performance regression
+          comment-always: true
           alert-threshold: "200%"
-          comment-on-alert: true
           fail-on-alert: true
-          alert-comment-cc-users: "@ktrz,@findmyway"
+          benchmark-data-dir-path: benchmarks
+          auto-push: ${{ github.event_name != 'pull_request' }}

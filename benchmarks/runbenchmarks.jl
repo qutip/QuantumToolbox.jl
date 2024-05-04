@@ -23,7 +23,8 @@ suite["steadystate"]["driven-dissipative harmonic oscillator"] = @benchmarkable 
 ## end ##
 
 
-tune!(suite)
+BenchmarkTools.tune!(suite)
 results = run(suite, verbose = true)
+display(median(results))
 
-BenchmarkTools.save("benchmarks_output.json", mean(results))
+BenchmarkTools.save(joinpath(@__DIR__, "benchmarks_output.json"), median(results))
