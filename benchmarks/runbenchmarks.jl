@@ -1,28 +1,18 @@
 using BenchmarkTools
 using QuantumToolbox
 
-suite = BenchmarkGroup()
+BLAS.set_num_threads(1)
 
-suite["steadystate"] = BenchmarkGroup(["steadystate"])
+const SUITE = BenchmarkGroup()
 
+include("correlations_and_spectrum.jl")
+include("dynamical_fock_dimension.jl")
+include("eigenvalues.jl")
+include("steadystate.jl")
+include("timeevolution.jl")
 
-## steadystate ##
-
-N = 50
-Δ = 0.1
-F = 2
-γ = 1
-a = destroy(N)
-H = Δ * a' * a + F * (a + a')
-c_ops = [sqrt(γ) * a]
-
-suite["steadystate"]["driven-dissipative harmonic oscillator"] = @benchmarkable steadystate($H, $c_ops)
-
-## end ##
-
-
-BenchmarkTools.tune!(suite)
-results = run(suite, verbose = true)
+BenchmarkTools.tune!(SUITE)
+results = BenchmarkTools.run(SUITE, verbose = true)
 display(median(results))
 
-BenchmarkTools.save(joinpath(@__DIR__, "benchmarks_output.json"), median(results))
+BenchmarkTools.save("benchmarks_output.json", median(results))
