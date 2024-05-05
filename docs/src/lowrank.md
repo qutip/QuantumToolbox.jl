@@ -3,9 +3,9 @@
 We start by importing the packages
 
 ```@example lowrank
-using Plots
-using LaTeXStrings
-using QuantumToolbox;
+using QuantumToolbox
+using CairoMakie
+CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 ```
 
 Define lattice
@@ -134,19 +134,21 @@ opt = LRMesolveOptions(
 
 Plot the results
 ```@example lowrank
-fig = plot(layout=(1,2), size=(800,400), legend=:topleft, xlabel=L"\gamma t")
-
 m_me = real(mesol.expect[3,:])/Nx/Ny
 m_lr = real(lrsol.expvals[3,:])/Nx/Ny
 
-plot!(fig[1], tl, m_lr, label=raw"LR $[M=M(t)]$", lw=2)
-plot!(fig[1], tl, m_me, ls=:dash, label="Fock", lw=2)
-ylabel!(fig[1], L"M_{z}")
+fig = Figure(size=(800, 400), fontsize=15)
+ax = Axis(fig[1, 1], xlabel=L"\gamma t", ylabel=L"M_{z}", xlabelsize=20, ylabelsize=20)
+lines!(ax, tl, m_lr, label=L"LR $[M=M(t)]$", linewidth=2)
+lines!(ax, tl, m_me, label="Fock", linewidth=2, linestyle=:dash)
+axislegend(ax, position=:rb)
 
-plot!(fig[2], tl, 1 .-real(lrsol.funvals[1,:]), label=L"$1-P$", lw=2)
-plot!(fig[2], tl, 1 .-real(lrsol.funvals[3,:]), c=:orange, label=L"$1-\rm{Tr}(\rho)$", lw=2, ls=:dash)
-plot!(fig[2], tl, real(lrsol.funvals[2,:])/Nx/Ny, c=:blue, label=L"S", lw=2)
-hline!(fig[2], [Strue], c=:blue, ls=:dash, lw=2, label=L"S^{\rm \,true}_{\rm ss}")
-ylabel!(fig[2], "value")
-xlabel!(fig[2], L"\gamma t")
+ax2 = Axis(fig[1, 2], xlabel=L"\gamma t", ylabel="Value", xlabelsize=20, ylabelsize=20)
+lines!(ax2, tl, 1 .-real(lrsol.funvals[1,:]), label=L"$1-P$", linewidth=2)
+lines!(ax2, tl, 1 .-real(lrsol.funvals[3,:]), label=L"$1-\mathrm{Tr}(\rho)$", linewidth=2, linestyle=:dash, color=:orange)
+lines!(ax2, tl, real(lrsol.funvals[2,:])/Nx/Ny, color=:blue, label=L"S", linewidth=2)
+hlines!(ax2, [Strue], color=:blue, linestyle=:dash, linewidth=2, label=L"S^{\,\mathrm{true}}_{\mathrm{ss}}")
+axislegend(ax2, position=:rb)
+
+fig
 ```
