@@ -1,24 +1,12 @@
 function benchmark_correlations_and_spectrum()
-    ωc = 1
-    ωq = 1
-    g = 0.05
-    ωd = 0.95
-    F = 0.1
-    nth = 7
+    N = 15
+    ω = 1
     γ = 0.1
-    
-    Δc = ωc - ωd
-    Δq = ωq - ωd
-    
-    # Operators definition
-    N = 50 # cutoff for the cavity Hilbert space
-    a = tensor(destroy(N), qeye(2))
-    σm = tensor(qeye(N), sigmam())
-    σz = tensor(qeye(N), sigmaz())
-    
-    # Hamiltonian
-    H = Δc * a' * a + Δq * σz / 2 + g * (a' * σm + a * σm') + F * (a + a')
-    c_ops = [sqrt(γ * (nth + 1)) * a, sqrt(γ * nth) * a', sqrt(γ) * σm]
+    nth = 0.02
+
+    a = destroy(N)
+    H = ω * a' * a
+    c_ops = [sqrt(γ * (nth + 1)) * a, sqrt(γ * nth) * a']
 
     ω_l = range(0, 3, length=1000)
 

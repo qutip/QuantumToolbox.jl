@@ -1,15 +1,15 @@
 function benchmark_timeevolution()
     ωc = 1
     ωq = 1
-    g = 0.05
-    ωd = 0.95
-    F = 0.1
+    g = 0.1
+    ωd = 0.99
+    F = 0.07
     
     Δc = ωc - ωd
     Δq = ωq - ωd
     
     # Operators definition
-    N = 50 # cutoff for the cavity Hilbert space
+    N = 20 # cutoff for the cavity Hilbert space
     a = tensor(destroy(N), qeye(2))
     σm = tensor(qeye(N), sigmam())
     σz = tensor(qeye(N), sigmaz())
@@ -30,8 +30,8 @@ function benchmark_timeevolution()
 
     ## mesolve ##
 
-    nth = 7
-    γ = 0.1
+    nth = 0.01
+    γ = 0.05
     c_ops = [sqrt(γ * (nth + 1)) * a, sqrt(γ * nth) * a', sqrt(γ) * σm]
     
     tlist = range(0, 10/γ, 100)
@@ -40,9 +40,7 @@ function benchmark_timeevolution()
 
     ## mcsolve ##
 
-    ntraj = 100
-
-    SUITE["Time Evolution"]["time-independent"]["mcsolve"] = @benchmarkable mcsolve($H, $ψ0, $tlist, $c_ops, n_traj=ntraj, e_ops=$e_ops)
+    SUITE["Time Evolution"]["time-independent"]["mcsolve"] = @benchmarkable mcsolve($H, $ψ0, $tlist, $c_ops, n_traj=100, e_ops=$e_ops, progress_bar=false)
 end
 
 benchmark_timeevolution()

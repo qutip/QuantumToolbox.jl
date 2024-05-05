@@ -1,6 +1,8 @@
 using BenchmarkTools
 using QuantumToolbox
 
+BLAS.set_num_threads(1)
+
 const SUITE = BenchmarkGroup()
 
 include("correlations_and_spectrum.jl")
