@@ -30,7 +30,9 @@ makedocs(;
         "Users Guide" => [
             "Low Rank Master Equation" => "lowrank.md",
         ],
-        "Benchmarks" => "https://albertomercurio.github.io/QuantumToolbox.jl/benchmarks/"
+        "Benchmarks" => [
+            "Benchmark History" => "https://albertomercurio.github.io/QuantumToolbox.jl/benchmarks/",
+        ]
     ],
 )
 
