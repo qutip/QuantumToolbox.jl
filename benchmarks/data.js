@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1714903360870,
+  "lastUpdate": 1714904792261,
   "repoUrl": "https://github.com/albertomercurio/QuantumToolbox.jl",
   "entries": {
     "Benchmark results": [
@@ -28,6 +28,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "steadystate/driven-dissipative harmonic oscillator",
             "value": 7402800.5,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=8686048\nallocs=250\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "61953577+albertomercurio@users.noreply.github.com",
+            "name": "Alberto Mercurio",
+            "username": "albertomercurio"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bb7fb7ca4374cd49918145e75d7e6bf8ddc94922",
+          "message": "Merge pull request #97 from albertomercurio/dev/patch-3\n\nChange README Zenodo Badge",
+          "timestamp": "2024-05-05T12:25:33+02:00",
+          "tree_id": "875d7271688776efb5302232bfca8dbf34f4c403",
+          "url": "https://github.com/albertomercurio/QuantumToolbox.jl/commit/bb7fb7ca4374cd49918145e75d7e6bf8ddc94922"
+        },
+        "date": 1714904791570,
+        "tool": "julia",
+        "benches": [
+          {
+            "name": "steadystate/driven-dissipative harmonic oscillator",
+            "value": 7271233,
             "unit": "ns",
             "extra": "gctime=0\nmemory=8686048\nallocs=250\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
           }
