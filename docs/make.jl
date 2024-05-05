@@ -8,7 +8,6 @@ DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recu
 makedocs(;
     modules=[QuantumToolbox],
     authors="Alberto Mercurio",
-    # repo="https://github.com/albertomercurio/QuantumToolbox.jl/blob/{commit}{path}#{line}",
     repo = Remotes.GitHub("albertomercurio", "QuantumToolbox.jl"),
     sitename="QuantumToolbox.jl",
     format=Documenter.HTML(;
@@ -30,7 +29,8 @@ makedocs(;
         "api.md",
         "Users Guide" => [
             "Low Rank Master Equation" => "lowrank.md",
-        ]
+        ],
+        "Benchmarks" => "benchmarks/index.html"
     ],
 )
 
