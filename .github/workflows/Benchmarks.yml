@@ -1,0 +1,62 @@
+name: Benchmark Tracking
+on:
+  push:
+    branches:
+      - 'main'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    branches:
+      - 'main'
+    paths-ignore:
+      - 'docs/**'
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+    actions: write
+    contents: write
+    deployments: write
+
+concurrency:
+    # Skip intermediate builds: always.
+    # Cancel intermediate builds: only if it is a pull request build.
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+          arch: x64
+      - uses: julia-actions/cache@v1
+      - name: Run benchmark
+        run: |
+          cd benchmarks
+          julia --project --threads=2 --color=yes -e '
+            using Pkg;
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "..")));
+            Pkg.instantiate();
+            include("runbenchmarks.jl")'
+
+      - name: Parse & Upload Benchmark Results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: Benchmark results
+          tool: "julia"
+          output-file-path: benchmarks/benchmarks_output.json
+          summary-always: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-always: true
+          alert-threshold: "200%"
+          fail-on-alert: true
+          benchmark-data-dir-path: benchmarks
+          auto-push: ${{ github.event_name != 'pull_request' }}
