@@ -40,7 +40,8 @@ function benchmark_timeevolution()
 
     ## mcsolve ##
 
-    SUITE["Time Evolution"]["time-independent"]["mcsolve"] = @benchmarkable mcsolve($H, $ψ0, $tlist, $c_ops, n_traj=100, e_ops=$e_ops, progress_bar=false)
+    SUITE["Time Evolution"]["time-independent"]["mcsolve"]["Serial"] = @benchmarkable mcsolve($H, $ψ0, $tlist, $c_ops, n_traj=100, e_ops=$e_ops, progress_bar=false, ensemble_method=EnsembleSerial())
+    SUITE["Time Evolution"]["time-independent"]["mcsolve"]["Multithreaded"] = @benchmarkable mcsolve($H, $ψ0, $tlist, $c_ops, n_traj=100, e_ops=$e_ops, progress_bar=false, ensemble_method=EnsembleThreads())
 end
 
 benchmark_timeevolution()
