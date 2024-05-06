@@ -54,7 +54,7 @@ jobs:
           tool: "julia"
           output-file-path: benchmarks/benchmarks_output.json
           summary-always: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.DOCUMENTER_KEY }}
           comment-always: true
           alert-threshold: "200%"
           fail-on-alert: true
