@@ -21,12 +21,6 @@ permissions:
     contents: write
     deployments: write
 
-concurrency:
-    # Skip intermediate builds: always.
-    # Cancel intermediate builds: only if it is a pull request build.
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
-
 jobs:
   benchmark:
     runs-on: ubuntu-latest
@@ -53,10 +47,9 @@ jobs:
           name: Benchmark Results
           tool: "julia"
           output-file-path: benchmarks/benchmarks_output.json
-          summary-always: true
-          github-token: ${{ secrets.DOCUMENTER_KEY }}
-          comment-always: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           alert-threshold: "200%"
           fail-on-alert: true
           benchmark-data-dir-path: benchmarks
+          max-items-in-chart: 100
           auto-push: ${{ github.event_name != 'pull_request' }}
