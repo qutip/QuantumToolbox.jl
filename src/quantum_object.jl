@@ -1,6 +1,9 @@
-using LinearAlgebra
-using LinearAlgebra: checksquare, BlasFloat, BlasComplex, BlasReal, BlasInt
-import LinearAlgebra
+export AbstractQuantumObject, QuantumObject, Qobj
+export QuantumObjectType, BraQuantumObject, KetQuantumObject, OperatorQuantumObject, OperatorBraQuantumObject, OperatorKetQuantumObject, SuperOperatorQuantumObject
+export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
+
+export isket, isbra, isoper, isoperbra, isoperket, issuper, ket2dm
+export tensor, ⊗
 
 abstract type AbstractQuantumObject end
 abstract type QuantumObjectType end
@@ -96,7 +99,7 @@ A constant representing the type of [`OperatorKetQuantumObject`](@ref)
 const OperatorKet = OperatorKetQuantumObject()
 
 @doc raw"""
-    mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
+    struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType}
         data::MT
         type::ObjType
         dims::Vector{Int}
@@ -120,7 +123,7 @@ julia> a isa QuantumObject
 true
 ```
 """
-mutable struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: AbstractQuantumObject
+struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: AbstractQuantumObject
     data::MT
     type::ObjType
     dims::Vector{Int}
@@ -196,10 +199,10 @@ function _check_QuantumObject(type::OperatorBraQuantumObject, prod_dims::Int, m:
     prod_dims != sqrt(n) ? throw(DimensionMismatch("The dims parameter does not fit the dimension of the Array.")) : nothing
 end
 
-function QuantumObject(A::QuantumObject{<:AbstractArray}; type::ObjType=A.type, dims=A.dims) where
-    {ObjType<:QuantumObjectType}
-
-    QuantumObject(A.data, type, dims)
+function QuantumObject(A::QuantumObject{<:AbstractArray{T,N}}; type::ObjType=A.type, dims=A.dims) where {T,N,ObjType<:QuantumObjectType}
+    N == 1 ? Size = (length(A), 1) : Size = size(A)
+    _check_QuantumObject(type, prod(dims), Size[1], Size[2])
+    return QuantumObject(copy(A.data), type, dims)
 end
 
 @doc raw"""
@@ -668,3 +671,13 @@ function _spexp(A::SparseMatrixCSC{T,M}; threshold=1e-14, nonzero_tol=1e-20) whe
     end
     P
 end
+
+# data type conversions
+Base.Vector(A::QuantumObject{<:AbstractVector}) = QuantumObject(Vector(A.data), A.type, A.dims)
+Base.Vector{T}(A::QuantumObject{<:AbstractVector}) where {T<:Number} = QuantumObject(Vector{T}(A.data), A.type, A.dims)
+Base.Matrix(A::QuantumObject{<:AbstractMatrix}) = QuantumObject(Matrix(A.data), A.type, A.dims)
+Base.Matrix{T}(A::QuantumObject{<:AbstractMatrix}) where {T<:Number} = QuantumObject(Matrix{T}(A.data), A.type, A.dims)
+SparseArrays.SparseVector(A::QuantumObject{<:AbstractVector}) = QuantumObject(SparseVector(A.data), A.type, A.dims)
+SparseArrays.SparseVector{T}(A::QuantumObject{<:SparseVector}) where {T<:Number} = QuantumObject(SparseVector{T}(A.data), A.type, A.dims)
+SparseArrays.SparseMatrixCSC(A::QuantumObject{<:AbstractMatrix}) = QuantumObject(SparseMatrixCSC(A.data), A.type, A.dims)
+SparseArrays.SparseMatrixCSC{T}(A::QuantumObject{<:SparseMatrixCSC}) where {T<:Number} = QuantumObject(SparseMatrixCSC{T}(A.data), A.type, A.dims)

@@ -238,4 +238,24 @@
     ρ2 = dense_to_sparse(ρ1)
     @test tidyup(ρ2, 0.1) != ρ2
     @test dense_to_sparse(tidyup(ρ1, 0.1)) == tidyup(ρ2, 0.1)
+
+    # data element type conversion
+    vd = Qobj(Int64[0, 0])
+    vs = Qobj(dense_to_sparse(vd))
+    Md = Qobj(Int64[0 0; 0 0])
+    Ms = Qobj(dense_to_sparse(Md))
+    @test typeof(Vector(vd).data) == Vector{Int64}
+    @test typeof(Vector(vs).data) == Vector{Int64}
+    @test typeof(Vector{ComplexF64}(vd).data) == Vector{ComplexF64}
+    @test typeof(Vector{ComplexF64}(vs).data) == Vector{ComplexF64}
+    @test typeof(SparseVector(vd).data) == SparseVector{Int64, Int64}
+    @test typeof(SparseVector(vs).data) == SparseVector{Int64, Int64}
+    @test typeof(SparseVector{ComplexF64}(vs).data) == SparseVector{ComplexF64, Int64}
+    @test typeof(Matrix(Md).data) == Matrix{Int64}
+    @test typeof(Matrix(Ms).data) == Matrix{Int64}
+    @test typeof(Matrix{ComplexF64}(Ms).data) == Matrix{ComplexF64}
+    @test typeof(Matrix{ComplexF64}(Md).data) == Matrix{ComplexF64}
+    @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64, Int64}
+    @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64, Int64}
+    @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64, Int64}
 end

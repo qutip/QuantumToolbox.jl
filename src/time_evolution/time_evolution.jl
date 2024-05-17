@@ -1,12 +1,21 @@
 export OperatorSum, TimeDependentOperatorSum
+export TimeEvolutionSol, TimeEvolutionMCSol
+
+export liouvillian, liouvillian_floquet, liouvillian_generalized
+export LiouvillianSolver, LiouvillianDirectSolver
+
+export steadystate, steadystate_floquet
+export SteadyStateSolver, SteadyStateDirectSolver
 
 abstract type LiouvillianSolver end
+
 struct LiouvillianDirectSolver{T<:Real} <: LiouvillianSolver 
     tol::T
 end
 
 abstract type SteadyStateSolver end
-abstract type SteadyStateDirectSolver <: SteadyStateSolver end
+
+struct SteadyStateDirectSolver <: SteadyStateSolver end
 
 struct TimeEvolutionSol{TT<:Vector{<:Real}, TS<:AbstractVector, TE<:Matrix{ComplexF64}}
     times::TT
@@ -39,7 +48,7 @@ ContinuousLindbladJumpCallback(;interp_points::Int=10) = ContinuousLindbladJumpC
 
 ## Sum of operators
 
-mutable struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}} <: AbstractQuantumObject
+struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}} <: AbstractQuantumObject
     coefficients::CT
     operators::OT
     function OperatorSum(coefficients::CT, operators::OT) where {CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}}
@@ -76,7 +85,7 @@ end
     y
 end
 
-mutable struct TimeDependentOperatorSum{CFT,OST<:OperatorSum}
+struct TimeDependentOperatorSum{CFT,OST<:OperatorSum}
     coefficient_functions::CFT
     operator_sum::OST
 end
@@ -139,7 +148,7 @@ liouvillian(H::QuantumObject{MT1,SuperOperatorQuantumObject}, Id_cache::Diagonal
 function liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
     Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
-    ω::Real; n_max::Int=4, solver::LSolver=LiouvillianDirectSolver()) where {T1,T2,T3,LSolver<:LiouvillianSolver}
+    ω::Real; n_max::Int=4, solver::LiouvillianSolver=LiouvillianDirectSolver()) where {T1,T2,T3}
 
     ((L₀.dims == Lₚ.dims) && (L₀.dims == Lₘ.dims)) || throw(ErrorException("The operators are not of the same Hilbert dimension."))
 
@@ -150,11 +159,10 @@ function liouvillian_floquet(H::QuantumObject{<:AbstractArray{T1},OpType1},
     c_ops::AbstractVector,
     Hₚ::QuantumObject{<:AbstractArray{T2},OpType2},
     Hₘ::QuantumObject{<:AbstractArray{T3},OpType3},
-    ω::Real; n_max::Int=4, solver::LSolver=LiouvillianDirectSolver()) where {T1,T2,T3,
+    ω::Real; n_max::Int=4, solver::LiouvillianSolver=LiouvillianDirectSolver()) where {T1,T2,T3,
                                                                             OpType1<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
                                                                             OpType2<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
-                                                                            OpType3<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
-                                                                            LSolver<:LiouvillianSolver}
+                                                                            OpType3<:Union{OperatorQuantumObject, SuperOperatorQuantumObject}}
 
     liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, solver=solver, n_max=n_max)
 end
@@ -244,20 +252,20 @@ function _liouvillian_floquet(L₀::QuantumObject{<:AbstractArray{T1},SuperOpera
 end
 
 function steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject};
-    solver::Type{SSSolver}=SteadyStateDirectSolver) where {T,SSSolver<:SteadyStateSolver}
+    solver::SteadyStateSolver=SteadyStateDirectSolver()) where {T}
 
     _steadystate(L, solver)
 end
 
 function steadystate(H::QuantumObject{<:AbstractArray{T},OpType}, c_ops::Vector,
-    solver::Type{SSSolver}=SteadyStateDirectSolver) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},SSSolver<:SteadyStateSolver}
+    solver::SteadyStateSolver=SteadyStateDirectSolver()) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     L = liouvillian(H, c_ops)
     steadystate(L, solver=solver)
 end
 
 function _steadystate(L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
-    solver::Type{SteadyStateDirectSolver}) where {T}
+    solver::SteadyStateSolver) where {T}
 
     L_tmp = copy(L.data)
     N = prod(L.dims)
@@ -277,8 +285,8 @@ end
     steadystate_floquet(H_0::QuantumObject,
         c_ops::Vector, H_p::QuantumObject,
         H_m::QuantumObject,
-        ω::Real; n_max::Int=4, lf_solver::LSolver=LiouvillianDirectSolver(),
-        ss_solver::Type{SSSolver}=SteadyStateDirectSolver)
+        ω::Real; n_max::Int=4, lf_solver::LiouvillianSolver=LiouvillianDirectSolver(),
+        ss_solver::SteadyStateSolver=SteadyStateDirectSolver())
 
 Calculates the steady state of a periodically driven system.
 Here `H_0` is the Hamiltonian or the Liouvillian of the undriven system.
@@ -292,11 +300,10 @@ and `ss_solver` is the solver used to solve the steady state.
 function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
     c_ops::AbstractVector, H_p::QuantumObject{<:AbstractArray{T2},OpType2},
     H_m::QuantumObject{<:AbstractArray{T3},OpType3},
-    ω::Real; n_max::Int=4, lf_solver::LSolver=LiouvillianDirectSolver(),
-    ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    ω::Real; n_max::Int=4, lf_solver::LiouvillianSolver=LiouvillianDirectSolver(),
+    ss_solver::SteadyStateSolver=SteadyStateDirectSolver()) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    LSolver<:LiouvillianSolver,SSSolver<:SteadyStateSolver}
+    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     L_0 = liouvillian(H_0, c_ops)
     L_p = liouvillian(H_p)
@@ -308,11 +315,10 @@ end
 function steadystate_floquet(H_0::QuantumObject{<:AbstractArray{T1},OpType1},
     H_p::QuantumObject{<:AbstractArray{T2},OpType2},
     H_m::QuantumObject{<:AbstractArray{T3},OpType3},
-    ω::Real; n_max::Int=4, lf_solver::LSolver=LiouvillianDirectSolver(),
-    ss_solver::Type{SSSolver}=SteadyStateDirectSolver) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    ω::Real; n_max::Int=4, lf_solver::LiouvillianSolver=LiouvillianDirectSolver(),
+    ss_solver::SteadyStateSolver=SteadyStateDirectSolver()) where {T1,T2,T3,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    LSolver<:LiouvillianSolver,SSSolver<:SteadyStateSolver}
+    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     L_0 = liouvillian(H_0)
     L_p = liouvillian(H_p)

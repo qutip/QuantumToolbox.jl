@@ -1,5 +1,10 @@
+export SpectrumSolver, FFTCorrelation, ExponentialSeries
+export correlation_3op_2t, correlation_2op_2t, correlation_2op_1t, spectrum
+
 abstract type SpectrumSolver end
+
 struct FFTCorrelation <: SpectrumSolver end
+
 struct ExponentialSeries <: SpectrumSolver
     tol::Real
     calc_steadystate::Bool

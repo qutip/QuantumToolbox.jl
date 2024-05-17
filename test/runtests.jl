@@ -24,13 +24,15 @@ core_tests = [
     "wigner.jl",
 ]
 
-if (GROUP == "All") || (GROUP == "Code-Quality")
+if ((GROUP == "All") || (GROUP == "Code-Quality")) && (VERSION >= v"1.9")
     Pkg.add(["Aqua", "JET"])
     include(joinpath(testdir, "aqua.jl"))
     include(joinpath(testdir, "jet.jl"))
 end
 
 if (GROUP == "All") || (GROUP == "Core")
+    QuantumToolbox.about()
+
     for test in core_tests
         include(joinpath(testdir, test))
     end

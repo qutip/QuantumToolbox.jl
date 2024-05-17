@@ -135,3 +135,9 @@ _adjM_condition_ratio
 _pinv!
 dBdz!
 ```
+
+## [Miscellaneous](@id API: Miscellaneous)
+```@docs
+QuantumToolbox.versioninfo
+QuantumToolbox.about
+```

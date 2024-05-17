@@ -1,7 +1,10 @@
 .DS_Store
+
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
 Manifest.toml
 docs/build/
+
 .vscode
+*.json

@@ -1,0 +1,55 @@
+name: Benchmark Tracking
+on:
+  push:
+    branches:
+      - 'main'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    branches:
+      - 'main'
+    paths-ignore:
+      - 'docs/**'
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+    actions: write
+    contents: write
+    deployments: write
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+          arch: x64
+      - uses: julia-actions/cache@v2
+      - name: Run benchmark
+        run: |
+          cd benchmarks
+          julia --project --threads=2 --color=yes -e '
+            using Pkg;
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "..")));
+            Pkg.instantiate();
+            include("runbenchmarks.jl")'
+
+      - name: Parse & Upload Benchmark Results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: Benchmark Results
+          tool: "julia"
+          output-file-path: benchmarks/benchmarks_output.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          alert-threshold: "200%"
+          fail-on-alert: true
+          benchmark-data-dir-path: benchmarks
+          max-items-in-chart: 100
+          auto-push: ${{ github.event_name != 'pull_request' }}
