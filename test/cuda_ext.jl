@@ -1,7 +1,7 @@
-using SparseArrays
 using CUDA
 using CUDA.CUSPARSE
 
+QuantumToolbox.about()
 CUDA.versioninfo()
 
 @testset "CUDA Extension" begin
