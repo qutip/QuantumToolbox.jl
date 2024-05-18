@@ -47,7 +47,7 @@ function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool=false)
     end
 
     ρ_pt = partial_transpose(ρ, mask)
-    tr_norm = sum(sqrt, eigvals(ρ_pt' * ρ_pt))
+    tr_norm = norm(ρ_pt, 1) # trace norm
 
     if logarithmic
         return log2(tr_norm)
@@ -89,7 +89,7 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractArray, OperatorQuantumOb
         [pt_dims[n, 3 - mask2[n]] for n in 1:nsys]  # opposite value in mask2 (1 -> 2, and 2 -> 1)
     ]
     return QuantumObject(
-        reshape(PermutedDimsArray(reshape(ρ.data, (ρ.dims..., ρ.dims...)), pt_idx), size(ρ)),
+        Matrix(reshape(PermutedDimsArray(reshape(ρ.data, (ρ.dims..., ρ.dims...)), pt_idx), size(ρ))),
         Operator,
         ρ.dims
     )
