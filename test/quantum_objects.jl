@@ -226,6 +226,17 @@
     @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md)))
     @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms)))
 
+    # trace distance
+    ψz0 = basis(2, 0)
+    ψz1 = basis(2, 1)
+    ρz0 = dense_to_sparse(ket2dm(ψz0))
+    ρz1 = dense_to_sparse(ket2dm(ψz1))
+    ψx0 = sqrt(0.5) * (basis(2, 0) + basis(2, 1))
+    @test tracedist(ψz0, ψx0) ≈ sqrt(0.5)
+    @test tracedist(ρz0, ψz1) ≈ 1.
+    @test tracedist(ψz1, ρz0) ≈ 1.
+    @test tracedist(ρz0, ρz1) ≈ 1.
+
     # Broadcasting
     a = destroy(20)
     for op in ((+), (-), (*), (^))

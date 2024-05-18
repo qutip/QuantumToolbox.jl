@@ -58,6 +58,7 @@ expect
 wigner
 get_coherence
 n_th
+tracedist
 get_data
 mat2vec
 vec2mat

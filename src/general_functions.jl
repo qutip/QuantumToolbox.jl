@@ -1,6 +1,6 @@
 export get_data, get_coherence, expect, ptrace
 export mat2vec, vec2mat
-export entropy_vn, entanglement
+export entropy_vn, entanglement, tracedist
 export gaussian, n_th
 
 export row_major_reshape, tidyup, tidyup!, meshgrid, sparse_to_dense, dense_to_sparse
@@ -328,9 +328,18 @@ function n_th(ω::Real, T::Real)::Float64
     return 1 / (exp(ω / T) - 1)
 end
 
+@doc raw"""
+    tracedist(A::QuantumObject, B::QuantumObject)
 
+Calculates the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) between two [`QuantumObject`](@ref) `A` and `B`:
+``T(A, B) = frac{1}{2} \lVert A - B \rVert_1``
 
-
+Note that `A` and `B` must be either [`Ket`](@ref) or [`Operator`](@ref).
+"""
+tracedist(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = 0.5 * norm(A - B, 1)
+tracedist(A::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = tracedist(ket2dm(A), B)
+tracedist(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, B::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2} = tracedist(A, ket2dm(B))
+tracedist(A::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, B::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2} = tracedist(ket2dm(A), ket2dm(B))
 
 function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
     {T1,T2<:Integer}
