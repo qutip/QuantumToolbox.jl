@@ -332,9 +332,9 @@ end
     tracedist(ρ::QuantumObject, σ::QuantumObject)
 
 Calculates the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) between two [`QuantumObject`](@ref):
-``T(\rho, \sigma) = frac{1}{2} \lVert \rho - \sigma \rVert_1``
+``T(\rho, \sigma) = \frac{1}{2} \lVert \rho - \sigma \rVert_1``
 
-Note that `A` and `B` must be either [`Ket`](@ref) or [`Operator`](@ref).
+Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
 tracedist(ρ::QuantumObject{<:AbstractArray{T1},ObjType1}, σ::QuantumObject{<:AbstractArray{T2},ObjType2}) where {T1,T2,ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},ObjType2<:Union{KetQuantumObject,OperatorQuantumObject}} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
 
