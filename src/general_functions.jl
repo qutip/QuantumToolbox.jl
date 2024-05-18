@@ -1,6 +1,6 @@
 export get_data, get_coherence, expect, ptrace
 export mat2vec, vec2mat
-export entropy_vn, entanglement
+export entropy_vn, entanglement, tracedist
 export gaussian, n_th
 
 export row_major_reshape, tidyup, tidyup!, meshgrid, sparse_to_dense, dense_to_sparse
@@ -328,9 +328,15 @@ function n_th(ω::Real, T::Real)::Float64
     return 1 / (exp(ω / T) - 1)
 end
 
+@doc raw"""
+    tracedist(ρ::QuantumObject, σ::QuantumObject)
 
+Calculates the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) between two [`QuantumObject`](@ref):
+``T(\rho, \sigma) = frac{1}{2} \lVert \rho - \sigma \rVert_1``
 
-
+Note that `A` and `B` must be either [`Ket`](@ref) or [`Operator`](@ref).
+"""
+tracedist(ρ::QuantumObject{<:AbstractArray{T1},ObjType1}, σ::QuantumObject{<:AbstractArray{T2},ObjType2}) where {T1,T2,ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},ObjType2<:Union{KetQuantumObject,OperatorQuantumObject}} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
 
 function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
     {T1,T2<:Integer}

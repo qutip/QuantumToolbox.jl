@@ -32,6 +32,7 @@ size
 eltype
 length
 LinearAlgebra.tr
+LinearAlgebra.svdvals
 LinearAlgebra.norm
 LinearAlgebra.kron
 tensor
@@ -57,6 +58,7 @@ expect
 wigner
 get_coherence
 n_th
+tracedist
 get_data
 mat2vec
 vec2mat

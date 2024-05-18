@@ -458,9 +458,21 @@ julia> tr(a' * a)
 LinearAlgebra.tr(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = tr(A.data)
 
 """
-    norm(A::QuantumObject)
+    svdvals(A::QuantumObject)
 
-Returns the norm of `A`.
+Return the singular values of a [`QuantumObject`](@ref) in descending order
+"""
+LinearAlgebra.svdvals(A::QuantumObject{<:AbstractVector}) = svdvals(A.data)
+LinearAlgebra.svdvals(A::QuantumObject{<:DenseMatrix}) = svdvals(A.data)
+LinearAlgebra.svdvals(A::QuantumObject{<:AbstractSparseMatrix}) = svdvals(sparse_to_dense(A.data))
+
+"""
+    norm(A::QuantumObject, p::Real=2)
+
+If `A` is either [`Ket`](@ref), [`Bra`](@ref), [`OperatorKet`](@ref), or [`OperatorBra`](@ref), returns the standard vector `p`-norm of `A`.
+If `A` is either [`Operator`](@ref) or [`SuperOperator`](@ref), returns [Schatten](https://en.wikipedia.org/wiki/Schatten_norm) `p`-norm of `A`.
+
+Note that the default value of `p=2`
 
 # Examples
 
@@ -483,7 +495,11 @@ julia> norm(ψ)
 1.0
 ```
 """
-LinearAlgebra.norm(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = norm(A.data)
+LinearAlgebra.norm(A::QuantumObject{<:AbstractArray{T},OpType}, p::Real=2) where {T,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorKetQuantumObject,OperatorBraQuantumObject}} = norm(A.data, p)
+function LinearAlgebra.norm(A::QuantumObject{<:AbstractArray{T},OpType}, p::Real=2) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    p == 2.0 && return norm(A.data, 2)
+    return norm(svdvals(A), p)
+end
 LinearAlgebra.normalize(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
     QuantumObject(normalize(A.data), OpType(), A.dims)
 LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
