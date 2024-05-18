@@ -336,7 +336,7 @@ Calculates the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) be
 
 Note that `A` and `B` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
-tracedist(ρ::QuantumObject{<:AbstractArray{T1},ObjType1}, σ::QuantumObject{<:AbstractArray{T2},ObjType2}) where {T1,T2,ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},ObjType2<:Union{KetQuantumObject,OperatorQuantumObject}} = 0.5 * norm(ket2dm(ρ) - ket2dm(σ), 1)
+tracedist(ρ::QuantumObject{<:AbstractArray{T1},ObjType1}, σ::QuantumObject{<:AbstractArray{T2},ObjType2}) where {T1,T2,ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},ObjType2<:Union{KetQuantumObject,OperatorQuantumObject}} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
 
 function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
     {T1,T2<:Integer}
