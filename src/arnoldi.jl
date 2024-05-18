@@ -26,7 +26,7 @@ function arnoldi_init!(A, b::AbstractVector{T}, V::AbstractMatrix{T}, H::Abstrac
     H[1,1] = dot(v₁, v₂)
     axpy!(-H[1,1], v₁, v₂)
     H[2,1] = norm(v₂)
-    @. v₂ = v₂ / H[2,1]
+    v₂ ./= H[2,1]
 end
   
 function arnoldi_step!(A, V::AbstractMatrix{T}, H::AbstractMatrix{T}, i::TI) where {T <: BlasFloat, TI <: Integer}
@@ -39,7 +39,7 @@ function arnoldi_step!(A, V::AbstractMatrix{T}, H::AbstractMatrix{T}, i::TI) whe
         axpy!(-H[j,i], vⱼ, vᵢ₊₁)
     end
     β = H[i+1,i] = norm(vᵢ₊₁)
-    @. vᵢ₊₁ = vᵢ₊₁ / H[i+1,i]
+    vᵢ₊₁ ./= H[i+1,i]
     return β
 end
 
