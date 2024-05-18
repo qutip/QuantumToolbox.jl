@@ -211,9 +211,20 @@
     ψ2_size = size(ψ2)
     @test opstring == "Quantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
+    # get coherence
     ψ = coherent(30, 3)
     α, δψ = get_coherence(ψ)
     @test isapprox(abs(α), 3, atol=1e-5) && abs2(δψ[1]) > 0.999
+
+    # svdvals, Schatten p-norm
+    vd = Qobj(  rand(ComplexF64, 10))
+    vs = Qobj(sprand(ComplexF64, 100, 0.1))
+    Md = Qobj(  rand(ComplexF64, 10, 10))
+    Ms = Qobj(sprand(ComplexF64, 10, 10, 0.1))
+    @test svdvals(vd)[1] ≈ √(vd' * vd)
+    @test svdvals(vs)[1] ≈ √(vs' * vs)
+    @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md)))
+    @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms)))
 
     # Broadcasting
     a = destroy(20)

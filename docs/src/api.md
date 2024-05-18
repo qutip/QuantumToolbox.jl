@@ -32,6 +32,7 @@ size
 eltype
 length
 LinearAlgebra.tr
+LinearAlgebra.svdvals
 LinearAlgebra.norm
 LinearAlgebra.kron
 tensor
