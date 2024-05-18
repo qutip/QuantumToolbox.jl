@@ -182,6 +182,18 @@ function _permuteschur!(T::AbstractMatrix{S}, Q::AbstractMatrix{S}, order::Abstr
     return T, Q
 end
 
+function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals)
+    F = hessenberg!(Hₘ)
+    copyto!(Uₘ, Hₘ)
+    LAPACK.orghr!(1, m, Uₘ, F.τ)
+    Tₘ, Uₘ, values = hseqr!(Hₘ, Uₘ)
+    sortperm!(sorted_vals, values, by = abs, rev = true)
+    _permuteschur!(Tₘ, Uₘ, sorted_vals)
+    mul!(f, Uₘᵥ, β)
+
+    return Tₘ, Uₘ
+end
+
 function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k::Int = 1, 
     m::Int = max(20, 2*k+1); tol::Real = 1e-8, maxiter::Int = 200) where {T<:BlasFloat,ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
 
@@ -194,17 +206,18 @@ function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k:
     for i = 2:m
         β = arnoldi_step!(A, V, H, i)
         if β < tol && i > k
-            return _eigsolve_happy(V, H, i, k, type, dims) # happy breakdown
+            m = i # happy breakdown
+            break
         end
     end
 
     f = ones(eltype(A), m)
 
     Vₘ = view(V, :, 1:m)
-    Hₘ = view(H, 1:m, :)
+    Hₘ = view(H, 1:m, 1:m)
     qₘ = view(V, :, m+1)
-    βeₘ = view(H, m+1, :)
-    β = H[m+1, m]
+    βeₘ = view(H, m+1, 1:m)
+    β = real(H[m+1, m])
     Uₘ = one(Hₘ)
     
     Uₘᵥ = view(Uₘ, m, 1:m)
@@ -222,22 +235,11 @@ function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k:
 
     M = typeof(cache0)
 
+    Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals)
+
     numops = m
     iter = 0
-    while iter < maxiter && count(x -> abs(x) < tol, f) < k
-        # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
-
-        F = hessenberg!(Hₘ)
-        copyto!(Uₘ, Hₘ)
-        LAPACK.orghr!(1, m, Uₘ, F.τ)
-        Tₘ, Uₘ, values = hseqr!(Hₘ, Uₘ)
-        
-        sortperm!(sorted_vals, values, by = abs, rev = true)
-        _permuteschur!(Tₘ, Uₘ, sorted_vals)
-
-        mul!(f, Uₘᵥ, β)
-
-
+    while iter < maxiter && count(x -> abs(x) < tol, f) < k && β > tol
         # println( A * Vₘ * Uₘ ≈ Vₘ * Uₘ * M(Tₘ) + qₘ * M(transpose(βeₘ)) * Uₘ )     # SHOULD BE TRUE
 
         copyto!(cache0, Uₘ)
@@ -257,18 +259,15 @@ function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k:
             end
         end
 
+        # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
+
+        Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals)
+
         numops += m-k-1
         iter+=1
     end
 
-    F = hessenberg!(Hₘ)
-    copyto!(Uₘ, F.H.data)
-    LAPACK.orghr!(1, m, Uₘ, F.τ)
-    Tₘ, Uₘ, values = hseqr!(F.H.data, Uₘ)
-    sortperm!(sorted_vals, values, by = abs, rev = true)
-    _permuteschur!(Tₘ, Uₘ, sorted_vals)
-
-    vals = diag(view(Hₘ, 1:k, 1:k))
+    vals = diag(view(Tₘ, 1:k, 1:k))
     select = Vector{BlasInt}(undef, 0)
     VR = LAPACK.trevc!('R', 'A', select, Tₘ)
     @inbounds for i in 1:size(VR, 2)
@@ -280,36 +279,6 @@ function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k:
     return EigsolveResult(vals, vecs, type, dims, iter, numops, (iter < maxiter))
 end
 
-function _eigsolve_happy(V::AbstractMatrix{T}, H::AbstractMatrix{T},
-        m::Int, k::Int, type::ObjType, dims::Vector{Int}) where {T<:BlasFloat,ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
-    
-    Vₘ = view(V, :, 1:m)
-    Hₘ = view(H, 1:m, 1:m)
-    Uₘ = one(Hₘ)
-
-    sorted_vals = Array{Int16}(undef, m)
-
-    F = hessenberg!(Hₘ)
-    copyto!(Uₘ, F.H.data)
-    LAPACK.orghr!(1, m, Uₘ, F.τ)
-    Tₘ, Uₘ, values = hseqr!(F.H.data, Uₘ)
-    sortperm!(sorted_vals, values, by = abs, rev = true)
-    _permuteschur!(Tₘ, Uₘ, sorted_vals)
-
-    vals = diag(Hₘ)[1:k]
-    select = Vector{BlasInt}(undef, 0)
-    VR = LAPACK.trevc!('R', 'A', select, Tₘ)
-    @inbounds for i in 1:size(VR, 2)
-        normalize!(view(VR, :, i))
-    end
-    M = typeof(Vₘ.parent)
-    vecs = (Vₘ * M(Uₘ * VR))[:, 1:k]
-
-    iter = 0
-    numops = m
-
-    return EigsolveResult(vals, vecs, type, dims, iter, numops, true)
-end
 
 @doc raw"""
     function eigsolve(A::QuantumObject; v0::Union{Nothing,AbstractVector}=nothing, 
@@ -330,7 +299,7 @@ function eigsolve(A::QuantumObject{<:AbstractMatrix}; v0::Union{Nothing,Abstract
 end
 
 
-function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing, 
+function eigsolve(A; v0::Union{Nothing,AbstractVector}=nothing, 
     type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}=nothing, 
     dims::Vector{Int}=Int[],
     sigma::Union{Nothing, Real}=nothing, k::Int = 1, 
@@ -343,28 +312,25 @@ function eigsolve(A::AbstractMatrix; v0::Union{Nothing,AbstractVector}=nothing,
 
     if sigma === nothing
         res = _eigsolve(A, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
-        vals = similar(res.values)
-        vals .= res.values
+        vals = res.values
     else
         Aₛ = A - sigma * I
         solver === nothing && (solver = isH ? KrylovJL_MINRES() : KrylovJL_GMRES())
 
         kwargs2 = (;kwargs...)
         condition = !haskey(kwargs2, :Pl) && typeof(A) <: SparseMatrixCSC
-        condition && (kwargs2 = merge(kwargs2, (Pl = ilu(Aₛ, τ=0.001),)))
+        condition && (kwargs2 = merge(kwargs2, (Pl = ilu(Aₛ, τ=0.01),)))
 
-        !haskey(kwargs2, :atol) && (kwargs2 = merge(kwargs2, (atol = tol,)))
+        !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, (abstol = tol*1e-6,)))
+        !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, (reltol = tol*1e-6,)))
 
         prob = LinearProblem(Aₛ, v0)
         linsolve = init(prob, solver; kwargs2...)
         Amap = LinearMap{T}((y,x) -> _map_ldiv(linsolve, y, x), length(v0))
 
         res = _eigsolve(Amap, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
-        vals = similar(res.values)
-        @. vals = (1 + sigma * res.values) / res.values
+        vals = @. (1 + sigma * res.values) / res.values
     end
-
-    # isH && (vals = real.(vals))
 
     return EigsolveResult(vals, res.vectors, res.type, res.dims, res.iter, res.numops, res.converged)
 end
