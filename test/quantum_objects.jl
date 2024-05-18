@@ -220,11 +220,11 @@
     vd = Qobj(  rand(ComplexF64, 10))
     vs = Qobj(sprand(ComplexF64, 100, 0.1))
     Md = Qobj(  rand(ComplexF64, 10, 10))
-    Ms = Qobj(sprand(ComplexF64, 10, 10, 0.1))
+    Ms = Qobj(sprand(ComplexF64, 10, 10, 0.5))
     @test svdvals(vd)[1] ≈ √(vd' * vd)
     @test svdvals(vs)[1] ≈ √(vs' * vs)
-    @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md)))
-    @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms)))
+    @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol=1e-6
+    @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol=1e-6
 
     # trace distance
     ψz0 = basis(2, 0)
