@@ -329,17 +329,14 @@ function n_th(ω::Real, T::Real)::Float64
 end
 
 @doc raw"""
-    tracedist(A::QuantumObject, B::QuantumObject)
+    tracedist(ρ::QuantumObject, σ::QuantumObject)
 
-Calculates the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) between two [`QuantumObject`](@ref) `A` and `B`:
-``T(A, B) = frac{1}{2} \lVert A - B \rVert_1``
+Calculates the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) between two [`QuantumObject`](@ref):
+``T(\rho, \sigma) = frac{1}{2} \lVert \rho - \sigma \rVert_1``
 
 Note that `A` and `B` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
-tracedist(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = 0.5 * norm(A - B, 1)
-tracedist(A::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = tracedist(ket2dm(A), B)
-tracedist(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, B::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2} = tracedist(A, ket2dm(B))
-tracedist(A::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, B::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2} = tracedist(ket2dm(A), ket2dm(B))
+tracedist(ρ::QuantumObject{<:AbstractArray{T1},ObjType1}, σ::QuantumObject{<:AbstractArray{T2},ObjType2}) where {T1,T2,ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},ObjType2<:Union{KetQuantumObject,OperatorQuantumObject}} = 0.5 * norm(ket2dm(ρ) - ket2dm(σ), 1)
 
 function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
     {T1,T2<:Integer}
