@@ -5,7 +5,7 @@ export negativity, partial_transpose
 
 Compute the [negativity](https://en.wikipedia.org/wiki/Negativity_(quantum_mechanics)) ``N(\rho) = \frac{\Vert \rho^{\Gamma}\Vert_1 - 1}{2}``  
 where ``\rho^{\Gamma}`` is the partial transpose of ``\rho`` with respect to the subsystem,  
-and ``\Vert X \Vert_1=\Tr\sqrt{X^\dagger X}`` is the trace norm.
+and ``\Vert X \Vert_1=\textrm{Tr}\sqrt{X^\dagger X}`` is the trace norm.
 
 # Arguments
 - `ρ::QuantumObject`: The density matrix (`ρ.type` must be [`OperatorQuantumObject`](@ref)).

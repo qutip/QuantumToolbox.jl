@@ -282,8 +282,8 @@ end
 
 @doc raw"""
     function eigsolve(A::QuantumObject; v0::Union{Nothing,AbstractVector}=nothing, 
-        sigma::Union{Nothing, Real}=nothing, k::Int = min(4, size(A, 1)), 
-        krylovdim::Int = min(10, size(A, 1)), tol::Real = 1e-8, maxiter::Int = 200,
+        sigma::Union{Nothing, Real}=nothing, k::Int = 1, 
+        krylovdim::Int = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Int = 200,
         solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, kwargs...)
 
 Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi method.
