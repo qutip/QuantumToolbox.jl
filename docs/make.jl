@@ -27,8 +27,9 @@ makedocs(;
     pages=[
         "index.md",
         "api.md",
-        "Users Guide" => [
-            "Low Rank Master Equation" => "lowrank.md",
+        "Tutorials" => [
+            "Creation of the QuantulToolbox.jl logo" => "tutorials/logo.md",
+            "Low Rank Master Equation" => "tutorials/lowrank.md",
         ],
         "Benchmarks" => [
             "Benchmark History" => "benchmarks/benchmark_history.md",
