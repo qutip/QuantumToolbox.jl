@@ -1,53 +1,18 @@
 ```@raw html
-<style>
-    .chart-container {
-        width: 100%;
-        max-width: 600px;
-        margin: auto;
-    }
-</style>
+<iframe id="myIframe" src="https://albertomercurio.github.io/QuantumToolbox.jl/benchmarks/" style="width:100%; border:none; overflow:hidden;"></iframe>
 
-<div class="chart-container">
-    <canvas id="myChart"></canvas>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.2/dist/Chart.min.js"></script>
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    var ctx = document.getElementById('myChart').getContext('2d');
-    var myChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [1, 2, 3, 4], // x values
-        datasets: [{
-          label: 'Simple Line Chart',
-          data: [2, 4, 6, 8], // y values
-          borderColor: 'rgba(75, 192, 192, 1)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        scales: {
-          xAxes: [{
-            scaleLabel: {
-              display: true,
-              labelString: 'X values'
-            }
-          }],
-          yAxes: [{
-            scaleLabel: {
-              display: true,
-              labelString: 'Y values'
-            },
-            ticks: {
-              beginAtZero: true
-            }
-          }]
-        }
-      }
-    });
-  });
+  // Function to adjust the iframe height
+  function adjustIframeHeight(event) {
+    const iframe = document.getElementById('myIframe');
+    if (event.origin === 'https://albertomercurio.github.io') { // Ensure this matches the iframe origin
+      iframe.style.height = event.data + 'px';
+    }
+  }
+
+  // Listen for messages from the iframe
+  window.addEventListener('message', adjustIframeHeight, false);
 </script>
 
 ```
