@@ -48,7 +48,7 @@ CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 Here we define the parameters for the triangular cat state:
 
 ```@example logo
-N = 40  # Cutoff of the Hilbert space for the harmonic oscillator
+N = 30  # Cutoff of the Hilbert space for the harmonic oscillator
 ρ = 2.5  # Amplitude of the coherent state
 θ1 = π/2
 θ2 = π/2 + 2π/3
@@ -210,4 +210,4 @@ fig
 
 ## Conclusion
 
-This tutorial demonstrates how to generate the **QuantumToolbox.jl** logo using the package itself and **Makie.jl** for visualization. The logo is a visualization of the Wigner function of a triangular cat state, with a custom colormap that highlights the different coherent states with colors matching the Julia logo.
+This tutorial demonstrates how to generate the [QuantumToolbox.jl](https://github.com/albertomercurio/QuantumToolbox.jl) logo using the package itself and [Makie.jl](https://github.com/MakieOrg/Makie.jl) for visualization. The logo is a visualization of the Wigner function of a triangular cat state, with a custom colormap that highlights the different coherent states with colors matching the Julia logo.
