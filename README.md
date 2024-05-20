@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="/docs/src/assets/logo.png" alt="QuantumToolbox.jl logo" width="150">
+  <img src="./docs/src/assets/logo.png" alt="QuantumToolbox.jl logo" width="150">
 </div>
 
 # QuantumToolbox.jl
