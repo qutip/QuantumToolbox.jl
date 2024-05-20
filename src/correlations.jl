@@ -10,7 +10,7 @@ struct ExponentialSeries <: SpectrumSolver
     calc_steadystate::Bool
 end
 
-ExponentialSeries(;tol=1e-14,calc_steadystate=false) = ExponentialSeries(tol,calc_steadystate)
+ExponentialSeries(; tol=1e-14, calc_steadystate=false) = ExponentialSeries(tol, calc_steadystate)
 
 @doc raw"""
     correlation_3op_2t(H::QuantumObject,
@@ -35,15 +35,15 @@ function correlation_3op_2t(H::QuantumObject{<:AbstractArray{T1},HOpType},
     c_ops::AbstractVector=[];
     kwargs...) where {T1,T2,T3,T4,T5,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-    
-    (H.dims == ψ0.dims && H.dims == A.dims &&
-    H.dims == B.dims && H.dims == C.dims) || throw(ErrorException("The two operators are not of the same Hilbert dimension."))
 
-    kwargs2 = (;kwargs...)
-    kwargs2 = merge(kwargs2, (saveat = collect(t_l),))
+    (H.dims == ψ0.dims && H.dims == A.dims &&
+     H.dims == B.dims && H.dims == C.dims) || throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+
+    kwargs2 = (; kwargs...)
+    kwargs2 = merge(kwargs2, (saveat=collect(t_l),))
     ρt = mesolve(H, ψ0, t_l, c_ops; kwargs2...).states
 
-    corr = map((t,ρ)->mesolve(H, C*ρ*A, τ_l .+ t, c_ops, e_ops=[B]; kwargs...).expect[1,:], t_l, ρt)
+    corr = map((t, ρ) -> mesolve(H, C * ρ * A, τ_l .+ t, c_ops, e_ops=[B]; kwargs...).expect[1, :], t_l, ρt)
 
     corr
 end
@@ -73,14 +73,14 @@ function correlation_2op_2t(H::QuantumObject{<:AbstractArray{T1},HOpType},
     reverse::Bool=false,
     kwargs...) where {T1,T2,T3,T4,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-    
+
     C = eye(prod(H.dims), dims=H.dims)
     if reverse
         corr = correlation_3op_2t(H, ψ0, t_l, τ_l, A, B, C, c_ops; kwargs...)
     else
         corr = correlation_3op_2t(H, ψ0, t_l, τ_l, C, A, B, c_ops; kwargs...)
     end
-    
+
     reduce(hcat, corr)
 end
 
@@ -107,10 +107,10 @@ function correlation_2op_1t(H::QuantumObject{<:AbstractArray{T1},HOpType},
     reverse::Bool=false,
     kwargs...) where {T1,T2,T3,T4,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-    
+
     corr = correlation_2op_2t(H, ψ0, [0], τ_l, A, B, c_ops; reverse=reverse, kwargs...)
-    
-    corr[:,1]
+
+    corr[:, 1]
 end
 
 @doc raw"""
@@ -131,10 +131,10 @@ function spectrum(H::QuantumObject{MT1,HOpType},
     c_ops::Vector{QuantumObject{MT2,COpType}}=Vector{QuantumObject{MT1,HOpType}}([]);
     solver::MySolver=ExponentialSeries(),
     kwargs...) where {MT1<:AbstractMatrix,MT2<:AbstractMatrix,T2,T3,
-            HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-            COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-            MySolver<:SpectrumSolver}
-    
+    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    MySolver<:SpectrumSolver}
+
     return _spectrum(H, ω_list, A, B, c_ops, solver; kwargs...)
 end
 
@@ -145,13 +145,13 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     c_ops,
     solver::FFTCorrelation;
     kwargs...) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-    
+
     Nsamples = length(ω_list)
     ω_max = abs(maximum(ω_list))
-    dω = 2*ω_max/(Nsamples-1)
+    dω = 2 * ω_max / (Nsamples - 1)
     ω_l = -ω_max:dω:ω_max
 
-    T = 2π/(ω_l[2]-ω_l[1])
+    T = 2π / (ω_l[2] - ω_l[1])
     τ_l = range(0, T, length=length(ω_l))
 
     ρss = steadystate(H, c_ops)
@@ -169,7 +169,7 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
     c_ops,
     solver::ExponentialSeries;
     kwargs...) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-    
+
     (H.dims == A.dims == B.dims) || throw(DimensionMismatch("The dimensions of H, A and B must be the same"))
 
     L = liouvillian(H, c_ops)
@@ -190,23 +190,23 @@ function _spectrum(H::QuantumObject{<:AbstractArray{T1},HOpType},
         ρss = steadystate(L).data
     else
         ss_idx = argmin(abs2.(rates))
-        ρss = vec2mat(@view(vecs[:,ss_idx]))
+        ρss = vec2mat(@view(vecs[:, ss_idx]))
         ρss2 = (ρss + ρss') / 2
         ρss2 ./= tr(ρss2)
         ρss .= ρss2
     end
-    
+
     ρ0 = B.data * ρss
     v = vecs \ mat2vec(ρ0)
-    
-    amps = map(i->v[i] * tr(A.data * vec2mat(@view(vecs[:,i]))), eachindex(rates))
+
+    amps = map(i -> v[i] * tr(A.data * vec2mat(@view(vecs[:, i]))), eachindex(rates))
     idxs = findall(x -> abs(x) > solver.tol, amps)
     amps, rates = amps[idxs], rates[idxs]
     # @. amps = abs(amps)
     # idxs = findall(x -> real(x) < 0, amps)
     # @. amps[idxs] -= 2*real(amps[idxs])
-    
-    spec = map(ω->2*real(sum(@. amps * (1 / (1im * ω - rates)))), ω_l)
+
+    spec = map(ω -> 2 * real(sum(@. amps * (1 / (1im * ω - rates)))), ω_l)
 
     return ω_l, spec
 end

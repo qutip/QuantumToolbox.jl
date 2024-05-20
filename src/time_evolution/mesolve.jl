@@ -10,7 +10,7 @@ function _save_func_mesolve(integrator)
         # This is equivalent to tr(op * ρ), when both are matrices.
         # The advantage of using this convention is that I don't need
         # to reshape u to make it a matrix, but I reshape the e_ops once.
-        
+
         ρ = integrator.u
         _expect = op -> dot(op, ρ)
         @. expvals[:, progr.counter[]+1] = _expect(e_ops)
@@ -22,10 +22,10 @@ end
 mesolve_ti_dudt!(du, u, p, t) = mul!(du, p.L, u)
 function mesolve_td_dudt!(du, u, p, t)
     mul!(du, p.L, u)
-    L_t = p.H_t(t,p)
+    L_t = p.H_t(t, p)
     mul!(du, L_t, u, 1, 1)
 end
-    
+
 """
     mesolveProblem(H::QuantumObject,
         ψ0::QuantumObject,
@@ -57,9 +57,9 @@ Generates the ODEProblem for the master equation time evolution of an open quant
 function mesolveProblem(H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     t_l,
-    c_ops::Vector{QuantumObject{Tc, COpType}}=QuantumObject{MT1, HOpType}[];
+    c_ops::Vector{QuantumObject{Tc,COpType}}=QuantumObject{MT1,HOpType}[];
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{Te,OperatorQuantumObject}}=QuantumObject{MT1,OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     progress_bar::Bool=true,
@@ -78,10 +78,10 @@ function mesolveProblem(H::QuantumObject{MT1,HOpType},
     progr = ProgressBar(length(t_l), enable=progress_bar)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
     e_ops2 = @. mat2vec(adjoint(get_data(e_ops)))
-    
-    p = (L = L, progr = progr, Hdims = H.dims, e_ops = e_ops2, expvals = expvals, H_t = H_t, is_empty_e_ops = isempty(e_ops), params...)
 
-    default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
+    p = (L=L, progr=progr, Hdims=H.dims, e_ops=e_ops2, expvals=expvals, H_t=H_t, is_empty_e_ops=isempty(e_ops), params...)
+
+    default_values = (abstol=1e-7, reltol=1e-5, saveat=[t_l[end]])
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops) || progress_bar
         cb1 = PresetTimeCallback(t_l, _save_func_mesolve, save_positions=(false, false))
@@ -131,9 +131,9 @@ Time evolution of an open quantum system using master equation.
 function mesolve(H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     t_l::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc, COpType}}=QuantumObject{MT1, HOpType}[];
+    c_ops::Vector{QuantumObject{Tc,COpType}}=QuantumObject{MT1,HOpType}[];
     alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{Te,OperatorQuantumObject}}=QuantumObject{MT1,OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     progress_bar::Bool=true,
@@ -143,8 +143,8 @@ function mesolve(H::QuantumObject{MT1,HOpType},
     COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     prob = mesolveProblem(H, ψ0, t_l, c_ops; alg=alg, e_ops=e_ops,
-            H_t=H_t, params=params, progress_bar=progress_bar, kwargs...)
-    
+        H_t=H_t, params=params, progress_bar=progress_bar, kwargs...)
+
     return mesolve(prob, alg; kwargs...)
 end
 

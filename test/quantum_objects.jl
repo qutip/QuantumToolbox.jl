@@ -9,10 +9,10 @@
     N = 10
     a = rand(ComplexF64, 10)
     # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
-    @test_throws DomainError Qobj(a,  type=Bra)
-    @test_throws DomainError Qobj(a,  type=Operator)
-    @test_throws DomainError Qobj(a,  type=SuperOperator)
-    @test_throws DomainError Qobj(a,  type=OperatorBra)
+    @test_throws DomainError Qobj(a, type=Bra)
+    @test_throws DomainError Qobj(a, type=Operator)
+    @test_throws DomainError Qobj(a, type=SuperOperator)
+    @test_throws DomainError Qobj(a, type=OperatorBra)
     @test_throws DomainError Qobj(a', type=Ket)
     @test_throws DomainError Qobj(a', type=Operator)
     @test_throws DomainError Qobj(a', type=SuperOperator)
@@ -57,9 +57,9 @@
     @test_throws DimensionMismatch Qobj(a, dims=[2])
 
     # Operator-Ket, Operator-Bra tests
-    H  = 0.3 * sigmax() + 0.7 * sigmaz()
-    L  = liouvillian(H)
-    ρ  = Qobj(rand(ComplexF64, 2, 2))
+    H = 0.3 * sigmax() + 0.7 * sigmaz()
+    L = liouvillian(H)
+    ρ = Qobj(rand(ComplexF64, 2, 2))
     ρ_ket = mat2vec(ρ)
     ρ_bra = ρ_ket'
     @test ρ_bra == Qobj(mat2vec(ρ.data)', type=OperatorBra)
@@ -78,7 +78,7 @@
     @test isoperbra(ρ_bra) == true
     @test ρ_bra.dims == [2]
     @test ρ_ket.dims == [2]
-    @test H * ρ ≈ spre(H)  * ρ
+    @test H * ρ ≈ spre(H) * ρ
     @test ρ * H ≈ spost(H) * ρ
     @test H * ρ * H ≈ sprepost(H, H) * ρ
     @test (L * ρ_ket).dims == [2]
@@ -217,14 +217,14 @@
     @test isapprox(abs(α), 3, atol=1e-5) && abs2(δψ[1]) > 0.999
 
     # svdvals, Schatten p-norm
-    vd = Qobj(  rand(ComplexF64, 10))
+    vd = Qobj(rand(ComplexF64, 10))
     vs = Qobj(sprand(ComplexF64, 100, 0.1))
-    Md = Qobj(  rand(ComplexF64, 10, 10))
+    Md = Qobj(rand(ComplexF64, 10, 10))
     Ms = Qobj(sprand(ComplexF64, 10, 10, 0.5))
     @test svdvals(vd)[1] ≈ √(vd' * vd)
     @test svdvals(vs)[1] ≈ √(vs' * vs)
-    @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol=1e-6
-    @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol=1e-6
+    @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol = 1e-6
+    @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol = 1e-6
 
     # trace distance
     ψz0 = basis(2, 0)
@@ -233,9 +233,9 @@
     ρz1 = dense_to_sparse(ket2dm(ψz1))
     ψx0 = sqrt(0.5) * (basis(2, 0) + basis(2, 1))
     @test tracedist(ψz0, ψx0) ≈ sqrt(0.5)
-    @test tracedist(ρz0, ψz1) ≈ 1.
-    @test tracedist(ψz1, ρz0) ≈ 1.
-    @test tracedist(ρz0, ρz1) ≈ 1.
+    @test tracedist(ρz0, ψz1) ≈ 1.0
+    @test tracedist(ψz1, ρz0) ≈ 1.0
+    @test tracedist(ρz0, ρz1) ≈ 1.0
 
     # Broadcasting
     a = destroy(20)
@@ -270,14 +270,14 @@
     @test typeof(Vector(vs).data) == Vector{Int64}
     @test typeof(Vector{ComplexF64}(vd).data) == Vector{ComplexF64}
     @test typeof(Vector{ComplexF64}(vs).data) == Vector{ComplexF64}
-    @test typeof(SparseVector(vd).data) == SparseVector{Int64, Int64}
-    @test typeof(SparseVector(vs).data) == SparseVector{Int64, Int64}
-    @test typeof(SparseVector{ComplexF64}(vs).data) == SparseVector{ComplexF64, Int64}
+    @test typeof(SparseVector(vd).data) == SparseVector{Int64,Int64}
+    @test typeof(SparseVector(vs).data) == SparseVector{Int64,Int64}
+    @test typeof(SparseVector{ComplexF64}(vs).data) == SparseVector{ComplexF64,Int64}
     @test typeof(Matrix(Md).data) == Matrix{Int64}
     @test typeof(Matrix(Ms).data) == Matrix{Int64}
     @test typeof(Matrix{ComplexF64}(Ms).data) == Matrix{ComplexF64}
     @test typeof(Matrix{ComplexF64}(Md).data) == Matrix{ComplexF64}
-    @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64, Int64}
-    @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64, Int64}
-    @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64, Int64}
+    @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64,Int64}
+    @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64,Int64}
+    @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
 end

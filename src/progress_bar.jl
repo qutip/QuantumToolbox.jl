@@ -1,6 +1,6 @@
 export ProgressBar, next!
 
-mutable struct ProgressBar{CT,T1<:Integer, T2<:Real}
+mutable struct ProgressBar{CT,T1<:Integer,T2<:Real}
     counter::CT
     max_counts::T1
     enable::Bool
@@ -23,7 +23,7 @@ function next!(p::ProgressBar, io::IO=stdout)
     max_counts = p.max_counts
     bar_width = p.bar_width
     start_time = p.start_time
-    
+
     percentage = counter / max_counts
     percentage_100 = lpad(round(100 * percentage, digits=1), 5, " ")
     progress = floor(Int, bar_width * percentage)

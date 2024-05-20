@@ -29,7 +29,7 @@
     maxdims = [150]
     ψ0 = fock(3, 0)
     dfd_params = (Δ=Δ, F=F, κ=κ)
-    sol = dfd_mesolve(H_dfd0, ψ0, t_l, c_ops_dfd0, maxdims, dfd_params, e_ops=e_ops_dfd0, progress_bar=false);
+    sol = dfd_mesolve(H_dfd0, ψ0, t_l, c_ops_dfd0, maxdims, dfd_params, e_ops=e_ops_dfd0, progress_bar=false)
 
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
 
@@ -103,5 +103,5 @@
     sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, maxdims, dfd_params, e_ops=e_ops_dfd2, progress_bar=false)
 
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) +
-        sum(abs.((sol.expect[2, :] .- sol0.expect[2, :]) ./ (sol0.expect[2, :] .+ 1e-16))) < 0.01
+          sum(abs.((sol.expect[2, :] .- sol0.expect[2, :]) ./ (sol0.expect[2, :] .+ 1e-16))) < 0.01
 end

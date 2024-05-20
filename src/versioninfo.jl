@@ -33,22 +33,22 @@ function versioninfo(io::IO=stdout)
         "====================================\n",
         "Julia Version: $(VERSION)"
     )
-    println(io, 
+    println(io,
         """OS       : $(OS_name) ($(Sys.MACHINE))"""
     )
-    println(io, 
+    println(io,
         """CPU      : $(length(cpu)) × $(cpu[1].model)"""
     )
     println(io,
         """Memory   : $(round(Sys.total_memory() / 2 ^ 30, digits=3)) GB"""
     )
-    println(io, 
+    println(io,
         """WORD_SIZE: $(Sys.WORD_SIZE)"""
     )
-    println(io, 
+    println(io,
         """LIBM     : $(Base.libm_name)"""
     )
-    println(io, 
+    println(io,
         """LLVM     : libLLVM-$(Base.libllvm_version) ($(Sys.JIT), $(Sys.CPU_NAME))"""
     )
     println(io,

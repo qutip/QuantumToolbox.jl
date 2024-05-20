@@ -129,7 +129,7 @@ struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: AbstractQu
     dims::Vector{Int}
 end
 
-function QuantumObject(A::AbstractArray{T, N}; type::ObjType=nothing, dims=nothing) where {T,N,ObjType<:Union{Nothing,QuantumObjectType}}
+function QuantumObject(A::AbstractArray{T,N}; type::ObjType=nothing, dims=nothing) where {T,N,ObjType<:Union{Nothing,QuantumObjectType}}
 
     # only accept 1D- and 2D-array
     if N == 1
@@ -153,7 +153,7 @@ function QuantumObject(A::AbstractArray{T, N}; type::ObjType=nothing, dims=nothi
     end
 
     # decide dims from the size of A and the given type
-    if dims === nothing 
+    if dims === nothing
         if (type isa KetQuantumObject) || (type isa OperatorQuantumObject)
             dims = [Size[1]]
         elseif (type isa SuperOperatorQuantumObject) || (type isa OperatorKetQuantumObject)
@@ -409,8 +409,8 @@ LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T},OpType}, n::T1) where {T,
     QuantumObject(^(A.data, n), OpType(), A.dims)
 LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T},OpType}, n::T1) where {T,T1<:Number,OpType<:QuantumObjectType} =
     QuantumObject(/(A.data, n), OpType(), A.dims)
-function LinearAlgebra.dot(A::QuantumObject{<:AbstractArray{T1},OpType}, B::QuantumObject{<:AbstractArray{T2},OpType}) where 
-{T1<:Number,T2<:Number,OpType<:Union{KetQuantumObject,OperatorKetQuantumObject}} 
+function LinearAlgebra.dot(A::QuantumObject{<:AbstractArray{T1},OpType}, B::QuantumObject{<:AbstractArray{T2},OpType}) where
+{T1<:Number,T2<:Number,OpType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
 
     A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
     LinearAlgebra.dot(A.data, B.data)

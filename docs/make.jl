@@ -8,21 +8,21 @@ DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recu
 makedocs(;
     modules=[QuantumToolbox],
     authors="Alberto Mercurio",
-    repo = Remotes.GitHub("albertomercurio", "QuantumToolbox.jl"),
+    repo=Remotes.GitHub("albertomercurio", "QuantumToolbox.jl"),
     sitename="QuantumToolbox.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://albertomercurio.github.io/QuantumToolbox.jl",
         edit_link="main",
         assets=String[],
-        mathengine = MathJax3(Dict(
+        mathengine=MathJax3(Dict(
             :loader => Dict("load" => ["[tex]/physics"]),
             :tex => Dict(
-                "inlineMath" => [["\$","\$"], ["\\(","\\)"]],
+                "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
                 "tags" => "ams",
                 "packages" => ["base", "ams", "autoload", "physics"],
             ),
-            )),
+        )),
     ),
     pages=[
         "index.md",

@@ -46,7 +46,7 @@ julia> T
   0.707107+0.0im  0.707107+0.0im
  ```
 """
-struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
+struct EigsolveResult{T1<:Vector{<:Number},T2<:AbstractMatrix{<:Number},ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
     values::T1
     vectors::T2
     type::ObjType
@@ -57,7 +57,7 @@ struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjTyp
 end
 
 Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
-Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1, T2} = ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
+Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1,T2} = ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1,T2,OperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} = ([QuantumObject(res.vectors[:, k], Ket, res.dims) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1,T2,SuperOperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} = ([QuantumObject(res.vectors[:, k], OperatorKet, res.dims) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
@@ -73,92 +73,92 @@ function Base.show(io::IO, res::EigsolveResult)
 end
 
 if VERSION < v"1.10"
-for (hseqr, elty) in
-    ((:zhseqr_,:ComplexF64),
-     (:chseqr_,:ComplexF32))
-    @eval begin
-        # *     .. Scalar Arguments ..
-        #       CHARACTER          JOB, COMPZ
-        #       INTEGER            N, ILO, IHI, LWORK, LDH, LDZ, INFO
-        # *     ..
-        # *     .. Array Arguments ..
-        #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
-        function hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
-                        H::AbstractMatrix{$elty}, Z::AbstractMatrix{$elty})
-            require_one_based_indexing(H, Z)
-            chkstride1(H)
-            n = checksquare(H)
-            checksquare(Z) == n || throw(DimensionMismatch())
-            ldh = max(1, stride(H, 2))
-            ldz = max(1, stride(Z, 2))
-            w = similar(H, $elty, n)
-            work = Vector{$elty}(undef, 1)
-            lwork = BlasInt(-1)
-            info = Ref{BlasInt}()
-            for i = 1:2  # first call returns lwork as work[1]
-                ccall((@blasfunc($hseqr), libblastrampoline), Cvoid,
-                    (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt},
-                    Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}, Ptr{$elty},
-                    Ptr{$elty}, Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt},
-                    Ptr{BlasInt}),
-                    job, compz, n, ilo, ihi,
-                    H, ldh, w, Z, ldz, work,
-                    lwork, info)
-                chklapackerror(info[])
-                if i == 1
-                    lwork = BlasInt(real(work[1]))
-                    resize!(work, lwork)
+    for (hseqr, elty) in
+        ((:zhseqr_, :ComplexF64),
+        (:chseqr_, :ComplexF32))
+        @eval begin
+            # *     .. Scalar Arguments ..
+            #       CHARACTER          JOB, COMPZ
+            #       INTEGER            N, ILO, IHI, LWORK, LDH, LDZ, INFO
+            # *     ..
+            # *     .. Array Arguments ..
+            #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
+            function hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
+                H::AbstractMatrix{$elty}, Z::AbstractMatrix{$elty})
+                require_one_based_indexing(H, Z)
+                chkstride1(H)
+                n = checksquare(H)
+                checksquare(Z) == n || throw(DimensionMismatch())
+                ldh = max(1, stride(H, 2))
+                ldz = max(1, stride(Z, 2))
+                w = similar(H, $elty, n)
+                work = Vector{$elty}(undef, 1)
+                lwork = BlasInt(-1)
+                info = Ref{BlasInt}()
+                for i = 1:2  # first call returns lwork as work[1]
+                    ccall((@blasfunc($hseqr), libblastrampoline), Cvoid,
+                        (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt},
+                            Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}, Ptr{$elty},
+                            Ptr{$elty}, Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt},
+                            Ptr{BlasInt}),
+                        job, compz, n, ilo, ihi,
+                        H, ldh, w, Z, ldz, work,
+                        lwork, info)
+                    chklapackerror(info[])
+                    if i == 1
+                        lwork = BlasInt(real(work[1]))
+                        resize!(work, lwork)
+                    end
                 end
+                H, Z, w
             end
-            H, Z, w
         end
     end
-end
 
-for (hseqr, elty) in
-    ((:dhseqr_,:Float64),
-     (:shseqr_,:Float32))
-    @eval begin
-        # *     .. Scalar Arguments ..
-        #       CHARACTER          JOB, COMPZ
-        #       INTEGER            N, ILO, IHI, LWORK, LDH, LDZ, INFO
-        # *     ..
-        # *     .. Array Arguments ..
-        #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
-        function hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
-                        H::AbstractMatrix{$elty}, Z::AbstractMatrix{$elty})
-            require_one_based_indexing(H, Z)
-            chkstride1(H)
-            n = checksquare(H)
-            checksquare(Z) == n || throw(DimensionMismatch())
-            ldh = max(1, stride(H, 2))
-            ldz = max(1, stride(Z, 2))
-            wr = similar(H, $elty, n)
-            wi = similar(H, $elty, n)
-            work = Vector{$elty}(undef, 1)
-            lwork = BlasInt(-1)
-            info = Ref{BlasInt}()
-            for i = 1:2  # first call returns lwork as work[1]
-                ccall((@blasfunc($hseqr), libblastrampoline), Cvoid,
-                    (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt},
-                    Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}, Ptr{$elty}, Ptr{$elty},
-                    Ptr{$elty}, Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt},
-                    Ptr{BlasInt}),
-                    job, compz, n, ilo, ihi,
-                    H, ldh, wr, wi, Z, ldz, work,
-                    lwork, info)
-                chklapackerror(info[])
-                if i == 1
-                    lwork = BlasInt(real(work[1]))
-                    resize!(work, lwork)
+    for (hseqr, elty) in
+        ((:dhseqr_, :Float64),
+        (:shseqr_, :Float32))
+        @eval begin
+            # *     .. Scalar Arguments ..
+            #       CHARACTER          JOB, COMPZ
+            #       INTEGER            N, ILO, IHI, LWORK, LDH, LDZ, INFO
+            # *     ..
+            # *     .. Array Arguments ..
+            #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
+            function hseqr!(job::AbstractChar, compz::AbstractChar, ilo::Int, ihi::Int,
+                H::AbstractMatrix{$elty}, Z::AbstractMatrix{$elty})
+                require_one_based_indexing(H, Z)
+                chkstride1(H)
+                n = checksquare(H)
+                checksquare(Z) == n || throw(DimensionMismatch())
+                ldh = max(1, stride(H, 2))
+                ldz = max(1, stride(Z, 2))
+                wr = similar(H, $elty, n)
+                wi = similar(H, $elty, n)
+                work = Vector{$elty}(undef, 1)
+                lwork = BlasInt(-1)
+                info = Ref{BlasInt}()
+                for i = 1:2  # first call returns lwork as work[1]
+                    ccall((@blasfunc($hseqr), libblastrampoline), Cvoid,
+                        (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt},
+                            Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}, Ptr{$elty}, Ptr{$elty},
+                            Ptr{$elty}, Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt},
+                            Ptr{BlasInt}),
+                        job, compz, n, ilo, ihi,
+                        H, ldh, wr, wi, Z, ldz, work,
+                        lwork, info)
+                    chklapackerror(info[])
+                    if i == 1
+                        lwork = BlasInt(real(work[1]))
+                        resize!(work, lwork)
+                    end
                 end
+                H, Z, complex.(wr, wi)
             end
-            H, Z, complex.(wr, wi)
         end
     end
-end
-hseqr!(H::StridedMatrix{T}, Z::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'V', 1, size(H, 1), H, Z)
-hseqr!(H::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'I', 1, size(H, 1), H, similar(H))
+    hseqr!(H::StridedMatrix{T}, Z::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'V', 1, size(H, 1), H, Z)
+    hseqr!(H::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'I', 1, size(H, 1), H, similar(H))
 end
 
 function _map_ldiv(linsolve, y, x)
@@ -187,19 +187,19 @@ function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals)
     copyto!(Uₘ, Hₘ)
     LAPACK.orghr!(1, m, Uₘ, F.τ)
     Tₘ, Uₘ, values = hseqr!(Hₘ, Uₘ)
-    sortperm!(sorted_vals, values, by = abs, rev = true)
+    sortperm!(sorted_vals, values, by=abs, rev=true)
     _permuteschur!(Tₘ, Uₘ, sorted_vals)
     mul!(f, Uₘᵥ, β)
 
     return Tₘ, Uₘ
 end
 
-function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k::Int = 1, 
-    m::Int = max(20, 2*k+1); tol::Real = 1e-8, maxiter::Int = 200) where {T<:BlasFloat,ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
+function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k::Int=1,
+    m::Int=max(20, 2 * k + 1); tol::Real=1e-8, maxiter::Int=200) where {T<:BlasFloat,ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     n = size(A, 2)
-    V = similar(b, n, m+1)
-    H = zeros(T, m+1, m)
+    V = similar(b, n, m + 1)
+    H = zeros(T, m + 1, m)
 
     arnoldi_init!(A, b, V, H)
 
@@ -215,11 +215,11 @@ function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k:
 
     Vₘ = view(V, :, 1:m)
     Hₘ = view(H, 1:m, 1:m)
-    qₘ = view(V, :, m+1)
-    βeₘ = view(H, m+1, 1:m)
+    qₘ = view(V, :, m + 1)
+    βeₘ = view(H, m + 1, 1:m)
     β = real(H[m+1, m])
     Uₘ = one(Hₘ)
-    
+
     Uₘᵥ = view(Uₘ, m, 1:m)
 
     cache0 = similar(b, m, m)
@@ -228,8 +228,8 @@ function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k:
     sorted_vals = Array{Int16}(undef, m)
 
     V₁ₖ = view(V, :, 1:k)
-    Vₖ₊₁ = view(V, :, k+1)
-    Hₖ₊₁₁ₖ = view(H, k+1, 1:k)
+    Vₖ₊₁ = view(V, :, k + 1)
+    Hₖ₊₁₁ₖ = view(H, k + 1, 1:k)
     cache1₁ₖ = view(cache1, :, 1:k)
     cache2₁ₖ = view(cache2, 1:k)
 
@@ -254,7 +254,7 @@ function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k:
         for j in k+1:m
             β = arnoldi_step!(A, V, H, j)
             if β < tol
-                numops += j-k-1
+                numops += j - k - 1
                 break
             end
         end
@@ -263,8 +263,8 @@ function _eigsolve(A, b::AbstractVector{T}, type::ObjType, dims::Vector{Int}, k:
 
         Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals)
 
-        numops += m-k-1
-        iter+=1
+        numops += m - k - 1
+        iter += 1
     end
 
     vals = diag(view(Tₘ, 1:k, 1:k))
@@ -289,46 +289,46 @@ end
 Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi method.
 The keyword arguments are passed to the linear solver.
 """
-function eigsolve(A::QuantumObject{<:AbstractMatrix}; v0::Union{Nothing,AbstractVector}=nothing, 
-    sigma::Union{Nothing, Real}=nothing, k::Int = 1,
-    krylovdim::Int = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Int = 200,
-    solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, kwargs...)
+function eigsolve(A::QuantumObject{<:AbstractMatrix}; v0::Union{Nothing,AbstractVector}=nothing,
+    sigma::Union{Nothing,Real}=nothing, k::Int=1,
+    krylovdim::Int=max(20, 2 * k + 1), tol::Real=1e-8, maxiter::Int=200,
+    solver::Union{Nothing,LinearSolve.SciMLLinearSolveAlgorithm}=nothing, kwargs...)
 
-    return eigsolve(A.data; v0=v0, type=A.type, dims=A.dims, sigma=sigma, k=k, krylovdim=krylovdim, tol=tol, 
-                    maxiter=maxiter, solver=solver, kwargs...)
+    return eigsolve(A.data; v0=v0, type=A.type, dims=A.dims, sigma=sigma, k=k, krylovdim=krylovdim, tol=tol,
+        maxiter=maxiter, solver=solver, kwargs...)
 end
 
 
-function eigsolve(A; v0::Union{Nothing,AbstractVector}=nothing, 
-    type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}=nothing, 
+function eigsolve(A; v0::Union{Nothing,AbstractVector}=nothing,
+    type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}=nothing,
     dims::Vector{Int}=Int[],
-    sigma::Union{Nothing, Real}=nothing, k::Int = 1, 
-    krylovdim::Int = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Int = 200,
-    solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, kwargs...)
+    sigma::Union{Nothing,Real}=nothing, k::Int=1,
+    krylovdim::Int=max(20, 2 * k + 1), tol::Real=1e-8, maxiter::Int=200,
+    solver::Union{Nothing,LinearSolve.SciMLLinearSolveAlgorithm}=nothing, kwargs...)
 
     T = eltype(A)
     isH = ishermitian(A)
     v0 === nothing && (v0 = normalize!(rand(T, size(A, 1))))
 
     if sigma === nothing
-        res = _eigsolve(A, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
+        res = _eigsolve(A, v0, type, dims, k, krylovdim, tol=tol, maxiter=maxiter)
         vals = res.values
     else
         Aₛ = A - sigma * I
         solver === nothing && (solver = isH ? KrylovJL_MINRES() : KrylovJL_GMRES())
 
-        kwargs2 = (;kwargs...)
+        kwargs2 = (; kwargs...)
         condition = !haskey(kwargs2, :Pl) && typeof(A) <: SparseMatrixCSC
-        condition && (kwargs2 = merge(kwargs2, (Pl = ilu(Aₛ, τ=0.01),)))
+        condition && (kwargs2 = merge(kwargs2, (Pl=ilu(Aₛ, τ=0.01),)))
 
-        !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, (abstol = tol*1e-6,)))
-        !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, (reltol = tol*1e-6,)))
+        !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, (abstol=tol * 1e-6,)))
+        !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, (reltol=tol * 1e-6,)))
 
         prob = LinearProblem(Aₛ, v0)
         linsolve = init(prob, solver; kwargs2...)
-        Amap = LinearMap{T}((y,x) -> _map_ldiv(linsolve, y, x), length(v0))
+        Amap = LinearMap{T}((y, x) -> _map_ldiv(linsolve, y, x), length(v0))
 
-        res = _eigsolve(Amap, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
+        res = _eigsolve(Amap, v0, type, dims, k, krylovdim, tol=tol, maxiter=maxiter)
         vals = @. (1 + sigma * res.values) / res.values
     end
 
@@ -380,18 +380,18 @@ function eigsolve_al(H::QuantumObject{MT1,HOpType},
     alg::OrdinaryDiffEqAlgorithm=Tsit5(),
     H_t::Union{Nothing,Function}=nothing,
     params::NamedTuple=NamedTuple(),
-    ρ0::AbstractMatrix = rand_dm(prod(H.dims)).data,
+    ρ0::AbstractMatrix=rand_dm(prod(H.dims)).data,
     k::Int=1,
     krylovdim::Int=min(10, size(H, 1)),
     maxiter::Int=200,
     eigstol::Real=1e-6,
     kwargs...) where {MT1<:AbstractMatrix,MT2<:AbstractMatrix,
-                    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-                    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     L = liouvillian(H, c_ops)
-    prob = mesolveProblem(L, QuantumObject(ρ0, dims=H.dims), [0,T]; alg=alg,
-            H_t=H_t, params=params, progress_bar=false, kwargs...)
+    prob = mesolveProblem(L, QuantumObject(ρ0, dims=H.dims), [0, T]; alg=alg,
+        H_t=H_t, params=params, progress_bar=false, kwargs...)
     integrator = init(prob, alg)
 
     # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
@@ -401,7 +401,7 @@ function eigsolve_al(H::QuantumObject{MT1,HOpType},
         solve!(integrator)
         integrator.u
     end
-    
+
     Lmap = LinearMap{eltype(MT1)}(arnoldi_lindblad_solve, size(L, 1), ismutating=false)
 
     res = _eigsolve(Lmap, mat2vec(ρ0), L.type, L.dims, k, krylovdim, maxiter=maxiter, tol=eigstol)
@@ -413,7 +413,7 @@ function eigsolve_al(H::QuantumObject{MT1,HOpType},
     for i in eachindex(res.values)
         vec = view(res.vectors, :, i)
         vals[i] = dot(vec, L.data, vec)
-        @. vecs[:,i] = vec * exp(-1im*angle(vec[1]))
+        @. vecs[:, i] = vec * exp(-1im * angle(vec[1]))
     end
 
     return EigsolveResult(vals, vecs, res.type, res.dims, res.iter, res.numops, res.converged)
@@ -459,7 +459,7 @@ true
 ```
 """
 function LinearAlgebra.eigen(A::QuantumObject{MT,OpType}; kwargs...) where
-        {MT<:AbstractMatrix,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+{MT<:AbstractMatrix,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     F = eigen(sparse_to_dense(A.data); kwargs...)
     # This fixes a type inference issue. But doesn't work for GPU arrays

@@ -31,11 +31,11 @@ Converts a sparse QuantumObject to a dense QuantumObject.
 sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
 sparse_to_dense(A::MT) where {MT<:AbstractSparseMatrix} = Array(A)
 for op in (:Transpose, :Adjoint)
-    @eval sparse_to_dense(A::$op{T, <:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
+    @eval sparse_to_dense(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
 end
 sparse_to_dense(A::MT) where {MT<:AbstractArray} = A
 
-function sparse_to_dense(::Type{M}) where M <: SparseMatrixCSC
+function sparse_to_dense(::Type{M}) where {M<:SparseMatrixCSC}
     T = M
     par = T.parameters
     npar = length(par)
@@ -43,7 +43,7 @@ function sparse_to_dense(::Type{M}) where M <: SparseMatrixCSC
     return Matrix{par[1]}
 end
 
-sparse_to_dense(::Type{M}) where M <: AbstractMatrix = M
+sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
 
 """
     dense_to_sparse(A::QuantumObject)
@@ -69,9 +69,9 @@ end
 
 Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
 """
-tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2=1e-14) where {T, T2<:Real} = QuantumObject(tidyup(A.data, tol), A.type, A.dims)
-tidyup(A::AbstractArray{T}, tol::T2=1e-14) where {T, T2<:Real} = @. T(abs(A) > tol) * A
-tidyup(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T, T2<:Real} = droptol!(copy(A), tol)
+tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2=1e-14) where {T,T2<:Real} = QuantumObject(tidyup(A.data, tol), A.type, A.dims)
+tidyup(A::AbstractArray{T}, tol::T2=1e-14) where {T,T2<:Real} = @. T(abs(A) > tol) * A
+tidyup(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T,T2<:Real} = droptol!(copy(A), tol)
 
 """
     tidyup!(A::QuantumObject, tol::Real=1e-14)
@@ -79,9 +79,9 @@ tidyup(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T, T2<:Real} = droptol!
 Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
 In-place version of [`tidyup`](#tidyup).
 """
-tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2=1e-14) where {T, T2<:Real} = (tidyup!(A.data, tol); A)
-tidyup!(A::AbstractArray{T}, tol::T2=1e-14) where {T, T2<:Real} = @. A = T(abs(A) > tol) * A
-tidyup!(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T, T2<:Real} = droptol!(A, tol)
+tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2=1e-14) where {T,T2<:Real} = (tidyup!(A.data, tol); A)
+tidyup!(A::AbstractArray{T}, tol::T2=1e-14) where {T,T2<:Real} = @. A = T(abs(A) > tol) * A
+tidyup!(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T,T2<:Real} = droptol!(A, tol)
 
 """
     get_data(A::QuantumObject)
@@ -102,8 +102,8 @@ function mat2vec(A::MT) where {MT<:AbstractSparseMatrix}
     return sparsevec(i .+ (j .- 1) .* size(A, 1), v, prod(size(A)))
 end
 for op in (:Transpose, :Adjoint)
-    @eval mat2vec(A::$op{T, <:AbstractSparseMatrix}) where {T<:BlasFloat} = mat2vec(sparse(A))
-    @eval mat2vec(A::$op{T, <:AbstractMatrix}) where {T<:BlasFloat} = mat2vec(Matrix(A))
+    @eval mat2vec(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = mat2vec(sparse(A))
+    @eval mat2vec(A::$op{T,<:AbstractMatrix}) where {T<:BlasFloat} = mat2vec(Matrix(A))
 end
 
 
@@ -174,8 +174,8 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 ```
 """
 function ptrace(QO::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, sel::Vector{T2}) where
-    {T1,T2<:Integer}
-    
+{T1,T2<:Integer}
+
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sel)
@@ -185,8 +185,8 @@ end
 ptrace(QO::QuantumObject{<:AbstractArray{T1},BraQuantumObject}, sel::Vector{T2}) where {T1,T2<:Integer} = ptrace(QO', sel)
 
 function ptrace(QO::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, sel::Vector{T2}) where
-    {T1,T2<:Integer}
-    
+{T1,T2<:Integer}
+
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sel)
@@ -241,7 +241,7 @@ julia> entropy_vn(ρ, base=2)
 function entropy_vn(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}; base::Int=0, tol::Real=1e-15) where {T}
     vals = eigvals(ρ)
     indexes = abs.(vals) .> tol
-    1 ∉ indexes && return 0 
+    1 ∉ indexes && return 0
     nzvals = vals[indexes]
     logvals = base != 0 ? log.(base, Complex.(nzvals)) : log.(Complex.(nzvals))
     return -real(sum(nzvals .* logvals))
@@ -308,10 +308,10 @@ It returns both ``\alpha`` and the state
 ``\ket{\delta_\psi} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger )``. The
 latter corresponds to the quantum fulctuations around the coherent state ``\ket{\alpha}``.
 """
-function get_coherence(ψ::QuantumObject{<:AbstractArray{T}, StateOpType}) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-    a = destroy(size(ψ,1))
+function get_coherence(ψ::QuantumObject{<:AbstractArray{T},StateOpType}) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    a = destroy(size(ψ, 1))
     α = expect(a, ψ)
-    D = exp(α*a' - conj(α)*a)
+    D = exp(α * a' - conj(α) * a)
 
     α, D' * ψ
 end
@@ -339,8 +339,8 @@ Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 tracedist(ρ::QuantumObject{<:AbstractArray{T1},ObjType1}, σ::QuantumObject{<:AbstractArray{T2},ObjType2}) where {T1,T2,ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},ObjType2<:Union{KetQuantumObject,OperatorQuantumObject}} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
 
 function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
-    {T1,T2<:Integer}
-    
+{T1,T2<:Integer}
+
     rd = dims
     nd = length(rd)
 
@@ -351,7 +351,7 @@ function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector
     dtrace = @view(rd[qtrace])
 
     vmat = reshape(QO, reverse(rd)...)
-    topermute = nd+1 .- vcat(sel, qtrace)
+    topermute = nd + 1 .- vcat(sel, qtrace)
     vmat = PermutedDimsArray(vmat, topermute)
     vmat = reshape(vmat, prod(dkeep), prod(dtrace))
 
@@ -359,8 +359,8 @@ function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector
 end
 
 function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
-    {T1,T2<:Integer}
-    
+{T1,T2<:Integer}
+
     rd = dims
     nd = length(rd)
 
@@ -371,47 +371,47 @@ function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vecto
     dtrace = @view(rd[qtrace])
 
     ρmat = reshape(QO, reverse!(repeat(rd, 2))...)
-    topermute = 2*nd+1 .- vcat(qtrace, qtrace .+ nd, sel, sel .+ nd)
+    topermute = 2 * nd + 1 .- vcat(qtrace, qtrace .+ nd, sel, sel .+ nd)
     reverse!(topermute)
     ρmat = PermutedDimsArray(ρmat, topermute)
 
     ## TODO: Check if it works always
-    
+
     # ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
     # res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
     ρmat = reshape(ρmat, prod(dkeep), prod(dkeep), prod(dtrace), prod(dtrace))
-    res = dropdims(mapslices(tr, ρmat, dims=(3,4)), dims=(3,4))
+    res = dropdims(mapslices(tr, ρmat, dims=(3, 4)), dims=(3, 4))
 
     return res, dkeep
 end
 
-function mat2vec(::Type{M}) where M <: DenseMatrix
+function mat2vec(::Type{M}) where {M<:DenseMatrix}
     T = hasproperty(M, :body) ? M.body : M
     par = T.parameters
     npar = length(par)
     (2 ≤ npar ≤ 3) || error("Type $M is not supported.")
     if npar == 2
-      S = T.name.wrapper{par[1], 1}
+        S = T.name.wrapper{par[1],1}
     else
-      S = T.name.wrapper{par[1], 1, par[3]}
+        S = T.name.wrapper{par[1],1,par[3]}
     end
     return S
 end
 
-function mat2vec(::Type{M}) where M <: SparseMatrixCSC
+function mat2vec(::Type{M}) where {M<:SparseMatrixCSC}
     T = M
     par = T.parameters
     npar = length(par)
     (2 == npar) || error("Type $M is not supported.")
-    return SparseVector{par[1], par[2]}
+    return SparseVector{par[1],par[2]}
 end
 
-function mat2vec(::Type{M}) where M <: Union{Adjoint{<:BlasFloat,<:SparseMatrixCSC}, Transpose{<:BlasFloat,<:SparseMatrixCSC}}
+function mat2vec(::Type{M}) where {M<:Union{Adjoint{<:BlasFloat,<:SparseMatrixCSC},Transpose{<:BlasFloat,<:SparseMatrixCSC}}}
     T = M.parameters[2]
     par = T.parameters
     npar = length(par)
     (2 == npar) || error("Type $M is not supported.")
-    return SparseVector{par[1], par[2]}
+    return SparseVector{par[1],par[2]}
 end
 
 @doc raw"""

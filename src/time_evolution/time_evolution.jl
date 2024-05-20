@@ -9,7 +9,7 @@ export SteadyStateSolver, SteadyStateDirectSolver
 
 abstract type LiouvillianSolver end
 
-struct LiouvillianDirectSolver{T<:Real} <: LiouvillianSolver 
+struct LiouvillianDirectSolver{T<:Real} <: LiouvillianSolver
     tol::T
 end
 
@@ -17,14 +17,14 @@ abstract type SteadyStateSolver end
 
 struct SteadyStateDirectSolver <: SteadyStateSolver end
 
-struct TimeEvolutionSol{TT<:Vector{<:Real}, TS<:AbstractVector, TE<:Matrix{ComplexF64}}
+struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{ComplexF64}}
     times::TT
     states::TS
     expect::TE
 end
 
-struct TimeEvolutionMCSol{TT<:Vector{<:Vector{<:Real}}, TS<:AbstractVector, TE<:Matrix{ComplexF64}, 
-                TEA<:Array{ComplexF64, 3}, TJT<:Vector{<:Vector{<:Real}}, TJW<:Vector{<:Vector{<:Integer}}}
+struct TimeEvolutionMCSol{TT<:Vector{<:Vector{<:Real}},TS<:AbstractVector,TE<:Matrix{ComplexF64},
+    TEA<:Array{ComplexF64,3},TJT<:Vector{<:Vector{<:Real}},TJW<:Vector{<:Vector{<:Integer}}}
     times::TT
     states::TS
     expect::TE
@@ -33,7 +33,7 @@ struct TimeEvolutionMCSol{TT<:Vector{<:Vector{<:Real}}, TS<:AbstractVector, TE<:
     jump_which::TJW
 end
 
-LiouvillianDirectSolver(;tol=1e-16) = LiouvillianDirectSolver(tol)
+LiouvillianDirectSolver(; tol=1e-16) = LiouvillianDirectSolver(tol)
 
 abstract type LindbladJumpCallbackType end
 
@@ -44,7 +44,7 @@ end
 struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType
 end
 
-ContinuousLindbladJumpCallback(;interp_points::Int=10) = ContinuousLindbladJumpCallback(interp_points)
+ContinuousLindbladJumpCallback(; interp_points::Int=10) = ContinuousLindbladJumpCallback(interp_points)
 
 ## Sum of operators
 
@@ -56,9 +56,9 @@ struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}} <: Abstract
         # Check if all the operators have the same dimensions
         dims = operators[1].dims
         optype = operators[1].type
-        mapreduce(x->x.dims == dims && x.type == optype, &, operators) || throw(DimensionMismatch("All the operators must have the same dimensions."))
-        T = promote_type(mapreduce(x->eltype(x.data), promote_type, operators),
-                mapreduce(eltype, promote_type, coefficients))
+        mapreduce(x -> x.dims == dims && x.type == optype, &, operators) || throw(DimensionMismatch("All the operators must have the same dimensions."))
+        T = promote_type(mapreduce(x -> eltype(x.data), promote_type, operators),
+            mapreduce(eltype, promote_type, coefficients))
         coefficients2 = T.(coefficients)
         new{Vector{T},OT}(coefficients2, operators)
     end
@@ -75,12 +75,12 @@ function update_coefficients!(A::OperatorSum, coefficients)
     A.coefficients .= coefficients
 end
 
-@inline function LinearAlgebra.mul!(y::AbstractVector{T}, A::OperatorSum, x::AbstractVector, α, β) where T
+@inline function LinearAlgebra.mul!(y::AbstractVector{T}, A::OperatorSum, x::AbstractVector, α, β) where {T}
     # Note that β is applied only to the first term
-    mul!(y, A.operators[1], x, α*A.coefficients[1], β)
+    mul!(y, A.operators[1], x, α * A.coefficients[1], β)
     @inbounds for i in 2:length(A.operators)
         A.coefficients[i] == 0 && continue
-        mul!(y, A.operators[i], x, α*A.coefficients[i], 1)
+        mul!(y, A.operators[i], x, α * A.coefficients[i], 1)
     end
     y
 end
@@ -114,7 +114,7 @@ end
 end
 
 #######################################
-    
+
 
 ### LIOUVILLIAN AND STEADYSTATE ###
 @doc raw"""
@@ -130,8 +130,8 @@ the same function is applied multiple times with a known Hilbert space dimension
 function liouvillian(H::QuantumObject{MT1,OpType1},
     c_ops::Vector{QuantumObject{MT2,OpType2}}=Vector{QuantumObject{MT1,OpType1}}([]),
     Id_cache=I(prod(H.dims))) where {MT1<:AbstractMatrix,MT2<:AbstractMatrix,
-                                    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-                                    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     L = liouvillian(H, Id_cache)
     for c_op in c_ops
@@ -160,9 +160,9 @@ function liouvillian_floquet(H::QuantumObject{<:AbstractArray{T1},OpType1},
     Hₚ::QuantumObject{<:AbstractArray{T2},OpType2},
     Hₘ::QuantumObject{<:AbstractArray{T3},OpType3},
     ω::Real; n_max::Int=4, solver::LiouvillianSolver=LiouvillianDirectSolver()) where {T1,T2,T3,
-                                                                            OpType1<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
-                                                                            OpType2<:Union{OperatorQuantumObject, SuperOperatorQuantumObject},
-                                                                            OpType3<:Union{OperatorQuantumObject, SuperOperatorQuantumObject}}
+    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
 
     liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, solver=solver, n_max=n_max)
 end
@@ -175,12 +175,12 @@ Constructs the generalized Liouvillian for a system coupled to a bath of harmoni
 
 See, e.g., Settineri, Alessio, et al. "Dissipation and thermal noise in hybrid quantum systems in the ultrastrong-coupling regime." Physical Review A 98.5 (2018): 053834.
 """
-function liouvillian_generalized(H::QuantumObject{MT, OperatorQuantumObject}, fields::Vector, 
-    T_list::Vector{<:Real}; N_trunc::Int=size(H,1), tol::Real=1e-12, σ_filter::Union{Nothing, Real}=nothing) where {MT<:AbstractMatrix}
+function liouvillian_generalized(H::QuantumObject{MT,OperatorQuantumObject}, fields::Vector,
+    T_list::Vector{<:Real}; N_trunc::Int=size(H, 1), tol::Real=1e-12, σ_filter::Union{Nothing,Real}=nothing) where {MT<:AbstractMatrix}
 
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
-    dims = N_trunc == size(H,1) ? H.dims : [N_trunc]
+    dims = N_trunc == size(H, 1) ? H.dims : [N_trunc]
     result = eigen(H)
     E = real.(result.values[1:N_trunc])
     U = QuantumObject(result.vectors, result.type, result.dims)
@@ -194,7 +194,7 @@ function liouvillian_generalized(H::QuantumObject{MT, OperatorQuantumObject}, fi
     σ = isnothing(σ_filter) ? 500 * maximum([norm(field) / length(field) for field in fields]) : σ_filter
     F1 = QuantumObject(gaussian.(Ω, 0, σ), dims=dims)
     F1 = dense_to_sparse(F1, tol)
-    
+
     # Filter in the Liouville space
     # M1 = ones(N_trunc, N_trunc)
     M1 = similar(E, N_trunc, N_trunc)
@@ -209,20 +209,20 @@ function liouvillian_generalized(H::QuantumObject{MT, OperatorQuantumObject}, fi
 
     for i in eachindex(fields)
         # The operator that couples the system to the bath in the eigenbasis
-        X_op = dense_to_sparse((U' * fields[i] * U).data[1:N_trunc, 1:N_trunc], tol)
+        X_op = dense_to_sparse((U'*fields[i]*U).data[1:N_trunc, 1:N_trunc], tol)
         if ishermitian(fields[i])
             X_op = (X_op + X_op') / 2 # Make sure it's hermitian
         end
 
         # Ohmic reservoir
         N_th = n_th.(Ωp, T_list[i])
-        Sp₀ = QuantumObject( triu(X_op, 1), dims=dims )
-        Sp₁ = QuantumObject( droptol!( (@. Ωp * N_th * Sp₀.data), tol), dims=dims )
-        Sp₂ = QuantumObject( droptol!( (@. Ωp * (1 + N_th) * Sp₀.data), tol), dims=dims )
+        Sp₀ = QuantumObject(triu(X_op, 1), dims=dims)
+        Sp₁ = QuantumObject(droptol!((@. Ωp * N_th * Sp₀.data), tol), dims=dims)
+        Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), dims=dims)
         # S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
 
-        L += 1 / 2 * ( F2 .* (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁)) - spre(F1 .* (Sp₀ * Sp₁')) - spost(F1 .* (Sp₁ * Sp₀')) )
-        L += 1 / 2 * ( F2 .* (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂')) - spre(F1 .* (Sp₀' * Sp₂)) - spost(F1 .* (Sp₂' * Sp₀)) )
+        L += 1 / 2 * (F2 .* (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁)) - spre(F1 .* (Sp₀ * Sp₁')) - spost(F1 .* (Sp₁ * Sp₀')))
+        L += 1 / 2 * (F2 .* (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂')) - spre(F1 .* (Sp₀' * Sp₂)) - spost(F1 .* (Sp₂' * Sp₀)))
     end
 
     return E, U, L

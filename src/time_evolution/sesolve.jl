@@ -20,7 +20,7 @@ end
 sesolve_ti_dudt!(du, u, p, t) = mul!(du, p.U, u)
 function sesolve_td_dudt!(du, u, p, t)
     mul!(du, p.U, u)
-    H_t = p.H_t(t,p)
+    H_t = p.H_t(t, p)
     mul!(du, H_t, u, -1im, 1)
 end
 
@@ -55,7 +55,7 @@ function sesolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{MT2, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{MT2,OperatorQuantumObject}}=QuantumObject{MT1,OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     progress_bar::Bool=true,
@@ -72,9 +72,9 @@ function sesolveProblem(H::QuantumObject{MT1,OperatorQuantumObject},
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
     e_ops2 = get_data.(e_ops)
 
-    p = (U = U, e_ops = e_ops2, expvals = expvals, progr = progr, Hdims = H.dims, H_t = H_t, is_empty_e_ops = isempty(e_ops), params...)
+    p = (U=U, e_ops=e_ops2, expvals=expvals, progr=progr, Hdims=H.dims, H_t=H_t, is_empty_e_ops=isempty(e_ops), params...)
 
-    default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
+    default_values = (abstol=1e-7, reltol=1e-5, saveat=[t_l[end]])
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops) || progress_bar
         cb1 = PresetTimeCallback(t_l, _save_func_sesolve, save_positions=(false, false))
@@ -124,15 +124,15 @@ function sesolve(H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    e_ops::Vector{QuantumObject{MT2, OperatorQuantumObject}}=QuantumObject{MT1, OperatorQuantumObject}[],
+    e_ops::Vector{QuantumObject{MT2,OperatorQuantumObject}}=QuantumObject{MT1,OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
     params::NamedTuple=NamedTuple(),
     progress_bar::Bool=true,
     kwargs...) where {MT1<:AbstractMatrix,T2,MT2<:AbstractMatrix}
 
     prob = sesolveProblem(H, ψ0, t_l; alg=alg, e_ops=e_ops,
-            H_t=H_t, params=params, progress_bar=progress_bar, kwargs...)
-    
+        H_t=H_t, params=params, progress_bar=progress_bar, kwargs...)
+
     return sesolve(prob, alg; kwargs...)
 end
 
@@ -145,7 +145,7 @@ end
 
 function _sesolve_sol(sol; kwargs...)
     Hdims = sol.prob.p.Hdims
-    ψt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(ϕ, dims = Hdims), sol.u) : sol.u
+    ψt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(ϕ, dims=Hdims), sol.u) : sol.u
 
     return TimeEvolutionSol(sol.t, ψt, sol.prob.p.expvals)
 end
