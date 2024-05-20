@@ -274,5 +274,18 @@
       renderAllChars(init());
     })();
   </script>
+
+  <script>
+    function sendHeight() {
+      parent.postMessage({ type: 'height', height: document.documentElement.scrollHeight }, '*');
+    }
+
+    window.addEventListener('load', () => {
+      sendHeight();
+    });
+    window.addEventListener('resize', sendHeight);
+    // Optionally, observe DOM changes
+    new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true });
+  </script>
 </body>
 </html>
