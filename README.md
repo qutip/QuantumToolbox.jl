@@ -1,4 +1,6 @@
-<img src="https://github.com/albertomercurio/QuantumToolbox.jl/blob/main/docs/src/assets/logo.png" alt="QuantumToolbox.jl" width="120">
+<div align="center">
+  <img src="/docs/src/assets/logo.png" alt="QuantumToolbox.jl logo" width="150">
+</div>
 
 # QuantumToolbox.jl
 
