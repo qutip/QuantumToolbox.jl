@@ -9,11 +9,12 @@
       -webkit-font-smoothing: antialiased;
       background-color: transparent;
       font-size: 16px;
+      margin: 0;
       overflow: hidden;
     }
     body {
       color: #4a4a4a;
-      margin: 8px;
+      margin: 0;
       font-size: 1em;
       font-weight: 400;
       background-color: transparent;
@@ -279,12 +280,10 @@
 
   <script>
     function sendHeight() {
-      parent.postMessage({ type: 'height', height: document.documentElement.scrollHeight }, '*');
+      parent.postMessage(document.documentElement.scrollHeight, '*');
     }
 
-    window.addEventListener('load', () => {
-      sendHeight();
-    });
+    window.addEventListener('load', sendHeight);
     window.addEventListener('resize', sendHeight);
     // Optionally, observe DOM changes
     new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true });
