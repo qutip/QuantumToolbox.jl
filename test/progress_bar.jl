@@ -1,7 +1,7 @@
 @testset "Progress Bar" begin
     bar_width = 30
     strLength = 67 + bar_width # including "\r" in the beginning of the string
-    prog = ProgressBar(bar_width, enable=true, bar_width=bar_width)
+    prog = ProgressBar(bar_width, enable = true, bar_width = bar_width)
     for p in 1:bar_width
         output = sprint((t, s) -> next!(s, t), prog)
 

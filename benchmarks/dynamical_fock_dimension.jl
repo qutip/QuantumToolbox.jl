@@ -23,11 +23,20 @@ function benchmark_dfd()
     maxdims = [50, 50]
 
     ψ0 = tensor(fock(3, 0), fock(20, 15))
-    dfd_params = (Δ=Δ, F=F, κ=κ, J=J)
+    dfd_params = (Δ = Δ, F = F, κ = κ, J = J)
 
     tlist = range(0, 15 / κ, 100)
 
-    SUITE["Time Evolution"]["Dynamical Fock Dimension"] = @benchmarkable dfd_mesolve(H_dfd2, $ψ0, $tlist, c_ops_dfd2, $maxdims, $dfd_params, e_ops=e_ops_dfd2, progress_bar=false)
+    SUITE["Time Evolution"]["Dynamical Fock Dimension"] = @benchmarkable dfd_mesolve(
+        H_dfd2,
+        $ψ0,
+        $tlist,
+        c_ops_dfd2,
+        $maxdims,
+        $dfd_params,
+        e_ops = e_ops_dfd2,
+        progress_bar = false,
+    )
 end
 
 benchmark_dfd()

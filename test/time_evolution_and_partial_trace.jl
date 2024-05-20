@@ -10,7 +10,7 @@
     psi0 = kron(fock(N, 0), fock(2, 0))
     t_l = LinRange(0, 1000, 1000)
     e_ops = [a_d * a]
-    sol = sesolve(H, psi0, t_l, e_ops=e_ops, alg=Vern7(), progress_bar=false)
+    sol = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress_bar = false)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
     @test ptrace(sol.states[end], 1) ≈ ptrace(ket2dm(sol.states[end]), 1)
     @test ptrace(sol.states[end]', 1) ≈ ptrace(sol.states[end], 1)
@@ -22,8 +22,9 @@
     e_ops = [a_d * a]
     psi0 = basis(N, 3)
     t_l = LinRange(0, 100, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=e_ops, alg=Vern7(), progress_bar=false)
-    sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=e_ops, progress_bar=false)
+    sol_me =
+        mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress_bar = false)
+    sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = false)
     @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
 
     sp1 = kron(sigmap(), qeye(2))
@@ -44,8 +45,18 @@
     psi0_2 = normalize(fock(2, 0) + fock(2, 1))
     psi0 = kron(psi0_1, psi0_2)
     t_l = LinRange(0, 20 / γ1, 1000)
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops=[sp1 * sm1, sp2 * sm2], progress_bar=false)
-    sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj=500, e_ops=[sp1 * sm1, sp2 * sm2], progress_bar=false)
+    sol_me =
+        mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = false)
+    sol_mc = mcsolve(
+        H,
+        psi0,
+        t_l,
+        c_ops,
+        n_traj = 500,
+        e_ops = [sp1 * sm1, sp2 * sm2],
+        progress_bar = false,
+    )
     @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
-    @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], 1))
+    @test expect(sp1 * sm1, sol_me.states[end]) ≈
+          expect(sigmap() * sigmam(), ptrace(sol_me.states[end], 1))
 end

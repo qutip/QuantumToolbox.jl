@@ -2,23 +2,23 @@
     # unsupported size of array
     for a in [rand(ComplexF64, 3, 2), rand(ComplexF64, 2, 2, 2)]
         for t in [nothing, Ket, Bra, Operator, SuperOperator, OperatorBra, OperatorKet]
-            @test_throws DomainError Qobj(a, type=t)
+            @test_throws DomainError Qobj(a, type = t)
         end
     end
 
     N = 10
     a = rand(ComplexF64, 10)
     # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
-    @test_throws DomainError Qobj(a, type=Bra)
-    @test_throws DomainError Qobj(a, type=Operator)
-    @test_throws DomainError Qobj(a, type=SuperOperator)
-    @test_throws DomainError Qobj(a, type=OperatorBra)
-    @test_throws DomainError Qobj(a', type=Ket)
-    @test_throws DomainError Qobj(a', type=Operator)
-    @test_throws DomainError Qobj(a', type=SuperOperator)
-    @test_throws DomainError Qobj(a', type=OperatorKet)
-    @test_throws DimensionMismatch Qobj(a, dims=[2])
-    @test_throws DimensionMismatch Qobj(a', dims=[2])
+    @test_throws DomainError Qobj(a, type = Bra)
+    @test_throws DomainError Qobj(a, type = Operator)
+    @test_throws DomainError Qobj(a, type = SuperOperator)
+    @test_throws DomainError Qobj(a, type = OperatorBra)
+    @test_throws DomainError Qobj(a', type = Ket)
+    @test_throws DomainError Qobj(a', type = Operator)
+    @test_throws DomainError Qobj(a', type = SuperOperator)
+    @test_throws DomainError Qobj(a', type = OperatorKet)
+    @test_throws DimensionMismatch Qobj(a, dims = [2])
+    @test_throws DimensionMismatch Qobj(a', dims = [2])
     a2 = Qobj(a')
     a3 = Qobj(a)
     @test isket(a2) == false
@@ -39,7 +39,7 @@
 
     a = sprand(ComplexF64, 100, 100, 0.1)
     a2 = Qobj(a)
-    a3 = Qobj(a, type=SuperOperator)
+    a3 = Qobj(a, type = SuperOperator)
 
     @test isket(a2) == false
     @test isbra(a2) == false
@@ -53,8 +53,8 @@
     @test issuper(a3) == true
     @test isoperket(a3) == false
     @test isoperbra(a3) == false
-    @test_throws DimensionMismatch Qobj(a, dims=[2])
-    @test_throws DimensionMismatch Qobj(a, dims=[2])
+    @test_throws DimensionMismatch Qobj(a, dims = [2])
+    @test_throws DimensionMismatch Qobj(a, dims = [2])
 
     # Operator-Ket, Operator-Bra tests
     H = 0.3 * sigmax() + 0.7 * sigmaz()
@@ -62,7 +62,7 @@
     ρ = Qobj(rand(ComplexF64, 2, 2))
     ρ_ket = mat2vec(ρ)
     ρ_bra = ρ_ket'
-    @test ρ_bra == Qobj(mat2vec(ρ.data)', type=OperatorBra)
+    @test ρ_bra == Qobj(mat2vec(ρ.data)', type = OperatorBra)
     @test ρ == vec2mat(ρ_ket)
     @test isket(ρ_ket) == false
     @test isbra(ρ_ket) == false
@@ -85,8 +85,8 @@
     @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
     @test (ρ_bra * L')' == L * ρ_ket
     @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
-    @test_throws DimensionMismatch Qobj(ρ_ket.data, type=OperatorKet, dims=[4])
-    @test_throws DimensionMismatch Qobj(ρ_bra.data, type=OperatorBra, dims=[4])
+    @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet, dims = [4])
+    @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = [4])
 
     a = Array(a)
     a4 = Qobj(a)
@@ -174,7 +174,8 @@
     a_dims = a.dims
     a_size = size(a)
     a_isherm = ishermitian(a)
-    @test opstring == "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+    @test opstring ==
+          "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
     a = spre(a)
     opstring = sprint((t, s) -> show(t, "text/plain", s), a)
@@ -182,39 +183,44 @@
     a_dims = a.dims
     a_size = size(a)
     a_isherm = ishermitian(a)
-    @test opstring == "Quantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
+    @test opstring ==
+          "Quantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
 
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
     ψ_dims = ψ.dims
     ψ_size = size(ψ)
-    @test opstring == "Quantum Object:   type=Ket   dims=$ψ_dims   size=$ψ_size\n$datastring"
+    @test opstring ==
+          "Quantum Object:   type=Ket   dims=$ψ_dims   size=$ψ_size\n$datastring"
 
     ψ = ψ'
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
     ψ_dims = ψ.dims
     ψ_size = size(ψ)
-    @test opstring == "Quantum Object:   type=Bra   dims=$ψ_dims   size=$ψ_size\n$datastring"
+    @test opstring ==
+          "Quantum Object:   type=Bra   dims=$ψ_dims   size=$ψ_size\n$datastring"
 
-    ψ2 = Qobj(rand(ComplexF64, 4), type=OperatorKet)
+    ψ2 = Qobj(rand(ComplexF64, 4), type = OperatorKet)
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
     ψ2_dims = ψ2.dims
     ψ2_size = size(ψ2)
-    @test opstring == "Quantum Object:   type=OperatorKet   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+    @test opstring ==
+          "Quantum Object:   type=OperatorKet   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
     ψ2 = ψ2'
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
     ψ2_dims = ψ2.dims
     ψ2_size = size(ψ2)
-    @test opstring == "Quantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+    @test opstring ==
+          "Quantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
     # get coherence
     ψ = coherent(30, 3)
     α, δψ = get_coherence(ψ)
-    @test isapprox(abs(α), 3, atol=1e-5) && abs2(δψ[1]) > 0.999
+    @test isapprox(abs(α), 3, atol = 1e-5) && abs2(δψ[1]) > 0.999
 
     # svdvals, Schatten p-norm
     vd = Qobj(rand(ComplexF64, 10))
@@ -241,7 +247,9 @@
     a = destroy(20)
     for op in ((+), (-), (*), (^))
         A = broadcast(op, a, a)
-        @test A.data == broadcast(op, a.data, a.data) && A.type == a.type && A.dims == a.dims
+        @test A.data == broadcast(op, a.data, a.data) &&
+              A.type == a.type &&
+              A.dims == a.dims
 
         A = broadcast(op, 2.1, a)
         @test A.data == broadcast(op, 2.1, a.data) && A.type == a.type && A.dims == a.dims

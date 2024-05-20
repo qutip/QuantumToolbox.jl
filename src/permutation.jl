@@ -11,7 +11,9 @@ function bdf(A::SparseMatrixCSC{T,M}) where {T,M}
     P, P * A * P', block_sizes
 end
 
-function bdf(A::QuantumObject{SparseMatrixCSC{T,M},OpType}) where {T,M,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+function bdf(
+    A::QuantumObject{SparseMatrixCSC{T,M},OpType},
+) where {T,M,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     P, A_bd, block_sizes = bdf(A.data)
     P, QuantumObject(A_bd, A.type, A.dims), block_sizes
 end
@@ -28,6 +30,9 @@ function get_bdf_blocks(A::SparseMatrixCSC{T,M}, block_sizes::Vector{Int}) where
     block_list, block_indices
 end
 
-function get_bdf_blocks(A::QuantumObject{SparseMatrixCSC{T,M},OpType}, block_sizes::Vector{Int}) where {T,M,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+function get_bdf_blocks(
+    A::QuantumObject{SparseMatrixCSC{T,M},OpType},
+    block_sizes::Vector{Int},
+) where {T,M,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     get_bdf_blocks(A.data, block_sizes)
 end

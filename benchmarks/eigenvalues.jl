@@ -12,11 +12,12 @@ function benchmark_eigenvalues()
     n_thermal = 0.1
 
     H = ωc * a_d * a + ωb * b_d * b + g * (a + a_d) * (b + b_d)
-    c_ops = [√((1+n_thermal)*κ) * a, √κ * b, √(n_thermal*κ) * a_d]
+    c_ops = [√((1 + n_thermal) * κ) * a, √κ * b, √(n_thermal * κ) * a_d]
     L = liouvillian(H, c_ops)
 
     SUITE["Eigenvalues"]["eigenstates"]["dense"] = @benchmarkable eigenstates($L)
-    SUITE["Eigenvalues"]["eigenstates"]["sparse"] = @benchmarkable eigenstates($L, sparse=true, sigma=0.01, k=5)
+    SUITE["Eigenvalues"]["eigenstates"]["sparse"] =
+        @benchmarkable eigenstates($L, sparse = true, sigma = 0.01, k = 5)
 end
 
 benchmark_eigenvalues()

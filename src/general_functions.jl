@@ -8,9 +8,10 @@ export row_major_reshape, tidyup, tidyup!, meshgrid, sparse_to_dense, dense_to_s
 """
     row_major_reshape(Q::AbstractArray, shapes...)
 
-Reshapes `Q` in the row-major order, as numpy. 
+Reshapes `Q` in the row-major order, as numpy.
 """
-row_major_reshape(Q::AbstractArray{T}, shapes...) where {T} = PermutedDimsArray(reshape(Q, reverse(shapes)...), (length(shapes):-1:1))
+row_major_reshape(Q::AbstractArray{T}, shapes...) where {T} =
+    PermutedDimsArray(reshape(Q, reverse(shapes)...), (length(shapes):-1:1))
 
 """
     meshgrid(x::AbstractVector, y::AbstractVector)
@@ -18,8 +19,8 @@ row_major_reshape(Q::AbstractArray{T}, shapes...) where {T} = PermutedDimsArray(
 Equivalent to [numpy meshgrid](https://numpy.org/doc/stable/reference/generated/numpy.meshgrid.html).
 """
 function meshgrid(x::AbstractVector{T}, y::AbstractVector{T}) where {T}
-    X = reshape(repeat(x, inner=length(y)), length(y), length(x))
-    Y = repeat(y, outer=(1, length(x)))
+    X = reshape(repeat(x, inner = length(y)), length(y), length(x))
+    Y = repeat(y, outer = (1, length(x)))
     X, Y
 end
 
@@ -28,7 +29,8 @@ end
 
 Converts a sparse QuantumObject to a dense QuantumObject.
 """
-sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
+sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) =
+    QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
 sparse_to_dense(A::MT) where {MT<:AbstractSparseMatrix} = Array(A)
 for op in (:Transpose, :Adjoint)
     @eval sparse_to_dense(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
@@ -50,15 +52,16 @@ sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
 
 Converts a dense QuantumObject to a sparse QuantumObject.
 """
-dense_to_sparse(A::QuantumObject{<:AbstractVecOrMat}, tol::Real=1e-10) = QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
-function dense_to_sparse(A::MT, tol::Real=1e-10) where {MT<:AbstractMatrix}
+dense_to_sparse(A::QuantumObject{<:AbstractVecOrMat}, tol::Real = 1e-10) =
+    QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
+function dense_to_sparse(A::MT, tol::Real = 1e-10) where {MT<:AbstractMatrix}
     idxs = findall(@. abs(A) > tol)
     row_indices = getindex.(idxs, 1)
     col_indices = getindex.(idxs, 2)
     vals = getindex(A, idxs)
     return sparse(row_indices, col_indices, vals, size(A)...)
 end
-function dense_to_sparse(A::VT, tol::Real=1e-10) where {VT<:AbstractVector}
+function dense_to_sparse(A::VT, tol::Real = 1e-10) where {VT<:AbstractVector}
     idxs = findall(@. abs(A) > tol)
     vals = getindex(A, idxs)
     return sparsevec(idxs, vals, length(A))
@@ -69,9 +72,11 @@ end
 
 Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
 """
-tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2=1e-14) where {T,T2<:Real} = QuantumObject(tidyup(A.data, tol), A.type, A.dims)
-tidyup(A::AbstractArray{T}, tol::T2=1e-14) where {T,T2<:Real} = @. T(abs(A) > tol) * A
-tidyup(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T,T2<:Real} = droptol!(copy(A), tol)
+tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} =
+    QuantumObject(tidyup(A.data, tol), A.type, A.dims)
+tidyup(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = @. T(abs(A) > tol) * A
+tidyup(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} =
+    droptol!(copy(A), tol)
 
 """
     tidyup!(A::QuantumObject, tol::Real=1e-14)
@@ -79,9 +84,11 @@ tidyup(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T,T2<:Real} = droptol!(
 Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
 In-place version of [`tidyup`](#tidyup).
 """
-tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2=1e-14) where {T,T2<:Real} = (tidyup!(A.data, tol); A)
-tidyup!(A::AbstractArray{T}, tol::T2=1e-14) where {T,T2<:Real} = @. A = T(abs(A) > tol) * A
-tidyup!(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T,T2<:Real} = droptol!(A, tol)
+tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} =
+    (tidyup!(A.data, tol); A)
+tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} =
+    @. A = T(abs(A) > tol) * A
+tidyup!(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} = droptol!(A, tol)
 
 """
     get_data(A::QuantumObject)
@@ -89,7 +96,6 @@ tidyup!(A::AbstractSparseMatrix{T}, tol::T2=1e-14) where {T,T2<:Real} = droptol!
 Returns the data of a QuantumObject.
 """
 get_data(A::QuantumObject) = A.data
-
 
 """
     mat2vec(A::AbstractMatrix)
@@ -102,10 +108,10 @@ function mat2vec(A::MT) where {MT<:AbstractSparseMatrix}
     return sparsevec(i .+ (j .- 1) .* size(A, 1), v, prod(size(A)))
 end
 for op in (:Transpose, :Adjoint)
-    @eval mat2vec(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = mat2vec(sparse(A))
+    @eval mat2vec(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} =
+        mat2vec(sparse(A))
     @eval mat2vec(A::$op{T,<:AbstractMatrix}) where {T<:BlasFloat} = mat2vec(Matrix(A))
 end
-
 
 """
     vec2mat(A::AbstractVector)
@@ -122,7 +128,8 @@ end
 
 Convert a quantum object from vector ([`OperatorKetQuantumObject`](@ref)-type) to matrix ([`OperatorQuantumObject`](@ref)-type)
 """
-vec2mat(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} = QuantumObject(vec2mat(A.data), Operator, A.dims)
+vec2mat(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} =
+    QuantumObject(vec2mat(A.data), Operator, A.dims)
 
 @doc raw"""
     gaussian(x::Number, μ::Number, σ::Number)
@@ -173,24 +180,29 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
  0.0+0.0im  0.5+0.0im
 ```
 """
-function ptrace(QO::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, sel::Vector{T2}) where
-{T1,T2<:Integer}
-
+function ptrace(
+    QO::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
+    sel::Vector{T2},
+) where {T1,T2<:Integer}
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sel)
-    return QuantumObject(ρtr, dims=dkeep)
+    return QuantumObject(ρtr, dims = dkeep)
 end
 
-ptrace(QO::QuantumObject{<:AbstractArray{T1},BraQuantumObject}, sel::Vector{T2}) where {T1,T2<:Integer} = ptrace(QO', sel)
+ptrace(
+    QO::QuantumObject{<:AbstractArray{T1},BraQuantumObject},
+    sel::Vector{T2},
+) where {T1,T2<:Integer} = ptrace(QO', sel)
 
-function ptrace(QO::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, sel::Vector{T2}) where
-{T1,T2<:Integer}
-
+function ptrace(
+    QO::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    sel::Vector{T2},
+) where {T1,T2<:Integer}
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sel)
-    return QuantumObject(ρtr, dims=dkeep)
+    return QuantumObject(ρtr, dims = dkeep)
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, [sel])
 
@@ -238,7 +250,11 @@ julia> entropy_vn(ρ, base=2)
 1.0
 ```
 """
-function entropy_vn(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}; base::Int=0, tol::Real=1e-15) where {T}
+function entropy_vn(
+    ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject};
+    base::Int = 0,
+    tol::Real = 1e-15,
+) where {T}
     vals = eigvals(ρ)
     indexes = abs.(vals) .> tol
     1 ∉ indexes && return 0
@@ -251,11 +267,12 @@ end
     entanglement(QO::QuantumObject, sel::Vector)
 
 Calculates the entanglement by doing the partial trace of `QO`, selecting only the dimensions
-with the indices contained in the `sel` vector, and then using the Von Neumann entropy [`entropy_vn`](@ref). 
+with the indices contained in the `sel` vector, and then using the Von Neumann entropy [`entropy_vn`](@ref).
 """
-function entanglement(QO::QuantumObject{<:AbstractArray{T},OpType}, sel::Vector{Int}) where
-{T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
-
+function entanglement(
+    QO::QuantumObject{<:AbstractArray{T},OpType},
+    sel::Vector{Int},
+) where {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     ψ = normalize(QO)
     ρ_tr = ptrace(ψ, sel)
     entropy = entropy_vn(ρ_tr)
@@ -284,17 +301,26 @@ julia> expect(a' * a, ψ) ≈ 3
 true
 ```
 """
-function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2}
+function expect(
+    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+) where {T1,T2}
     ψd = ψ.data
     Od = O.data
     return ishermitian(O) ? real(dot(ψd, Od, ψd)) : dot(ψd, Od, ψd)
 end
-function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T2},BraQuantumObject}) where {T1,T2}
+function expect(
+    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ψ::QuantumObject{<:AbstractArray{T2},BraQuantumObject},
+) where {T1,T2}
     ψd = ψ.data'
     Od = O.data
     return ishermitian(O) ? real(dot(ψd, Od, ψd)) : dot(ψd, Od, ψd)
 end
-function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2}
+function expect(
+    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+) where {T1,T2}
     return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
 end
 
@@ -308,7 +334,9 @@ It returns both ``\alpha`` and the state
 ``\ket{\delta_\psi} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger )``. The
 latter corresponds to the quantum fulctuations around the coherent state ``\ket{\alpha}``.
 """
-function get_coherence(ψ::QuantumObject{<:AbstractArray{T},StateOpType}) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+function get_coherence(
+    ψ::QuantumObject{<:AbstractArray{T},StateOpType},
+) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     a = destroy(size(ψ, 1))
     α = expect(a, ψ)
     D = exp(α * a' - conj(α) * a)
@@ -336,11 +364,21 @@ Calculates the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) be
 
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
-tracedist(ρ::QuantumObject{<:AbstractArray{T1},ObjType1}, σ::QuantumObject{<:AbstractArray{T2},ObjType2}) where {T1,T2,ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},ObjType2<:Union{KetQuantumObject,OperatorQuantumObject}} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
+tracedist(
+    ρ::QuantumObject{<:AbstractArray{T1},ObjType1},
+    σ::QuantumObject{<:AbstractArray{T2},ObjType2},
+) where {
+    T1,
+    T2,
+    ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},
+    ObjType2<:Union{KetQuantumObject,OperatorQuantumObject},
+} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
 
-function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
-{T1,T2<:Integer}
-
+function _ptrace_ket(
+    QO::AbstractArray{T1},
+    dims::Vector{<:Integer},
+    sel::Vector{T2},
+) where {T1,T2<:Integer}
     rd = dims
     nd = length(rd)
 
@@ -358,9 +396,11 @@ function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector
     return vmat * vmat', dkeep
 end
 
-function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where
-{T1,T2<:Integer}
-
+function _ptrace_oper(
+    QO::AbstractArray{T1},
+    dims::Vector{<:Integer},
+    sel::Vector{T2},
+) where {T1,T2<:Integer}
     rd = dims
     nd = length(rd)
 
@@ -380,7 +420,7 @@ function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vecto
     # ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
     # res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
     ρmat = reshape(ρmat, prod(dkeep), prod(dkeep), prod(dtrace), prod(dtrace))
-    res = dropdims(mapslices(tr, ρmat, dims=(3, 4)), dims=(3, 4))
+    res = dropdims(mapslices(tr, ρmat, dims = (3, 4)), dims = (3, 4))
 
     return res, dkeep
 end
@@ -406,7 +446,14 @@ function mat2vec(::Type{M}) where {M<:SparseMatrixCSC}
     return SparseVector{par[1],par[2]}
 end
 
-function mat2vec(::Type{M}) where {M<:Union{Adjoint{<:BlasFloat,<:SparseMatrixCSC},Transpose{<:BlasFloat,<:SparseMatrixCSC}}}
+function mat2vec(
+    ::Type{M},
+) where {
+    M<:Union{
+        Adjoint{<:BlasFloat,<:SparseMatrixCSC},
+        Transpose{<:BlasFloat,<:SparseMatrixCSC},
+    },
+}
     T = M.parameters[2]
     par = T.parameters
     npar = length(par)
@@ -419,4 +466,5 @@ end
 
 Convert a quantum object from matrix ([`OperatorQuantumObject`](@ref)-type) to vector ([`OperatorKetQuantumObject`](@ref)-type)
 """
-mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = QuantumObject(mat2vec(A.data), OperatorKet, A.dims)
+mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} =
+    QuantumObject(mat2vec(A.data), OperatorKet, A.dims)
