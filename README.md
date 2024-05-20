@@ -1,12 +1,14 @@
-# QuantumToolbox
+<img src="https://github.com/albertomercurio/QuantumToolbox.jl/blob/main/docs/src/assets/logo.png" alt="QuantumToolbox.jl" width="120">
 
+# QuantumToolbox.jl
+
+[![Release](https://img.shields.io/github/release/albertomercurio/QuantumToolbox.jl.svg)](https://github.com/albertomercurio/QuantumToolbox.jl/releases)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://albertomercurio.github.io/QuantumToolbox.jl/dev)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://albertomercurio.github.io/QuantumToolbox.jl/stable)
 [![Build Status](https://github.com/albertomercurio/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/albertomercurio/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![Coverage](https://codecov.io/gh/albertomercurio/QuantumToolbox.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/albertomercurio/QuantumToolbox.jl)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11096277.svg)](https://doi.org/10.5281/zenodo.11096277)
-![Logo](./docs/src/assets/logo.png)
 
 ## Introduction
 [QuantumToolbox.jl](https://github.com/albertomercurio/QuantumToolbox.jl) is a cutting-edge Julia package designed for quantum physics simulations, closely emulating the popular Python [QuTiP](https://github.com/qutip/qutip) package. It uniquely combines the simplicity and power of Julia with advanced features like GPU acceleration and distributed computing, making simulation of quantum systems more accessible and efficient.
@@ -23,3 +25,4 @@ QuantumToolbox.jl is equipped with a robust set of features:
 ```julia
 using Pkg
 Pkg.add("QuantumToolbox")
+```
