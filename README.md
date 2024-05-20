@@ -11,6 +11,7 @@
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![Coverage](https://codecov.io/gh/albertomercurio/QuantumToolbox.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/albertomercurio/QuantumToolbox.jl)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11096277.svg)](https://doi.org/10.5281/zenodo.11096277)
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FQuantumToolbox&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/QuantumToolbox)
 
 ## Introduction
 [QuantumToolbox.jl](https://github.com/albertomercurio/QuantumToolbox.jl) is a cutting-edge Julia package designed for quantum physics simulations, closely emulating the popular Python [QuTiP](https://github.com/qutip/qutip) package. It uniquely combines the simplicity and power of Julia with advanced features like GPU acceleration and distributed computing, making simulation of quantum systems more accessible and efficient.
