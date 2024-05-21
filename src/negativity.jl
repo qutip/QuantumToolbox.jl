@@ -38,7 +38,7 @@ julia> negativity(ρ, 2)
 0.4999999999999998
 ```
 """
-function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool=false)
+function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool = false)
     mask = fill(false, length(ρ.dims))
     try
         mask[subsys] = true
@@ -68,40 +68,40 @@ Return the partial transpose of a density matrix ``\rho``, where `mask` is an ar
 # Returns
 - `ρ_pt::QuantumObject`: The density matrix with the selected subsystems transposed.
 """
-function partial_transpose(ρ::QuantumObject{T, OperatorQuantumObject}, mask::Vector{Bool}) where T
-    if length(mask) != length(ρ.dims) 
+function partial_transpose(ρ::QuantumObject{T,OperatorQuantumObject}, mask::Vector{Bool}) where {T}
+    if length(mask) != length(ρ.dims)
         error("The length of \`mask\` should be equal to the length of \`ρ.dims\`.")
     end
     return _partial_transpose(ρ, mask)
 end
 
 # for dense matrices
-function _partial_transpose(ρ::QuantumObject{<:AbstractArray, OperatorQuantumObject}, mask::Vector{Bool})
+function _partial_transpose(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject}, mask::Vector{Bool})
     mask2 = [1 + Int(i) for i in mask]
     # mask2 has elements with values equal to 1 or 2
     #   1 - the subsystem don't need to be transposed
     #   2 - the subsystem need be transposed
 
     nsys = length(mask2)
-    pt_dims = reshape(Vector(1:(2 * nsys)), (nsys, 2))
-    pt_idx  = [
-        [pt_dims[n,     mask2[n]] for n in 1:nsys]; # origin   value in mask2
-        [pt_dims[n, 3 - mask2[n]] for n in 1:nsys]  # opposite value in mask2 (1 -> 2, and 2 -> 1)
+    pt_dims = reshape(Vector(1:(2*nsys)), (nsys, 2))
+    pt_idx = [
+        [pt_dims[n, mask2[n]] for n in 1:nsys] # origin   value in mask2
+        [pt_dims[n, 3-mask2[n]] for n in 1:nsys]  # opposite value in mask2 (1 -> 2, and 2 -> 1)
     ]
     return QuantumObject(
         reshape(permutedims(reshape(ρ.data, (ρ.dims..., ρ.dims...)), pt_idx), size(ρ)),
         Operator,
-        ρ.dims
+        ρ.dims,
     )
 end
 
 # for sparse matrices
-function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray, OperatorQuantumObject}, mask::Vector{Bool})
+function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray,OperatorQuantumObject}, mask::Vector{Bool})
     M, N = size(ρ)
     dimsTuple = Tuple(ρ.dims)
     colptr = ρ.data.colptr
     rowval = ρ.data.rowval
-    nzval  = ρ.data.nzval
+    nzval = ρ.data.nzval
     len = length(nzval)
 
     # for partial transposed data
@@ -110,8 +110,8 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray, OperatorQua
     V_pt = Vector{eltype(ρ)}(undef, len)
 
     n = 0
-    for j in 1:(length(colptr) - 1)
-        for p in colptr[j]:(colptr[j + 1] - 1)
+    for j in 1:(length(colptr)-1)
+        for p in colptr[j]:(colptr[j+1]-1)
             n += 1
             i = rowval[p]
             if i == j
@@ -130,9 +130,5 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray, OperatorQua
         end
     end
 
-    return QuantumObject(
-        sparse(I_pt, J_pt, V_pt, M, N),
-        Operator,
-        ρ.dims
-    )
+    return QuantumObject(sparse(I_pt, J_pt, V_pt, M, N), Operator, ρ.dims)
 end

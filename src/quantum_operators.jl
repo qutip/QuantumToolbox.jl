@@ -16,7 +16,7 @@ a matrix, obtained from ``\mathcal{O} \left(\hat{O}\right) \boldsymbol{\cdot} = 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
 """
-spre(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache=I(size(O,1))) where {T} =
+spre(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(O, 1))) where {T} =
     QuantumObject(kron(Id_cache, O.data), SuperOperator, O.dims)
 
 @doc raw"""
@@ -31,7 +31,7 @@ a matrix, obtained from ``\mathcal{O} \left(\hat{O}\right) \boldsymbol{\cdot} = 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
 """
-spost(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache=I(size(O,1))) where {T} =
+spost(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(O, 1))) where {T} =
     QuantumObject(kron(sparse(transpose(sparse(O.data))), Id_cache), SuperOperator, O.dims) # TODO: fix the sparse conversion
 
 @doc raw"""
@@ -43,8 +43,10 @@ of the density matrix operator respectively, ``\mathcal{O} \left( \hat{A}, \hat{
 Since the density matrix is vectorized, this super-operator is always
 a matrix, obtained from ``\mathcal{O} \left(\hat{A}, \hat{B}\right) \boldsymbol{\cdot} = \text{spre}(A) * \text{spost}(B)``.
 """
-sprepost(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-         B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = QuantumObject(kron(sparse(transpose(sparse(B.data))), A.data), SuperOperator, A.dims) # TODO: fix the sparse conversion
+sprepost(
+    A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+) where {T1,T2} = QuantumObject(kron(sparse(transpose(sparse(B.data))), A.data), SuperOperator, A.dims) # TODO: fix the sparse conversion
 
 @doc raw"""
     lindblad_dissipator(O::QuantumObject, Id_cache=I(size(O,1))
@@ -59,7 +61,10 @@ considering the density matrix ``\hat{\rho}`` in the vectorized form.
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
 """
-function lindblad_dissipator(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache=I(size(O,1))) where {T}
+function lindblad_dissipator(
+    O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
+    Id_cache = I(size(O, 1)),
+) where {T}
     Od_O = O' * O
     return sprepost(O, O') - spre(Od_O, Id_cache) / 2 - spost(Od_O, Id_cache) / 2
 end
@@ -155,16 +160,23 @@ sigmaz() = sigmap() * sigmam() - sigmam() * sigmap()
 
 Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
 """
-eye(N::Int; type::ObjType=Operator, dims::Vector{Int}=[N]) where 
-    {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = QuantumObject(Diagonal(ones(ComplexF64, N)), type, dims)
+eye(
+    N::Int;
+    type::ObjType = Operator,
+    dims::Vector{Int} = [N],
+) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    QuantumObject(Diagonal(ones(ComplexF64, N)), type, dims)
 
 @doc raw"""
     qeye(N::Int; type=OperatorQuantumObject, dims=[N])
 
 Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
 """
-qeye(N::Int; type::ObjType=Operator, dims::Vector{Int}=[N]) where 
-    {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eye(N, type=type, dims=dims)
+qeye(
+    N::Int;
+    type::ObjType = Operator,
+    dims::Vector{Int} = [N],
+) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eye(N, type = type, dims = dims)
 
 @doc raw"""
     fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)
@@ -172,9 +184,9 @@ qeye(N::Int; type::ObjType=Operator, dims::Vector{Int}=[N]) where
 Generates a fock state ``\ket{\psi}`` of dimension `N`. It is also possible
 to specify the list of dimensions `dims` if different subsystems are present.
 """
-function fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)
+function fock(N::Int, pos::Int; dims::Vector{Int} = [N], sparse::Bool = false)
     if sparse
-        return QuantumObject(sparsevec([pos+1], [1.0+0im], N), Ket, dims)
+        return QuantumObject(sparsevec([pos + 1], [1.0 + 0im], N), Ket, dims)
     else
         array = zeros(ComplexF64, N)
         array[pos+1] = 1
@@ -187,7 +199,7 @@ end
 
 Generates a fock state like [`fock`](@ref).
 """
-basis(N::Int, pos::Int; dims::Vector{Int}=[N]) = fock(N, pos, dims=dims)
+basis(N::Int, pos::Int; dims::Vector{Int} = [N]) = fock(N, pos, dims = dims)
 
 @doc raw"""
     coherent(N::Real, α::T)
@@ -210,7 +222,7 @@ function rand_dm(N::Integer; kwargs...)
     ρ = rand(ComplexF64, N, N)
     ρ *= ρ'
     ρ /= tr(ρ)
-    QuantumObject(ρ; kwargs...)
+    return QuantumObject(ρ; kwargs...)
 end
 
 @doc raw"""
@@ -218,7 +230,7 @@ end
 
 Generates the projection operator ``\hat{O} = \dyad{i}{j}`` with Hilbert space dimension `N`.
 """
-projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i+1],[j+1],[1.0+0.0im], N, N))
+projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N))
 
 @doc raw"""
     sinm(O::QuantumObject)

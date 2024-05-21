@@ -2,23 +2,23 @@
     # unsupported size of array
     for a in [rand(ComplexF64, 3, 2), rand(ComplexF64, 2, 2, 2)]
         for t in [nothing, Ket, Bra, Operator, SuperOperator, OperatorBra, OperatorKet]
-            @test_throws DomainError Qobj(a, type=t)
+            @test_throws DomainError Qobj(a, type = t)
         end
     end
 
     N = 10
     a = rand(ComplexF64, 10)
     # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
-    @test_throws DomainError Qobj(a,  type=Bra)
-    @test_throws DomainError Qobj(a,  type=Operator)
-    @test_throws DomainError Qobj(a,  type=SuperOperator)
-    @test_throws DomainError Qobj(a,  type=OperatorBra)
-    @test_throws DomainError Qobj(a', type=Ket)
-    @test_throws DomainError Qobj(a', type=Operator)
-    @test_throws DomainError Qobj(a', type=SuperOperator)
-    @test_throws DomainError Qobj(a', type=OperatorKet)
-    @test_throws DimensionMismatch Qobj(a, dims=[2])
-    @test_throws DimensionMismatch Qobj(a', dims=[2])
+    @test_throws DomainError Qobj(a, type = Bra)
+    @test_throws DomainError Qobj(a, type = Operator)
+    @test_throws DomainError Qobj(a, type = SuperOperator)
+    @test_throws DomainError Qobj(a, type = OperatorBra)
+    @test_throws DomainError Qobj(a', type = Ket)
+    @test_throws DomainError Qobj(a', type = Operator)
+    @test_throws DomainError Qobj(a', type = SuperOperator)
+    @test_throws DomainError Qobj(a', type = OperatorKet)
+    @test_throws DimensionMismatch Qobj(a, dims = [2])
+    @test_throws DimensionMismatch Qobj(a', dims = [2])
     a2 = Qobj(a')
     a3 = Qobj(a)
     @test isket(a2) == false
@@ -39,7 +39,7 @@
 
     a = sprand(ComplexF64, 100, 100, 0.1)
     a2 = Qobj(a)
-    a3 = Qobj(a, type=SuperOperator)
+    a3 = Qobj(a, type = SuperOperator)
 
     @test isket(a2) == false
     @test isbra(a2) == false
@@ -53,16 +53,16 @@
     @test issuper(a3) == true
     @test isoperket(a3) == false
     @test isoperbra(a3) == false
-    @test_throws DimensionMismatch Qobj(a, dims=[2])
-    @test_throws DimensionMismatch Qobj(a, dims=[2])
+    @test_throws DimensionMismatch Qobj(a, dims = [2])
+    @test_throws DimensionMismatch Qobj(a, dims = [2])
 
     # Operator-Ket, Operator-Bra tests
-    H  = 0.3 * sigmax() + 0.7 * sigmaz()
-    L  = liouvillian(H)
-    ρ  = Qobj(rand(ComplexF64, 2, 2))
+    H = 0.3 * sigmax() + 0.7 * sigmaz()
+    L = liouvillian(H)
+    ρ = Qobj(rand(ComplexF64, 2, 2))
     ρ_ket = mat2vec(ρ)
     ρ_bra = ρ_ket'
-    @test ρ_bra == Qobj(mat2vec(ρ.data)', type=OperatorBra)
+    @test ρ_bra == Qobj(mat2vec(ρ.data)', type = OperatorBra)
     @test ρ == vec2mat(ρ_ket)
     @test isket(ρ_ket) == false
     @test isbra(ρ_ket) == false
@@ -78,15 +78,15 @@
     @test isoperbra(ρ_bra) == true
     @test ρ_bra.dims == [2]
     @test ρ_ket.dims == [2]
-    @test H * ρ ≈ spre(H)  * ρ
+    @test H * ρ ≈ spre(H) * ρ
     @test ρ * H ≈ spost(H) * ρ
     @test H * ρ * H ≈ sprepost(H, H) * ρ
     @test (L * ρ_ket).dims == [2]
     @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
     @test (ρ_bra * L')' == L * ρ_ket
     @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
-    @test_throws DimensionMismatch Qobj(ρ_ket.data, type=OperatorKet, dims=[4])
-    @test_throws DimensionMismatch Qobj(ρ_bra.data, type=OperatorBra, dims=[4])
+    @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet, dims = [4])
+    @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = [4])
 
     a = Array(a)
     a4 = Qobj(a)
@@ -174,7 +174,8 @@
     a_dims = a.dims
     a_size = size(a)
     a_isherm = ishermitian(a)
-    @test opstring == "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+    @test opstring ==
+          "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
     a = spre(a)
     opstring = sprint((t, s) -> show(t, "text/plain", s), a)
@@ -197,7 +198,7 @@
     ψ_size = size(ψ)
     @test opstring == "Quantum Object:   type=Bra   dims=$ψ_dims   size=$ψ_size\n$datastring"
 
-    ψ2 = Qobj(rand(ComplexF64, 4), type=OperatorKet)
+    ψ2 = Qobj(rand(ComplexF64, 4), type = OperatorKet)
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
     ψ2_dims = ψ2.dims
@@ -214,17 +215,17 @@
     # get coherence
     ψ = coherent(30, 3)
     α, δψ = get_coherence(ψ)
-    @test isapprox(abs(α), 3, atol=1e-5) && abs2(δψ[1]) > 0.999
+    @test isapprox(abs(α), 3, atol = 1e-5) && abs2(δψ[1]) > 0.999
 
     # svdvals, Schatten p-norm
-    vd = Qobj(  rand(ComplexF64, 10))
+    vd = Qobj(rand(ComplexF64, 10))
     vs = Qobj(sprand(ComplexF64, 100, 0.1))
-    Md = Qobj(  rand(ComplexF64, 10, 10))
+    Md = Qobj(rand(ComplexF64, 10, 10))
     Ms = Qobj(sprand(ComplexF64, 10, 10, 0.5))
     @test svdvals(vd)[1] ≈ √(vd' * vd)
     @test svdvals(vs)[1] ≈ √(vs' * vs)
-    @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol=1e-6
-    @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol=1e-6
+    @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol = 1e-6
+    @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol = 1e-6
 
     # trace distance
     ψz0 = basis(2, 0)
@@ -233,9 +234,9 @@
     ρz1 = dense_to_sparse(ket2dm(ψz1))
     ψx0 = sqrt(0.5) * (basis(2, 0) + basis(2, 1))
     @test tracedist(ψz0, ψx0) ≈ sqrt(0.5)
-    @test tracedist(ρz0, ψz1) ≈ 1.
-    @test tracedist(ψz1, ρz0) ≈ 1.
-    @test tracedist(ρz0, ρz1) ≈ 1.
+    @test tracedist(ρz0, ψz1) ≈ 1.0
+    @test tracedist(ψz1, ρz0) ≈ 1.0
+    @test tracedist(ρz0, ρz1) ≈ 1.0
 
     # Broadcasting
     a = destroy(20)
@@ -270,14 +271,14 @@
     @test typeof(Vector(vs).data) == Vector{Int64}
     @test typeof(Vector{ComplexF64}(vd).data) == Vector{ComplexF64}
     @test typeof(Vector{ComplexF64}(vs).data) == Vector{ComplexF64}
-    @test typeof(SparseVector(vd).data) == SparseVector{Int64, Int64}
-    @test typeof(SparseVector(vs).data) == SparseVector{Int64, Int64}
-    @test typeof(SparseVector{ComplexF64}(vs).data) == SparseVector{ComplexF64, Int64}
+    @test typeof(SparseVector(vd).data) == SparseVector{Int64,Int64}
+    @test typeof(SparseVector(vs).data) == SparseVector{Int64,Int64}
+    @test typeof(SparseVector{ComplexF64}(vs).data) == SparseVector{ComplexF64,Int64}
     @test typeof(Matrix(Md).data) == Matrix{Int64}
     @test typeof(Matrix(Ms).data) == Matrix{Int64}
     @test typeof(Matrix{ComplexF64}(Ms).data) == Matrix{ComplexF64}
     @test typeof(Matrix{ComplexF64}(Md).data) == Matrix{ComplexF64}
-    @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64, Int64}
-    @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64, Int64}
-    @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64, Int64}
+    @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64,Int64}
+    @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64,Int64}
+    @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
 end

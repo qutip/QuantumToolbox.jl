@@ -5,10 +5,10 @@
     xvec = LinRange(-3, 3, 300)
     yvec = LinRange(-3, 3, 300)
 
-    wig = wigner(ψ, xvec, yvec, solver=WignerLaguerre(tol=1e-6))
-    wig2 = wigner(ρ, xvec, yvec, solver=WignerLaguerre(parallel=false))
-    wig3 = wigner(ρ, xvec, yvec, solver=WignerLaguerre(parallel=true))
-    wig4 = wigner(ψ, xvec, yvec, solver=WignerClenshaw())
+    wig = wigner(ψ, xvec, yvec, solver = WignerLaguerre(tol = 1e-6))
+    wig2 = wigner(ρ, xvec, yvec, solver = WignerLaguerre(parallel = false))
+    wig3 = wigner(ρ, xvec, yvec, solver = WignerLaguerre(parallel = true))
+    wig4 = wigner(ψ, xvec, yvec, solver = WignerClenshaw())
 
     @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 1e-3
     @test sqrt(sum(abs.(wig3 .- wig)) / length(wig)) < 1e-3
