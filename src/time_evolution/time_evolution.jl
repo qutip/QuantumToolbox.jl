@@ -2,17 +2,6 @@ export OperatorSum, TimeDependentOperatorSum
 export TimeEvolutionSol, TimeEvolutionMCSol
 
 export liouvillian, liouvillian_floquet, liouvillian_generalized
-export LiouvillianSolver, LiouvillianDirectSolver
-
-
-
-
-abstract type LiouvillianSolver end
-
-struct LiouvillianDirectSolver{T<:Real} <: LiouvillianSolver
-    tol::T
-end
-
 
 struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{ComplexF64}}
     times::TT
@@ -35,8 +24,6 @@ struct TimeEvolutionMCSol{
     jump_times::TJT
     jump_which::TJW
 end
-
-LiouvillianDirectSolver(; tol = 1e-16) = LiouvillianDirectSolver(tol)
 
 abstract type LindbladJumpCallbackType end
 
@@ -127,7 +114,7 @@ end
 
 #######################################
 
-### LIOUVILLIAN AND STEADYSTATE ###
+### LIOUVILLIAN ###
 @doc raw"""
     liouvillian(H::QuantumObject, c_ops::AbstractVector, Id_cache=I(prod(H.dims))
 
@@ -167,13 +154,13 @@ function liouvillian_floquet(
     Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
     Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
     ω::Real;
-    n_max::Int = 4,
-    solver::LiouvillianSolver = LiouvillianDirectSolver(),
+    n_max::Int = 3,
+    tol::Real = 1e-15,
 ) where {T1,T2,T3}
     ((L₀.dims == Lₚ.dims) && (L₀.dims == Lₘ.dims)) ||
         throw(ErrorException("The operators are not of the same Hilbert dimension."))
 
-    return _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, solver, n_max = n_max)
+    return _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, n_max, tol)
 end
 
 function liouvillian_floquet(
@@ -182,8 +169,8 @@ function liouvillian_floquet(
     Hₚ::QuantumObject{<:AbstractArray{T2},OpType2},
     Hₘ::QuantumObject{<:AbstractArray{T3},OpType3},
     ω::Real;
-    n_max::Int = 4,
-    solver::LiouvillianSolver = LiouvillianDirectSolver(),
+    n_max::Int = 3,
+    tol::Real = 1e-15,
 ) where {
     T1,
     T2,
@@ -197,8 +184,8 @@ function liouvillian_floquet(
         liouvillian(Hₚ),
         liouvillian(Hₘ),
         ω,
-        solver = solver,
         n_max = n_max,
+        tol = tol,
     )
 end
 
@@ -277,8 +264,8 @@ function _liouvillian_floquet(
     Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
     Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
     ω::Real,
-    solver::LiouvillianDirectSolver;
-    n_max::Int = 4,
+    n_max::Int,
+    tol::Real,
 ) where {T1,T2,T3}
     L_0 = L₀.data
     L_p = Lₚ.data
@@ -294,6 +281,6 @@ function _liouvillian_floquet(
         T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m_dense
     end
 
-    solver.tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator, L₀.dims)
-    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, solver.tol), SuperOperator, L₀.dims)
+    tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator, L₀.dims)
+    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, tol), SuperOperator, L₀.dims)
 end
