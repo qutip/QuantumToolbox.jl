@@ -1,8 +1,6 @@
 using QuantumToolbox
 using Documenter
 
-ENV["GKSwstype"] = "100" # enable headless mode for GR to suppress warnings when plotting
-
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive=true)
 
 makedocs(;
@@ -14,7 +12,9 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://albertomercurio.github.io/QuantumToolbox.jl",
         edit_link="main",
-        assets=String[],
+        assets=[
+            "assets/favicon.ico"
+        ],
         mathengine = MathJax3(Dict(
             :loader => Dict("load" => ["[tex]/physics"]),
             :tex => Dict(
