@@ -43,24 +43,14 @@ function next!(p::ProgressBar, io::IO = stdout)
     # Calculate the estimated time of arrival
     eta = floor(Int, elapsed_time / counter * (max_counts - counter))
     # convert eta into a string in hours, minutes and seconds
-    eta_str = string(
-        eta ÷ 3600,
-        "h ",
-        lpad((eta % 3600) ÷ 60, 2, "0"),
-        "m ",
-        lpad(eta % 60, 2, "0"),
-        "s",
-    )
+    eta_str = string(eta ÷ 3600, "h ", lpad((eta % 3600) ÷ 60, 2, "0"), "m ", lpad(eta % 60, 2, "0"), "s")
 
     # Construct the progress bar string
     bar = "[" * repeat("=", progress) * repeat(" ", bar_width - progress) * "]"
 
-    print(
-        io,
-        "\rProgress: $bar $percentage_100% --- Elapsed Time: $elapsed_time_str (ETA: $eta_str)",
-    )
+    print(io, "\rProgress: $bar $percentage_100% --- Elapsed Time: $elapsed_time_str (ETA: $eta_str)")
 
     counter == p.max_counts && print(io, "\n")
 
-    flush(io)
+    return flush(io)
 end

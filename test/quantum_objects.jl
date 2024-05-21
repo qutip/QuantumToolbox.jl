@@ -183,39 +183,34 @@
     a_dims = a.dims
     a_size = size(a)
     a_isherm = ishermitian(a)
-    @test opstring ==
-          "Quantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
+    @test opstring == "Quantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
 
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
     ψ_dims = ψ.dims
     ψ_size = size(ψ)
-    @test opstring ==
-          "Quantum Object:   type=Ket   dims=$ψ_dims   size=$ψ_size\n$datastring"
+    @test opstring == "Quantum Object:   type=Ket   dims=$ψ_dims   size=$ψ_size\n$datastring"
 
     ψ = ψ'
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
     ψ_dims = ψ.dims
     ψ_size = size(ψ)
-    @test opstring ==
-          "Quantum Object:   type=Bra   dims=$ψ_dims   size=$ψ_size\n$datastring"
+    @test opstring == "Quantum Object:   type=Bra   dims=$ψ_dims   size=$ψ_size\n$datastring"
 
     ψ2 = Qobj(rand(ComplexF64, 4), type = OperatorKet)
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
     ψ2_dims = ψ2.dims
     ψ2_size = size(ψ2)
-    @test opstring ==
-          "Quantum Object:   type=OperatorKet   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+    @test opstring == "Quantum Object:   type=OperatorKet   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
     ψ2 = ψ2'
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
     datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
     ψ2_dims = ψ2.dims
     ψ2_size = size(ψ2)
-    @test opstring ==
-          "Quantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+    @test opstring == "Quantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
     # get coherence
     ψ = coherent(30, 3)
@@ -247,9 +242,7 @@
     a = destroy(20)
     for op in ((+), (-), (*), (^))
         A = broadcast(op, a, a)
-        @test A.data == broadcast(op, a.data, a.data) &&
-              A.type == a.type &&
-              A.dims == a.dims
+        @test A.data == broadcast(op, a.data, a.data) && A.type == a.type && A.dims == a.dims
 
         A = broadcast(op, 2.1, a)
         @test A.data == broadcast(op, 2.1, a.data) && A.type == a.type && A.dims == a.dims

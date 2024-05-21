@@ -26,10 +26,7 @@
     c_ops = [sqrt(0.01) * a2, sqrt(0.01) * sm2]
     L2 = liouvillian(H_d, c_ops)
 
-    @test (
-        expect(Xp' * Xp, steadystate(L1)) < 1e-10 &&
-        expect(Xp' * Xp, steadystate(L2)) > 1e-3
-    )
+    @test (expect(Xp' * Xp, steadystate(L1)) < 1e-10 && expect(Xp' * Xp, steadystate(L2)) > 1e-3)
 
     H = 1 * a' * a + 1 * sz / 2 + 1e-5 * (a * sp + a' * sm)
 
@@ -43,6 +40,5 @@
     a2 = Qobj(dense_to_sparse((U'*a*U).data[1:N_trunc, 1:N_trunc], tol))
     sm2 = Qobj(dense_to_sparse((U'*sm*U).data[1:N_trunc, 1:N_trunc], tol))
 
-    @test abs(expect(Xp' * Xp, steadystate(L1)) - n_th(1, Tlist[1])) / n_th(1, Tlist[1]) <
-          1e-4
+    @test abs(expect(Xp' * Xp, steadystate(L1)) - n_th(1, Tlist[1])) / n_th(1, Tlist[1]) < 1e-4
 end

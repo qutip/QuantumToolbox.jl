@@ -33,8 +33,7 @@
 
     vals_d, vecs_d, mat_d = eigenstates(H_d)
     vals_c, vecs_c, mat_c = eigenstates(H_c)
-    vals2, vecs2, mat2 =
-        eigenstates(H_d, sparse = true, sigma = -0.9, k = 10, krylovdim = 30)
+    vals2, vecs2, mat2 = eigenstates(H_d, sparse = true, sigma = -0.9, k = 10, krylovdim = 30)
     sort!(vals_c, by = real)
     sort!(vals2, by = real)
 
@@ -60,24 +59,15 @@
     # eigen solve for general matrices
     vals, _, vecs = eigsolve(L.data, sigma = 0.01, k = 10, krylovdim = 50)
     vals2, vecs2 = eigen(sparse_to_dense(L.data))
-    vals3, state3, vecs3 =
-        eigsolve_al(liouvillian(H, c_ops), 1 \ (40 * κ), k = 10, krylovdim = 50)
+    vals3, state3, vecs3 = eigsolve_al(liouvillian(H, c_ops), 1 \ (40 * κ), k = 10, krylovdim = 50)
     idxs = sortperm(vals2, by = abs)
     vals2 = vals2[idxs][1:10]
     vecs2 = vecs2[:, idxs][:, 1:10]
 
     @test isapprox(sum(abs2, vals), sum(abs2, vals2), atol = 1e-7)
     @test isapprox(abs2(vals2[1]), abs2(vals3[1]), atol = 1e-7)
-    @test isapprox(
-        vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])),
-        vec2mat(vecs2[:, 1]),
-        atol = 1e-7,
-    )
-    @test isapprox(
-        vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])),
-        vec2mat(vecs3[:, 1]),
-        atol = 1e-5,
-    )
+    @test isapprox(vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])), vec2mat(vecs2[:, 1]), atol = 1e-7)
+    @test isapprox(vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])), vec2mat(vecs3[:, 1]), atol = 1e-5)
 
     # eigen solve for QuantumObject
     result = eigenstates(L, sparse = true, sigma = 0.01, k = 10, krylovdim = 50)
@@ -99,14 +89,6 @@
     @test typeof(result.vectors) <: AbstractMatrix
     @test isapprox(sum(abs2, vals), sum(abs2, vals2), atol = 1e-7)
     @test isapprox(abs2(vals2[1]), abs2(vals3[1]), atol = 1e-7)
-    @test isapprox(
-        vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])),
-        vec2mat(vecs2[1]).data,
-        atol = 1e-7,
-    )
-    @test isapprox(
-        vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])),
-        vec2mat(state3[1]).data,
-        atol = 1e-5,
-    )
+    @test isapprox(vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])), vec2mat(vecs2[1]).data, atol = 1e-7)
+    @test isapprox(vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])), vec2mat(state3[1]).data, atol = 1e-5)
 end

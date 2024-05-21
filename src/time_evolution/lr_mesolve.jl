@@ -27,26 +27,36 @@ struct LRMesolveOptions{AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
 end
 
 function LRMesolveOptions(;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-    progress::Bool=true,
-    err_max::Real=0.0,
-    p0::Real=0.0,
-    atol_inv::Real=1e-4,
-    M_max::Integer=typemax(Int),
-    compute_Si::Bool=true,
-    _is_dynamical::Bool=err_max > 0,
-    adj_condition::String="variational",
-    Δt::Real=0.0
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    progress::Bool = true,
+    err_max::Real = 0.0,
+    p0::Real = 0.0,
+    atol_inv::Real = 1e-4,
+    M_max::Integer = typemax(Int),
+    compute_Si::Bool = true,
+    _is_dynamical::Bool = err_max > 0,
+    adj_condition::String = "variational",
+    Δt::Real = 0.0,
 )
-    return LRMesolveOptions{typeof(alg)}(alg, progress, err_max, p0, atol_inv, M_max, compute_Si, _is_dynamical, adj_condition, Δt)
+    return LRMesolveOptions{typeof(alg)}(
+        alg,
+        progress,
+        err_max,
+        p0,
+        atol_inv,
+        M_max,
+        compute_Si,
+        _is_dynamical,
+        adj_condition,
+        Δt,
+    )
 end
-
 
 #=======================================================#
 #                  ADDITIONAL FUNCTIONS
 #=======================================================#
 
-select(x::Real, xarr::AbstractArray, retval=false) = retval ? xarr[argmin(abs.(x .- xarr))] : argmin(abs.(x .- xarr))
+select(x::Real, xarr::AbstractArray, retval = false) = retval ? xarr[argmin(abs.(x .- xarr))] : argmin(abs.(x .- xarr))
 
 """
     _pinv!(A, T1, T2; atol::Real=0.0, rtol::Real=(eps(real(float(oneunit(T))))*min(size(A)...))*iszero(atol)) where T
@@ -66,7 +76,13 @@ select(x::Real, xarr::AbstractArray, retval=false) = retval ? xarr[argmin(abs.(x
     rtol : Real
         Relative tolerance for the calculation of the pseudo-inverse.
 """
-function _pinv!(A::AbstractMatrix{T}, T1::AbstractMatrix{T}, T2::AbstractMatrix{T}; atol::Real=0.0, rtol::Real=(eps(real(float(oneunit(T)))) * min(size(A)...)) * iszero(atol)) where {T}
+function _pinv!(
+    A::AbstractMatrix{T},
+    T1::AbstractMatrix{T},
+    T2::AbstractMatrix{T};
+    atol::Real = 0.0,
+    rtol::Real = (eps(real(float(oneunit(T)))) * min(size(A)...)) * iszero(atol),
+) where {T}
     if isdiag(A)
         idxA = diagind(A)
         diagA = view(A, idxA)
@@ -79,9 +95,8 @@ function _pinv!(A::AbstractMatrix{T}, T1::AbstractMatrix{T}, T2::AbstractMatrix{
     λ = max(rtol * maximum(SVD.S), atol)
     SVD.S .= pinv.(SVD.S) .* 1 ./ (1 .+ (λ ./ SVD.S) .^ 6)
     mul!(T2, Diagonal(SVD.S), SVD.U')
-    mul!(T1, SVD.Vt', T2)
+    return mul!(T1, SVD.Vt', T2)
 end
-
 
 """
     _calculate_expectation!(p,z,B,idx) where T
@@ -121,7 +136,6 @@ function _calculate_expectation!(p, z, B, idx)
     end
 end
 
-
 #=======================================================#
 #                   SAVING FUNCTIONS
 #=======================================================#
@@ -130,12 +144,10 @@ function _periodicsave_func(integrator)
     ip = integrator.p
     ip.u_save .= integrator.u
     ip.scalars[2] = integrator.t
-    u_modified!(integrator, false)
+    return u_modified!(integrator, false)
 end
 
-function _save_control_lr_mesolve(u, t, integrator)
-    t in integrator.p.t_l
-end
+_save_control_lr_mesolve(u, t, integrator) = t in integrator.p.t_l
 
 function _save_affect_lr_mesolve!(integrator)
     ip = integrator.p
@@ -150,9 +162,8 @@ function _save_affect_lr_mesolve!(integrator)
         print("\rProgress: $(round(Int, 100*idx/length(ip.t_l)))%")
         flush(stdout)
     end
-    u_modified!(integrator, false)
+    return u_modified!(integrator, false)
 end
-
 
 #=======================================================#
 #                CALLBACK FUNCTIONS
@@ -186,7 +197,7 @@ function _adjM_condition_ratio(u, t, integrator)
     p = abs.(eigvals(σ))
     err = p[1] / p[end]
 
-    (err >= opt.err_max && M < N && M < opt.M_max)
+    return (err >= opt.err_max && M < N && M < opt.M_max)
 end
 
 """
@@ -208,7 +219,7 @@ function _adjM_condition_variational(u, t, integrator)
     N, M = ip.N, ip.M
     err = abs(ip.scalars[1] * sqrt(ip.M))
 
-    (err >= opt.err_max && M < N && M < opt.M_max)
+    return (err >= opt.err_max && M < N && M < opt.M_max)
 end
 
 """
@@ -234,20 +245,33 @@ function _adjM_affect!(integrator)
         normalize!(ψ)
 
         z = hcat(z, ψ)
-        B = cat(B, opt.p0, dims=(1, 2))
+        B = cat(B, opt.p0, dims = (1, 2))
         resize!(integrator, length(z) + length(B))
         integrator.u[1:length(z)] .= z[:]
         integrator.u[length(z)+1:end] .= B[:]
     end
 
-    integrator.p = merge(integrator.p, (M=ip.M + 1, L_tilde=similar(z), A0=similar(z), Bi=similar(B), L=similar(B), temp_MM=similar(B), S=similar(B), Si=similar(B),))
+    integrator.p = merge(
+        integrator.p,
+        (
+            M = ip.M + 1,
+            L_tilde = similar(z),
+            A0 = similar(z),
+            Bi = similar(B),
+            L = similar(B),
+            temp_MM = similar(B),
+            S = similar(B),
+            Si = similar(B),
+        ),
+    )
     mul!(integrator.p.S, z', z)
-    !(opt.compute_Si) && (integrator.p.Si .= _pinv!(Hermitian(integrator.p.S), integrator.temp_MM, integrator.L, atol=opt.atol_inv))
+    !(opt.compute_Si) &&
+        (integrator.p.Si .= _pinv!(Hermitian(integrator.p.S), integrator.temp_MM, integrator.L, atol = opt.atol_inv))
 
     if Δt > 0
-        integrator.p = merge(integrator.p, (u_save=copy(integrator.u),))
+        integrator.p = merge(integrator.p, (u_save = copy(integrator.u),))
         t0 = ip.scalars[2]
-        reinit!(integrator, integrator.u; t0=t0, erase_sol=false)
+        reinit!(integrator, integrator.u; t0 = t0, erase_sol = false)
 
         if length(integrator.sol.t) > 1
             idx = findlast(integrator.sol.t .<= t0)
@@ -257,7 +281,6 @@ function _adjM_affect!(integrator)
         end
     end
 end
-
 
 #=======================================================#
 #            DYNAMICAL EVOLUTION EQUATIONS
@@ -303,8 +326,8 @@ function dBdz!(du, u, p, t)
     mul!(A0, z, B)
 
     # Calculate inverse
-    opt.compute_Si && (Si .= _pinv!(Hermitian(S), temp_MM, L, atol=opt.atol_inv))
-    Bi .= _pinv!(Hermitian(B), temp_MM, L, atol=opt.atol_inv)
+    opt.compute_Si && (Si .= _pinv!(Hermitian(S), temp_MM, L, atol = opt.atol_inv))
+    Bi .= _pinv!(Hermitian(B), temp_MM, L, atol = opt.atol_inv)
 
     # Calculate the effective Hamiltonian part of L_tilde
     mul!(dz, H, A0)
@@ -334,9 +357,8 @@ function dBdz!(du, u, p, t)
     mul!(dB, temp_MM, Si)
     temp_MM .= Si
     lmul!(p.scalars[1], temp_MM)
-    dB .-= temp_MM
+    return dB .-= temp_MM
 end
-
 
 #=======================================================#
 #                   PROBLEM FORMULATION
@@ -367,8 +389,17 @@ end
     kwargs : NamedTuple
         Additional keyword arguments for the ODEProblem.
 """
-function lr_mesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, z::AbstractArray{T2,2}, B::AbstractArray{T2,2}, t_l::AbstractVector, c_ops::AbstractVector=[];
-    e_ops::Tuple=(), f_ops::Tuple=(), opt::LRMesolveOptions{AlgType}=LRMesolveOptions(), kwargs...) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
+function lr_mesolveProblem(
+    H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    z::AbstractArray{T2,2},
+    B::AbstractArray{T2,2},
+    t_l::AbstractVector,
+    c_ops::AbstractVector = [];
+    e_ops::Tuple = (),
+    f_ops::Tuple = (),
+    opt::LRMesolveOptions{AlgType} = LRMesolveOptions(),
+    kwargs...,
+) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
 
     # Formulation of problem
     H -= 0.5im * sum([Γ' * Γ for Γ in c_ops])
@@ -382,26 +413,53 @@ function lr_mesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumO
     Ml = Array{Int64}(undef, length(t_l))
 
     # Initialization of parameters. Scalars represents in order: Tr(S^{-1}L), t0
-    p = (N=size(z, 1), M=size(z, 2), H=H, Γ=c_ops, e_ops=e_ops, f_ops=f_ops, opt=opt, t_l=t_l,
-        expvals=expvals, funvals=funvals, Ml=Ml,
-        L_tilde=similar(z), A0=similar(z), Bi=similar(B), L=similar(B), temp_MM=similar(B), S=similar(B), Si=similar(B),
-        u_save=vcat(vec(z), vec(B)), scalars=[0.0, t_l[1]],)
+    p = (
+        N = size(z, 1),
+        M = size(z, 2),
+        H = H,
+        Γ = c_ops,
+        e_ops = e_ops,
+        f_ops = f_ops,
+        opt = opt,
+        t_l = t_l,
+        expvals = expvals,
+        funvals = funvals,
+        Ml = Ml,
+        L_tilde = similar(z),
+        A0 = similar(z),
+        Bi = similar(B),
+        L = similar(B),
+        temp_MM = similar(B),
+        S = similar(B),
+        Si = similar(B),
+        u_save = vcat(vec(z), vec(B)),
+        scalars = [0.0, t_l[1]],
+    )
 
     mul!(p.S, z', z)
-    p.Si .= pinv(Hermitian(p.S), atol=opt.atol_inv)
+    p.Si .= pinv(Hermitian(p.S), atol = opt.atol_inv)
 
     # Initialization of Callbacks
     kwargs2 = kwargs
     if !isempty(e_ops) || !isempty(f_ops)
         _calculate_expectation!(p, z, B, 1)
-        cb_save = DiscreteCallback(_save_control_lr_mesolve, _save_affect_lr_mesolve!, save_positions=(false, false))
-        kwargs2 = merge(kwargs2, haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_save, kwargs2[:callback])) : Dict(:callback => cb_save))
+        cb_save = DiscreteCallback(_save_control_lr_mesolve, _save_affect_lr_mesolve!, save_positions = (false, false))
+        kwargs2 = merge(
+            kwargs2,
+            haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_save, kwargs2[:callback])) :
+            Dict(:callback => cb_save),
+        )
     end
 
     if opt.is_dynamical
         if opt.Δt > 0
-            cb_periodicsave = PeriodicCallback(_periodicsave_func, opt.Δt, final_affect=true, save_positions=(false, false))
-            kwargs2 = merge(kwargs2, haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_periodicsave, kwargs2[:callback])) : Dict(:callback => cb_periodicsave))
+            cb_periodicsave =
+                PeriodicCallback(_periodicsave_func, opt.Δt, final_affect = true, save_positions = (false, false))
+            kwargs2 = merge(
+                kwargs2,
+                haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_periodicsave, kwargs2[:callback])) :
+                Dict(:callback => cb_periodicsave),
+            )
         end
 
         if opt.adj_condition == "variational"
@@ -411,8 +469,12 @@ function lr_mesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumO
         else
             error("adj_condition must be either 'variational' or 'ratio'")
         end
-        cb_adjM = DiscreteCallback(adj_condition_function, _adjM_affect!, save_positions=(false, false))
-        kwargs2 = merge(kwargs2, haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_adjM, kwargs2[:callback])) : Dict(:callback => cb_adjM))
+        cb_adjM = DiscreteCallback(adj_condition_function, _adjM_affect!, save_positions = (false, false))
+        kwargs2 = merge(
+            kwargs2,
+            haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_adjM, kwargs2[:callback])) :
+            Dict(:callback => cb_adjM),
+        )
     end
 
     # Initialization of ODEProblem's kwargs
@@ -425,25 +487,28 @@ function lr_mesolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumO
     return ODEProblem(dBdz!, p.u_save, tspan, p; kwargs2...)
 end
 
-function lr_mesolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, z::AbstractArray{T2,2}, B::AbstractArray{T2,2}, t_l::AbstractVector, c_ops::AbstractVector=[];
-    e_ops::Tuple=(), f_ops::Tuple=(), opt::LRMesolveOptions{AlgType}=LRMesolveOptions(), kwargs...) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
-
-    prob = lr_mesolveProblem(H, z, B, t_l, c_ops; e_ops=e_ops, f_ops=f_ops, opt=opt, kwargs...)
+function lr_mesolve(
+    H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    z::AbstractArray{T2,2},
+    B::AbstractArray{T2,2},
+    t_l::AbstractVector,
+    c_ops::AbstractVector = [];
+    e_ops::Tuple = (),
+    f_ops::Tuple = (),
+    opt::LRMesolveOptions{AlgType} = LRMesolveOptions(),
+    kwargs...,
+) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
+    prob = lr_mesolveProblem(H, z, B, t_l, c_ops; e_ops = e_ops, f_ops = f_ops, opt = opt, kwargs...)
     return lr_mesolve(prob; kwargs...)
 end
-
 
 #=======================================================#
 #                  OUTPUT GENNERATION
 #=======================================================#
 
-function get_z(u::AbstractArray{T}, N::Integer, M::Integer) where {T}
-    reshape(view(u, 1:M*N), N, M)
-end
+get_z(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, 1:M*N), N, M)
 
-function get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T}
-    reshape(view(u, (M*N+1):length(u)), M, M)
-end
+get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (M*N+1):length(u)), M, M)
 
 """
     lr_mesolve(prob::ODEProblem; kwargs...)
@@ -457,7 +522,7 @@ end
         Additional keyword arguments for the ODEProblem.
 """
 function lr_mesolve(prob::ODEProblem; kwargs...)
-    sol = solve(prob, prob.p.opt.alg, tstops=prob.p.t_l)
+    sol = solve(prob, prob.p.opt.alg, tstops = prob.p.t_l)
     prob.p.opt.progress && print("\n")
 
     N = prob.p.N

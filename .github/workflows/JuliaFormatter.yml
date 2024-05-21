@@ -1,4 +1,4 @@
-name: format-pr
+name: JuliaFormatter PR
 on:
   schedule:
     - cron: '0 0 * * *'

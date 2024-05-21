@@ -63,20 +63,10 @@ end
 Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1,T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
-Base.iterate(
-    res::EigsolveResult{T1,T2,OperatorQuantumObject},
-    ::Val{:vector_list},
-) where {T1,T2} = (
-    [QuantumObject(res.vectors[:, k], Ket, res.dims) for k in 1:length(res.values)],
-    Val(:vectors),
-)
-Base.iterate(
-    res::EigsolveResult{T1,T2,SuperOperatorQuantumObject},
-    ::Val{:vector_list},
-) where {T1,T2} = (
-    [QuantumObject(res.vectors[:, k], OperatorKet, res.dims) for k in 1:length(res.values)],
-    Val(:vectors),
-)
+Base.iterate(res::EigsolveResult{T1,T2,OperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
+    ([QuantumObject(res.vectors[:, k], Ket, res.dims) for k in 1:length(res.values)], Val(:vectors))
+Base.iterate(res::EigsolveResult{T1,T2,SuperOperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
+    ([QuantumObject(res.vectors[:, k], OperatorKet, res.dims) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
@@ -86,7 +76,7 @@ function Base.show(io::IO, res::EigsolveResult)
     show(io, MIME("text/plain"), res.values)
     print(io, "\n")
     println(io, "vectors:")
-    show(io, MIME("text/plain"), res.vectors)
+    return show(io, MIME("text/plain"), res.vectors)
 end
 
 if VERSION < v"1.10"
@@ -155,7 +145,7 @@ if VERSION < v"1.10"
                         resize!(work, lwork)
                     end
                 end
-                H, Z, w
+                return H, Z, w
             end
         end
     end
@@ -228,19 +218,17 @@ if VERSION < v"1.10"
                         resize!(work, lwork)
                     end
                 end
-                H, Z, complex.(wr, wi)
+                return H, Z, complex.(wr, wi)
             end
         end
     end
-    hseqr!(H::StridedMatrix{T}, Z::StridedMatrix{T}) where {T<:BlasFloat} =
-        hseqr!('S', 'V', 1, size(H, 1), H, Z)
-    hseqr!(H::StridedMatrix{T}) where {T<:BlasFloat} =
-        hseqr!('S', 'I', 1, size(H, 1), H, similar(H))
+    hseqr!(H::StridedMatrix{T}, Z::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'V', 1, size(H, 1), H, Z)
+    hseqr!(H::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'I', 1, size(H, 1), H, similar(H))
 end
 
 function _map_ldiv(linsolve, y, x)
     linsolve.b .= x
-    y .= LinearSolve.solve!(linsolve).u
+    return y .= LinearSolve.solve!(linsolve).u
 end
 
 function _permuteschur!(
@@ -284,10 +272,7 @@ function _eigsolve(
     m::Int = max(20, 2 * k + 1);
     tol::Real = 1e-8,
     maxiter::Int = 200,
-) where {
-    T<:BlasFloat,
-    ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},
-}
+) where {T<:BlasFloat,ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
     n = size(A, 2)
     V = similar(b, n, m + 1)
     H = zeros(T, m + 1, m)
@@ -444,15 +429,7 @@ function eigsolve(
         vals = @. (1 + sigma * res.values) / res.values
     end
 
-    return EigsolveResult(
-        vals,
-        res.vectors,
-        res.type,
-        res.dims,
-        res.iter,
-        res.numops,
-        res.converged,
-    )
+    return EigsolveResult(vals, res.vectors, res.type, res.dims, res.iter, res.numops, res.converged)
 end
 
 @doc raw"""
@@ -529,21 +506,12 @@ function eigsolve_al(
     function arnoldi_lindblad_solve(ρ)
         reinit!(integrator, ρ)
         solve!(integrator)
-        integrator.u
+        return integrator.u
     end
 
     Lmap = LinearMap{eltype(MT1)}(arnoldi_lindblad_solve, size(L, 1), ismutating = false)
 
-    res = _eigsolve(
-        Lmap,
-        mat2vec(ρ0),
-        L.type,
-        L.dims,
-        k,
-        krylovdim,
-        maxiter = maxiter,
-        tol = eigstol,
-    )
+    res = _eigsolve(Lmap, mat2vec(ρ0), L.type, L.dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
     # finish!(prog)
 
     vals = similar(res.values)
@@ -555,15 +523,7 @@ function eigsolve_al(
         @. vecs[:, i] = vec * exp(-1im * angle(vec[1]))
     end
 
-    return EigsolveResult(
-        vals,
-        vecs,
-        res.type,
-        res.dims,
-        res.iter,
-        res.numops,
-        res.converged,
-    )
+    return EigsolveResult(vals, vecs, res.type, res.dims, res.iter, res.numops, res.converged)
 end
 
 @doc raw"""
@@ -614,7 +574,7 @@ function LinearAlgebra.eigen(
     E::mat2vec(sparse_to_dense(MT)) = F.values
     U::sparse_to_dense(MT) = F.vectors
 
-    EigsolveResult(E, U, A.type, A.dims, 0, 0, true)
+    return EigsolveResult(E, U, A.type, A.dims, 0, 0, true)
 end
 
 @doc raw"""

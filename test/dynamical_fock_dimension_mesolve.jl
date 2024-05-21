@@ -15,34 +15,23 @@
         Δ = p.Δ
         F = p.F
         a = destroy(dims[1])
-        Δ * a' * a + F * (a + a')
+        return Δ * a' * a + F * (a + a')
     end
     function c_ops_dfd0(dims, p)
         κ = p.κ
         a = destroy(dims[1])
-        [√κ * a]
+        return [√κ * a]
     end
     function e_ops_dfd0(dims, p)
         a = destroy(dims[1])
-        [a' * a]
+        return [a' * a]
     end
     maxdims = [150]
     ψ0 = fock(3, 0)
     dfd_params = (Δ = Δ, F = F, κ = κ)
-    sol = dfd_mesolve(
-        H_dfd0,
-        ψ0,
-        t_l,
-        c_ops_dfd0,
-        maxdims,
-        dfd_params,
-        e_ops = e_ops_dfd0,
-        progress_bar = false,
-    )
+    sol = dfd_mesolve(H_dfd0, ψ0, t_l, c_ops_dfd0, maxdims, dfd_params, e_ops = e_ops_dfd0, progress_bar = false)
 
-    @test sum(
-        abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16)),
-    ) < 0.01
+    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
 
     ######################
 
@@ -57,34 +46,23 @@
         Δ = p.Δ
         F = p.F
         a = destroy(dims[1])
-        Δ * a' * a + F * (a + a')
+        return Δ * a' * a + F * (a + a')
     end
     function c_ops_dfd1(dims, p)
         κ = p.κ
         a = destroy(dims[1])
-        [√κ * a]
+        return [√κ * a]
     end
     function e_ops_dfd1(dims, p)
         a = destroy(dims[1])
-        [a' * a]
+        return [a' * a]
     end
     maxdims = [150]
     ψ0 = fock(70, 50)
     dfd_params = (Δ = Δ, F = F, κ = κ)
-    sol = dfd_mesolve(
-        H_dfd1,
-        ψ0,
-        t_l,
-        c_ops_dfd1,
-        maxdims,
-        dfd_params,
-        e_ops = e_ops_dfd1,
-        progress_bar = false,
-    )
+    sol = dfd_mesolve(H_dfd1, ψ0, t_l, c_ops_dfd1, maxdims, dfd_params, e_ops = e_ops_dfd1, progress_bar = false)
 
-    @test sum(
-        abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16)),
-    ) < 0.01
+    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
 
     ######################
 
@@ -105,36 +83,24 @@
         J = p.J
         a = kron(destroy(dims[1]), qeye(dims[2]))
         b = kron(qeye(dims[1]), destroy(dims[2]))
-        Δ * a' * a + F * (a + a') + Δ * b' * b + J * (a' * b + a * b')
+        return Δ * a' * a + F * (a + a') + Δ * b' * b + J * (a' * b + a * b')
     end
     function c_ops_dfd2(dims, p)
         κ = p.κ
         a = kron(destroy(dims[1]), qeye(dims[2]))
         b = kron(qeye(dims[1]), destroy(dims[2]))
-        [√κ * a, √κ * b]
+        return [√κ * a, √κ * b]
     end
     function e_ops_dfd2(dims, p)
         a = kron(destroy(dims[1]), qeye(dims[2]))
         b = kron(qeye(dims[1]), destroy(dims[2]))
-        [a' * a, b' * b]
+        return [a' * a, b' * b]
     end
     maxdims = [50, 50]
     ψ0 = kron(fock(3, 0), fock(20, 15))
     dfd_params = (Δ = Δ, F = F, κ = κ, J = J)
-    sol = dfd_mesolve(
-        H_dfd2,
-        ψ0,
-        t_l,
-        c_ops_dfd2,
-        maxdims,
-        dfd_params,
-        e_ops = e_ops_dfd2,
-        progress_bar = false,
-    )
+    sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, maxdims, dfd_params, e_ops = e_ops_dfd2, progress_bar = false)
 
-    @test sum(
-        abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16)),
-    ) + sum(
-        abs.((sol.expect[2, :] .- sol0.expect[2, :]) ./ (sol0.expect[2, :] .+ 1e-16)),
-    ) < 0.01
+    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) +
+          sum(abs.((sol.expect[2, :] .- sol0.expect[2, :]) ./ (sol0.expect[2, :] .+ 1e-16))) < 0.01
 end

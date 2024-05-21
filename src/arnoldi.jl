@@ -1,35 +1,22 @@
 export ArnoldiSpace, arnoldi, arnoldi!, arnoldi_init!, arnoldi_step!
 export expv!, expv
 
-struct ArnoldiSpace{
-    VT<:AbstractMatrix{<:BlasFloat},
-    HT<:AbstractMatrix{<:BlasFloat},
-    mT<:Integer,
-}
+struct ArnoldiSpace{VT<:AbstractMatrix{<:BlasFloat},HT<:AbstractMatrix{<:BlasFloat},mT<:Integer}
     V::VT
     H::HT
     Hcopy::HT
     m::mT
 end
 
-function Base.copy(
-    AS::ArnoldiSpace{<:AbstractMatrix{T1},<:AbstractMatrix{T1}},
-) where {T1<:BlasFloat}
-    ArnoldiSpace(copy(AS.V), copy(AS.H), copy(AS.Hcopy), AS.m)
+function Base.copy(AS::ArnoldiSpace{<:AbstractMatrix{T1},<:AbstractMatrix{T1}}) where {T1<:BlasFloat}
+    return ArnoldiSpace(copy(AS.V), copy(AS.H), copy(AS.Hcopy), AS.m)
 end
 
-function Base.deepcopy(
-    AS::ArnoldiSpace{<:AbstractMatrix{T1},<:AbstractMatrix{T1}},
-) where {T1<:BlasFloat}
-    ArnoldiSpace(deepcopy(AS.V), deepcopy(AS.H), deepcopy(AS.Hcopy), AS.m)
+function Base.deepcopy(AS::ArnoldiSpace{<:AbstractMatrix{T1},<:AbstractMatrix{T1}}) where {T1<:BlasFloat}
+    return ArnoldiSpace(deepcopy(AS.V), deepcopy(AS.H), deepcopy(AS.Hcopy), AS.m)
 end
 
-function arnoldi_init!(
-    A,
-    b::AbstractVector{T},
-    V::AbstractMatrix{T},
-    H::AbstractMatrix{T},
-) where {T<:BlasFloat}
+function arnoldi_init!(A, b::AbstractVector{T}, V::AbstractMatrix{T}, H::AbstractMatrix{T}) where {T<:BlasFloat}
     v₁ = view(V, :, 1)
     v₂ = view(V, :, 2)
     v₁ .= b
@@ -39,15 +26,10 @@ function arnoldi_init!(
     H[1, 1] = dot(v₁, v₂)
     axpy!(-H[1, 1], v₁, v₂)
     H[2, 1] = norm(v₂)
-    v₂ ./= H[2, 1]
+    return v₂ ./= H[2, 1]
 end
 
-function arnoldi_step!(
-    A,
-    V::AbstractMatrix{T},
-    H::AbstractMatrix{T},
-    i::TI,
-) where {T<:BlasFloat,TI<:Integer}
+function arnoldi_step!(A, V::AbstractMatrix{T}, H::AbstractMatrix{T}, i::TI) where {T<:BlasFloat,TI<:Integer}
     vᵢ = view(V, :, i)
     vᵢ₊₁ = view(V, :, i + 1)
     mul!(vᵢ₊₁, A, vᵢ)
@@ -86,7 +68,7 @@ function arnoldi(A, b::AbstractVector{T}, m::Integer) where {T<:BlasFloat}
     V = similar(b, n, m + 1)
     H = zeros(T, m + 1, m)
     AS = ArnoldiSpace(V, H, copy(H), m)
-    arnoldi!(AS, A, b)
+    return arnoldi!(AS, A, b)
 end
 
 ### EXPV TOOLS ###
@@ -129,7 +111,7 @@ function expv!(
     m::Int = min(30, cld(2 * length(b), 3)),
 ) where {T1<:BlasFloat,T2<:Union{BlasFloat,BlasInt}}
     AS = arnoldi(A, b, m)
-    expv!(x, AS, t, b)
+    return expv!(x, AS, t, b)
 end
 
 function expv(
@@ -139,5 +121,5 @@ function expv(
     m::Int = min(30, cld(2 * length(b), 3)),
 ) where {T1<:BlasFloat,T2<:BlasFloat}
     x = similar(b)
-    expv!(x, A, t, b, m = m)
+    return expv!(x, A, t, b, m = m)
 end

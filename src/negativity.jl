@@ -68,10 +68,7 @@ Return the partial transpose of a density matrix ``\rho``, where `mask` is an ar
 # Returns
 - `ρ_pt::QuantumObject`: The density matrix with the selected subsystems transposed.
 """
-function partial_transpose(
-    ρ::QuantumObject{T,OperatorQuantumObject},
-    mask::Vector{Bool},
-) where {T}
+function partial_transpose(ρ::QuantumObject{T,OperatorQuantumObject}, mask::Vector{Bool}) where {T}
     if length(mask) != length(ρ.dims)
         error("The length of \`mask\` should be equal to the length of \`ρ.dims\`.")
     end
@@ -79,10 +76,7 @@ function partial_transpose(
 end
 
 # for dense matrices
-function _partial_transpose(
-    ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject},
-    mask::Vector{Bool},
-)
+function _partial_transpose(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject}, mask::Vector{Bool})
     mask2 = [1 + Int(i) for i in mask]
     # mask2 has elements with values equal to 1 or 2
     #   1 - the subsystem don't need to be transposed
@@ -102,10 +96,7 @@ function _partial_transpose(
 end
 
 # for sparse matrices
-function _partial_transpose(
-    ρ::QuantumObject{<:AbstractSparseArray,OperatorQuantumObject},
-    mask::Vector{Bool},
-)
+function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray,OperatorQuantumObject}, mask::Vector{Bool})
     M, N = size(ρ)
     dimsTuple = Tuple(ρ.dims)
     colptr = ρ.data.colptr

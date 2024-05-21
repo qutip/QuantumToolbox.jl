@@ -30,11 +30,7 @@ function wigner(
     yvec::AbstractVector;
     g::Real = √2,
     solver::MySolver = WignerLaguerre(),
-) where {
-    T,
-    OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject},
-    MySolver<:WignerSolver,
-}
+) where {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject},MySolver<:WignerSolver}
     if isket(state)
         ρ = (state * state').data
     elseif isbra(state)
@@ -87,28 +83,14 @@ function _wigner(
 
     while L > 0
         L -= 1
-        ρdiag = _wig_laguerre_clenshaw!(
-            res,
-            L,
-            B,
-            lmul!(1 + Int(L != 0), diag(ρ, L)),
-            y0,
-            y1,
-            y0_old,
-        )
+        ρdiag = _wig_laguerre_clenshaw!(res, L, B, lmul!(1 + Int(L != 0), diag(ρ, L)), y0, y1, y0_old)
         @. W = ρdiag + W * A / √(L + 1)
     end
 
     return @. real(W) * exp(-B / 2) * g^2 / 2 / π
 end
 
-function _wigner_laguerre(
-    ρ::AbstractSparseArray,
-    A::AbstractArray,
-    W::AbstractArray,
-    g::Real,
-    solver::WignerLaguerre,
-)
+function _wigner_laguerre(ρ::AbstractSparseArray, A::AbstractArray, W::AbstractArray, g::Real, solver::WignerLaguerre)
     rows, cols, vals = findnz(ρ)
     B = @. 4 * abs2(A)
 
@@ -122,8 +104,7 @@ function _wigner_laguerre(
             Γ_mn = (1 + Int(m != n)) * sqrt(exp(loggamma(m + 1) - loggamma(n + 1))) # Is this a good trick?
             Γ_mn = check_inf(Γ_mn)
 
-            @. Wtot[:, :, i] =
-                real(ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn * _genlaguerre(m, n - m, B))
+            @. Wtot[:, :, i] = real(ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn * _genlaguerre(m, n - m, B))
         end
         W .= dropdims(sum(Wtot, dims = 3), dims = 3)
     else
@@ -141,13 +122,7 @@ function _wigner_laguerre(
     return @. W * g^2 * exp(-B / 2) / 2 / π
 end
 
-function _wigner_laguerre(
-    ρ::AbstractArray,
-    A::AbstractArray,
-    W::AbstractArray,
-    g::Real,
-    solver::WignerLaguerre,
-)
+function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray, g::Real, solver::WignerLaguerre)
     tol = solver.tol
     M = size(ρ, 1)
     B = @. 4 * abs2(A)
@@ -164,10 +139,7 @@ function _wigner_laguerre(
                 Γ_mn = sqrt(exp(loggamma(m + 1) - loggamma(n + 1))) # Is this a good trick?
                 Γ_mn = check_inf(Γ_mn)
 
-                abs(ρmn) > tol && (@. W +=
-                    2 * real(
-                        ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn * _genlaguerre(m, n - m, B),
-                    ))
+                abs(ρmn) > tol && (@. W += 2 * real(ρmn * (-1)^m * (2 * A)^(n - m) * Γ_mn * _genlaguerre(m, n - m, B)))
             end
         end
     end
@@ -192,10 +164,11 @@ function _genlaguerre(n::Int, α::Number, x::T) where {T<:BlasFloat}
     for k in 1:n-1
         p1, p0 = ((2k + α + 1) / (k + 1) - x / (k + 1)) * p1 - (k + α) / (k + 1) * p0, p1
     end
-    p1
+    return p1
 end
 
-check_inf(x::T) where {T} = if isinf(x)
+check_inf(x::T) where {T} =
+    if isinf(x)
         return x > zero(T) ? floatmax(T) : -floatmax(T)
     else
         return x

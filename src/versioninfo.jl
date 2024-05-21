@@ -6,8 +6,7 @@ Command line output of information on QuantumToolbox, dependencies, and system i
 function versioninfo(io::IO = stdout)
     cpu = Sys.cpu_info()
     BLAS_info = BLAS.get_config().loaded_libs[1]
-    Sys.iswindows() ? OS_name = "Windows" :
-    Sys.isapple() ? OS_name = "macOS" : OS_name = Sys.KERNEL
+    Sys.iswindows() ? OS_name = "Windows" : Sys.isapple() ? OS_name = "macOS" : OS_name = Sys.KERNEL
 
     # print introduction
     println(
@@ -31,27 +30,16 @@ function versioninfo(io::IO = stdout)
     )
 
     # print System informations
-    println(
-        io,
-        "System information:\n",
-        "====================================\n",
-        "Julia Version: $(VERSION)",
-    )
+    println(io, "System information:\n", "====================================\n", "Julia Version: $(VERSION)")
     println(io, """OS       : $(OS_name) ($(Sys.MACHINE))""")
     println(io, """CPU      : $(length(cpu)) × $(cpu[1].model)""")
     println(io, """Memory   : $(round(Sys.total_memory() / 2 ^ 30, digits=3)) GB""")
     println(io, """WORD_SIZE: $(Sys.WORD_SIZE)""")
     println(io, """LIBM     : $(Base.libm_name)""")
-    println(
-        io,
-        """LLVM     : libLLVM-$(Base.libllvm_version) ($(Sys.JIT), $(Sys.CPU_NAME))""",
-    )
+    println(io, """LLVM     : libLLVM-$(Base.libllvm_version) ($(Sys.JIT), $(Sys.CPU_NAME))""")
     println(io, """BLAS     : $(basename(BLAS_info.libname)) ($(BLAS_info.interface))""")
-    println(
-        io,
-        """Threads  : $(Threads.nthreads()) (on $(Sys.CPU_THREADS) virtual cores)""",
-    )
-    print(io, "\n")
+    println(io, """Threads  : $(Threads.nthreads()) (on $(Sys.CPU_THREADS) virtual cores)""")
+    return print(io, "\n")
 end
 
 """

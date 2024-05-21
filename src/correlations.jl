@@ -10,8 +10,7 @@ struct ExponentialSeries <: SpectrumSolver
     calc_steadystate::Bool
 end
 
-ExponentialSeries(; tol = 1e-14, calc_steadystate = false) =
-    ExponentialSeries(tol, calc_steadystate)
+ExponentialSeries(; tol = 1e-14, calc_steadystate = false) = ExponentialSeries(tol, calc_steadystate)
 
 @doc raw"""
     correlation_3op_2t(H::QuantumObject,
@@ -53,14 +52,9 @@ function correlation_3op_2t(
     kwargs2 = merge(kwargs2, (saveat = collect(t_l),))
     ρt = mesolve(H, ψ0, t_l, c_ops; kwargs2...).states
 
-    corr = map(
-        (t, ρ) ->
-            mesolve(H, C * ρ * A, τ_l .+ t, c_ops, e_ops = [B]; kwargs...).expect[1, :],
-        t_l,
-        ρt,
-    )
+    corr = map((t, ρ) -> mesolve(H, C * ρ * A, τ_l .+ t, c_ops, e_ops = [B]; kwargs...).expect[1, :], t_l, ρt)
 
-    corr
+    return corr
 end
 
 @doc raw"""
@@ -103,7 +97,7 @@ function correlation_2op_2t(
         corr = correlation_3op_2t(H, ψ0, t_l, τ_l, C, A, B, c_ops; kwargs...)
     end
 
-    reduce(hcat, corr)
+    return reduce(hcat, corr)
 end
 
 @doc raw"""
@@ -139,7 +133,7 @@ function correlation_2op_1t(
 }
     corr = correlation_2op_2t(H, ψ0, [0], τ_l, A, B, c_ops; reverse = reverse, kwargs...)
 
-    corr[:, 1]
+    return corr[:, 1]
 end
 
 @doc raw"""
@@ -207,8 +201,7 @@ function _spectrum(
     solver::ExponentialSeries;
     kwargs...,
 ) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-    (H.dims == A.dims == B.dims) ||
-        throw(DimensionMismatch("The dimensions of H, A and B must be the same"))
+    (H.dims == A.dims == B.dims) || throw(DimensionMismatch("The dimensions of H, A and B must be the same"))
 
     L = liouvillian(H, c_ops)
 

@@ -1,12 +1,7 @@
 using QuantumToolbox
 using Documenter
 
-DocMeta.setdocmeta!(
-    QuantumToolbox,
-    :DocTestSetup,
-    :(using QuantumToolbox);
-    recursive = true,
-)
+DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
 makedocs(;
     modules = [QuantumToolbox],
