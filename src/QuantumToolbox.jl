@@ -53,4 +53,6 @@ include("arnoldi.jl")
 include("eigsolve.jl")
 include("negativity.jl")
 include("progress_bar.jl")
+include("steadystate.jl")
+
 end
