@@ -179,14 +179,7 @@ function liouvillian_floquet(
     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
 }
-    return liouvillian_floquet(
-        liouvillian(H, c_ops),
-        liouvillian(Hₚ),
-        liouvillian(Hₘ),
-        ω,
-        n_max = n_max,
-        tol = tol,
-    )
+    return liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
 end
 
 @doc raw"""
