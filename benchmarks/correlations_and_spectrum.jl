@@ -10,17 +10,10 @@ function benchmark_correlations_and_spectrum()
 
     ω_l = range(0, 3, length = 1000)
 
-    SUITE["Correlations and Spectrum"]["FFT Correlation"] = @benchmarkable spectrum(
-        $H,
-        $ω_l,
-        $(a'),
-        $a,
-        $c_ops,
-        solver = FFTCorrelation(),
-        progress_bar = false,
-    )
+    SUITE["Correlations and Spectrum"]["FFT Correlation"] =
+        @benchmarkable spectrum($H, $ω_l, $(a'), $a, $c_ops, solver = FFTCorrelation(), progress_bar = false)
 
-    SUITE["Correlations and Spectrum"]["Exponential Series"] =
+    return SUITE["Correlations and Spectrum"]["Exponential Series"] =
         @benchmarkable spectrum($H, $ω_l, $(a'), $a, $c_ops)
 end
 

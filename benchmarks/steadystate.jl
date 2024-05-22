@@ -9,7 +9,7 @@ function benchmark_steadystate()
     H = Δ * a' * a + F * (a + a')
     c_ops = [sqrt(γ * (nth + 1)) * a, sqrt(γ * nth) * a']
 
-    SUITE["Steadystate"]["Direct"] = @benchmarkable steadystate($H, $c_ops)
+    return SUITE["Steadystate"]["Direct"] = @benchmarkable steadystate($H, $c_ops)
 end
 
 benchmark_steadystate()

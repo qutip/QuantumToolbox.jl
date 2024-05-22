@@ -16,7 +16,7 @@ function benchmark_eigenvalues()
     L = liouvillian(H, c_ops)
 
     SUITE["Eigenvalues"]["eigenstates"]["dense"] = @benchmarkable eigenstates($L)
-    SUITE["Eigenvalues"]["eigenstates"]["sparse"] =
+    return SUITE["Eigenvalues"]["eigenstates"]["sparse"] =
         @benchmarkable eigenstates($L, sparse = true, sigma = 0.01, k = 5)
 end
 

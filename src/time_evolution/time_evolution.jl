@@ -4,15 +4,11 @@ export TimeEvolutionSol, TimeEvolutionMCSol
 export liouvillian, liouvillian_floquet, liouvillian_generalized
 export LiouvillianSolver, LiouvillianDirectSolver
 
-
-
-
 abstract type LiouvillianSolver end
 
 struct LiouvillianDirectSolver{T<:Real} <: LiouvillianSolver
     tol::T
 end
-
 
 struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{ComplexF64}}
     times::TT
