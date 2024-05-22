@@ -12,7 +12,7 @@ makedocs(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://albertomercurio.github.io/QuantumToolbox.jl",
         edit_link = "main",
-        assets = String[],
+        assets = ["src/assets/favicon.ico"],
         mathengine = MathJax3(
             Dict(
                 :loader => Dict("load" => ["[tex]/physics"]),
