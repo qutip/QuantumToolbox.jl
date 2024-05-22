@@ -442,3 +442,6 @@ Convert a quantum object from matrix ([`OperatorQuantumObject`](@ref)-type) to v
 """
 mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} =
     QuantumObject(mat2vec(A.data), OperatorKet, A.dims)
+
+_get_dense_similar(A::AbstractArray, args...) = similar(A, args...)
+_get_dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
