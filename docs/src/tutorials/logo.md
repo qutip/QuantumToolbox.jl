@@ -14,7 +14,7 @@ A cat state, often referred to as a Schrödinger cat state, is a quantum state t
 
 where ``| \alpha \rangle`` is a coherent state with amplitude ``\alpha``.
 
-The triangular cat state is a generalization of the standard cat state. It is a superposition of three coherent states with phases ``\theta_0, \theta_1, \theta_2``separated by ``120^\circ``(or ``2\pi/3``radians):
+The triangular cat state is a generalization of the standard cat state. It is a superposition of three coherent states with phases ``\theta_0, \theta_1, \theta_2`` separated by ``120^\circ``(or ``2\pi/3``radians):
 
 ```math
 | \psi_{\text{tri-cat}} \rangle = \frac{1}{\sqrt{3}} \left( | \alpha_0 \rangle + | \alpha_1 \rangle + | \alpha_2 \rangle \right)
