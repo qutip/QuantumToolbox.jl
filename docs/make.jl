@@ -5,12 +5,12 @@ DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recu
 
 makedocs(;
     modules = [QuantumToolbox],
-    authors = "Alberto Mercurio",
-    repo = Remotes.GitHub("albertomercurio", "QuantumToolbox.jl"),
+    authors = "Alberto Mercurio, Luca Gravina and Yi-Te Huang",
+    repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://albertomercurio.github.io/QuantumToolbox.jl",
+        canonical = "https://qutip.github.io/QuantumToolbox.jl",
         edit_link = "main",
         assets = ["src/assets/favicon.ico"],
         mathengine = MathJax3(
@@ -35,4 +35,4 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo = "github.com/albertomercurio/QuantumToolbox.jl", devbranch = "main")
+deploydocs(; repo = "github.com/qutip/QuantumToolbox.jl", devbranch = "main")

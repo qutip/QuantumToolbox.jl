@@ -208,4 +208,4 @@ fig
 
 ## Conclusion
 
-This tutorial demonstrates how to generate the [QuantumToolbox.jl](https://github.com/albertomercurio/QuantumToolbox.jl) logo using the package itself and [Makie.jl](https://github.com/MakieOrg/Makie.jl) for visualization. The logo is a visualization of the Wigner function of a triangular cat state, with a custom colormap that highlights the different coherent states with colors matching the Julia logo.
+This tutorial demonstrates how to generate the [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) logo using the package itself and [Makie.jl](https://github.com/MakieOrg/Makie.jl) for visualization. The logo is a visualization of the Wigner function of a triangular cat state, with a custom colormap that highlights the different coherent states with colors matching the Julia logo.
