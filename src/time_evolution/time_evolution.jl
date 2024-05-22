@@ -2,20 +2,6 @@ export OperatorSum, TimeDependentOperatorSum
 export TimeEvolutionSol, TimeEvolutionMCSol
 
 export liouvillian, liouvillian_floquet, liouvillian_generalized
-export LiouvillianSolver, LiouvillianDirectSolver
-
-export steadystate, steadystate_floquet
-export SteadyStateSolver, SteadyStateDirectSolver
-
-abstract type LiouvillianSolver end
-
-struct LiouvillianDirectSolver{T<:Real} <: LiouvillianSolver
-    tol::T
-end
-
-abstract type SteadyStateSolver end
-
-struct SteadyStateDirectSolver <: SteadyStateSolver end
 
 struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{ComplexF64}}
     times::TT
@@ -38,8 +24,6 @@ struct TimeEvolutionMCSol{
     jump_times::TJT
     jump_which::TJW
 end
-
-LiouvillianDirectSolver(; tol = 1e-16) = LiouvillianDirectSolver(tol)
 
 abstract type LindbladJumpCallbackType end
 
@@ -130,7 +114,7 @@ end
 
 #######################################
 
-### LIOUVILLIAN AND STEADYSTATE ###
+### LIOUVILLIAN ###
 @doc raw"""
     liouvillian(H::QuantumObject, c_ops::AbstractVector, Id_cache=I(prod(H.dims))
 
@@ -170,13 +154,13 @@ function liouvillian_floquet(
     Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
     Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
     ω::Real;
-    n_max::Int = 4,
-    solver::LiouvillianSolver = LiouvillianDirectSolver(),
+    n_max::Int = 3,
+    tol::Real = 1e-15,
 ) where {T1,T2,T3}
     ((L₀.dims == Lₚ.dims) && (L₀.dims == Lₘ.dims)) ||
         throw(ErrorException("The operators are not of the same Hilbert dimension."))
 
-    return _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, solver, n_max = n_max)
+    return _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, n_max, tol)
 end
 
 function liouvillian_floquet(
@@ -185,8 +169,8 @@ function liouvillian_floquet(
     Hₚ::QuantumObject{<:AbstractArray{T2},OpType2},
     Hₘ::QuantumObject{<:AbstractArray{T3},OpType3},
     ω::Real;
-    n_max::Int = 4,
-    solver::LiouvillianSolver = LiouvillianDirectSolver(),
+    n_max::Int = 3,
+    tol::Real = 1e-15,
 ) where {
     T1,
     T2,
@@ -195,14 +179,7 @@ function liouvillian_floquet(
     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
 }
-    return liouvillian_floquet(
-        liouvillian(H, c_ops),
-        liouvillian(Hₚ),
-        liouvillian(Hₘ),
-        ω,
-        solver = solver,
-        n_max = n_max,
-    )
+    return liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
 end
 
 @doc raw"""
@@ -280,8 +257,8 @@ function _liouvillian_floquet(
     Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
     Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
     ω::Real,
-    solver::LiouvillianDirectSolver;
-    n_max::Int = 4,
+    n_max::Int,
+    tol::Real,
 ) where {T1,T2,T3}
     L_0 = L₀.data
     L_p = Lₚ.data
@@ -297,103 +274,6 @@ function _liouvillian_floquet(
         T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m_dense
     end
 
-    solver.tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator, L₀.dims)
-    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, solver.tol), SuperOperator, L₀.dims)
-end
-
-function steadystate(
-    L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject};
-    solver::SteadyStateSolver = SteadyStateDirectSolver(),
-) where {T}
-    return _steadystate(L, solver)
-end
-
-function steadystate(
-    H::QuantumObject{<:AbstractArray{T},OpType},
-    c_ops::Vector,
-    solver::SteadyStateSolver = SteadyStateDirectSolver(),
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-    L = liouvillian(H, c_ops)
-    return steadystate(L, solver = solver)
-end
-
-function _steadystate(
-    L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
-    solver::SteadyStateSolver,
-) where {T}
-    L_tmp = copy(L.data)
-    N = prod(L.dims)
-    weight = norm(L_tmp, 1) / length(L_tmp)
-    v0 = zeros(ComplexF64, N^2) # This is not scalable for GPU arrays
-    v0[1] = weight
-
-    L_tmp[1, [N * (i - 1) + i for i in 1:N]] .+= weight
-
-    ρss_vec = L_tmp \ v0
-    ρss = reshape(ρss_vec, N, N)
-    ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator, L.dims)
-end
-
-@doc raw"""
-    steadystate_floquet(H_0::QuantumObject,
-        c_ops::Vector, H_p::QuantumObject,
-        H_m::QuantumObject,
-        ω::Real; n_max::Int=4, lf_solver::LiouvillianSolver=LiouvillianDirectSolver(),
-        ss_solver::SteadyStateSolver=SteadyStateDirectSolver())
-
-Calculates the steady state of a periodically driven system.
-Here `H_0` is the Hamiltonian or the Liouvillian of the undriven system.
-Considering a monochromatic drive at frequency ``\\omega``, we divide it into two parts,
-`H_p` and `H_m`, where `H_p` oscillates
-as ``e^{i \\omega t}`` and `H_m` oscillates as ``e^{-i \\omega t}``.
-`n_max` is the number of iterations used to obtain the effective Liouvillian,
-`lf_solver` is the solver used to solve the effective Liouvillian,
-and `ss_solver` is the solver used to solve the steady state.
-"""
-function steadystate_floquet(
-    H_0::QuantumObject{<:AbstractArray{T1},OpType1},
-    c_ops::AbstractVector,
-    H_p::QuantumObject{<:AbstractArray{T2},OpType2},
-    H_m::QuantumObject{<:AbstractArray{T3},OpType3},
-    ω::Real;
-    n_max::Int = 4,
-    lf_solver::LiouvillianSolver = LiouvillianDirectSolver(),
-    ss_solver::SteadyStateSolver = SteadyStateDirectSolver(),
-) where {
-    T1,
-    T2,
-    T3,
-    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-}
-    L_0 = liouvillian(H_0, c_ops)
-    L_p = liouvillian(H_p)
-    L_m = liouvillian(H_m)
-
-    return steadystate(liouvillian_floquet(L_0, L_p, L_m, ω, n_max = n_max, solver = lf_solver), solver = ss_solver)
-end
-
-function steadystate_floquet(
-    H_0::QuantumObject{<:AbstractArray{T1},OpType1},
-    H_p::QuantumObject{<:AbstractArray{T2},OpType2},
-    H_m::QuantumObject{<:AbstractArray{T3},OpType3},
-    ω::Real;
-    n_max::Int = 4,
-    lf_solver::LiouvillianSolver = LiouvillianDirectSolver(),
-    ss_solver::SteadyStateSolver = SteadyStateDirectSolver(),
-) where {
-    T1,
-    T2,
-    T3,
-    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-}
-    L_0 = liouvillian(H_0)
-    L_p = liouvillian(H_p)
-    L_m = liouvillian(H_m)
-
-    return steadystate(liouvillian_floquet(L_0, L_p, L_m, ω, n_max = n_max, solver = lf_solver), solver = ss_solver)
+    tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator, L₀.dims)
+    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, tol), SuperOperator, L₀.dims)
 end

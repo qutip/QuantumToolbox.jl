@@ -48,7 +48,9 @@ jobs:
           tool: "julia"
           output-file-path: benchmarks/benchmarks_output.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          alert-threshold: "200%"
+          alert-threshold: "130%"
+          fail-threshold: "170%"
+          comment-on-alert: true
           fail-on-alert: true
           benchmark-data-dir-path: benchmarks
           max-items-in-chart: 100

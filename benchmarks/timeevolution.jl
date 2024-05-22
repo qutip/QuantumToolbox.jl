@@ -1,4 +1,4 @@
-function benchmark_timeevolution()
+function benchmark_timeevolution!(SUITE)
     ωc = 1
     ωq = 1
     g = 0.1
@@ -37,39 +37,31 @@ function benchmark_timeevolution()
 
     tlist = range(0, 10 / γ, 100)
 
-    SUITE["Time Evolution"]["time-independent"]["mesolve"] = @benchmarkable mesolve(
+    SUITE["Time Evolution"]["time-independent"]["mesolve"] =
+        @benchmarkable mesolve($H, $ψ0, $tlist, $c_ops, e_ops = $e_ops, progress_bar = false)
+
+    ## mcsolve ##
+
+    SUITE["Time Evolution"]["time-independent"]["mcsolve"]["Serial"] = @benchmarkable mcsolve(
         $H,
         $ψ0,
         $tlist,
         $c_ops,
+        n_traj = 100,
         e_ops = $e_ops,
         progress_bar = false,
+        ensemble_method = EnsembleSerial(),
+    )
+    SUITE["Time Evolution"]["time-independent"]["mcsolve"]["Multithreaded"] = @benchmarkable mcsolve(
+        $H,
+        $ψ0,
+        $tlist,
+        $c_ops,
+        n_traj = 100,
+        e_ops = $e_ops,
+        progress_bar = false,
+        ensemble_method = EnsembleThreads(),
     )
 
-    ## mcsolve ##
-
-    SUITE["Time Evolution"]["time-independent"]["mcsolve"]["Serial"] =
-        @benchmarkable mcsolve(
-            $H,
-            $ψ0,
-            $tlist,
-            $c_ops,
-            n_traj = 100,
-            e_ops = $e_ops,
-            progress_bar = false,
-            ensemble_method = EnsembleSerial(),
-        )
-    SUITE["Time Evolution"]["time-independent"]["mcsolve"]["Multithreaded"] =
-        @benchmarkable mcsolve(
-            $H,
-            $ψ0,
-            $tlist,
-            $c_ops,
-            n_traj = 100,
-            e_ops = $e_ops,
-            progress_bar = false,
-            ensemble_method = EnsembleThreads(),
-        )
+    return nothing
 end
-
-benchmark_timeevolution()

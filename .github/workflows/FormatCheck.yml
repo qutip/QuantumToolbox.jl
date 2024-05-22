@@ -1,0 +1,44 @@
+name: Format Check
+on:
+  push:
+    branches:
+      - 'main'
+    tags: 
+      - '*'
+  pull_request:
+    branches:
+      - 'main'
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - name: Install and Run JuliaFormatter
+        run: |
+          julia -e 'import Pkg; Pkg.add("JuliaFormatter")'
+          julia -e 'using JuliaFormatter; format(".", verbose=true)'
+
+      - name: Format Check
+        run: |
+          julia -e '
+            output = Cmd(`git diff --name-only`) |> read |> String
+            if output == ""
+                exit(0)
+            else
+                @error "The following files have not been formatted !!!"
+                write(stdout, output)
+                write(stdout, "-----\n")
+                write(stdout, "Please format them by running the following command:\n")
+                write(stdout, "julia -e \"using JuliaFormatter; format(\\\".\\\")\"")
+                exit(1)
+            end'

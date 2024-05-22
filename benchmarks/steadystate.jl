@@ -1,4 +1,4 @@
-function benchmark_steadystate()
+function benchmark_steadystate!(SUITE)
     N = 50
     Δ = 0.1
     F = 2
@@ -10,6 +10,6 @@ function benchmark_steadystate()
     c_ops = [sqrt(γ * (nth + 1)) * a, sqrt(γ * nth) * a']
 
     SUITE["Steadystate"]["Direct"] = @benchmarkable steadystate($H, $c_ops)
-end
 
-benchmark_steadystate()
+    return nothing
+end

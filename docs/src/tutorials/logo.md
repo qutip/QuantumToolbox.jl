@@ -14,23 +14,23 @@ A cat state, often referred to as a Schrödinger cat state, is a quantum state t
 
 where ``| \alpha \rangle`` is a coherent state with amplitude ``\alpha``.
 
-The triangular cat state is a generalization of the standard cat state. It is a superposition of three coherent states with phases ``\theta_0, \theta_1, \theta_2 ``separated by ``120^\circ ``(or ``2\pi/3 ``radians):
+The triangular cat state is a generalization of the standard cat state. It is a superposition of three coherent states with phases ``\theta_0, \theta_1, \theta_2``separated by ``120^\circ``(or ``2\pi/3``radians):
 
 ```math
 | \psi_{\text{tri-cat}} \rangle = \frac{1}{\sqrt{3}} \left( | \alpha_0 \rangle + | \alpha_1 \rangle + | \alpha_2 \rangle \right)
 ```
 
-where ``\alpha_j = \rho e^{i\theta_j} ``with ``\theta_j = \frac{\pi}{2} + \frac{2\pi j}{3} ``and ``j = 0, 1, 2 ``.
+where ``\alpha_j = \rho e^{i\theta_j}``with ``\theta_j = \frac{\pi}{2} + \frac{2\pi j}{3}``and ``j = 0, 1, 2``.
 
 ### Wigner Function
 
-The Wigner function ``W(x, p) ``is a quasi-probability distribution used in quantum mechanics to represent quantum states in phase space. It is defined as:
+The Wigner function ``W(x, p)``is a quasi-probability distribution used in quantum mechanics to represent quantum states in phase space. It is defined as:
 
 ```math
 W(x, p) = \frac{1}{\pi \hbar} \int_{-\infty}^{\infty} \psi^*(x + y) \psi(x - y) e^{2ipy / \hbar} \, dy
 ```
 
-where ``\psi(x) ``is the wave function of the quantum state, ``x ``is the position, ``p ``is the momentum, and ``\hbar ``is the reduced Planck constant. Unlike classical probability distributions, the Wigner function can take negative values, which indicates non-classical behavior.
+where ``\psi(x)``is the wave function of the quantum state, ``x``is the position, ``p``is the momentum, and ``\hbar``is the reduced Planck constant. Unlike classical probability distributions, the Wigner function can take negative values, which indicates non-classical behavior.
 
 ## Generating the Logo
 
@@ -50,9 +50,9 @@ Here we define the parameters for the triangular cat state:
 ```@example logo
 N = 30  # Cutoff of the Hilbert space for the harmonic oscillator
 ρ = 2.5  # Amplitude of the coherent state
-θ1 = π/2
-θ2 = π/2 + 2π/3
-θ3 = π/2 + 4π/3
+θ1 = π / 2
+θ2 = π / 2 + 2π / 3
+θ3 = π / 2 + 4π / 3
 α1 = ρ * exp(im * θ1)
 α2 = ρ * exp(im * θ2)
 α3 = ρ * exp(im * θ3)
@@ -75,7 +75,7 @@ We define the grid for the Wigner function and calculate it using the [`wigner`]
 xvec = range(-ρ, ρ, 500) .* 1.5
 yvec = xvec .+ (abs(imag(α1)) - abs(imag(α2))) / 2
 
-wig = wigner(ψ, xvec, yvec, g=2)
+wig = wigner(ψ, xvec, yvec, g = 2)
 ```
 
 ### Plotting the Wigner function
@@ -100,7 +100,7 @@ The figure obtained above coulb be already a potential logo for the package. How
 \frac{d \hat{\rho}}{dt} = -i [\hat{H}, \hat{\rho}] + \gamma \left( 2 \hat{a} \hat{\rho} \hat{a}^\dagger - \hat{a}^\dagger \hat{a} \hat{\rho} - \hat{\rho} \hat{a}^\dagger \hat{a} \right)
 ```
 
-where ``\hat{\rho}`` is the density matrix, ``\hat{H} = \omega \hat{a}^\dagger \hat{a} ``is the Hamiltonian of the harmonic oscillator (``\hbar = 1``), ``\hat{a} ``and ``\hat{a}^\dagger ``are the annihilation and creation operators, and ``\gamma ``is the damping rate. Thus, we initialize the system in the triangular cat state and evolve it under the Lindblad master equation, using the [`mesolve`](@ref) function.
+where ``\hat{\rho}`` is the density matrix, ``\hat{H} = \omega \hat{a}^\dagger \hat{a}``is the Hamiltonian of the harmonic oscillator (``\hbar = 1``), ``\hat{a}``and ``\hat{a}^\dagger``are the annihilation and creation operators, and ``\gamma``is the damping rate. Thus, we initialize the system in the triangular cat state and evolve it under the Lindblad master equation, using the [`mesolve`](@ref) function.
 
 ```@example logo
 γ = 0.012
@@ -111,19 +111,19 @@ c_ops = [sqrt(γ) * a]
 
 tlist = range(0, 2π, 100)
 
-sol = mesolve(H, ψ, tlist, c_ops, progress_bar=false)
+sol = mesolve(H, ψ, tlist, c_ops, progress_bar = false)
 nothing # hide
 ```
 
 And the Wigner function becomes more uniform:
 
 ```@example logo
-wig = wigner(sol.states[end], xvec, yvec, g=2)
+wig = wigner(sol.states[end], xvec, yvec, g = 2)
 
-fig = Figure(size=(500, 500), figure_padding=0)
+fig = Figure(size = (500, 500), figure_padding = 0)
 ax = Axis(fig[1, 1])
 
-img_wig = heatmap!(ax, xvec, yvec, wig', colormap=:RdBu, interpolate=true, rasterize=2)
+img_wig = heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 2)
 hidespines!(ax)
 hidexdecorations!(ax)
 hideydecorations!(ax)
@@ -138,8 +138,7 @@ At this stage, we have finished to use the `QuantumToolbox` package. From now on
 We define a custom colormap that changes depending on the Wigner function and spatial coordinates. Indeed, we want the three different colormaps, in the regions corresponding to the three coherent states, to match the colors of the Julia logo. We also want the colormap change to be smooth, so we use a Gaussian function to blend the colors. We introduce also a Wigner function dependent transparency to make the logo more appealing.
 
 ```@example logo
-function set_color_julia(x, y, wig::T, α1, α2, α3, cmap1, cmap2, cmap3, δ) where T
-    
+function set_color_julia(x, y, wig::T, α1, α2, α3, cmap1, cmap2, cmap3, δ) where {T}
     amp1 = gaussian(x, real(α1), δ) * gaussian(y, imag(α1), δ)
     amp2 = gaussian(x, real(α2), δ) * gaussian(y, imag(α2), δ)
     amp3 = gaussian(x, real(α3), δ) * gaussian(y, imag(α3), δ)
@@ -149,13 +148,12 @@ function set_color_julia(x, y, wig::T, α1, α2, α3, cmap1, cmap2, cmap3, δ) w
     c3 = get(cmap3, wig)
 
     c_tot = (amp1 * c1 + amp2 * c2 + amp3 * c3) / (amp1 + amp2 + amp3)
-    
-    wig_abs = abs( 2 * (wig - 1/2) )
+
+    wig_abs = abs(2 * (wig - 1 / 2))
     # We introduce some non-linearity to increase the contrast
-    alpha = 2 * ( 1 / (1 + exp(-5 * wig_abs)) - 1/2 )
+    alpha = 2 * (1 / (1 + exp(-5 * wig_abs)) - 1 / 2)
 
     return RGBAf(c_tot.r, c_tot.g, c_tot.b, alpha)
-
 end
 
 X, Y = meshgrid(xvec, yvec)

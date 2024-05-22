@@ -116,6 +116,7 @@ steadystate_floquet
 ```
 
 ## [Correlations and Spectrum](@id doc-API: Correlations and Spectrum)
+
 ```@docs
 correlation_3op_2t
 correlation_2op_2t
@@ -124,6 +125,7 @@ spectrum
 ```
 
 ## [Eigenvalues and eigenvectors](@id doc-API: Eigenvalues and eigenvectors)
+
 ```@docs
 EigsolveResult
 eigenenergies
@@ -135,6 +137,7 @@ eigsolve_al
 ```
 
 ## [Low Rank internal APIs](@id doc-API: Low Rank internal APIs)
+
 ```@docs
 _calculate_expectation!
 _adjM_condition_variational
@@ -145,6 +148,7 @@ dBdz!
 ```
 
 ## [Miscellaneous](@id doc-API: Miscellaneous)
+
 ```@docs
 QuantumToolbox.versioninfo
 QuantumToolbox.about
