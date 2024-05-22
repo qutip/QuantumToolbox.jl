@@ -1,4 +1,4 @@
-function benchmark_eigenvalues()
+function benchmark_eigenvalues!(SUITE)
     N = 5
     a = tensor(destroy(N), qeye(N))
     a_d = a'
@@ -16,8 +16,7 @@ function benchmark_eigenvalues()
     L = liouvillian(H, c_ops)
 
     SUITE["Eigenvalues"]["eigenstates"]["dense"] = @benchmarkable eigenstates($L)
-    SUITE["Eigenvalues"]["eigenstates"]["sparse"] =
-        @benchmarkable eigenstates($L, sparse = true, sigma = 0.01, k = 5)
-end
+    SUITE["Eigenvalues"]["eigenstates"]["sparse"] = @benchmarkable eigenstates($L, sparse = true, sigma = 0.01, k = 5)
 
-benchmark_eigenvalues()
+    return nothing
+end
