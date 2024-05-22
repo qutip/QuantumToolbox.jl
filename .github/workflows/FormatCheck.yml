@@ -25,8 +25,8 @@ jobs:
           version: '1'
       - name: Install and Run JuliaFormatter
         run: |
-          julia  -e 'import Pkg; Pkg.add("JuliaFormatter")'
-          julia  -e 'using JuliaFormatter; format(".", verbose=true)'
+          julia -e 'import Pkg; Pkg.add("JuliaFormatter")'
+          julia -e 'using JuliaFormatter; format(".", verbose=true)'
 
       - name: Format Check
         run: |
@@ -37,6 +37,8 @@ jobs:
             else
                 @error "The following files have not been formatted !!!"
                 write(stdout, output)
-                write(stdout, "-----\nPlease format it by running: using JuliaFormatter; format(\".\")")
+                write(stdout, "-----")
+                write(stdout, "Please format them by running the following command:")
+                write(stdout, "julia -e \"using JuliaFormatter; format(\\\".\\\")\"")
                 exit(1)
             end'
