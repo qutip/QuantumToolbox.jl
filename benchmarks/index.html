@@ -30,36 +30,6 @@
       display: flex;
       flex-direction: column;
     }
-    a {
-      color: #3273dc;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    a:hover {
-      color: #000;
-    }
-    button {
-      color: #fff;
-      background-color: #3298dc;
-      border-color: transparent;
-      cursor: pointer;
-      text-align: center;
-    }
-    button:hover {
-      background-color: #2793da;
-      flex: none;
-    }
-    .spacer {
-      flex: auto;
-    }
-    .small {
-      font-size: 0.75rem;
-    }
-    footer {
-      margin-top: 16px;
-      display: flex;
-      align-items: center;
-    }
     .header-label {
       margin-right: 4px;
     }
@@ -142,17 +112,6 @@
         const data = window.BENCHMARK_DATA;
 
         document.getElementById('last-update').textContent = new Date(data.lastUpdate).toString();
-        const repoLink = document.getElementById('repository-link');
-        repoLink.href = data.repoUrl;
-        repoLink.textContent = data.repoUrl;
-
-        document.getElementById('dl-button').onclick = () => {
-          const dataUrl = 'data:,' + JSON.stringify(data, null, 2);
-          const a = document.createElement('a');
-          a.href = dataUrl;
-          a.download = 'benchmark_data.json';
-          a.click();
-        };
 
         return Object.keys(data.entries).map(name => ({
           name,
