@@ -30,6 +30,7 @@ import LinearMaps: LinearMap
 import Pkg
 import Random
 import SpecialFunctions: loggamma
+using ArrayInterface: allowed_getindex, allowed_setindex!
 
 # Setting the number of threads to 1 allows
 # to achieve better performances for more massive parallelizations
