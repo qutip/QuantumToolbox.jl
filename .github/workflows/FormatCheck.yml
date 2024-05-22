@@ -37,6 +37,6 @@ jobs:
             else
                 @error "The following files have not been formatted !!!"
                 write(stdout, output)
-                write(stdout, "Please format it by running: \'using JuliaFormatter; format(\".\")\'")
+                write(stdout, "-----\nPlease format it by running: using JuliaFormatter; format(\".\")")
                 exit(1)
             end'
