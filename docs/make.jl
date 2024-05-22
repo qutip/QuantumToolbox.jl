@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recu
 
 makedocs(;
     modules = [QuantumToolbox],
-    authors = ["Alberto Mercurio", "Luca Gravina", "Yi-Te Huang"],
+    authors = "Alberto Mercurio, Luca Gravina and Yi-Te Huang",
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",
     format = Documenter.HTML(;
