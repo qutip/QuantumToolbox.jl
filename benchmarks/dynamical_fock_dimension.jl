@@ -4,21 +4,21 @@ function H_dfd2(dims, p)
     J = p.J
     a = tensor(destroy(dims[1]), qeye(dims[2]))
     b = tensor(qeye(dims[1]), destroy(dims[2]))
-    Δ * a' * a + F * (a + a') + Δ * b' * b + J * (a' * b + a * b')
+    return Δ * a' * a + F * (a + a') + Δ * b' * b + J * (a' * b + a * b')
 end
 function c_ops_dfd2(dims, p)
     κ = p.κ
     a = tensor(destroy(dims[1]), qeye(dims[2]))
     b = tensor(qeye(dims[1]), destroy(dims[2]))
-    [√κ * a, √κ * b]
+    return [√κ * a, √κ * b]
 end
 function e_ops_dfd2(dims, p)
     a = tensor(destroy(dims[1]), qeye(dims[2]))
     b = tensor(qeye(dims[1]), destroy(dims[2]))
-    [a' * a, b' * b]
+    return [a' * a, b' * b]
 end
 
-function benchmark_dfd()
+function benchmark_dfd!(SUITE)
     F, Δ, κ, J = 1, 0.25, 1, 0.05
     maxdims = [50, 50]
 
@@ -37,6 +37,6 @@ function benchmark_dfd()
         e_ops = e_ops_dfd2,
         progress_bar = false,
     )
-end
 
-benchmark_dfd()
+    return nothing
+end
