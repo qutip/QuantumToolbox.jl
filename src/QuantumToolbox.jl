@@ -22,6 +22,7 @@ else
 end
 
 # other dependencies (in alphabetical order)
+import ArrayInterface: allowed_getindex, allowed_setindex!
 import DiffEqCallbacks: DiscreteCallback, PeriodicCallback, PresetTimeCallback
 import FFTW: fft, fftshift
 import Graphs: connected_components, DiGraph
@@ -30,7 +31,6 @@ import LinearMaps: LinearMap
 import Pkg
 import Random
 import SpecialFunctions: loggamma
-using ArrayInterface: allowed_getindex, allowed_setindex!
 
 # Setting the number of threads to 1 allows
 # to achieve better performances for more massive parallelizations
