@@ -85,7 +85,7 @@ Finally, we plot the Wigner function using the `heatmap` function from the `Cair
 ```@example logo
 fig = Figure(size = (500, 500), figure_padding = 0)
 ax = Axis(fig[1, 1])
-heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 2)
+heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 1)
 hidespines!(ax)
 hidexdecorations!(ax)
 hideydecorations!(ax)
@@ -123,7 +123,7 @@ wig = wigner(sol.states[end], xvec, yvec, g = 2)
 fig = Figure(size = (500, 500), figure_padding = 0)
 ax = Axis(fig[1, 1])
 
-img_wig = heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 2)
+img_wig = heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 1)
 hidespines!(ax)
 hidexdecorations!(ax)
 hideydecorations!(ax)
@@ -199,7 +199,7 @@ Finally, we plot the Wigner function with the custom colormap.
 ```@example logo
 fig = Figure(size = (500, 500), figure_padding = 0, backgroundcolor = :transparent)
 ax = Axis(fig[1, 1], backgroundcolor = :transparent)
-image!(ax, img')
+image!(ax, img', rasterize = 1)
 hidespines!(ax)
 hidexdecorations!(ax)
 hideydecorations!(ax)
