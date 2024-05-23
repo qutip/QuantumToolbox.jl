@@ -6,9 +6,7 @@
   // Function to adjust the iframe height
   function adjustIframeHeight(event) {
     const iframe = document.getElementById('myIframe');
-    if (event.origin === 'https://qutip.github.io') { // Ensure this matches the iframe origin
-      iframe.style.height = event.data + 'px';
-    }
+    iframe.style.height = event.data + 'px';
   }
 
   // Listen for messages from the iframe
