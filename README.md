@@ -5,7 +5,7 @@
 # QuantumToolbox.jl
 
 [![Release](https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg)](https://github.com/qutip/QuantumToolbox.jl/releases)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11096277.svg)](https://doi.org/10.5281/zenodo.11096277)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10822816.svg)](https://doi.org/10.5281/zenodo.10822816)
 [![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FQuantumToolbox&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/QuantumToolbox)  
 [![Build Status](https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
