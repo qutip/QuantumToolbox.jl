@@ -1,10 +1,18 @@
+<!-- Logo -->
 <div align="center">
   <img src="./docs/src/assets/logo.png" alt="QuantumToolbox.jl logo" width="150">
 </div>
 
 # QuantumToolbox.jl
 
+<!-- Current admin team (in chronological order) -->
+[A. Mercurio](https://github.com/albertomercurio),
+[L. Gravina](https://github.com/lgravina1997),
+and [Y.-T. Huang](https://github.com/ytdHuang).
+
+<!-- Badges -->
 [![Release](https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg)](https://github.com/qutip/QuantumToolbox.jl/releases)
+[![License](https://img.shields.io/badge/license-New%20BSD-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10822816.svg)](https://doi.org/10.5281/zenodo.10822816)
 [![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuantumToolbox&query=total_requests&label=Downloads)](https://juliapkgstats.com/pkg/QuantumToolbox)  
 [![Build Status](https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain)
