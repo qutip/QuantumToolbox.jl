@@ -295,14 +295,11 @@ issuper(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObj
 
 Returns the size of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
 """
-Base.size(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = size(A.data)
-Base.size(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<:QuantumObjectType} =
-    size(A.data, inds...)
+Base.size(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
+Base.size(A::QuantumObject{<:AbstractArray{T}}, inds...) where {T} = size(A.data, inds...)
 
-Base.getindex(A::QuantumObject{<:AbstractArray{T},OpType}, inds...) where {T,OpType<:QuantumObjectType} =
-    getindex(A.data, inds...)
-Base.setindex!(A::QuantumObject{<:AbstractArray{T},OpType}, val, inds...) where {T,OpType<:QuantumObjectType} =
-    setindex!(A.data, val, inds...)
+Base.getindex(A::QuantumObject{<:AbstractArray{T}}, inds...) where {T} = getindex(A.data, inds...)
+Base.setindex!(A::QuantumObject{<:AbstractArray{T}}, val, inds...) where {T} = setindex!(A.data, val, inds...)
 
 """
     eltype(A::QuantumObject)
@@ -342,33 +339,22 @@ end
 
 Returns the length of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
 """
-Base.length(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = length(A.data)
+Base.length(A::QuantumObject{<:AbstractArray{T}}) where {T} = length(A.data)
 
-SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    QuantumObject(sparse(A.data), OpType(), A.dims)
-SparseArrays.nnz(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} = nnz(A.data)
-SparseArrays.nonzeros(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} =
-    nonzeros(A.data)
-SparseArrays.rowvals(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} = rowvals(A.data)
-SparseArrays.droptol!(A::QuantumObject{<:AbstractSparseArray,OpType}, tol::Real) where {OpType<:QuantumObjectType} =
-    (droptol!(A.data, tol); return A)
-SparseArrays.dropzeros(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} =
-    QuantumObject(dropzeros(A.data), A.type, A.dims)
-SparseArrays.dropzeros!(A::QuantumObject{<:AbstractSparseArray,OpType}) where {OpType<:QuantumObjectType} =
-    (dropzeros!(A.data); return A)
+SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(sparse(A.data), A.type, A.dims)
+SparseArrays.nnz(A::QuantumObject{<:AbstractSparseArray}) = nnz(A.data)
+SparseArrays.nonzeros(A::QuantumObject{<:AbstractSparseArray}) = nonzeros(A.data)
+SparseArrays.rowvals(A::QuantumObject{<:AbstractSparseArray}) = rowvals(A.data)
+SparseArrays.droptol!(A::QuantumObject{<:AbstractSparseArray}, tol::Real) = (droptol!(A.data, tol); return A)
+SparseArrays.dropzeros(A::QuantumObject{<:AbstractSparseArray}) = QuantumObject(dropzeros(A.data), A.type, A.dims)
+SparseArrays.dropzeros!(A::QuantumObject{<:AbstractSparseArray}) = (dropzeros!(A.data); return A)
 
-Base.isequal(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-    B::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:QuantumObjectType} = isequal(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
-Base.isapprox(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-    B::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:QuantumObjectType} = isapprox(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
-Base.:(==)(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-    B::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:QuantumObjectType} = (A.data == B.data) && (A.type == B.type) && (A.dims == B.dims)
+Base.isequal(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}) where {T} =
+    isequal(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
+Base.isapprox(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}) where {T} =
+    isapprox(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
+Base.:(==)(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}) where {T} =
+    (A.data == B.data) && (A.type == B.type) && (A.dims == B.dims)
 
 LinearAlgebra.Hermitian(
     A::QuantumObject{<:AbstractArray{T},OpType},
@@ -417,19 +403,14 @@ for op in (:(+), :(-), :(*))
             B::QuantumObject{<:AbstractArray{T2},OpType},
         ) where {T1,T2,OpType<:QuantumObjectType}
             A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
-            return QuantumObject($(op)(A.data, B.data), OpType(), A.dims)
+            return QuantumObject($(op)(A.data, B.data), A.type, A.dims)
         end
-        LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-            QuantumObject($(op)(A.data), OpType(), A.dims)
+        LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject($(op)(A.data), A.type, A.dims)
 
-        LinearAlgebra.$op(
-            n::T1,
-            A::QuantumObject{<:AbstractArray{T2},OpType},
-        ) where {T1<:Number,T2,OpType<:QuantumObjectType} = QuantumObject($(op)(n * I, A.data), OpType(), A.dims)
-        LinearAlgebra.$op(
-            A::QuantumObject{<:AbstractArray{T1},OpType},
-            n::T2,
-        ) where {T1,T2<:Number,OpType<:QuantumObjectType} = QuantumObject($(op)(A.data, n * I), OpType(), A.dims)
+        LinearAlgebra.$op(n::T1, A::QuantumObject{<:AbstractArray{T2}}) where {T1<:Number,T2} =
+            QuantumObject($(op)(n * I, A.data), A.type, A.dims)
+        LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T1}}, n::T2) where {T1,T2<:Number} =
+            QuantumObject($(op)(A.data, n * I), A.type, A.dims)
     end
 end
 
@@ -490,10 +471,10 @@ function LinearAlgebra.:(*)(
     return QuantumObject(A.data * B.data, OperatorBra, A.dims)
 end
 
-LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T},OpType}, n::T1) where {T,T1<:Number,OpType<:QuantumObjectType} =
-    QuantumObject(^(A.data, n), OpType(), A.dims)
-LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T},OpType}, n::T1) where {T,T1<:Number,OpType<:QuantumObjectType} =
-    QuantumObject(/(A.data, n), OpType(), A.dims)
+LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Number} =
+    QuantumObject(^(A.data, n), A.type, A.dims)
+LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Number} =
+    QuantumObject(/(A.data, n), A.type, A.dims)
 function LinearAlgebra.dot(
     A::QuantumObject{<:AbstractArray{T1},OpType},
     B::QuantumObject{<:AbstractArray{T2},OpType},
@@ -502,16 +483,17 @@ function LinearAlgebra.dot(
     return LinearAlgebra.dot(A.data, B.data)
 end
 
-Base.conj(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    QuantumObject(conj(A.data), OpType(), A.dims)
-LinearAlgebra.adjoint(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(adjoint(A.data), OpType(), A.dims)
+Base.conj(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(conj(A.data), A.type, A.dims)
+
 LinearAlgebra.transpose(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(transpose(A.data), OpType(), A.dims)
+    QuantumObject(transpose(A.data), A.type, A.dims)
+
+LinearAlgebra.adjoint(
+    A::QuantumObject{<:AbstractArray{T},OpType},
+) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    QuantumObject(adjoint(A.data), A.type, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} =
     QuantumObject(adjoint(A.data), Bra, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} =
@@ -524,7 +506,7 @@ LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorBraQuantumObje
 LinearAlgebra.inv(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(sparse(inv(Matrix(A.data))), OpType(), A.dims)
+    QuantumObject(sparse(inv(Matrix(A.data))), A.type, A.dims)
 
 """
     tr(A::QuantumObject})
@@ -601,16 +583,12 @@ function LinearAlgebra.norm(
     p == 2.0 && return norm(A.data, 2)
     return norm(svdvals(A), p)
 end
-LinearAlgebra.normalize(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    QuantumObject(normalize(A.data), OpType(), A.dims)
-LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    (normalize!(A.data); A)
-LinearAlgebra.ishermitian(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    ishermitian(A.data)
-LinearAlgebra.issymmetric(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    issymmetric(A.data)
-LinearAlgebra.isposdef(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    isposdef(A.data)
+LinearAlgebra.normalize(A::QuantumObject{<:AbstractArray{T}}) where {T} =
+    QuantumObject(normalize(A.data), A.type, A.dims)
+LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T}}) where {T} = (normalize!(A.data); A)
+LinearAlgebra.ishermitian(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A.data)
+LinearAlgebra.issymmetric(A::QuantumObject{<:AbstractArray{T}}) where {T} = issymmetric(A.data)
+LinearAlgebra.isposdef(A::QuantumObject{<:AbstractArray{T}}) where {T} = isposdef(A.data)
 
 @doc raw"""
     kron(A::QuantumObject, B::QuantumObject)
@@ -659,7 +637,7 @@ function LinearAlgebra.kron(
     A::QuantumObject{<:AbstractArray{T1},OpType},
     B::QuantumObject{<:AbstractArray{T2},OpType},
 ) where {T1,T2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
-    return QuantumObject(kron(A.data, B.data), OpType(), vcat(A.dims, B.dims))
+    return QuantumObject(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
 end
 
 @doc raw"""
@@ -750,12 +728,12 @@ LinearAlgebra.triu(
     A::QuantumObject{<:AbstractArray{T},OpType},
     k::Integer = 0,
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(triu(A.data, k), OpType(), A.dims)
+    QuantumObject(triu(A.data, k), A.type, A.dims)
 LinearAlgebra.tril(
     A::QuantumObject{<:AbstractArray{T},OpType},
     k::Integer = 0,
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(tril(A.data, k), OpType(), A.dims)
+    QuantumObject(tril(A.data, k), A.type, A.dims)
 
 LinearAlgebra.lmul!(a::Number, B::QuantumObject{<:AbstractArray}) = (lmul!(a, B.data); B)
 LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.data, a); B)
@@ -763,14 +741,11 @@ LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.dat
 @inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} =
     mul!(y, A.data, x, α, β)
 
-LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    QuantumObject(sqrt(A.data), OpType(), A.dims)
+LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(sqrt(A.data), A.type, A.dims)
 
-LinearAlgebra.exp(A::QuantumObject{<:AbstractMatrix{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    QuantumObject(dense_to_sparse(exp(A.data)), OpType(), A.dims)
-
-LinearAlgebra.exp(A::QuantumObject{<:AbstractSparseMatrix{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    QuantumObject(_spexp(A.data), OpType(), A.dims)
+LinearAlgebra.exp(A::QuantumObject{<:AbstractMatrix{T}}) where {T} =
+    QuantumObject(dense_to_sparse(exp(A.data)), A.type, A.dims)
+LinearAlgebra.exp(A::QuantumObject{<:AbstractSparseMatrix{T}}) where {T} = QuantumObject(_spexp(A.data), A.type, A.dims)
 
 function _spexp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20) where {T,M}
     m = checksquare(A) # Throws exception if not square
