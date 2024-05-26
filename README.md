@@ -1,3 +1,4 @@
+<!-- Logo -->
 <div align="center">
   <img src="./docs/src/assets/logo.png" alt="QuantumToolbox.jl logo" width="150">
 </div>
@@ -9,6 +10,7 @@
 [L. Gravina](https://github.com/lgravina1997),
 and [Y.-T. Huang](https://github.com/ytdHuang).
 
+<!-- Badges -->
 [![Release](https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg)](https://github.com/qutip/QuantumToolbox.jl/releases)
 [![License](https://img.shields.io/badge/license-New%20BSD-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10822816.svg)](https://doi.org/10.5281/zenodo.10822816)
