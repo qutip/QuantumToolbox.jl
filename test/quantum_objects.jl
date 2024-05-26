@@ -240,7 +240,7 @@
 
     # sqrtm (sqrt) and fidelity
     M = sprand(ComplexF64, 5, 5, 0.5)
-    M0 = Qobj(M)
+    M0 = Qobj(M * M')
     ψ1 = Qobj(rand(ComplexF64, 5))
     ψ2 = Qobj(rand(ComplexF64, 5))
     M1 = ψ1 * ψ1'
