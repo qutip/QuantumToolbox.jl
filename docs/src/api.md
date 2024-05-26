@@ -56,6 +56,7 @@ negativity
 entropy_vn
 entanglement
 expect
+fidelity
 wigner
 get_coherence
 n_th

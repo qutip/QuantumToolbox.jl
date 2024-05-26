@@ -238,10 +238,15 @@
     @test tracedist(ψz1, ρz0) ≈ 1.0
     @test tracedist(ρz0, ρz1) ≈ 1.0
 
-    # sqrtm (sqrt)
+    # sqrtm (sqrt) and fidelity
     M = sprand(ComplexF64, 5, 5, 0.5)
     M0 = Qobj(M)
+    ψ1 = Qobj(rand(ComplexF64, 5))
+    ψ2 = Qobj(rand(ComplexF64, 5))
+    M1 = ψ1 * ψ1'
     @test sqrtm(M0) ≈ sqrtm(sparse_to_dense(M0))
+    @test isapprox(fidelity(M0, M1), fidelity(ψ1, M0); atol = 1e-6)
+    @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1e-6)
 
     # Broadcasting
     a = destroy(20)

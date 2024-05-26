@@ -321,14 +321,26 @@ Here, the definition is from Nielsen & Chuang, "Quantum Computation and Quantum 
 
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
-function fidelity(ρ::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, σ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2}
+function fidelity(
+    ρ::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    σ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+) where {T1,T2}
     sqrt_ρ = sqrt(ρ)
     eigval = abs.(eigvals(sqrt_ρ * σ * sqrt_ρ))
     return sum(sqrt, eigval)
 end
-fidelity(ρ::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2} = sqrt(abs(expect(ρ, ψ)))
-fidelity(ψ::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, σ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = fidelity(σ, ψ)
-fidelity(ψ::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, ϕ::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2} = abs(ψ' * ϕ)
+fidelity(
+    ρ::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+) where {T1,T2} = sqrt(abs(expect(ρ, ψ)))
+fidelity(
+    ψ::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
+    σ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+) where {T1,T2} = fidelity(σ, ψ)
+fidelity(
+    ψ::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
+    ϕ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+) where {T1,T2} = abs(ψ' * ϕ)
 
 @doc raw"""
     get_coherence(ψ::QuantumObject)
