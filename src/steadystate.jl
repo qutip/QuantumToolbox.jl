@@ -26,15 +26,25 @@ function _steadystate(
     L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
     solver::SteadyStateDirectSolver,
 ) where {T}
-    L_tmp = copy(L.data)
+    L_tmp = L.data
     N = prod(L.dims)
     weight = norm(L_tmp, 1) / length(L_tmp)
-    v0 = zeros(ComplexF64, N^2) # This is not scalable for GPU arrays
-    v0[1] = weight
 
-    L_tmp[1, [N * (i - 1) + i for i in 1:N]] .+= weight
+    v0 = _get_dense_similar(L_tmp, N^2)
+    fill!(v0, 0)
+    allowed_setindex!(v0, weight, 1) # Because scalar indexing is not allowed on GPU arrays
 
-    ρss_vec = L_tmp \ v0
+    idx_range = collect(1:N)
+    rows = _get_dense_similar(L_tmp, N)
+    cols = _get_dense_similar(L_tmp, N)
+    datas = _get_dense_similar(L_tmp, N)
+    fill!(rows, 1)
+    copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
+    fill!(datas, weight)
+    Tn = sparse(rows, cols, datas, N^2, N^2)
+    L_tmp = L_tmp + Tn
+
+    ρss_vec = L_tmp \ v0 # This is still not supported on GPU, yet
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
     return QuantumObject(ρss, Operator, L.dims)

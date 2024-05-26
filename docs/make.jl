@@ -49,15 +49,15 @@ const PAGES = Any[
 
 makedocs(;
     modules = [QuantumToolbox],
-    authors = "Alberto Mercurio",
-    repo = Remotes.GitHub("albertomercurio", "QuantumToolbox.jl"),
+    authors = "Alberto Mercurio, Luca Gravina and Yi-Te Huang",
+    repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",
     pages = PAGES,
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://albertomercurio.github.io/QuantumToolbox.jl",
+        canonical = "https://qutip.github.io/QuantumToolbox.jl",
         edit_link = "main",
-        assets = String[],
+        assets = ["assets/favicon.ico"],
         mathengine = MathJax3(
             Dict(
                 :loader => Dict("load" => ["[tex]/physics"]),
@@ -71,4 +71,4 @@ makedocs(;
     )
 )
 
-deploydocs(; repo = "github.com/albertomercurio/QuantumToolbox.jl", devbranch = "main")
+deploydocs(; repo = "github.com/qutip/QuantumToolbox.jl", devbranch = "main")
