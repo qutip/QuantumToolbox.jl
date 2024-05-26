@@ -340,7 +340,7 @@ fidelity(
 fidelity(
     ψ::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
     ϕ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-) where {T1,T2} = abs(ψ' * ϕ)
+) where {T1,T2} = abs(dot(ψ, ϕ))
 
 @doc raw"""
     get_coherence(ψ::QuantumObject)
