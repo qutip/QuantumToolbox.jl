@@ -31,6 +31,7 @@ issuper
 size
 eltype
 length
+sqrtm
 LinearAlgebra.tr
 LinearAlgebra.svdvals
 LinearAlgebra.norm
@@ -55,6 +56,7 @@ negativity
 entropy_vn
 entanglement
 expect
+fidelity
 wigner
 get_coherence
 n_th
