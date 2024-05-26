@@ -1,6 +1,6 @@
 export get_data, get_coherence, expect, ptrace
 export mat2vec, vec2mat
-export entropy_vn, entanglement, tracedist
+export entropy_vn, entanglement, tracedist, fidelity
 export gaussian, n_th
 
 export row_major_reshape, tidyup, tidyup!, meshgrid, sparse_to_dense, dense_to_sparse
@@ -310,6 +310,25 @@ function expect(
 ) where {T1,T2}
     return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
 end
+
+@doc raw"""
+    fidelity(ρ::QuantumObject, σ::QuantumObject)
+
+Calculate the fidelity of two [`QuantumObject`](@ref):
+``F(\rho, \sigma) = \textrm{Tr} \sqrt{\sqrt{\rho} \sigma \sqrt{\rho}}``
+
+Here, the definition is from Nielsen & Chuang, "Quantum Computation and Quantum Information". It is the square root of the fidelity defined in R. Jozsa, Journal of Modern Optics, 41:12, 2315 (1994).
+
+Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
+"""
+function fidelity(ρ::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, σ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2}
+    sqrt_ρ = sqrt(ρ)
+    eigval = abs.(eigvals(sqrt_ρ * σ * sqrt_ρ))
+    return sum(sqrt, eigval)
+end
+fidelity(ρ::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2} = sqrt(abs(expect(ρ, ψ)))
+fidelity(ψ::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, σ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}) where {T1,T2} = fidelity(σ, ψ)
+fidelity(ψ::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, ϕ::QuantumObject{<:AbstractArray{T2},KetQuantumObject}) where {T1,T2} = abs(ψ' * ϕ)
 
 @doc raw"""
     get_coherence(ψ::QuantumObject)

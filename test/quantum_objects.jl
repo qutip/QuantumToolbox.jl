@@ -238,6 +238,11 @@
     @test tracedist(ψz1, ρz0) ≈ 1.0
     @test tracedist(ρz0, ρz1) ≈ 1.0
 
+    # sqrtm (sqrt)
+    M = sprand(ComplexF64, 5, 5, 0.5)
+    M0 = Qobj(M)
+    @test sqrtm(M0) ≈ sqrtm(sparse_to_dense(M0))
+
     # Broadcasting
     a = destroy(20)
     for op in ((+), (-), (*), (^))

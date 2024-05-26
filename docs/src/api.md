@@ -31,6 +31,7 @@ issuper
 size
 eltype
 length
+sqrtm
 LinearAlgebra.tr
 LinearAlgebra.svdvals
 LinearAlgebra.norm

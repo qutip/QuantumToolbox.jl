@@ -9,6 +9,7 @@ export QuantumObjectType,
 export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 
 export isket, isbra, isoper, isoperbra, isoperket, issuper, ket2dm
+export sqrtm
 export tensor, ⊗
 
 abstract type AbstractQuantumObject end
@@ -741,7 +742,17 @@ LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.dat
 @inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} =
     mul!(y, A.data, x, α, β)
 
-LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(sqrt(A.data), A.type, A.dims)
+LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} =
+    QuantumObject(sqrt(sparse_to_dense(A.data)), A.type, A.dims)
+
+@doc raw"""
+    sqrtm(A::QuantumObject)
+
+Matrix square root of [`Operator`](@ref) type of [`QuantumObject`](@ref)
+
+Note that for other types of [`QuantumObject`](@ref) use `sprt(A)` instead.
+"""
+sqrtm(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = sqrt(A)
 
 LinearAlgebra.exp(A::QuantumObject{<:AbstractMatrix{T}}) where {T} =
     QuantumObject(dense_to_sparse(exp(A.data)), A.type, A.dims)
