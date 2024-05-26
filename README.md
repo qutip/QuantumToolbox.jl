@@ -6,7 +6,7 @@
 
 [![Release](https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg)](https://github.com/qutip/QuantumToolbox.jl/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10822816.svg)](https://doi.org/10.5281/zenodo.10822816)
-[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FQuantumToolbox&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/QuantumToolbox)  
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuantumToolbox&query=total_requests&label=Downloads)](https://juliapkgstats.com/pkg/QuantumToolbox)  
 [![Build Status](https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![Coverage](https://codecov.io/gh/qutip/QuantumToolbox.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/qutip/QuantumToolbox.jl)  
@@ -27,8 +27,18 @@ QuantumToolbox.jl is equipped with a robust set of features:
 - **GPU and Distributed Computing:** Leverage GPU and distributed resources for high-performance computing.
 
 ## Installation
-
+`QuantumToolbox.jl` requires `Julia 1.7+`. To install it, run the following commands inside Julia's interactive session (also known as REPL):
 ```julia
 using Pkg
 Pkg.add("QuantumToolbox")
+```
+Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
+```julia-REPL
+(1.7) pkg> add QuantumToolbox
+```
+To load the package and check the version information, use either `versioninfo()` or `about()`, namely
+```julia
+using QuantumToolbox
+QuantumToolbox.versioninfo()
+QuantumToolbox.about()
 ```
