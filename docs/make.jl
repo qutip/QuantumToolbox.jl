@@ -14,8 +14,8 @@ const PAGES = [
             "users_guide/QuantumObject/QuantumObject.md",
             "users_guide/QuantumObject/QuantumObject_functions.md",
         ],
-        "Manipulating States and Operators" => "users_guide/states_and_operators/states_and_operators.md",
-        "Tensor Products and Partial Traces" => "users_guide/tensor_product/tensor.md",
+        "Manipulating States and Operators" => "users_guide/states_and_operators.md",
+        "Tensor Products and Partial Traces" => "users_guide/tensor.md",
         "Time Evolution and Dynamics" => [
             "Introduction" => "users_guide/time_evolution/intro.md"
         ],
