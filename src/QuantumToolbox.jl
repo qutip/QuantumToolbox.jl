@@ -22,6 +22,7 @@ else
 end
 
 # other dependencies (in alphabetical order)
+import ArrayInterface: allowed_getindex, allowed_setindex!
 import DiffEqCallbacks: DiscreteCallback, PeriodicCallback, PresetTimeCallback
 import FFTW: fft, fftshift
 import Graphs: connected_components, DiGraph

@@ -14,7 +14,7 @@ A cat state, often referred to as a Schrödinger cat state, is a quantum state t
 
 where ``| \alpha \rangle`` is a coherent state with amplitude ``\alpha``.
 
-The triangular cat state is a generalization of the standard cat state. It is a superposition of three coherent states with phases ``\theta_0, \theta_1, \theta_2``separated by ``120^\circ``(or ``2\pi/3``radians):
+The triangular cat state is a generalization of the standard cat state. It is a superposition of three coherent states with phases ``\theta_0, \theta_1, \theta_2`` separated by ``120^\circ``(or ``2\pi/3``radians):
 
 ```math
 | \psi_{\text{tri-cat}} \rangle = \frac{1}{\sqrt{3}} \left( | \alpha_0 \rangle + | \alpha_1 \rangle + | \alpha_2 \rangle \right)
@@ -85,7 +85,7 @@ Finally, we plot the Wigner function using the `heatmap` function from the `Cair
 ```@example logo
 fig = Figure(size = (500, 500), figure_padding = 0)
 ax = Axis(fig[1, 1])
-heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 2)
+heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 1)
 hidespines!(ax)
 hidexdecorations!(ax)
 hideydecorations!(ax)
@@ -123,7 +123,7 @@ wig = wigner(sol.states[end], xvec, yvec, g = 2)
 fig = Figure(size = (500, 500), figure_padding = 0)
 ax = Axis(fig[1, 1])
 
-img_wig = heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 2)
+img_wig = heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 1)
 hidespines!(ax)
 hidexdecorations!(ax)
 hideydecorations!(ax)
@@ -199,7 +199,7 @@ Finally, we plot the Wigner function with the custom colormap.
 ```@example logo
 fig = Figure(size = (500, 500), figure_padding = 0, backgroundcolor = :transparent)
 ax = Axis(fig[1, 1], backgroundcolor = :transparent)
-image!(ax, img')
+image!(ax, img', rasterize = 1)
 hidespines!(ax)
 hidexdecorations!(ax)
 hideydecorations!(ax)
@@ -208,4 +208,4 @@ fig
 
 ## Conclusion
 
-This tutorial demonstrates how to generate the [QuantumToolbox.jl](https://github.com/albertomercurio/QuantumToolbox.jl) logo using the package itself and [Makie.jl](https://github.com/MakieOrg/Makie.jl) for visualization. The logo is a visualization of the Wigner function of a triangular cat state, with a custom colormap that highlights the different coherent states with colors matching the Julia logo.
+This tutorial demonstrates how to generate the [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) logo using the package itself and [Makie.jl](https://github.com/MakieOrg/Makie.jl) for visualization. The logo is a visualization of the Wigner function of a triangular cat state, with a custom colormap that highlights the different coherent states with colors matching the Julia logo.

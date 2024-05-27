@@ -3,42 +3,43 @@ using Documenter
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
-const PAGES = Any[
-    "Front Matter" => Any[
+const PAGES = [
+    "Front Matter" => [
         "Introduction" => "index.md",
         "Installation" => "install.md",
+        "Key differences from QuTiP" => "qutip_differences.md",
         # "Cite QuantumToolbox.jl" => "cite.md",
     ],
-    "Users Guide" => Any[
-        "Basic Operations on Quantum Objects" => Any[
-            "Qobj.md",
-            "Qobj_functions.md",
+    "Users Guide" => [
+        "Basic Operations on Quantum Objects" => [
+            "users_guide/QuantumObject/QuantumObject.md",
+            "users_guide/QuantumObject/QuantumObject_functions.md",
         ],
-        "Manipulating States and Operators" => Any[
-            "state_vectors.md",
-            "density_matrices.md",
-            "qubit_systems.md",
-            "expectation_values.md",
-            "superoperators.md",
+        "Manipulating States and Operators" => [
+            "users_guide/states_and_operators/state_vectors.md",
+            "users_guide/states_and_operators/density_matrices.md",
+            "users_guide/states_and_operators/qubit_systems.md",
+            "users_guide/states_and_operators/expectation_values.md",
+            "users_guide/states_and_operators/superoperators.md",
         ],
-        "Tensor Products and Partial Traces" => Any[
-            "tensor.md",
-            "partial_trace.md",
+        "Tensor Products and Partial Traces" => [
+            "users_guide/tensor_product/tensor.md",
+            "users_guide/tensor_product/partial_trace.md",
         ],
-        "Time Evolution and Dynamics" => Any[
-            "time_evolution/intro.md"
+        "Time Evolution and Dynamics" => [
+            "users_guide/time_evolution/intro.md"
         ],
-        "Solving for Steady-State Solutions" => Any[],
-        "Two-time correlation functions" => Any[],
-        "Extensions" => Any[
-            "extensions/cuda.md",
+        "Solving for Steady-State Solutions" => [],
+        "Two-time correlation functions" => [],
+        "Extensions" => [
+            "users_guide/extensions/cuda.md",
         ],
     ],
-    "Tutorials" => Any[
-        "Time Evolution" => Any[
+    "Tutorials" => [
+        "Time Evolution" => [
             "Low Rank Master Equation" => "tutorials/lowrank.md",
         ],
-        "Miscellaneous Tutorials" => Any[
+        "Miscellaneous Tutorials" => [
             "tutorials/logo.md",
         ],
     ],
@@ -49,15 +50,15 @@ const PAGES = Any[
 
 makedocs(;
     modules = [QuantumToolbox],
-    authors = "Alberto Mercurio",
-    repo = Remotes.GitHub("albertomercurio", "QuantumToolbox.jl"),
+    authors = "Alberto Mercurio, Luca Gravina and Yi-Te Huang",
+    repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",
     pages = PAGES,
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://albertomercurio.github.io/QuantumToolbox.jl",
+        canonical = "https://qutip.github.io/QuantumToolbox.jl",
         edit_link = "main",
-        assets = String[],
+        assets = ["assets/favicon.ico"],
         mathengine = MathJax3(
             Dict(
                 :loader => Dict("load" => ["[tex]/physics"]),
@@ -71,4 +72,4 @@ makedocs(;
     )
 )
 
-deploydocs(; repo = "github.com/albertomercurio/QuantumToolbox.jl", devbranch = "main")
+deploydocs(; repo = "github.com/qutip/QuantumToolbox.jl", devbranch = "main")

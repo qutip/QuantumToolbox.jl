@@ -6,4 +6,7 @@ always_use_return=true
 format_docstrings=true
 indent_submodule=true
 format_markdown=true
-ignore = ["README.md"]
+ignore = [
+    "README.md", 
+    "CODE_OF_CONDUCT.md"
+]
