@@ -2,9 +2,15 @@
 CurrentModule = QuantumToolbox
 ```
 
-# [API](@id API)
+# [API](@id doc-API)
 
-## [Quantum object functions](@id API: Quantum object functions)
+## Contents
+
+```@contents
+Pages = ["api.md"]
+```
+
+## [Quantum object functions](@id doc-API: Quantum object functions)
 
 ```@docs
 BraQuantumObject
@@ -40,7 +46,7 @@ tensor
 ⊗
 ```
 
-## [General functions](@id API: General functions)
+## [General functions](@id doc-API: General functions)
 
 ```@docs
 row_major_reshape
@@ -66,7 +72,7 @@ mat2vec
 vec2mat
 ```
 
-## [Quantum states, operators and super-operators](@id API: Quantum states, operators and super-operators)
+## [Quantum states, operators and super-operators](@id doc-API: Quantum states, operators and super-operators)
 
 ```@docs
 spre
@@ -91,7 +97,7 @@ sinm
 cosm
 ```
 
-## [Time evolution](@id API: Time evolution)
+## [Time evolution](@id doc-API: Time evolution)
 
 ```@docs
 sesolveProblem
@@ -111,7 +117,7 @@ liouvillian_generalized
 steadystate_floquet
 ```
 
-## [Correlations and Spectrum](@id API: Correlations and Spectrum)
+## [Correlations and Spectrum](@id doc-API: Correlations and Spectrum)
 
 ```@docs
 correlation_3op_2t
@@ -120,7 +126,7 @@ correlation_2op_1t
 spectrum
 ```
 
-## [Eigenvalues and eigenvectors](@id API: Eigenvalues and eigenvectors)
+## [Eigenvalues and eigenvectors](@id doc-API: Eigenvalues and eigenvectors)
 
 ```@docs
 EigsolveResult
@@ -132,7 +138,7 @@ eigsolve
 eigsolve_al
 ```
 
-## [Low Rank internal APIs](@id API: Low Rank internal APIs)
+## [Low Rank internal APIs](@id doc-API: Low Rank internal APIs)
 
 ```@docs
 _calculate_expectation!
@@ -143,7 +149,7 @@ _pinv!
 dBdz!
 ```
 
-## [Miscellaneous](@id API: Miscellaneous)
+## [Miscellaneous](@id doc-API: Miscellaneous)
 
 ```@docs
 QuantumToolbox.versioninfo

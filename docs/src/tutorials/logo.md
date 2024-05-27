@@ -1,4 +1,4 @@
-# QuantumToolbox.jl Logo Tutorial
+# [Create QuantumToolbox.jl logo](@id doc-tutor: Create QuantumToolbox.jl logo)
 
 ## Introduction
 
