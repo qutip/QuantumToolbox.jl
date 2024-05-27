@@ -2,7 +2,7 @@
 CurrentModule = QuantumToolbox
 ```
 
-# [Introduction](@id doc: Introduction)
+# QuantumToolbox.jl Documentation
 
 [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) is a cutting-edge Julia package designed for quantum physics simulations, closely emulating the popular Python [QuTiP](https://github.com/qutip/qutip) package. It uniquely combines the simplicity and power of Julia with advanced features like GPU acceleration and distributed computing, making simulation of quantum systems more accessible and efficient.
 
@@ -18,7 +18,30 @@ QuantumToolbox.jl is equipped with a robust set of features:
 - **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run undreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
 - **Easy Extension:** Easily extend the package, taking advantage of the Julia language features, like multiple dispatch and metaprogramming.
 
-## Brief example
+## [Installation](@id doc: Installation)
+
+!!! note "Requirements"
+    `QuantumToolbox.jl` requires `Julia 1.7+`.
+
+To install `QuantumToolbox.jl`, run the following commands inside Julia's interactive session (also known as REPL):
+```julia
+using Pkg
+Pkg.add("QuantumToolbox")
+```
+Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
+```julia-REPL
+(1.7) pkg> add QuantumToolbox
+```
+More information about `Julia`'s package manager can be found at [`Pkg.jl`](https://julialang.github.io/Pkg.jl/v1/).
+
+To load the package and check the version information, use either [`QuantumToolbox.versioninfo()`](@ref) or [`QuantumToolbox.about()`](@ref), namely
+```julia
+using QuantumToolbox
+QuantumToolbox.versioninfo()
+QuantumToolbox.about()
+```
+
+## Brief Example
 
 We now provide a brief example to demonstrate the similarity between [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) and [QuTiP](https://github.com/qutip/qutip).
 
@@ -53,7 +76,7 @@ where ``\hat{\rho}`` is the density matrix, ``\gamma`` is the damping rate, and 
 \mathcal{D}[\hat{a}]\hat{\rho} = \hat{a}\hat{\rho}\hat{a}^\dagger - \frac{1}{2}\hat{a}^\dagger\hat{a}\hat{\rho} - \frac{1}{2}\hat{\rho}\hat{a}^\dagger\hat{a}
 ```
 
-We nowm compute the time evolution of the system using the [`mesolve`](@ref) function, starting from the initial state ``\ket{\psi (0)} = \ket{3}``:
+We now compute the time evolution of the system using the [`mesolve`](@ref) function, starting from the initial state ``\ket{\psi (0)} = \ket{3}``:
 
 ```julia
 γ = 0.1 # damping rate
@@ -65,16 +88,20 @@ tlist = range(0, 10, 100) # time list
 c_ops = [sqrt(γ) * a]
 e_ops = [a' * a]
 
-sol = mesolve(H, ψ0, tlist, c_ops, e_ops=e_ops)
+sol = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops)
 ```
 
 We can extract the expectation value of the number operator ``\hat{a}^\dagger \hat{a}`` with the command `sol.expect`, and the states with the command `sol.states`.
 
-### Passing in the GPU
+### Support for GPU calculation
 
 We can easily pass the computation to the GPU, by simply passing all the `Qobj`s to the GPU:
 
+!!! compat "Compat"
+    The described feature requires `Julia 1.9+`. See [CUDA extension](@ref "doc: CUDA") for more details.
+
 ```julia
+using QuantumToolbox
 using CUDA
 
 a_gpu = cu(destroy(N)) # The only difference in the code is the cu() function
@@ -86,5 +113,5 @@ H_gpu = ω * a_gpu' * a_gpu
 c_ops = [sqrt(γ) * a_gpu]
 e_ops = [a_gpu' * a_gpu]
 
-sol = mesolve(H_gpi, ψ0_gpu, tlist, c_ops, e_ops=e_ops)
+sol = mesolve(H_gpu, ψ0_gpu, tlist, c_ops, e_ops = e_ops)
 ```
