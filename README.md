@@ -37,7 +37,29 @@ QuantumToolbox.jl is equipped with a robust set of features:
 - **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run undreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
 - **Easy Extension:** Easily extend the package, taking advantage of the Julia language features, like multiple dispatch and metaprogramming.
 
-## Brief example
+## Installation
+    
+> **_NOTE:_**  `QuantumToolbox.jl` requires `Julia 1.7+`.
+
+To install `QuantumToolbox.jl`, run the following commands inside Julia's interactive session (also known as REPL):
+```julia
+using Pkg
+Pkg.add("QuantumToolbox")
+```
+Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
+```julia-repl
+(1.7) pkg> add QuantumToolbox
+```
+More information about `Julia`'s package manager can be found at [`Pkg.jl`](https://julialang.github.io/Pkg.jl/v1/).
+
+To load the package and check the version information, use either `QuantumToolbox.versioninfo()` or `QuantumToolbox.about()`, namely
+```julia
+using QuantumToolbox
+QuantumToolbox.versioninfo()
+QuantumToolbox.about()
+```
+
+## Brief Example
 
 We now provide a brief example to demonstrate the similarity between [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) and [QuTiP](https://github.com/qutip/qutip).
 
@@ -72,7 +94,7 @@ $$
 \mathcal{D}[\hat{a}]\hat{\rho} = \hat{a}\hat{\rho}\hat{a}^\dagger - \frac{1}{2}\hat{a}^\dagger\hat{a}\hat{\rho} - \frac{1}{2}\hat{\rho}\hat{a}^\dagger\hat{a}
 $$
 
-We now compute the time evolution of the system using the [`mesolve`](@ref) function, starting from the initial state $\ket{\psi (0)} = \ket{3}$:
+We now compute the time evolution of the system using the `mesolve` function, starting from the initial state $\ket{\psi (0)} = \ket{3}$:
 
 ```julia
 γ = 0.1 # damping rate
@@ -84,16 +106,19 @@ tlist = range(0, 10, 100) # time list
 c_ops = [sqrt(γ) * a]
 e_ops = [a' * a]
 
-sol = mesolve(H, ψ0, tlist, c_ops, e_ops=e_ops)
+sol = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops)
 ```
 
 We can extract the expectation value of the number operator $\hat{a}^\dagger \hat{a}$ with the command `sol.expect`, and the states with the command `sol.states`.
 
-### Passing in the GPU
+### Support for GPU calculation
 
 We can easily pass the computation to the GPU, by simply passing all the `Qobj`s to the GPU:
 
+> **_NOTE:_** The described feature requires `Julia 1.9+`.
+
 ```julia
+using QuantumToolbox
 using CUDA
 
 a_gpu = cu(destroy(N)) # The only difference in the code is the cu() function
@@ -105,22 +130,5 @@ H_gpu = ω * a_gpu' * a_gpu
 c_ops = [sqrt(γ) * a_gpu]
 e_ops = [a_gpu' * a_gpu]
 
-sol = mesolve(H_gpi, ψ0_gpu, tlist, c_ops, e_ops=e_ops)
-```
-
-## Installation
-`QuantumToolbox.jl` requires `Julia 1.7+`. To install it, run the following commands inside Julia's interactive session (also known as REPL):
-```julia
-using Pkg
-Pkg.add("QuantumToolbox")
-```
-Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
-```julia-REPL
-(1.7) pkg> add QuantumToolbox
-```
-To load the package and check the version information, use either `versioninfo()` or `about()`, namely
-```julia
-using QuantumToolbox
-QuantumToolbox.versioninfo()
-QuantumToolbox.about()
+sol = mesolve(H_gpu, ψ0_gpu, tlist, c_ops, e_ops = e_ops)
 ```
