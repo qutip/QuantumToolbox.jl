@@ -10,16 +10,40 @@
 [L. Gravina](https://github.com/lgravina1997),
 and [Y.-T. Huang](https://github.com/ytdHuang).
 
-<!-- Badges -->
-[![Release](https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg)](https://github.com/qutip/QuantumToolbox.jl/releases)
-[![License](https://img.shields.io/badge/license-New%20BSD-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10822816.svg)](https://doi.org/10.5281/zenodo.10822816)
-[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuantumToolbox&query=total_requests&label=Downloads)](https://juliapkgstats.com/pkg/QuantumToolbox)  
-[![Build Status](https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
-[![Coverage](https://codecov.io/gh/qutip/QuantumToolbox.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/qutip/QuantumToolbox.jl)  
-[![Doc-Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://qutip.github.io/QuantumToolbox.jl/stable)
-[![Doc-Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://qutip.github.io/QuantumToolbox.jl/dev)
+<!-- Badges Table -->
+| **Release**       | [![Release][release-img]](release-url) [![License][license-img]](license-url) [![DOI][doi-img]](doi-url) [![Downloads][download-img]](download-url) |
+|:-----------------:|:-------------|
+| **Runtests**      | [![Runtests][runtests-img]](runtests-url) [![Coverage][codecov-img]](codecov-url) [![Aqua QA][aqua-img]](aqua-url) [![JET][jet-img]](jet-url) |
+| **Documentation** | [![Doc-Stable][docs-stable-img]](docs-stable-url) [![Doc-Dev][docs-develop-img]](docs-develop-url) |
+
+[release-img]: https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg
+[release-url]: https://github.com/qutip/QuantumToolbox.jl/releases
+
+[license-img]: https://img.shields.io/badge/license-New%20BSD-blue.svg
+[license-url]: https://opensource.org/licenses/BSD-3-Clause
+
+[doi-img]: https://zenodo.org/badge/DOI/10.5281/zenodo.10822816.svg
+[doi-url]: https://doi.org/10.5281/zenodo.10822816
+
+[download-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuantumToolbox&query=total_requests&label=Downloads
+[download-url]: https://juliapkgstats.com/pkg/QuantumToolbox
+
+[runtests-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main
+[runtests-url]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain
+
+[codecov-img]: https://codecov.io/gh/qutip/QuantumToolbox.jl/branch/main/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/qutip/QuantumToolbox.jl
+
+[aqua-img]: https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg
+[aqua-url]: https://github.com/JuliaTesting/Aqua.jl
+
+[jet-img]: https://img.shields.io/badge/JET.jl-%E2%9C%88%EF%B8%8F-9cf
+[jet-url]: https://github.com/aviatesk/JET.jl
+
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://qutip.github.io/QuantumToolbox.jl/stable
+[docs-develop-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-develop-url]: https://qutip.github.io/QuantumToolbox.jl/dev
 
 ## Introduction
 
