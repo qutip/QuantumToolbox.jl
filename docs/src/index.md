@@ -18,7 +18,7 @@ QuantumToolbox.jl is equipped with a robust set of features:
 - **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run undreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
 - **Easy Extension:** Easily extend the package, taking advantage of the Julia language features, like multiple dispatch and metaprogramming.
 
-## [Installation](@id doc: Installation)
+## [Installation](@id doc:Installation)
 
 !!! note "Requirements"
     `QuantumToolbox.jl` requires `Julia 1.7+`.
@@ -98,7 +98,7 @@ We can extract the expectation value of the number operator ``\hat{a}^\dagger \h
 We can easily pass the computation to the GPU, by simply passing all the `Qobj`s to the GPU:
 
 !!! compat "Compat"
-    The described feature requires `Julia 1.9+`. See [CUDA extension](@ref "doc: CUDA") for more details.
+    The described feature requires `Julia 1.9+`. See [CUDA extension](@ref doc:CUDA) for more details.
 
 ```julia
 using QuantumToolbox

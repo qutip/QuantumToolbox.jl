@@ -1,4 +1,4 @@
-# [States and Operators](@id doc: States and Operators)
+# [States and Operators](@id doc:States-and-Operators)
 
 This page is still under construction, please visit [API](@ref doc-API) first.
 
