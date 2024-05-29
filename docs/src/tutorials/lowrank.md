@@ -1,4 +1,4 @@
-# [Low rank master equation](@id doc-tutor: Low rank master equation)
+# [Low rank master equation](@id doc-tutor:Low-rank-master-equation)
 
 We start by importing the packages
 
