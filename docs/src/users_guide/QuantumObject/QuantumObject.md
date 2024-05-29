@@ -183,6 +183,8 @@ dense_to_sparse(x_d)
 
 ## Qobj math
 
+The rules for mathematical operations on [`QuantumObject`](@ref) are similar to the standard scalar, vector, and matrix arithmetic:
+
 ```@example Qobj
 a = destroy(4)
 ```
