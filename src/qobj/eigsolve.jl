@@ -1,3 +1,7 @@
+#=
+Eigen solvers and results for QuantumObject
+=#
+
 export EigsolveResult
 export eigenenergies, eigenstates, eigsolve, eigsolve_al
 

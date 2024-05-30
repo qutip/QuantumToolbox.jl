@@ -36,24 +36,36 @@ import SpecialFunctions: loggamma
 # to achieve better performances for more massive parallelizations
 BLAS.set_num_threads(1)
 
+# Utility
+include("utilities.jl")
 include("versioninfo.jl")
-include("quantum_object.jl")
-include("quantum_operators.jl")
-include("general_functions.jl")
+include("progress_bar.jl")
+
+# Quantum Object
+include("qobj/quantum_object.jl")
+include("qobj/boolean_functions.jl")
+include("qobj/arithmetic_and_attributes.jl")
+include("qobj/eigsolve.jl")
+include("qobj/functions.jl")
+include("qobj/states.jl")
+include("qobj/operators.jl")
+
+# time evolution
 include("time_evolution/time_evolution.jl")
 include("time_evolution/mesolve.jl")
 include("time_evolution/lr_mesolve.jl")
 include("time_evolution/sesolve.jl")
 include("time_evolution/mcsolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
+
+# Others
 include("permutation.jl")
 include("correlations.jl")
 include("wigner.jl")
 include("spin_lattice.jl")
 include("arnoldi.jl")
-include("eigsolve.jl")
+include("metrics.jl")
 include("negativity.jl")
-include("progress_bar.jl")
 include("steadystate.jl")
 
 end

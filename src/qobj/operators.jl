@@ -1,8 +1,10 @@
-export spre, spost, sprepost, lindblad_dissipator
-export fock, basis, coherent
+#=
+Functions for generating (common) quantum operators.
+=#
+
 export sigmam, sigmap, sigmax, sigmay, sigmaz
-export destroy, create, eye, qeye, projection, rand_dm
-export sinm, cosm
+export destroy, create, eye, qeye, projection
+export spre, spost, sprepost, lindblad_dissipator
 
 @doc raw"""
     spre(O::QuantumObject, Id_cache=I(size(O,1)))
@@ -179,73 +181,8 @@ qeye(
 ) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eye(N, type = type, dims = dims)
 
 @doc raw"""
-    fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)
-
-Generates a fock state ``\ket{\psi}`` of dimension `N`. It is also possible
-to specify the list of dimensions `dims` if different subsystems are present.
-"""
-function fock(N::Int, pos::Int; dims::Vector{Int} = [N], sparse::Bool = false)
-    if sparse
-        return QuantumObject(sparsevec([pos + 1], [1.0 + 0im], N), Ket, dims)
-    else
-        array = zeros(ComplexF64, N)
-        array[pos+1] = 1
-        return QuantumObject(array, Ket, dims)
-    end
-end
-
-"""
-    basis(N::Int, pos::Int; dims::Vector{Int}=[N])
-
-Generates a fock state like [`fock`](@ref).
-"""
-basis(N::Int, pos::Int; dims::Vector{Int} = [N]) = fock(N, pos, dims = dims)
-
-@doc raw"""
-    coherent(N::Real, α::T)
-
-Generates a coherent state ``\ket{\alpha}``, which is defined as an eigenvector of the
-bosonic annihilation operator ``\hat{a} \ket{\alpha} = \alpha \ket{\alpha}``.
-"""
-function coherent(N::Real, α::T) where {T<:Number}
-    a = destroy(N)
-    return exp(α * a' - α' * a) * fock(N, 0)
-end
-
-@doc raw"""
-    rand_dm(N::Integer; kwargs...)
-
-Generates a random density matrix ``\hat{\rho}``, with the property to be positive definite,
-and that ``\Tr \left[ \hat{\rho} \right] = 1``.
-"""
-function rand_dm(N::Integer; kwargs...)
-    ρ = rand(ComplexF64, N, N)
-    ρ *= ρ'
-    ρ /= tr(ρ)
-    return QuantumObject(ρ; kwargs...)
-end
-
-@doc raw"""
     projection(N::Int, i::Int, j::Int)
 
 Generates the projection operator ``\hat{O} = \dyad{i}{j}`` with Hilbert space dimension `N`.
 """
 projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N))
-
-@doc raw"""
-    sinm(O::QuantumObject)
-
-Generates the sine of the operator `O`, defined as
-
-``\sin \left( \hat{O} \right) = \frac{e^{i \hat{O}} - e^{-i \hat{O}}}{2 i}``
-"""
-sinm(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = -0.5im * (exp(1im * O) - exp(-1im * O))
-
-@doc raw"""
-    cosm(O::QuantumObject)
-
-Generates the cosine of the operator `O`, defined as
-
-``\cos \left( \hat{O} \right) = \frac{e^{i \hat{O}} + e^{-i \hat{O}}}{2}``
-"""
-cosm(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = 0.5 * (exp(1im * O) + exp(-1im * O))
