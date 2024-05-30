@@ -1,25 +1,89 @@
 export steadystate, steadystate_floquet
-export SteadyStateSolver, SteadyStateDirectSolver
+export SteadyStateSolver, SteadyStateLinearSolver, SteadyStateEigenSolver, SteadyStateDirectSolver
 
 abstract type SteadyStateSolver end
 
 struct SteadyStateDirectSolver <: SteadyStateSolver end
+struct SteadyStateEigenSolver <: SteadyStateSolver end
+Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{LinearSolve.SciMLLinearSolveAlgorithm,Nothing}} <:
+                   SteadyStateSolver
+    alg::MT = nothing
+    Pl::Union{Function,Nothing} = nothing
+    Pr::Union{Function,Nothing} = nothing
+end
 
 function steadystate(
     L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject};
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
+    kwargs...,
 ) where {T}
-    return _steadystate(L, solver)
+    return _steadystate(L, solver; kwargs...)
 end
 
 function steadystate(
     H::QuantumObject{<:AbstractArray{T},OpType},
-    c_ops::Vector,
+    c_ops::AbstractVector;
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
+    kwargs...,
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, c_ops)
 
-    return steadystate(L, solver = solver)
+    return steadystate(L; solver = solver, kwargs...)
+end
+
+function _steadystate(
+    L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
+    solver::SteadyStateLinearSolver;
+    kwargs...,
+) where {T}
+    L_tmp = L.data
+    N = prod(L.dims)
+    weight = norm(L_tmp, 1) / length(L_tmp)
+
+    v0 = _get_dense_similar(L_tmp, N^2)
+    fill!(v0, 0)
+    allowed_setindex!(v0, weight, 1) # Because scalar indexing is not allowed on GPU arrays
+
+    idx_range = collect(1:N)
+    rows = _get_dense_similar(L_tmp, N)
+    cols = _get_dense_similar(L_tmp, N)
+    datas = _get_dense_similar(L_tmp, N)
+    fill!(rows, 1)
+    copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
+    fill!(datas, weight)
+    Tn = sparse(rows, cols, datas, N^2, N^2)
+    L_tmp = L_tmp + Tn
+
+    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
+    if !isnothing(solver.Pl)
+        kwargs = merge((; kwargs...), (Pl = solver.Pl(L_tmp),))
+    elseif isa(L_tmp, SparseMatrixCSC)
+        kwargs = merge((; kwargs...), (Pl = ilu(L_tmp, τ = 0.01),))
+    end
+    !isnothing(solver.Pr) && (kwargs = merge((; kwargs...), (Pr = solver.Pr(L_tmp),)))
+
+    prob = LinearProblem(L_tmp, v0)
+    ρss_vec = solve(prob, solver.alg; kwargs...).u
+
+    ρss = reshape(ρss_vec, N, N)
+    ρss = (ρss + ρss') / 2 # Hermitianize
+    return QuantumObject(ρss, Operator, L.dims)
+end
+
+function _steadystate(
+    L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
+    solver::SteadyStateEigenSolver;
+    kwargs...,
+) where {T}
+    N = prod(L.dims)
+
+    kwargs = merge((sigma = 1e-8, k = 1), (; kwargs...))
+
+    ρss_vec = eigsolve(L; kwargs...).vectors[:, 1]
+    ρss = reshape(ρss_vec, N, N)
+    ρss /= tr(ρss)
+    ρss = (ρss + ρss') / 2 # Hermitianize
+    return QuantumObject(ρss, Operator, L.dims)
 end
 
 function _steadystate(
