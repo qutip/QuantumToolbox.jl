@@ -176,7 +176,8 @@ julia> tr(a' * a)
 """
 LinearAlgebra.tr(
     A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = tr(A.data)
+) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    ishermitian(A) ? real(tr(A.data)) : tr(A.data)
 
 """
     svdvals(A::QuantumObject)
