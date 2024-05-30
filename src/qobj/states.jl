@@ -6,12 +6,12 @@ export fock, basis, coherent
 export rand_dm
 
 @doc raw"""
-    fock(N::Int, pos::Int; dims::Vector{Int}=[N], sparse::Bool=false)
+    fock(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)
 
 Generates a fock state ``\ket{\psi}`` of dimension `N`. It is also possible
 to specify the list of dimensions `dims` if different subsystems are present.
 """
-function fock(N::Int, pos::Int; dims::Vector{Int} = [N], sparse::Bool = false)
+function fock(N::Int, pos::Int = 0; dims::Vector{Int} = [N], sparse::Bool = false)
     if sparse
         return QuantumObject(sparsevec([pos + 1], [1.0 + 0im], N), Ket, dims)
     else
@@ -22,11 +22,11 @@ function fock(N::Int, pos::Int; dims::Vector{Int} = [N], sparse::Bool = false)
 end
 
 """
-    basis(N::Int, pos::Int; dims::Vector{Int}=[N])
+    basis(N::Int, pos::Int = 0; dims::Vector{Int}=[N])
 
 Generates a fock state like [`fock`](@ref).
 """
-basis(N::Int, pos::Int; dims::Vector{Int} = [N]) = fock(N, pos, dims = dims)
+basis(N::Int, pos::Int = 0; dims::Vector{Int} = [N]) = fock(N, pos, dims = dims)
 
 @doc raw"""
     coherent(N::Real, α::T)
