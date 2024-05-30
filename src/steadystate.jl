@@ -13,7 +13,7 @@ end
 
 function steadystate(
     L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject};
-    solver::SteadyStateSolver = SteadyStateLinearSolver(),
+    solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
 ) where {T}
     return _steadystate(L, solver; kwargs...)
@@ -22,7 +22,7 @@ end
 function steadystate(
     H::QuantumObject{<:AbstractArray{T},OpType},
     c_ops::AbstractVector;
-    solver::SteadyStateSolver = SteadyStateLinearSolver(),
+    solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, c_ops)

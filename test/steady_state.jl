@@ -8,8 +8,23 @@
     psi0 = fock(N, 3)
     t_l = LinRange(0, 200, 1000)
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = false)
-    ρ_ss = steadystate(H, c_ops)
-    @test abs(sol_me.expect[1, end] - expect(e_ops[1], ρ_ss)) < 1e-3
+    rho_me = sol_me.states[end]
+
+    solver = SteadyStateDirectSolver()
+    ρ_ss = steadystate(H, c_ops, solver = solver)
+    @test tracedist(rho_me, ρ_ss) < 1e-4
+
+    solver = SteadyStateLinearSolver()
+    ρ_ss = steadystate(H, c_ops, solver = solver)
+    @test tracedist(rho_me, ρ_ss) < 1e-4
+
+    solver = SteadyStateLinearSolver(alg=KrylovJL_GMRES())
+    ρ_ss = steadystate(H, c_ops, solver = solver)
+    @test tracedist(rho_me, ρ_ss) < 1e-4
+
+    solver = SteadyStateEigenSolver()
+    ρ_ss = steadystate(H, c_ops, solver = solver)
+    @test tracedist(rho_me, ρ_ss) < 1e-4
 
     H = a_d * a
     H_t = 0.1 * (a + a_d)
