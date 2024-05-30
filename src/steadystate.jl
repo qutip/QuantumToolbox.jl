@@ -5,10 +5,11 @@ abstract type SteadyStateSolver end
 
 struct SteadyStateDirectSolver <: SteadyStateSolver end
 struct SteadyStateEigenSolver <: SteadyStateSolver end
-Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{LinearSolve.SciMLLinearSolveAlgorithm, Nothing}} <: SteadyStateSolver 
+Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{LinearSolve.SciMLLinearSolveAlgorithm,Nothing}} <:
+                   SteadyStateSolver
     alg::MT = nothing
-    Pl::Union{Function, Nothing} = nothing
-    Pr::Union{Function, Nothing} = nothing
+    Pl::Union{Function,Nothing} = nothing
+    Pr::Union{Function,Nothing} = nothing
 end
 
 function steadystate(
@@ -52,15 +53,14 @@ function _steadystate(
     fill!(datas, weight)
     Tn = sparse(rows, cols, datas, N^2, N^2)
     L_tmp = L_tmp + Tn
-    
+
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
     if !isnothing(solver.Pl)
         kwargs = merge((; kwargs...), (Pl = solver.Pl(L_tmp),))
     elseif isa(L_tmp, SparseMatrixCSC)
-        kwargs = merge((; kwargs...), (Pl = ilu(L_tmp, τ=0.01),))
+        kwargs = merge((; kwargs...), (Pl = ilu(L_tmp, τ = 0.01),))
     end
     !isnothing(solver.Pr) && (kwargs = merge((; kwargs...), (Pr = solver.Pr(L_tmp),)))
-
 
     prob = LinearProblem(L_tmp, v0)
     ρss_vec = solve(prob, solver.alg; kwargs...).u
@@ -70,23 +70,21 @@ function _steadystate(
     return QuantumObject(ρss, Operator, L.dims)
 end
 
-
 function _steadystate(
     L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
     solver::SteadyStateEigenSolver;
     kwargs...,
-) where {T}    
+) where {T}
     N = prod(L.dims)
 
-    kwargs = merge((sigma = 1e-8, k=1), (; kwargs...))
+    kwargs = merge((sigma = 1e-8, k = 1), (; kwargs...))
 
-    ρss_vec = eigsolve(L; kwargs...).vectors[:, 1] 
+    ρss_vec = eigsolve(L; kwargs...).vectors[:, 1]
     ρss = reshape(ρss_vec, N, N)
     ρss /= tr(ρss)
     ρss = (ρss + ρss') / 2 # Hermitianize
     return QuantumObject(ρss, Operator, L.dims)
 end
-
 
 function _steadystate(
     L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
