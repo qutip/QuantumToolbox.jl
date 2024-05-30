@@ -48,7 +48,7 @@ julia> T
 2×2 Matrix{ComplexF64}:
  -0.707107+0.0im  0.707107+0.0im
   0.707107+0.0im  0.707107+0.0im
- ```
+```
 """
 struct EigsolveResult{
     T1<:Vector{<:Number},
