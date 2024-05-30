@@ -18,7 +18,7 @@
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
 
-    solver = SteadyStateLinearSolver(alg=KrylovJL_GMRES())
+    solver = SteadyStateLinearSolver(alg = KrylovJL_GMRES())
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
 
