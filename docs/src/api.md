@@ -10,7 +10,7 @@ CurrentModule = QuantumToolbox
 Pages = ["api.md"]
 ```
 
-## [Quantum object functions](@id doc-API:Quantum-object-functions)
+## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 
 ```@docs
 BraQuantumObject
@@ -27,74 +27,81 @@ SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
 Qobj
-ket2dm
+size
+eltype
+length
 isbra
 isket
 isoper
 isoperbra
 isoperket
 issuper
-size
-eltype
-length
+```
+
+## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
+
+```@docs
 sqrtm
+sinm
+cosm
 LinearAlgebra.tr
 LinearAlgebra.svdvals
 LinearAlgebra.norm
+ptrace
+tidyup
+tidyup!
+get_data
+get_coherence
+partial_transpose
+```
+
+## [Qobj eigenvalues and eigenvectors](@id doc-API:Qobj-eigenvalues-and-eigenvectors)
+
+```@docs
+EigsolveResult
+eigenenergies
+eigenstates
+LinearAlgebra.eigen
+LinearAlgebra.eigvals
+eigsolve
+eigsolve_al
+```
+
+## [Qobj manipulation](@id doc-API:Qobj-manipulation)
+
+```@docs
+ket2dm
+expect
 LinearAlgebra.kron
 tensor
 ⊗
-```
-
-## [General functions](@id doc-API:General-functions)
-
-```@docs
-row_major_reshape
-meshgrid
 sparse_to_dense
 dense_to_sparse
-tidyup
-tidyup!
-gaussian
-ptrace
-partial_transpose
-negativity
-entropy_vn
-entanglement
-expect
-fidelity
-wigner
-get_coherence
-n_th
-tracedist
-get_data
-mat2vec
 vec2mat
+mat2vec
 ```
 
-## [Quantum states, operators and super-operators](@id doc-API:Quantum-states-operators-and-super-operators)
+## [Generate states and operators](@id doc-API:Generate-states-and-operators)
 
 ```@docs
-spre
-spost
-sprepost
-lindblad_dissipator
-destroy
-create
+fock
+basis
+coherent
+rand_dm
 sigmap
 sigmam
 sigmax
 sigmay
 sigmaz
+destroy
+create
 eye
 qeye
-fock
-basis
-coherent
-rand_dm
 projection
-sinm
-cosm
+spre
+spost
+sprepost
+lindblad_dissipator
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)
@@ -126,32 +133,35 @@ correlation_2op_1t
 spectrum
 ```
 
-## [Eigenvalues and eigenvectors](@id doc-API:Eigenvalues-and-eigenvectors)
+## [Metrics](@id doc-API:Metrics)
 
 ```@docs
-EigsolveResult
-eigenenergies
-eigenstates
-LinearAlgebra.eigen
-LinearAlgebra.eigvals
-eigsolve
-eigsolve_al
+entropy_vn
+entanglement
+tracedist
+fidelity
 ```
 
-## [Low Rank internal APIs](@id doc-API:Low-Rank-internal-APIs)
+## [Miscellaneous](@id doc-API:Miscellaneous)
 
 ```@docs
+wigner
+negativity
+```
+
+## [Utility functions](@id doc-API:Utility-functions)
+
+```@docs
+QuantumToolbox.versioninfo
+QuantumToolbox.about
+gaussian
+n_th
+row_major_reshape
+meshgrid
 _calculate_expectation!
 _adjM_condition_variational
 _adjM_affect!
 _adjM_condition_ratio
 _pinv!
 dBdz!
-```
-
-## [Miscellaneous](@id doc-API:Miscellaneous)
-
-```@docs
-QuantumToolbox.versioninfo
-QuantumToolbox.about
 ```

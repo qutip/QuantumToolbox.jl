@@ -1,3 +1,7 @@
+#=
+Command line output of information on QuantumToolbox, dependencies, and system information
+=#
+
 """
     QuantumToolbox.versioninfo(io::IO=stdout)
 
