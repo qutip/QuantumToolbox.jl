@@ -291,4 +291,27 @@
     @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64,Int64}
     @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64,Int64}
     @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
+
+    # tensor & permute tests
+    ket_a = Qobj(rand(ComplexF64, 2))
+    ket_b = Qobj(rand(ComplexF64, 3))
+    ket_c = Qobj(rand(ComplexF64, 4))
+    bra_a = ket_a'
+    bra_b = ket_b'
+    bra_c = ket_c'
+    op_a = Qobj(rand(ComplexF64, 2, 2))
+    op_b = Qobj(rand(ComplexF64, 3, 3))
+    op_c = Qobj(rand(ComplexF64, 4, 4))
+
+    @test tensor(ket_a, ket_b, ket_c) ≈ tensor(ket_a, tensor(ket_b, ket_c))
+    @test tensor(bra_a, bra_b, bra_c) ≈ tensor(bra_a, tensor(bra_b, bra_c))
+    @test tensor(op_a, op_b, op_c) ≈ tensor(op_a, tensor(op_b, op_c))
+
+    ket_abc = tensor(ket_a, ket_b, ket_c)
+    bra_abc = tensor(bra_a, bra_b, bra_c)
+    op_abc = tensor(op_a, op_b, op_c)
+
+    @test permute(ket_abc, [2, 3, 1]) ≈ tensor(ket_b, ket_c, ket_a)
+    @test permute(bra_abc, [2, 3, 1]) ≈ tensor(bra_b, bra_c, bra_a)
+    @test permute(op_abc, [2, 3, 1]) ≈ tensor(op_b, op_c, op_a)
 end

@@ -8,6 +8,7 @@ export sqrtm, sinm, cosm
 export ptrace
 export tidyup, tidyup!
 export get_data, get_coherence
+export permute
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
@@ -458,7 +459,7 @@ get_data(A::QuantumObject) = A.data
 Get the coherence value ``\alpha`` by measuring the expectation value of the destruction
 operator ``\hat{a}`` on the state ``\ket{\psi}``.
 
-It returns both ``\alpha`` and the state 
+It returns both ``\alpha`` and the state
 ``\ket{\delta_\psi} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger )``. The
 latter corresponds to the quantum fulctuations around the coherent state ``\ket{\alpha}``.
 """
