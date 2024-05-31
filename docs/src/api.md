@@ -41,6 +41,7 @@ issuper
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
 
 ```@docs
+matrix_element
 sqrtm
 sinm
 cosm

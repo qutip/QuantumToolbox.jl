@@ -115,6 +115,16 @@ LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Num
     QuantumObject(^(A.data, n), A.type, A.dims)
 LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Number} =
     QuantumObject(/(A.data, n), A.type, A.dims)
+
+@doc raw"""
+    dot(A::QuantumObject, B::QuantumObject)
+
+Compute the dot product between two [`QuantumObject`]: ``\langle A | B \rangle``
+
+Note that A and B should be [`Ket`](@ref) or [`OperatorKet`](@ref)
+
+A ⋅ B (where ⋅ can be typed by tab-completing \\cdot in the REPL) is a synonym for dot(A, B)
+"""
 function LinearAlgebra.dot(
     A::QuantumObject{<:AbstractArray{T1},OpType},
     B::QuantumObject{<:AbstractArray{T2},OpType},
@@ -122,6 +132,54 @@ function LinearAlgebra.dot(
     A.dims != B.dims && throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(A.data, B.data)
 end
+
+@doc raw"""
+    dot(i::QuantumObject, A::QuantumObject j::QuantumObject)
+
+Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | A | j \rangle``
+
+Supports the following inputs:
+- `A` is in the type of [`Operator`](@ref), with `i` and `j` are both [`Ket`](@ref).
+- `A` is in the type of [`SuperOperator`](@ref), with `i` and `j` are both [`OperatorKet`](@ref)
+"""
+function LinearAlgebra.dot(
+    i::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
+    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject}
+) where {T1<:Number,T2<:Number,T3<:Number}
+    ((i.dims != A.dims) || (A.dims != j.dims)) && throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    return LinearAlgebra.dot(i.data, A.data, j.data)
+end
+function LinearAlgebra.dot(
+    i::QuantumObject{<:AbstractArray{T1},OperatorKetQuantumObject},
+    A::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
+    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject}
+) where {T1<:Number,T2<:Number,T3<:Number}
+    ((i.dims != A.dims) || (A.dims != j.dims)) && throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    return LinearAlgebra.dot(i.data, A.data, j.data)
+end
+
+@doc raw"""
+    matrix_element(i::QuantumObject, A::QuantumObject j::QuantumObject)
+
+Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | A | j \rangle``
+
+Note that this function is same as `dot(i, A, j)`
+
+Supports the following inputs:
+- `A` is in the type of [`Operator`](@ref), with `i` and `j` are both [`Ket`](@ref).
+- `A` is in the type of [`SuperOperator`](@ref), with `i` and `j` are both [`OperatorKet`](@ref)
+"""
+matrix_element(
+    i::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
+    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject}
+) where {T1<:Number,T2<:Number,T3<:Number} = dot(i, A, j)
+matrix_element(
+    i::QuantumObject{<:AbstractArray{T1},OperatorKetQuantumObject},
+    A::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
+    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject}
+) where {T1<:Number,T2<:Number,T3<:Number} = dot(i, A, j)
 
 Base.conj(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(conj(A.data), A.type, A.dims)
 
