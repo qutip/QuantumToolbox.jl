@@ -42,7 +42,8 @@ for op in (:(+), :(-), :(*))
             A::QuantumObject{<:AbstractArray{T1},OpType},
             B::QuantumObject{<:AbstractArray{T2},OpType},
         ) where {T1,T2,OpType<:QuantumObjectType}
-            A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+            A.dims != B.dims &&
+                throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
             return QuantumObject($(op)(A.data, B.data), A.type, A.dims)
         end
         LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject($(op)(A.data), A.type, A.dims)
@@ -145,17 +146,19 @@ Supports the following inputs:
 function LinearAlgebra.dot(
     i::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject}
+    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject},
 ) where {T1<:Number,T2<:Number,T3<:Number}
-    ((i.dims != A.dims) || (A.dims != j.dims)) && throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    ((i.dims != A.dims) || (A.dims != j.dims)) &&
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 function LinearAlgebra.dot(
     i::QuantumObject{<:AbstractArray{T1},OperatorKetQuantumObject},
     A::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject}
+    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject},
 ) where {T1<:Number,T2<:Number,T3<:Number}
-    ((i.dims != A.dims) || (A.dims != j.dims)) && throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    ((i.dims != A.dims) || (A.dims != j.dims)) &&
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 
@@ -173,12 +176,12 @@ Supports the following inputs:
 matrix_element(
     i::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject}
+    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject},
 ) where {T1<:Number,T2<:Number,T3<:Number} = dot(i, A, j)
 matrix_element(
     i::QuantumObject{<:AbstractArray{T1},OperatorKetQuantumObject},
     A::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject}
+    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject},
 ) where {T1<:Number,T2<:Number,T3<:Number} = dot(i, A, j)
 
 Base.conj(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(conj(A.data), A.type, A.dims)
