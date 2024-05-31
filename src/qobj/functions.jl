@@ -187,7 +187,7 @@ Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=
 """
 ⊗(A::QuantumObject, B::QuantumObject) = kron(A, B)
 
-"""
+@doc raw"""
     sparse_to_dense(A::QuantumObject)
 
 Converts a sparse QuantumObject to a dense QuantumObject.
@@ -209,7 +209,7 @@ end
 
 sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
 
-"""
+@doc raw"""
     dense_to_sparse(A::QuantumObject)
 
 Converts a dense QuantumObject to a sparse QuantumObject.
@@ -229,7 +229,7 @@ function dense_to_sparse(A::VT, tol::Real = 1e-10) where {VT<:AbstractVector}
     return sparsevec(idxs, vals, length(A))
 end
 
-"""
+@doc raw"""
     vec2mat(A::AbstractVector)
 
 Converts a vector to a matrix.
@@ -255,7 +255,7 @@ Convert a quantum object from matrix ([`OperatorQuantumObject`](@ref)-type) to v
 mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} =
     QuantumObject(mat2vec(A.data), OperatorKet, A.dims)
 
-"""
+@doc raw"""
     mat2vec(A::AbstractMatrix)
 
 Converts a matrix to a vector.

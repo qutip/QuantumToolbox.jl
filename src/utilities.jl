@@ -6,7 +6,7 @@ Utilities:
 export gaussian, n_th
 export row_major_reshape, meshgrid
 
-"""
+@doc raw"""
     row_major_reshape(Q::AbstractArray, shapes...)
 
 Reshapes `Q` in the row-major order, as numpy.
@@ -14,7 +14,7 @@ Reshapes `Q` in the row-major order, as numpy.
 row_major_reshape(Q::AbstractArray{T}, shapes...) where {T} =
     PermutedDimsArray(reshape(Q, reverse(shapes)...), (length(shapes):-1:1))
 
-"""
+@doc raw"""
     meshgrid(x::AbstractVector, y::AbstractVector)
 
 Equivalent to [numpy meshgrid](https://numpy.org/doc/stable/reference/generated/numpy.meshgrid.html).

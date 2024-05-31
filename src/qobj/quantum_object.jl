@@ -275,7 +275,7 @@ Generate `QuantumObject`
 """
 Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
 
-"""
+@doc raw"""
     size(A::QuantumObject)
 
 Returns the size of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
@@ -286,14 +286,14 @@ Base.size(A::QuantumObject{<:AbstractArray{T}}, inds...) where {T} = size(A.data
 Base.getindex(A::QuantumObject{<:AbstractArray{T}}, inds...) where {T} = getindex(A.data, inds...)
 Base.setindex!(A::QuantumObject{<:AbstractArray{T}}, val, inds...) where {T} = setindex!(A.data, val, inds...)
 
-"""
+@doc raw"""
     eltype(A::QuantumObject)
 
 Returns the elements type of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
 """
 Base.eltype(A::QuantumObject) = eltype(A.data)
 
-"""
+@doc raw"""
     length(A::QuantumObject)
 
 Returns the length of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
