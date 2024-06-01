@@ -185,7 +185,7 @@ In the case of `SSFloquetEffectiveLiouvillian`, instead, the effective Liouvilli
 !!! note "different return"
     The two solvers returns different objects. The `SSFloquetLinearSystem` returns a list of `QuantumObject`, containing the density matrices for each Fourier component (`\hat{\rho}_{-n}`, with `n` from `0` to `n_max`), while the `SSFloquetEffectiveLiouvillian` returns only `\hat{\rho}_0`. 
 
-# Arguments
+## Arguments
 - `H_0::QuantumObject`: The Hamiltonian or the Liouvillian of the undriven system.
 - `H_p::QuantumObject`: The Hamiltonian or the Liouvillian of the part of the drive that oscillates as ``e^{i \\omega t}``.
 - `H_m::QuantumObject`: The Hamiltonian or the Liouvillian of the part of the drive that oscillates as ``e^{-i \\omega t}``.
@@ -204,7 +204,7 @@ function steadystate_floquet(
     c_ops::AbstractVector = QuantumObject{MT,OpType1}[];
     n_max::Integer = 2,
     tol::R = 1e-8,
-    solver::FSolver = SSFloquetLinearSystem,
+    solver::FSolver = SSFloquetLinearSystem(),
     kwargs...,
 ) where {
     MT<:AbstractArray,
@@ -221,15 +221,15 @@ function steadystate_floquet(
 end
 
 function _steadystate_floquet(
-    L_0::QuantumObject{<:AbstractArray{T1},OpType},
-    L_p::QuantumObject{<:AbstractArray{T2},OpType},
-    L_m::QuantumObject{<:AbstractArray{T3},OpType},
+    L_0::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    L_p::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
+    L_m::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
     ωd::Number,
     solver::SSFloquetLinearSystem;
     n_max::Integer = 1,
     tol::R = 1e-8,
     kwargs...,
-) where {T1,T2,T3,OpType<:SuperOperatorQuantumObject,R<:Real}
+) where {T1,T2,T3,R<:Real}
     T = promote_type(T1, T2, T3)
 
     L_0_mat = get_data(L_0)
@@ -279,19 +279,19 @@ function _steadystate_floquet(
 end
 
 function _steadystate_floquet(
-    L_0::QuantumObject{<:AbstractArray{T1},OpType},
-    L_p::QuantumObject{<:AbstractArray{T2},OpType},
-    L_m::QuantumObject{<:AbstractArray{T3},OpType},
+    L_0::QuantumObject{<:AbstractArray,SuperOperatorQuantumObject},
+    L_p::QuantumObject{<:AbstractArray,SuperOperatorQuantumObject},
+    L_m::QuantumObject{<:AbstractArray,SuperOperatorQuantumObject},
     ωd::Number,
     solver::SSFloquetEffectiveLiouvillian;
     n_max::Integer = 1,
     tol::R = 1e-8,
     kwargs...,
-) where {T1,T2,T3,OpType<:SuperOperatorQuantumObject,R<:Real}
+) where {R<:Real}
     ((L_0.dims == L_p.dims) && (L_0.dims == L_m.dims)) ||
         throw(ErrorException("The operators are not of the same Hilbert dimension."))
 
-    L_eff = liouvillian_floquet(L_0, L_p, L_m, ωd, n_max; tol = tol, kwargs...)
+    L_eff = liouvillian_floquet(L_0, L_p, L_m, ωd; n_max = n_max, tol = tol)
 
     return steadystate(L_eff; solver = solver.steadystate_solver, kwargs...)
 end
