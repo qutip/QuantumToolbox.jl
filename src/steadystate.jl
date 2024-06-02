@@ -126,7 +126,7 @@ function _steadystate(
 end
 
 @doc raw"""
-    function steadystate_floquet(
+    steadystate_floquet(
         H_0::QuantumObject{MT,OpType1},
         H_p::QuantumObject{<:AbstractArray,OpType2},
         H_m::QuantumObject{<:AbstractArray,OpType3},
