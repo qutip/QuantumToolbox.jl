@@ -89,20 +89,15 @@
     @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = [4])
 
     # matrix element
+    s0 = Qobj(basis(4, 0).data; type = OperatorKet)
+    s1 = Qobj(basis(4, 1).data; type = OperatorKet)
+    s_wrong = Qobj(basis(9, 0).data; type = OperatorKet)
     @test matrix_element(basis(2, 0), H, basis(2, 1)) == H[1, 2]
-    @test matrix_element(basis(4, 0; type = SuperOperator), L, basis(4, 1; type = SuperOperator)) == L[1, 2]
+    @test matrix_element(s0, L, s1) == L[1, 2]
     @test_throws DimensionMismatch matrix_element(basis(3, 0), H, basis(2, 1))
     @test_throws DimensionMismatch matrix_element(basis(2, 0), H, basis(3, 1))
-    @test_throws DimensionMismatch matrix_element(
-        basis(4, 0; type = SuperOperator),
-        L,
-        basis(9, 1; type = SuperOperator),
-    )
-    @test_throws DimensionMismatch matrix_element(
-        basis(9, 0; type = SuperOperator),
-        L,
-        basis(4, 1; type = SuperOperator),
-    )
+    @test_throws DimensionMismatch matrix_element(s0, L, s_wrong)
+    @test_throws DimensionMismatch matrix_element(s_wrong, L, s0)
 
     a = Array(a)
     a4 = Qobj(a)
