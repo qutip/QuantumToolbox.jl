@@ -208,7 +208,9 @@ Lazy matrix transpose of the [`QuantumObject`](@ref).
 
 Note that this function is same as `transpose(A)`
 """
-trans(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = transpose(A)
+trans(
+    A::QuantumObject{<:AbstractArray{T},OpType},
+) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = transpose(A)
 
 @doc raw"""
     A'

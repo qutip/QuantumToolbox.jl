@@ -116,7 +116,7 @@
     @test a2 * 2 == 2 * a2
 
     @test trans(trans(a2)) == a2
-    @test trans(a2).data == trans(a2.data)
+    @test trans(a2).data == transpose(a2.data)
     @test adjoint(a2) ≈ trans(conj(a2))
     @test adjoint(adjoint(a2)) == a2
     @test adjoint(a2).data == adjoint(a2.data)
@@ -187,8 +187,7 @@
     a_dims = a.dims
     a_size = size(a)
     a_isherm = isherm(a)
-    @test opstring ==
-          "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   isherm=$a_isherm\n$datastring"
+    @test opstring == "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
     a = spre(a)
     opstring = sprint((t, s) -> show(t, "text/plain", s), a)
