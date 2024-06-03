@@ -69,6 +69,7 @@ unit
 LinearAlgebra.inv
 LinearAlgebra.diag
 ptrace
+purity
 tidyup
 tidyup!
 get_data

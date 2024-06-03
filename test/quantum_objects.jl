@@ -254,6 +254,17 @@
     @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol = 1e-6
     @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol = 1e-6
 
+    # purity
+    ψ = normalize!(Qobj(rand(ComplexF64, N)))
+    ψd = ψ'
+    ρ1 = ψ * ψ'
+    M2 = rand(ComplexF64, N, N)
+    ρ2 = normalize!(Qobj(M2 * M2'))
+    @test purity(ψ) ≈ norm(ψ)^2 ≈ 1.0
+    @test purity(ψd) ≈ norm(ψd)^2 ≈ 1.0
+    @test purity(ρ1) ≈ 1.0
+    @test (1.0 / N) <= purity(ρ2) <= 1.0
+
     # trace distance
     ψz0 = basis(2, 0)
     ψz1 = basis(2, 1)
@@ -276,7 +287,7 @@
     @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1e-6)
 
     # logm (log), expm (exp), sinm, cosm
-    M0 = rand(4, 4)
+    M0 = rand(ComplexF64, 4, 4)
     Md = Qobj(M0 * M0')
     Ms = dense_to_sparse(Md)
     e_p = expm(1im * Md)

@@ -6,7 +6,7 @@ Arithmetic and Attributes for QuantumObject
 
 export trans, dag, dagger, matrix_element, unit
 export sqrtm, logm, expm, sinm, cosm
-export ptrace
+export ptrace, purity
 export tidyup, tidyup!
 export get_data, get_coherence
 
@@ -659,6 +659,17 @@ function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vecto
 
     return res, dkeep
 end
+
+@doc raw"""
+    purity(ρ::QuantumObject)
+
+Calculate the purity of a [`QuantumObject`](@ref): ``\textrm{Tr}(\rho^2)``
+
+Note that this function only supports for [`Ket`](@ref), [`Bra`](@ref), and [`Operator`](@ref)
+"""
+purity(ρ::QuantumObject{<:AbstractArray{T},ObjType}) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} =
+    sum(abs2, ρ.data)
+purity(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = real(tr(ρ.data^2))
 
 @doc raw"""
     tidyup(A::QuantumObject, tol::Real=1e-14)
