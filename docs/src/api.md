@@ -52,6 +52,7 @@ LinearAlgebra.adjoint
 dag
 dagger
 matrix_element
+LinearAlgebra.sqrt
 sqrtm
 sinm
 cosm

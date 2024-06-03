@@ -422,6 +422,11 @@ LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.dat
 @inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} =
     mul!(y, A.data, x, α, β)
 
+@doc raw"""
+    sqrt(A::QuantumObject)
+
+Square root of [`QuantumObject`](@ref)
+"""
 LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} =
     QuantumObject(sqrt(sparse_to_dense(A.data)), A.type, A.dims)
 
