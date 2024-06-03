@@ -443,19 +443,28 @@ sqrtm(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = sq
     exp(A::QuantumObject)
 
 Matrix exponential of [`QuantumObject`](@ref)
+
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-LinearAlgebra.exp(A::QuantumObject{<:AbstractMatrix{T}}) where {T} =
+LinearAlgebra.exp(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(dense_to_sparse(exp(A.data)), A.type, A.dims)
-LinearAlgebra.exp(A::QuantumObject{<:AbstractSparseMatrix{T}}) where {T} = QuantumObject(_spexp(A.data), A.type, A.dims)
+LinearAlgebra.exp(
+    A::QuantumObject{<:AbstractSparseMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    QuantumObject(_spexp(A.data), A.type, A.dims)
 
 @doc raw"""
     expm(A::QuantumObject)
 
 Matrix exponential of [`QuantumObject`](@ref)
 
-Note that this function is same as `exp(A)`
+Note that this function is same as `exp(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-expm(A::QuantumObject{<:AbstractMatrix{T}}) where {T} = exp(A)
+expm(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = exp(A)
 
 function _spexp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20) where {T,M}
     m = checksquare(A) # Throws exception if not square
@@ -491,20 +500,28 @@ end
 @doc raw"""
     sinm(O::QuantumObject)
 
-Generates the sine of the operator `O`, defined as
+Generates the matrix sine of the operator `O`, defined as
 
 ``\sin \left( \hat{O} \right) = \frac{e^{i \hat{O}} - e^{-i \hat{O}}}{2 i}``
+
+Note that this function only supports for [`Operator`](@ref)
 """
-sinm(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = (exp(1im * O) - exp(-1im * O)) / 2im
+sinm(
+    O::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * O) - exp(-1im * O)) / 2im
 
 @doc raw"""
     cosm(O::QuantumObject)
 
-Generates the cosine of the operator `O`, defined as
+Generates the matrix cosine of the operator `O`, defined as
 
 ``\cos \left( \hat{O} \right) = \frac{e^{i \hat{O}} + e^{-i \hat{O}}}{2}``
+
+Note that this function only supports for [`Operator`](@ref)
 """
-cosm(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = (exp(1im * O) + exp(-1im * O)) / 2
+cosm(
+    O::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * O) + exp(-1im * O)) / 2
 
 @doc raw"""
     ptrace(QO::QuantumObject, sel::Vector{Int})
