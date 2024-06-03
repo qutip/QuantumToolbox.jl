@@ -50,6 +50,23 @@ Checks if the [`QuantumObject`](@ref) `A` is a [`SuperOperatorQuantumObject`](@r
 issuper(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
     OpType <: SuperOperatorQuantumObject
 
+@doc raw"""
+    ishermitian(A::QuantumObject)
+
+Test whether the [`QuantumObject`](@ref) is Hermitian.
+"""
 LinearAlgebra.ishermitian(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A.data)
+
+@doc raw"""
+    issymmetric(A::QuantumObject)
+
+Test whether the [`QuantumObject`](@ref) is symmetric.
+"""
 LinearAlgebra.issymmetric(A::QuantumObject{<:AbstractArray{T}}) where {T} = issymmetric(A.data)
+
+@doc raw"""
+    isposdef(A::QuantumObject)
+
+Test whether the [`QuantumObject`](@ref) is positive definite (and Hermitian) by trying to perform a Cholesky factorization of `A`.
+"""
 LinearAlgebra.isposdef(A::QuantumObject{<:AbstractArray{T}}) where {T} = isposdef(A.data)
