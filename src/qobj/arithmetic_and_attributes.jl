@@ -4,7 +4,7 @@ Arithmetic and Attributes for QuantumObject
     - export most of the attribute functions in "Python Qobj class"
 =#
 
-export matrix_element
+export trans, matrix_element
 export sqrtm, sinm, cosm
 export ptrace
 export tidyup, tidyup!
@@ -184,12 +184,31 @@ matrix_element(
     j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject},
 ) where {T1<:Number,T2<:Number,T3<:Number} = dot(i, A, j)
 
+@doc raw"""
+    conj(A::QuantumObject)
+
+Return the element-wise complex conjugation of the [`QuantumObject`](@ref).
+"""
 Base.conj(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(conj(A.data), A.type, A.dims)
 
+@doc raw"""
+    transpose(A::QuantumObject)
+
+Lazy matrix transpose of the [`QuantumObject`](@ref).
+"""
 LinearAlgebra.transpose(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(transpose(A.data), A.type, A.dims)
+
+@doc raw"""
+    trans(A::QuantumObject)
+
+Lazy matrix transpose of the [`QuantumObject`](@ref).
+
+Note that this function is same as `transpose(A)`
+"""
+trans(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = transpose(A)
 
 LinearAlgebra.adjoint(
     A::QuantumObject{<:AbstractArray{T},OpType},

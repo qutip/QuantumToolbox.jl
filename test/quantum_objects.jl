@@ -113,9 +113,9 @@
     @test (a2 + 2).data == a2.data + 2 * I
     @test a2 * 2 == 2 * a2
 
-    @test transpose(transpose(a2)) == a2
-    @test transpose(a2).data == transpose(a2.data)
-    @test adjoint(a2) ≈ transpose(conj(a2))
+    @test trans(trans(a2)) == a2
+    @test trans(a2).data == trans(a2.data)
+    @test adjoint(a2) ≈ trans(conj(a2))
     @test adjoint(adjoint(a2)) == a2
     @test adjoint(a2).data == adjoint(a2.data)
 
@@ -144,7 +144,7 @@
     a_d = a'
     X = a + a_d
     Y = 1im * (a - a_d)
-    Z = a + transpose(a)
+    Z = a + trans(a)
     @test ishermitian(X) == true
     @test ishermitian(Y) == true
     @test issymmetric(Y) == false

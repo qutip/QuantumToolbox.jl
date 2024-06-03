@@ -41,6 +41,9 @@ issuper
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
 
 ```@docs
+Base.conj
+LinearAlgebra.transpose
+trans
 matrix_element
 sqrtm
 sinm
