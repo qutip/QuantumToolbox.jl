@@ -49,6 +49,8 @@ Base.conj
 LinearAlgebra.transpose
 trans
 LinearAlgebra.adjoint
+dag
+dagger
 matrix_element
 sqrtm
 sinm

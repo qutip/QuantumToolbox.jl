@@ -21,6 +21,8 @@
     @test_throws DimensionMismatch Qobj(a', dims = [2])
     a2 = Qobj(a')
     a3 = Qobj(a)
+    @test dag(a3) == a2
+    @test dagger(a3) == a2
     @test isket(a2) == false
     @test isbra(a2) == true
     @test isoper(a2) == false

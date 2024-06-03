@@ -4,7 +4,7 @@ Arithmetic and Attributes for QuantumObject
     - export most of the attribute functions in "Python Qobj class"
 =#
 
-export trans, matrix_element
+export trans, dag, dagger, matrix_element
 export sqrtm, sinm, cosm
 export ptrace
 export tidyup, tidyup!
@@ -230,6 +230,24 @@ LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObje
     QuantumObject(adjoint(A.data), OperatorBra, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorBraQuantumObject}) where {T} =
     QuantumObject(adjoint(A.data), OperatorKet, A.dims)
+
+@doc raw"""
+    dag(A::QuantumObject)
+
+Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
+
+Note that this function is same as `adjoint(A)`
+"""
+dag(A::QuantumObject{<:AbstractArray{T}}) where {T} = adjoint(A)
+
+@doc raw"""
+    dagger(A::QuantumObject)
+
+Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
+
+Note that this function is same as `adjoint(A)`
+"""
+dagger(A::QuantumObject{<:AbstractArray{T}}) where {T} = adjoint(A)
 
 LinearAlgebra.inv(
     A::QuantumObject{<:AbstractArray{T},OpType},
