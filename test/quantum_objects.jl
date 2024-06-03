@@ -275,12 +275,13 @@
     @test isapprox(fidelity(M0, M1), fidelity(ψ1, M0); atol = 1e-6)
     @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1e-6)
 
-    # expm (exp), sinm, cosm
+    # logm (log), expm (exp), sinm, cosm
     M0 = rand(4, 4)
     Md = Qobj(M0 * M0')
     Ms = dense_to_sparse(Md)
     e_p = expm(1im * Md)
     e_m = expm(-1im * Md)
+    @test logm(expm(Ms)) ≈ expm(logm(Md))
     @test cosm(Ms) ≈ (e_p + e_m) / 2
     @test sinm(Ms) ≈ (e_p - e_m) / 2im
 

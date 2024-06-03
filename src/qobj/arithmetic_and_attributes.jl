@@ -5,7 +5,7 @@ Arithmetic and Attributes for QuantumObject
 =#
 
 export trans, dag, dagger, matrix_element, unit
-export sqrtm, expm, sinm, cosm
+export sqrtm, logm, expm, sinm, cosm
 export ptrace
 export tidyup, tidyup!
 export get_data, get_coherence
@@ -438,6 +438,29 @@ Matrix square root of [`Operator`](@ref) type of [`QuantumObject`](@ref)
 Note that for other types of [`QuantumObject`](@ref) use `sprt(A)` instead.
 """
 sqrtm(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = sqrt(A)
+
+@doc raw"""
+    log(A::QuantumObject)
+
+Matrix logarithm of [`QuantumObject`](@ref)
+
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+"""
+LinearAlgebra.log(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    QuantumObject(log(sparse_to_dense(A.data)), A.type, A.dims)
+
+@doc raw"""
+    logm(A::QuantumObject)
+
+Matrix logarithm of [`QuantumObject`](@ref)
+
+Note that this function is same as `log(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+"""
+logm(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = log(A)
 
 @doc raw"""
     exp(A::QuantumObject)
