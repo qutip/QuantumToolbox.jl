@@ -4,7 +4,7 @@ Arithmetic and Attributes for QuantumObject
     - export most of the attribute functions in "Python Qobj class"
 =#
 
-export trans, dag, dagger, matrix_element
+export trans, dag, dagger, matrix_element, unit
 export sqrtm, sinm, cosm
 export ptrace
 export tidyup, tidyup!
@@ -299,16 +299,14 @@ LinearAlgebra.tr(
 Return the singular values of a [`QuantumObject`](@ref) in descending order
 """
 LinearAlgebra.svdvals(A::QuantumObject{<:AbstractVector}) = svdvals(A.data)
-LinearAlgebra.svdvals(A::QuantumObject{<:DenseMatrix}) = svdvals(A.data)
+LinearAlgebra.svdvals(A::QuantumObject{<:AbstractMatrix}) = svdvals(A.data)
 LinearAlgebra.svdvals(A::QuantumObject{<:AbstractSparseMatrix}) = svdvals(sparse_to_dense(A.data))
 
 @doc raw"""
-    norm(A::QuantumObject, p::Real=2)
+    norm(A::QuantumObject, p::Real)
 
-If `A` is either [`Ket`](@ref), [`Bra`](@ref), [`OperatorKet`](@ref), or [`OperatorBra`](@ref), returns the standard vector `p`-norm of `A`.
-If `A` is either [`Operator`](@ref) or [`SuperOperator`](@ref), returns [Schatten](https://en.wikipedia.org/wiki/Schatten_norm) `p`-norm of `A`.
-
-Note that the default value of `p=2`
+If `A` is either [`Ket`](@ref), [`Bra`](@ref), [`OperatorKet`](@ref), or [`OperatorBra`](@ref), returns the standard vector `p`-norm (default `p=2`) of `A`.
+If `A` is either [`Operator`](@ref) or [`SuperOperator`](@ref), returns [Schatten](https://en.wikipedia.org/wiki/Schatten_norm) `p`-norm (default `p=1`) of `A`.
 
 # Examples
 
@@ -338,14 +336,66 @@ LinearAlgebra.norm(
     norm(A.data, p)
 function LinearAlgebra.norm(
     A::QuantumObject{<:AbstractArray{T},OpType},
-    p::Real = 2,
+    p::Real = 1,
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     p == 2.0 && return norm(A.data, 2)
     return norm(svdvals(A), p)
 end
-LinearAlgebra.normalize(A::QuantumObject{<:AbstractArray{T}}) where {T} =
-    QuantumObject(normalize(A.data), A.type, A.dims)
-LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T}}) where {T} = (normalize!(A.data); A)
+
+@doc raw"""
+    normalize(A::QuantumObject, p::Real)
+
+Return normalized [`QuantumObject`](@ref) so that its `p`-norm equals to unity, i.e. `norm(A, p) == 1`.
+
+Support for the following types of [`QuantumObject`](@ref):
+- If `A` is [`Ket`](@ref) or [`Bra`](@ref), default `p = 2`
+- If `A` is [`Operator`](@ref), default `p = 1`
+
+Also, see [`norm`](@ref) about its definition for different types of [`QuantumObject`](@ref).
+"""
+LinearAlgebra.normalize(
+    A::QuantumObject{<:AbstractArray{T},ObjType},
+    p::Real = 2,
+) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = QuantumObject(A.data / norm(A, p), A.type, A.dims)
+LinearAlgebra.normalize(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, p::Real = 1) where {T} =
+    QuantumObject(A.data / norm(A, p), A.type, A.dims)
+
+@doc raw"""
+    normalize!(A::QuantumObject, p::Real)
+
+Normalize [`QuantumObject`](@ref) in-place so that its `p`-norm equals to unity, i.e. `norm(A, p) == 1`.
+
+Support for the following types of [`QuantumObject`](@ref):
+- If `A` is [`Ket`](@ref) or [`Bra`](@ref), default `p = 2`
+- If `A` is [`Operator`](@ref), default `p = 1`
+
+Also, see [`norm`](@ref) about its definition for different types of [`QuantumObject`](@ref).
+"""
+LinearAlgebra.normalize!(
+    A::QuantumObject{<:AbstractArray{T},ObjType},
+    p::Real = 2,
+) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = (rmul!(A.data, 1 / norm(A)); A)
+LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, p::Real = 1) where {T} =
+    (rmul!(A.data, 1 / norm(A)); A)
+
+@doc raw"""
+    unit(A::QuantumObject, p::Real)
+
+Return normalized [`QuantumObject`](@ref) so that its `p`-norm equals to unity, i.e. `norm(A, p) == 1`.
+
+Support for the following types of [`QuantumObject`](@ref):
+- If `A` is [`Ket`](@ref) or [`Bra`](@ref), default `p = 2`
+- If `A` is [`Operator`](@ref), default `p = 1`
+
+Note that this function is same as `normalize(A, p)`
+
+Also, see [`norm`](@ref) about its definition for different types of [`QuantumObject`](@ref).
+"""
+unit(
+    A::QuantumObject{<:AbstractArray{T},ObjType},
+    p::Real = 2,
+) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = normalize(A, p)
+unit(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, p::Real = 1) where {T} = normalize(A, p)
 
 LinearAlgebra.triu!(
     A::QuantumObject{<:AbstractArray{T},OpType},

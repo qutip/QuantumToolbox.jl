@@ -135,12 +135,21 @@
     @test dot(ψ, ψ) ≈ norm(ψ)
     @test dot(ψ, ψ) ≈ ψ' * ψ
 
+    # normalize, normalize!, unit
     a = Qobj(rand(ComplexF64, N))
+    M = a * a'
     @test (norm(a) ≈ 1) == false
-    @test (norm(normalize(a)) ≈ 1) == true
+    @test (norm(M) ≈ 1) == false
+    @test (norm(unit(a)) ≈ 1) == true
+    @test (norm(unit(M)) ≈ 1) == true
     @test (norm(a) ≈ 1) == false # Again, to be sure that it is still non-normalized
+    @test (norm(M) ≈ 1) == false # Again, to be sure that it is still non-normalized
     normalize!(a)
+    normalize!(M)
     @test (norm(a) ≈ 1) == true
+    @test (norm(M) ≈ 1) == true
+    @test M ≈ a * a'
+    @test (unit(qeye(N)) ≈ (qeye(N) / N)) == true
 
     a = destroy(N)
     a_d = a'

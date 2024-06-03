@@ -16,23 +16,15 @@ const PAGES = [
         ],
         "Manipulating States and Operators" => "users_guide/states_and_operators.md",
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
-        "Time Evolution and Dynamics" => [
-            "Introduction" => "users_guide/time_evolution/intro.md"
-        ],
+        "Time Evolution and Dynamics" => ["Introduction" => "users_guide/time_evolution/intro.md"],
         "Solving for Steady-State Solutions" => [],
         "Symmetries" => [],
         "Two-time correlation functions" => [],
-        "Extensions" => [
-            "users_guide/extensions/cuda.md",
-        ],
+        "Extensions" => ["users_guide/extensions/cuda.md"],
     ],
     "Tutorials" => [
-        "Time Evolution" => [
-            "Low Rank Master Equation" => "tutorials/lowrank.md",
-        ],
-        "Miscellaneous Tutorials" => [
-            "tutorials/logo.md",
-        ],
+        "Time Evolution" => ["Low Rank Master Equation" => "tutorials/lowrank.md"],
+        "Miscellaneous Tutorials" => ["tutorials/logo.md"],
     ],
     "Solver Benchmarks" => "benchmarks/benchmark_history.md",
     "API" => "api.md",
@@ -60,7 +52,7 @@ makedocs(;
                 ),
             ),
         ),
-    )
+    ),
 )
 
 deploydocs(; repo = "github.com/qutip/QuantumToolbox.jl", devbranch = "main")
