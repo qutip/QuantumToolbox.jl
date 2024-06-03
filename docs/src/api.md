@@ -54,6 +54,8 @@ dagger
 matrix_element
 LinearAlgebra.sqrt
 sqrtm
+LinearAlgebra.exp
+expm
 sinm
 cosm
 LinearAlgebra.tr
