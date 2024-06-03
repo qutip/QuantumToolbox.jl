@@ -122,9 +122,9 @@ LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Num
 
 Compute the dot product between two [`QuantumObject`]: ``\langle A | B \rangle``
 
-Note that A and B should be [`Ket`](@ref) or [`OperatorKet`](@ref)
+Note that `A` and `B` should be [`Ket`](@ref) or [`OperatorKet`](@ref)
 
-A ⋅ B (where ⋅ can be typed by tab-completing \\cdot in the REPL) is a synonym for dot(A, B)
+`A ⋅ B` (where `⋅` can be typed by tab-completing `\\cdot` in the REPL) is a synonym for `dot(A, B)`
 """
 function LinearAlgebra.dot(
     A::QuantumObject{<:AbstractArray{T1},OpType},
