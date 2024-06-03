@@ -314,4 +314,14 @@
     @test permute(ket_abc, [2, 3, 1]) ≈ tensor(ket_b, ket_c, ket_a)
     @test permute(bra_abc, [2, 3, 1]) ≈ tensor(bra_b, bra_c, bra_a)
     @test permute(op_abc, [2, 3, 1]) ≈ tensor(op_b, op_c, op_a)
+
+    @test_throws ArgumentError permute(ket_abc, [2, 3, 1, 4])
+    @test_throws ArgumentError permute(ket_abc, [2, 3, 2])
+
+    @test_throws ArgumentError permute(bra_abc, [2, 3, 1, 4])
+    @test_throws ArgumentError permute(bra_abc, [2, 3, 2])
+
+    @test_throws ArgumentError permute(op_abc, [2, 3, 1, 4])
+    @test_throws ArgumentError permute(op_abc, [2, 3, 2])
+
 end

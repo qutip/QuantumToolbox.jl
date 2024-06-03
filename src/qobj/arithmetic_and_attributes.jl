@@ -8,7 +8,6 @@ export sqrtm, sinm, cosm
 export ptrace
 export tidyup, tidyup!
 export get_data, get_coherence
-export permute
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data

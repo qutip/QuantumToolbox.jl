@@ -130,9 +130,8 @@ Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=
 """
 ⊗(A::QuantumObject, B::QuantumObject) = kron(A, B)
 
-
 function _permute_oper(
-    QO::AbstractVecOrMat{T},
+    QO::AbstractVector{T},
     dims::AbstractVector{<:Integer},
     perm::AbstractVector{<:Integer}
 ) where T
@@ -140,18 +139,35 @@ function _permute_oper(
     # number of subsystems
     n_subsystems = length(dims)
 
-    # number of dimensions with size ≠ 1 in original operator (ket, bra, or operator)
-    # perhaps there's a cleaner way to do this
-    n_dims = sum([size(QO, i) == 1 ? 0 : 1 for i = 1:n_subsystems])
-
     # reshape operator into tensor
-    QO_tensor = reshape(QO, reverse(repeat(dims, n_dims))...)
+    QO_tensor = reshape(QO, reverse(dims)...)
 
     # construct the permutation for the tensor dimensions
-    tensor_perm = vcat([
-        (n_subsystems + 1 .- reverse(perm)) .+ i * n_subsystems
-            for i = 0:n_dims - 1
-    ]...)
+    tensor_perm = (n_subsystems + 1 .- reverse(perm))
+
+    # permute the tensor and reshape back to operator
+    return reshape(PermutedDimsArray(QO_tensor, tensor_perm), size(QO))
+end
+
+
+
+function _permute_oper(
+    QO::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer},
+    perm::AbstractVector{<:Integer}
+) where T
+
+    # number of subsystems
+    n_subsystems = length(dims)
+
+    # reshape operator into tensor
+    QO_tensor = reshape(QO, reverse(repeat(dims, 2))...)
+
+    # construct the permutation for the tensor dimensions
+    tensor_perm = vcat(
+        n_subsystems + 1 .- reverse(perm),
+        (n_subsystems + 1 .- reverse(perm)) .+ n_subsystems
+    )
 
     # permute the tensor and reshape back to operator
     return reshape(PermutedDimsArray(QO_tensor, tensor_perm), size(QO))
@@ -178,11 +194,43 @@ permute(ψ_12, [2, 1]) ≈ tensor(ψ2, ψ1)
 
 """
 function permute(
-    QO::QuantumObject{<:AbstractArray{T},OpType},
+    QO::QuantumObject{<:AbstractArray{T},KetQuantumObject},
     order::AbstractVector{<:Integer}
-) where {T, OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
+) where T
     if length(order) != length(QO.dims)
         throw(ArgumentError("The order vector must have the same length as the number of subsystems"))
+    end
+    if sort(order) != 1:length(order)
+        throw(ArgumentError("The order vector must contain all integers from 1 to the number of subsystems"))
+    end
+    permuted_data = _permute_oper(QO.data, QO.dims, order)
+    return QuantumObject(permuted_data, QO.type, QO.dims[order])
+end
+
+function permute(
+    QO::QuantumObject{<:AbstractArray{T},BraQuantumObject},
+    order::AbstractVector{<:Integer}
+) where T
+    if length(order) != length(QO.dims)
+        throw(ArgumentError("The order vector must have the same length as the number of subsystems"))
+    end
+    if sort(order) != 1:length(order)
+        throw(ArgumentError("The order vector must contain all integers from 1 to the number of subsystems"))
+    end
+    permuted_data = _permute_oper(QO.data', QO.dims, order)
+    return QuantumObject(permuted_data', QO.type, QO.dims[order])
+end
+
+
+function permute(
+    QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
+    order::AbstractVector{<:Integer}
+) where T
+    if length(order) != length(QO.dims)
+        throw(ArgumentError("The order vector must have the same length as the number of subsystems"))
+    end
+    if sort(order) != 1:length(order)
+        throw(ArgumentError("The order vector must contain all integers from 1 to the number of subsystems"))
     end
     permuted_data = _permute_oper(QO.data, QO.dims, order)
     return QuantumObject(permuted_data, QO.type, QO.dims[order])
