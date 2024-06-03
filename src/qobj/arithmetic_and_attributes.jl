@@ -622,7 +622,7 @@ tidyup(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} = droptol
     tidyup!(A::QuantumObject, tol::Real=1e-14)
 
 Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
-In-place version of [`tidyup`](#tidyup).
+In-place version of [`tidyup`](@ref).
 """
 tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} = (tidyup!(A.data, tol); A)
 tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = @. A = T(abs(A) > tol) * A
