@@ -524,6 +524,18 @@ cosm(
 ) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * O) + exp(-1im * O)) / 2
 
 @doc raw"""
+    diag(A::QuantumObject, k::Int=0)
+
+Return the `k`-th diagonal elements of a matrix-type [`QuantumObject`](@ref)
+
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+"""
+LinearAlgebra.diag(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+    k::Int = 0,
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = diag(A.data, k)
+
+@doc raw"""
     ptrace(QO::QuantumObject, sel::Vector{Int})
 
 [Partial trace](https://en.wikipedia.org/wiki/Partial_trace) of a quantum state `QO` leaving only the dimensions

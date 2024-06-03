@@ -65,6 +65,7 @@ LinearAlgebra.normalize
 LinearAlgebra.normalize!
 unit
 LinearAlgebra.inv
+LinearAlgebra.diag
 ptrace
 tidyup
 tidyup!

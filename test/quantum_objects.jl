@@ -161,6 +161,11 @@
     @test issymmetric(Y) == false
     @test issymmetric(Z) == true
 
+    # diag
+    @test diag(a, 1) ≈ [sqrt(i) for i in 1:(N-1)]
+    @test diag(a_d, -1) == [sqrt(i) for i in 1:(N-1)]
+    @test diag(a_d * a) ≈ collect(0:(N-1))
+
     @test Y[1, 2] == conj(Y[2, 1])
 
     @test triu(X) == a
