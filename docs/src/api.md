@@ -48,6 +48,7 @@ LinearAlgebra.isposdef
 Base.conj
 LinearAlgebra.transpose
 trans
+LinearAlgebra.adjoint
 matrix_element
 sqrtm
 sinm

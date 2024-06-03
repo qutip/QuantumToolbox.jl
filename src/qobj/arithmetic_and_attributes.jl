@@ -210,6 +210,14 @@ Note that this function is same as `transpose(A)`
 """
 trans(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = transpose(A)
 
+@doc raw"""
+    A'
+    adjoint(A::QuantumObject)
+
+Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
+
+Note that `A'` is a synonym for `adjoint(A)`
+"""
 LinearAlgebra.adjoint(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
