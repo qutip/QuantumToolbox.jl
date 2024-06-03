@@ -187,7 +187,8 @@
     a_dims = a.dims
     a_size = size(a)
     a_isherm = isherm(a)
-    @test opstring == "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+    @test opstring ==
+          "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
     a = spre(a)
     opstring = sprint((t, s) -> show(t, "text/plain", s), a)
