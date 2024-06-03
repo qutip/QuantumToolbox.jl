@@ -145,8 +145,8 @@
     X = a + a_d
     Y = 1im * (a - a_d)
     Z = a + trans(a)
-    @test ishermitian(X) == true
-    @test ishermitian(Y) == true
+    @test isherm(X) == true
+    @test isherm(Y) == true
     @test issymmetric(Y) == false
     @test issymmetric(Z) == true
 
@@ -184,16 +184,16 @@
     datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
     a_dims = a.dims
     a_size = size(a)
-    a_isherm = ishermitian(a)
+    a_isherm = isherm(a)
     @test opstring ==
-          "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+          "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   isherm=$a_isherm\n$datastring"
 
     a = spre(a)
     opstring = sprint((t, s) -> show(t, "text/plain", s), a)
     datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
     a_dims = a.dims
     a_size = size(a)
-    a_isherm = ishermitian(a)
+    a_isherm = isherm(a)
     @test opstring == "Quantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
 
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)

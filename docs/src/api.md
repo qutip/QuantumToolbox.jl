@@ -37,6 +37,7 @@ isoperbra
 isoperket
 issuper
 LinearAlgebra.ishermitian
+isherm
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
 ```
