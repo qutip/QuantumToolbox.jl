@@ -6,7 +6,7 @@ Arithmetic and Attributes for QuantumObject
 
 export trans, dag, dagger, matrix_element, unit
 export sqrtm, logm, expm, sinm, cosm
-export ptrace, purity
+export proj, ptrace, purity
 export tidyup, tidyup!
 export get_data, get_coherence
 
@@ -557,6 +557,14 @@ LinearAlgebra.diag(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
     k::Int = 0,
 ) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = diag(A.data, k)
+
+@doc raw"""
+    proj(ψ::QuantumObject)
+
+Return the projector for a [`Ket`](@ref) or [`Bra`](@Ref) type of [`QuantumObject`](@ref)
+"""
+proj(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * ψ'
+proj(ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} = ψ' * ψ
 
 @doc raw"""
     ptrace(QO::QuantumObject, sel::Vector{Int})

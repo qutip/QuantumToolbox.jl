@@ -123,7 +123,7 @@
 
     N = 10
     a = fock(N, 3)
-    @test sparse(ket2dm(a)) ≈ projection(N, 3, 3)
+    @test proj(a) ≈ proj(a') ≈ sparse(ket2dm(a)) ≈ projection(N, 3, 3)
     @test isket(a') == false
     @test isbra(a') == true
     @test size(a) == (N,)

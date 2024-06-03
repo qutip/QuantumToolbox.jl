@@ -68,6 +68,7 @@ LinearAlgebra.normalize!
 unit
 LinearAlgebra.inv
 LinearAlgebra.diag
+proj
 ptrace
 purity
 tidyup
