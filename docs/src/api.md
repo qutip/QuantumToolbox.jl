@@ -58,6 +58,7 @@ cosm
 LinearAlgebra.tr
 LinearAlgebra.svdvals
 LinearAlgebra.norm
+LinearAlgebra.inv
 ptrace
 tidyup
 tidyup!

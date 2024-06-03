@@ -251,6 +251,11 @@ Note that this function is same as `adjoint(A)`
 """
 dagger(A::QuantumObject{<:AbstractArray{T}}) where {T} = adjoint(A)
 
+@doc raw"""
+    inv(A::QuantumObject)
+
+Matrix inverse of the [`QuantumObject`](@ref)
+"""
 LinearAlgebra.inv(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
