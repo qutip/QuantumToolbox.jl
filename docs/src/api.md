@@ -93,6 +93,13 @@ sigmam
 sigmax
 sigmay
 sigmaz
+jmat
+spin_Jx
+spin_Jy
+spin_Jz
+spin_Jm
+spin_Jp
+spin_J_set
 destroy
 create
 fdestroy

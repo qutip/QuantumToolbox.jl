@@ -18,6 +18,35 @@
     @test all(eigenenergies(ρ_B) .>= 0)
     @test_throws DimensionMismatch rand_dm(4, dims = [2])
 
+    # Pauli matrices and general Spin-j operators
+    J0 = Qobj(spdiagm(0 => [0.0im]))
+    Jx, Jy, Jz = spin_J_set(0.5)
+    @test spin_Jx(0) == spin_Jy(0) == spin_Jz(0) == spin_Jp(0) == spin_Jm(0) == J0
+    @test sigmax() ≈ 2 * spin_Jx(0.5) ≈ 2 * Jx ≈ Qobj(sparse([0.0im 1; 1 0]))
+    @test sigmay() ≈ 2 * spin_Jy(0.5) ≈ 2 * Jy ≈ Qobj(sparse([0.0im -1im; 1im 0]))
+    @test sigmaz() ≈ 2 * spin_Jz(0.5) ≈ 2 * Jz ≈ Qobj(sparse([1 0.0im; 0 -1]))
+    @test sigmap() ≈ spin_Jp(0.5) ≈ Qobj(sparse([0.0im 1; 0 0]))
+    @test sigmam() ≈ spin_Jm(0.5) ≈ Qobj(sparse([0.0im 0; 1 0]))
+    for which in [:x, :y, :z, :+, :-]
+        @test jmat(2.5, which).dims == [6] # 2.5 * 2 + 1 = 6
+
+        for j_wrong in [-1, 8.7]  # Invalid j
+            @test_throws ArgumentError jmat(j_wrong, which)
+        end
+    end
+    @test_throws ArgumentError jmat(0.5, :wrong)
+
+    # test commutation relations for general Spin-j operators
+    # the negative signs follow the rule of Levi-Civita symbol (ϵ_ijk)
+    j = 2
+    Jx, Jy, Jz = spin_J_set(j)
+    @test commutator(Jx, Jy) ≈ 1im * Jz
+    @test commutator(Jy, Jz) ≈ 1im * Jx
+    @test commutator(Jz, Jx) ≈ 1im * Jy
+    @test commutator(Jx, Jz) ≈ -1im * Jy
+    @test commutator(Jy, Jx) ≈ -1im * Jz
+    @test commutator(Jz, Jy) ≈ -1im * Jx
+
     # test commutation relations for fermionic creation and annihilation operators
     sites = 4
     SIZE = 2^sites
