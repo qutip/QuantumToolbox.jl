@@ -233,7 +233,7 @@ function _Jordan_Wigner(N::Int, j::Int, op::QuantumObject{<:AbstractArray{T},Ope
     Z_tensor = kron(1, 1, fill(σz, j)...)
 
     S = 2^(N - j - 1)
-    I_tensor = sparse(ComplexF64, LinearAlgebra.I, S, S)
+    I_tensor = sparse((1.0 + 0.0im) * LinearAlgebra.I, S, S)
 
     return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator, dims = fill(2, N))
 end
