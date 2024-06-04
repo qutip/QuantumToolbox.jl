@@ -8,8 +8,9 @@ export rand_dm
 @doc raw"""
     fock(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)
 
-Generates a fock state ``\ket{\psi}`` of dimension `N`. It is also possible
-to specify the list of dimensions `dims` if different subsystems are present.
+Generates a fock state ``\ket{\psi}`` of dimension `N`. 
+
+It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 """
 function fock(N::Int, pos::Int = 0; dims::Vector{Int} = [N], sparse::Bool = false)
     if sparse
@@ -21,7 +22,7 @@ function fock(N::Int, pos::Int = 0; dims::Vector{Int} = [N], sparse::Bool = fals
     return QuantumObject(array; type = Ket, dims = dims)
 end
 
-"""
+@doc raw"""
     basis(N::Int, pos::Int = 0; dims::Vector{Int}=[N])
 
 Generates a fock state like [`fock`](@ref).
