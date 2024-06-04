@@ -4,7 +4,19 @@ Functions for generating (common) quantum operators.
 
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, qeye, projection
+export commutator
 export spre, spost, sprepost, lindblad_dissipator
+
+@doc raw"""
+    commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
+
+Return the commutator (or `anti`-commutator) of the two [`QuantumObject`](@ref):
+- commutator (`anti=false`): ``AB-BA``
+- anticommutator (`anti=true`): ``AB+BA``
+
+Note that `A` and `B` must be [`Operator`](@ref)
+"""
+commutator(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}; anti::Bool=false) = A * B - (-1)^anti * B * A
 
 @doc raw"""
     spre(O::QuantumObject, Id_cache=I(size(O,1)))
