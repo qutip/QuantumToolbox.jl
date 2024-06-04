@@ -1,4 +1,23 @@
 @testset "States and Operators" begin
+    # fock, basis
+    @test fock(4; dims = [2, 2], sparse = true) ≈ basis(4; dims = [2, 2])
+    @test_throws DimensionMismatch fock(4; dims = [2])
+
+    # rand_dm
+    ρ_AB = rand_dm(4, dims = [2, 2])
+    ρ_A = ptrace(ρ_AB, 1)
+    ρ_B = ptrace(ρ_AB, 2)
+    @test tr(ρ_AB) ≈ 1.0
+    @test tr(ρ_A) ≈ 1.0
+    @test tr(ρ_B) ≈ 1.0
+    @test ishermitian(ρ_AB) == true
+    @test ishermitian(ρ_A) == true
+    @test ishermitian(ρ_B) == true
+    @test all(eigenenergies(ρ_AB) .>= 0)
+    @test all(eigenenergies(ρ_A) .>= 0)
+    @test all(eigenenergies(ρ_B) .>= 0)
+    @test_throws DimensionMismatch rand_dm(4, dims = [2])
+
     # test commutation relations for fermionic creation and annihilation operators
     sites = 4
     SIZE = 2^sites
