@@ -133,8 +133,8 @@ Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=
 function _permute_oper(
     QO::AbstractVector{T},
     dims::AbstractVector{<:Integer},
-    perm::AbstractVector{<:Integer}
-) where T
+    perm::AbstractVector{<:Integer},
+) where {T}
 
     # number of subsystems
     n_subsystems = length(dims)
@@ -149,13 +149,11 @@ function _permute_oper(
     return reshape(PermutedDimsArray(QO_tensor, tensor_perm), size(QO))
 end
 
-
-
 function _permute_oper(
     QO::AbstractMatrix{T},
     dims::AbstractVector{<:Integer},
-    perm::AbstractVector{<:Integer}
-) where T
+    perm::AbstractVector{<:Integer},
+) where {T}
 
     # number of subsystems
     n_subsystems = length(dims)
@@ -164,10 +162,7 @@ function _permute_oper(
     QO_tensor = reshape(QO, reverse(repeat(dims, 2))...)
 
     # construct the permutation for the tensor dimensions
-    tensor_perm = vcat(
-        n_subsystems + 1 .- reverse(perm),
-        (n_subsystems + 1 .- reverse(perm)) .+ n_subsystems
-    )
+    tensor_perm = vcat(n_subsystems + 1 .- reverse(perm), (n_subsystems + 1 .- reverse(perm)) .+ n_subsystems)
 
     # permute the tensor and reshape back to operator
     return reshape(PermutedDimsArray(QO_tensor, tensor_perm), size(QO))
@@ -193,10 +188,7 @@ permute(ψ_12, [2, 1]) ≈ tensor(ψ2, ψ1)
 ```
 
 """
-function permute(
-    QO::QuantumObject{<:AbstractArray{T},KetQuantumObject},
-    order::AbstractVector{<:Integer}
-) where T
+function permute(QO::QuantumObject{<:AbstractArray{T},KetQuantumObject}, order::AbstractVector{<:Integer}) where {T}
     if length(order) != length(QO.dims)
         throw(ArgumentError("The order vector must have the same length as the number of subsystems"))
     end
@@ -207,10 +199,7 @@ function permute(
     return QuantumObject(permuted_data, QO.type, QO.dims[order])
 end
 
-function permute(
-    QO::QuantumObject{<:AbstractArray{T},BraQuantumObject},
-    order::AbstractVector{<:Integer}
-) where T
+function permute(QO::QuantumObject{<:AbstractArray{T},BraQuantumObject}, order::AbstractVector{<:Integer}) where {T}
     if length(order) != length(QO.dims)
         throw(ArgumentError("The order vector must have the same length as the number of subsystems"))
     end
@@ -221,11 +210,10 @@ function permute(
     return QuantumObject(permuted_data', QO.type, QO.dims[order])
 end
 
-
 function permute(
     QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
-    order::AbstractVector{<:Integer}
-) where T
+    order::AbstractVector{<:Integer},
+) where {T}
     if length(order) != length(QO.dims)
         throw(ArgumentError("The order vector must have the same length as the number of subsystems"))
     end

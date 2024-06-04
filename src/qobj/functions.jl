@@ -60,7 +60,6 @@ function expect(
     return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
 end
 
-
 """
     sparse_to_dense(A::QuantumObject)
 

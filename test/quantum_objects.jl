@@ -323,5 +323,4 @@
 
     @test_throws ArgumentError permute(op_abc, [2, 3, 1, 4])
     @test_throws ArgumentError permute(op_abc, [2, 3, 2])
-
 end
