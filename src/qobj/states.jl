@@ -26,14 +26,15 @@ end
     basis(N::Int, pos::Int = 0; dims::Vector{Int}=[N])
 
 Generates a fock state like [`fock`](@ref).
+
+It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 """
 basis(N::Int, pos::Int = 0; dims::Vector{Int} = [N]) = fock(N, pos, dims = dims)
 
 @doc raw"""
     coherent(N::Real, α::Number)
 
-Generates a coherent state ``\ket{\alpha}``, which is defined as an eigenvector of the
-bosonic annihilation operator ``\hat{a} \ket{\alpha} = \alpha \ket{\alpha}``.
+Generates a coherent state ``\ket{\alpha}``, which is defined as an eigenvector of the bosonic annihilation operator ``\hat{a} \ket{\alpha} = \alpha \ket{\alpha}``.
 """
 function coherent(N::Real, α::T) where {T<:Number}
     a = destroy(N)
