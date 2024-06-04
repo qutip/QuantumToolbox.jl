@@ -19,6 +19,7 @@ core_tests = [
     "permutation.jl",
     "progress_bar.jl",
     "quantum_objects.jl",
+    "states_and_operators.jl",
     "steady_state.jl",
     "time_evolution_and_partial_trace.jl",
     "wigner.jl",

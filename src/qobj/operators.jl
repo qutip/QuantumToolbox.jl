@@ -4,6 +4,7 @@ Functions for generating (common) quantum operators.
 
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, qeye, projection
+export fdestroy, fcreate
 export commutator
 export spre, spost, sprepost, lindblad_dissipator
 
@@ -16,7 +17,11 @@ Return the commutator (or `anti`-commutator) of the two [`QuantumObject`](@ref):
 
 Note that `A` and `B` must be [`Operator`](@ref)
 """
-commutator(A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject}; anti::Bool=false) = A * B - (-1)^anti * B * A
+commutator(
+    A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject};
+    anti::Bool = false,
+) where {T1,T2} = A * B - (-1)^anti * B * A
 
 @doc raw"""
     spre(O::QuantumObject, Id_cache=I(size(O,1)))
@@ -191,6 +196,47 @@ qeye(
     type::ObjType = Operator,
     dims::Vector{Int} = [N],
 ) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eye(N, type = type, dims = dims)
+
+@doc raw"""
+    fdestroy(N::Int, j::Int)
+
+Construct a fermionic destruction operator acting on the `j`-th site, where the fock space has totally `N`-sites:
+
+Here, we use the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
+```math
+d_j = \sigma_z^{\otimes j} \otimes \sigma_{-} \otimes I^{\otimes N-j-1}
+```
+
+Note that the site index `j` should satisfy: `0 ≤ j ≤ N - 1`
+"""
+fdestroy(N::Int, j::Int) = _Jordan_Wigner(N, j, sigmam())
+
+@doc raw"""
+    fcreate(N::Int, j::Int)
+
+Construct a fermionic creation operator acting on the `j`-th site, where the fock space has totally `N`-sites:
+
+Here, we use the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
+```math
+d_j^\dagger = \sigma_z^{\otimes j} \otimes \sigma_{+} \otimes I^{\otimes N-j-1}
+```
+
+Note that the site index `j` should satisfy: `0 ≤ j ≤ N - 1`
+"""
+fcreate(N::Int, j::Int) = _Jordan_Wigner(N, j, sigmap())
+
+function _Jordan_Wigner(N::Int, j::Int, op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T}
+    (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
+    ((j >= N) || (j < 0)) && throw(ArgumentError("The site index (j) should satisfy: 0 ≤ j ≤ N - 1"))
+
+    σz = sigmaz().data
+    Z_tensor = kron(1, 1, fill(σz, j)...)
+
+    S = 2^(N - j - 1)
+    I_tensor = sparse(ComplexF64, LinearAlgebra.I, S, S)
+
+    return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator, dims = fill(2, N))
+end
 
 @doc raw"""
     projection(N::Int, i::Int, j::Int)
