@@ -41,14 +41,15 @@ function coherent(N::Real, α::T) where {T<:Number}
 end
 
 @doc raw"""
-    rand_dm(N::Integer; kwargs...)
+    rand_dm(N::Integer; dims::Vector{Int}=[N])
 
-Generates a random density matrix ``\hat{\rho}``, with the property to be positive definite,
-and that ``\Tr \left[ \hat{\rho} \right] = 1``.
+Generates a random density matrix ``\hat{\rho}``, with the property to be positive semi-definite and ``\textrm{Tr} \left[ \hat{\rho} \right] = 1``.
+
+It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 """
-function rand_dm(N::Integer; kwargs...)
+function rand_dm(N::Integer; dims::Vector{Int}=[N])
     ρ = rand(ComplexF64, N, N)
     ρ *= ρ'
     ρ /= tr(ρ)
-    return QuantumObject(ρ; kwargs...)
+    return QuantumObject(ρ; type = Operator, dims = dims)
 end
