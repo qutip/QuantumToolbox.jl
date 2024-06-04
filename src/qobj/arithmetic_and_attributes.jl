@@ -561,7 +561,7 @@ LinearAlgebra.diag(
 @doc raw"""
     proj(ψ::QuantumObject)
 
-Return the projector for a [`Ket`](@ref) or [`Bra`](@Ref) type of [`QuantumObject`](@ref)
+Return the projector for a [`Ket`](@ref) or [`Bra`](@ref) type of [`QuantumObject`](@ref)
 """
 proj(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * ψ'
 proj(ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} = ψ' * ψ
