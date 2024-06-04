@@ -29,7 +29,7 @@ Generates a fock state like [`fock`](@ref).
 basis(N::Int, pos::Int = 0; dims::Vector{Int} = [N]) = fock(N, pos, dims = dims)
 
 @doc raw"""
-    coherent(N::Real, α::T)
+    coherent(N::Real, α::Number)
 
 Generates a coherent state ``\ket{\alpha}``, which is defined as an eigenvector of the
 bosonic annihilation operator ``\hat{a} \ket{\alpha} = \alpha \ket{\alpha}``.
