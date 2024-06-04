@@ -51,6 +51,7 @@ trans
 LinearAlgebra.adjoint
 dag
 dagger
+LinearAlgebra.dot
 matrix_element
 LinearAlgebra.sqrt
 sqrtm
