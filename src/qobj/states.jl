@@ -47,7 +47,7 @@ Generates a random density matrix ``\hat{\rho}``, with the property to be positi
 
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 """
-function rand_dm(N::Integer; dims::Vector{Int}=[N])
+function rand_dm(N::Integer; dims::Vector{Int} = [N])
     ρ = rand(ComplexF64, N, N)
     ρ *= ρ'
     ρ /= tr(ρ)
