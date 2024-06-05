@@ -10,6 +10,10 @@
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = false)
     rho_me = sol_me.states[end]
 
+    solver = SteadyStateODESolver()
+    ρ_ss = steadystate(H, psi0, t_l[end], c_ops, solver = solver)
+    @test tracedist(rho_me, ρ_ss) < 1e-4
+
     solver = SteadyStateDirectSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4

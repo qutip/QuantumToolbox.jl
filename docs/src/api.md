@@ -131,7 +131,9 @@ dsf_mesolve
 dsf_mcsolve
 liouvillian
 liouvillian_generalized
+steadystate
 steadystate_floquet
+SteadyStateODESolver
 ```
 
 ## [Correlations and Spectrum](@id doc-API:Correlations-and-Spectrum)
