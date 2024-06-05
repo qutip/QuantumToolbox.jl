@@ -97,14 +97,14 @@ function steadystate(
     u0 = mat2vec(ket2dm(ψ0).data)
     L = MatrixOperator(liouvillian(H, c_ops).data)
 
-    prob = ODEProblem{true}(L, u0, (0., tspan))
+    prob = ODEProblem{true}(L, u0, (0.0, tspan))
     sol = solve(
         prob,
         solver.alg;
         callback = TerminateSteadyState(abstol, reltol, _steadystate_ode_condition),
         reltol = reltol,
         abstol = abstol,
-        kwargs...
+        kwargs...,
     )
 
     ρss = reshape(sol.u[end], N, N)
