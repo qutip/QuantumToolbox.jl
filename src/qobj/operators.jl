@@ -215,7 +215,7 @@ function _jm(j::Real)
     data = sqrt.(j * (j + 1) .- m .* (m .- 1))[1:end-1]
     return spdiagm(-1 => Array{ComplexF64}(data))
 end
-_jz(j::Real) = spdiagm(0 => ComplexF64[j - k for k in 0:Int(2 * j)])
+_jz(j::Real) = spdiagm(0 => Array{ComplexF64}(j .- (0:Int(2 * j))))
 
 @doc raw"""
     spin_Jx(j::Real)
@@ -296,7 +296,7 @@ Pauli operator ``\hat{\sigma}_x = \hat{\sigma}_- + \hat{\sigma}_+``.
 
 See also [`jmat`](@ref).
 """
-sigmax() = 2 * jmat(0.5, Val(:x))
+sigmax() = rmul!(jmat(0.5, Val(:x)), 2)
 
 @doc raw"""
     sigmay()
@@ -305,7 +305,7 @@ Pauli operator ``\hat{\sigma}_y = i \left( \hat{\sigma}_- - \hat{\sigma}_+ \righ
 
 See also [`jmat`](@ref).
 """
-sigmay() = 2 * jmat(0.5, Val(:y))
+sigmay() = rmul!(jmat(0.5, Val(:y)), 2)
 
 @doc raw"""
     sigmaz()
@@ -314,7 +314,7 @@ Pauli operator ``\hat{\sigma}_z = \comm{\hat{\sigma}_+}{\hat{\sigma}_-}``.
 
 See also [`jmat`](@ref).
 """
-sigmaz() = 2 * jmat(0.5, Val(:z))
+sigmaz() = rmul!(jmat(0.5, Val(:z)), 2)
 
 @doc raw"""
     eye(N::Int; type=OperatorQuantumObject, dims=[N])
