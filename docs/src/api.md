@@ -94,6 +94,13 @@ sigmam
 sigmax
 sigmay
 sigmaz
+jmat
+spin_Jx
+spin_Jy
+spin_Jz
+spin_Jm
+spin_Jp
+spin_J_set
 destroy
 create
 fdestroy
@@ -125,7 +132,9 @@ dsf_mesolve
 dsf_mcsolve
 liouvillian
 liouvillian_generalized
+steadystate
 steadystate_floquet
+SteadyStateODESolver
 ```
 
 ## [Correlations and Spectrum](@id doc-API:Correlations-and-Spectrum)

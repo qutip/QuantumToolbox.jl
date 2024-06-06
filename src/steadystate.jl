@@ -1,5 +1,6 @@
 export steadystate, steadystate_floquet
 export SteadyStateSolver,
+    SteadyStateODESolver,
     SteadyStateLinearSolver,
     SteadyStateEigenSolver,
     SteadyStateDirectSolver,
@@ -9,6 +10,20 @@ export SteadyStateSolver,
 
 abstract type SteadyStateSolver end
 abstract type SteadyStateFloquetSolver end
+
+@doc raw"""
+    SteadyStateODESolver{::OrdinaryDiffEqAlgorithm}
+
+A structure representing an ordinary differential equation (ODE) solver for solving [`steadystate`](@ref)
+
+It includes a field (attribute) `SteadyStateODESolver.alg` that specifies the solving algorithm. Default to `Tsit5()`.
+
+For more details about the solvers, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+"""
+Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm} <: SteadyStateSolver
+    alg::MT = Tsit5()
+end
+
 struct SSFloquetLinearSystem <: SteadyStateFloquetSolver end
 Base.@kwdef struct SSFloquetEffectiveLiouvillian{SSST<:SteadyStateSolver} <: SteadyStateFloquetSolver
     steadystate_solver::SSST = SteadyStateDirectSolver()
@@ -21,6 +36,92 @@ Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{LinearSolve.SciMLLinearSolv
     alg::MT = nothing
     Pl::Union{Function,Nothing} = nothing
     Pr::Union{Function,Nothing} = nothing
+end
+
+@doc raw"""
+    steadystate(
+        H::QuantumObject{MT1,HOpType},
+        ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+        tspan::Real = Inf,
+        c_ops::Vector{QuantumObject{Tc,COpType}} = QuantumObject{MT1,HOpType}[];
+        solver::SteadyStateODESolver = SteadyStateODESolver(),
+        reltol::Real = 1.0e-8,
+        abstol::Real = 1.0e-10,
+        kwargs...,
+    )
+
+Solve the stationary state based on time evolution (ordinary differential equations; `OrdinaryDiffEq.jl`) with a given initial state.
+
+The termination condition of the stationary state ``|\rho\rangle\rangle`` is that either the following condition is `true`:
+
+```math
+\lVert\frac{\partial |\rho\rangle\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\rho\rangle\rangle}{\partial t}+|\rho\rangle\rangle\rVert
+```
+
+or
+
+```math
+\lVert\frac{\partial |\rho\rangle\rangle}{\partial t}\rVert \leq \textrm{abstol}
+```
+
+# Parameters
+- `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
+- `ψ0::QuantumObject`: The initial state of the system.
+- `tspan::Real=Inf`: The final time step for the steady state problem.
+- `c_ops::AbstractVector=[]`: The list of the collapse operators.
+- `solver::SteadyStateODESolver=SteadyStateODESolver()`: see [`SteadyStateODESolver`](@ref) for more details.
+- `reltol::Real=1.0e-8`: Relative tolerance in steady state terminate condition and solver adaptive timestepping.
+- `abstol::Real=1.0e-10`: Absolute tolerance in steady state terminate condition and solver adaptive timestepping.
+- `kwargs...`: The keyword arguments for the ODEProblem.
+"""
+function steadystate(
+    H::QuantumObject{MT1,HOpType},
+    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    tspan::Real = Inf,
+    c_ops::Vector{QuantumObject{Tc,COpType}} = QuantumObject{MT1,HOpType}[];
+    solver::SteadyStateODESolver = SteadyStateODESolver(),
+    reltol::Real = 1.0e-8,
+    abstol::Real = 1.0e-10,
+    kwargs...,
+) where {
+    MT1<:AbstractMatrix,
+    T2,
+    Tc<:AbstractMatrix,
+    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
+    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+}
+    (H.dims != ψ0.dims) && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+
+    N = prod(H.dims)
+    u0 = mat2vec(ket2dm(ψ0).data)
+    L = MatrixOperator(liouvillian(H, c_ops).data)
+
+    prob = ODEProblem{true}(L, u0, (0.0, tspan))
+    sol = solve(
+        prob,
+        solver.alg;
+        callback = TerminateSteadyState(abstol, reltol, _steadystate_ode_condition),
+        reltol = reltol,
+        abstol = abstol,
+        kwargs...,
+    )
+
+    ρss = reshape(sol.u[end], N, N)
+    ρss = (ρss + ρss') / 2 # Hermitianize
+    return QuantumObject(ρss, Operator, H.dims)
+end
+
+function _steadystate_ode_condition(integrator, abstol, reltol, min_t)
+    # this condition is same as DiffEqBase.NormTerminationMode
+
+    du_dt = (integrator.u - integrator.uprev) / integrator.dt
+    norm_du_dt = norm(du_dt)
+    if (norm_du_dt <= reltol * norm(du_dt + integrator.u)) || (norm_du_dt <= abstol)
+        return true
+    else
+        return false
+    end
 end
 
 function steadystate(
