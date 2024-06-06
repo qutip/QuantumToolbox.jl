@@ -1,7 +1,7 @@
 module QuantumToolbox
 
-# Re-export: 
-#   1. basic functions in LinearAlgebra and SparseArrays 
+# Re-export:
+#   1. basic functions in LinearAlgebra and SparseArrays
 #   2. the solvers in ODE and LinearSolve
 import Reexport: @reexport
 @reexport using LinearAlgebra

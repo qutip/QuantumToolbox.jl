@@ -4,8 +4,8 @@ Functions which manipulates QuantumObject
 
 export ket2dm
 export expect
-export tensor, ⊗
 export sparse_to_dense, dense_to_sparse
+export tensor, ⊗
 export vec2mat, mat2vec
 
 @doc raw"""
@@ -59,6 +59,48 @@ function expect(
     ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
 ) where {T1,T2}
     return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
+end
+
+"""
+    sparse_to_dense(A::QuantumObject)
+
+Converts a sparse QuantumObject to a dense QuantumObject.
+"""
+sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
+sparse_to_dense(A::MT) where {MT<:AbstractSparseMatrix} = Array(A)
+for op in (:Transpose, :Adjoint)
+    @eval sparse_to_dense(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
+end
+sparse_to_dense(A::MT) where {MT<:AbstractArray} = A
+
+function sparse_to_dense(::Type{M}) where {M<:SparseMatrixCSC}
+    T = M
+    par = T.parameters
+    npar = length(par)
+    (2 == npar) || error("Type $M is not supported.")
+    return Matrix{par[1]}
+end
+
+sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
+
+"""
+    dense_to_sparse(A::QuantumObject)
+
+Converts a dense QuantumObject to a sparse QuantumObject.
+"""
+dense_to_sparse(A::QuantumObject{<:AbstractVecOrMat}, tol::Real = 1e-10) =
+    QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
+function dense_to_sparse(A::MT, tol::Real = 1e-10) where {MT<:AbstractMatrix}
+    idxs = findall(@. abs(A) > tol)
+    row_indices = getindex.(idxs, 1)
+    col_indices = getindex.(idxs, 2)
+    vals = getindex(A, idxs)
+    return sparse(row_indices, col_indices, vals, size(A)...)
+end
+function dense_to_sparse(A::VT, tol::Real = 1e-10) where {VT<:AbstractVector}
+    idxs = findall(@. abs(A) > tol)
+    vals = getindex(A, idxs)
+    return sparsevec(idxs, vals, length(A))
 end
 
 @doc raw"""
@@ -131,12 +173,12 @@ julia> tensor(x_list...)
 Quantum Object:   type=Operator   dims=[2, 2, 2]   size=(8, 8)   ishermitian=true
 8×8 SparseMatrixCSC{ComplexF64, Int64} with 8 stored entries:
      ⋅          ⋅          ⋅      …      ⋅          ⋅      1.0+0.0im
-     ⋅          ⋅          ⋅             ⋅      1.0+0.0im      ⋅    
-     ⋅          ⋅          ⋅         1.0+0.0im      ⋅          ⋅    
-     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅    
-     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅    
-     ⋅          ⋅      1.0+0.0im  …      ⋅          ⋅          ⋅    
-     ⋅      1.0+0.0im      ⋅             ⋅          ⋅          ⋅    
+     ⋅          ⋅          ⋅             ⋅      1.0+0.0im      ⋅
+     ⋅          ⋅          ⋅         1.0+0.0im      ⋅          ⋅
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅
+     ⋅          ⋅      1.0+0.0im  …      ⋅          ⋅          ⋅
+     ⋅      1.0+0.0im      ⋅             ⋅          ⋅          ⋅
  1.0+0.0im      ⋅          ⋅             ⋅          ⋅          ⋅
 ```
 """
@@ -186,48 +228,6 @@ Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=
 ```
 """
 ⊗(A::QuantumObject, B::QuantumObject) = kron(A, B)
-
-"""
-    sparse_to_dense(A::QuantumObject)
-
-Converts a sparse QuantumObject to a dense QuantumObject.
-"""
-sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
-sparse_to_dense(A::MT) where {MT<:AbstractSparseMatrix} = Array(A)
-for op in (:Transpose, :Adjoint)
-    @eval sparse_to_dense(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
-end
-sparse_to_dense(A::MT) where {MT<:AbstractArray} = A
-
-function sparse_to_dense(::Type{M}) where {M<:SparseMatrixCSC}
-    T = M
-    par = T.parameters
-    npar = length(par)
-    (2 == npar) || error("Type $M is not supported.")
-    return Matrix{par[1]}
-end
-
-sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
-
-"""
-    dense_to_sparse(A::QuantumObject)
-
-Converts a dense QuantumObject to a sparse QuantumObject.
-"""
-dense_to_sparse(A::QuantumObject{<:AbstractVecOrMat}, tol::Real = 1e-10) =
-    QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
-function dense_to_sparse(A::MT, tol::Real = 1e-10) where {MT<:AbstractMatrix}
-    idxs = findall(@. abs(A) > tol)
-    row_indices = getindex.(idxs, 1)
-    col_indices = getindex.(idxs, 2)
-    vals = getindex(A, idxs)
-    return sparse(row_indices, col_indices, vals, size(A)...)
-end
-function dense_to_sparse(A::VT, tol::Real = 1e-10) where {VT<:AbstractVector}
-    idxs = findall(@. abs(A) > tol)
-    vals = getindex(A, idxs)
-    return sparsevec(idxs, vals, length(A))
-end
 
 """
     vec2mat(A::AbstractVector)

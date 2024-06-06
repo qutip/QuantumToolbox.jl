@@ -75,6 +75,7 @@ expect
 LinearAlgebra.kron
 tensor
 ⊗
+permute
 sparse_to_dense
 dense_to_sparse
 vec2mat

@@ -291,4 +291,39 @@
     @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64,Int64}
     @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64,Int64}
     @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
+
+    # permute tests
+    ket_a = Qobj(rand(ComplexF64, 2))
+    ket_b = Qobj(rand(ComplexF64, 3))
+    ket_c = Qobj(rand(ComplexF64, 4))
+    ket_d = Qobj(rand(ComplexF64, 5))
+    ket_bdca = permute(tensor(ket_a, ket_b, ket_c, ket_d), [2, 4, 3, 1])
+    bra_a = ket_a'
+    bra_b = ket_b'
+    bra_c = ket_c'
+    bra_d = ket_d'
+    bra_bdca = permute(tensor(bra_a, bra_b, bra_c, bra_d), [2, 4, 3, 1])
+    op_a = Qobj(rand(ComplexF64, 2, 2))
+    op_b = Qobj(rand(ComplexF64, 3, 3))
+    op_c = Qobj(rand(ComplexF64, 4, 4))
+    op_d = Qobj(rand(ComplexF64, 5, 5))
+    op_bdca = permute(tensor(op_a, op_b, op_c, op_d), [2, 4, 3, 1])
+    correct_dims = [3, 5, 4, 2]
+    wrong_order1 = [1]
+    wrong_order2 = [2, 3, 4, 5]
+    @test ket_bdca ≈ tensor(ket_b, ket_d, ket_c, ket_a)
+    @test bra_bdca ≈ tensor(bra_b, bra_d, bra_c, bra_a)
+    @test op_bdca ≈ tensor(op_b, op_d, op_c, op_a)
+    @test ket_bdca.dims == correct_dims
+    @test bra_bdca.dims == correct_dims
+    @test op_bdca.dims == correct_dims
+    @test typeof(ket_bdca.type) <: KetQuantumObject
+    @test typeof(bra_bdca.type) <: BraQuantumObject
+    @test typeof(op_bdca.type) <: OperatorQuantumObject
+    @test_throws ArgumentError permute(ket_bdca, wrong_order1)
+    @test_throws ArgumentError permute(ket_bdca, wrong_order2)
+    @test_throws ArgumentError permute(bra_bdca, wrong_order1)
+    @test_throws ArgumentError permute(bra_bdca, wrong_order2)
+    @test_throws ArgumentError permute(op_bdca, wrong_order1)
+    @test_throws ArgumentError permute(op_bdca, wrong_order2)
 end
