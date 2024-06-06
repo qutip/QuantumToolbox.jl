@@ -171,55 +171,47 @@ end
 @doc raw"""
     permute(A::QuantumObject, order::Vector{Int})
 
-Permute the subsystems of a [`QuantumObject`](@ref) `A` according to the order specified in `order`. So, if `order = [2, 1, 3]`, the first subsystem will become the second, the second will become the first, and the third will remain the same, i.e. H₁ ⊗ H₂ ⊗ H₃ → H₂ ⊗ H₁ ⊗ H₃.
+Permute the tensor structure of a [`QuantumObject`](@ref) `A` according to the specified `order` list
 
-This method currently dispatches only for [`Ket`](@ref), [`Bra`](@ref), and [`Operator`](@ref) types of [`QuantumObject`](@ref).
+Note that this method currently works for [`Ket`](@ref), [`Bra`](@ref), and [`Operator`](@ref) types of [`QuantumObject`](@ref).
 
 # Examples
 
-```julia
-ψ1 = fock(2, 0)
-ψ2 = fock(2, 1)
-ψ_12 = tensor(ψ1, ψ2)
+If `order = [2, 1, 3]`, the Hilbert space structure will be re-arranged: H₁ ⊗ H₂ ⊗ H₃ → H₂ ⊗ H₁ ⊗ H₃.
 
-permute(ψ_12, [2, 1]) ≈ tensor(ψ2, ψ1)
-
-# Returns true
 ```
-
+julia> ψ1 = fock(2, 0)
+julia> ψ2 = fock(3, 1)
+julia> ψ3 = fock(4, 2)
+julia> ψ_123 = tensor(ψ1, ψ2, ψ3)
+julia> permute(ψ_123, [2, 1, 3]) ≈ tensor(ψ2, ψ1, ψ3)
+true
+```
 """
-function permute(QO::QuantumObject{<:AbstractArray{T},KetQuantumObject}, order::AbstractVector{<:Integer}) where {T}
-    if length(order) != length(QO.dims)
-        throw(ArgumentError("The order vector must have the same length as the number of subsystems"))
-    end
-    if sort(order) != 1:length(order)
-        throw(ArgumentError("The order vector must contain all integers from 1 to the number of subsystems"))
-    end
-    permuted_data = _permute_oper(QO.data, QO.dims, order)
-    return QuantumObject(permuted_data, QO.type, QO.dims[order])
-end
-
-function permute(QO::QuantumObject{<:AbstractArray{T},BraQuantumObject}, order::AbstractVector{<:Integer}) where {T}
-    if length(order) != length(QO.dims)
-        throw(ArgumentError("The order vector must have the same length as the number of subsystems"))
-    end
-    if sort(order) != 1:length(order)
-        throw(ArgumentError("The order vector must contain all integers from 1 to the number of subsystems"))
-    end
-    permuted_data = _permute_oper(QO.data', QO.dims, order)
-    return QuantumObject(permuted_data', QO.type, QO.dims[order])
-end
-
 function permute(
-    QO::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
-    order::AbstractVector{<:Integer},
-) where {T}
-    if length(order) != length(QO.dims)
-        throw(ArgumentError("The order vector must have the same length as the number of subsystems"))
-    end
-    if sort(order) != 1:length(order)
-        throw(ArgumentError("The order vector must contain all integers from 1 to the number of subsystems"))
-    end
-    permuted_data = _permute_oper(QO.data, QO.dims, order)
-    return QuantumObject(permuted_data, QO.type, QO.dims[order])
+    A::QuantumObject{<:AbstractArray{T},ObjType},
+    order::AbstractVector{Int},
+) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
+    (length(order) != length(A.dims)) &&
+        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
+
+    !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))
+
+    # obtain the arguments: dims for reshape; perm for PermutedDimsArray
+    dims, perm = _dims_and_perm(A.type, A.dims, order, length(order))
+
+    return QuantumObject(reshape(PermutedDimsArray(reshape(A.data, dims...), perm), size(A)), A.type, A.dims[order])
+end
+
+function _dims_and_perm(
+    ::ObjType,
+    dims::AbstractVector{Int},
+    order::AbstractVector{Int},
+    L::Int,
+) where {ObjType<:Union{KetQuantumObject,BraQuantumObject}}
+    return reverse(dims), reverse!((L + 1) .- order)
+end
+
+function _dims_and_perm(::OperatorQuantumObject, dims::AbstractVector{Int}, order::AbstractVector{Int}, L::Int)
+    return reverse!([dims; dims]), reverse!((2 * L + 1) .- [order; order .+ L])
 end
