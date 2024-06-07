@@ -61,7 +61,7 @@ function expect(
     return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
 end
 
-"""
+@doc raw"""
     sparse_to_dense(A::QuantumObject)
 
 Converts a sparse QuantumObject to a dense QuantumObject.
@@ -83,7 +83,7 @@ end
 
 sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
 
-"""
+@doc raw"""
     dense_to_sparse(A::QuantumObject)
 
 Converts a dense QuantumObject to a sparse QuantumObject.
