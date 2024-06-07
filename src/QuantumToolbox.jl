@@ -1,7 +1,7 @@
 module QuantumToolbox
 
-# Re-export: 
-#   1. basic functions in LinearAlgebra and SparseArrays 
+# Re-export:
+#   1. basic functions in LinearAlgebra and SparseArrays
 #   2. the solvers in ODE and LinearSolve
 import Reexport: @reexport
 @reexport using LinearAlgebra
@@ -23,7 +23,7 @@ end
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
-import DiffEqCallbacks: DiscreteCallback, PeriodicCallback, PresetTimeCallback
+import DiffEqCallbacks: DiscreteCallback, PeriodicCallback, PresetTimeCallback, TerminateSteadyState
 import FFTW: fft, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu

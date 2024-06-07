@@ -9,6 +9,7 @@ export sqrtm, logm, expm, sinm, cosm
 export proj, ptrace, purity
 export tidyup, tidyup!
 export get_data, get_coherence
+export permute
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
@@ -712,7 +713,7 @@ get_data(A::QuantumObject) = A.data
 Get the coherence value ``\alpha`` by measuring the expectation value of the destruction
 operator ``\hat{a}`` on the state ``\ket{\psi}``.
 
-It returns both ``\alpha`` and the state 
+It returns both ``\alpha`` and the state
 ``\ket{\delta_\psi} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger )``. The
 latter corresponds to the quantum fulctuations around the coherent state ``\ket{\alpha}``.
 """
@@ -724,4 +725,52 @@ function get_coherence(
     D = exp(α * a' - conj(α) * a)
 
     return α, D' * ψ
+end
+
+@doc raw"""
+    permute(A::QuantumObject, order::Vector{Int})
+
+Permute the tensor structure of a [`QuantumObject`](@ref) `A` according to the specified `order` list
+
+Note that this method currently works for [`Ket`](@ref), [`Bra`](@ref), and [`Operator`](@ref) types of [`QuantumObject`](@ref).
+
+# Examples
+
+If `order = [2, 1, 3]`, the Hilbert space structure will be re-arranged: H₁ ⊗ H₂ ⊗ H₃ → H₂ ⊗ H₁ ⊗ H₃.
+
+```
+julia> ψ1 = fock(2, 0)
+julia> ψ2 = fock(3, 1)
+julia> ψ3 = fock(4, 2)
+julia> ψ_123 = tensor(ψ1, ψ2, ψ3)
+julia> permute(ψ_123, [2, 1, 3]) ≈ tensor(ψ2, ψ1, ψ3)
+true
+```
+"""
+function permute(
+    A::QuantumObject{<:AbstractArray{T},ObjType},
+    order::AbstractVector{Int},
+) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
+    (length(order) != length(A.dims)) &&
+        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
+
+    !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))
+
+    # obtain the arguments: dims for reshape; perm for PermutedDimsArray
+    dims, perm = _dims_and_perm(A.type, A.dims, order, length(order))
+
+    return QuantumObject(reshape(PermutedDimsArray(reshape(A.data, dims...), perm), size(A)), A.type, A.dims[order])
+end
+
+function _dims_and_perm(
+    ::ObjType,
+    dims::AbstractVector{Int},
+    order::AbstractVector{Int},
+    L::Int,
+) where {ObjType<:Union{KetQuantumObject,BraQuantumObject}}
+    return reverse(dims), reverse!((L + 1) .- order)
+end
+
+function _dims_and_perm(::OperatorQuantumObject, dims::AbstractVector{Int}, order::AbstractVector{Int}, L::Int)
+    return reverse!([dims; dims]), reverse!((2 * L + 1) .- [order; order .+ L])
 end
