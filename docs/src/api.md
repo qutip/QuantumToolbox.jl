@@ -26,7 +26,6 @@ OperatorKet
 SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
-Qobj
 size
 eltype
 length
@@ -69,20 +68,6 @@ tidyup!
 get_data
 get_coherence
 partial_transpose
-```
-
-## [Synonyms for Qobj attribute functions](@id doc-API:Synonyms-for-Qobj-attribute-functions)
-```@docs
-isherm
-trans
-dag
-matrix_element
-unit
-sqrtm
-logm
-expm
-sinm
-cosm
 ```
 
 ## [Qobj eigenvalues and eigenvectors](@id doc-API:Qobj-eigenvalues-and-eigenvectors)
@@ -142,6 +127,21 @@ spre
 spost
 sprepost
 lindblad_dissipator
+```
+
+## [Synonyms of functions for Qobj](@id doc-API:Synonyms-of-functions-for-Qobj)
+```@docs
+Qobj
+isherm
+trans
+dag
+matrix_element
+unit
+sqrtm
+logm
+expm
+sinm
+cosm
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)

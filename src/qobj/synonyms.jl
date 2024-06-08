@@ -2,9 +2,18 @@
 Synonyms of the functions for QuantumObject
 =#
 
-export isherm
+export Qobj, isherm
 export trans, dag, matrix_element, unit
 export sqrtm, logm, expm, sinm, cosm
+
+@doc raw"""
+    Qobj(A::AbstractArray; type::QuantumObjectType, dims::Vector{Int})
+
+Generate `QuantumObject`
+
+Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`
+"""
+Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
 
 @doc raw"""
     isherm(A::QuantumObject)

@@ -7,7 +7,7 @@ Also support for fundamental functions in Julia standard library:
     - SparseArrays: sparse, nnz, nonzeros, rowvals, droptol!, dropzeros, dropzeros!, SparseVector, SparseMatrixCSC
 =#
 
-export AbstractQuantumObject, QuantumObject, Qobj
+export AbstractQuantumObject, QuantumObject
 export QuantumObjectType,
     BraQuantumObject,
     KetQuantumObject,
@@ -267,13 +267,6 @@ function QuantumObject(
     _check_QuantumObject(type, prod(dims), Size[1], Size[2])
     return QuantumObject(copy(A.data), type, dims)
 end
-
-@doc raw"""
-    Qobj(A::AbstractArray; type::QuantumObjectType, dims::Vector{Int})
-
-Generate `QuantumObject`
-"""
-Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
 
 @doc raw"""
     size(A::QuantumObject)

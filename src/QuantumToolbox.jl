@@ -45,11 +45,11 @@ include("progress_bar.jl")
 include("qobj/quantum_object.jl")
 include("qobj/boolean_functions.jl")
 include("qobj/arithmetic_and_attributes.jl")
-include("qobj/synonyms.jl")
 include("qobj/eigsolve.jl")
 include("qobj/functions.jl")
 include("qobj/states.jl")
 include("qobj/operators.jl")
+include("qobj/synonyms.jl")
 
 # time evolution
 include("time_evolution/time_evolution.jl")
