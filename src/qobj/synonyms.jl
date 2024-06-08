@@ -11,7 +11,7 @@ export qeye
 @doc raw"""
     Qobj(A::AbstractArray; type::QuantumObjectType, dims::Vector{Int})
 
-Generate `QuantumObject`
+Generate [`QuantumObject`](@ref)
 
 Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`
 """

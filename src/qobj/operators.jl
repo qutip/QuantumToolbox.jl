@@ -25,43 +25,49 @@ commutator(
 ) where {T1,T2} = A * B - (-1)^anti * B * A
 
 @doc raw"""
-    spre(O::QuantumObject, Id_cache=I(size(O,1)))
+    spre(A::QuantumObject, Id_cache=I(size(A,1)))
 
-Returns the super-operator form of `O` acting on the left
-of the density matrix operator, ``\mathcal{O} \left(\hat{O}\right) \left[ \hat{\rho} \right] = \hat{O} \hat{\rho}``.
+Returns the [`SuperOperator`](@ref) form of `A` acting on the left of the density matrix operator: ``\mathcal{O} \left(\hat{A}\right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho}``.
 
-Since the density matrix is vectorized, this super-operator is always
-a matrix, obtained from ``\mathcal{O} \left(\hat{O}\right) \boldsymbol{\cdot} = \hat{\mathbb{1}} \otimes \hat{O}``.
+Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{\mathbb{1}} \otimes \hat{A}``, namely 
+
+```math
+\mathcal{O} \left(\hat{A}\right) \left[ \hat{\rho} \right] = \hat{\mathbb{1}} \otimes \hat{A} ~ |\hat{\rho}\rangle\rangle
+```
 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
 """
-spre(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(O, 1))) where {T} =
-    QuantumObject(kron(Id_cache, O.data), SuperOperator, O.dims)
+spre(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(A, 1))) where {T} =
+    QuantumObject(kron(Id_cache, A.data), SuperOperator, A.dims)
 
 @doc raw"""
-    spost(O::QuantumObject)
+    spost(B::QuantumObject)
 
-Returns the super-operator form of `O` acting on the right
-of the density matrix operator, ``\mathcal{O} \left(\hat{O}\right) \left[ \hat{\rho} \right] = \hat{\rho} \hat{O}``.
+Returns the [`SuperOperator`](@ref) form of `B` acting on the right of the density matrix operator: ``\mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{\rho} \hat{B}``.
 
-Since the density matrix is vectorized, this super-operator is always
-a matrix, obtained from ``\mathcal{O} \left(\hat{O}\right) \boldsymbol{\cdot} = \hat{O}^T \otimes \hat{\mathbb{1}}``.
+Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{B}^T \otimes \hat{\mathbb{1}}``, namely
+
+```math
+\mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{B}^T \otimes \hat{\mathbb{1}} ~ |\hat{\rho}\rangle\rangle
+```
 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
 """
-spost(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(O, 1))) where {T} =
-    QuantumObject(kron(sparse(transpose(sparse(O.data))), Id_cache), SuperOperator, O.dims) # TODO: fix the sparse conversion
+spost(B::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(B, 1))) where {T} =
+    QuantumObject(kron(sparse(transpose(sparse(B.data))), Id_cache), SuperOperator, B.dims) # TODO: fix the sparse conversion
 
 @doc raw"""
     sprepost(A::QuantumObject, B::QuantumObject)
 
-Returns the super-operator form of `A` and `B` acting on the left and the right
-of the density matrix operator respectively, ``\mathcal{O} \left( \hat{A}, \hat{B} \right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho} \hat{B}``.
+Returns the [`SuperOperator`](@ref) form of `A` and `B` acting on the left and right of the density matrix operator, respectively: ``\mathcal{O} \left( \hat{A}, \hat{B} \right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho} \hat{B}``.
 
-Since the density matrix is vectorized, this super-operator is always
-a matrix, obtained from ``\mathcal{O} \left(\hat{A}, \hat{B}\right) \boldsymbol{\cdot} = \text{spre}(A) * \text{spost}(B)``.
+Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{B}^T \otimes \hat{A}``, namely
+
+```math
+\mathcal{O} \left(\hat{A}, \hat{B}\right) \left[ \hat{\rho} \right] = \hat{B}^T \otimes \hat{A} ~ |\hat{\rho}\rangle\rangle = \textrm{spre}(A) * \textrm{spost}(B) ~ |\hat{\rho}\rangle\rangle
+```
 """
 sprepost(
     A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
@@ -71,12 +77,12 @@ sprepost(
 @doc raw"""
     lindblad_dissipator(O::QuantumObject, Id_cache=I(size(O,1))
 
-Returns the Lindblad super-operator defined as
-``
+Returns the Lindblad [`SuperOperator`](@ref) defined as
+
+```math
 \mathcal{D} \left( \hat{O} \right) \left[ \hat{\rho} \right] = \frac{1}{2} \left( 2 \hat{O} \hat{\rho} \hat{O}^\dagger - 
 \hat{O}^\dagger \hat{O} \hat{\rho} - \hat{\rho} \hat{O}^\dagger \hat{O} \right)
-``
-considering the density matrix ``\hat{\rho}`` in the vectorized form.
+```
 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.

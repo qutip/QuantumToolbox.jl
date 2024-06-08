@@ -23,7 +23,7 @@ abstract type QuantumObjectType end
 @doc raw"""
     BraQuantumObject <: QuantumObjectType
 
-Constructor representing a bra state ``\bra{\psi}``.
+Constructor representing a bra state ``\langle\psi|``.
 """
 struct BraQuantumObject <: QuantumObjectType end
 Base.show(io::IO, ::BraQuantumObject) = print(io, "Bra")
@@ -31,14 +31,14 @@ Base.show(io::IO, ::BraQuantumObject) = print(io, "Bra")
 @doc raw"""
     const Bra = BraQuantumObject()
 
-A constant representing the type of [`BraQuantumObject`](@ref)
+A constant representing the type of [`BraQuantumObject`](@ref): a bra state ``\langle\psi|``
 """
 const Bra = BraQuantumObject()
 
 @doc raw"""
     KetQuantumObject <: QuantumObjectType
 
-Constructor representing a ket state ``\ket{\psi}``.
+Constructor representing a ket state ``|\psi\rangle``.
 """
 struct KetQuantumObject <: QuantumObjectType end
 Base.show(io::IO, ::KetQuantumObject) = print(io, "Ket")
@@ -46,7 +46,7 @@ Base.show(io::IO, ::KetQuantumObject) = print(io, "Ket")
 @doc raw"""
     const Ket = KetQuantumObject()
 
-A constant representing the type of [`KetQuantumObject`](@ref)
+A constant representing the type of [`KetQuantumObject`](@ref): a ket state ``|\psi\rangle``
 """
 const Ket = KetQuantumObject()
 
@@ -61,14 +61,14 @@ Base.show(io::IO, ::OperatorQuantumObject) = print(io, "Operator")
 @doc raw"""
     const Operator = OperatorQuantumObject()
 
-A constant representing the type of [`OperatorQuantumObject`](@ref)
+A constant representing the type of [`OperatorQuantumObject`](@ref): an operator ``\hat{O}``
 """
 const Operator = OperatorQuantumObject()
 
 @doc raw"""
     SuperOperatorQuantumObject <: QuantumObjectType
 
-Constructor representing a super-operator ``\hat{\mathcal{O}}``.
+Constructor representing a super-operator ``\hat{\mathcal{O}}`` acting on vectorized density operator matrices.
 """
 struct SuperOperatorQuantumObject <: QuantumObjectType end
 Base.show(io::IO, ::SuperOperatorQuantumObject) = print(io, "SuperOperator")
@@ -76,14 +76,14 @@ Base.show(io::IO, ::SuperOperatorQuantumObject) = print(io, "SuperOperator")
 @doc raw"""
     const SuperOperator = SuperOperatorQuantumObject()
 
-A constant representing the type of [`SuperOperatorQuantumObject`](@ref)
+A constant representing the type of [`SuperOperatorQuantumObject`](@ref): a super-operator ``\hat{\mathcal{O}}`` acting on vectorized density operator matrices
 """
 const SuperOperator = SuperOperatorQuantumObject()
 
 @doc raw"""
     OperatorBraQuantumObject <: QuantumObjectType
 
-Constructor representing a bra state in the super-operator formalism ``\langle\langle\rho|``.
+Constructor representing a bra state in the [`SuperOperator`](@ref) formalism ``\langle\langle\rho|``.
 """
 struct OperatorBraQuantumObject <: QuantumObjectType end
 Base.show(io::IO, ::OperatorBraQuantumObject) = print(io, "OperatorBra")
@@ -91,14 +91,14 @@ Base.show(io::IO, ::OperatorBraQuantumObject) = print(io, "OperatorBra")
 @doc raw"""
     const OperatorBra = OperatorBraQuantumObject()
 
-A constant representing the type of [`OperatorBraQuantumObject`](@ref)
+A constant representing the type of [`OperatorBraQuantumObject`](@ref): a bra state in the [`SuperOperator`](@ref) formalism ``\langle\langle\rho|``.
 """
 const OperatorBra = OperatorBraQuantumObject()
 
 @doc raw"""
     OperatorKetQuantumObject <: QuantumObjectType
 
-Constructor representing a ket state in the super-operator formalism ``|\rho\rangle\rangle``.
+Constructor representing a ket state in the [`SuperOperator`](@ref) formalism ``|\rho\rangle\rangle``.
 """
 struct OperatorKetQuantumObject <: QuantumObjectType end
 Base.show(io::IO, ::OperatorKetQuantumObject) = print(io, "OperatorKet")
@@ -106,7 +106,7 @@ Base.show(io::IO, ::OperatorKetQuantumObject) = print(io, "OperatorKet")
 @doc raw"""
     const OperatorKet = OperatorKetQuantumObject()
 
-A constant representing the type of [`OperatorKetQuantumObject`](@ref)
+A constant representing the type of [`OperatorKetQuantumObject`](@ref): a ket state in the [`SuperOperator`](@ref) formalism ``|\rho\rangle\rangle``
 """
 const OperatorKet = OperatorKetQuantumObject()
 
@@ -117,7 +117,7 @@ const OperatorKet = OperatorKetQuantumObject()
         dims::Vector{Int}
     end
 
-Julia struct representing any quantum operator.
+Julia struct representing any quantum objects.
 
 # Examples
 
