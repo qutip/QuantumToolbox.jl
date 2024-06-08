@@ -4,12 +4,10 @@ Arithmetic and Attributes for QuantumObject
     - export most of the attribute functions in "Python Qobj class"
 =#
 
-export trans, dag, dagger, matrix_element, unit
-export sqrtm, logm, expm, sinm, cosm
-export proj, ptrace, purity
+export sinm, cosm
+export proj, ptrace, purity, permute
 export tidyup, tidyup!
 export get_data, get_coherence
-export permute
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
@@ -164,28 +162,6 @@ function LinearAlgebra.dot(
 end
 
 @doc raw"""
-    matrix_element(i::QuantumObject, A::QuantumObject j::QuantumObject)
-
-Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | A | j \rangle``
-
-Note that this function is same as `dot(i, A, j)`
-
-Supports the following inputs:
-- `A` is in the type of [`Operator`](@ref), with `i` and `j` are both [`Ket`](@ref).
-- `A` is in the type of [`SuperOperator`](@ref), with `i` and `j` are both [`OperatorKet`](@ref)
-"""
-matrix_element(
-    i::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject},
-) where {T1<:Number,T2<:Number,T3<:Number} = dot(i, A, j)
-matrix_element(
-    i::QuantumObject{<:AbstractArray{T1},OperatorKetQuantumObject},
-    A::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject},
-) where {T1<:Number,T2<:Number,T3<:Number} = dot(i, A, j)
-
-@doc raw"""
     conj(A::QuantumObject)
 
 Return the element-wise complex conjugation of the [`QuantumObject`](@ref).
@@ -201,17 +177,6 @@ LinearAlgebra.transpose(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(transpose(A.data), A.type, A.dims)
-
-@doc raw"""
-    trans(A::QuantumObject)
-
-Lazy matrix transpose of the [`QuantumObject`](@ref).
-
-Note that this function is same as `transpose(A)`
-"""
-trans(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = transpose(A)
 
 @doc raw"""
     A'
@@ -233,24 +198,6 @@ LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObje
     QuantumObject(adjoint(A.data), OperatorBra, A.dims)
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorBraQuantumObject}) where {T} =
     QuantumObject(adjoint(A.data), OperatorKet, A.dims)
-
-@doc raw"""
-    dag(A::QuantumObject)
-
-Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
-
-Note that this function is same as `adjoint(A)`
-"""
-dag(A::QuantumObject{<:AbstractArray{T}}) where {T} = adjoint(A)
-
-@doc raw"""
-    dagger(A::QuantumObject)
-
-Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
-
-Note that this function is same as `adjoint(A)`
-"""
-dagger(A::QuantumObject{<:AbstractArray{T}}) where {T} = adjoint(A)
 
 @doc raw"""
     inv(A::QuantumObject)
@@ -379,25 +326,6 @@ LinearAlgebra.normalize!(
 LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, p::Real = 1) where {T} =
     (rmul!(A.data, 1 / norm(A)); A)
 
-@doc raw"""
-    unit(A::QuantumObject, p::Real)
-
-Return normalized [`QuantumObject`](@ref) so that its `p`-norm equals to unity, i.e. `norm(A, p) == 1`.
-
-Support for the following types of [`QuantumObject`](@ref):
-- If `A` is [`Ket`](@ref) or [`Bra`](@ref), default `p = 2`
-- If `A` is [`Operator`](@ref), default `p = 1`
-
-Note that this function is same as `normalize(A, p)`
-
-Also, see [`norm`](@ref) about its definition for different types of [`QuantumObject`](@ref).
-"""
-unit(
-    A::QuantumObject{<:AbstractArray{T},ObjType},
-    p::Real = 2,
-) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = normalize(A, p)
-unit(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, p::Real = 1) where {T} = normalize(A, p)
-
 LinearAlgebra.triu!(
     A::QuantumObject{<:AbstractArray{T},OpType},
     k::Integer = 0,
@@ -432,15 +360,6 @@ LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} =
     QuantumObject(sqrt(sparse_to_dense(A.data)), A.type, A.dims)
 
 @doc raw"""
-    sqrtm(A::QuantumObject)
-
-Matrix square root of [`Operator`](@ref) type of [`QuantumObject`](@ref)
-
-Note that for other types of [`QuantumObject`](@ref) use `sprt(A)` instead.
-"""
-sqrtm(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = sqrt(A)
-
-@doc raw"""
     log(A::QuantumObject)
 
 Matrix logarithm of [`QuantumObject`](@ref)
@@ -451,17 +370,6 @@ LinearAlgebra.log(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
 ) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(log(sparse_to_dense(A.data)), A.type, A.dims)
-
-@doc raw"""
-    logm(A::QuantumObject)
-
-Matrix logarithm of [`QuantumObject`](@ref)
-
-Note that this function is same as `log(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
-"""
-logm(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = log(A)
 
 @doc raw"""
     exp(A::QuantumObject)
@@ -478,17 +386,6 @@ LinearAlgebra.exp(
     A::QuantumObject{<:AbstractSparseMatrix{T},ObjType},
 ) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(_spexp(A.data), A.type, A.dims)
-
-@doc raw"""
-    expm(A::QuantumObject)
-
-Matrix exponential of [`QuantumObject`](@ref)
-
-Note that this function is same as `exp(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
-"""
-expm(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = exp(A)
 
 function _spexp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20) where {T,M}
     m = checksquare(A) # Throws exception if not square
