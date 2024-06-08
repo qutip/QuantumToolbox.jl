@@ -158,7 +158,7 @@ function liouvillian_floquet(
     tol::Real = 1e-15,
 ) where {T1,T2,T3}
     ((L₀.dims == Lₚ.dims) && (L₀.dims == Lₘ.dims)) ||
-        throw(ErrorException("The operators are not of the same Hilbert dimension."))
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     return _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, n_max, tol)
 end

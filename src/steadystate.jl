@@ -390,7 +390,7 @@ function _steadystate_floquet(
     kwargs...,
 ) where {R<:Real}
     ((L_0.dims == L_p.dims) && (L_0.dims == L_m.dims)) ||
-        throw(ErrorException("The operators are not of the same Hilbert dimension."))
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     L_eff = liouvillian_floquet(L_0, L_p, L_m, ωd; n_max = n_max, tol = tol)
 

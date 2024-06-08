@@ -13,7 +13,7 @@
     @test Neg ≈ 0.25
     @test negativity(rho, 2) ≈ Neg
     @test negativity(rho, 1; logarithmic = true) ≈ log2(2 * Neg + 1)
-    @test_throws ErrorException negativity(rho, 3)
+    @test_throws ArgumentError negativity(rho, 3)
 
     # tests for partial transpose (PT)
     # A (24 * 24)-matrix which contains number 1 ~ 576
@@ -28,5 +28,5 @@
             end
         end
     end
-    @test_throws ErrorException partial_transpose(rho, [true])
+    @test_throws ArgumentError partial_transpose(rho, [true])
 end

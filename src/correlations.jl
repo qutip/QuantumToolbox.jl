@@ -46,7 +46,7 @@ function correlation_3op_2t(
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
     (H.dims == ψ0.dims && H.dims == A.dims && H.dims == B.dims && H.dims == C.dims) ||
-        throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     kwargs2 = (; kwargs...)
     kwargs2 = merge(kwargs2, (saveat = collect(t_l),))

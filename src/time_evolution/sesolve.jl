@@ -63,7 +63,7 @@ function sesolveProblem(
     progress_bar::Bool = true,
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,MT2<:AbstractMatrix}
-    H.dims != ψ0.dims && throw(ErrorException("The two operators don't have the same Hilbert dimension."))
+    H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
     is_time_dependent = !(H_t === nothing)
 

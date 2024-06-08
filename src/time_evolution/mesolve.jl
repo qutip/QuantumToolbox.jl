@@ -76,7 +76,7 @@ function mesolveProblem(
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
     COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
 }
-    H.dims != ψ0.dims && throw(ErrorException("The two operators don't have the same Hilbert dimension."))
+    H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
     is_time_dependent = !(H_t === nothing)
 
