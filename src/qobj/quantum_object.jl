@@ -7,7 +7,7 @@ Also support for fundamental functions in Julia standard library:
     - SparseArrays: sparse, nnz, nonzeros, rowvals, droptol!, dropzeros, dropzeros!, SparseVector, SparseMatrixCSC
 =#
 
-export AbstractQuantumObject, QuantumObject, Qobj
+export AbstractQuantumObject, QuantumObject
 export QuantumObjectType,
     BraQuantumObject,
     KetQuantumObject,
@@ -269,31 +269,27 @@ function QuantumObject(
 end
 
 @doc raw"""
-    Qobj(A::AbstractArray; type::QuantumObjectType, dims::Vector{Int})
-
-Generate `QuantumObject`
-"""
-Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
-
-"""
     size(A::QuantumObject)
+    size(A::QuantumObject, idx::Int)
 
-Returns the size of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
+Returns a tuple containing each dimensions of the array in the [`QuantumObject`](@ref).
+
+Optionally, you can specify an index (`idx`) to just get the corresponding dimension of the array.
 """
 Base.size(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
-Base.size(A::QuantumObject{<:AbstractArray{T}}, inds...) where {T} = size(A.data, inds...)
+Base.size(A::QuantumObject{<:AbstractArray{T}}, idx::Int) where {T} = size(A.data, idx)
 
 Base.getindex(A::QuantumObject{<:AbstractArray{T}}, inds...) where {T} = getindex(A.data, inds...)
 Base.setindex!(A::QuantumObject{<:AbstractArray{T}}, val, inds...) where {T} = setindex!(A.data, val, inds...)
 
-"""
+@doc raw"""
     eltype(A::QuantumObject)
 
 Returns the elements type of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
 """
 Base.eltype(A::QuantumObject) = eltype(A.data)
 
-"""
+@doc raw"""
     length(A::QuantumObject)
 
 Returns the length of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.

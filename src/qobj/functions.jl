@@ -5,7 +5,6 @@ Functions which manipulates QuantumObject
 export ket2dm
 export expect
 export sparse_to_dense, dense_to_sparse
-export tensor, ⊗
 export vec2mat, mat2vec
 
 @doc raw"""
@@ -61,7 +60,7 @@ function expect(
     return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
 end
 
-"""
+@doc raw"""
     sparse_to_dense(A::QuantumObject)
 
 Converts a sparse QuantumObject to a dense QuantumObject.
@@ -83,7 +82,7 @@ end
 
 sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
 
-"""
+@doc raw"""
     dense_to_sparse(A::QuantumObject)
 
 Converts a dense QuantumObject to a sparse QuantumObject.
@@ -104,9 +103,9 @@ function dense_to_sparse(A::VT, tol::Real = 1e-10) where {VT<:AbstractVector}
 end
 
 @doc raw"""
-    kron(A::QuantumObject, B::QuantumObject)
+    kron(A::QuantumObject, B::QuantumObject, ...)
 
-Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B}``.
+Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B} \otimes \cdots``.
 
 # Examples
 
@@ -154,82 +153,6 @@ function LinearAlgebra.kron(
 end
 
 @doc raw"""
-    tensor(A1::QuantumObject, A2::QuantumObject, ...)
-
-Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A}_1 \otimes \hat{A}_2 \otimes \cdots``.
-
-# Examples
-
-```
-julia> x = sigmax()
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
-2×2 SparseMatrixCSC{ComplexF64, Int64} with 2 stored entries:
-     ⋅      1.0+0.0im
- 1.0+0.0im      ⋅
-
-julia> x_list = fill(x, 3);
-
-julia> tensor(x_list...)
-Quantum Object:   type=Operator   dims=[2, 2, 2]   size=(8, 8)   ishermitian=true
-8×8 SparseMatrixCSC{ComplexF64, Int64} with 8 stored entries:
-     ⋅          ⋅          ⋅      …      ⋅          ⋅      1.0+0.0im
-     ⋅          ⋅          ⋅             ⋅      1.0+0.0im      ⋅
-     ⋅          ⋅          ⋅         1.0+0.0im      ⋅          ⋅
-     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅
-     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅
-     ⋅          ⋅      1.0+0.0im  …      ⋅          ⋅          ⋅
-     ⋅      1.0+0.0im      ⋅             ⋅          ⋅          ⋅
- 1.0+0.0im      ⋅          ⋅             ⋅          ⋅          ⋅
-```
-"""
-tensor(A::QuantumObject...) = kron(A...)
-
-@doc raw"""
-    ⊗(A::QuantumObject, B::QuantumObject)
-
-Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B}``.
-
-# Examples
-
-```
-julia> a = destroy(20)
-Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
-20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
-⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢
-
-julia> a ⊗ a
-Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=false
-400×400 SparseMatrixCSC{ComplexF64, Int64} with 361 stored entries:
-⠀⠀⠘⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠦
-```
-"""
-⊗(A::QuantumObject, B::QuantumObject) = kron(A, B)
-
-"""
     vec2mat(A::AbstractVector)
 
 Converts a vector to a matrix.
@@ -255,7 +178,7 @@ Convert a quantum object from matrix ([`OperatorQuantumObject`](@ref)-type) to v
 mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} =
     QuantumObject(mat2vec(A.data), OperatorKet, A.dims)
 
-"""
+@doc raw"""
     mat2vec(A::AbstractMatrix)
 
 Converts a matrix to a vector.

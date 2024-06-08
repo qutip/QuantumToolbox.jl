@@ -49,6 +49,7 @@ include("qobj/eigsolve.jl")
 include("qobj/functions.jl")
 include("qobj/states.jl")
 include("qobj/operators.jl")
+include("qobj/synonyms.jl")
 
 # time evolution
 include("time_evolution/time_evolution.jl")

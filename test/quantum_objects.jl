@@ -21,6 +21,7 @@
     @test_throws DimensionMismatch Qobj(a', dims = [2])
     a2 = Qobj(a')
     a3 = Qobj(a)
+    @test dag(a3) == a2
     @test isket(a2) == false
     @test isbra(a2) == true
     @test isoper(a2) == false
@@ -88,6 +89,17 @@
     @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet, dims = [4])
     @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = [4])
 
+    # matrix element
+    s0 = Qobj(basis(4, 0).data; type = OperatorKet)
+    s1 = Qobj(basis(4, 1).data; type = OperatorKet)
+    s_wrong = Qobj(basis(9, 0).data; type = OperatorKet)
+    @test matrix_element(basis(2, 0), H, basis(2, 1)) == H[1, 2]
+    @test matrix_element(s0, L, s1) == L[1, 2]
+    @test_throws DimensionMismatch matrix_element(basis(3, 0), H, basis(2, 1))
+    @test_throws DimensionMismatch matrix_element(basis(2, 0), H, basis(3, 1))
+    @test_throws DimensionMismatch matrix_element(s0, L, s_wrong)
+    @test_throws DimensionMismatch matrix_element(s_wrong, L, s0)
+
     a = Array(a)
     a4 = Qobj(a)
     a5 = sparse(a4)
@@ -102,19 +114,19 @@
     @test (a2 + 2).data == a2.data + 2 * I
     @test a2 * 2 == 2 * a2
 
-    @test transpose(transpose(a2)) == a2
-    @test transpose(a2).data == transpose(a2.data)
-    @test adjoint(a2) ≈ transpose(conj(a2))
+    @test trans(trans(a2)) == a2
+    @test trans(a2).data == transpose(a2.data)
+    @test adjoint(a2) ≈ trans(conj(a2))
     @test adjoint(adjoint(a2)) == a2
     @test adjoint(a2).data == adjoint(a2.data)
 
     N = 10
     a = fock(N, 3)
-    @test sparse(ket2dm(a)) ≈ projection(N, 3, 3)
+    @test proj(a) ≈ proj(a') ≈ sparse(ket2dm(a)) ≈ projection(N, 3, 3)
     @test isket(a') == false
     @test isbra(a') == true
-    @test size(a) == (N,)
-    @test size(a') == (1, N)
+    @test shape(a) == (N,)
+    @test shape(a') == (1, N)
     @test norm(a) ≈ 1
     @test norm(a') ≈ 1
 
@@ -122,22 +134,36 @@
     @test dot(ψ, ψ) ≈ norm(ψ)
     @test dot(ψ, ψ) ≈ ψ' * ψ
 
+    # normalize, normalize!, unit
     a = Qobj(rand(ComplexF64, N))
+    M = a * a'
     @test (norm(a) ≈ 1) == false
-    @test (norm(normalize(a)) ≈ 1) == true
+    @test (norm(M) ≈ 1) == false
+    @test (norm(unit(a)) ≈ 1) == true
+    @test (norm(unit(M)) ≈ 1) == true
     @test (norm(a) ≈ 1) == false # Again, to be sure that it is still non-normalized
+    @test (norm(M) ≈ 1) == false # Again, to be sure that it is still non-normalized
     normalize!(a)
+    normalize!(M)
     @test (norm(a) ≈ 1) == true
+    @test (norm(M) ≈ 1) == true
+    @test M ≈ a * a'
+    @test (unit(qeye(N)) ≈ (qeye(N) / N)) == true
 
     a = destroy(N)
     a_d = a'
     X = a + a_d
     Y = 1im * (a - a_d)
-    Z = a + transpose(a)
-    @test ishermitian(X) == true
-    @test ishermitian(Y) == true
+    Z = a + trans(a)
+    @test isherm(X) == true
+    @test isherm(Y) == true
     @test issymmetric(Y) == false
     @test issymmetric(Z) == true
+
+    # diag
+    @test diag(a, 1) ≈ [sqrt(i) for i in 1:(N-1)]
+    @test diag(a_d, -1) == [sqrt(i) for i in 1:(N-1)]
+    @test diag(a_d * a) ≈ collect(0:(N-1))
 
     @test Y[1, 2] == conj(Y[2, 1])
 
@@ -173,7 +199,7 @@
     datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
     a_dims = a.dims
     a_size = size(a)
-    a_isherm = ishermitian(a)
+    a_isherm = isherm(a)
     @test opstring ==
           "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
@@ -182,7 +208,7 @@
     datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
     a_dims = a.dims
     a_size = size(a)
-    a_isherm = ishermitian(a)
+    a_isherm = isherm(a)
     @test opstring == "Quantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
 
     opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
@@ -227,6 +253,17 @@
     @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol = 1e-6
     @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol = 1e-6
 
+    # purity
+    ψ = normalize!(Qobj(rand(ComplexF64, N)))
+    ψd = ψ'
+    ρ1 = ψ * ψ'
+    M2 = rand(ComplexF64, N, N)
+    ρ2 = normalize!(Qobj(M2 * M2'))
+    @test purity(ψ) ≈ norm(ψ)^2 ≈ 1.0
+    @test purity(ψd) ≈ norm(ψd)^2 ≈ 1.0
+    @test purity(ρ1) ≈ 1.0
+    @test (1.0 / N) <= purity(ρ2) <= 1.0
+
     # trace distance
     ψz0 = basis(2, 0)
     ψz1 = basis(2, 1)
@@ -247,6 +284,16 @@
     @test sqrtm(M0) ≈ sqrtm(sparse_to_dense(M0))
     @test isapprox(fidelity(M0, M1), fidelity(ψ1, M0); atol = 1e-6)
     @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1e-6)
+
+    # logm (log), expm (exp), sinm, cosm
+    M0 = rand(ComplexF64, 4, 4)
+    Md = Qobj(M0 * M0')
+    Ms = dense_to_sparse(Md)
+    e_p = expm(1im * Md)
+    e_m = expm(-1im * Md)
+    @test logm(expm(Ms)) ≈ expm(logm(Md))
+    @test cosm(Ms) ≈ (e_p + e_m) / 2
+    @test sinm(Ms) ≈ (e_p - e_m) / 2im
 
     # Broadcasting
     a = destroy(20)

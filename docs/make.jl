@@ -1,3 +1,6 @@
+#! format: off
+# turns off the julia formatting of this file
+
 using QuantumToolbox
 using Documenter
 
@@ -17,7 +20,7 @@ const PAGES = [
         "Manipulating States and Operators" => "users_guide/states_and_operators.md",
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
         "Time Evolution and Dynamics" => [
-            "Introduction" => "users_guide/time_evolution/intro.md"
+            "Introduction" => "users_guide/time_evolution/intro.md",
         ],
         "Solving for Steady-State Solutions" => [],
         "Symmetries" => [],

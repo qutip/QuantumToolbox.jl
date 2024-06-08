@@ -72,4 +72,20 @@
     @test_throws ArgumentError fdestroy(0, 0)
     @test_throws ArgumentError fdestroy(sites, -1)
     @test_throws ArgumentError fdestroy(sites, sites)
+
+    # identity operator
+    I_op1 = qeye(4)
+    I_op2 = qeye(4, dims = [2, 2])
+    I_su1 = qeye(4, type = SuperOperator)
+    I_su2 = qeye(4, type = SuperOperator, dims = [2])
+    @test I_op1.data == I_op2.data == I_su1.data == I_su2.data
+    @test (I_op1 == I_op2) == false
+    @test (I_op1 == I_su1) == false
+    @test (I_op1 == I_su2) == false
+    @test (I_op2 == I_su1) == false
+    @test (I_op2 == I_su2) == false
+    @test (I_su1 == I_su2) == true
+    @test_throws DimensionMismatch qeye(4, dims = [2])
+    @test_throws DimensionMismatch qeye(2, type = SuperOperator)
+    @test_throws DimensionMismatch qeye(4, type = SuperOperator, dims = [2, 2])
 end

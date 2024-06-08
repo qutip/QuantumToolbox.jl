@@ -26,7 +26,6 @@ OperatorKet
 SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
-Qobj
 size
 eltype
 length
@@ -36,18 +35,34 @@ isoper
 isoperbra
 isoperket
 issuper
+LinearAlgebra.ishermitian
+LinearAlgebra.issymmetric
+LinearAlgebra.isposdef
 ```
 
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
 
 ```@docs
-sqrtm
-sinm
-cosm
+Base.conj
+LinearAlgebra.transpose
+LinearAlgebra.adjoint
+LinearAlgebra.dot
+LinearAlgebra.sqrt
+LinearAlgebra.log
+LinearAlgebra.exp
+LinearAlgebra.sin
+LinearAlgebra.cos
 LinearAlgebra.tr
 LinearAlgebra.svdvals
 LinearAlgebra.norm
+LinearAlgebra.normalize
+LinearAlgebra.normalize!
+LinearAlgebra.inv
+LinearAlgebra.diag
+proj
 ptrace
+purity
+permute
 tidyup
 tidyup!
 get_data
@@ -73,9 +88,6 @@ eigsolve_al
 ket2dm
 expect
 LinearAlgebra.kron
-tensor
-⊗
-permute
 sparse_to_dense
 dense_to_sparse
 vec2mat
@@ -106,13 +118,31 @@ create
 fdestroy
 fcreate
 eye
-qeye
 projection
 commutator
 spre
 spost
 sprepost
 lindblad_dissipator
+```
+
+## [Synonyms of functions for Qobj](@id doc-API:Synonyms-of-functions-for-Qobj)
+```@docs
+Qobj
+shape
+isherm
+trans
+dag
+matrix_element
+unit
+sqrtm
+logm
+expm
+sinm
+cosm
+tensor
+⊗
+qeye
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)

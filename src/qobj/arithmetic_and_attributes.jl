@@ -4,11 +4,9 @@ Arithmetic and Attributes for QuantumObject
     - export most of the attribute functions in "Python Qobj class"
 =#
 
-export sqrtm, sinm, cosm
-export ptrace
+export proj, ptrace, purity, permute
 export tidyup, tidyup!
 export get_data, get_coherence
-export permute
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
@@ -42,7 +40,8 @@ for op in (:(+), :(-), :(*))
             A::QuantumObject{<:AbstractArray{T1},OpType},
             B::QuantumObject{<:AbstractArray{T2},OpType},
         ) where {T1,T2,OpType<:QuantumObjectType}
-            A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+            A.dims != B.dims &&
+                throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
             return QuantumObject($(op)(A.data, B.data), A.type, A.dims)
         end
         LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject($(op)(A.data), A.type, A.dims)
@@ -58,56 +57,56 @@ function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, Ket, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},BraQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, Bra, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},BraQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, Operator, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},BraQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
     return A.data * B.data
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
     return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
     return A.data * B.data
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, OperatorKet, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, OperatorBra, A.dims)
 end
 
@@ -115,21 +114,77 @@ LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Num
     QuantumObject(^(A.data, n), A.type, A.dims)
 LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Number} =
     QuantumObject(/(A.data, n), A.type, A.dims)
+
+@doc raw"""
+    dot(A::QuantumObject, B::QuantumObject)
+
+Compute the dot product between two [`QuantumObject`]: ``\langle A | B \rangle``
+
+Note that `A` and `B` should be [`Ket`](@ref) or [`OperatorKet`](@ref)
+
+`A ⋅ B` (where `⋅` can be typed by tab-completing `\\cdot` in the REPL) is a synonym for `dot(A, B)`
+"""
 function LinearAlgebra.dot(
     A::QuantumObject{<:AbstractArray{T1},OpType},
     B::QuantumObject{<:AbstractArray{T2},OpType},
 ) where {T1<:Number,T2<:Number,OpType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
-    A.dims != B.dims && throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(A.data, B.data)
 end
 
+@doc raw"""
+    dot(i::QuantumObject, A::QuantumObject j::QuantumObject)
+
+Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | A | j \rangle``
+
+Supports the following inputs:
+- `A` is in the type of [`Operator`](@ref), with `i` and `j` are both [`Ket`](@ref).
+- `A` is in the type of [`SuperOperator`](@ref), with `i` and `j` are both [`OperatorKet`](@ref)
+"""
+function LinearAlgebra.dot(
+    i::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
+    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject},
+) where {T1<:Number,T2<:Number,T3<:Number}
+    ((i.dims != A.dims) || (A.dims != j.dims)) &&
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    return LinearAlgebra.dot(i.data, A.data, j.data)
+end
+function LinearAlgebra.dot(
+    i::QuantumObject{<:AbstractArray{T1},OperatorKetQuantumObject},
+    A::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
+    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject},
+) where {T1<:Number,T2<:Number,T3<:Number}
+    ((i.dims != A.dims) || (A.dims != j.dims)) &&
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    return LinearAlgebra.dot(i.data, A.data, j.data)
+end
+
+@doc raw"""
+    conj(A::QuantumObject)
+
+Return the element-wise complex conjugation of the [`QuantumObject`](@ref).
+"""
 Base.conj(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(conj(A.data), A.type, A.dims)
 
+@doc raw"""
+    transpose(A::QuantumObject)
+
+Lazy matrix transpose of the [`QuantumObject`](@ref).
+"""
 LinearAlgebra.transpose(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(transpose(A.data), A.type, A.dims)
 
+@doc raw"""
+    A'
+    adjoint(A::QuantumObject)
+
+Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
+
+Note that `A'` is a synonym for `adjoint(A)`
+"""
 LinearAlgebra.adjoint(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
@@ -143,6 +198,11 @@ LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObje
 LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorBraQuantumObject}) where {T} =
     QuantumObject(adjoint(A.data), OperatorKet, A.dims)
 
+@doc raw"""
+    inv(A::QuantumObject)
+
+Matrix inverse of the [`QuantumObject`](@ref)
+"""
 LinearAlgebra.inv(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
@@ -154,7 +214,7 @@ LinearAlgebra.Hermitian(
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(Hermitian(A.data, uplo), A.type, A.dims)
 
-"""
+@doc raw"""
     tr(A::QuantumObject})
 
 Returns the trace of `A`.
@@ -180,22 +240,20 @@ LinearAlgebra.tr(
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     ishermitian(A) ? real(tr(A.data)) : tr(A.data)
 
-"""
+@doc raw"""
     svdvals(A::QuantumObject)
 
 Return the singular values of a [`QuantumObject`](@ref) in descending order
 """
 LinearAlgebra.svdvals(A::QuantumObject{<:AbstractVector}) = svdvals(A.data)
-LinearAlgebra.svdvals(A::QuantumObject{<:DenseMatrix}) = svdvals(A.data)
+LinearAlgebra.svdvals(A::QuantumObject{<:AbstractMatrix}) = svdvals(A.data)
 LinearAlgebra.svdvals(A::QuantumObject{<:AbstractSparseMatrix}) = svdvals(sparse_to_dense(A.data))
 
-"""
-    norm(A::QuantumObject, p::Real=2)
+@doc raw"""
+    norm(A::QuantumObject, p::Real)
 
-If `A` is either [`Ket`](@ref), [`Bra`](@ref), [`OperatorKet`](@ref), or [`OperatorBra`](@ref), returns the standard vector `p`-norm of `A`.
-If `A` is either [`Operator`](@ref) or [`SuperOperator`](@ref), returns [Schatten](https://en.wikipedia.org/wiki/Schatten_norm) `p`-norm of `A`.
-
-Note that the default value of `p=2`
+If `A` is either [`Ket`](@ref), [`Bra`](@ref), [`OperatorKet`](@ref), or [`OperatorBra`](@ref), returns the standard vector `p`-norm (default `p=2`) of `A`.
+If `A` is either [`Operator`](@ref) or [`SuperOperator`](@ref), returns [Schatten](https://en.wikipedia.org/wiki/Schatten_norm) `p`-norm (default `p=1`) of `A`.
 
 # Examples
 
@@ -225,14 +283,47 @@ LinearAlgebra.norm(
     norm(A.data, p)
 function LinearAlgebra.norm(
     A::QuantumObject{<:AbstractArray{T},OpType},
-    p::Real = 2,
+    p::Real = 1,
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     p == 2.0 && return norm(A.data, 2)
     return norm(svdvals(A), p)
 end
-LinearAlgebra.normalize(A::QuantumObject{<:AbstractArray{T}}) where {T} =
-    QuantumObject(normalize(A.data), A.type, A.dims)
-LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T}}) where {T} = (normalize!(A.data); A)
+
+@doc raw"""
+    normalize(A::QuantumObject, p::Real)
+
+Return normalized [`QuantumObject`](@ref) so that its `p`-norm equals to unity, i.e. `norm(A, p) == 1`.
+
+Support for the following types of [`QuantumObject`](@ref):
+- If `A` is [`Ket`](@ref) or [`Bra`](@ref), default `p = 2`
+- If `A` is [`Operator`](@ref), default `p = 1`
+
+Also, see [`norm`](@ref) about its definition for different types of [`QuantumObject`](@ref).
+"""
+LinearAlgebra.normalize(
+    A::QuantumObject{<:AbstractArray{T},ObjType},
+    p::Real = 2,
+) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = QuantumObject(A.data / norm(A, p), A.type, A.dims)
+LinearAlgebra.normalize(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, p::Real = 1) where {T} =
+    QuantumObject(A.data / norm(A, p), A.type, A.dims)
+
+@doc raw"""
+    normalize!(A::QuantumObject, p::Real)
+
+Normalize [`QuantumObject`](@ref) in-place so that its `p`-norm equals to unity, i.e. `norm(A, p) == 1`.
+
+Support for the following types of [`QuantumObject`](@ref):
+- If `A` is [`Ket`](@ref) or [`Bra`](@ref), default `p = 2`
+- If `A` is [`Operator`](@ref), default `p = 1`
+
+Also, see [`norm`](@ref) about its definition for different types of [`QuantumObject`](@ref).
+"""
+LinearAlgebra.normalize!(
+    A::QuantumObject{<:AbstractArray{T},ObjType},
+    p::Real = 2,
+) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = (rmul!(A.data, 1 / norm(A)); A)
+LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, p::Real = 1) where {T} =
+    (rmul!(A.data, 1 / norm(A)); A)
 
 LinearAlgebra.triu!(
     A::QuantumObject{<:AbstractArray{T},OpType},
@@ -259,21 +350,41 @@ LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.dat
 @inline LinearAlgebra.mul!(y::AbstractVector{Ty}, A::QuantumObject{<:AbstractMatrix{Ta}}, x, α, β) where {Ty,Ta} =
     mul!(y, A.data, x, α, β)
 
+@doc raw"""
+    sqrt(A::QuantumObject)
+
+Square root of [`QuantumObject`](@ref)
+"""
 LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} =
     QuantumObject(sqrt(sparse_to_dense(A.data)), A.type, A.dims)
 
 @doc raw"""
-    sqrtm(A::QuantumObject)
+    log(A::QuantumObject)
 
-Matrix square root of [`Operator`](@ref) type of [`QuantumObject`](@ref)
+Matrix logarithm of [`QuantumObject`](@ref)
 
-Note that for other types of [`QuantumObject`](@ref) use `sprt(A)` instead.
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-sqrtm(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = sqrt(A)
+LinearAlgebra.log(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    QuantumObject(log(sparse_to_dense(A.data)), A.type, A.dims)
 
-LinearAlgebra.exp(A::QuantumObject{<:AbstractMatrix{T}}) where {T} =
+@doc raw"""
+    exp(A::QuantumObject)
+
+Matrix exponential of [`QuantumObject`](@ref)
+
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+"""
+LinearAlgebra.exp(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(dense_to_sparse(exp(A.data)), A.type, A.dims)
-LinearAlgebra.exp(A::QuantumObject{<:AbstractSparseMatrix{T}}) where {T} = QuantumObject(_spexp(A.data), A.type, A.dims)
+LinearAlgebra.exp(
+    A::QuantumObject{<:AbstractSparseMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    QuantumObject(_spexp(A.data), A.type, A.dims)
 
 function _spexp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20) where {T,M}
     m = checksquare(A) # Throws exception if not square
@@ -307,22 +418,50 @@ function _spexp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20)
 end
 
 @doc raw"""
-    sinm(O::QuantumObject)
+    sin(A::QuantumObject)
 
-Generates the sine of the operator `O`, defined as
+Matrix sine of [`QuantumObject`](@ref), defined as
 
-``\sin \left( \hat{O} \right) = \frac{e^{i \hat{O}} - e^{-i \hat{O}}}{2 i}``
+``\sin \left( \hat{A} \right) = \frac{e^{i \hat{A}} - e^{-i \hat{A}}}{2 i}``
+
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-sinm(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = -0.5im * (exp(1im * O) - exp(-1im * O))
+LinearAlgebra.sin(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) - exp(-1im * A)) / 2im
 
 @doc raw"""
-    cosm(O::QuantumObject)
+    cos(A::QuantumObject)
 
-Generates the cosine of the operator `O`, defined as
+Matrix cosine of [`QuantumObject`](@ref), defined as
 
-``\cos \left( \hat{O} \right) = \frac{e^{i \hat{O}} + e^{-i \hat{O}}}{2}``
+``\cos \left( \hat{A} \right) = \frac{e^{i \hat{A}} + e^{-i \hat{A}}}{2}``
+
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-cosm(O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = 0.5 * (exp(1im * O) + exp(-1im * O))
+LinearAlgebra.cos(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) + exp(-1im * A)) / 2
+
+@doc raw"""
+    diag(A::QuantumObject, k::Int=0)
+
+Return the `k`-th diagonal elements of a matrix-type [`QuantumObject`](@ref)
+
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+"""
+LinearAlgebra.diag(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+    k::Int = 0,
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = diag(A.data, k)
+
+@doc raw"""
+    proj(ψ::QuantumObject)
+
+Return the projector for a [`Ket`](@ref) or [`Bra`](@ref) type of [`QuantumObject`](@ref)
+"""
+proj(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * ψ'
+proj(ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} = ψ' * ψ
 
 @doc raw"""
     ptrace(QO::QuantumObject, sel::Vector{Int})
@@ -426,7 +565,18 @@ function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vecto
     return res, dkeep
 end
 
+@doc raw"""
+    purity(ρ::QuantumObject)
+
+Calculate the purity of a [`QuantumObject`](@ref): ``\textrm{Tr}(\rho^2)``
+
+Note that this function only supports for [`Ket`](@ref), [`Bra`](@ref), and [`Operator`](@ref)
 """
+purity(ρ::QuantumObject{<:AbstractArray{T},ObjType}) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} =
+    sum(abs2, ρ.data)
+purity(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = real(tr(ρ.data^2))
+
+@doc raw"""
     tidyup(A::QuantumObject, tol::Real=1e-14)
 
 Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
@@ -436,17 +586,17 @@ tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real}
 tidyup(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = @. T(abs(A) > tol) * A
 tidyup(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} = droptol!(copy(A), tol)
 
-"""
+@doc raw"""
     tidyup!(A::QuantumObject, tol::Real=1e-14)
 
 Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
-In-place version of [`tidyup`](#tidyup).
+In-place version of [`tidyup`](@ref).
 """
 tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} = (tidyup!(A.data, tol); A)
 tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = @. A = T(abs(A) > tol) * A
 tidyup!(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} = droptol!(A, tol)
 
-"""
+@doc raw"""
     get_data(A::QuantumObject)
 
 Returns the data of a QuantumObject.
