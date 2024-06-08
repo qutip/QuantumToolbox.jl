@@ -43,7 +43,7 @@ function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool = false)
     try
         mask[subsys] = true
     catch
-        error("Invalid index of subsys: $subsys")
+        throw(ArgumentError("Invalid index of subsys: $subsys"))
     end
 
     ρ_pt = partial_transpose(ρ, mask)
@@ -70,7 +70,7 @@ Return the partial transpose of a density matrix ``\rho``, where `mask` is an ar
 """
 function partial_transpose(ρ::QuantumObject{T,OperatorQuantumObject}, mask::Vector{Bool}) where {T}
     if length(mask) != length(ρ.dims)
-        error("The length of \`mask\` should be equal to the length of \`ρ.dims\`.")
+        throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
     end
     return _partial_transpose(ρ, mask)
 end
