@@ -88,8 +88,6 @@ eigsolve_al
 ket2dm
 expect
 LinearAlgebra.kron
-tensor
-⊗
 sparse_to_dense
 dense_to_sparse
 vec2mat
@@ -142,6 +140,8 @@ logm
 expm
 sinm
 cosm
+tensor
+⊗
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)

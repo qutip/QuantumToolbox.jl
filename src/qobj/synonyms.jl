@@ -5,6 +5,7 @@ Synonyms of the functions for QuantumObject
 export Qobj, isherm
 export trans, dag, matrix_element, unit
 export sqrtm, logm, expm, sinm, cosm
+export tensor, ⊗
 
 @doc raw"""
     Qobj(A::AbstractArray; type::QuantumObjectType, dims::Vector{Int})
@@ -141,3 +142,83 @@ Note that this function is same as `cos(A)` and only supports for [`Operator`](@
 cosm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
 ) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = cos(A)
+
+@doc raw"""
+    tensor(A::QuantumObject, B::QuantumObject, ...)
+
+Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B} \otimes \cdots``.
+
+Note that this function is same as `kron(A, B, ...)`
+
+# Examples
+
+```
+julia> x = sigmax()
+Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+2×2 SparseMatrixCSC{ComplexF64, Int64} with 2 stored entries:
+     ⋅      1.0+0.0im
+ 1.0+0.0im      ⋅
+
+julia> x_list = fill(x, 3);
+
+julia> tensor(x_list...)
+Quantum Object:   type=Operator   dims=[2, 2, 2]   size=(8, 8)   ishermitian=true
+8×8 SparseMatrixCSC{ComplexF64, Int64} with 8 stored entries:
+     ⋅          ⋅          ⋅      …      ⋅          ⋅      1.0+0.0im
+     ⋅          ⋅          ⋅             ⋅      1.0+0.0im      ⋅
+     ⋅          ⋅          ⋅         1.0+0.0im      ⋅          ⋅
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅
+     ⋅          ⋅      1.0+0.0im  …      ⋅          ⋅          ⋅
+     ⋅      1.0+0.0im      ⋅             ⋅          ⋅          ⋅
+ 1.0+0.0im      ⋅          ⋅             ⋅          ⋅          ⋅
+```
+"""
+tensor(A::QuantumObject...) = kron(A...)
+
+@doc raw"""
+    ⊗(A::QuantumObject, B::QuantumObject)
+
+Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B}``.
+
+Note that this function is same as `kron(A, B)`
+
+# Examples
+
+```
+julia> a = destroy(20)
+Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
+⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢
+
+julia> a ⊗ a
+Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=false
+400×400 SparseMatrixCSC{ComplexF64, Int64} with 361 stored entries:
+⠀⠀⠘⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠦
+```
+"""
+⊗(A::QuantumObject, B::QuantumObject) = kron(A, B)
