@@ -4,7 +4,7 @@ Functions for generating (common) quantum operators.
 
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
-export destroy, create, eye, qeye, projection
+export destroy, create, eye, projection
 export fdestroy, fcreate
 export commutator
 export spre, spost, sprepost, lindblad_dissipator
@@ -317,27 +317,20 @@ See also [`jmat`](@ref).
 sigmaz() = rmul!(jmat(0.5, Val(:z)), 2)
 
 @doc raw"""
-    eye(N::Int; type=OperatorQuantumObject, dims=[N])
+    eye(N::Int; type=Operator, dims=nothing)
 
-Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
+Identity operator ``\hat{\mathbb{1}}`` with size `N`.
+
+It is also possible to specify the list of Hilbert dimensions `dims` if different subsystems are present.
+
+Note that `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref)
 """
 eye(
     N::Int;
     type::ObjType = Operator,
-    dims::Vector{Int} = [N],
+    dims = nothing,
 ) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(Diagonal(ones(ComplexF64, N)), type, dims)
-
-@doc raw"""
-    qeye(N::Int; type=OperatorQuantumObject, dims=[N])
-
-Identity operator ``\hat{\mathbb{1}}`` with Hilbert dimension `N`.
-"""
-qeye(
-    N::Int;
-    type::ObjType = Operator,
-    dims::Vector{Int} = [N],
-) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eye(N, type = type, dims = dims)
+    QuantumObject(Diagonal(ones(ComplexF64, N)); type = type, dims = dims)
 
 @doc raw"""
     fdestroy(N::Int, j::Int)

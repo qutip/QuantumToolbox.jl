@@ -6,6 +6,7 @@ export Qobj, isherm
 export trans, dag, matrix_element, unit
 export sqrtm, logm, expm, sinm, cosm
 export tensor, ⊗
+export qeye
 
 @doc raw"""
     Qobj(A::AbstractArray; type::QuantumObjectType, dims::Vector{Int})
@@ -222,3 +223,19 @@ Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=
 ```
 """
 ⊗(A::QuantumObject, B::QuantumObject) = kron(A, B)
+
+@doc raw"""
+    qeye(N::Int; type=Operator, dims=nothing)
+
+Identity operator ``\hat{\mathbb{1}}`` with size `N`.
+
+It is also possible to specify the list of Hilbert dimensions `dims` if different subsystems are present.
+
+Note that this function is same as `eye(N, type=type, dims=dims)`, and type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref)
+"""
+qeye(
+    N::Int;
+    type::ObjType = Operator,
+    dims = nothing,
+) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    QuantumObject(Diagonal(ones(ComplexF64, N)); type = type, dims = dims)

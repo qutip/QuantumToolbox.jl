@@ -118,7 +118,6 @@ create
 fdestroy
 fcreate
 eye
-qeye
 projection
 commutator
 spre
@@ -142,6 +141,8 @@ sinm
 cosm
 tensor
 ⊗
+qeye
+identity
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)
