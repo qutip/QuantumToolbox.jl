@@ -1,3 +1,6 @@
+#! format: off
+# turns off the julia formatting of this file
+
 using QuantumToolbox
 using Documenter
 
