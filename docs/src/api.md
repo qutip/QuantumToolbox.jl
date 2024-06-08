@@ -129,6 +129,7 @@ lindblad_dissipator
 ## [Synonyms of functions for Qobj](@id doc-API:Synonyms-of-functions-for-Qobj)
 ```@docs
 Qobj
+shape
 isherm
 trans
 dag

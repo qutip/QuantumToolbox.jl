@@ -125,8 +125,8 @@
     @test proj(a) ≈ proj(a') ≈ sparse(ket2dm(a)) ≈ projection(N, 3, 3)
     @test isket(a') == false
     @test isbra(a') == true
-    @test size(a) == (N,)
-    @test size(a') == (1, N)
+    @test shape(a) == (N,)
+    @test shape(a') == (1, N)
     @test norm(a) ≈ 1
     @test norm(a') ≈ 1
 

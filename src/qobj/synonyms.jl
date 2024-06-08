@@ -2,7 +2,7 @@
 Synonyms of the functions for QuantumObject
 =#
 
-export Qobj, isherm
+export Qobj, shape, isherm
 export trans, dag, matrix_element, unit
 export sqrtm, logm, expm, sinm, cosm
 export tensor, ⊗
@@ -16,6 +16,15 @@ Generate `QuantumObject`
 Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`
 """
 Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
+
+@doc raw"""
+    shape(A::QuantumObject)
+
+Returns a tuple containing each dimensions of the array in the [`QuantumObject`](@ref).
+
+Note that this function is same as `size(A)`
+"""
+shape(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
 
 @doc raw"""
     isherm(A::QuantumObject)

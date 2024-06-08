@@ -270,11 +270,14 @@ end
 
 @doc raw"""
     size(A::QuantumObject)
+    size(A::QuantumObject, idx::Int)
 
-Returns the size of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
+Returns a tuple containing each dimensions of the array in the [`QuantumObject`](@ref).
+
+Optionally, you can specify an index (`idx`) to just get the corresponding dimension of the array.
 """
 Base.size(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
-Base.size(A::QuantumObject{<:AbstractArray{T}}, inds...) where {T} = size(A.data, inds...)
+Base.size(A::QuantumObject{<:AbstractArray{T}}, idx::Int) where {T} = size(A.data, idx)
 
 Base.getindex(A::QuantumObject{<:AbstractArray{T}}, inds...) where {T} = getindex(A.data, inds...)
 Base.setindex!(A::QuantumObject{<:AbstractArray{T}}, val, inds...) where {T} = setindex!(A.data, val, inds...)
