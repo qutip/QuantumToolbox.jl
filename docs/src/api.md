@@ -37,7 +37,6 @@ isoperbra
 isoperket
 issuper
 LinearAlgebra.ishermitian
-isherm
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
 ```
@@ -74,6 +73,7 @@ partial_transpose
 
 ## [Synonyms for Qobj attribute functions](@id doc-API:Synonyms-for-Qobj-attribute-functions)
 ```@docs
+isherm
 trans
 dag
 matrix_element

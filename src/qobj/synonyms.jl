@@ -1,9 +1,19 @@
 #=
-Synonyms for the attribute functions of QuantumObject
+Synonyms for the functions of QuantumObject
 =#
 
+export isherm
 export trans, dag, matrix_element, unit
 export sqrtm, logm, expm
+
+@doc raw"""
+    isherm(A::QuantumObject)
+
+Test whether the [`QuantumObject`](@ref) is Hermitian.
+
+Note that this functions is same as `ishermitian(A)`
+"""
+isherm(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A)
 
 @doc raw"""
     trans(A::QuantumObject)

@@ -3,7 +3,6 @@ All boolean functions for checking the data or type in `QuantumObject`
 =#
 
 export isket, isbra, isoper, isoperbra, isoperket, issuper
-export isherm
 
 @doc raw"""
     isbra(A::QuantumObject)
@@ -57,15 +56,6 @@ issuper(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObj
 Test whether the [`QuantumObject`](@ref) is Hermitian.
 """
 LinearAlgebra.ishermitian(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A.data)
-
-@doc raw"""
-    isherm(A::QuantumObject)
-
-Test whether the [`QuantumObject`](@ref) is Hermitian.
-
-Note that this functions is same as `ishermitian(A)`
-"""
-isherm(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A)
 
 @doc raw"""
     issymmetric(A::QuantumObject)
