@@ -118,9 +118,17 @@ end
 @doc raw"""
     liouvillian(H::QuantumObject, c_ops::AbstractVector, Id_cache=I(prod(H.dims))
 
-Construct the Liouvillian superoperator for a system Hamiltonian and a set of collapse operators:
-``\mathcal{L} \cdot = -i[\hat{H}, \cdot] + \sum_i \mathcal{D}[\hat{O}_i] \cdot``,
-where ``\mathcal{D}[\hat{O}_i] \cdot = \hat{O}_i \cdot \hat{O}_i^\dagger - \frac{1}{2} \hat{O}_i^\dagger \hat{O}_i \cdot - \frac{1}{2} \cdot \hat{O}_i^\dagger \hat{O}_i``.
+Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\hat{O}_i``:
+
+```math
+\mathcal{L} [\cdot] = -i[\hat{H}, \cdot] + \sum_i \mathcal{D}(\hat{O}_i) [\cdot]
+```
+
+where 
+
+```math
+\mathcal{D}(\hat{O}_i) [\cdot] = \hat{O}_i [\cdot] \hat{O}_i^\dagger - \frac{1}{2} \hat{O}_i^\dagger \hat{O}_i [\cdot] - \frac{1}{2} [\cdot] \hat{O}_i^\dagger \hat{O}_i
+```
 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
