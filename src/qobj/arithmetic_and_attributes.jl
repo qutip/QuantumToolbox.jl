@@ -4,7 +4,6 @@ Arithmetic and Attributes for QuantumObject
     - export most of the attribute functions in "Python Qobj class"
 =#
 
-export sinm, cosm
 export proj, ptrace, purity, permute
 export tidyup, tidyup!
 export get_data, get_coherence
@@ -419,30 +418,30 @@ function _spexp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20)
 end
 
 @doc raw"""
-    sinm(O::QuantumObject)
+    sin(A::QuantumObject)
 
-Generates the matrix sine of the operator `O`, defined as
+Matrix sine of [`QuantumObject`](@ref), defined as
 
-``\sin \left( \hat{O} \right) = \frac{e^{i \hat{O}} - e^{-i \hat{O}}}{2 i}``
+``\sin \left( \hat{A} \right) = \frac{e^{i \hat{A}} - e^{-i \hat{A}}}{2 i}``
 
-Note that this function only supports for [`Operator`](@ref)
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-sinm(
-    O::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * O) - exp(-1im * O)) / 2im
+LinearAlgebra.sin(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) - exp(-1im * A)) / 2im
 
 @doc raw"""
-    cosm(O::QuantumObject)
+    cos(A::QuantumObject)
 
-Generates the matrix cosine of the operator `O`, defined as
+Matrix cosine of [`QuantumObject`](@ref), defined as
 
-``\cos \left( \hat{O} \right) = \frac{e^{i \hat{O}} + e^{-i \hat{O}}}{2}``
+``\cos \left( \hat{A} \right) = \frac{e^{i \hat{A}} + e^{-i \hat{A}}}{2}``
 
-Note that this function only supports for [`Operator`](@ref)
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-cosm(
-    O::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * O) + exp(-1im * O)) / 2
+LinearAlgebra.cos(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) + exp(-1im * A)) / 2
 
 @doc raw"""
     diag(A::QuantumObject, k::Int=0)

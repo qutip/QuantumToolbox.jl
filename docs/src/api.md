@@ -51,6 +51,8 @@ LinearAlgebra.dot
 LinearAlgebra.sqrt
 LinearAlgebra.log
 LinearAlgebra.exp
+LinearAlgebra.sin
+LinearAlgebra.cos
 LinearAlgebra.tr
 LinearAlgebra.svdvals
 LinearAlgebra.norm
@@ -58,8 +60,6 @@ LinearAlgebra.normalize
 LinearAlgebra.normalize!
 LinearAlgebra.inv
 LinearAlgebra.diag
-sinm
-cosm
 proj
 ptrace
 purity
@@ -81,6 +81,8 @@ unit
 sqrtm
 logm
 expm
+sinm
+cosm
 ```
 
 ## [Qobj eigenvalues and eigenvectors](@id doc-API:Qobj-eigenvalues-and-eigenvectors)

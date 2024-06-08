@@ -1,10 +1,10 @@
 #=
-Synonyms for the functions of QuantumObject
+Synonyms of the functions for QuantumObject
 =#
 
 export isherm
 export trans, dag, matrix_element, unit
-export sqrtm, logm, expm
+export sqrtm, logm, expm, sinm, cosm
 
 @doc raw"""
     isherm(A::QuantumObject)
@@ -106,3 +106,29 @@ Note that this function is same as `exp(A)` and only supports for [`Operator`](@
 expm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
 ) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = exp(A)
+
+@doc raw"""
+    sinm(A::QuantumObject)
+
+Matrix sine of [`QuantumObject`](@ref), defined as
+
+``\sin \left( \hat{A} \right) = \frac{e^{i \hat{A}} - e^{-i \hat{A}}}{2 i}``
+
+Note that this function is same as `sin(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+"""
+sinm(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = sin(A)
+
+@doc raw"""
+    cosm(A::QuantumObject)
+
+Matrix cosine of [`QuantumObject`](@ref), defined as
+
+``\cos \left( \hat{A} \right) = \frac{e^{i \hat{A}} + e^{-i \hat{A}}}{2}``
+
+Note that this function is same as `cos(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+"""
+cosm(
+    A::QuantumObject{<:AbstractMatrix{T},ObjType},
+) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = cos(A)
