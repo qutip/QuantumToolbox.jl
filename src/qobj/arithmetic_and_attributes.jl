@@ -118,11 +118,11 @@ LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Num
 @doc raw"""
     dot(A::QuantumObject, B::QuantumObject)
 
-Compute the dot product between two [`QuantumObject`]: ``\langle A | B \rangle``
+Compute the dot product between two [`QuantumObject`](@ref): ``\langle A | B \rangle``
 
 Note that `A` and `B` should be [`Ket`](@ref) or [`OperatorKet`](@ref)
 
-`A ⋅ B` (where `⋅` can be typed by tab-completing `\\cdot` in the REPL) is a synonym for `dot(A, B)`
+`A ⋅ B` (where `⋅` can be typed by tab-completing `\cdot` in the REPL) is a synonym for `dot(A, B)`
 """
 function LinearAlgebra.dot(
     A::QuantumObject{<:AbstractArray{T1},OpType},
@@ -217,7 +217,9 @@ LinearAlgebra.Hermitian(
 @doc raw"""
     tr(A::QuantumObject})
 
-Returns the trace of `A`.
+Returns the trace of [`QuantumObject`](@ref).
+
+Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 
 # Examples
 
@@ -252,8 +254,10 @@ LinearAlgebra.svdvals(A::QuantumObject{<:AbstractSparseMatrix}) = svdvals(sparse
 @doc raw"""
     norm(A::QuantumObject, p::Real)
 
-If `A` is either [`Ket`](@ref), [`Bra`](@ref), [`OperatorKet`](@ref), or [`OperatorBra`](@ref), returns the standard vector `p`-norm (default `p=2`) of `A`.
-If `A` is either [`Operator`](@ref) or [`SuperOperator`](@ref), returns [Schatten](https://en.wikipedia.org/wiki/Schatten_norm) `p`-norm (default `p=1`) of `A`.
+Return the standard vector `p`-norm or [Schatten](https://en.wikipedia.org/wiki/Schatten_norm) `p`-norm of a [`QuantumObject`](@ref) depending on the type of `A`:
+
+- If `A` is either [`Ket`](@ref), [`Bra`](@ref), [`OperatorKet`](@ref), or [`OperatorBra`](@ref), returns the standard vector `p`-norm (default `p=2`) of `A`.
+- If `A` is either [`Operator`](@ref) or [`SuperOperator`](@ref), returns [Schatten](https://en.wikipedia.org/wiki/Schatten_norm) `p`-norm (default `p=1`) of `A`.
 
 # Examples
 
@@ -590,7 +594,8 @@ tidyup(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} = droptol
     tidyup!(A::QuantumObject, tol::Real=1e-14)
 
 Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
-In-place version of [`tidyup`](@ref).
+
+Note that this function is an in-place version of [`tidyup`](@ref).
 """
 tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} = (tidyup!(A.data, tol); A)
 tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = @. A = T(abs(A) > tol) * A
@@ -611,7 +616,7 @@ operator ``\hat{a}`` on the state ``\ket{\psi}``.
 
 It returns both ``\alpha`` and the state
 ``\ket{\delta_\psi} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger )``. The
-latter corresponds to the quantum fulctuations around the coherent state ``\ket{\alpha}``.
+latter corresponds to the quantum fluctuations around the coherent state ``\ket{\alpha}``.
 """
 function get_coherence(
     ψ::QuantumObject{<:AbstractArray{T},StateOpType},

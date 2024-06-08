@@ -117,7 +117,7 @@ const OperatorKet = OperatorKetQuantumObject()
         dims::Vector{Int}
     end
 
-Julia struct representing any quantum operator.
+Julia struct representing any quantum objects.
 
 # Examples
 
