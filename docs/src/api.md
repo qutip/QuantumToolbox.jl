@@ -143,7 +143,6 @@ cosm
 tensor
 ⊗
 qeye
-identity
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)
