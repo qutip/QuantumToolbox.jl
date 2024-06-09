@@ -39,10 +39,10 @@ The optional argument `Id_cache` can be used to pass a precomputed identity matr
 the same function is applied multiple times with a known Hilbert space dimension.
 """
 spre(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(A, 1))) where {T} =
-    QuantumObject(kron(Id_cache, A.data), SuperOperator, A.dims)
+    QuantumObject(kron(Id_cache, sparse(A.data)), SuperOperator, A.dims)
 
 @doc raw"""
-    spost(B::QuantumObject)
+    spost(B::QuantumObject, Id_cache=I(size(B,1)))
 
 Returns the [`SuperOperator`](@ref) form of `B` acting on the right of the density matrix operator: ``\mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{\rho} \hat{B}``.
 
@@ -56,7 +56,7 @@ The optional argument `Id_cache` can be used to pass a precomputed identity matr
 the same function is applied multiple times with a known Hilbert space dimension.
 """
 spost(B::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(B, 1))) where {T} =
-    QuantumObject(kron(sparse(transpose(sparse(B.data))), Id_cache), SuperOperator, B.dims) # TODO: fix the sparse conversion
+    QuantumObject(kron(transpose(sparse(B.data)), Id_cache), SuperOperator, B.dims)
 
 @doc raw"""
     sprepost(A::QuantumObject, B::QuantumObject)
@@ -68,11 +68,18 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 ```math
 \mathcal{O} \left(\hat{A}, \hat{B}\right) \left[ \hat{\rho} \right] = \hat{B}^T \otimes \hat{A} ~ |\hat{\rho}\rangle\rangle = \textrm{spre}(A) * \textrm{spost}(B) ~ |\hat{\rho}\rangle\rangle
 ```
+
+See also [`spre`](@ref) and [`spost`](@ref).
 """
-sprepost(
+function sprepost(
     A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {T1,T2} = QuantumObject(kron(sparse(transpose(sparse(B.data))), A.data), SuperOperator, A.dims) # TODO: fix the sparse conversion
+) where {T1,T2}
+    A.dims != B.dims &&
+        throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+
+    return QuantumObject(kron(transpose(sparse(B.data)), A.data), SuperOperator, A.dims)
+end
 
 @doc raw"""
     lindblad_dissipator(O::QuantumObject, Id_cache=I(size(O,1))
@@ -86,6 +93,8 @@ Returns the Lindblad [`SuperOperator`](@ref) defined as
 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
+
+See also [`spre`](@ref) and [`spost`](@ref).
 """
 function lindblad_dissipator(
     O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
