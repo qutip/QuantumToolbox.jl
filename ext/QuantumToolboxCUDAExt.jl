@@ -64,15 +64,15 @@ CuSparseMatrixCSR{T}(A::QuantumObject{<:SparseMatrixCSC}) where {T} =
     QuantumObject(CuSparseMatrixCSR{T}(A.data), A.type, A.dims)
 
 @doc raw"""
-    cu(A::QuantumObject; word_size::Int=32)
+    cu(A::QuantumObject; word_size::Int=64)
 
 Return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA` arrays for gpu calculations.
 
 # Arguments
 - `A::QuantumObject`: The [`QuantumObject`](@ref)
-- `word_size::Int`: The word size of the element type of `A`, can be either `32` or `64`. Default to `32`.
+- `word_size::Int`: The word size of the element type of `A`, can be either `32` or `64`. Default to `64`.
 """
-cu(A::QuantumObject; word_size::Int = 32) =
+cu(A::QuantumObject; word_size::Int = 64) =
     ((word_size == 64) || (word_size == 32)) ? cu(A, Val(word_size)) :
     throw(DomainError(word_size, "The word size should be 32 or 64."))
 cu(A::QuantumObject{T}, word_size::TW) where {T<:Union{Vector,Matrix},TW<:Union{Val{32},Val{64}}} =

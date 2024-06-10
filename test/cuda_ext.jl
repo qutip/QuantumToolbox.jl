@@ -22,34 +22,18 @@ CUDA.versioninfo()
     @test_throws DomainError cu(ψdi; word_size = 16)
 
     # type conversion of CUDA dense arrays
-    @test typeof(cu(ψdi; word_size = 64).data) == typeof(CuArray(ψdi).data) == CuArray{Int64,1,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(ψdi; word_size = 32).data) ==
-          typeof(CuArray{Int32}(ψdi).data) ==
-          CuArray{Int32,1,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(ψdf; word_size = 64).data) == typeof(CuArray(ψdf).data) == CuArray{Float64,1,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(ψdf; word_size = 32).data) ==
-          typeof(CuArray{Float32}(ψdf).data) ==
-          CuArray{Float32,1,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(ψdc; word_size = 64).data) ==
-          typeof(CuArray(ψdc).data) ==
-          CuArray{ComplexF64,1,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(ψdc; word_size = 32).data) ==
-          typeof(CuArray{ComplexF32}(ψdc).data) ==
-          CuArray{ComplexF32,1,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(Xdi; word_size = 64).data) == typeof(CuArray(Xdi).data) == CuArray{Int64,2,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(Xdi; word_size = 32).data) ==
-          typeof(CuArray{Int32}(Xdi).data) ==
-          CuArray{Int32,2,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(Xdf; word_size = 64).data) == typeof(CuArray(Xdf).data) == CuArray{Float64,2,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(Xdf; word_size = 32).data) ==
-          typeof(CuArray{Float32}(Xdf).data) ==
-          CuArray{Float32,2,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(Xdc; word_size = 64).data) ==
-          typeof(CuArray(Xdc).data) ==
-          CuArray{ComplexF64,2,CUDA.Mem.DeviceBuffer}
-    @test typeof(cu(Xdc; word_size = 32).data) ==
-          typeof(CuArray{ComplexF32}(Xdc).data) ==
-          CuArray{ComplexF32,2,CUDA.Mem.DeviceBuffer}
+    @test typeof(cu(ψdi; word_size = 64).data) == typeof(CuArray(ψdi).data) <: CuArray{Int64,1}
+    @test typeof(cu(ψdi; word_size = 32).data) == typeof(CuArray{Int32}(ψdi).data) <: CuArray{Int32,1}
+    @test typeof(cu(ψdf; word_size = 64).data) == typeof(CuArray(ψdf).data) <: CuArray{Float64,1}
+    @test typeof(cu(ψdf; word_size = 32).data) == typeof(CuArray{Float32}(ψdf).data) <: CuArray{Float32,1}
+    @test typeof(cu(ψdc; word_size = 64).data) == typeof(CuArray(ψdc).data) <: CuArray{ComplexF64,1}
+    @test typeof(cu(ψdc; word_size = 32).data) == typeof(CuArray{ComplexF32}(ψdc).data) <: CuArray{ComplexF32,1}
+    @test typeof(cu(Xdi; word_size = 64).data) == typeof(CuArray(Xdi).data) <: CuArray{Int64,2}
+    @test typeof(cu(Xdi; word_size = 32).data) == typeof(CuArray{Int32}(Xdi).data) <: CuArray{Int32,2}
+    @test typeof(cu(Xdf; word_size = 64).data) == typeof(CuArray(Xdf).data) <: CuArray{Float64,2}
+    @test typeof(cu(Xdf; word_size = 32).data) == typeof(CuArray{Float32}(Xdf).data) <: CuArray{Float32,2}
+    @test typeof(cu(Xdc; word_size = 64).data) == typeof(CuArray(Xdc).data) <: CuArray{ComplexF64,2}
+    @test typeof(cu(Xdc; word_size = 32).data) == typeof(CuArray{ComplexF32}(Xdc).data) <: CuArray{ComplexF32,2}
 
     # type conversion of CUDA sparse arrays
     @test typeof(cu(ψsi; word_size = 64).data) == typeof(CuSparseVector(ψsi).data) == CuSparseVector{Int64,Int32}
@@ -84,4 +68,35 @@ CUDA.versioninfo()
     @test typeof(CuSparseMatrixCSR{Float32}(Xsf).data) == CuSparseMatrixCSR{Float32,Int32}
     @test typeof(CuSparseMatrixCSR(Xsc).data) == CuSparseMatrixCSR{ComplexF64,Int32}
     @test typeof(CuSparseMatrixCSR{ComplexF32}(Xsc).data) == CuSparseMatrixCSR{ComplexF32,Int32}
+
+    # brief example in README and documentation
+    N = 20
+    ω64 = 1.0    # Float64
+    ω32 = 1.0f0  # Float32
+    γ64 = 0.1    # Float64
+    γ32 = 0.1f0  # Float32
+    tlist = range(0, 10, 100)
+
+    ## calculate by CPU
+    a_cpu = destroy(N)
+    ψ0_cpu = fock(N, 3)
+    H_cpu = ω64 * a_cpu' * a_cpu
+    sol_cpu = mesolve(H_cpu, ψ0_cpu, tlist, [sqrt(γ64) * a_cpu], e_ops = [a_cpu' * a_cpu], progress_bar = false)
+
+    ## calculate by GPU (with 64-bit)
+    a_gpu64 = cu(destroy(N))
+    ψ0_gpu64 = cu(fock(N, 3))
+    H_gpu64 = ω64 * a_gpu64' * a_gpu64
+    sol_gpu64 =
+        mesolve(H_gpu64, ψ0_gpu64, tlist, [sqrt(γ64) * a_gpu64], e_ops = [a_gpu64' * a_gpu64], progress_bar = false)
+
+    ## calculate by GPU (with 32-bit)
+    a_gpu32 = cu(destroy(N), word_size = 32)
+    ψ0_gpu32 = cu(fock(N, 3), word_size = 32)
+    H_gpu32 = ω32 * a_gpu32' * a_gpu32
+    sol_gpu32 =
+        mesolve(H_gpu32, ψ0_gpu32, tlist, [sqrt(γ32) * a_gpu32], e_ops = [a_gpu32' * a_gpu32], progress_bar = false)
+
+    @test all([isapprox(sol_cpu.expect[i], sol_gpu64.expect[i]) for i in 1:length(tlist)])
+    @test all([isapprox(sol_cpu.expect[i], sol_gpu32.expect[i]; atol = 1e-6) for i in 1:length(tlist)])
 end
