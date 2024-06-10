@@ -101,6 +101,7 @@ zero_ket
 fock
 basis
 coherent
+fock_dm
 rand_dm
 sigmap
 sigmam

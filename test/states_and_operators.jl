@@ -11,8 +11,8 @@
     @test v1.dims == [4]
     @test v2.dims == [2, 2]
 
-    # fock, basis
-    @test fock(4; dims = [2, 2], sparse = true) ≈ basis(4; dims = [2, 2])
+    # fock, basis, fock_dm
+    @test fock_dm(4; dims = [2, 2], sparse = true) ≈ ket2dm(basis(4; dims = [2, 2]))
     @test_throws DimensionMismatch fock(4; dims = [2])
 
     # rand_dm

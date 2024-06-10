@@ -3,7 +3,7 @@ Functions for generating (common) quantum states.
 =#
 
 export zero_ket, fock, basis, coherent
-export rand_dm
+export fock_dm, rand_dm
 
 @doc raw"""
     zero_ket(dimensions)
@@ -51,6 +51,18 @@ Generates a coherent state ``\ket{\alpha}``, which is defined as an eigenvector 
 function coherent(N::Real, α::T) where {T<:Number}
     a = destroy(N)
     return exp(α * a' - α' * a) * fock(N, 0)
+end
+
+@doc raw"""
+    fock_dm(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)
+
+Density matrix representation of a Fock state.
+
+Constructed via outer product of [`fock`](@ref).
+"""
+function fock_dm(N::Int, pos::Int = 0; dims::Vector{Int} = [N], sparse::Bool = false)
+    ψ = fock(N, pos; dims = dims, sparse = sparse)
+    return ψ * ψ'
 end
 
 @doc raw"""
