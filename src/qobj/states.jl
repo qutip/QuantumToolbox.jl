@@ -3,7 +3,7 @@ Functions for generating (common) quantum states.
 =#
 
 export zero_ket, fock, basis, coherent
-export fock_dm, coherent_dm, rand_dm
+export fock_dm, coherent_dm, thermal_dm, rand_dm
 
 @doc raw"""
     zero_ket(dimensions)
@@ -75,6 +75,20 @@ Constructed via outer product of [`coherent`](@ref).
 function coherent_dm(N::Int, α::T) where {T<:Number}
     ψ = coherent(N, α)
     return ψ * ψ'
+end
+
+@doc raw"""
+    thermal_dm(N::Int, n::Real)
+
+Density matrix for a thermal state (generating thermal state probabilities) with the following arguments:
+- `N::Int`: Number of basis states in the Hilbert space
+- `n::Real`: Expectation value for number of particles in the thermal state.
+"""
+function thermal_dm(N::Int, n::Real)
+    β = log(1.0 / n + 1.0)
+    N_list = Array{Float64}(0:N-1)
+    data = exp.(-β .* N_list)
+    return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator, [N])
 end
 
 @doc raw"""

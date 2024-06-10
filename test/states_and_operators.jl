@@ -24,6 +24,20 @@
     @test isoper(ρα)
     @test ket2dm(ψα) ≈ ρα
 
+    # thermal_dm
+    ρT = thermal_dm(5, 0.123)
+    @test isoper(ρT)
+    @test ρT.dims == [5]
+    @test ρT.data ≈ spdiagm(
+        0 => Float64[
+            0.8904859864731106,
+            0.09753319353178326,
+            0.010682620484781245,
+            0.0011700465891612583,
+            0.00012815292116369966,
+        ],
+    )
+
     # rand_dm
     ρ_AB = rand_dm(4, dims = [2, 2])
     ρ_A = ptrace(ρ_AB, 1)
