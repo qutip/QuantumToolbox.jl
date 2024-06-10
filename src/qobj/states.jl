@@ -4,7 +4,7 @@ Functions for generating (common) quantum states.
 
 export zero_ket, fock, basis, coherent
 export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
-export spin_state
+export spin_state, spin_coherent
 
 @doc raw"""
     zero_ket(dimensions)
@@ -141,4 +141,34 @@ function spin_state(j::Real, m::Real)
     (m < (-j)) && throw(ArgumentError("Invalid eigenvalue m, must satisfy: -j ≤ m ≤ j"))
 
     return basis(Int(J), Int(Δ))
+end
+
+@doc raw"""
+    spin_coherent(j::Real, θ::Real, ϕ::Real)
+
+Generate the coherent spin state (rotation of the ``|j, j\rangle`` state), namely
+
+```math
+|\theta, \phi \rangle = R(\theta, \phi) |j, j\rangle
+```
+
+where the rotation operator is defined as
+
+```math
+R(\theta, \phi) = \exp \left( \frac{\theta}{2} (S_- e^{i\phi} - S_+ e^{-i\phi}) \right)
+```
+
+# Arguments
+- `j::Real`: The spin quantum number and can be a non-negative integer or half-integer
+- `θ::Real`: rotation angle from z-axis
+- `ϕ::Real`: rotation angle from x-axis
+
+See also [`jmat`](@ref) and [`spin_state`](@ref).
+
+# Reference
+- [Robert Jones, Spin Coherent States and Statistical Physics](https://web.mit.edu/8.334/www/grades/projects/projects19/JonesRobert.pdf)
+"""
+function spin_coherent(j::Real, θ::Real, ϕ::Real)
+    Sm = jmat(j, Val(:-))
+    return exp(0.5 * θ * (Sm * exp(1im * ϕ) - Sm' * exp(-1im * ϕ))) * spin_state(j, j)
 end

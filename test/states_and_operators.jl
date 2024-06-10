@@ -110,6 +110,28 @@
     @test_throws ArgumentError spin_state(2.5, 3.5)
     @test_throws ArgumentError spin_state(2.5, -3.5)
 
+    # spin_coherent
+    ## spin-half (state in Bloch sphere)
+    s = 0.5
+    θ = π * rand()
+    ϕ = 2 * π * rand()
+    @test spin_coherent(s, θ, ϕ) ≈ cos(θ / 2) * basis(2, 0) + exp(1im * ϕ) * sin(θ / 2) * basis(2, 1)
+
+    ## also verify the equation in: 
+    ## Robert Jones, Spin Coherent States and Statistical Physics, page 3
+    s = 3.5
+    θ1 = π * rand()
+    θ2 = π * rand()
+    ϕ1 = 2 * π * rand()
+    ϕ2 = 2 * π * rand()
+    γ = rand()
+    Sz = spin_Jz(s)
+    n1 = spin_coherent(s, θ1, ϕ1)
+    n2 = spin_coherent(s, θ2, ϕ2)
+    @test dot(n1, n2) ≈ (cos(θ1 / 2) * cos(θ2 / 2) + exp(1im * (ϕ2 - ϕ1)) * sin(θ1 / 2) * sin(θ2 / 2))^(2 * s)
+    @test dot(n1, exp(-γ * Sz), n2) ≈
+          (exp(-γ / 2) * cos(θ1 / 2) * cos(θ2 / 2) + exp(1im * (ϕ2 - ϕ1) + γ / 2) * sin(θ1 / 2) * sin(θ2 / 2))^(2 * s)
+
     # test commutation relations for fermionic creation and annihilation operators
     sites = 4
     SIZE = 2^sites
