@@ -104,6 +104,7 @@ coherent
 fock_dm
 coherent_dm
 thermal_dm
+maximally_mixed_dm
 rand_dm
 sigmap
 sigmam

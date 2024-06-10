@@ -3,7 +3,7 @@ Functions for generating (common) quantum states.
 =#
 
 export zero_ket, fock, basis, coherent
-export fock_dm, coherent_dm, thermal_dm, rand_dm
+export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
 
 @doc raw"""
     zero_ket(dimensions)
@@ -89,6 +89,21 @@ function thermal_dm(N::Int, n::Real)
     N_list = Array{Float64}(0:N-1)
     data = exp.(-β .* N_list)
     return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator, [N])
+end
+
+@doc raw"""
+    maximally_mixed_dm(dimensions)
+
+Returns the maximally mixed density matrix with given argument `dimensions`.
+
+The `dimensions` can be either the following types:
+- `dimensions::Int`: Number of basis states in the Hilbert space.
+- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+"""
+maximally_mixed_dm(dimensions::Int) = QuantumObject(ones(dimensions) / dimensions, Operator, [dimensions])
+function maximally_mixed_dm(dimensions::Vector{Int})
+    N = prod(dimensions)
+    return QuantumObject(ones(N) / N, Operator, dimensions)
 end
 
 @doc raw"""

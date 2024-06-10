@@ -38,6 +38,18 @@
         ],
     )
 
+    # maximally_mixed_dm
+    ρ1 = maximally_mixed_dm(4)
+    ρ2 = maximally_mixed_dm([2, 2])
+    @test size(ρ1) == (4, 4)
+    @test size(ρ2) == (4, 4)
+    @test ρ1.data == ρ2.data
+    @test ρ1 != ρ2
+    @test isoper(ρ1)
+    @test isoper(ρ2)
+    @test ρ1.dims == [4]
+    @test ρ2.dims == [2, 2]
+
     # rand_dm
     ρ_AB = rand_dm(4, dims = [2, 2])
     ρ_A = ptrace(ρ_AB, 1)
