@@ -23,11 +23,13 @@
     @test isket(ψα)
     @test isoper(ρα)
     @test ket2dm(ψα) ≈ ρα
+    @test tr(ρα) ≈ 1.0
 
     # thermal_dm
     ρT = thermal_dm(5, 0.123)
     @test isoper(ρT)
     @test ρT.dims == [5]
+    @test tr(ρT) ≈ 1.0
     @test ρT.data ≈ spdiagm(
         0 => Float64[
             0.8904859864731106,
@@ -43,6 +45,7 @@
     ρ2 = maximally_mixed_dm([2, 2])
     @test size(ρ1) == (4, 4)
     @test size(ρ2) == (4, 4)
+    @test tr(ρ1) ≈ 1.0
     @test ρ1.data == ρ2.data
     @test ρ1 != ρ2
     @test isoper(ρ1)
