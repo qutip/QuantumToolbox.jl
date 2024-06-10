@@ -100,10 +100,10 @@ The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
 - `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
 """
-maximally_mixed_dm(dimensions::Int) = QuantumObject(ones(dimensions) / dimensions, Operator, [dimensions])
+maximally_mixed_dm(dimensions::Int) = QuantumObject(ones(dimensions, dimensions) / dimensions, Operator, [dimensions])
 function maximally_mixed_dm(dimensions::Vector{Int})
     N = prod(dimensions)
-    return QuantumObject(ones(N) / N, Operator, dimensions)
+    return QuantumObject(ones(N, N) / N, Operator, dimensions)
 end
 
 @doc raw"""
