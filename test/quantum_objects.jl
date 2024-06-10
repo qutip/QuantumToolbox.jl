@@ -364,9 +364,9 @@
     @test ket_bdca.dims == correct_dims
     @test bra_bdca.dims == correct_dims
     @test op_bdca.dims == correct_dims
-    @test typeof(ket_bdca.type) <: KetQuantumObject
-    @test typeof(bra_bdca.type) <: BraQuantumObject
-    @test typeof(op_bdca.type) <: OperatorQuantumObject
+    @test isket(ket_bdca)
+    @test isbra(bra_bdca)
+    @test isoper(op_bdca)
     @test_throws ArgumentError permute(ket_bdca, wrong_order1)
     @test_throws ArgumentError permute(ket_bdca, wrong_order2)
     @test_throws ArgumentError permute(bra_bdca, wrong_order1)

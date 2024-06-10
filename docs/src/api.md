@@ -97,6 +97,7 @@ mat2vec
 ## [Generate states and operators](@id doc-API:Generate-states-and-operators)
 
 ```@docs
+zero_ket
 fock
 basis
 coherent

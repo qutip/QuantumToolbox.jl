@@ -2,8 +2,20 @@
 Functions for generating (common) quantum states.
 =#
 
-export fock, basis, coherent
+export zero_ket, fock, basis, coherent
 export rand_dm
+
+@doc raw"""
+    zero_ket(dimensions)
+
+Returns a zero [`Ket`](@ref) vector with given argument `dimensions`.
+
+The `dimensions` can be either the following types:
+- `dimensions::Int`: Number of basis states in the Hilbert space.
+- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+"""
+zero_ket(dimensions::Int) = QuantumObject(zeros(dimensions), Ket, [dimensions])
+zero_ket(dimensions::Vector{Int}) = QuantumObject(zeros(prod(dimensions)), Ket, dimensions)
 
 @doc raw"""
     fock(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)

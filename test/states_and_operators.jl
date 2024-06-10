@@ -1,4 +1,16 @@
 @testset "States and Operators" begin
+    # zero_ket
+    v1 = zero_ket(4)
+    v2 = zero_ket([2, 2])
+    @test size(v1) == (4,)
+    @test size(v2) == (4,)
+    @test v1.data == v2.data
+    @test v1 != v2
+    @test isket(v1)
+    @test isket(v2)
+    @test v1.dims == [4]
+    @test v2.dims == [2, 2]
+
     # fock, basis
     @test fock(4; dims = [2, 2], sparse = true) ≈ basis(4; dims = [2, 2])
     @test_throws DimensionMismatch fock(4; dims = [2])
