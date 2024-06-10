@@ -106,6 +106,7 @@ coherent_dm
 thermal_dm
 maximally_mixed_dm
 rand_dm
+spin_state
 sigmap
 sigmam
 sigmax

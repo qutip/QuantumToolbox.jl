@@ -97,6 +97,19 @@
     @test commutator(Jy, Jx) ≈ -1im * Jz
     @test commutator(Jz, Jy) ≈ -1im * Jx
 
+    # spin_state
+    j = 3.5
+    Jz = spin_Jz(j)
+    for m in (-j):1:j
+        ψm = spin_state(j, m)
+        @test Jz * ψm ≈ m * ψm  # check eigenvalue
+    end
+    @test_throws ArgumentError spin_state(8.7, 8.7)
+    @test_throws ArgumentError spin_state(-1, 0)
+    @test_throws ArgumentError spin_state(2.5, 2)
+    @test_throws ArgumentError spin_state(2.5, 3.5)
+    @test_throws ArgumentError spin_state(2.5, -3.5)
+
     # test commutation relations for fermionic creation and annihilation operators
     sites = 4
     SIZE = 2^sites

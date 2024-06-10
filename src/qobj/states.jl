@@ -4,6 +4,7 @@ Functions for generating (common) quantum states.
 
 export zero_ket, fock, basis, coherent
 export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
+export spin_state
 
 @doc raw"""
     zero_ket(dimensions)
@@ -118,4 +119,26 @@ function rand_dm(N::Integer; dims::Vector{Int} = [N])
     ρ *= ρ'
     ρ /= tr(ρ)
     return QuantumObject(ρ; type = Operator, dims = dims)
+end
+
+@doc raw"""
+    spin_state(j::Real, m::Real)
+
+Generate the spin state: ``|j, m\rangle``
+
+The eigenstate of the Spin-`j` ``S_z`` operator with eigenvalue `m`, where where `j` is the spin quantum number and can be a non-negative integer or half-integer
+
+See also [`jmat`](@ref).
+"""
+function spin_state(j::Real, m::Real)
+    J = 2 * j + 1
+    ((floor(J) != J) || (j < 0)) &&
+        throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
+
+    Δ = j - m
+    ((floor(Δ) != Δ) || (Δ < 0)) &&
+        throw(ArgumentError("Invalid eigenvalue m: (j - m) must be a non-negative integer."))
+    (m < (-j)) && throw(ArgumentError("Invalid eigenvalue m, must satisfy: -j ≤ m ≤ j"))
+
+    return basis(Int(J), Int(Δ))
 end
