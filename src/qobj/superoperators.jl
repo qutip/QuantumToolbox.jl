@@ -5,9 +5,9 @@ Functions for generating (common) quantum super-operators.
 export spre, spost, sprepost, lindblad_dissipator
 
 # intrinsic functions for super-operators
+_spre(A::AbstractMatrix, Id::AbstractMatrix) = kron(Id, sparse(A))
+_spre(A::AbstractSparseMatrix, Id::AbstractMatrix) = kron(Id, A)
 if VERSION < v"1.10"
-    _spre(A::AbstractMatrix, Id::AbstractMatrix) = kron(Id, sparse(A))
-    _spre(A::AbstractSparseMatrix, Id::AbstractMatrix) = kron(Id, A)
     _spost(B::AbstractMatrix, Id::AbstractMatrix) = kron(sparse(transpose(sparse(B))), Id)
     _spost(B::AbstractSparseMatrix, Id::AbstractMatrix) = kron(sparse(transpose(B)), Id)
     _sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(sparse(transpose(sparse(B))), sparse(A))
@@ -15,8 +15,6 @@ if VERSION < v"1.10"
     _sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(sparse(transpose(sparse(B))), A)
     _sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(sparse(transpose(B)), A)
 else
-    _spre(A::AbstractMatrix, Id::AbstractMatrix) = kron(Id, sparse(A))
-    _spre(A::AbstractSparseMatrix, Id::AbstractMatrix) = kron(Id, A)
     _spost(B::AbstractMatrix, Id::AbstractMatrix) = kron(transpose(sparse(B)), Id)
     _spost(B::AbstractSparseMatrix, Id::AbstractMatrix) = kron(transpose(B), Id)
     _sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), sparse(A))
