@@ -7,7 +7,6 @@ export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection
 export fdestroy, fcreate
 export commutator
-export spre, spost, sprepost, lindblad_dissipator
 
 @doc raw"""
     commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
@@ -23,80 +22,6 @@ commutator(
     B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject};
     anti::Bool = false,
 ) where {T1,T2} = A * B - (-1)^anti * B * A
-
-@doc raw"""
-    spre(A::QuantumObject, Id_cache=I(size(A,1)))
-
-Returns the [`SuperOperator`](@ref) form of `A` acting on the left of the density matrix operator: ``\mathcal{O} \left(\hat{A}\right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho}``.
-
-Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{\mathbb{1}} \otimes \hat{A}``, namely 
-
-```math
-\mathcal{O} \left(\hat{A}\right) \left[ \hat{\rho} \right] = \hat{\mathbb{1}} \otimes \hat{A} ~ |\hat{\rho}\rangle\rangle
-```
-
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
-the same function is applied multiple times with a known Hilbert space dimension.
-"""
-spre(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(A, 1))) where {T} =
-    QuantumObject(kron(Id_cache, A.data), SuperOperator, A.dims)
-
-@doc raw"""
-    spost(B::QuantumObject)
-
-Returns the [`SuperOperator`](@ref) form of `B` acting on the right of the density matrix operator: ``\mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{\rho} \hat{B}``.
-
-Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{B}^T \otimes \hat{\mathbb{1}}``, namely
-
-```math
-\mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{B}^T \otimes \hat{\mathbb{1}} ~ |\hat{\rho}\rangle\rangle
-```
-
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
-the same function is applied multiple times with a known Hilbert space dimension.
-"""
-spost(B::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(B, 1))) where {T} =
-    QuantumObject(kron(sparse(transpose(sparse(B.data))), Id_cache), SuperOperator, B.dims) # TODO: fix the sparse conversion
-
-@doc raw"""
-    sprepost(A::QuantumObject, B::QuantumObject)
-
-Returns the [`SuperOperator`](@ref) form of `A` and `B` acting on the left and right of the density matrix operator, respectively: ``\mathcal{O} \left( \hat{A}, \hat{B} \right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho} \hat{B}``.
-
-Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{B}^T \otimes \hat{A}``, namely
-
-```math
-\mathcal{O} \left(\hat{A}, \hat{B}\right) \left[ \hat{\rho} \right] = \hat{B}^T \otimes \hat{A} ~ |\hat{\rho}\rangle\rangle = \textrm{spre}(A) * \textrm{spost}(B) ~ |\hat{\rho}\rangle\rangle
-```
-"""
-sprepost(
-    A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {T1,T2} = QuantumObject(kron(sparse(transpose(sparse(B.data))), A.data), SuperOperator, A.dims) # TODO: fix the sparse conversion
-
-@doc raw"""
-    lindblad_dissipator(O::QuantumObject, Id_cache=I(size(O,1))
-
-Returns the Lindblad [`SuperOperator`](@ref) defined as
-
-```math
-\mathcal{D} \left( \hat{O} \right) \left[ \hat{\rho} \right] = \frac{1}{2} \left( 2 \hat{O} \hat{\rho} \hat{O}^\dagger - 
-\hat{O}^\dagger \hat{O} \hat{\rho} - \hat{\rho} \hat{O}^\dagger \hat{O} \right)
-```
-
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
-the same function is applied multiple times with a known Hilbert space dimension.
-"""
-function lindblad_dissipator(
-    O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
-    Id_cache = I(size(O, 1)),
-) where {T}
-    Od_O = O' * O
-    return sprepost(O, O') - spre(Od_O, Id_cache) / 2 - spost(Od_O, Id_cache) / 2
-end
-
-# It is already a SuperOperator
-lindblad_dissipator(O::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject}, Id_cache) where {T} = O
 
 @doc raw"""
     destroy(N::Int)

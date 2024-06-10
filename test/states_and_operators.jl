@@ -88,4 +88,21 @@
     @test_throws DimensionMismatch qeye(4, dims = [2])
     @test_throws DimensionMismatch qeye(2, type = SuperOperator)
     @test_throws DimensionMismatch qeye(4, type = SuperOperator, dims = [2, 2])
+
+    # spre, spost, and sprepost
+    Xs = sigmax()
+    Xd = sparse_to_dense(Xs)
+    A_wrong1 = Qobj(rand(4, 4), dims = [4])
+    A_wrong2 = Qobj(rand(4, 4), dims = [2, 2])
+    A_wrong3 = Qobj(rand(3, 3))
+    @test (typeof(spre(Xd).data) <: SparseMatrixCSC) == true
+    @test (typeof(spre(Xs).data) <: SparseMatrixCSC) == true
+    @test (typeof(spost(Xd).data) <: SparseMatrixCSC) == true
+    @test (typeof(spost(Xs).data) <: SparseMatrixCSC) == true
+    @test (typeof(sprepost(Xd, Xd).data) <: SparseMatrixCSC) == true
+    @test (typeof(sprepost(Xs, Xs).data) <: SparseMatrixCSC) == true
+    @test (typeof(sprepost(Xs, Xd).data) <: SparseMatrixCSC) == true
+    @test (typeof(sprepost(Xd, Xs).data) <: SparseMatrixCSC) == true
+    @test_throws DimensionMismatch sprepost(A_wrong1, A_wrong2)
+    @test_throws DimensionMismatch sprepost(A_wrong1, A_wrong3)
 end
