@@ -3,7 +3,7 @@ Functions for generating (common) quantum states.
 =#
 
 export zero_ket, fock, basis, coherent
-export fock_dm, rand_dm
+export fock_dm, coherent_dm, rand_dm
 
 @doc raw"""
     zero_ket(dimensions)
