@@ -6,6 +6,17 @@ using Documenter
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
+const MathEngine = MathJax3(
+    Dict(
+        :loader => Dict("load" => ["[tex]/physics"]),
+        :tex => Dict(
+            "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
+            "tags" => "ams",
+            "packages" => ["base", "ams", "autoload", "physics"],
+        ),
+    )
+)
+
 const PAGES = [
     "Getting Started" => [
         "Introduction" => "index.md",
@@ -53,16 +64,8 @@ makedocs(;
         canonical = "https://qutip.github.io/QuantumToolbox.jl",
         edit_link = "main",
         assets = ["assets/favicon.ico"],
-        mathengine = MathJax3(
-            Dict(
-                :loader => Dict("load" => ["[tex]/physics"]),
-                :tex => Dict(
-                    "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
-                    "tags" => "ams",
-                    "packages" => ["base", "ams", "autoload", "physics"],
-                ),
-            ),
-        ),
+        mathengine = MathEngine,
+        size_threshold_ignore = ["api.md"],
     )
 )
 
