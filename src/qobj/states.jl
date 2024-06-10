@@ -44,11 +44,11 @@ It is also possible to specify the list of dimensions `dims` if different subsys
 basis(N::Int, pos::Int = 0; dims::Vector{Int} = [N]) = fock(N, pos, dims = dims)
 
 @doc raw"""
-    coherent(N::Real, α::Number)
+    coherent(N::Int, α::Number)
 
 Generates a coherent state ``\ket{\alpha}``, which is defined as an eigenvector of the bosonic annihilation operator ``\hat{a} \ket{\alpha} = \alpha \ket{\alpha}``.
 """
-function coherent(N::Real, α::T) where {T<:Number}
+function coherent(N::Int, α::T) where {T<:Number}
     a = destroy(N)
     return exp(α * a' - α' * a) * fock(N, 0)
 end
@@ -62,6 +62,18 @@ Constructed via outer product of [`fock`](@ref).
 """
 function fock_dm(N::Int, pos::Int = 0; dims::Vector{Int} = [N], sparse::Bool = false)
     ψ = fock(N, pos; dims = dims, sparse = sparse)
+    return ψ * ψ'
+end
+
+@doc raw"""
+    coherent_dm(N::Int, α::Number)
+
+Density matrix representation of a coherent state.
+
+Constructed via outer product of [`coherent`](@ref).
+"""
+function coherent(N::Int, α::T) where {T<:Number}
+    ψ = coherent(N, α)
     return ψ * ψ'
 end
 

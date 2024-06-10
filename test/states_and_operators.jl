@@ -15,6 +15,15 @@
     @test fock_dm(4; dims = [2, 2], sparse = true) ≈ ket2dm(basis(4; dims = [2, 2]))
     @test_throws DimensionMismatch fock(4; dims = [2])
 
+    # coherent, coherent_dm
+    N = 4
+    α = 0.25im
+    ψα = coherent(N, α)
+    ρα = coherent_dm(N, α)
+    @test isket(ψα)
+    @test isoper(ρα)
+    @test ket2dm(ψα) ≈ ρα
+
     # rand_dm
     ρ_AB = rand_dm(4, dims = [2, 2])
     ρ_A = ptrace(ρ_AB, 1)

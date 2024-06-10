@@ -102,6 +102,7 @@ fock
 basis
 coherent
 fock_dm
+coherent_dm
 rand_dm
 sigmap
 sigmam
