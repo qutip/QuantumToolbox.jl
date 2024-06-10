@@ -5,6 +5,7 @@ Functions for generating (common) quantum states.
 export zero_ket, fock, basis, coherent
 export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
 export spin_state, spin_coherent
+export bell_state, singlet_state, triplet_states
 
 @doc raw"""
     zero_ket(dimensions)
@@ -171,4 +172,68 @@ See also [`jmat`](@ref) and [`spin_state`](@ref).
 function spin_coherent(j::Real, θ::Real, ϕ::Real)
     Sm = jmat(j, Val(:-))
     return exp(0.5 * θ * (Sm * exp(1im * ϕ) - Sm' * exp(-1im * ϕ))) * spin_state(j, j)
+end
+
+@doc raw"""
+    bell_state(state::String="00")
+
+Return the corresponding Bell state:
+- `"00"`: ``( |00\rangle + |11\rangle ) / \sqrt{2}``
+- `"01"`: ``( |00\rangle - |11\rangle ) / \sqrt{2}``
+- `"10"`: ``( |01\rangle + |10\rangle ) / \sqrt{2}``
+- `"11"`: ``( |01\rangle - |10\rangle ) / \sqrt{2}``
+
+# Example
+
+```
+julia> bell_state("00")
+Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
+4-element Vector{ComplexF64}:
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 0.7071067811865475 + 0.0im
+```
+"""
+function bell_state(state::String = "00")
+    if state == "00"
+        data = ComplexF64[1, 0, 0, 1]
+
+    elseif state == "01"
+        data = ComplexF64[1, 0, 0, -1]
+
+    elseif state == "10"
+        data = ComplexF64[0, 1, 1, 0]
+
+    elseif state == "11"
+        data = ComplexF64[0, 1, -1, 0]
+    else
+        throw(ArgumentError("Invalid state: $(state)"))
+    end
+
+    return QuantumObject(data / sqrt(2), Ket, [2, 2])
+end
+
+@doc raw"""
+    singlet_state()
+
+Return the two particle singlet state: ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
+"""
+singlet_state() = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket, [2, 2])
+
+@doc raw"""
+    triplet_states()
+
+Return a list of the two particle triplet states: 
+
+- ``|11\rangle``
+- ``( |01\rangle + |10\rangle ) / \sqrt{2}``
+- ``|00\rangle``
+"""
+function triplet_states()
+    return QuantumObject[
+        QuantumObject(ComplexF64[0, 0, 0, 1], Ket, [2, 2]),
+        QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket, [2, 2]),
+        QuantumObject(ComplexF64[1, 0, 0, 0], Ket, [2, 2]),
+    ]
 end

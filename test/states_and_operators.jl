@@ -68,6 +68,25 @@
     @test all(eigenenergies(ρ_B) .>= 0)
     @test_throws DimensionMismatch rand_dm(4, dims = [2])
 
+    # bell_state, singlet_state, triplet_states
+    e0 = basis(2, 0)
+    e1 = basis(2, 1)
+    B00 = (e0 ⊗ e0 + e1 ⊗ e1) / √2
+    B01 = (e0 ⊗ e0 - e1 ⊗ e1) / √2
+    B10 = (e0 ⊗ e1 + e1 ⊗ e0) / √2
+    B11 = (e0 ⊗ e1 - e1 ⊗ e0) / √2
+    S = singlet_state()
+    T = triplet_states()
+    @test bell_state("00") == B00
+    @test bell_state("01") == B01
+    @test bell_state("10") == B10 == T[2]
+    @test bell_state("11") == B11 == S
+    @test T[1] == e1 ⊗ e1
+    @test T[3] == e0 ⊗ e0
+    @test_throws ArgumentError bell_state("")
+    @test_throws ArgumentError bell_state("0")
+    @test_throws ArgumentError bell_state("1")
+
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))
     Jx, Jy, Jz = spin_J_set(0.5)
