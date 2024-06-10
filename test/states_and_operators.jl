@@ -68,21 +68,27 @@
     @test all(eigenenergies(ρ_B) .>= 0)
     @test_throws DimensionMismatch rand_dm(4, dims = [2])
 
-    # bell_state, singlet_state, triplet_states
+    # bell_state, singlet_state, triplet_states, w_state, ghz_state
     e0 = basis(2, 0)
     e1 = basis(2, 1)
+    d0 = basis(3, 0)
+    d1 = basis(3, 1)
+    d2 = basis(3, 2)
     B00 = (e0 ⊗ e0 + e1 ⊗ e1) / √2
     B01 = (e0 ⊗ e0 - e1 ⊗ e1) / √2
     B10 = (e0 ⊗ e1 + e1 ⊗ e0) / √2
     B11 = (e0 ⊗ e1 - e1 ⊗ e0) / √2
     S = singlet_state()
     T = triplet_states()
-    @test bell_state("00") == B00
+    @test bell_state("00") == B00 == ghz_state(2)
     @test bell_state("01") == B01
-    @test bell_state("10") == B10 == T[2]
+    @test bell_state("10") == B10 == T[2] == w_state(2)
     @test bell_state("11") == B11 == S
     @test T[1] == e1 ⊗ e1
     @test T[3] == e0 ⊗ e0
+    @test w_state(3) == (e0 ⊗ e0 ⊗ e1 + e0 ⊗ e1 ⊗ e0 + e1 ⊗ e0 ⊗ e0) / √3
+    @test ghz_state(3) == (e0 ⊗ e0 ⊗ e0 + e1 ⊗ e1 ⊗ e1) / √2
+    @test ghz_state(3; d = 3) == (d0 ⊗ d0 ⊗ d0 + d1 ⊗ d1 ⊗ d1 + d2 ⊗ d2 ⊗ d2) / √3
     @test_throws ArgumentError bell_state("")
     @test_throws ArgumentError bell_state("0")
     @test_throws ArgumentError bell_state("1")

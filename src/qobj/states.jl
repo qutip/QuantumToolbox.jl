@@ -5,7 +5,7 @@ Functions for generating (common) quantum states.
 export zero_ket, fock, basis, coherent
 export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
 export spin_state, spin_coherent
-export bell_state, singlet_state, triplet_states
+export bell_state, singlet_state, triplet_states, w_state, ghz_state
 
 @doc raw"""
     zero_ket(dimensions)
@@ -236,4 +236,36 @@ function triplet_states()
         QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket, [2, 2]),
         QuantumObject(ComplexF64[1, 0, 0, 0], Ket, [2, 2]),
     ]
+end
+
+@doc raw"""
+    w_state(n::Int)
+
+Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
+
+```math
+\frac{1}{\sqrt{n}} \left( |100...0\rangle + |010...0\rangle + \cdots + |00...01\rangle \right)
+```
+"""
+function w_state(n::Int)
+    nzind = 2 .^ (0:(n-1)) .+ 1
+    nzval = fill(ComplexF64(1 / sqrt(n)), n)
+    return QuantumObject(SparseVector(2^n, nzind, nzval), Ket, fill(2, n))
+end
+
+@doc raw"""
+    ghz_state(n::Int; d::Int=2)
+
+Returns the generalized `n`-qudit [Greenberger–Horne–Zeilinger (GHZ) state](https://en.wikipedia.org/wiki/Greenberger%E2%80%93Horne%E2%80%93Zeilinger_state):
+
+```math
+\frac{1}{\sqrt{d}} \sum_{i=0}^{d-1} | i \rangle \otimes \cdots \otimes | i \rangle
+```
+
+Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
+"""
+function ghz_state(n::Int; d::Int = 2)
+    nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
+    nzval = ones(ComplexF64, d) / sqrt(d)
+    return QuantumObject(SparseVector(d^n, nzind, nzval), Ket, fill(d, n))
 end

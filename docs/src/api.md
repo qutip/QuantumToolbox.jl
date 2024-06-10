@@ -111,6 +111,8 @@ spin_coherent
 bell_state
 singlet_state
 triplet_states
+w_state
+ghz_state
 sigmap
 sigmam
 sigmax
