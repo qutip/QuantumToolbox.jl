@@ -72,7 +72,7 @@ Density matrix representation of a coherent state.
 
 Constructed via outer product of [`coherent`](@ref).
 """
-function coherent(N::Int, α::T) where {T<:Number}
+function coherent_dm(N::Int, α::T) where {T<:Number}
     ψ = coherent(N, α)
     return ψ * ψ'
 end
