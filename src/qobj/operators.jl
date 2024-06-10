@@ -178,41 +178,41 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
 jmat(j::Real, which::Symbol) = jmat(j, Val(which))
 jmat(j::Real) = (jmat(j, Val(:x)), jmat(j, Val(:y)), jmat(j, Val(:z)))
 function jmat(j::Real, ::Val{:x})
-    N = 2 * j
-    ((floor(N) != (N)) || (j < 0)) &&
-        throw(ArgumentError("The spin quantum number (j) j must be a non-negative integer or half-integer."))
+    J = 2 * j + 1
+    ((floor(J) != J) || (j < 0)) &&
+        throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
     σ = _jm(j)
-    return QuantumObject((σ' + σ) / 2, Operator, [Int(N + 1)])
+    return QuantumObject((σ' + σ) / 2, Operator, [Int(J)])
 end
 function jmat(j::Real, ::Val{:y})
-    N = 2 * j
-    ((floor(N) != (N)) || (j < 0)) &&
-        throw(ArgumentError("The spin quantum number (j) j must be a non-negative integer or half-integer."))
+    J = 2 * j + 1
+    ((floor(J) != J) || (j < 0)) &&
+        throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
     σ = _jm(j)
-    return QuantumObject((σ' - σ) / 2im, Operator, [Int(N + 1)])
+    return QuantumObject((σ' - σ) / 2im, Operator, [Int(J)])
 end
 function jmat(j::Real, ::Val{:z})
-    N = 2 * j
-    ((floor(N) != (N)) || (j < 0)) &&
-        throw(ArgumentError("The spin quantum number (j) j must be a non-negative integer or half-integer."))
+    J = 2 * j + 1
+    ((floor(J) != J) || (j < 0)) &&
+        throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
-    return QuantumObject(_jz(j), Operator, [Int(N + 1)])
+    return QuantumObject(_jz(j), Operator, [Int(J)])
 end
 function jmat(j::Real, ::Val{:+})
-    N = 2 * j
-    ((floor(N) != (N)) || (j < 0)) &&
-        throw(ArgumentError("The spin quantum number (j) j must be a non-negative integer or half-integer."))
+    J = 2 * j + 1
+    ((floor(J) != J) || (j < 0)) &&
+        throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
-    return QuantumObject(adjoint(_jm(j)), Operator, [Int(N + 1)])
+    return QuantumObject(adjoint(_jm(j)), Operator, [Int(J)])
 end
 function jmat(j::Real, ::Val{:-})
-    N = 2 * j
-    ((floor(N) != (N)) || (j < 0)) &&
-        throw(ArgumentError("The spin quantum number (j) j must be a non-negative integer or half-integer."))
+    J = 2 * j + 1
+    ((floor(J) != J) || (j < 0)) &&
+        throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
-    return QuantumObject(_jm(j), Operator, [Int(N + 1)])
+    return QuantumObject(_jm(j), Operator, [Int(J)])
 end
 jmat(j::Real, ::Val{T}) where {T} = throw(ArgumentError("Invalid spin operator: $(T)"))
 
