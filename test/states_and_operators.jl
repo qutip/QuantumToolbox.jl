@@ -80,18 +80,18 @@
     B11 = (e0 ⊗ e1 - e1 ⊗ e0) / √2
     S = singlet_state()
     T = triplet_states()
-    @test bell_state("00") == B00 == ghz_state(2)
-    @test bell_state("01") == B01
-    @test bell_state("10") == B10 == T[2] == w_state(2)
-    @test bell_state("11") == B11 == S
+    @test bell_state(0, 0) == B00 == ghz_state(2)
+    @test bell_state(0, 1) == B01
+    @test bell_state(1, 0) == B10 == T[2] == w_state(2)
+    @test bell_state(1, 1) == B11 == S
     @test T[1] == e1 ⊗ e1
     @test T[3] == e0 ⊗ e0
     @test w_state(3) == (e0 ⊗ e0 ⊗ e1 + e0 ⊗ e1 ⊗ e0 + e1 ⊗ e0 ⊗ e0) / √3
     @test ghz_state(3) == (e0 ⊗ e0 ⊗ e0 + e1 ⊗ e1 ⊗ e1) / √2
     @test ghz_state(3; d = 3) == (d0 ⊗ d0 ⊗ d0 + d1 ⊗ d1 ⊗ d1 + d2 ⊗ d2 ⊗ d2) / √3
-    @test_throws ArgumentError bell_state("")
-    @test_throws ArgumentError bell_state("0")
-    @test_throws ArgumentError bell_state("1")
+    @test_throws ArgumentError bell_state(0, 2)
+    @test_throws ArgumentError bell_state(3, 1)
+    @test_throws ArgumentError bell_state(2, 3)
 
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))

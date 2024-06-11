@@ -175,18 +175,20 @@ function spin_coherent(j::Real, θ::Real, ϕ::Real)
 end
 
 @doc raw"""
-    bell_state(state::String="00")
+    bell_state(x::Int, z::Int)
 
-Return the corresponding Bell state:
-- `"00"`: ``( |00\rangle + |11\rangle ) / \sqrt{2}``
-- `"01"`: ``( |00\rangle - |11\rangle ) / \sqrt{2}``
-- `"10"`: ``( |01\rangle + |10\rangle ) / \sqrt{2}``
-- `"11"`: ``( |01\rangle - |10\rangle ) / \sqrt{2}``
+Return the [Bell state](https://en.wikipedia.org/wiki/Bell_state) depending on the arguments `(x, z)`:
+- `(0, 0)`: ``| \Phi^+ \rangle = ( |00\rangle + |11\rangle ) / \sqrt{2}``
+- `(0, 1)`: ``| \Phi^- \rangle = ( |00\rangle - |11\rangle ) / \sqrt{2}``
+- `(1, 0)`: ``| \Psi^+ \rangle = ( |01\rangle + |10\rangle ) / \sqrt{2}``
+- `(1, 1)`: ``| \Psi^- \rangle = ( |01\rangle - |10\rangle ) / \sqrt{2}``
+
+Here, `x = 1` (`z = 1`) means applying Pauli-``X`` ( Pauli-``Z``) unitary transformation on ``| \Phi^+ \rangle``.
 
 # Example
 
 ```
-julia> bell_state("00")
+julia> bell_state(0, 0)
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
@@ -195,24 +197,12 @@ Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
  0.7071067811865475 + 0.0im
 ```
 """
-function bell_state(state::String = "00")
-    if state == "00"
-        data = ComplexF64[1, 0, 0, 1]
-
-    elseif state == "01"
-        data = ComplexF64[1, 0, 0, -1]
-
-    elseif state == "10"
-        data = ComplexF64[0, 1, 1, 0]
-
-    elseif state == "11"
-        data = ComplexF64[0, 1, -1, 0]
-    else
-        throw(ArgumentError("Invalid state: $(state)"))
-    end
-
-    return QuantumObject(data / sqrt(2), Ket, [2, 2])
-end
+bell_state(x::Int, z::Int) = bell_state(Val(x), Val(z))
+bell_state(::Val{0}, ::Val{0}) = QuantumObject(ComplexF64[1, 0, 0, 1] / sqrt(2), Ket, [2, 2])
+bell_state(::Val{0}, ::Val{1}) = QuantumObject(ComplexF64[1, 0, 0, -1] / sqrt(2), Ket, [2, 2])
+bell_state(::Val{1}, ::Val{0}) = QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket, [2, 2])
+bell_state(::Val{1}, ::Val{1}) = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket, [2, 2])
+bell_state(::Val{T1}, ::Val{T2}) where {T1,T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
 
 @doc raw"""
     singlet_state()

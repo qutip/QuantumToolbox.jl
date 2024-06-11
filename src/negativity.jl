@@ -18,7 +18,7 @@ and ``\Vert X \Vert_1=\textrm{Tr}\sqrt{X^\dagger X}`` is the trace norm.
 # Examples
 
 ```
-julia> Ψ = bell_state("00")
+julia> Ψ = bell_state(0, 0)
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
