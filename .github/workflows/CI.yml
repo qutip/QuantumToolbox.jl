@@ -30,11 +30,11 @@ jobs:
       matrix:
         # for core tests (latest and oldest supported versions)
         version:
-          - '1.7'
-          - '1.10'
+          - '1.7'  # oldest
+          - '1'    # latest
         os:
           - ubuntu-latest
-          - macOS-latest
+          - macOS-latest-large # intel chip
           - windows-latest
         arch:
           - x64
@@ -50,6 +50,12 @@ jobs:
           - version: '1.9'
             os: 'ubuntu-latest'
             arch: 'x64'
+            group: 'Core'
+
+          # for core tests on macOS M-series chip
+          - version: '1'
+            os: 'macOS-latest-xlarge'
+            arch: 'arm64'
             group: 'Core'
 
           # for code quality tests
