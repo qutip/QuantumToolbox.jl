@@ -34,7 +34,7 @@ jobs:
           - '1'    # latest
         os:
           - ubuntu-latest
-          - macOS-latest-large # intel chip
+          - macOS-13 # intel chip
           - windows-latest
         arch:
           - x64
@@ -54,7 +54,7 @@ jobs:
 
           # for core tests on macOS M-series chip
           - version: '1'
-            os: 'macOS-latest-xlarge'
+            os: 'macOS-latest'
             arch: 'arm64'
             group: 'Core'
 
