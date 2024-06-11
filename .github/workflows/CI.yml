@@ -34,7 +34,6 @@ jobs:
           - '1'    # latest
         os:
           - ubuntu-latest
-          - macOS-13 # intel chip
           - windows-latest
         arch:
           - x64
@@ -42,6 +41,20 @@ jobs:
           - Core
 
         include:
+          # for core tests on macOS
+          - version: '1.7'      # oldest
+            os: 'macOS-latest'  # M-series chip
+            arch: 'arm64'
+            group: 'Core'
+          - version: '1'        # latest
+            os: 'macOS-latest'  # M-series chip
+            arch: 'arm64'
+            group: 'Core'
+          - version: '1'        # latest
+            os: 'macOS-13'      # Intel chip
+            arch: 'x64'
+            group: 'Core'
+
           # for core tests (intermediate versions)
           - version: '1.8'
             os: 'ubuntu-latest'
@@ -50,12 +63,6 @@ jobs:
           - version: '1.9'
             os: 'ubuntu-latest'
             arch: 'x64'
-            group: 'Core'
-
-          # for core tests on macOS M-series chip
-          - version: '1'
-            os: 'macOS-latest'
-            arch: 'arm64'
             group: 'Core'
 
           # for code quality tests
