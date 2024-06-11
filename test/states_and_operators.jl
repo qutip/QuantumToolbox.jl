@@ -26,11 +26,12 @@
     @test tr(ρα) ≈ 1.0
 
     # thermal_dm
-    ρT = thermal_dm(5, 0.123)
-    @test isoper(ρT)
-    @test ρT.dims == [5]
-    @test tr(ρT) ≈ 1.0
-    @test ρT.data ≈ spdiagm(
+    ρTd = thermal_dm(5, 0.123)
+    ρTs = thermal_dm(5, 0.123; sparse = true)
+    @test isoper(ρTd)
+    @test ρTd.dims == [5]
+    @test tr(ρTd) ≈ 1.0
+    @test ρTd.data ≈ spdiagm(
         0 => Float64[
             0.8904859864731106,
             0.09753319353178326,
@@ -39,6 +40,8 @@
             0.00012815292116369966,
         ],
     )
+    @test typeof(ρTs.data) <: AbstractSparseMatrix
+    @test ρTd ≈ ρTs
 
     # maximally_mixed_dm
     ρ1 = maximally_mixed_dm(4)
@@ -52,6 +55,7 @@
     @test isoper(ρ2)
     @test ρ1.dims == [4]
     @test ρ2.dims == [2, 2]
+    @test entropy_vn(ρ1, base = 2) ≈ log(2, 4)
 
     # rand_dm
     ρ_AB = rand_dm(4, dims = [2, 2])

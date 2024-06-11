@@ -80,17 +80,21 @@ function coherent_dm(N::Int, α::T) where {T<:Number}
 end
 
 @doc raw"""
-    thermal_dm(N::Int, n::Real)
+    thermal_dm(N::Int, n::Real; sparse::Bool=false)
 
 Density matrix for a thermal state (generating thermal state probabilities) with the following arguments:
 - `N::Int`: Number of basis states in the Hilbert space
 - `n::Real`: Expectation value for number of particles in the thermal state.
 """
-function thermal_dm(N::Int, n::Real)
+function thermal_dm(N::Int, n::Real; sparse::Bool = false)
     β = log(1.0 / n + 1.0)
     N_list = Array{Float64}(0:N-1)
     data = exp.(-β .* N_list)
-    return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator, [N])
+    if sparse
+        return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator, [N])
+    else
+        return QuantumObject(diagm(0 => data ./ sum(data)), Operator, [N])
+    end
 end
 
 @doc raw"""
@@ -102,10 +106,10 @@ The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
 - `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
 """
-maximally_mixed_dm(dimensions::Int) = QuantumObject(ones(dimensions, dimensions) / dimensions, Operator, [dimensions])
+maximally_mixed_dm(dimensions::Int) = QuantumObject(I(dimensions) / complex(dimensions), Operator, [dimensions])
 function maximally_mixed_dm(dimensions::Vector{Int})
     N = prod(dimensions)
-    return QuantumObject(ones(N, N) / N, Operator, dimensions)
+    return QuantumObject(I(N) / complex(N), Operator, dimensions)
 end
 
 @doc raw"""
