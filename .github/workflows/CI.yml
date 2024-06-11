@@ -30,11 +30,10 @@ jobs:
       matrix:
         # for core tests (latest and oldest supported versions)
         version:
-          - '1.7'
-          - '1.10'
+          - '1.7'  # oldest
+          - '1'    # latest
         os:
           - ubuntu-latest
-          - macOS-latest
           - windows-latest
         arch:
           - x64
@@ -42,6 +41,16 @@ jobs:
           - Core
 
         include:
+          # for core tests on macOS
+          - version: '1.7'      # oldest (julia v1.7 does not support M-series chip)
+            os: 'macOS-13'      # Intel chip
+            arch: 'x64'
+            group: 'Core'
+          - version: '1'        # latest
+            os: 'macOS-latest'  # M-series chip
+            arch: 'arm64'
+            group: 'Core'
+
           # for core tests (intermediate versions)
           - version: '1.8'
             os: 'ubuntu-latest'
@@ -73,7 +82,8 @@ jobs:
         with:
           directories: src,ext
       - uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           files: lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false
