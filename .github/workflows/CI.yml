@@ -42,17 +42,13 @@ jobs:
 
         include:
           # for core tests on macOS
-          - version: '1.7'      # oldest
-            os: 'macOS-latest'  # M-series chip
-            arch: 'arm64'
-            group: 'Core'
-          - version: '1'        # latest
-            os: 'macOS-latest'  # M-series chip
-            arch: 'arm64'
-            group: 'Core'
-          - version: '1'        # latest
+          - version: '1.7'      # oldest (julia v1.7 does not support M-series chip)
             os: 'macOS-13'      # Intel chip
             arch: 'x64'
+            group: 'Core'
+          - version: '1'        # latest
+            os: 'macOS-latest'  # M-series chip
+            arch: 'arm64'
             group: 'Core'
 
           # for core tests (intermediate versions)
