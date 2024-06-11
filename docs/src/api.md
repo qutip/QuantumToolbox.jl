@@ -97,10 +97,22 @@ mat2vec
 ## [Generate states and operators](@id doc-API:Generate-states-and-operators)
 
 ```@docs
+zero_ket
 fock
 basis
 coherent
+fock_dm
+coherent_dm
+thermal_dm
+maximally_mixed_dm
 rand_dm
+spin_state
+spin_coherent
+bell_state
+singlet_state
+triplet_states
+w_state
+ghz_state
 sigmap
 sigmam
 sigmax

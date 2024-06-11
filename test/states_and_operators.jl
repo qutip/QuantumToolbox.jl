@@ -1,7 +1,61 @@
 @testset "States and Operators" begin
-    # fock, basis
-    @test fock(4; dims = [2, 2], sparse = true) ≈ basis(4; dims = [2, 2])
+    # zero_ket
+    v1 = zero_ket(4)
+    v2 = zero_ket([2, 2])
+    @test size(v1) == (4,)
+    @test size(v2) == (4,)
+    @test v1.data == v2.data
+    @test v1 != v2
+    @test isket(v1)
+    @test isket(v2)
+    @test v1.dims == [4]
+    @test v2.dims == [2, 2]
+
+    # fock, basis, fock_dm
+    @test fock_dm(4; dims = [2, 2], sparse = true) ≈ ket2dm(basis(4; dims = [2, 2]))
     @test_throws DimensionMismatch fock(4; dims = [2])
+
+    # coherent, coherent_dm
+    N = 4
+    α = 0.25im
+    ψα = coherent(N, α)
+    ρα = coherent_dm(N, α)
+    @test isket(ψα)
+    @test isoper(ρα)
+    @test ket2dm(ψα) ≈ ρα
+    @test tr(ρα) ≈ 1.0
+
+    # thermal_dm
+    ρTd = thermal_dm(5, 0.123)
+    ρTs = thermal_dm(5, 0.123; sparse = true)
+    @test isoper(ρTd)
+    @test ρTd.dims == [5]
+    @test tr(ρTd) ≈ 1.0
+    @test ρTd.data ≈ spdiagm(
+        0 => Float64[
+            0.8904859864731106,
+            0.09753319353178326,
+            0.010682620484781245,
+            0.0011700465891612583,
+            0.00012815292116369966,
+        ],
+    )
+    @test typeof(ρTs.data) <: AbstractSparseMatrix
+    @test ρTd ≈ ρTs
+
+    # maximally_mixed_dm
+    ρ1 = maximally_mixed_dm(4)
+    ρ2 = maximally_mixed_dm([2, 2])
+    @test size(ρ1) == (4, 4)
+    @test size(ρ2) == (4, 4)
+    @test tr(ρ1) ≈ 1.0
+    @test ρ1.data == ρ2.data
+    @test ρ1 != ρ2
+    @test isoper(ρ1)
+    @test isoper(ρ2)
+    @test ρ1.dims == [4]
+    @test ρ2.dims == [2, 2]
+    @test entropy_vn(ρ1, base = 2) ≈ log(2, 4)
 
     # rand_dm
     ρ_AB = rand_dm(4, dims = [2, 2])
@@ -17,6 +71,31 @@
     @test all(eigenenergies(ρ_A) .>= 0)
     @test all(eigenenergies(ρ_B) .>= 0)
     @test_throws DimensionMismatch rand_dm(4, dims = [2])
+
+    # bell_state, singlet_state, triplet_states, w_state, ghz_state
+    e0 = basis(2, 0)
+    e1 = basis(2, 1)
+    d0 = basis(3, 0)
+    d1 = basis(3, 1)
+    d2 = basis(3, 2)
+    B00 = (e0 ⊗ e0 + e1 ⊗ e1) / √2
+    B01 = (e0 ⊗ e0 - e1 ⊗ e1) / √2
+    B10 = (e0 ⊗ e1 + e1 ⊗ e0) / √2
+    B11 = (e0 ⊗ e1 - e1 ⊗ e0) / √2
+    S = singlet_state()
+    T = triplet_states()
+    @test bell_state(0, 0) == B00 == ghz_state(2)
+    @test bell_state(0, 1) == B01
+    @test bell_state(1, 0) == B10 == T[2] == w_state(2)
+    @test bell_state(1, 1) == B11 == S
+    @test T[1] == e1 ⊗ e1
+    @test T[3] == e0 ⊗ e0
+    @test w_state(3) == (e0 ⊗ e0 ⊗ e1 + e0 ⊗ e1 ⊗ e0 + e1 ⊗ e0 ⊗ e0) / √3
+    @test ghz_state(3) == (e0 ⊗ e0 ⊗ e0 + e1 ⊗ e1 ⊗ e1) / √2
+    @test ghz_state(3; d = 3) == (d0 ⊗ d0 ⊗ d0 + d1 ⊗ d1 ⊗ d1 + d2 ⊗ d2 ⊗ d2) / √3
+    @test_throws ArgumentError bell_state(0, 2)
+    @test_throws ArgumentError bell_state(3, 1)
+    @test_throws ArgumentError bell_state(2, 3)
 
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))
@@ -46,6 +125,41 @@
     @test commutator(Jx, Jz) ≈ -1im * Jy
     @test commutator(Jy, Jx) ≈ -1im * Jz
     @test commutator(Jz, Jy) ≈ -1im * Jx
+
+    # spin_state
+    j = 3.5
+    Jz = spin_Jz(j)
+    for m in (-j):1:j
+        ψm = spin_state(j, m)
+        @test Jz * ψm ≈ m * ψm  # check eigenvalue
+    end
+    @test_throws ArgumentError spin_state(8.7, 8.7)
+    @test_throws ArgumentError spin_state(-1, 0)
+    @test_throws ArgumentError spin_state(2.5, 2)
+    @test_throws ArgumentError spin_state(2.5, 3.5)
+    @test_throws ArgumentError spin_state(2.5, -3.5)
+
+    # spin_coherent
+    ## spin-half (state in Bloch sphere)
+    s = 0.5
+    θ = π * rand()
+    ϕ = 2 * π * rand()
+    @test spin_coherent(s, θ, ϕ) ≈ cos(θ / 2) * basis(2, 0) + exp(1im * ϕ) * sin(θ / 2) * basis(2, 1)
+
+    ## also verify the equation in: 
+    ## Robert Jones, Spin Coherent States and Statistical Physics, page 3
+    s = 3.5
+    θ1 = π * rand()
+    θ2 = π * rand()
+    ϕ1 = 2 * π * rand()
+    ϕ2 = 2 * π * rand()
+    γ = rand()
+    Sz = spin_Jz(s)
+    n1 = spin_coherent(s, θ1, ϕ1)
+    n2 = spin_coherent(s, θ2, ϕ2)
+    @test dot(n1, n2) ≈ (cos(θ1 / 2) * cos(θ2 / 2) + exp(1im * (ϕ2 - ϕ1)) * sin(θ1 / 2) * sin(θ2 / 2))^(2 * s)
+    @test dot(n1, exp(-γ * Sz), n2) ≈
+          (exp(-γ / 2) * cos(θ1 / 2) * cos(θ2 / 2) + exp(1im * (ϕ2 - ϕ1) + γ / 2) * sin(θ1 / 2) * sin(θ2 / 2))^(2 * s)
 
     # test commutation relations for fermionic creation and annihilation operators
     sites = 4
