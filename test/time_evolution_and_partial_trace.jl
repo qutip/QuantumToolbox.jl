@@ -11,9 +11,19 @@
     t_l = LinRange(0, 1000, 1000)
     e_ops = [a_d * a]
     sol = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress_bar = false)
+    sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
     @test ptrace(sol.states[end], 1) ≈ ptrace(ket2dm(sol.states[end]), 1)
     @test ptrace(sol.states[end]', 1) ≈ ptrace(sol.states[end], 1)
+    @test sol_string ==
+          "Solution of time evolution\n" *
+          "(return code: $(sol.retcode))\n" *
+          "--------------------------\n" *
+          "num_states = $(length(sol.states))\n" *
+          "num_expect = $(size(sol.expect, 1))\n" *
+          "ODE alg.: $(sol.alg)\n" *
+          "abstol = $(sol.abstol)\n" *
+          "reltol = $(sol.reltol)\n"
 
     a = destroy(N)
     a_d = a'
@@ -24,7 +34,17 @@
     t_l = LinRange(0, 100, 1000)
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress_bar = false)
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = false)
+    sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
     @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
+    @test sol_me_string ==
+          "Solution of time evolution\n" *
+          "(return code: $(sol_me.retcode))\n" *
+          "--------------------------\n" *
+          "num_states = $(length(sol_me.states))\n" *
+          "num_expect = $(size(sol_me.expect, 1))\n" *
+          "ODE alg.: $(sol_me.alg)\n" *
+          "abstol = $(sol_me.abstol)\n" *
+          "reltol = $(sol_me.reltol)\n"
 
     sp1 = kron(sigmap(), qeye(2))
     sm1 = sp1'

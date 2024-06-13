@@ -103,7 +103,7 @@ function mesolveProblem(
         params...,
     )
 
-    saveat = is_empty_e_ops ? t_l : []
+    saveat = is_empty_e_ops ? t_l : [t_l[end]]
     default_values = (abstol = 1e-7, reltol = 1e-5, saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops) || progress_bar

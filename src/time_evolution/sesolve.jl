@@ -23,7 +23,7 @@ function sesolve_td_dudt!(du, u, p, t)
     return mul!(du, H_t, u, -1im, 1)
 end
 
-"""
+@doc raw"""
     sesolveProblem(H::QuantumObject,
         ψ0::QuantumObject,
         t_l::AbstractVector;
@@ -38,15 +38,15 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 
 # Arguments
 
-  - `H::QuantumObject`: The Hamiltonian of the system.
-  - `ψ0::QuantumObject`: The initial state of the system.
-  - `t_l::AbstractVector`: The time list of the evolution.
-  - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
-  - `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
-  - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
-  - `params::NamedTuple`: The parameters of the system.
-  - `progress_bar::Bool`: Whether to show the progress bar.
-  - `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+- `H::QuantumObject`: The Hamiltonian of the system.
+- `ψ0::QuantumObject`: The initial state of the system.
+- `t_l::AbstractVector`: The time list of the evolution.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
+- `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
+- `params::NamedTuple`: The parameters of the system.
+- `progress_bar::Bool`: Whether to show the progress bar.
+- `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
 
 Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
 
@@ -54,7 +54,7 @@ For more details about `alg` and extra `kwargs`, please refer to [`DifferentialE
 
 # Returns
 
-  - `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
+- `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
 """
 function sesolveProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
@@ -90,7 +90,7 @@ function sesolveProblem(
         params...,
     )
 
-    saveat = is_empty_e_ops ? t_l : []
+    saveat = is_empty_e_ops ? t_l : [t_l[end]]
     default_values = (abstol = 1e-7, reltol = 1e-5, saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops) || progress_bar
