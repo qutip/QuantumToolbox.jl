@@ -38,15 +38,15 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 
 # Arguments
 
-- `H::QuantumObject`: The Hamiltonian of the system.
-- `ψ0::QuantumObject`: The initial state of the system.
-- `t_l::AbstractVector`: The time list of the evolution.
-- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
-- `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
-- `params::NamedTuple`: The parameters of the system.
-- `progress_bar::Bool`: Whether to show the progress bar.
-- `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+  - `H::QuantumObject`: The Hamiltonian of the system.
+  - `ψ0::QuantumObject`: The initial state of the system.
+  - `t_l::AbstractVector`: The time list of the evolution.
+  - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
+  - `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
+  - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
+  - `params::NamedTuple`: The parameters of the system.
+  - `progress_bar::Bool`: Whether to show the progress bar.
+  - `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
 
 Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
 
@@ -54,7 +54,7 @@ For more details about `alg` and extra `kwargs`, please refer to [`DifferentialE
 
 # Returns
 
-- `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
+  - `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
 """
 function sesolveProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
@@ -77,6 +77,7 @@ function sesolveProblem(
     progr = ProgressBar(length(t_l), enable = progress_bar)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
     e_ops2 = get_data.(e_ops)
+    is_empty_e_ops = isempty(e_ops)
 
     p = (
         U = U,
@@ -85,11 +86,12 @@ function sesolveProblem(
         progr = progr,
         Hdims = H.dims,
         H_t = H_t,
-        is_empty_e_ops = isempty(e_ops),
+        is_empty_e_ops = is_empty_e_ops,
         params...,
     )
 
-    default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
+    saveat = is_empty_e_ops ? t_l : []
+    default_values = (abstol = 1e-7, reltol = 1e-5, saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops) || progress_bar
         cb1 = PresetTimeCallback(t_l, _save_func_sesolve, save_positions = (false, false))
@@ -186,18 +188,21 @@ function sesolve(
         kwargs...,
     )
 
-    return sesolve(prob, alg; kwargs...)
+    return sesolve(prob, alg)
 end
 
-function sesolve(prob::ODEProblem, alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(); kwargs...)
+function sesolve(prob::ODEProblem, alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob, alg)
+    ψt =
+        isempty(sol.prob.kwargs[:saveat]) ? QuantumObject[] : map(ϕ -> QuantumObject(ϕ, dims = sol.prob.p.Hdims), sol.u)
 
-    return _sesolve_sol(sol; kwargs...)
-end
-
-function _sesolve_sol(sol; kwargs...)
-    Hdims = sol.prob.p.Hdims
-    ψt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(ϕ, dims = Hdims), sol.u) : sol.u
-
-    return TimeEvolutionSol(sol.t, ψt, sol.prob.p.expvals)
+    return TimeEvolutionSol(
+        sol.t,
+        ψt,
+        sol.prob.p.expvals,
+        sol.retcode,
+        sol.alg,
+        sol.prob.kwargs[:abstol],
+        sol.prob.kwargs[:reltol],
+    )
 end

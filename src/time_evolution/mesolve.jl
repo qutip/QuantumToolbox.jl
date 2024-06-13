@@ -90,6 +90,7 @@ function mesolveProblem(
     progr = ProgressBar(length(t_l), enable = progress_bar)
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
     e_ops2 = @. mat2vec(adjoint(get_data(e_ops)))
+    is_empty_e_ops = isempty(e_ops)
 
     p = (
         L = L,
@@ -98,11 +99,12 @@ function mesolveProblem(
         e_ops = e_ops2,
         expvals = expvals,
         H_t = H_t,
-        is_empty_e_ops = isempty(e_ops),
+        is_empty_e_ops = is_empty_e_ops,
         params...,
     )
 
-    default_values = (abstol = 1e-7, reltol = 1e-5, saveat = [t_l[end]])
+    saveat = is_empty_e_ops ? t_l : []
+    default_values = (abstol = 1e-7, reltol = 1e-5, saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops) || progress_bar
         cb1 = PresetTimeCallback(t_l, _save_func_mesolve, save_positions = (false, false))
@@ -216,18 +218,22 @@ function mesolve(
         kwargs...,
     )
 
-    return mesolve(prob, alg; kwargs...)
+    return mesolve(prob, alg)
 end
 
-function mesolve(prob::ODEProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5(); kwargs...)
+function mesolve(prob::ODEProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob, alg)
+    ρt =
+        isempty(sol.prob.kwargs[:saveat]) ? QuantumObject[] :
+        map(ϕ -> QuantumObject(vec2mat(ϕ), dims = sol.prob.p.Hdims), sol.u)
 
-    return _mesolve_sol(sol; kwargs...)
-end
-
-function _mesolve_sol(sol; kwargs...)
-    Hdims = sol.prob.p.Hdims
-    ρt = !haskey(kwargs, :save_idxs) ? map(ϕ -> QuantumObject(vec2mat(ϕ), dims = Hdims), sol.u) : sol.u
-
-    return TimeEvolutionSol(sol.t, ρt, sol.prob.p.expvals)
+    return TimeEvolutionSol(
+        sol.t,
+        ρt,
+        sol.prob.p.expvals,
+        sol.retcode,
+        sol.alg,
+        sol.prob.kwargs[:abstol],
+        sol.prob.kwargs[:reltol],
+    )
 end

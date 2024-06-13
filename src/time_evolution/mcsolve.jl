@@ -99,7 +99,7 @@ function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_t
     return jump_which[i] = sol_i.prob.p.jump_which
 end
 
-"""
+@doc raw"""
     mcsolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         t_l::AbstractVector,

@@ -7,6 +7,22 @@ struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{Complex
     times::TT
     states::TS
     expect::TE
+    retcode::Enum
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm
+    abstol::Real
+    reltol::Real
+end
+
+function Base.show(io::IO, sol::TimeEvolutionSol)
+    print(io, "Solution of time evolution\n")
+    print(io, "(return code: $(sol.retcode))\n")
+    print(io, "--------------------------\n")
+    print(io, "num_states = $(length(sol.states))\n")
+    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    print(io, "ODE alg.: $(sol.alg)\n")
+    print(io, "abstol = $(sol.abstol)\n")
+    print(io, "reltol = $(sol.reltol)\n")
+    return nothing
 end
 
 struct TimeEvolutionMCSol{

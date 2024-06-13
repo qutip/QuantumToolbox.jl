@@ -242,7 +242,15 @@ function dfd_mesolve(
         eachindex(sol.t),
     )
 
-    return TimeEvolutionSol(sol.t, ρt, sol.prob.p.expvals)
+    return TimeEvolutionSol(
+        sol.t,
+        ρt,
+        sol.prob.p.expvals,
+        sol.retcode,
+        sol.alg,
+        sol.prob.kwargs[:abstol],
+        sol.prob.kwargs[:reltol],
+    )
 end
 
 # Dynamical Shifted Fock mesolve
@@ -443,7 +451,7 @@ function dsf_mesolve(
         kwargs...,
     )
 
-    return mesolve(dsf_prob; alg = alg, kwargs...)
+    return mesolve(dsf_prob, alg)
 end
 
 function dsf_mesolve(
