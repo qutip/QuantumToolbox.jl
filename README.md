@@ -37,7 +37,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [aqua-img]: https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg
 [aqua-url]: https://github.com/JuliaTesting/Aqua.jl
 
-[jet-img]: https://img.shields.io/badge/JET.jl-%E2%9C%88%EF%B8%8F-9cf
+[jet-img]: https://img.shields.io/badge/%F0%9F%9B%A9%EF%B8%8F_tested_with-JET.jl-233f9a
 [jet-url]: https://github.com/aviatesk/JET.jl
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
