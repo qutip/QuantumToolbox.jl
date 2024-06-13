@@ -26,7 +26,7 @@ function mesolve_td_dudt!(du, u, p, t)
     return mul!(du, L_t, u, 1, 1)
 end
 
-"""
+@doc raw"""
     mesolveProblem(H::QuantumObject,
         ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::AbstractVector=[];
@@ -41,20 +41,24 @@ Generates the ODEProblem for the master equation time evolution of an open quant
 
 # Arguments
 
-  - `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
-  - `ψ0::QuantumObject`: The initial state of the system.
-  - `t_l::AbstractVector`: The time list of the evolution.
-  - `c_ops::AbstractVector=[]`: The list of the collapse operators.
-  - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm used for the time evolution.
-  - `e_ops::AbstractVector=[]`: The list of the operators for which the expectation values are calculated.
-  - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing`: The time-dependent Hamiltonian or Liouvillian.
-  - `params::NamedTuple=NamedTuple()`: The parameters of the time evolution.
-  - `progress_bar::Bool=true`: Whether to show the progress bar.
-  - `kwargs...`: The keyword arguments for the ODEProblem.
+- `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
+- `ψ0::QuantumObject`: The initial state of the system.
+- `t_l::AbstractVector`: The time list of the evolution.
+- `c_ops::AbstractVector=[]`: The list of the collapse operators.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm used for the time evolution.
+- `e_ops::AbstractVector=[]`: The list of the operators for which the expectation values are calculated.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing`: The time-dependent Hamiltonian or Liouvillian.
+- `params::NamedTuple=NamedTuple()`: The parameters of the time evolution.
+- `progress_bar::Bool=true`: Whether to show the progress bar.
+- `kwargs...`: The keyword arguments for the ODEProblem.
+
+Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+
+For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
-  - `prob::ODEProblem`: The ODEProblem for the master equation time evolution.
+- `prob::ODEProblem`: The ODEProblem for the master equation time evolution.
 """
 function mesolveProblem(
     H::QuantumObject{MT1,HOpType},
@@ -135,7 +139,7 @@ function _mesolveProblem(
     return ODEProblem{true,SciMLBase.FullSpecialize}(mesolve_td_dudt!, ρ0, tspan, p; kwargs...)
 end
 
-"""
+@doc raw"""
     mesolve(H::QuantumObject,
         ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::AbstractVector=[];
@@ -146,24 +150,38 @@ end
         progress_bar::Bool=true,
         kwargs...)
 
-Time evolution of an open quantum system using master equation.
+Time evolution of an open quantum system using Lindblad master equation:
+
+```math
+\frac{\partial \rho(t)}{\partial t} = -i[\hat{H}, \rho(t)] + \sum_i \mathcal{D}(\hat{O}_i) [\rho(t)]
+```
+
+where 
+
+```math
+\mathcal{D}(\hat{O}_i) [\rho(t)] = \hat{O}_i \rho(t) \hat{O}_i^\dagger - \frac{1}{2} \hat{O}_i^\dagger \hat{O}_i \rho(t) - \frac{1}{2} \rho(t) \hat{O}_i^\dagger \hat{O}_i
+```
 
 # Arguments
 
-  - `H::QuantumObject`: Hamiltonian of Liouvillian of the system.
-  - `ψ0::QuantumObject`: Initial state of the system.
-  - `t_l::AbstractVector`: List of times at which to save the state of the system.
-  - `c_ops::AbstractVector`: List of collapse operators.
-  - `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-  - `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
-  - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-  - `params::NamedTuple`: Named Tuple of parameters to pass to the solver.
-  - `progress_bar::Bool`: Whether to show the progress bar.
-  - `kwargs...`: Additional keyword arguments to pass to the solver.
+- `H::QuantumObject`: Hamiltonian ``\hat{H}`` or Liouvillian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `c_ops::AbstractVector`: List of collapse operators ``\{\hat{O}_i\}_i``.
+- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
+- `params::NamedTuple`: Named Tuple of parameters to pass to the solver.
+- `progress_bar::Bool`: Whether to show the progress bar.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+
+For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
-  - `sol::TimeEvolutionSol`: The solution of the time evolution.
+- `sol::TimeEvolutionSol`: The solution of the time evolution.
 """
 function mesolve(
     H::QuantumObject{MT1,HOpType},

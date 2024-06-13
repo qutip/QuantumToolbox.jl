@@ -190,7 +190,7 @@ function dfd_mesolveProblem(
     return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, H_t = H_t, params = params2, kwargs2...)
 end
 
-"""
+@doc raw"""
     function dfd_mesolve(H::Function, ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function, maxdims::AbstractVector,
         dfd_params::NamedTuple=NamedTuple();
@@ -393,7 +393,7 @@ function dsf_mesolveProblem(
     return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, H_t = H_t, params = params2, kwargs2...)
 end
 
-"""
+@doc raw"""
     function dsf_mesolve(H::Function,
         ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function,
@@ -658,7 +658,7 @@ function dsf_mcsolveEnsembleProblem(
     )
 end
 
-"""
+@doc raw"""
     function dsf_mcsolve(H::Function,
         ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function,
@@ -676,8 +676,7 @@ end
         krylov_dim::Int=min(5,cld(length(ψ0.data), 3)),
         kwargs...)
 
-Time evolution of a quantum system using the Monte Carlo wave function method
-and the Dynamical Shifted Fock algorithm.
+Time evolution of a quantum system using the Monte Carlo wave function method and the Dynamical Shifted Fock algorithm.
 """
 function dsf_mcsolve(
     H::Function,

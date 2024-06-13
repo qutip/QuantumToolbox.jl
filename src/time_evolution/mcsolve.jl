@@ -111,26 +111,29 @@ end
         jump_callback::TJC=ContinuousLindbladJumpCallback(),
         kwargs...)
 
-Generates the ODEProblem for a single trajectory of the Monte Carlo wave function
-time evolution of an open quantum system.
+Generates the ODEProblem for a single trajectory of the Monte Carlo wave function time evolution of an open quantum system.
 
 # Arguments
 
-  - `H::QuantumObject`: Hamiltonian of the system.
-  - `ψ0::QuantumObject`: Initial state of the system.
-  - `t_l::AbstractVector`: List of times at which to save the state of the system.
-  - `c_ops::Vector`: List of collapse operators.
-  - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-  - `e_ops::Vector`: List of operators for which to calculate expectation values.
-  - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-  - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-  - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
-  - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
-  - `kwargs...`: Additional keyword arguments to pass to the solver.
+- `H::QuantumObject`: Hamiltonian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `c_ops::Vector`: List of collapse operators.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::Vector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
+- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
+- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
+- `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+
+For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
-  - `prob::ODEProblem`: The ODEProblem for the Monte Carlo wave function time evolution.
+- `prob::ODEProblem`: The ODEProblem for the Monte Carlo wave function time evolution.
 """
 function mcsolveProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
@@ -228,7 +231,7 @@ function mcsolveProblem(
     return sesolveProblem(H_eff, ψ0, t_l; alg = alg, H_t = H_t, params = params, kwargs2...)
 end
 
-"""
+@doc raw"""
     mcsolveEnsembleProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         t_l::AbstractVector,
@@ -242,29 +245,31 @@ end
         output_func::Function=_mcsolve_output_func,
         kwargs...)
 
-Generates the ODEProblem for an ensemble of trajectories of the Monte Carlo wave function
-time evolution of an open quantum system.
+Generates the ODEProblem for an ensemble of trajectories of the Monte Carlo wave function time evolution of an open quantum system.
 
 # Arguments
 
-  - `H::QuantumObject`: Hamiltonian of the system.
-  - `ψ0::QuantumObject`: Initial state of the system.
-  - `t_l::AbstractVector`: List of times at which to save the state of the system.
-  - `c_ops::Vector`: List of collapse operators.
-  - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-  - `e_ops::Vector`: List of operators for which to calculate expectation values.
-  - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-  - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-  - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
-  - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
-  - `prob_func::Function`: Function to use for generating the ODEProblem.
-  - `output_func::Function`: Function to use for generating the output of a single trajectory.
-  - `kwargs...`: Additional keyword arguments to pass to the solver.
+- `H::QuantumObject`: Hamiltonian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `c_ops::Vector`: List of collapse operators.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::Vector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
+- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
+- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
+- `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
+- `prob_func::Function`: Function to use for generating the ODEProblem.
+- `output_func::Function`: Function to use for generating the output of a single trajectory.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+
+For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
-  - `prob::EnsembleProblem with ODEProblem`: The Ensemble ODEProblem for the Monte Carlo
-    wave function time evolution.
+- `prob::EnsembleProblem with ODEProblem`: The Ensemble ODEProblem for the Monte Carlo wave function time evolution.
 """
 function mcsolveEnsembleProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
@@ -300,7 +305,7 @@ function mcsolveEnsembleProblem(
     return ensemble_prob
 end
 
-"""
+@doc raw"""
     mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         t_l::AbstractVector,
@@ -318,29 +323,31 @@ Time evolution of an open quantum system using quantum trajectories.
 
 # Arguments
 
-  - `H::QuantumObject`: Hamiltonian of the system.
-  - `ψ0::QuantumObject`: Initial state of the system.
-  - `t_l::AbstractVector`: List of times at which to save the state of the system.
-  - `c_ops::Vector`: List of collapse operators.
-  - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-  - `e_ops::Vector`: List of operators for which to calculate expectation values.
-  - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-  - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-  - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
-  - `n_traj::Int`: Number of trajectories to use.
-  - `ensemble_method`: Ensemble method to use.
-  - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
-  - `prob_func::Function`: Function to use for generating the ODEProblem.
-  - `output_func::Function`: Function to use for generating the output of a single trajectory.
-  - `kwargs...`: Additional keyword arguments to pass to the solver.
+- `H::QuantumObject`: Hamiltonian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `c_ops::Vector`: List of collapse operators.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::Vector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
+- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
+- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
+- `n_traj::Int`: Number of trajectories to use.
+- `ensemble_method`: Ensemble method to use.
+- `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
+- `prob_func::Function`: Function to use for generating the ODEProblem.
+- `output_func::Function`: Function to use for generating the output of a single trajectory.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+Note that `ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`.
+
+The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+
+For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
-  - `sol::TimeEvolutionMCSol`: The solution of the time evolution.
-
-# Notes
-
-`ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`.
+- `sol::TimeEvolutionMCSol`: The solution of the time evolution.
 """
 function mcsolve(
     H::QuantumObject{MT1,OperatorQuantumObject},

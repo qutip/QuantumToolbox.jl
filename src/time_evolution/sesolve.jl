@@ -38,19 +38,23 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 
 # Arguments
 
-  - `H::QuantumObject`: The Hamiltonian of the system.
-  - `ψ0::QuantumObject`: The initial state of the system.
-  - `t_l::AbstractVector`: The time list of the evolution.
-  - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
-  - `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
-  - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
-  - `params::NamedTuple`: The parameters of the system.
-  - `progress_bar::Bool`: Whether to show the progress bar.
-  - `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+- `H::QuantumObject`: The Hamiltonian of the system.
+- `ψ0::QuantumObject`: The initial state of the system.
+- `t_l::AbstractVector`: The time list of the evolution.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
+- `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
+- `params::NamedTuple`: The parameters of the system.
+- `progress_bar::Bool`: Whether to show the progress bar.
+- `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+
+Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+
+For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
-  - `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
+- `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
 """
 function sesolveProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
@@ -122,7 +126,7 @@ function _sesolveProblem(
     return ODEProblem{true,SciMLBase.FullSpecialize}(sesolve_td_dudt!, ϕ0, tspan, p; kwargs...)
 end
 
-"""
+@doc raw"""
     sesolve(H::QuantumObject,
         ψ0::QuantumObject,
         t_l::AbstractVector;
@@ -133,22 +137,31 @@ end
         progress_bar::Bool=true,
         kwargs...)
 
-Time evolution of a closed quantum system using the Schrödinger equation.
+Time evolution of a closed quantum system using the Schrödinger equation:
+
+```math
+\frac{\partial \psi(t)}{\partial t}=-i H \psi(t)
+```
 
 # Arguments
 
-  - `H::QuantumObject`: Hamiltonian of the system.
+- `H::QuantumObject`: Hamiltonian of the system.
+- `ψ0::QuantumObject`: Initial state of the system.
+- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
+- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
+- `progress_bar::Bool`: Whether to show the progress bar.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
 
-  - `ψ0::QuantumObject`: Initial state of the system.
-  - `t_l::AbstractVector`: List of times at which to save the state of the system.
-  - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-  - `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
-  - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-  - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-  - `progress_bar::Bool`: Whether to show the progress bar.
-  - `kwargs...`: Additional keyword arguments to pass to the solver.
-  - Returns
-  - `sol::TimeEvolutionSol`: The solution of the time evolution.
+Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+
+For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+
+Returns
+
+- `sol::TimeEvolutionSol`: The solution of the time evolution.
 """
 function sesolve(
     H::QuantumObject{MT1,OperatorQuantumObject},
