@@ -529,7 +529,7 @@ function lr_mesolve(prob::ODEProblem; kwargs...)
     Ll = length.(sol.u)
     Ml = @. Int((sqrt(N^2 + 4 * Ll) - N) / 2)
 
-    if !haskey(kwargs, :save_idxs)
+    if !haskey(kwargs, :saveat)
         Bt = map(x -> get_B(x[1], N, x[2]), zip(sol.u, Ml))
         zt = map(x -> get_z(x[1], N, x[2]), zip(sol.u, Ml))
     else

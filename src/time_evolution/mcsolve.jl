@@ -89,7 +89,7 @@ end
 function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
     sol_i = sol[:, i]
     sol_u =
-        haskey(sol_i.prob.kwargs, :save_idxs) ? sol_i.u :
+        isempty(sol_i.prob.kwargs[:saveat]) ? sol_i.u :
         [QuantumObject(sol_i.u[i], dims = sol_i.prob.p.Hdims) for i in 1:length(sol_i.u)]
 
     copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
@@ -403,7 +403,7 @@ function mcsolve(
     expvals_all = Array{ComplexF64}(undef, length(sol), size(sol[:, 1].prob.p.expvals)...)
     times = Vector{Vector{Float64}}(undef, length(sol))
     states =
-        haskey(sol[:, 1].prob.kwargs, :save_idxs) ? Vector{Vector{eltype(sol[:, 1].u[1])}}(undef, length(sol)) :
+        isempty(sol[:, 1].prob.kwargs[:saveat]) ? Vector{Vector{eltype(sol[:, 1].u[1])}}(undef, length(sol)) :
         Vector{Vector{QuantumObject}}(undef, length(sol))
     jump_times = Vector{Vector{Float64}}(undef, length(sol))
     jump_which = Vector{Vector{Int16}}(undef, length(sol))
