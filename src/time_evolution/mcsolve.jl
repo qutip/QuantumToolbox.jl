@@ -127,9 +127,10 @@ Generates the ODEProblem for a single trajectory of the Monte Carlo wave functio
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
-Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+# Notes
 
-For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
@@ -263,9 +264,10 @@ Generates the ODEProblem for an ensemble of trajectories of the Monte Carlo wave
 - `output_func::Function`: Function to use for generating the output of a single trajectory.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
-Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+# Notes
 
-For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
@@ -339,11 +341,11 @@ Time evolution of an open quantum system using quantum trajectories.
 - `output_func::Function`: Function to use for generating the output of a single trajectory.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
-Note that `ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`.
+# Notes
 
-The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
-
-For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- `ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`
+- The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 

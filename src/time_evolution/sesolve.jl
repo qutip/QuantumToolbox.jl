@@ -48,9 +48,12 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 - `progress_bar::Bool`: Whether to show the progress bar.
 - `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
 
-Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+# Notes
 
-For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- The states will be saved depend on the keyword argument `saveat` in `kwargs`.
+- If `e_ops` is specified, the default value of `saveat=[t_l[end]]` (only save the final state), otherwise, `saveat=t_l` (saving the states corresponding to `t_l`). You can also specify `e_ops` and `saveat` separately.
+- The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
@@ -157,13 +160,16 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `progress_bar::Bool`: Whether to show the progress bar.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
-Note that the default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+# Notes
 
-For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- The states will be saved depend on the keyword argument `saveat` in `kwargs`.
+- If `e_ops` is specified, the default value of `saveat=[t_l[end]]` (only save the final state), otherwise, `saveat=t_l` (saving the states corresponding to `t_l`). You can also specify `e_ops` and `saveat` separately.
+- The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
-Returns
+# Returns
 
-- `sol::TimeEvolutionSol`: The solution of the time evolution.
+- `sol::TimeEvolutionSol`: The solution of the time evolution. See also [`TimeEvolutionSol`](@ref)
 """
 function sesolve(
     H::QuantumObject{MT1,OperatorQuantumObject},
@@ -194,7 +200,8 @@ end
 function sesolve(prob::ODEProblem, alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob, alg)
     ψt =
-        isempty(sol.prob.kwargs[:saveat]) ? QuantumObject[] : map(ϕ -> QuantumObject(ϕ, dims = sol.prob.p.Hdims), sol.u)
+        isempty(sol.prob.kwargs[:saveat]) ? QuantumObject[] :
+        map(ϕ -> QuantumObject(ϕ, type = Ket, dims = sol.prob.p.Hdims), sol.u)
 
     return TimeEvolutionSol(
         sol.t,
