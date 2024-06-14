@@ -3,6 +3,21 @@ export TimeEvolutionSol, TimeEvolutionMCSol
 
 export liouvillian, liouvillian_floquet, liouvillian_generalized
 
+@doc raw"""
+    struct TimeEvolutionSol
+
+A structure storing the results and some information from solving time evolution.
+
+# Fields (Attributes)
+
+- `times::AbstractVector`: The time list of the evolution.
+- `states::Vector{QuantumObject}`: The list of result states.
+- `expect::Matrix`: The expectation values corresponding each time points in `times`.
+- `retcode`: The return code from the solver.
+- `alg`: The algorithm which is used during the solving process.
+- `abstol::Real`: The absolute tolerance which is used during the solving process.
+- `reltol::Real`: The relative tolerance which is used during the solving process.
+"""
 struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{ComplexF64}}
     times::TT
     states::TS

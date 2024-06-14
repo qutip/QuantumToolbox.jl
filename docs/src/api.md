@@ -160,6 +160,7 @@ qeye
 ## [Time evolution](@id doc-API:Time-evolution)
 
 ```@docs
+TimeEvolutionSol
 sesolveProblem
 mesolveProblem
 lr_mesolveProblem
