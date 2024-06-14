@@ -1,15 +1,18 @@
 export ProgressBar, next!
 
-mutable struct ProgressBar{CT,T1<:Integer,T2<:Real}
+mutable struct ProgressBar{CT,T1<:Integer,T2<:Real,T3<:Real}
     counter::CT
     max_counts::T1
     enable::Bool
     bar_width::T1
     start_time::T2
+    previous_time::T2
+    interval::T3
 end
 
-function ProgressBar(max_counts::Int; enable::Bool = true, bar_width::Int = 30)
-    return ProgressBar(Threads.Atomic{Int}(0), max_counts, enable, bar_width, time())
+function ProgressBar(max_counts::Int; enable::Bool = true, bar_width::Int = 30, interval = 1.0)
+    start_time = time()
+    return ProgressBar(Threads.Atomic{Int}(0), max_counts, enable, bar_width, start_time, start_time, interval)
 end
 
 function next!(p::ProgressBar, io::IO = stdout)
@@ -23,6 +26,12 @@ function next!(p::ProgressBar, io::IO = stdout)
     max_counts = p.max_counts
     bar_width = p.bar_width
     start_time = p.start_time
+    previous_time = p.previous_time
+    interval = p.interval
+
+    (time() - previous_time) < interval && return
+
+    p.previous_time = time()
 
     percentage = counter / max_counts
     percentage_100 = lpad(round(100 * percentage, digits = 1), 5, " ")
