@@ -112,8 +112,8 @@ end
         reverse::Bool=false,
         kwargs...)
 
-Returns the one-time correlation function of two operators ``\hat{A}`` and ``\hat{B}`` 
-at different times ``\expval{\hat{A}(\tau) \hat{B}(0)}``.
+Returns the one-time correlation function of two operators ``\hat{A}`` and ``\hat{B}`` at different times ``\expval{\hat{A}(\tau) \hat{B}(0)}``.
+
 When `reverse=true`, the correlation function is calculated as ``\expval{\hat{A}(0) \hat{B}(\tau)}``.
 """
 function correlation_2op_1t(
@@ -140,11 +140,11 @@ end
 
 @doc raw"""
     spectrum(H::QuantumObject,
-    ω_list::AbstractVector,
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    c_ops::AbstractVector=[];
-    solver::MySolver=ExponentialSeries(),
+        ω_list::AbstractVector,
+        A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+        B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
+        c_ops::AbstractVector=[];
+        solver::MySolver=ExponentialSeries(),
         kwargs...)
 
 Returns the emission spectrum 
