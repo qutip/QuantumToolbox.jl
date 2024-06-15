@@ -34,12 +34,16 @@ end
         progress_bar::Bool=true,
         kwargs...)
 
-Generates the ODEProblem for the Schrödinger time evolution of a quantum system.
+Generates the ODEProblem for the Schrödinger time evolution of a quantum system:
+
+```math
+\frac{\partial}{\partial t} |\psi(t)\rangle = -i \hat{H} |\psi(t)\rangle
+```
 
 # Arguments
 
-- `H::QuantumObject`: The Hamiltonian of the system.
-- `ψ0::QuantumObject`: The initial state of the system.
+- `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
+- `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `t_l::AbstractVector`: The time list of the evolution.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
 - `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
@@ -145,13 +149,13 @@ end
 Time evolution of a closed quantum system using the Schrödinger equation:
 
 ```math
-\frac{\partial \psi(t)}{\partial t}=-i H \psi(t)
+\frac{\partial}{\partial t} |\psi(t)\rangle = -i \hat{H} |\psi(t)\rangle
 ```
 
 # Arguments
 
-- `H::QuantumObject`: Hamiltonian of the system.
-- `ψ0::QuantumObject`: Initial state of the system.
+- `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
+- `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `t_l::AbstractVector`: List of times at which to save the state of the system.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::AbstractVector`: List of operators for which to calculate expectation values.

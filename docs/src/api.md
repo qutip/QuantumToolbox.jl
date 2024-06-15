@@ -161,6 +161,7 @@ qeye
 
 ```@docs
 TimeEvolutionSol
+TimeEvolutionMCSol
 sesolveProblem
 mesolveProblem
 lr_mesolveProblem

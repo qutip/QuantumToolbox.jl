@@ -35,6 +35,7 @@
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress_bar = false)
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = false)
     sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
+    sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
     @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
     @test sol_me_string ==
           "Solution of time evolution\n" *
@@ -45,6 +46,16 @@
           "ODE alg.: $(sol_me.alg)\n" *
           "abstol = $(sol_me.abstol)\n" *
           "reltol = $(sol_me.reltol)\n"
+    @test sol_mc_string ==
+          "Solution of quantum trajectories\n" *
+          "(converged: $(sol_mc.converged))\n" *
+          "--------------------------------\n" *
+          "num_trajectories = $(sol_mc.n_traj)\n" *
+          "num_states = $(length(sol_mc.states[1]))\n" *
+          "num_expect = $(size(sol_mc.expect, 1))\n" *
+          "ODE alg.: $(sol_mc.alg)\n" *
+          "abstol = $(sol_mc.abstol)\n" *
+          "reltol = $(sol_mc.reltol)\n"
 
     sp1 = kron(sigmap(), qeye(2))
     sm1 = sp1'

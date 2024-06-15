@@ -191,7 +191,7 @@ function dfd_mesolveProblem(
 end
 
 @doc raw"""
-    function dfd_mesolve(H::Function, ψ0::QuantumObject,
+    dfd_mesolve(H::Function, ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function, maxdims::AbstractVector,
         dfd_params::NamedTuple=NamedTuple();
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
@@ -402,7 +402,7 @@ function dsf_mesolveProblem(
 end
 
 @doc raw"""
-    function dsf_mesolve(H::Function,
+    dsf_mesolve(H::Function,
         ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function,
         op_list::Vector{TOl},
@@ -667,7 +667,7 @@ function dsf_mcsolveEnsembleProblem(
 end
 
 @doc raw"""
-    function dsf_mcsolve(H::Function,
+    dsf_mcsolve(H::Function,
         ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function,
         op_list::Vector{TOl},
@@ -723,5 +723,5 @@ function dsf_mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc; alg = alg, n_traj = n_traj, ensemble_method = ensemble_method, kwargs...)
+    return mcsolve(ens_prob_mc; alg = alg, n_traj = n_traj, ensemble_method = ensemble_method)
 end

@@ -88,13 +88,11 @@ end
 
 function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
     sol_i = sol[:, i]
-    sol_u =
-        isempty(sol_i.prob.kwargs[:saveat]) ? sol_i.u :
-        [QuantumObject(sol_i.u[i], dims = sol_i.prob.p.Hdims) for i in 1:length(sol_i.u)]
+    !isempty(sol_i.prob.kwargs[:saveat]) ?
+    states[i] = [QuantumObject(sol_i.u[i], dims = sol_i.prob.p.Hdims) for i in 1:length(sol_i.u)] : nothing
 
     copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
     times[i] = sol_i.t
-    states[i] = sol_u
     jump_times[i] = sol_i.prob.p.jump_times
     return jump_which[i] = sol_i.prob.p.jump_which
 end
@@ -113,12 +111,30 @@ end
 
 Generates the ODEProblem for a single trajectory of the Monte Carlo wave function time evolution of an open quantum system.
 
+Given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{J}_i\}_i``, the state ``|\psi(t)\rangle`` evolves according to:
+
+```math
+\frac{\partial}{\partial t} |\psi(t)\rangle= -i \hat{H}_{\textrm{eff}} |\psi(t)\rangle,
+```
+
+where
+
+```math
+\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_i \hat{J}_i^\dagger \hat{J}_i.
+```
+
+During the time evolution, each quantum jump ``\hat{J}_i`` event happends at randomly determined time ``t^*`` can be described by
+
+```math
+|\psi(t^*)\rangle \rightarrow \frac{\hat{J}_i|\psi(t^*)\rangle}{\lVert \hat{J}_i|\psi(t^*)\rangle \rVert}.
+```
+
 # Arguments
 
-- `H::QuantumObject`: Hamiltonian of the system.
-- `ψ0::QuantumObject`: Initial state of the system.
+- `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
+- `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `t_l::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Vector`: List of collapse operators.
+- `c_ops::Vector`: List of collapse operators ``\{\hat{J}_i\}_i``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
@@ -129,6 +145,8 @@ Generates the ODEProblem for a single trajectory of the Monte Carlo wave functio
 
 # Notes
 
+- The states will be saved depend on the keyword argument `saveat` in `kwargs`.
+- If `e_ops` is specified, the default value of `saveat=[t_l[end]]` (only save the final state), otherwise, `saveat=t_l` (saving the states corresponding to `t_l`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
 - For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
@@ -149,12 +167,16 @@ function mcsolveProblem(
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
-    H_eff = H - T2(0.5im) * mapreduce(op -> op' * op, +, c_ops)
+    H_eff = H - 0.5im * mapreduce(op -> op' * op, +, c_ops)
 
+    is_empty_e_ops_mc = isempty(e_ops)
     e_ops2 = Vector{Te}(undef, length(e_ops))
     for i in eachindex(e_ops)
         e_ops2[i] = get_data(e_ops[i])
     end
+    saveat = is_empty_e_ops_mc ? t_l : [t_l[end]]
+    default_values = (abstol = 1e-7, reltol = 1e-5, saveat = saveat)
+    kwargs2 = merge(default_values, kwargs)
 
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
     cache_mc = similar(ψ0.data)
@@ -168,7 +190,7 @@ function mcsolveProblem(
     params2 = (
         expvals = expvals,
         e_ops_mc = e_ops2,
-        is_empty_e_ops_mc = isempty(e_ops),
+        is_empty_e_ops_mc = is_empty_e_ops_mc,
         progr_mc = ProgressBar(length(t_l), enable = false),
         seeds = seeds,
         random_n = Ref(rand()),
@@ -183,7 +205,7 @@ function mcsolveProblem(
         params...,
     )
 
-    return mcsolveProblem(H_eff, ψ0, t_l, alg, H_t, params2, jump_callback; kwargs...)
+    return mcsolveProblem(H_eff, ψ0, t_l, alg, H_t, params2, jump_callback; kwargs2...)
 end
 
 function mcsolveProblem(
@@ -248,12 +270,30 @@ end
 
 Generates the ODEProblem for an ensemble of trajectories of the Monte Carlo wave function time evolution of an open quantum system.
 
+In each trajectory, given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{J}_i\}_i``, the state ``|\psi(t)\rangle`` evolves according to:
+
+```math
+\frac{\partial}{\partial t} |\psi(t)\rangle= -i \hat{H}_{\textrm{eff}} |\psi(t)\rangle,
+```
+
+where
+
+```math
+\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_i \hat{J}_i^\dagger \hat{J}_i.
+```
+
+During the time evolution, each quantum jump ``\hat{J}_i`` event happends at randomly determined time ``t^*`` can be described by
+
+```math
+|\psi(t^*)\rangle \rightarrow \frac{\hat{J}_i|\psi(t^*)\rangle}{\lVert \hat{J}_i|\psi(t^*)\rangle \rVert}.
+```
+
 # Arguments
 
-- `H::QuantumObject`: Hamiltonian of the system.
-- `ψ0::QuantumObject`: Initial state of the system.
+- `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
+- `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `t_l::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Vector`: List of collapse operators.
+- `c_ops::Vector`: List of collapse operators ``\{\hat{J}_i\}_i``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
@@ -266,6 +306,8 @@ Generates the ODEProblem for an ensemble of trajectories of the Monte Carlo wave
 
 # Notes
 
+- The states will be saved depend on the keyword argument `saveat` in `kwargs`.
+- If `e_ops` is specified, the default value of `saveat=[t_l[end]]` (only save the final state), otherwise, `saveat=t_l` (saving the states corresponding to `t_l`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
 - For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
@@ -323,12 +365,30 @@ end
 
 Time evolution of an open quantum system using quantum trajectories.
 
+In each trajectory, given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{J}_i\}_i``, the state ``|\psi(t)\rangle`` evolves according to:
+
+```math
+\frac{\partial}{\partial t} |\psi(t)\rangle= -i \hat{H}_{\textrm{eff}} |\psi(t)\rangle,
+```
+
+where
+
+```math
+\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_i \hat{J}_i^\dagger \hat{J}_i.
+```
+
+During the time evolution, each quantum jump ``\hat{J}_i`` event happends at randomly determined time ``t^*`` can be described by
+
+```math
+|\psi(t^*)\rangle \rightarrow \frac{\hat{J}_i|\psi(t^*)\rangle}{\lVert \hat{J}_i|\psi(t^*)\rangle \rVert}.
+```
+
 # Arguments
 
-- `H::QuantumObject`: Hamiltonian of the system.
-- `ψ0::QuantumObject`: Initial state of the system.
+- `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
+- `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `t_l::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Vector`: List of collapse operators.
+- `c_ops::Vector`: List of collapse operators ``\{\hat{J}_i\}_i``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
@@ -344,12 +404,14 @@ Time evolution of an open quantum system using quantum trajectories.
 # Notes
 
 - `ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`
+- The states will be saved depend on the keyword argument `saveat` in `kwargs`.
+- If `e_ops` is specified, the default value of `saveat=[t_l[end]]` (only save the final state), otherwise, `saveat=t_l` (saving the states corresponding to `t_l`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
 - For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
 
-- `sol::TimeEvolutionMCSol`: The solution of the time evolution.
+- `sol::TimeEvolutionMCSol`: The solution of the time evolution. See also [`TimeEvolutionMCSol`](@ref)
 """
 function mcsolve(
     H::QuantumObject{MT1,OperatorQuantumObject},
@@ -388,7 +450,7 @@ function mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc; alg = alg, n_traj = n_traj, ensemble_method = ensemble_method, kwargs...)
+    return mcsolve(ens_prob_mc; alg = alg, n_traj = n_traj, ensemble_method = ensemble_method)
 end
 
 function mcsolve(
@@ -396,14 +458,14 @@ function mcsolve(
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
     n_traj::Int = 1,
     ensemble_method = EnsembleThreads(),
-    kwargs...,
 )
     sol = solve(ens_prob_mc, alg, ensemble_method, trajectories = n_traj)
+    _sol_1 = sol[:, 1]
 
-    expvals_all = Array{ComplexF64}(undef, length(sol), size(sol[:, 1].prob.p.expvals)...)
+    expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
     times = Vector{Vector{Float64}}(undef, length(sol))
     states =
-        isempty(sol[:, 1].prob.kwargs[:saveat]) ? Vector{Vector{eltype(sol[:, 1].u[1])}}(undef, length(sol)) :
+        isempty(_sol_1.prob.kwargs[:saveat]) ? fill(QuantumObject[], length(sol)) :
         Vector{Vector{QuantumObject}}(undef, length(sol))
     jump_times = Vector{Vector{Float64}}(undef, length(sol))
     jump_which = Vector{Vector{Int16}}(undef, length(sol))
@@ -414,5 +476,17 @@ function mcsolve(
     )
     expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
 
-    return TimeEvolutionMCSol(times, states, expvals, expvals_all, jump_times, jump_which)
+    return TimeEvolutionMCSol(
+        n_traj,
+        times,
+        states,
+        expvals,
+        expvals_all,
+        jump_times,
+        jump_which,
+        sol.converged,
+        _sol_1.alg,
+        _sol_1.prob.kwargs[:abstol],
+        _sol_1.prob.kwargs[:reltol],
+    )
 end
