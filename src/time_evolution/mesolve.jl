@@ -41,13 +41,13 @@ end
 Generates the ODEProblem for the master equation time evolution of an open quantum system:
 
 ```math
-\frac{\partial \rho(t)}{\partial t} = -i[\hat{H}, \rho(t)] + \sum_i \mathcal{D}(\hat{O}_i) [\rho(t)]
+\frac{\partial \rho(t)}{\partial t} = -i[\hat{H}, \rho(t)] + \sum_n \mathcal{D}(\hat{C}_n) [\rho(t)]
 ```
 
 where 
 
 ```math
-\mathcal{D}(\hat{O}_i) [\rho(t)] = \hat{O}_i \rho(t) \hat{O}_i^\dagger - \frac{1}{2} \hat{O}_i^\dagger \hat{O}_i \rho(t) - \frac{1}{2} \rho(t) \hat{O}_i^\dagger \hat{O}_i
+\mathcal{D}(\hat{C}_n) [\rho(t)] = \hat{C}_n \rho(t) \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n \rho(t) - \frac{1}{2} \rho(t) \hat{C}_n^\dagger \hat{C}_n
 ```
 
 # Arguments
@@ -55,7 +55,7 @@ where
 - `H::QuantumObject`: The Hamiltonian ``\hat{H}`` or the Liouvillian of the system.
 - `ψ0::QuantumObject`: The initial state of the system.
 - `t_l::AbstractVector`: The time list of the evolution.
-- `c_ops::AbstractVector=[]`: The list of the collapse operators ``\{\hat{O}_i\}_i``.
+- `c_ops::AbstractVector=[]`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm used for the time evolution.
 - `e_ops::AbstractVector=[]`: The list of the operators for which the expectation values are calculated.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing`: The time-dependent Hamiltonian or Liouvillian.
@@ -170,21 +170,21 @@ end
 Time evolution of an open quantum system using Lindblad master equation:
 
 ```math
-\frac{\partial \rho(t)}{\partial t} = -i[\hat{H}, \rho(t)] + \sum_i \mathcal{D}(\hat{O}_i) [\rho(t)]
+\frac{\partial \rho(t)}{\partial t} = -i[\hat{H}, \rho(t)] + \sum_n \mathcal{D}(\hat{C}_n) [\rho(t)]
 ```
 
 where 
 
 ```math
-\mathcal{D}(\hat{O}_i) [\rho(t)] = \hat{O}_i \rho(t) \hat{O}_i^\dagger - \frac{1}{2} \hat{O}_i^\dagger \hat{O}_i \rho(t) - \frac{1}{2} \rho(t) \hat{O}_i^\dagger \hat{O}_i
+\mathcal{D}(\hat{C}_n) [\rho(t)] = \hat{C}_n \rho(t) \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n \rho(t) - \frac{1}{2} \rho(t) \hat{C}_n^\dagger \hat{C}_n
 ```
 
 # Arguments
 
-- `H::QuantumObject`: Hamiltonian ``\hat{H}`` or Liouvillian of the system.
-- `ψ0::QuantumObject`: Initial state of the system.
-- `t_l::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::AbstractVector`: List of collapse operators ``\{\hat{O}_i\}_i``.
+- `H::QuantumObject`: The Hamiltonian ``\hat{H}`` or the Liouvillian of the system.
+- `ψ0::QuantumObject`: The initial state of the system.
+- `t_l::AbstractVector`: The time list of the evolution.
+- `c_ops::AbstractVector=[]`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.

@@ -52,8 +52,8 @@ A structure storing the results and some information from solving quantum trajec
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
 - `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
 - `expect_all::Array`: The expectation values corresponding to each trajectory and each time point in `times`
-- `jump_times::Vector{Vector{Real}}`: The time records of every quantum jump happened in each trajectory.
-- `jump_which::Vector{Vector{Int}}`: The indices of the jump operators in `c_ops` that describe the corresponding quantum jumps happened in each trajectory.
+- `jump_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
+- `jump_which::Vector{Vector{Int}}`: The indices of the jump operators in `c_ops` that describe the corresponding quantum jumps occurred in each trajectory.
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -186,16 +186,16 @@ end
 @doc raw"""
     liouvillian(H::QuantumObject, c_ops::AbstractVector, Id_cache=I(prod(H.dims)))
 
-Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\hat{O}_i``:
+Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
 
 ```math
-\mathcal{L} [\cdot] = -i[\hat{H}, \cdot] + \sum_i \mathcal{D}(\hat{O}_i) [\cdot]
+\mathcal{L} [\cdot] = -i[\hat{H}, \cdot] + \sum_n \mathcal{D}(\hat{C}_n) [\cdot]
 ```
 
 where 
 
 ```math
-\mathcal{D}(\hat{O}_i) [\cdot] = \hat{O}_i [\cdot] \hat{O}_i^\dagger - \frac{1}{2} \hat{O}_i^\dagger \hat{O}_i [\cdot] - \frac{1}{2} [\cdot] \hat{O}_i^\dagger \hat{O}_i
+\mathcal{D}(\hat{C}_n) [\cdot] = \hat{C}_n [\cdot] \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n [\cdot] - \frac{1}{2} [\cdot] \hat{C}_n^\dagger \hat{C}_n
 ```
 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.

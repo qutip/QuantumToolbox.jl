@@ -111,22 +111,36 @@ end
 
 Generates the ODEProblem for a single trajectory of the Monte Carlo wave function time evolution of an open quantum system.
 
-Given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{J}_i\}_i``, the state ``|\psi(t)\rangle`` evolves according to:
+Given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{C}_n\}_n``, the evolution of the state ``|\psi(t)\rangle`` is governed by the Schrodinger equation:
 
 ```math
-\frac{\partial}{\partial t} |\psi(t)\rangle= -i \hat{H}_{\textrm{eff}} |\psi(t)\rangle,
+\frac{\partial}{\partial t} |\psi(t)\rangle= -i \hat{H}_{\textrm{eff}} |\psi(t)\rangle
 ```
 
-where
+with a non-Hermitian effective Hamiltonian:
 
 ```math
-\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_i \hat{J}_i^\dagger \hat{J}_i.
+\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_n \hat{C}_n^\dagger \hat{C}_n.
 ```
 
-During the time evolution, each quantum jump ``\hat{J}_i`` event happends at randomly determined time ``t^*`` can be described by
+To the first-order of the wave function in a small time ``\delta t``, the strictly negative non-Hermitian portion in ``\hat{H}_{\textrm{eff}}`` gives rise to a reduction in the norm of the wave function, namely
 
 ```math
-|\psi(t^*)\rangle \rightarrow \frac{\hat{J}_i|\psi(t^*)\rangle}{\lVert \hat{J}_i|\psi(t^*)\rangle \rVert}.
+\langle \psi(t+\delta t) | \psi(t+\delta t) \rangle = 1 - \delta p,
+```
+
+where 
+
+```math
+\delta p = \delta t \sum_n \langle \psi(t) | \hat{C}_n^\dagger \hat{C}_n | \psi(t) \rangle
+```
+
+is the corresponding quantum jump probability.
+
+If the environmental measurements register a quantum jump, the wave function undergoes a jump into a state defined by projecting ``|\psi(t)\rangle`` using the collapse operator ``\hat{C}_n`` corresponding to the measurement, namely
+
+```math
+| \psi(t+\delta t) \rangle = \frac{\hat{C}_n |\psi(t)\rangle}{ \sqrt{\langle \psi(t) | \hat{C}_n^\dagger \hat{C}_n | \psi(t) \rangle} }
 ```
 
 # Arguments
@@ -134,7 +148,7 @@ During the time evolution, each quantum jump ``\hat{J}_i`` event happends at ran
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `t_l::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Vector`: List of collapse operators ``\{\hat{J}_i\}_i``.
+- `c_ops::Vector`: List of collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
@@ -167,7 +181,7 @@ function mcsolveProblem(
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
-    H_eff = H - 0.5im * mapreduce(op -> op' * op, +, c_ops)
+    H_eff = H - T2(0.5im) * mapreduce(op -> op' * op, +, c_ops)
 
     is_empty_e_ops_mc = isempty(e_ops)
     e_ops2 = Vector{Te}(undef, length(e_ops))
@@ -268,24 +282,38 @@ end
         output_func::Function=_mcsolve_output_func,
         kwargs...)
 
-Generates the ODEProblem for an ensemble of trajectories of the Monte Carlo wave function time evolution of an open quantum system.
+Generates the `EnsembleProblem` of `ODEProblem`s for the ensemble of trajectories of the Monte Carlo wave function time evolution of an open quantum system.
 
-In each trajectory, given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{J}_i\}_i``, the state ``|\psi(t)\rangle`` evolves according to:
+Given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{C}_n\}_n``, the evolution of the state ``|\psi(t)\rangle`` is governed by the Schrodinger equation:
 
 ```math
-\frac{\partial}{\partial t} |\psi(t)\rangle= -i \hat{H}_{\textrm{eff}} |\psi(t)\rangle,
+\frac{\partial}{\partial t} |\psi(t)\rangle= -i \hat{H}_{\textrm{eff}} |\psi(t)\rangle
 ```
 
-where
+with a non-Hermitian effective Hamiltonian:
 
 ```math
-\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_i \hat{J}_i^\dagger \hat{J}_i.
+\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_n \hat{C}_n^\dagger \hat{C}_n.
 ```
 
-During the time evolution, each quantum jump ``\hat{J}_i`` event happends at randomly determined time ``t^*`` can be described by
+To the first-order of the wave function in a small time ``\delta t``, the strictly negative non-Hermitian portion in ``\hat{H}_{\textrm{eff}}`` gives rise to a reduction in the norm of the wave function, namely
 
 ```math
-|\psi(t^*)\rangle \rightarrow \frac{\hat{J}_i|\psi(t^*)\rangle}{\lVert \hat{J}_i|\psi(t^*)\rangle \rVert}.
+\langle \psi(t+\delta t) | \psi(t+\delta t) \rangle = 1 - \delta p,
+```
+
+where 
+
+```math
+\delta p = \delta t \sum_n \langle \psi(t) | \hat{C}_n^\dagger \hat{C}_n | \psi(t) \rangle
+```
+
+is the corresponding quantum jump probability.
+
+If the environmental measurements register a quantum jump, the wave function undergoes a jump into a state defined by projecting ``|\psi(t)\rangle`` using the collapse operator ``\hat{C}_n`` corresponding to the measurement, namely
+
+```math
+| \psi(t+\delta t) \rangle = \frac{\hat{C}_n |\psi(t)\rangle}{ \sqrt{\langle \psi(t) | \hat{C}_n^\dagger \hat{C}_n | \psi(t) \rangle} }
 ```
 
 # Arguments
@@ -293,7 +321,7 @@ During the time evolution, each quantum jump ``\hat{J}_i`` event happends at ran
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `t_l::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Vector`: List of collapse operators ``\{\hat{J}_i\}_i``.
+- `c_ops::Vector`: List of collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
@@ -365,22 +393,36 @@ end
 
 Time evolution of an open quantum system using quantum trajectories.
 
-In each trajectory, given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{J}_i\}_i``, the state ``|\psi(t)\rangle`` evolves according to:
+Given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{C}_n\}_n``, the evolution of the state ``|\psi(t)\rangle`` is governed by the Schrodinger equation:
 
 ```math
-\frac{\partial}{\partial t} |\psi(t)\rangle= -i \hat{H}_{\textrm{eff}} |\psi(t)\rangle,
+\frac{\partial}{\partial t} |\psi(t)\rangle= -i \hat{H}_{\textrm{eff}} |\psi(t)\rangle
 ```
 
-where
+with a non-Hermitian effective Hamiltonian:
 
 ```math
-\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_i \hat{J}_i^\dagger \hat{J}_i.
+\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_n \hat{C}_n^\dagger \hat{C}_n.
 ```
 
-During the time evolution, each quantum jump ``\hat{J}_i`` event happends at randomly determined time ``t^*`` can be described by
+To the first-order of the wave function in a small time ``\delta t``, the strictly negative non-Hermitian portion in ``\hat{H}_{\textrm{eff}}`` gives rise to a reduction in the norm of the wave function, namely
 
 ```math
-|\psi(t^*)\rangle \rightarrow \frac{\hat{J}_i|\psi(t^*)\rangle}{\lVert \hat{J}_i|\psi(t^*)\rangle \rVert}.
+\langle \psi(t+\delta t) | \psi(t+\delta t) \rangle = 1 - \delta p,
+```
+
+where 
+
+```math
+\delta p = \delta t \sum_n \langle \psi(t) | \hat{C}_n^\dagger \hat{C}_n | \psi(t) \rangle
+```
+
+is the corresponding quantum jump probability.
+
+If the environmental measurements register a quantum jump, the wave function undergoes a jump into a state defined by projecting ``|\psi(t)\rangle`` using the collapse operator ``\hat{C}_n`` corresponding to the measurement, namely
+
+```math
+| \psi(t+\delta t) \rangle = \frac{\hat{C}_n |\psi(t)\rangle}{ \sqrt{\langle \psi(t) | \hat{C}_n^\dagger \hat{C}_n | \psi(t) \rangle} }
 ```
 
 # Arguments
@@ -388,7 +430,7 @@ During the time evolution, each quantum jump ``\hat{J}_i`` event happends at ran
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `t_l::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Vector`: List of collapse operators ``\{\hat{J}_i\}_i``.
+- `c_ops::Vector`: List of collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
