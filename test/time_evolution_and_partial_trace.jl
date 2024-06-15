@@ -1,4 +1,5 @@
 @testset "Time Evolution and Partial Trace" begin
+    # sesolve
     N = 10
     a_d = kron(create(N), qeye(2))
     a = a_d'
@@ -25,6 +26,7 @@
           "abstol = $(sol.abstol)\n" *
           "reltol = $(sol.reltol)\n"
 
+    # mesolve and mcsolve
     a = destroy(N)
     a_d = a'
     H = a_d * a
@@ -56,6 +58,15 @@
           "ODE alg.: $(sol_mc.alg)\n" *
           "abstol = $(sol_mc.abstol)\n" *
           "reltol = $(sol_mc.reltol)\n"
+
+    # exceptions
+    psi_wrong = basis(N - 1, 3)
+    @test_throws DimensionMismatch sesolve(H, psi_wrong, t_l)
+    @test_throws DimensionMismatch mesolve(H, psi_wrong, t_l)
+    @test_throws DimensionMismatch mcsolve(H, psi_wrong, t_l)
+    @test_throws ArgumentError sesolve(H, psi0, t_l, save_idxs = [1, 2])
+    @test_throws ArgumentError mesolve(H, psi0, t_l, save_idxs = [1, 2])
+    @test_throws ArgumentError mcsolve(H, psi0, t_l, save_idxs = [1, 2])
 
     sp1 = kron(sigmap(), qeye(2))
     sm1 = sp1'

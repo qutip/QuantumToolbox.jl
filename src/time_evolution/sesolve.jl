@@ -75,6 +75,8 @@ function sesolveProblem(
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,MT2<:AbstractMatrix}
     H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    
+    haskey(kwargs, :save_idxs) && throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     is_time_dependent = !(H_t === nothing)
 

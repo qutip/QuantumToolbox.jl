@@ -96,6 +96,8 @@ function mesolveProblem(
 }
     H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
+    haskey(kwargs, :save_idxs) && throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
+
     is_time_dependent = !(H_t === nothing)
 
     ρ0 = mat2vec(ket2dm(ψ0).data)

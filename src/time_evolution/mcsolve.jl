@@ -181,6 +181,11 @@ function mcsolveProblem(
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
+
+    H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+
+    haskey(kwargs, :save_idxs) && throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
+
     H_eff = H - T2(0.5im) * mapreduce(op -> op' * op, +, c_ops)
 
     is_empty_e_ops_mc = isempty(e_ops)
