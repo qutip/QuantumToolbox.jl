@@ -77,7 +77,13 @@ create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:N-1))), O
 @doc raw"""
     displace(N::Int, α::Number)
 
-Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator) ``\hat{D}(\alpha)=\exp\left( \alpha \hat{a}^\dagger - \alpha^* \hat{a} \right)``, where ``\hat{a}`` is the bosonic annihilation operator.
+Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator):
+
+```math
+\hat{D}(\alpha)=\exp\left( \alpha \hat{a}^\dagger - \alpha^* \hat{a} \right),
+```
+
+where ``\hat{a}`` is the bosonic annihilation operator, and ``\alpha`` is the amount of displacement in optical phase space.
 """
 function displace(N::Int, α::T) where {T<:Number}
     a = destroy(N)
