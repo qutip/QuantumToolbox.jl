@@ -111,6 +111,23 @@
     @test commutator(N, ad) ≈ ad
     @test all(diag(commutator(x, p))[1:(n-1)] .≈ 1.0im)
 
+    # phase
+    ## verify Equation (33) in: 
+    ## Michael Martin Nieto, QUANTUM PHASE AND QUANTUM PHASE OPERATORS: Some Physics and Some History
+    s = 10
+    ϕ0 = 2 * π * rand()
+    II = qeye(s + 1)
+    ket = [basis(s + 1, i) for i in 0:s]
+    SUM = Qobj(zeros(ComplexF64, s + 1, s + 1))
+    for j in 0:s
+        for k in 0:s
+            j != k ?
+            SUM += (exp(1im * (j - k) * ϕ0) / (exp(1im * (j - k) * 2 * π / (s + 1)) - 1)) * ket[j+1] * ket[k+1]' :
+            nothing
+        end
+    end
+    @test (ϕ0 + s * π / (s + 1)) * II + (2 * π / (s + 1)) * SUM ≈ phase(s + 1, ϕ0)
+
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))
     Jx, Jy, Jz = spin_J_set(0.5)

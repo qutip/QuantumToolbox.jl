@@ -131,6 +131,7 @@ displace
 num
 position_op
 momentum_op
+phase
 fdestroy
 fcreate
 eye

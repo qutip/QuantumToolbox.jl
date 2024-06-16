@@ -5,7 +5,7 @@ Functions for generating (common) quantum operators.
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection
-export displace, num, position_op, momentum_op
+export displace, num, position_op, momentum_op, phase
 export fdestroy, fcreate
 export commutator
 
@@ -115,6 +115,39 @@ This operator is defined as ``\hat{p}= \frac{i}{\sqrt{2}} (\hat{a}^\dagger - \ha
 function momentum_op(N::Int)
     a = destroy(N)
     return (1.0im * sqrt(0.5)) * (a' - a)
+end
+
+@doc raw"""
+    phase(N::Int, ϕ0::Real=0)
+
+Single-mode Pegg-Barnett phase operator with Hilbert space cutoff ``N`` and the reference phase ``\phi_0``.
+
+This operator is defined as
+
+```math
+\hat{\phi} = \sum_{m=0}^{N-1} \phi_m |\phi_m\rangle \langle\phi_m|,
+```
+
+where
+
+```math
+\phi_m = \phi_0 + \frac{2m\pi}{N},
+```
+
+and
+
+```math
+|\phi_m\rangle = \frac{1}{\sqrt{N}} \sum_{n=0}^{N-1} \exp(i n \phi_m) |n\rangle.
+```
+
+# Reference
+- [Michael Martin Nieto, QUANTUM PHASE AND QUANTUM PHASE OPERATORS: Some Physics and Some History, arXiv:hep-th/9304036](https://arxiv.org/abs/hep-th/9304036), Equation (30-32).
+"""
+function phase(N::Int, ϕ0::Real = 0)
+    N_list = collect(0:(N-1))
+    ϕ = ϕ0 .+ (2 * π / N) .* N_list
+    states = [exp.((1.0im * ϕ[m]) .* N_list) ./ sqrt(N) for m in 1:N]
+    return QuantumObject(sum([ϕ[m] * states[m] * states[m]' for m in 1:N]); type = Operator, dims = [N])
 end
 
 @doc raw"""
