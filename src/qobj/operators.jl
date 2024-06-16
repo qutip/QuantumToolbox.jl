@@ -5,7 +5,7 @@ Functions for generating (common) quantum operators.
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection
-export displace
+export displace, num
 export fdestroy, fcreate
 export commutator
 
@@ -27,8 +27,9 @@ commutator(
 @doc raw"""
     destroy(N::Int)
 
-Bosonic annihilation operator with Hilbert space cutoff `N`. This operator
-acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
+Bosonic annihilation operator with Hilbert space cutoff `N`. 
+
+This operator acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
 
 # Examples
 
@@ -51,8 +52,9 @@ destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:N-1))), O
 @doc raw"""
     create(N::Int)
 
-Bosonic creation operator with Hilbert space cutoff `N`. This operator
-acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ket{n+1}``.
+Bosonic creation operator with Hilbert space cutoff `N`.
+
+This operator acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ket{n+1}``.
 
 # Examples
 
@@ -81,6 +83,15 @@ function displace(N::Int, α::T) where {T<:Number}
     a = destroy(N)
     return exp(α * a' - α' * a)
 end
+
+@doc raw"""
+    num(N::Int)
+
+Bosonic number operator with Hilbert space cutoff `N`. 
+
+This operator is defined as ``\hat{N}=\hat{a}^\dagger \hat{a}``, where ``\hat{a}`` is the bosonic annihilation operator.
+"""
+num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:N-1)), Operator, [N])
 
 @doc raw"""
     jmat(j::Real, which::Symbol)

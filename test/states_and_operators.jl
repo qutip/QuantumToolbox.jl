@@ -97,6 +97,14 @@
     @test_throws ArgumentError bell_state(3, 1)
     @test_throws ArgumentError bell_state(2, 3)
 
+    # destroy, create, num
+    n = 10
+    a = destroy(n)
+    ad = create(n)
+    N = num(n)
+    @test commutator(N, a) ≈ -a
+    @test commutator(N, ad) ≈ ad
+
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))
     Jx, Jy, Jz = spin_J_set(0.5)

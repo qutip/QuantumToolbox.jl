@@ -128,6 +128,7 @@ spin_J_set
 destroy
 create
 displace
+num
 fdestroy
 fcreate
 eye
