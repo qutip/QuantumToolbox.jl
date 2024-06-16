@@ -128,6 +128,7 @@ spin_J_set
 destroy
 create
 displace
+squeeze
 num
 position_op
 momentum_op

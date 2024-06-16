@@ -5,7 +5,7 @@ Functions for generating (common) quantum operators.
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection
-export displace, num, position_op, momentum_op, phase
+export displace, squeeze, num, position_op, momentum_op, phase
 export fdestroy, fcreate
 export commutator
 
@@ -88,6 +88,22 @@ where ``\hat{a}`` is the bosonic annihilation operator, and ``\alpha`` is the am
 function displace(N::Int, α::T) where {T<:Number}
     a = destroy(N)
     return exp(α * a' - α' * a)
+end
+
+@doc raw"""
+    squeeze(N::Int, z::Number)
+
+Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_operator):
+
+```math
+\hat{S}(z)=\exp\left( \frac{1}{2} (z^* \hat{a}^2 - z(\hat{a}^\dagger)^2) \right),
+```
+
+where ``\hat{a}`` is the bosonic annihilation operator.
+"""
+function squeeze(N::Int, z::T) where {T<:Number}
+    a_sq = destroy(N)^2
+    return exp((z' * a_sq - z * a_sq') / 2)
 end
 
 @doc raw"""

@@ -111,6 +111,16 @@
     @test commutator(N, ad) ≈ ad
     @test all(diag(commutator(x, p))[1:(n-1)] .≈ 1.0im)
 
+    # displace, squeeze
+    N = 10
+    α = rand(ComplexF64)
+    z = rand(ComplexF64)
+    II = qeye(N)
+    D = displace(N, α)
+    S = squeeze(N, z)
+    @test D * D' ≈ II
+    @test S * S' ≈ II
+
     # phase
     ## verify Equation (33) in: 
     ## Michael Martin Nieto, QUANTUM PHASE AND QUANTUM PHASE OPERATORS: Some Physics and Some History
