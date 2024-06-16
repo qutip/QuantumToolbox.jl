@@ -127,6 +127,7 @@ spin_Jp
 spin_J_set
 destroy
 create
+displace
 fdestroy
 fcreate
 eye

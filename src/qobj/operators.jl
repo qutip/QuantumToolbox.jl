@@ -5,6 +5,7 @@ Functions for generating (common) quantum operators.
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection
+export displace
 export fdestroy, fcreate
 export commutator
 
@@ -70,6 +71,16 @@ julia> fock(20, 4)' * a_d * fock(20, 3)
 ```
 """
 create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:N-1))), Operator, [N])
+
+@doc raw"""
+    displace(N::Int, α::Number)
+
+Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator) ``\hat{D}(\alpha)=\exp\left( \alpha \hat{a}^\dagger - \alpha^* \hat{a} \right)``, where ``\hat{a}`` is the bosonic annihilation operator.
+"""
+function displace(N::Int, α::T) where {T<:Number}
+    a = destroy(N)
+    return exp(α * a' - α' * a)
+end
 
 @doc raw"""
     jmat(j::Real, which::Symbol)
