@@ -97,13 +97,19 @@
     @test_throws ArgumentError bell_state(3, 1)
     @test_throws ArgumentError bell_state(2, 3)
 
-    # destroy, create, num
+    # destroy, create, num, position, momentum
     n = 10
     a = destroy(n)
     ad = create(n)
     N = num(n)
+    x = position_op(n)
+    p = momentum_op(n)
+    @test isoper(x)
+    @test isoper(p)
+    @test a.dims == ad.dims == N.dims == x.dims == p.dims == [n]
     @test commutator(N, a) ≈ -a
     @test commutator(N, ad) ≈ ad
+    @test all(diag(commutator(x, p))[1:(n-1)] .≈ 1.0im)
 
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))

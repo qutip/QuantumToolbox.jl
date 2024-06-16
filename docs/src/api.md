@@ -129,6 +129,8 @@ destroy
 create
 displace
 num
+position_op
+momentum_op
 fdestroy
 fcreate
 eye

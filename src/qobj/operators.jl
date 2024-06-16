@@ -5,7 +5,7 @@ Functions for generating (common) quantum operators.
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection
-export displace, num
+export displace, num, position_op, momentum_op
 export fdestroy, fcreate
 export commutator
 
@@ -92,6 +92,30 @@ Bosonic number operator with Hilbert space cutoff `N`.
 This operator is defined as ``\hat{N}=\hat{a}^\dagger \hat{a}``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
 num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:N-1)), Operator, [N])
+
+@doc raw"""
+    position_op(N::Int)
+
+Position operator with Hilbert space cutoff `N`. 
+
+This operator is defined as ``\hat{x}=\frac{1}{\sqrt{2}} (\hat{a}^\dagger + \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
+"""
+function position_op(N::Int)
+    a = destroy(N)
+    return (a' + a) / sqrt(2)
+end
+
+@doc raw"""
+    momentum_op(N::Int)
+
+Momentum operator with Hilbert space cutoff `N`. 
+
+This operator is defined as ``\hat{p}= \frac{i}{\sqrt{2}} (\hat{a}^\dagger - \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
+"""
+function momentum_op(N::Int)
+    a = destroy(N)
+    return (1.0im * sqrt(0.5)) * (a' - a)
+end
 
 @doc raw"""
     jmat(j::Real, which::Symbol)
