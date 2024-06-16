@@ -138,6 +138,10 @@
     end
     @test (ϕ0 + s * π / (s + 1)) * II + (2 * π / (s + 1)) * SUM ≈ phase(s + 1, ϕ0)
 
+    # tunneling
+    @test tunneling(10, 2) == tunneling(10, 2; sparse = true)
+    @test_throws ArgumentError tunneling(10, 0)
+
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))
     Jx, Jy, Jz = spin_J_set(0.5)

@@ -135,6 +135,7 @@ momentum_op
 phase
 fdestroy
 fcreate
+tunneling
 eye
 projection
 commutator

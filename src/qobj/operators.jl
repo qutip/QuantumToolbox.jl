@@ -8,6 +8,7 @@ export destroy, create, eye, projection
 export displace, squeeze, num, position_op, momentum_op, phase
 export fdestroy, fcreate
 export commutator
+export tunneling
 
 @doc raw"""
     commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
@@ -411,3 +412,25 @@ end
 Generates the projection operator ``\hat{O} = \dyad{i}{j}`` with Hilbert space dimension `N`.
 """
 projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N))
+
+@doc raw"""
+    tunneling(N::Int, m::Int=1; sparse::Bool=false)
+
+Generate a tunneling operator defined as:
+
+```math
+\sum_{n=0}^{N-m} | n \rangle\langle n+m | + | n+m \rangle\langle n |,
+```
+
+where ``N`` is the number of basis states in the Hilbert space, and ``m`` is the number of excitations in tunneling event.
+"""
+function tunneling(N::Int, m::Int = 1; sparse::Bool = false)
+    (m < 1) && throw(ArgumentError("The number of excitations (m) cannot be less than 1"))
+
+    data = ones(ComplexF64, N - m)
+    if sparse
+        return QuantumObject(spdiagm(m => data, -m => data); type = Operator, dims = [N])
+    else
+        return QuantumObject(diagm(m => data, -m => data); type = Operator, dims = [N])
+    end
+end
