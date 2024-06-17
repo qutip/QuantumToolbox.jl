@@ -346,7 +346,7 @@ function dsf_mesolveProblem(
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    krylov_dim::Int = min(5, cld(length(ket2dm(ψ0).data), 3)),
+    krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
 ) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},TOl}
     op_l = op_list
@@ -413,7 +413,7 @@ end
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         δα_list::Vector{<:Number}=fill(0.2, length(op_list)),
-        krylov_dim::Int=min(5,cld(length(ket2dm(ψ0).data), 3)),
+        krylov_dim::Int=max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
         kwargs...)
 
 Time evolution of an open quantum system using master equation and the Dynamical Shifted Fock algorithm.
@@ -431,7 +431,7 @@ function dsf_mesolve(
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    krylov_dim::Int = min(5, cld(length(ket2dm(ψ0).data), 3)),
+    krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
 ) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},TOl}
     dsf_prob = dsf_mesolveProblem(
@@ -466,7 +466,7 @@ function dsf_mesolve(
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    krylov_dim::Int = min(5, cld(length(ket2dm(ψ0).data), 3)),
+    krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
 ) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},TOl}
     c_ops = op_list -> Vector{TOl}([])
@@ -681,7 +681,7 @@ end
         n_traj::Int=1,
         ensemble_method=EnsembleThreads(),
         jump_callback::LindbladJumpCallbackType=ContinuousLindbladJumpCallback(),
-        krylov_dim::Int=min(5,cld(length(ψ0.data), 3)),
+        krylov_dim::Int=max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
         kwargs...)
 
 Time evolution of a quantum system using the Monte Carlo wave function method and the Dynamical Shifted Fock algorithm.
