@@ -142,6 +142,15 @@
     @test tunneling(10, 2) == tunneling(10, 2; sparse = true)
     @test_throws ArgumentError tunneling(10, 0)
 
+    # qft (quantum Fourier transform)
+    N = 9
+    dims = [3, 3]
+    x = basis(N, 0; dims = dims)
+    y = Qobj(ones(ComplexF64, N); dims = dims) / sqrt(N)
+    F = qft(dims)
+    @test y ≈ F * x
+    @test x ≈ F' * y
+
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))
     Jx, Jy, Jz = spin_J_set(0.5)

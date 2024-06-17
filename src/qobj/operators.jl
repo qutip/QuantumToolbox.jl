@@ -9,6 +9,7 @@ export displace, squeeze, num, position_op, momentum_op, phase
 export fdestroy, fcreate
 export commutator
 export tunneling
+export qft
 
 @doc raw"""
     commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
@@ -433,4 +434,37 @@ function tunneling(N::Int, m::Int = 1; sparse::Bool = false)
     else
         return QuantumObject(diagm(m => data, -m => data); type = Operator, dims = [N])
     end
+end
+
+@doc raw"""
+    qft(dimensions)
+
+Generates a discrete Fourier transfor matrix ``\hat{F}_N`` for [Quantum Fourier Transform (QFT)](https://en.wikipedia.org/wiki/Quantum_Fourier_transform) with given argument `dimensions`.
+
+The `dimensions` can be either the following types:
+- `dimensions::Int`: Number of basis states in the Hilbert space.
+- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+
+``N`` represents the total dimension, and therefore the matrix is defined as
+
+```math
+\hat{F}_N = \frac{1}{\sqrt{N}}\begin{bmatrix}
+1 & 1 & 1 & 1 & \cdots & 1\\
+1 & \omega & \omega^2 & \omega^3 & \cdots & \omega^{N-1}\\
+1 & \omega^2 & \omega^4 & \omega^6 & \cdots & \omega^{2(N-1)}\\
+1 & \omega^3 & \omega^6 & \omega^9 & \cdots & \omega^{3(N-1)}\\
+\vdots & \vdots & \vdots & \vdots & \ddots & \vdots\\
+1 & \omega^{N-1} & \omega^{2(N-1)} & \omega^{3(N-1)} & \cdots & \omega^{(N-1)(N-1)}
+\end{bmatrix},
+```
+
+where ``\omega = \exp(\frac{2 \pi i}{N})``.
+"""
+qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator, [dimensions])
+qft(dimensions::Vector{Int}) = QuantumObject(_qft_op(prod(dimensions)), Operator, dimensions)
+function _qft_op(N::Int)
+    ω = exp(2.0im * π / N)
+    arr = 0:(N-1)
+    L, M = meshgrid(arr, arr)
+    return ω .^ (L .* M) / sqrt(N)
 end
