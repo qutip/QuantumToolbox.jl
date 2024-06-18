@@ -118,25 +118,25 @@ This operator is defined as ``\hat{N}=\hat{a}^\dagger \hat{a}``, where ``\hat{a}
 num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:N-1)), Operator, [N])
 
 @doc raw"""
-    position_op(N::Int)
+    position(N::Int)
 
 Position operator with Hilbert space cutoff `N`. 
 
 This operator is defined as ``\hat{x}=\frac{1}{\sqrt{2}} (\hat{a}^\dagger + \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
-function position_op(N::Int)
+function position(N::Int)
     a = destroy(N)
     return (a' + a) / sqrt(2)
 end
 
 @doc raw"""
-    momentum_op(N::Int)
+    momentum(N::Int)
 
 Momentum operator with Hilbert space cutoff `N`. 
 
 This operator is defined as ``\hat{p}= \frac{i}{\sqrt{2}} (\hat{a}^\dagger - \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
-function momentum_op(N::Int)
+function momentum(N::Int)
     a = destroy(N)
     return (1.0im * sqrt(0.5)) * (a' - a)
 end

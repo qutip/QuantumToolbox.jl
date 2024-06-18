@@ -102,8 +102,8 @@
     a = destroy(n)
     ad = create(n)
     N = num(n)
-    x = position_op(n)
-    p = momentum_op(n)
+    x = position(n)
+    p = momentum(n)
     @test isoper(x)
     @test isoper(p)
     @test a.dims == ad.dims == N.dims == x.dims == p.dims == [n]

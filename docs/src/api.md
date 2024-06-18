@@ -130,8 +130,8 @@ create
 displace
 squeeze
 num
-position_op
-momentum_op
+QuantumToolbox.position
+QuantumToolbox.momentum
 phase
 fdestroy
 fcreate
