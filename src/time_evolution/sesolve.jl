@@ -56,7 +56,7 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[t_l[end]]` (only save the final state), otherwise, `saveat=t_l` (saving the states corresponding to `t_l`). You can also specify `e_ops` and `saveat` separately.
-- The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+- The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
@@ -101,7 +101,7 @@ function sesolveProblem(
     )
 
     saveat = is_empty_e_ops ? t_l : [t_l[end]]
-    default_values = (abstol = 1e-7, reltol = 1e-5, saveat = saveat)
+    default_values = (abstol = 1e-8, reltol = 1e-6, saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops) || progress_bar
         cb1 = PresetTimeCallback(t_l, _save_func_sesolve, save_positions = (false, false))
@@ -171,7 +171,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[t_l[end]]` (only save the final state), otherwise, `saveat=t_l` (saving the states corresponding to `t_l`). You can also specify `e_ops` and `saveat` separately.
-- The default tolerances in `kwargs` are given as `reltol=1e-5` and `abstol=1e-7`.
+- The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
 # Returns
