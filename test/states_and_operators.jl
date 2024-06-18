@@ -145,11 +145,19 @@
     # qft (quantum Fourier transform)
     N = 9
     dims = [3, 3]
-    x = basis(N, 0; dims = dims)
-    y = Qobj(ones(ComplexF64, N); dims = dims) / sqrt(N)
-    F = qft(dims)
-    @test y ≈ F * x
-    @test x ≈ F' * y
+    ω = exp(2.0im * π / N)
+    x = Qobj(rand(ComplexF64, N))
+    ψx = basis(N, 0; dims = dims)
+    ψk = unit(Qobj(ones(ComplexF64, N); dims = dims))
+    F_9 = qft(N)
+    F_3_3 = qft(dims)
+    y = F_9 * x
+    for k in 0:(N-1)
+        nk = collect(0:(N-1)) * k
+        @test y[k+1] ≈ sum(x.data .* (ω .^ nk)) / sqrt(N)
+    end
+    @test ψk ≈ F_3_3 * ψx
+    @test ψx ≈ F_3_3' * ψk
 
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))
