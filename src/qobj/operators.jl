@@ -5,7 +5,7 @@ Functions for generating (common) quantum operators.
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection
-export displace, squeeze, num, position_op, momentum_op, phase
+export displace, squeeze, num, phase
 export fdestroy, fcreate
 export commutator
 export tunneling
