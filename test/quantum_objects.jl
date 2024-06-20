@@ -6,6 +6,13 @@
         end
     end
 
+    # unsupported dims
+    @test_throws ArgumentError Qobj(rand(2, 2), dims = 2)
+    @test_throws ArgumentError Qobj(rand(2, 2), dims = [2.0])
+    @test_throws ArgumentError Qobj(rand(2, 2), dims = [2.0 + 0.0im])
+    @test_throws DomainError Qobj(rand(2, 2), dims = [0])
+    @test_throws DomainError Qobj(rand(2, 2), dims = [2, -2])
+
     N = 10
     a = rand(ComplexF64, 10)
     # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
