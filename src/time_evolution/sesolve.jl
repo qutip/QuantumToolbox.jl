@@ -101,7 +101,7 @@ function sesolveProblem(
     )
 
     saveat = is_empty_e_ops ? t_l : [t_l[end]]
-    default_values = (abstol = 1e-8, reltol = 1e-6, saveat = saveat)
+    default_values = (_Default_ODE_Solver_Options..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
     if !isempty(e_ops) || progress_bar
         cb1 = PresetTimeCallback(t_l, _save_func_sesolve, save_positions = (false, false))

@@ -12,10 +12,18 @@
     t_l = LinRange(0, 1000, 1000)
     e_ops = [a_d * a]
     sol = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress_bar = false)
+    sol2 = sesolve(H, psi0, t_l, progress_bar = false)
+    sol3 = sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = false)
     sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
     @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
     @test ptrace(sol.states[end], 1) ≈ ptrace(ket2dm(sol.states[end]), 1)
     @test ptrace(sol.states[end]', 1) ≈ ptrace(sol.states[end], 1)
+    @test length(sol.states) == 1
+    @test size(sol.expect) == (length(e_ops), length(t_l))
+    @test length(sol2.states) == length(t_l)
+    @test size(sol2.expect) == (0, length(t_l))
+    @test length(sol3.states) == length(t_l)
+    @test size(sol3.expect) == (length(e_ops), length(t_l))
     @test sol_string ==
           "Solution of time evolution\n" *
           "(return code: $(sol.retcode))\n" *
@@ -35,10 +43,18 @@
     psi0 = basis(N, 3)
     t_l = LinRange(0, 100, 1000)
     sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress_bar = false)
+    sol_me2 = mesolve(H, psi0, t_l, c_ops, progress_bar = false)
+    sol_me3 = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = false)
     sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = false)
     sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
     sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
     @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
+    @test length(sol_me.states) == 1
+    @test size(sol_me.expect) == (length(e_ops), length(t_l))
+    @test length(sol_me2.states) == length(t_l)
+    @test size(sol_me2.expect) == (0, length(t_l))
+    @test length(sol_me3.states) == length(t_l)
+    @test size(sol_me3.expect) == (length(e_ops), length(t_l))
     @test sol_me_string ==
           "Solution of time evolution\n" *
           "(return code: $(sol_me.retcode))\n" *
