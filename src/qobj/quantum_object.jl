@@ -221,7 +221,7 @@ function QuantumObject(
 end
 
 _check_dims(dims::Vector{Int}) =
-    all(>(0), dims) ? nothing : throw(DomainError(dims, "The argument dims must be a vector with positive integers."))
+    all(>(0), dims) || throw(DomainError(dims, "The argument dims must be a vector with positive integers."))
 _check_dims(dims::Any) = throw(ArgumentError("The argument dims must be a vector with positive integers."))
 
 function _check_QuantumObject(type::KetQuantumObject, dims::Vector{Int}, m::Int, n::Int)
