@@ -624,7 +624,7 @@ function get_coherence(ψ::QuantumObject{<:AbstractArray,KetQuantumObject})
 end
 
 function get_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject})
-    a = destroy(prod(ψ.dims))
+    a = destroy(prod(ρ.dims))
     α = expect(a, ρ)
     D = exp(α * a' - conj(α) * a)
 
