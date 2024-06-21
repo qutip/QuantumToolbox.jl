@@ -439,7 +439,7 @@ end
 @doc raw"""
     qft(dimensions)
 
-Generates a discrete Fourier transfor matrix ``\hat{F}_N`` for [Quantum Fourier Transform (QFT)](https://en.wikipedia.org/wiki/Quantum_Fourier_transform) with given argument `dimensions`.
+Generates a discrete Fourier transform matrix ``\hat{F}_N`` for [Quantum Fourier Transform (QFT)](https://en.wikipedia.org/wiki/Quantum_Fourier_transform) with given argument `dimensions`.
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
