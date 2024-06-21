@@ -611,21 +611,24 @@ get_data(A::QuantumObject) = A.data
 @doc raw"""
     get_coherence(ψ::QuantumObject)
 
-Get the coherence value ``\alpha`` by measuring the expectation value of the destruction
-operator ``\hat{a}`` on the state ``\ket{\psi}``.
+Get the coherence value ``\alpha`` by measuring the expectation value of the destruction operator ``\hat{a}`` on a state ``\ket{\psi}`` or a density matrix ``\hat{\rho}``.
 
-It returns both ``\alpha`` and the state
-``\ket{\delta_\psi} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger )``. The
-latter corresponds to the quantum fluctuations around the coherent state ``\ket{\alpha}``.
+It returns both ``\alpha`` and the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``\dyad{\alpha}``.
 """
-function get_coherence(
-    ψ::QuantumObject{<:AbstractArray{T},StateOpType},
-) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-    a = destroy(size(ψ, 1))
+function get_coherence(ψ::QuantumObject{<:AbstractArray,KetQuantumObject})
+    a = destroy(prod(ψ.dims))
     α = expect(a, ψ)
     D = exp(α * a' - conj(α) * a)
 
     return α, D' * ψ
+end
+
+function get_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject})
+    a = destroy(prod(ψ.dims))
+    α = expect(a, ρ)
+    D = exp(α * a' - conj(α) * a)
+
+    return α, D' * ρ * D
 end
 
 @doc raw"""
