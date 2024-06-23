@@ -190,8 +190,8 @@ function dfd_mesolveProblem(
     return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, H_t = H_t, params = params2, kwargs2...)
 end
 
-"""
-    function dfd_mesolve(H::Function, ψ0::QuantumObject,
+@doc raw"""
+    dfd_mesolve(H::Function, ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function, maxdims::AbstractVector,
         dfd_params::NamedTuple=NamedTuple();
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
@@ -242,7 +242,15 @@ function dfd_mesolve(
         eachindex(sol.t),
     )
 
-    return TimeEvolutionSol(sol.t, ρt, sol.prob.p.expvals)
+    return TimeEvolutionSol(
+        sol.t,
+        ρt,
+        sol.prob.p.expvals,
+        sol.retcode,
+        sol.alg,
+        sol.prob.kwargs[:abstol],
+        sol.prob.kwargs[:reltol],
+    )
 end
 
 # Dynamical Shifted Fock mesolve
@@ -338,7 +346,7 @@ function dsf_mesolveProblem(
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    krylov_dim::Int = min(5, cld(length(ket2dm(ψ0).data), 3)),
+    krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
 ) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},TOl}
     op_l = op_list
@@ -393,8 +401,8 @@ function dsf_mesolveProblem(
     return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, H_t = H_t, params = params2, kwargs2...)
 end
 
-"""
-    function dsf_mesolve(H::Function,
+@doc raw"""
+    dsf_mesolve(H::Function,
         ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function,
         op_list::Vector{TOl},
@@ -405,7 +413,7 @@ end
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         δα_list::Vector{<:Number}=fill(0.2, length(op_list)),
-        krylov_dim::Int=min(5,cld(length(ket2dm(ψ0).data), 3)),
+        krylov_dim::Int=max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
         kwargs...)
 
 Time evolution of an open quantum system using master equation and the Dynamical Shifted Fock algorithm.
@@ -423,7 +431,7 @@ function dsf_mesolve(
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    krylov_dim::Int = min(5, cld(length(ket2dm(ψ0).data), 3)),
+    krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
 ) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},TOl}
     dsf_prob = dsf_mesolveProblem(
@@ -443,7 +451,7 @@ function dsf_mesolve(
         kwargs...,
     )
 
-    return mesolve(dsf_prob; alg = alg, kwargs...)
+    return mesolve(dsf_prob, alg)
 end
 
 function dsf_mesolve(
@@ -458,7 +466,7 @@ function dsf_mesolve(
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    krylov_dim::Int = min(5, cld(length(ket2dm(ψ0).data), 3)),
+    krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
 ) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},TOl}
     c_ops = op_list -> Vector{TOl}([])
@@ -658,8 +666,8 @@ function dsf_mcsolveEnsembleProblem(
     )
 end
 
-"""
-    function dsf_mcsolve(H::Function,
+@doc raw"""
+    dsf_mcsolve(H::Function,
         ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function,
         op_list::Vector{TOl},
@@ -673,11 +681,10 @@ end
         n_traj::Int=1,
         ensemble_method=EnsembleThreads(),
         jump_callback::LindbladJumpCallbackType=ContinuousLindbladJumpCallback(),
-        krylov_dim::Int=min(5,cld(length(ψ0.data), 3)),
+        krylov_dim::Int=max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
         kwargs...)
 
-Time evolution of a quantum system using the Monte Carlo wave function method
-and the Dynamical Shifted Fock algorithm.
+Time evolution of a quantum system using the Monte Carlo wave function method and the Dynamical Shifted Fock algorithm.
 """
 function dsf_mcsolve(
     H::Function,
@@ -716,5 +723,5 @@ function dsf_mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc; alg = alg, n_traj = n_traj, ensemble_method = ensemble_method, kwargs...)
+    return mcsolve(ens_prob_mc; alg = alg, n_traj = n_traj, ensemble_method = ensemble_method)
 end

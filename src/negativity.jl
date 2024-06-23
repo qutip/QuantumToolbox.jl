@@ -18,7 +18,7 @@ and ``\Vert X \Vert_1=\textrm{Tr}\sqrt{X^\dagger X}`` is the trace norm.
 # Examples
 
 ```
-julia> Ψ = 1 / √2 * ( basis(2,0) ⊗ basis(2,0) + basis(2,1) ⊗ basis(2,1) )
+julia> Ψ = bell_state(0, 0)
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
@@ -43,7 +43,7 @@ function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool = false)
     try
         mask[subsys] = true
     catch
-        error("Invalid index of subsys: $subsys")
+        throw(ArgumentError("Invalid index of subsys: $subsys"))
     end
 
     ρ_pt = partial_transpose(ρ, mask)
@@ -70,7 +70,7 @@ Return the partial transpose of a density matrix ``\rho``, where `mask` is an ar
 """
 function partial_transpose(ρ::QuantumObject{T,OperatorQuantumObject}, mask::Vector{Bool}) where {T}
     if length(mask) != length(ρ.dims)
-        error("The length of \`mask\` should be equal to the length of \`ρ.dims\`.")
+        throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
     end
     return _partial_transpose(ρ, mask)
 end

@@ -3,12 +3,64 @@ export TimeEvolutionSol, TimeEvolutionMCSol
 
 export liouvillian, liouvillian_floquet, liouvillian_generalized
 
+const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
+
+@doc raw"""
+    struct TimeEvolutionSol
+
+A structure storing the results and some information from solving time evolution.
+
+# Fields (Attributes)
+
+- `times::AbstractVector`: The time list of the evolution.
+- `states::Vector{QuantumObject}`: The list of result states.
+- `expect::Matrix`: The expectation values corresponding to each time point in `times`.
+- `retcode`: The return code from the solver.
+- `alg`: The algorithm which is used during the solving process.
+- `abstol::Real`: The absolute tolerance which is used during the solving process.
+- `reltol::Real`: The relative tolerance which is used during the solving process.
+"""
 struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{ComplexF64}}
     times::TT
     states::TS
     expect::TE
+    retcode::Enum
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm
+    abstol::Real
+    reltol::Real
 end
 
+function Base.show(io::IO, sol::TimeEvolutionSol)
+    print(io, "Solution of time evolution\n")
+    print(io, "(return code: $(sol.retcode))\n")
+    print(io, "--------------------------\n")
+    print(io, "num_states = $(length(sol.states))\n")
+    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    print(io, "ODE alg.: $(sol.alg)\n")
+    print(io, "abstol = $(sol.abstol)\n")
+    print(io, "reltol = $(sol.reltol)\n")
+    return nothing
+end
+
+@doc raw"""
+    struct TimeEvolutionMCSol
+
+A structure storing the results and some information from solving quantum trajectories of the Monte Carlo wave function time evolution.
+
+# Fields (Attributes)
+
+- `n_traj::Int`: Number of trajectories
+- `times::AbstractVector`: The time list of the evolution in each trajectory.
+- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
+- `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `expect_all::Array`: The expectation values corresponding to each trajectory and each time point in `times`
+- `jump_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
+- `jump_which::Vector{Vector{Int}}`: The indices of the jump operators in `c_ops` that describe the corresponding quantum jumps occurred in each trajectory.
+- `converged::Bool`: Whether the solution is converged or not.
+- `alg`: The algorithm which is used during the solving process.
+- `abstol::Real`: The absolute tolerance which is used during the solving process.
+- `reltol::Real`: The relative tolerance which is used during the solving process.
+"""
 struct TimeEvolutionMCSol{
     TT<:Vector{<:Vector{<:Real}},
     TS<:AbstractVector,
@@ -17,12 +69,30 @@ struct TimeEvolutionMCSol{
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
 }
+    n_traj::Int
     times::TT
     states::TS
     expect::TE
     expect_all::TEA
     jump_times::TJT
     jump_which::TJW
+    converged::Bool
+    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm
+    abstol::Real
+    reltol::Real
+end
+
+function Base.show(io::IO, sol::TimeEvolutionMCSol)
+    print(io, "Solution of quantum trajectories\n")
+    print(io, "(converged: $(sol.converged))\n")
+    print(io, "--------------------------------\n")
+    print(io, "num_trajectories = $(sol.n_traj)\n")
+    print(io, "num_states = $(length(sol.states[1]))\n")
+    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    print(io, "ODE alg.: $(sol.alg)\n")
+    print(io, "abstol = $(sol.abstol)\n")
+    print(io, "reltol = $(sol.reltol)\n")
+    return nothing
 end
 
 abstract type LindbladJumpCallbackType end
@@ -116,14 +186,23 @@ end
 
 ### LIOUVILLIAN ###
 @doc raw"""
-    liouvillian(H::QuantumObject, c_ops::AbstractVector, Id_cache=I(prod(H.dims))
+    liouvillian(H::QuantumObject, c_ops::AbstractVector, Id_cache=I(prod(H.dims)))
 
-Construct the Liouvillian superoperator for a system Hamiltonian and a set of collapse operators:
-``\mathcal{L} \cdot = -i[\hat{H}, \cdot] + \sum_i \mathcal{D}[\hat{O}_i] \cdot``,
-where ``\mathcal{D}[\hat{O}_i] \cdot = \hat{O}_i \cdot \hat{O}_i^\dagger - \frac{1}{2} \hat{O}_i^\dagger \hat{O}_i \cdot - \frac{1}{2} \cdot \hat{O}_i^\dagger \hat{O}_i``.
+Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
 
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
-the same function is applied multiple times with a known Hilbert space dimension.
+```math
+\mathcal{L} [\cdot] = -i[\hat{H}, \cdot] + \sum_n \mathcal{D}(\hat{C}_n) [\cdot]
+```
+
+where 
+
+```math
+\mathcal{D}(\hat{C}_n) [\cdot] = \hat{C}_n [\cdot] \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n [\cdot] - \frac{1}{2} [\cdot] \hat{C}_n^\dagger \hat{C}_n
+```
+
+The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
+
+See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 """
 function liouvillian(
     H::QuantumObject{MT1,OpType1},
@@ -158,7 +237,7 @@ function liouvillian_floquet(
     tol::Real = 1e-15,
 ) where {T1,T2,T3}
     ((L₀.dims == Lₚ.dims) && (L₀.dims == Lₘ.dims)) ||
-        throw(ErrorException("The operators are not of the same Hilbert dimension."))
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     return _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, n_max, tol)
 end

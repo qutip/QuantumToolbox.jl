@@ -23,8 +23,9 @@ ExponentialSeries(; tol = 1e-14, calc_steadystate = false) = ExponentialSeries(t
         c_ops::AbstractVector=[];
         kwargs...)
 
-Returns the two-times correlation function of three operators ``\hat{A}``, ``\hat{B}`` and ``\hat{C}``:
-``\expval{\hat{A}(t) \hat{B}(t + \tau) \hat{C}(t)}`` for a given initial state ``\ket{\psi_0}``.
+Returns the two-times correlation function of three operators ``\hat{A}``, ``\hat{B}`` and ``\hat{C}``: ``\expval{\hat{A}(t) \hat{B}(t + \tau) \hat{C}(t)}``
+
+for a given initial state ``\ket{\psi_0}``.
 """
 function correlation_3op_2t(
     H::QuantumObject{<:AbstractArray{T1},HOpType},
@@ -46,7 +47,7 @@ function correlation_3op_2t(
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
     (H.dims == ψ0.dims && H.dims == A.dims && H.dims == B.dims && H.dims == C.dims) ||
-        throw(ErrorException("The two operators are not of the same Hilbert dimension."))
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     kwargs2 = (; kwargs...)
     kwargs2 = merge(kwargs2, (saveat = collect(t_l),))
@@ -68,9 +69,10 @@ end
         reverse::Bool=false,
         kwargs...)
 
-Returns the two-times correlation function of two operators ``\hat{A}`` and ``\hat{B}``` 
-at different times ``\expval{\hat{A}(t + \tau) \hat{B}(t)}``.
-When ``reverse=true``, the correlation function is calculated as ``\expval{\hat{A}(t) \hat{B}(t + \tau)}``.
+Returns the two-times correlation function of two operators ``\hat{A}`` and ``\hat{B}`` 
+at different times: ``\expval{\hat{A}(t + \tau) \hat{B}(t)}``.
+
+When `reverse=true`, the correlation function is calculated as ``\expval{\hat{A}(t) \hat{B}(t + \tau)}``.
 """
 function correlation_2op_2t(
     H::QuantumObject{<:AbstractArray{T1},HOpType},
@@ -110,9 +112,9 @@ end
         reverse::Bool=false,
         kwargs...)
 
-Returns the one-time correlation function of two operators ``\hat{A}`` and ``\hat{B}`` 
-at different times ``\expval{\hat{A}(\tau) \hat{B}(0)}``.
-When ``reverse=true``, the correlation function is calculated as ``\expval{\hat{A}(0) \hat{B}(\tau)}``.
+Returns the one-time correlation function of two operators ``\hat{A}`` and ``\hat{B}`` at different times ``\expval{\hat{A}(\tau) \hat{B}(0)}``.
+
+When `reverse=true`, the correlation function is calculated as ``\expval{\hat{A}(0) \hat{B}(\tau)}``.
 """
 function correlation_2op_1t(
     H::QuantumObject{<:AbstractArray{T1},HOpType},
@@ -138,14 +140,18 @@ end
 
 @doc raw"""
     spectrum(H::QuantumObject,
-    ω_list::AbstractVector,
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    c_ops::AbstractVector=[];
-    solver::MySolver=ExponentialSeries(),
+        ω_list::AbstractVector,
+        A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+        B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
+        c_ops::AbstractVector=[];
+        solver::MySolver=ExponentialSeries(),
         kwargs...)
 
-Returns the emission spectrum ``S(\omega) = \int_{-\infty}^\infty \expval{\hat{A}(\tau) \hat{B}(0)} e^{-i \omega \tau} d \tau``.
+Returns the emission spectrum 
+
+```math
+S(\omega) = \int_{-\infty}^\infty \expval{\hat{A}(\tau) \hat{B}(0)} e^{-i \omega \tau} d \tau
+```
 """
 function spectrum(
     H::QuantumObject{MT1,HOpType},

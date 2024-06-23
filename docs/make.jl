@@ -1,7 +1,21 @@
+#! format: off
+# turns off the julia formatting of this file
+
 using QuantumToolbox
 using Documenter
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
+
+const MathEngine = MathJax3(
+    Dict(
+        :loader => Dict("load" => ["[tex]/physics"]),
+        :tex => Dict(
+            "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
+            "tags" => "ams",
+            "packages" => ["base", "ams", "autoload", "physics"],
+        ),
+    )
+)
 
 const PAGES = [
     "Getting Started" => [
@@ -17,7 +31,7 @@ const PAGES = [
         "Manipulating States and Operators" => "users_guide/states_and_operators.md",
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
         "Time Evolution and Dynamics" => [
-            "Introduction" => "users_guide/time_evolution/intro.md"
+            "Introduction" => "users_guide/time_evolution/intro.md",
         ],
         "Solving for Steady-State Solutions" => [],
         "Symmetries" => [],
@@ -50,16 +64,8 @@ makedocs(;
         canonical = "https://qutip.github.io/QuantumToolbox.jl",
         edit_link = "main",
         assets = ["assets/favicon.ico"],
-        mathengine = MathJax3(
-            Dict(
-                :loader => Dict("load" => ["[tex]/physics"]),
-                :tex => Dict(
-                    "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
-                    "tags" => "ams",
-                    "packages" => ["base", "ams", "autoload", "physics"],
-                ),
-            ),
-        ),
+        mathengine = MathEngine,
+        size_threshold_ignore = ["api.md"],
     )
 )
 

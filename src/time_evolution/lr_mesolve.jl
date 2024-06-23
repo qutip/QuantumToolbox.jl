@@ -58,7 +58,7 @@ end
 
 select(x::Real, xarr::AbstractArray, retval = false) = retval ? xarr[argmin(abs.(x .- xarr))] : argmin(abs.(x .- xarr))
 
-"""
+@doc raw"""
     _pinv!(A, T1, T2; atol::Real=0.0, rtol::Real=(eps(real(float(oneunit(T))))*min(size(A)...))*iszero(atol)) where T
     Computes the pseudo-inverse of a matrix A, and stores it in T1. If T2 is provided, it is used as a temporary matrix. 
     The algorithm is based on the SVD decomposition of A, and is taken from the Julia package LinearAlgebra.
@@ -98,7 +98,7 @@ function _pinv!(
     return mul!(T1, SVD.Vt', T2)
 end
 
-"""
+@doc raw"""
     _calculate_expectation!(p,z,B,idx) where T
     Calculates the expectation values and function values of the operators and functions in p.e_ops and p.f_ops, respectively, and stores them in p.expvals and p.funvals.
     The function is called by the callback _save_affect_lr_mesolve!.
@@ -169,7 +169,7 @@ end
 #                CALLBACK FUNCTIONS
 #=======================================================#
 
-"""
+@doc raw"""
     _adjM_condition_ratio(u, t, integrator) where T
     Condition for the dynamical rank adjustment based on the ratio between the smallest and largest eigenvalues of the density matrix.
     The spectrum of the density matrix is calculated efficiently using the properties of the SVD decomposition of the matrix.
@@ -200,7 +200,7 @@ function _adjM_condition_ratio(u, t, integrator)
     return (err >= opt.err_max && M < N && M < opt.M_max)
 end
 
-"""
+@doc raw"""
     _adjM_condition_variational(u, t, integrator) where T
     Condition for the dynamical rank adjustment based on the leakage out of the low-rank manifold.
 
@@ -222,7 +222,7 @@ function _adjM_condition_variational(u, t, integrator)
     return (err >= opt.err_max && M < N && M < opt.M_max)
 end
 
-"""
+@doc raw"""
     _adjM_affect!(integrator)
     Affect function for the dynamical rank adjustment. It increases the rank of the low-rank manifold by one, and updates the matrices accordingly.
     If Δt>0, it rewinds the integrator to the previous time step.
@@ -286,7 +286,7 @@ end
 #            DYNAMICAL EVOLUTION EQUATIONS
 #=======================================================#
 
-"""
+@doc raw"""
     dBdz!(du, u, p, t) where T
     Dynamical evolution equations for the low-rank manifold. The function is called by the ODEProblem.
 
@@ -364,7 +364,7 @@ end
 #                   PROBLEM FORMULATION
 #=======================================================#
 
-"""
+@doc raw"""
     lr_mesolveProblem(H, z, B, t_l, c_ops; e_ops=(), f_ops=(), opt=LRMesolveOptions(), kwargs...) where T
     Formulates the ODEproblem for the low-rank time evolution of the system. The function is called by lr_mesolve.
 
@@ -439,8 +439,11 @@ function lr_mesolveProblem(
     mul!(p.S, z', z)
     p.Si .= pinv(Hermitian(p.S), atol = opt.atol_inv)
 
+    # Initialization of ODEProblem's kwargs
+    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = [t_l[end]])
+    kwargs2 = merge(default_values, kwargs)
+
     # Initialization of Callbacks
-    kwargs2 = kwargs
     if !isempty(e_ops) || !isempty(f_ops)
         _calculate_expectation!(p, z, B, 1)
         cb_save = DiscreteCallback(_save_control_lr_mesolve, _save_affect_lr_mesolve!, save_positions = (false, false))
@@ -477,11 +480,6 @@ function lr_mesolveProblem(
         )
     end
 
-    # Initialization of ODEProblem's kwargs
-    !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, Dict(:abstol => 1e-7)))
-    !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, Dict(:reltol => 1e-5)))
-    !haskey(kwargs2, :saveat) && (kwargs2 = merge(kwargs2, Dict(:saveat => [t_l[end]])))
-
     # Initialization of ODEProblem
     tspan = (t_l[1], t_l[end])
     return ODEProblem(dBdz!, p.u_save, tspan, p; kwargs2...)
@@ -510,7 +508,7 @@ get_z(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, 1
 
 get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (M*N+1):length(u)), M, M)
 
-"""
+@doc raw"""
     lr_mesolve(prob::ODEProblem; kwargs...)
     Solves the ODEProblem formulated by lr_mesolveProblem. The function is called by lr_mesolve.
 
@@ -529,7 +527,7 @@ function lr_mesolve(prob::ODEProblem; kwargs...)
     Ll = length.(sol.u)
     Ml = @. Int((sqrt(N^2 + 4 * Ll) - N) / 2)
 
-    if !haskey(kwargs, :save_idxs)
+    if !haskey(kwargs, :saveat)
         Bt = map(x -> get_B(x[1], N, x[2]), zip(sol.u, Ml))
         zt = map(x -> get_z(x[1], N, x[2]), zip(sol.u, Ml))
     else
