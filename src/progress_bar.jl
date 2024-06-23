@@ -29,7 +29,7 @@ function next!(p::ProgressBar, io::IO = stdout)
     previous_time = p.previous_time
     interval = p.interval
 
-    (time() - previous_time) < interval && return
+    ((time() - previous_time) < interval || (time() - start_time) < interval) && return
 
     p.previous_time = time()
 
