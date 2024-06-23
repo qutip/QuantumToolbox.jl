@@ -54,20 +54,50 @@ Qobj(rand(4, 4), type = SuperOperator)
 Manually specifying the data for each quantum object is inefficient. Even more so when most objects correspond to commonly used types such as the ladder operators of a harmonic oscillator, the Pauli spin operators for a two-level system, or state vectors such as Fock states. Therefore, `QuantumToolbox` includes predefined functions to construct variety of states and operators (you can click the function links and see the corresponding docstring):
 
 ### States
-- [`basis`](@ref) or [`fock`](@ref): fock state ket vector
+- [`zero_ket`](@ref): zero ket vector
+- [`fock`](@ref) or [`basis`](@ref): fock state ket vector
+- [`fock_dm`](@ref): density matrix of a fock state
 - [`coherent`](@ref): coherent state ket vector 
+- [`coherent_dm`](@ref): density matrix of a coherent state
+- [`thermal_dm`](@ref): density matrix of a thermal state
+- [`maximally_mixed_dm`](@ref): density matrix of a maximally mixed state
 - [`rand_dm`](@ref): random density matrix
+- [`spin_state`](@ref): spin state
+- [`spin_coherent`](@ref): coherent spin state
+- [`bell_state`](@ref): Bell state
+- [`singlet_state`](@ref): two particle singlet state
+- [`triplet_states`](@ref): list of the two particle triplet states
+- [`w_state`](@ref): `n`-qubit W-state
+- [`ghz_state`](@ref): `n`-qudit GHZ state
 
 ### Operators
 - [`eye`](@ref) or [`qeye`](@ref): identity operator
 - [`destroy`](@ref): lowering (destruction) operator
 - [`create`](@ref): raising (creation) operator
 - [`projection`](@ref): projection operator
+- [`displace`](@ref): displacement operator
+- [`squeeze`](@ref): single-mode squeeze operator
+- [`num`](@ref): bosonic number operator
+- [`phase`](@ref): single-mode Pegg-Barnett phase operator
+- [`QuantumToolbox.position`](@ref): position operator
+- [`QuantumToolbox.momentum`](@ref): momentum operator
 - [`sigmax`](@ref): Pauli-``X`` operator
 - [`sigmay`](@ref): Pauli-``Y`` operator
 - [`sigmaz`](@ref): Pauli-``Z`` operator
 - [`sigmap`](@ref): Pauli ladder (``\sigma_+``) operator
 - [`sigmam`](@ref): Pauli ladder (``\sigma_-``) operator
+- [`jmat`](@ref): high-order Spin-`j` operator
+- [`spin_Jx`](@ref): ``S_x`` operator for Spin-`j`
+- [`spin_Jy`](@ref): ``S_y`` operator for Spin-`j`
+- [`spin_Jz`](@ref): ``S_z`` operator for Spin-`j`
+- [`spin_Jm`](@ref): ``S_-`` operator for Spin-`j`
+- [`spin_Jp`](@ref): ``S_+`` operator for Spin-`j`
+- [`spin_J_set`](@ref): a set of Spin-`j` operators ``(S_x, S_y, S_z)``
+- [`fdestroy`](@ref): fermion destruction operator
+- [`fcreate`](@ref): fermion creation operator
+- [`commutator`](@ref): commutator or anti-commutator
+- [`tunneling`](@ref): tunneling operator
+- [`qft`](@ref): discrete quantum Fourier transform matrix
 
 As an example, we give the output for a few of these functions:
 
@@ -115,6 +145,10 @@ size(a)
 ```
 
 ```@example Qobj
+shape(a) # synonym of size(a)
+```
+
+```@example Qobj
 length(a)
 ```
 
@@ -130,6 +164,7 @@ println(isoperket(a)) # operator-ket
 println(isoperbra(a)) # operator-bra
 println(issuper(a)) # super operator
 println(ishermitian(a)) # Hermitian
+println(isherm(a)) # synonym of ishermitian(a)
 println(issymmetric(a)) # symmetric
 println(isposdef(a)) # positive definite (and Hermitian)
 ```
@@ -190,7 +225,7 @@ a = destroy(4)
 ```
 
 ```@example Qobj
-a' # same as adjoint(a)
+a' # synonym of adjoint(a)
 ```
 
 ```@example Qobj
