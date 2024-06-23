@@ -29,7 +29,7 @@ function next!(p::ProgressBar, io::IO = stdout)
     previous_time = p.previous_time
     interval = p.interval
 
-    (time() - previous_time) < interval && return
+    ((time() - previous_time) < interval && counter != p.max_counts) && return
 
     p.previous_time = time()
 
@@ -61,5 +61,7 @@ function next!(p::ProgressBar, io::IO = stdout)
 
     counter == p.max_counts && print(io, "\n")
 
-    return flush(io)
+    flush(io)
+
+    return nothing
 end
