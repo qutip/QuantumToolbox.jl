@@ -61,5 +61,7 @@ function next!(p::ProgressBar, io::IO = stdout)
 
     counter == p.max_counts && print(io, "\n")
 
-    return flush(io)
+    flush(io)
+
+    return nothing
 end
