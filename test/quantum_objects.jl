@@ -242,6 +242,9 @@
     ψ = coherent(30, 3)
     α, δψ = get_coherence(ψ)
     @test isapprox(abs(α), 3, atol = 1e-5) && abs2(δψ[1]) > 0.999
+    ρ = ket2dm(ψ)
+    α, δρ = get_coherence(ρ)
+    @test isapprox(abs(α), 3, atol = 1e-5) && abs2(δρ[1, 1]) > 0.999
 
     # svdvals, Schatten p-norm
     vd = Qobj(rand(ComplexF64, 10))
