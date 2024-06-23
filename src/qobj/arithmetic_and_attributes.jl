@@ -215,7 +215,7 @@ LinearAlgebra.Hermitian(
     QuantumObject(Hermitian(A.data, uplo), A.type, A.dims)
 
 @doc raw"""
-    tr(A::QuantumObject})
+    tr(A::QuantumObject)
 
 Returns the trace of [`QuantumObject`](@ref).
 
@@ -355,9 +355,12 @@ LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.dat
     mul!(y, A.data, x, α, β)
 
 @doc raw"""
+    √(A)
     sqrt(A::QuantumObject)
 
-Square root of [`QuantumObject`](@ref)
+Matrix square root of [`QuantumObject`](@ref)
+
+Note that `√(A)` is a synonym for `sqrt(A)`
 """
 LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} =
     QuantumObject(sqrt(sparse_to_dense(A.data)), A.type, A.dims)
