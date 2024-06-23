@@ -439,8 +439,11 @@ function lr_mesolveProblem(
     mul!(p.S, z', z)
     p.Si .= pinv(Hermitian(p.S), atol = opt.atol_inv)
 
+    # Initialization of ODEProblem's kwargs
+    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = [t_l[end]])
+    kwargs2 = merge(default_values, kwargs)
+
     # Initialization of Callbacks
-    kwargs2 = kwargs
     if !isempty(e_ops) || !isempty(f_ops)
         _calculate_expectation!(p, z, B, 1)
         cb_save = DiscreteCallback(_save_control_lr_mesolve, _save_affect_lr_mesolve!, save_positions = (false, false))
@@ -476,11 +479,6 @@ function lr_mesolveProblem(
             Dict(:callback => cb_adjM),
         )
     end
-
-    # Initialization of ODEProblem's kwargs
-    !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, Dict(:abstol => 1e-8)))
-    !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, Dict(:reltol => 1e-6)))
-    !haskey(kwargs2, :saveat) && (kwargs2 = merge(kwargs2, Dict(:saveat => [t_l[end]])))
 
     # Initialization of ODEProblem
     tspan = (t_l[1], t_l[end])

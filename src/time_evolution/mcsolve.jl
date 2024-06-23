@@ -194,7 +194,7 @@ function mcsolveProblem(
         e_ops2[i] = get_data(e_ops[i])
     end
     saveat = is_empty_e_ops_mc ? t_l : [t_l[end]]
-    default_values = (abstol = 1e-8, reltol = 1e-6, saveat = saveat)
+    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
 
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
