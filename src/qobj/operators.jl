@@ -5,8 +5,11 @@ Functions for generating (common) quantum operators.
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection
+export displace, squeeze, num, phase
 export fdestroy, fcreate
 export commutator
+export tunneling
+export qft
 
 @doc raw"""
     commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
@@ -26,8 +29,9 @@ commutator(
 @doc raw"""
     destroy(N::Int)
 
-Bosonic annihilation operator with Hilbert space cutoff `N`. This operator
-acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
+Bosonic annihilation operator with Hilbert space cutoff `N`. 
+
+This operator acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
 
 # Examples
 
@@ -50,8 +54,9 @@ destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:N-1))), O
 @doc raw"""
     create(N::Int)
 
-Bosonic creation operator with Hilbert space cutoff `N`. This operator
-acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ket{n+1}``.
+Bosonic creation operator with Hilbert space cutoff `N`.
+
+This operator acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ket{n+1}``.
 
 # Examples
 
@@ -70,6 +75,104 @@ julia> fock(20, 4)' * a_d * fock(20, 3)
 ```
 """
 create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:N-1))), Operator, [N])
+
+@doc raw"""
+    displace(N::Int, α::Number)
+
+Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator):
+
+```math
+\hat{D}(\alpha)=\exp\left( \alpha \hat{a}^\dagger - \alpha^* \hat{a} \right),
+```
+
+where ``\hat{a}`` is the bosonic annihilation operator, and ``\alpha`` is the amount of displacement in optical phase space.
+"""
+function displace(N::Int, α::T) where {T<:Number}
+    a = destroy(N)
+    return exp(α * a' - α' * a)
+end
+
+@doc raw"""
+    squeeze(N::Int, z::Number)
+
+Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_operator):
+
+```math
+\hat{S}(z)=\exp\left( \frac{1}{2} (z^* \hat{a}^2 - z(\hat{a}^\dagger)^2) \right),
+```
+
+where ``\hat{a}`` is the bosonic annihilation operator.
+"""
+function squeeze(N::Int, z::T) where {T<:Number}
+    a_sq = destroy(N)^2
+    return exp((z' * a_sq - z * a_sq') / 2)
+end
+
+@doc raw"""
+    num(N::Int)
+
+Bosonic number operator with Hilbert space cutoff `N`. 
+
+This operator is defined as ``\hat{N}=\hat{a}^\dagger \hat{a}``, where ``\hat{a}`` is the bosonic annihilation operator.
+"""
+num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:N-1)), Operator, [N])
+
+@doc raw"""
+    position(N::Int)
+
+Position operator with Hilbert space cutoff `N`. 
+
+This operator is defined as ``\hat{x}=\frac{1}{\sqrt{2}} (\hat{a}^\dagger + \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
+"""
+function position(N::Int)
+    a = destroy(N)
+    return (a' + a) / sqrt(2)
+end
+
+@doc raw"""
+    momentum(N::Int)
+
+Momentum operator with Hilbert space cutoff `N`. 
+
+This operator is defined as ``\hat{p}= \frac{i}{\sqrt{2}} (\hat{a}^\dagger - \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
+"""
+function momentum(N::Int)
+    a = destroy(N)
+    return (1.0im * sqrt(0.5)) * (a' - a)
+end
+
+@doc raw"""
+    phase(N::Int, ϕ0::Real=0)
+
+Single-mode Pegg-Barnett phase operator with Hilbert space cutoff ``N`` and the reference phase ``\phi_0``.
+
+This operator is defined as
+
+```math
+\hat{\phi} = \sum_{m=0}^{N-1} \phi_m |\phi_m\rangle \langle\phi_m|,
+```
+
+where
+
+```math
+\phi_m = \phi_0 + \frac{2m\pi}{N},
+```
+
+and
+
+```math
+|\phi_m\rangle = \frac{1}{\sqrt{N}} \sum_{n=0}^{N-1} \exp(i n \phi_m) |n\rangle.
+```
+
+# Reference
+- [Michael Martin Nieto, QUANTUM PHASE AND QUANTUM PHASE OPERATORS: Some Physics and Some History, arXiv:hep-th/9304036](https://arxiv.org/abs/hep-th/9304036), Equation (30-32).
+"""
+function phase(N::Int, ϕ0::Real = 0)
+    N_list = collect(0:(N-1))
+    ϕ = ϕ0 .+ (2 * π / N) .* N_list
+    states = [exp.((1.0im * ϕ[m]) .* N_list) ./ sqrt(N) for m in 1:N]
+    return QuantumObject(sum([ϕ[m] * states[m] * states[m]' for m in 1:N]); type = Operator, dims = [N])
+end
 
 @doc raw"""
     jmat(j::Real, which::Symbol)
@@ -310,3 +413,58 @@ end
 Generates the projection operator ``\hat{O} = \dyad{i}{j}`` with Hilbert space dimension `N`.
 """
 projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N))
+
+@doc raw"""
+    tunneling(N::Int, m::Int=1; sparse::Bool=false)
+
+Generate a tunneling operator defined as:
+
+```math
+\sum_{n=0}^{N-m} | n \rangle\langle n+m | + | n+m \rangle\langle n |,
+```
+
+where ``N`` is the number of basis states in the Hilbert space, and ``m`` is the number of excitations in tunneling event.
+"""
+function tunneling(N::Int, m::Int = 1; sparse::Bool = false)
+    (m < 1) && throw(ArgumentError("The number of excitations (m) cannot be less than 1"))
+
+    data = ones(ComplexF64, N - m)
+    if sparse
+        return QuantumObject(spdiagm(m => data, -m => data); type = Operator, dims = [N])
+    else
+        return QuantumObject(diagm(m => data, -m => data); type = Operator, dims = [N])
+    end
+end
+
+@doc raw"""
+    qft(dimensions)
+
+Generates a discrete Fourier transform matrix ``\hat{F}_N`` for [Quantum Fourier Transform (QFT)](https://en.wikipedia.org/wiki/Quantum_Fourier_transform) with given argument `dimensions`.
+
+The `dimensions` can be either the following types:
+- `dimensions::Int`: Number of basis states in the Hilbert space.
+- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+
+``N`` represents the total dimension, and therefore the matrix is defined as
+
+```math
+\hat{F}_N = \frac{1}{\sqrt{N}}\begin{bmatrix}
+1 & 1 & 1 & 1 & \cdots & 1\\
+1 & \omega & \omega^2 & \omega^3 & \cdots & \omega^{N-1}\\
+1 & \omega^2 & \omega^4 & \omega^6 & \cdots & \omega^{2(N-1)}\\
+1 & \omega^3 & \omega^6 & \omega^9 & \cdots & \omega^{3(N-1)}\\
+\vdots & \vdots & \vdots & \vdots & \ddots & \vdots\\
+1 & \omega^{N-1} & \omega^{2(N-1)} & \omega^{3(N-1)} & \cdots & \omega^{(N-1)(N-1)}
+\end{bmatrix},
+```
+
+where ``\omega = \exp(\frac{2 \pi i}{N})``.
+"""
+qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator, [dimensions])
+qft(dimensions::Vector{Int}) = QuantumObject(_qft_op(prod(dimensions)), Operator, dimensions)
+function _qft_op(N::Int)
+    ω = exp(2.0im * π / N)
+    arr = 0:(N-1)
+    L, M = meshgrid(arr, arr)
+    return ω .^ (L .* M) / sqrt(N)
+end

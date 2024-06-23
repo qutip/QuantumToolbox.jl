@@ -1,6 +1,7 @@
 using Test
 using Pkg
 using QuantumToolbox
+using QuantumToolbox: position, momentum
 
 const GROUP = get(ENV, "GROUP", "All")
 

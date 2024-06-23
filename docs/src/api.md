@@ -127,8 +127,16 @@ spin_Jp
 spin_J_set
 destroy
 create
+displace
+squeeze
+num
+QuantumToolbox.position
+QuantumToolbox.momentum
+phase
 fdestroy
 fcreate
+tunneling
+qft
 eye
 projection
 commutator

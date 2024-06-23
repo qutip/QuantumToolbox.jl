@@ -97,6 +97,68 @@
     @test_throws ArgumentError bell_state(3, 1)
     @test_throws ArgumentError bell_state(2, 3)
 
+    # destroy, create, num, position, momentum
+    n = 10
+    a = destroy(n)
+    ad = create(n)
+    N = num(n)
+    x = position(n)
+    p = momentum(n)
+    @test isoper(x)
+    @test isoper(p)
+    @test a.dims == ad.dims == N.dims == x.dims == p.dims == [n]
+    @test commutator(N, a) ≈ -a
+    @test commutator(N, ad) ≈ ad
+    @test all(diag(commutator(x, p))[1:(n-1)] .≈ 1.0im)
+
+    # displace, squeeze
+    N = 10
+    α = rand(ComplexF64)
+    z = rand(ComplexF64)
+    II = qeye(N)
+    D = displace(N, α)
+    S = squeeze(N, z)
+    @test D * D' ≈ II
+    @test S * S' ≈ II
+
+    # phase
+    ## verify Equation (33) in: 
+    ## Michael Martin Nieto, QUANTUM PHASE AND QUANTUM PHASE OPERATORS: Some Physics and Some History
+    s = 10
+    ϕ0 = 2 * π * rand()
+    II = qeye(s + 1)
+    ket = [basis(s + 1, i) for i in 0:s]
+    SUM = Qobj(zeros(ComplexF64, s + 1, s + 1))
+    for j in 0:s
+        for k in 0:s
+            j != k ?
+            SUM += (exp(1im * (j - k) * ϕ0) / (exp(1im * (j - k) * 2 * π / (s + 1)) - 1)) * ket[j+1] * ket[k+1]' :
+            nothing
+        end
+    end
+    @test (ϕ0 + s * π / (s + 1)) * II + (2 * π / (s + 1)) * SUM ≈ phase(s + 1, ϕ0)
+
+    # tunneling
+    @test tunneling(10, 2) == tunneling(10, 2; sparse = true)
+    @test_throws ArgumentError tunneling(10, 0)
+
+    # qft (quantum Fourier transform)
+    N = 9
+    dims = [3, 3]
+    ω = exp(2.0im * π / N)
+    x = Qobj(rand(ComplexF64, N))
+    ψx = basis(N, 0; dims = dims)
+    ψk = unit(Qobj(ones(ComplexF64, N); dims = dims))
+    F_9 = qft(N)
+    F_3_3 = qft(dims)
+    y = F_9 * x
+    for k in 0:(N-1)
+        nk = collect(0:(N-1)) * k
+        @test y[k+1] ≈ sum(x.data .* (ω .^ nk)) / sqrt(N)
+    end
+    @test ψk ≈ F_3_3 * ψx
+    @test ψx ≈ F_3_3' * ψk
+
     # Pauli matrices and general Spin-j operators
     J0 = Qobj(spdiagm(0 => [0.0im]))
     Jx, Jy, Jz = spin_J_set(0.5)

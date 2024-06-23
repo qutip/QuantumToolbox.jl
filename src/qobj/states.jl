@@ -48,12 +48,11 @@ basis(N::Int, pos::Int = 0; dims::Vector{Int} = [N]) = fock(N, pos, dims = dims)
 @doc raw"""
     coherent(N::Int, α::Number)
 
-Generates a coherent state ``\ket{\alpha}``, which is defined as an eigenvector of the bosonic annihilation operator ``\hat{a} \ket{\alpha} = \alpha \ket{\alpha}``.
+Generates a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) ``|\alpha\rangle``, which is defined as an eigenvector of the bosonic annihilation operator ``\hat{a} |\alpha\rangle = \alpha |\alpha\rangle``.
+
+This state is constructed via the displacement operator [`displace`](@ref) and zero-fock state [`fock`](@ref): ``|\alpha\rangle = \hat{D}(\alpha) |0\rangle``
 """
-function coherent(N::Int, α::T) where {T<:Number}
-    a = destroy(N)
-    return exp(α * a' - α' * a) * fock(N, 0)
-end
+coherent(N::Int, α::T) where {T<:Number} = displace(N, α) * fock(N, 0)
 
 @doc raw"""
     fock_dm(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)
@@ -70,7 +69,7 @@ end
 @doc raw"""
     coherent_dm(N::Int, α::Number)
 
-Density matrix representation of a coherent state.
+Density matrix representation of a [coherent state](https://en.wikipedia.org/wiki/Coherent_state).
 
 Constructed via outer product of [`coherent`](@ref).
 """
