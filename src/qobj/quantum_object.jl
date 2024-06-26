@@ -141,6 +141,82 @@ struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType} <: AbstractQu
     dims::Vector{Int}
 end
 
+function QuantumObject(
+    A::AbstractMatrix{T};
+    type::ObjType = nothing,
+    dims = nothing,
+) where {T,ObjType<:Union{Nothing,QuantumObjectType}}
+
+    if type isa Nothing
+        type = Operator # default type
+    end
+
+    if type != Operator && type != SuperOperator
+        throw(ArgumentError("The argument type must be OperatorQuantumObject or SuperOperatorQuantumObject if the input array is a matrix."))
+    end
+
+    _size = size(A)
+
+    if dims isa Nothing
+        if type isa OperatorQuantumObject
+            dims = [_size[1]]
+        elseif type isa SuperOperatorQuantumObject
+            dims = [isqrt(_size[1])]
+        end
+    else
+        _check_dims(dims)
+    end
+
+    _check_QuantumObject(type, dims, _size[1], _size[2])
+    return QuantumObject(A, type, dims)
+end
+
+function QuantumObject(
+    A::AbstractVector{T};
+    type::ObjType = nothing,
+    dims = nothing,
+) where {T,ObjType<:Union{Nothing,QuantumObjectType}}
+
+    if type isa Nothing
+        type = Ket # default type
+    end
+
+    if type != Ket && type != Bra && type != OperatorKet && type != OperatorBra
+        throw(ArgumentError("The argument type must be KetQuantumObject, BraQuantumObject, OperatorKetQuantumObject or OperatorBraQuantumObject if the input array is a vector."))
+    end
+
+    _size = (length(A), 1)
+
+    if dims isa Nothing
+        if (type isa KetQuantumObject) || (type isa BraQuantumObject)
+            dims = [_size[1]]
+        elseif (type isa OperatorKetQuantumObject) || (type isa OperatorBraQuantumObject) 
+            dims = [isqrt(_size[1])]
+        end
+    else
+        _check_dims(dims)
+    end
+
+    if (type isa BraQuantumObject) || (type isa OperatorBraQuantumObject)
+        data = A'
+        _size = (1, length(A))
+    else
+        data = A
+    end
+
+    _check_QuantumObject(type, dims, _size[1], _size[2])
+    return QuantumObject(data, type, dims)
+end
+
+function QuantumObject(
+    A::AbstractArray{T,N};
+    type::ObjType = nothing,
+    dims = nothing,
+) where {T,N,ObjType<:Union{Nothing,QuantumObjectType}}
+
+    throw(ArgumentError("The input array must be a vector or a matrix."))
+end
+
 function Base.show(
     io::IO,
     QO::QuantumObject{<:AbstractArray{T},OpType},
@@ -173,51 +249,6 @@ function Base.show(io::IO, QO::QuantumObject{<:AbstractArray{T},OpType}) where {
         ishermitian(op_data),
     )
     return show(io, MIME("text/plain"), op_data)
-end
-
-function QuantumObject(
-    A::AbstractArray{T,N};
-    type::ObjType = nothing,
-    dims = nothing,
-) where {T,N,ObjType<:Union{Nothing,QuantumObjectType}}
-
-    # only accept 1D- and 2D-array
-    if N == 1
-        Size = (length(A), 1)
-    else
-        Size = size(A)
-        (N > 2) && throw(DomainError(Size, "The dimension of the array is not compatible with Quantum Object"))
-    end
-
-    # decide QuantumObjectType from the size of A
-    if type isa Nothing
-        if Size[1] == Size[2]
-            type = Operator
-        elseif Size[2] == 1
-            type = Ket
-        elseif Size[1] == 1
-            type = Bra
-        else
-            throw(DomainError(Size, "The dimension of the array is not compatible with Quantum Object"))
-        end
-    end
-
-    # decide dims from the size of A and the given type
-    if dims isa Nothing
-        if (type isa KetQuantumObject) || (type isa OperatorQuantumObject)
-            dims = [Size[1]]
-        elseif (type isa SuperOperatorQuantumObject) || (type isa OperatorKetQuantumObject)
-            dims = [isqrt(Size[1])]
-        elseif type isa BraQuantumObject
-            dims = [Size[2]]
-        elseif type isa OperatorBraQuantumObject
-            dims = [isqrt(Size[2])]
-        end
-    else
-        _check_dims(dims)
-    end
-    _check_QuantumObject(type, dims, Size[1], Size[2])
-    return QuantumObject(A, type, dims)
 end
 
 _check_dims(dims::Vector{Int}) =
@@ -269,8 +300,8 @@ function QuantumObject(
     type::ObjType = A.type,
     dims = A.dims,
 ) where {T,N,ObjType<:QuantumObjectType}
-    Size = N == 1 ? (length(A), 1) : size(A)
-    _check_QuantumObject(type, dims, Size[1], Size[2])
+    _size = N == 1 ? (length(A), 1) : size(A)
+    _check_QuantumObject(type, dims, _size[1], _size[2])
     return QuantumObject(copy(A.data), type, dims)
 end
 

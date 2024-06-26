@@ -1,9 +1,15 @@
 @testset "Quantum Objects" begin
     # unsupported size of array
-    for a in [rand(ComplexF64, 3, 2), rand(ComplexF64, 2, 2, 2)]
-        for t in [nothing, Ket, Bra, Operator, SuperOperator, OperatorBra, OperatorKet]
-            @test_throws DomainError Qobj(a, type = t)
-        end
+    a = rand(ComplexF64, 3, 2)
+    for t in [nothing, Operator, SuperOperator]
+        @test_throws DomainError Qobj(a, type = t)
+    end
+    for t in [Ket, Bra, OperatorBra, OperatorKet]
+        @test_throws ArgumentError Qobj(a, type = t)
+    end
+    a = rand(ComplexF64, 2, 2, 2)
+    for t in [nothing, Ket, Bra, Operator, SuperOperator, OperatorBra, OperatorKet]
+        @test_throws ArgumentError Qobj(a, type = t)
     end
 
     # unsupported dims
@@ -16,19 +22,17 @@
     N = 10
     a = rand(ComplexF64, 10)
     # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
-    @test_throws DomainError Qobj(a, type = Bra)
-    @test_throws DomainError Qobj(a, type = Operator)
-    @test_throws DomainError Qobj(a, type = SuperOperator)
-    @test_throws DomainError Qobj(a, type = OperatorBra)
-    @test_throws DomainError Qobj(a', type = Ket)
+    @test_throws ArgumentError Qobj(a, type = Operator)
+    @test_throws ArgumentError Qobj(a, type = SuperOperator)
+    @test_throws ArgumentError Qobj(a', type = Ket)
     @test_throws DomainError Qobj(a', type = Operator)
     @test_throws DomainError Qobj(a', type = SuperOperator)
-    @test_throws DomainError Qobj(a', type = OperatorKet)
+    @test_throws ArgumentError Qobj(a', type = OperatorKet)
     @test_throws DimensionMismatch Qobj(a, dims = [2])
-    @test_throws DimensionMismatch Qobj(a', dims = [2])
-    a2 = Qobj(a')
+    @test_throws DomainError Qobj(a', dims = [2])
+    a2 = Qobj(a, type = Bra)
     a3 = Qobj(a)
-    @test dag(a3) == a2
+    @test a3' == a2
     @test isket(a2) == false
     @test isbra(a2) == true
     @test isoper(a2) == false
@@ -43,7 +47,6 @@
     @test isoperbra(a3) == false
     @test Qobj(a3) == a3
     @test !(Qobj(a3) === a3)
-    @test isket(Qobj(Matrix([2 3])')) == true
 
     a = sprand(ComplexF64, 100, 100, 0.1)
     a2 = Qobj(a)
@@ -62,7 +65,6 @@
     @test isoperket(a3) == false
     @test isoperbra(a3) == false
     @test_throws DimensionMismatch Qobj(a, dims = [2])
-    @test_throws DimensionMismatch Qobj(a, dims = [2])
 
     # Operator-Ket, Operator-Bra tests
     H = 0.3 * sigmax() + 0.7 * sigmaz()
@@ -70,7 +72,7 @@
     ρ = Qobj(rand(ComplexF64, 2, 2))
     ρ_ket = mat2vec(ρ)
     ρ_bra = ρ_ket'
-    @test ρ_bra == Qobj(mat2vec(ρ.data)', type = OperatorBra)
+    @test ρ_bra == Qobj(mat2vec(ρ.data), type = OperatorBra)
     @test ρ == vec2mat(ρ_ket)
     @test isket(ρ_ket) == false
     @test isbra(ρ_ket) == false
@@ -94,7 +96,7 @@
     @test (ρ_bra * L')' == L * ρ_ket
     @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
     @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet, dims = [4])
-    @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = [4])
+    @test_throws ArgumentError Qobj(ρ_bra.data, type = OperatorBra, dims = [4])
 
     # matrix element
     s0 = Qobj(basis(4, 0).data; type = OperatorKet)
@@ -383,4 +385,19 @@
     @test_throws ArgumentError permute(bra_bdca, wrong_order2)
     @test_throws ArgumentError permute(op_bdca, wrong_order1)
     @test_throws ArgumentError permute(op_bdca, wrong_order2)
+
+    @testset "Type Inference" begin
+        for T in [Float32, Float64, ComplexF32, ComplexF64]
+            N = 25
+            a = rand(T, N)
+            for type in [Ket, Bra, OperatorKet, OperatorBra]
+                @inferred Qobj(a, type = type)
+            end
+
+            a = rand(T, N, N)
+            for type in [Operator, SuperOperator]
+                @inferred Qobj(a, type = type)
+            end
+        end
+    end
 end
