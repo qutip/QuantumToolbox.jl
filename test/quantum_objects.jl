@@ -24,6 +24,7 @@
     # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
     @test_throws ArgumentError Qobj(a, type = Operator)
     @test_throws ArgumentError Qobj(a, type = SuperOperator)
+    @test_throws ArgumentError Qobj(a, type = OperatorBra)
     @test_throws ArgumentError Qobj(a', type = Ket)
     @test_throws DomainError Qobj(a', type = Operator)
     @test_throws DomainError Qobj(a', type = SuperOperator)
@@ -32,7 +33,7 @@
     @test_throws DomainError Qobj(a', dims = [2])
     a2 = Qobj(a', type = Bra)
     a3 = Qobj(a)
-    @test a3' == a2
+    @test dag(a3) == a2 # Here we are also testing the dag function
     @test isket(a2) == false
     @test isbra(a2) == true
     @test isoper(a2) == false
