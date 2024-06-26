@@ -150,10 +150,10 @@ function QuantumObject(
         type = Operator # default type
     end
 
-    if type != Operator && type != SuperOperator
+    if type != Operator && type != SuperOperator && type != Bra && type != OperatorBra
         throw(
             ArgumentError(
-                "The argument type must be OperatorQuantumObject or SuperOperatorQuantumObject if the input array is a matrix.",
+                "The argument type must be Operator, SuperOperator, Bra or OperatorBra if the input array is a matrix.",
             ),
         )
     end
@@ -165,6 +165,10 @@ function QuantumObject(
             dims = [_size[1]]
         elseif type isa SuperOperatorQuantumObject
             dims = [isqrt(_size[1])]
+        elseif type isa BraQuantumObject
+            dims = [_size[2]]
+        elseif type isa OperatorBraQuantumObject
+            dims = [isqrt(_size[2])]
         end
     else
         _check_dims(dims)
@@ -183,35 +187,24 @@ function QuantumObject(
         type = Ket # default type
     end
 
-    if type != Ket && type != Bra && type != OperatorKet && type != OperatorBra
-        throw(
-            ArgumentError(
-                "The argument type must be KetQuantumObject, BraQuantumObject, OperatorKetQuantumObject or OperatorBraQuantumObject if the input array is a vector.",
-            ),
-        )
+    if type != Ket && type != OperatorKet
+        throw(ArgumentError("The argument type must be Ket or OperatorKet if the input array is a vector."))
     end
 
     _size = (length(A), 1)
 
     if dims isa Nothing
-        if (type isa KetQuantumObject) || (type isa BraQuantumObject)
+        if type isa KetQuantumObject
             dims = [_size[1]]
-        elseif (type isa OperatorKetQuantumObject) || (type isa OperatorBraQuantumObject)
+        elseif type isa OperatorKetQuantumObject
             dims = [isqrt(_size[1])]
         end
     else
         _check_dims(dims)
     end
 
-    if (type isa BraQuantumObject) || (type isa OperatorBraQuantumObject)
-        data = A'
-        _size = (1, length(A))
-    else
-        data = A
-    end
-
     _check_QuantumObject(type, dims, _size[1], _size[2])
-    return QuantumObject(data, type, dims)
+    return QuantumObject(A, type, dims)
 end
 
 function QuantumObject(

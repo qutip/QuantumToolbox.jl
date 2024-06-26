@@ -1,10 +1,10 @@
 @testset "Quantum Objects" begin
     # unsupported size of array
     a = rand(ComplexF64, 3, 2)
-    for t in [nothing, Operator, SuperOperator]
+    for t in [nothing, Operator, SuperOperator, Bra, OperatorBra]
         @test_throws DomainError Qobj(a, type = t)
     end
-    for t in [Ket, Bra, OperatorBra, OperatorKet]
+    for t in [Ket, OperatorKet]
         @test_throws ArgumentError Qobj(a, type = t)
     end
     a = rand(ComplexF64, 2, 2, 2)
@@ -30,7 +30,7 @@
     @test_throws ArgumentError Qobj(a', type = OperatorKet)
     @test_throws DimensionMismatch Qobj(a, dims = [2])
     @test_throws DomainError Qobj(a', dims = [2])
-    a2 = Qobj(a, type = Bra)
+    a2 = Qobj(a', type = Bra)
     a3 = Qobj(a)
     @test a3' == a2
     @test isket(a2) == false
@@ -72,7 +72,7 @@
     ρ = Qobj(rand(ComplexF64, 2, 2))
     ρ_ket = mat2vec(ρ)
     ρ_bra = ρ_ket'
-    @test ρ_bra == Qobj(mat2vec(ρ.data), type = OperatorBra)
+    @test ρ_bra == Qobj(mat2vec(ρ.data)', type = OperatorBra)
     @test ρ == vec2mat(ρ_ket)
     @test isket(ρ_ket) == false
     @test isbra(ρ_ket) == false
@@ -96,7 +96,7 @@
     @test (ρ_bra * L')' == L * ρ_ket
     @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
     @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet, dims = [4])
-    @test_throws ArgumentError Qobj(ρ_bra.data, type = OperatorBra, dims = [4])
+    @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = [4])
 
     # matrix element
     s0 = Qobj(basis(4, 0).data; type = OperatorKet)
@@ -390,8 +390,11 @@
         for T in [Float32, Float64, ComplexF32, ComplexF64]
             N = 25
             a = rand(T, N)
-            for type in [Ket, Bra, OperatorKet, OperatorBra]
+            for type in [Ket, OperatorKet]
                 @inferred Qobj(a, type = type)
+            end
+            for type in [Bra, OperatorBra]
+                @inferred Qobj(a', type = type)
             end
 
             a = rand(T, N, N)
