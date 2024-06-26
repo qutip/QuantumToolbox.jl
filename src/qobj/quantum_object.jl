@@ -150,7 +150,7 @@ function QuantumObject(
         type = Operator # default type
     end
 
-    if type != Operator && type != SuperOperator && type != Bra && type != OperatorBra
+    if !isa(type, Operator) && !isa(type, SuperOperator) && !isa(type, Bra) && !isa(type, OperatorBra)
         throw(
             ArgumentError(
                 "The argument type must be Operator, SuperOperator, Bra or OperatorBra if the input array is a matrix.",
@@ -187,7 +187,7 @@ function QuantumObject(
         type = Ket # default type
     end
 
-    if type != Ket && type != OperatorKet
+    if !isa(type, Ket) && !isa(type, OperatorKet)
         throw(ArgumentError("The argument type must be Ket or OperatorKet if the input array is a vector."))
     end
 
