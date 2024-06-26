@@ -146,13 +146,16 @@ function QuantumObject(
     type::ObjType = nothing,
     dims = nothing,
 ) where {T,ObjType<:Union{Nothing,QuantumObjectType}}
-
     if type isa Nothing
         type = Operator # default type
     end
 
     if type != Operator && type != SuperOperator
-        throw(ArgumentError("The argument type must be OperatorQuantumObject or SuperOperatorQuantumObject if the input array is a matrix."))
+        throw(
+            ArgumentError(
+                "The argument type must be OperatorQuantumObject or SuperOperatorQuantumObject if the input array is a matrix.",
+            ),
+        )
     end
 
     _size = size(A)
@@ -176,13 +179,16 @@ function QuantumObject(
     type::ObjType = nothing,
     dims = nothing,
 ) where {T,ObjType<:Union{Nothing,QuantumObjectType}}
-
     if type isa Nothing
         type = Ket # default type
     end
 
     if type != Ket && type != Bra && type != OperatorKet && type != OperatorBra
-        throw(ArgumentError("The argument type must be KetQuantumObject, BraQuantumObject, OperatorKetQuantumObject or OperatorBraQuantumObject if the input array is a vector."))
+        throw(
+            ArgumentError(
+                "The argument type must be KetQuantumObject, BraQuantumObject, OperatorKetQuantumObject or OperatorBraQuantumObject if the input array is a vector.",
+            ),
+        )
     end
 
     _size = (length(A), 1)
@@ -190,7 +196,7 @@ function QuantumObject(
     if dims isa Nothing
         if (type isa KetQuantumObject) || (type isa BraQuantumObject)
             dims = [_size[1]]
-        elseif (type isa OperatorKetQuantumObject) || (type isa OperatorBraQuantumObject) 
+        elseif (type isa OperatorKetQuantumObject) || (type isa OperatorBraQuantumObject)
             dims = [isqrt(_size[1])]
         end
     else
@@ -213,7 +219,6 @@ function QuantumObject(
     type::ObjType = nothing,
     dims = nothing,
 ) where {T,N,ObjType<:Union{Nothing,QuantumObjectType}}
-
     throw(ArgumentError("The input array must be a vector or a matrix."))
 end
 
