@@ -1,12 +1,51 @@
 @testset "Quantum Objects" begin
-    # unsupported size of array
-    for a in [rand(ComplexF64, 3, 2), rand(ComplexF64, 2, 2, 2)]
-        for t in [nothing, Ket, Bra, Operator, SuperOperator, OperatorBra, OperatorKet]
-            @test_throws DomainError Qobj(a, type = t)
+    @testset "Type Inference" begin
+        for T in [ComplexF32, ComplexF64]
+            N = 4
+            a = rand(T, N)
+            @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
+            for type in [Ket, OperatorKet]
+                @inferred Qobj(a, type = type)
+            end
+
+            UnionType = Union{QuantumObject{Matrix{T},BraQuantumObject},QuantumObject{Matrix{T},OperatorQuantumObject}}
+            a = rand(T, 1, N)
+            @inferred UnionType Qobj(a)
+            for type in [Bra, OperatorBra]
+                @inferred Qobj(a, type = type)
+            end
+
+            a = rand(T, N, N)
+            @inferred UnionType Qobj(a)
+            for type in [Operator, SuperOperator]
+                @inferred Qobj(a, type = type)
+            end
         end
     end
 
-    # unsupported dims
+    # ArgumentError: type is incompatible with vector or matrix
+    a = rand(ComplexF64, 2)
+    for t in [Operator, SuperOperator, Bra, OperatorBra]
+        @test_throws ArgumentError Qobj(a, type = t)
+    end
+    a = rand(ComplexF64, 2, 2)
+    @test_throws ArgumentError Qobj(a, type = Ket)
+    @test_throws ArgumentError Qobj(a, type = OperatorKet)
+
+    # DomainError: incompatible between size of array and type
+    a = rand(ComplexF64, 3, 2)
+    for t in [nothing, Operator, SuperOperator, Bra, OperatorBra]
+        @test_throws DomainError Qobj(a, type = t)
+    end
+    a = rand(ComplexF64, 2, 2, 2)
+    for t in [nothing, Ket, Bra, Operator, SuperOperator, OperatorBra, OperatorKet]
+        @test_throws DomainError Qobj(a, type = t)
+    end
+    a = rand(ComplexF64, 1, 2)
+    @test_throws DomainError Qobj(a, type = Operator)
+    @test_throws DomainError Qobj(a, type = SuperOperator)
+
+    # unsupported type of dims
     @test_throws ArgumentError Qobj(rand(2, 2), dims = 2)
     @test_throws ArgumentError Qobj(rand(2, 2), dims = [2.0])
     @test_throws ArgumentError Qobj(rand(2, 2), dims = [2.0 + 0.0im])
@@ -16,19 +55,11 @@
     N = 10
     a = rand(ComplexF64, 10)
     # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
-    @test_throws DomainError Qobj(a, type = Bra)
-    @test_throws DomainError Qobj(a, type = Operator)
-    @test_throws DomainError Qobj(a, type = SuperOperator)
-    @test_throws DomainError Qobj(a, type = OperatorBra)
-    @test_throws DomainError Qobj(a', type = Ket)
-    @test_throws DomainError Qobj(a', type = Operator)
-    @test_throws DomainError Qobj(a', type = SuperOperator)
-    @test_throws DomainError Qobj(a', type = OperatorKet)
     @test_throws DimensionMismatch Qobj(a, dims = [2])
     @test_throws DimensionMismatch Qobj(a', dims = [2])
     a2 = Qobj(a')
     a3 = Qobj(a)
-    @test dag(a3) == a2
+    @test dag(a3) == a2 # Here we are also testing the dag function
     @test isket(a2) == false
     @test isbra(a2) == true
     @test isoper(a2) == false
@@ -43,7 +74,6 @@
     @test isoperbra(a3) == false
     @test Qobj(a3) == a3
     @test !(Qobj(a3) === a3)
-    @test isket(Qobj(Matrix([2 3])')) == true
 
     a = sprand(ComplexF64, 100, 100, 0.1)
     a2 = Qobj(a)
@@ -61,7 +91,6 @@
     @test issuper(a3) == true
     @test isoperket(a3) == false
     @test isoperbra(a3) == false
-    @test_throws DimensionMismatch Qobj(a, dims = [2])
     @test_throws DimensionMismatch Qobj(a, dims = [2])
 
     # Operator-Ket, Operator-Bra tests
