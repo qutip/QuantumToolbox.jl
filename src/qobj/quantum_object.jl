@@ -159,13 +159,9 @@ function QuantumObject(
     end
 
     if dims isa Nothing
-        if type isa OperatorQuantumObject
-            dims = [_size[1]]
-        elseif type isa SuperOperatorQuantumObject
-            dims = [isqrt(_size[1])]
-        elseif type isa BraQuantumObject
+        if type isa OperatorQuantumObject || type isa BraQuantumObject
             dims = [_size[2]]
-        elseif type isa OperatorBraQuantumObject
+        elseif type isa SuperOperatorQuantumObject || type isa OperatorBraQuantumObject
             dims = [isqrt(_size[2])]
         end
     else
