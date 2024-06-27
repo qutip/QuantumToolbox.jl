@@ -1,24 +1,25 @@
 @testset "Quantum Objects" begin
-    # Qobj type inference
-    for T in [ComplexF32, ComplexF64]
-        N = 4
-        a = rand(T, N)
-        @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
-        for type in [Ket, OperatorKet]
-            @inferred Qobj(a, type = type)
-        end
+    @testset "Type Inference" begin
+        for T in [ComplexF32, ComplexF64]
+            N = 4
+            a = rand(T, N)
+            @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
+            for type in [Ket, OperatorKet]
+                @inferred Qobj(a, type = type)
+            end
 
-        UnionType = Union{QuantumObject{Matrix{T},BraQuantumObject},QuantumObject{Matrix{T},OperatorQuantumObject}}
-        a = rand(T, 1, N)
-        @inferred UnionType Qobj(a)
-        for type in [Bra, OperatorBra]
-            @inferred Qobj(a, type = type)
-        end
+            UnionType = Union{QuantumObject{Matrix{T},BraQuantumObject},QuantumObject{Matrix{T},OperatorQuantumObject}}
+            a = rand(T, 1, N)
+            @inferred UnionType Qobj(a)
+            for type in [Bra, OperatorBra]
+                @inferred Qobj(a, type = type)
+            end
 
-        a = rand(T, N, N)
-        @inferred UnionType Qobj(a)
-        for type in [Operator, SuperOperator]
-            @inferred Qobj(a, type = type)
+            a = rand(T, N, N)
+            @inferred UnionType Qobj(a)
+            for type in [Operator, SuperOperator]
+                @inferred Qobj(a, type = type)
+            end
         end
     end
 
