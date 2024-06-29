@@ -101,7 +101,7 @@ using QuantumToolbox
 N = 20 # cutoff of the Hilbert space dimension
 ω = 1.0 # frequency of the harmonic oscillator
 
-a = destroy(N) # annohilation operator
+a = destroy(N) # annihilation operator
 
 H = ω * a' * a
 ```
