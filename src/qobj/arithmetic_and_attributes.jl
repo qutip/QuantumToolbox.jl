@@ -586,23 +586,43 @@ purity(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = 
 @doc raw"""
     tidyup(A::QuantumObject, tol::Real=1e-14)
 
-Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
+Given a [`QuantumObject`](@ref) `A`, check the real and imaginary parts of each element separately. Remove the real or imaginary value if its absolute value is less than `tol`.
 """
 tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} =
     QuantumObject(tidyup(A.data, tol), A.type, A.dims)
-tidyup(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = @. T(abs(A) > tol) * A
-tidyup(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} = droptol!(copy(A), tol)
+tidyup(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = _DropTol(A, tol)
+function tidyup(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real}
+    A2 = copy(A)
+    _DropTol!(A2.nzval, tol)
+    return dropzeros!(A2)
+end
 
 @doc raw"""
     tidyup!(A::QuantumObject, tol::Real=1e-14)
 
-Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
+Given a [`QuantumObject`](@ref) `A`, check the real and imaginary parts of each element separately. Remove the real or imaginary value if its absolute value is less than `tol`.
 
 Note that this function is an in-place version of [`tidyup`](@ref).
 """
 tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} = (tidyup!(A.data, tol); A)
-tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = @. A = T(abs(A) > tol) * A
-tidyup!(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} = droptol!(A, tol)
+tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = _DropTol!(A, tol)
+function tidyup!(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real}
+    _DropTol!(A.nzval, tol)
+    return dropzeros!(A)
+end
+
+_DropTol(A::AbstractArray{T}, tol::Real) where {T<:Real} = @. T(abs(A) > tol) * A
+function _DropTol(A::AbstractArray{T}, tol::Real) where {T}
+    ReA = real(A)
+    ImA = imag(A)
+    return @. T(abs(ReA) > tol) * ReA + 1im * T(abs(ImA) > tol) * ImA
+end
+_DropTol!(A::AbstractArray{T}, tol::Real) where {T<:Real} = @. A = T(abs(A) > tol) * A
+function _DropTol!(A::AbstractArray{T}, tol::Real) where {T}
+    ReA = real(A)
+    ImA = imag(A)
+    return @. A = T(abs(ReA) > tol) * ReA + 1im * T(abs(ImA) > tol) * ImA
+end
 
 @doc raw"""
     get_data(A::QuantumObject)
