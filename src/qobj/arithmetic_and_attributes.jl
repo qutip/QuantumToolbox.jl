@@ -593,7 +593,7 @@ tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real}
 tidyup(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = _DropTol(A, tol)
 function tidyup(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real}
     A2 = copy(A)
-    _DropTol!(A2.nzval, tol)
+    _DropTol!(nonzeros(A2), tol)
     return dropzeros!(A2)
 end
 
@@ -607,22 +607,14 @@ Note that this function is an in-place version of [`tidyup`](@ref).
 tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} = (tidyup!(A.data, tol); A)
 tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = _DropTol!(A, tol)
 function tidyup!(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real}
-    _DropTol!(A.nzval, tol)
+    _DropTol!(nonzeros(A), tol)
     return dropzeros!(A)
 end
 
-_DropTol(A::AbstractArray{T}, tol::Real) where {T<:Real} = @. T(abs(A) > tol) * A
-function _DropTol(A::AbstractArray{T}, tol::Real) where {T}
-    ReA = real(A)
-    ImA = imag(A)
-    return @. T(abs(ReA) > tol) * ReA + 1im * T(abs(ImA) > tol) * ImA
-end
+_DropTol(A::AbstractArray{T}, tol::Real) where {T} = _DropTol!(copy(A), tol)
 _DropTol!(A::AbstractArray{T}, tol::Real) where {T<:Real} = @. A = T(abs(A) > tol) * A
-function _DropTol!(A::AbstractArray{T}, tol::Real) where {T}
-    ReA = real(A)
-    ImA = imag(A)
-    return @. A = T(abs(ReA) > tol) * ReA + 1im * T(abs(ImA) > tol) * ImA
-end
+_DropTol!(A::AbstractArray{T}, tol::Real) where {T} =
+    @. A = T(abs(real(A)) > tol) * real(A) + 1im * T(abs(imag(A)) > tol) * imag(A)
 
 @doc raw"""
     get_data(A::QuantumObject)
