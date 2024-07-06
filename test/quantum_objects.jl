@@ -348,15 +348,32 @@
     end
 
     # tidyup tests
-    ρ1 = rand_dm(20)
-    ρ2 = dense_to_sparse(ρ1)
-    @test tidyup!(ρ2, 0.1) == ρ2 != ρ1
-    @test dense_to_sparse(tidyup!(ρ1, 0.1)) == ρ2
+    N = 20
+    tol = 0.5
+    ## Vector{Float64} with in-place tidyup
+    ψ1 = Qobj(rand(Float64, N))
+    ψ2 = dense_to_sparse(ψ1)
+    @test tidyup!(ψ2, tol) == ψ2 != ψ1
+    @test dense_to_sparse(tidyup!(ψ1, tol)) == ψ2
 
-    ρ1 = rand_dm(20)
+    ## Vector{Float64} with normal tidyup
+    ψ1 = Qobj(rand(Float64, N))
+    ψ2 = dense_to_sparse(ψ1)
+    @test tidyup(ψ2, tol) != ψ2
+    @test dense_to_sparse(tidyup(ψ1, tol)) == tidyup(ψ2, tol)
+
+    ## Matrix{ComplexF64} with in-place tidyup
+    tol = 0.1
+    ρ1 = rand_dm(N)
     ρ2 = dense_to_sparse(ρ1)
-    @test tidyup(ρ2, 0.1) != ρ2
-    @test dense_to_sparse(tidyup(ρ1, 0.1)) == tidyup(ρ2, 0.1)
+    @test tidyup!(ρ2, tol) == ρ2 != ρ1
+    @test dense_to_sparse(tidyup!(ρ1, tol)) == ρ2
+
+    ## Matrix{ComplexF64} with normal tidyup
+    ρ1 = rand_dm(N)
+    ρ2 = dense_to_sparse(ρ1)
+    @test tidyup(ρ2, tol) != ρ2
+    @test dense_to_sparse(tidyup(ρ1, tol)) == tidyup(ρ2, tol)
 
     # data element type conversion
     vd = Qobj(Int64[0, 0])
