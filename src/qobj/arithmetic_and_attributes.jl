@@ -590,12 +590,7 @@ Given a [`QuantumObject`](@ref) `A`, check the real and imaginary parts of each 
 """
 tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} =
     QuantumObject(tidyup(A.data, tol), A.type, A.dims)
-tidyup(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = _DropTol(A, tol)
-function tidyup(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real}
-    A2 = copy(A)
-    _DropTol!(nonzeros(A2), tol)
-    return dropzeros!(A2)
-end
+tidyup(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = tidyup!(copy(A), tol)
 
 @doc raw"""
     tidyup!(A::QuantumObject, tol::Real=1e-14)
@@ -605,15 +600,12 @@ Given a [`QuantumObject`](@ref) `A`, check the real and imaginary parts of each 
 Note that this function is an in-place version of [`tidyup`](@ref).
 """
 tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} = (tidyup!(A.data, tol); A)
-tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = _DropTol!(A, tol)
-function tidyup!(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real}
-    _DropTol!(nonzeros(A), tol)
+function tidyup!(A::AbstractSparseArray{T}, tol::T2 = 1e-14) where {T,T2<:Real}
+    tidyup!(nonzeros(A), tol) # tidyup A.nzval in-place (also support for CUDA sparse arrays)
     return dropzeros!(A)
 end
-
-_DropTol(A::AbstractArray{T}, tol::Real) where {T} = _DropTol!(copy(A), tol)
-_DropTol!(A::AbstractArray{T}, tol::Real) where {T<:Real} = @. A = T(abs(A) > tol) * A
-_DropTol!(A::AbstractArray{T}, tol::Real) where {T} =
+tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T<:Real,T2<:Real} = @. A = T(abs(A) > tol) * A
+tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} =
     @. A = T(abs(real(A)) > tol) * real(A) + 1im * T(abs(imag(A)) > tol) * imag(A)
 
 @doc raw"""

@@ -350,25 +350,25 @@
     # tidyup tests
     N = 20
     tol = 0.1
-    ## Float64 with in-place tidyup
-    ρ1 = Qobj(rand(Float64, N, N))
-    ρ2 = dense_to_sparse(ρ1)
-    @test tidyup!(ρ2, tol) == ρ2 != ρ1
-    @test dense_to_sparse(tidyup!(ρ1, tol)) == ρ2
+    ## Vector{Float64} with in-place tidyup
+    ψ1 = Qobj(rand(Float64, N))
+    ψ2 = dense_to_sparse(ψ1)
+    @test tidyup!(ψ2, tol) == ψ2 != ψ1
+    @test dense_to_sparse(tidyup!(ψ1, tol)) == ψ2
 
-    ## Float64 with normal tidyup
-    ρ1 = Qobj(rand(Float64, N, N))
-    ρ2 = dense_to_sparse(ρ1)
-    @test tidyup(ρ2, tol) != ρ2
-    @test dense_to_sparse(tidyup(ρ1, tol)) == tidyup(ρ2, tol)
+    ## Vector{Float64} with normal tidyup
+    ψ1 = Qobj(rand(Float64, N))
+    ψ2 = dense_to_sparse(ψ1)
+    @test tidyup(ψ2, tol) != ψ2
+    @test dense_to_sparse(tidyup(ψ1, tol)) == tidyup(ψ2, tol)
 
-    ## ComplexF64 with in-place tidyup
+    ## Matrix{ComplexF64} with in-place tidyup
     ρ1 = rand_dm(N)
     ρ2 = dense_to_sparse(ρ1)
     @test tidyup!(ρ2, tol) == ρ2 != ρ1
     @test dense_to_sparse(tidyup!(ρ1, tol)) == ρ2
 
-    ## ComplexF64 with normal tidyup
+    ## Matrix{ComplexF64} with normal tidyup
     ρ1 = rand_dm(N)
     ρ2 = dense_to_sparse(ρ1)
     @test tidyup(ρ2, tol) != ρ2
