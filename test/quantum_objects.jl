@@ -349,7 +349,7 @@
 
     # tidyup tests
     N = 20
-    tol = 0.1
+    tol = 0.5
     ## Vector{Float64} with in-place tidyup
     ψ1 = Qobj(rand(Float64, N))
     ψ2 = dense_to_sparse(ψ1)
@@ -363,6 +363,7 @@
     @test dense_to_sparse(tidyup(ψ1, tol)) == tidyup(ψ2, tol)
 
     ## Matrix{ComplexF64} with in-place tidyup
+    tol = 0.1
     ρ1 = rand_dm(N)
     ρ2 = dense_to_sparse(ρ1)
     @test tidyup!(ρ2, tol) == ρ2 != ρ1
