@@ -112,17 +112,30 @@ function maximally_mixed_dm(dimensions::Vector{Int})
 end
 
 @doc raw"""
-    rand_dm(N::Integer; dims::Vector{Int}=[N])
+    rand_dm(dimensions; rank::Int=prod(dimensions))
 
-Generates a random density matrix ``\hat{\rho}``, with the property to be positive semi-definite and ``\textrm{Tr} \left[ \hat{\rho} \right] = 1``.
+Generate a random density matrix from Ginibre ensemble with given argument `dimensions` and `rank`, ensuring that it is positive semi-definite and trace equals to `1`.
 
-It is also possible to specify the list of dimensions `dims` if different subsystems are present.
+The `dimensions` can be either the following types:
+- `dimensions::Int`: Number of basis states in the Hilbert space.
+- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+
+The default keyword argument `rank = prod(dimensions)` (full rank).
+
+# References
+- [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)
+- [K. Życzkowski, et al., Generating random density matrices, Journal of Mathematical Physics 52, 062201 (2011)](http://dx.doi.org/10.1063/1.3595693)
 """
-function rand_dm(N::Integer; dims::Vector{Int} = [N])
-    ρ = rand(ComplexF64, N, N)
-    ρ *= ρ'
+rand_dm(dimensions::Int; rank::Int=prod(dimensions)) = rand_dm([dimensions], rank = rank)
+function rand_dm(dimensions::Vector{Int}; rank::Int=prod(dimensions))
+    N = prod(dimensions)
+    (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
+    (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))
+
+    X = _Ginibre_ensemble(N, rank)
+    ρ = X * X'
     ρ /= tr(ρ)
-    return QuantumObject(ρ; type = Operator, dims = dims)
+    return QuantumObject(ρ; type = Operator, dims = dimensions)
 end
 
 @doc raw"""

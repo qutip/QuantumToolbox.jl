@@ -58,19 +58,27 @@
     @test entropy_vn(ρ1, base = 2) ≈ log(2, 4)
 
     # rand_dm
-    ρ_AB = rand_dm(4, dims = [2, 2])
+    ρ_AB = rand_dm([2, 2])
     ρ_A = ptrace(ρ_AB, 1)
     ρ_B = ptrace(ρ_AB, 2)
+    rank = 5
+    ρ_low_rank = rand_dm(10, rank = rank)
+    eig_val = eigenenergies(ρ_low_rank)
     @test tr(ρ_AB) ≈ 1.0
     @test tr(ρ_A) ≈ 1.0
     @test tr(ρ_B) ≈ 1.0
+    @test tr(ρ_low_rank) ≈ 1.0
     @test ishermitian(ρ_AB) == true
     @test ishermitian(ρ_A) == true
     @test ishermitian(ρ_B) == true
+    @test ishermitian(ρ_low_rank) == true
     @test all(eigenenergies(ρ_AB) .>= 0)
     @test all(eigenenergies(ρ_A) .>= 0)
     @test all(eigenenergies(ρ_B) .>= 0)
-    @test_throws DimensionMismatch rand_dm(4, dims = [2])
+    @test all(isapprox.(eig_val[1:rank], 0.0, atol = 1e-10))
+    @test all(eig_val[(rank+1):10] .>= 0)
+    @test_throws DomainError rand_dm(4, rank = rank)
+    @test_throws DomainError rand_dm(4, rank = 0)
 
     # bell_state, singlet_state, triplet_states, w_state, ghz_state
     e0 = basis(2, 0)
