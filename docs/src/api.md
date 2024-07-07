@@ -101,6 +101,7 @@ zero_ket
 fock
 basis
 coherent
+rand_ket
 fock_dm
 coherent_dm
 thermal_dm

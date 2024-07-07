@@ -2,7 +2,7 @@
 Functions for generating (common) quantum states.
 =#
 
-export zero_ket, fock, basis, coherent
+export zero_ket, fock, basis, coherent, rand_ket
 export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
 export spin_state, spin_coherent
 export bell_state, singlet_state, triplet_states, w_state, ghz_state
@@ -53,6 +53,22 @@ Generates a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) ``|\a
 This state is constructed via the displacement operator [`displace`](@ref) and zero-fock state [`fock`](@ref): ``|\alpha\rangle = \hat{D}(\alpha) |0\rangle``
 """
 coherent(N::Int, α::T) where {T<:Number} = displace(N, α) * fock(N, 0)
+
+@doc raw"""
+    rand_ket(dimensions)
+
+Generate a random normalized [`Ket`](@ref) vector with given argument `dimensions`.
+
+The `dimensions` can be either the following types:
+- `dimensions::Int`: Number of basis states in the Hilbert space.
+- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+"""
+rand_ket(dimensions::Int) = rand_ket([dimensions])
+function rand_ket(dimensions::Vector{Int})
+    N = prod(dimensions)
+    ψ = rand(ComplexF64, N) .- (0.5 + 0.5im)
+    return QuantumObject(normalize!(ψ); type = Ket, dims = dimensions)
+end
 
 @doc raw"""
     fock_dm(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)

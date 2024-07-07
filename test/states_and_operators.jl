@@ -57,13 +57,15 @@
     @test ρ2.dims == [2, 2]
     @test entropy_vn(ρ1, base = 2) ≈ log(2, 4)
 
-    # rand_dm
+    # rand_ket and rand_dm
+    ψ = rand_ket(10)
     ρ_AB = rand_dm([2, 2])
     ρ_A = ptrace(ρ_AB, 1)
     ρ_B = ptrace(ρ_AB, 2)
     rank = 5
     ρ_low_rank = rand_dm(10, rank = rank)
     eig_val = eigenenergies(ρ_low_rank)
+    @test ψ' * ψ ≈ 1.0
     @test tr(ρ_AB) ≈ 1.0
     @test tr(ρ_A) ≈ 1.0
     @test tr(ρ_B) ≈ 1.0
