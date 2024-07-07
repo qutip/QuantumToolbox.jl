@@ -325,9 +325,9 @@ Also, see [`norm`](@ref) about its definition for different types of [`QuantumOb
 LinearAlgebra.normalize!(
     A::QuantumObject{<:AbstractArray{T},ObjType},
     p::Real = 2,
-) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = (rmul!(A.data, 1 / norm(A)); A)
+) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = (rmul!(A.data, 1 / norm(A, p)); A)
 LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, p::Real = 1) where {T} =
-    (rmul!(A.data, 1 / norm(A)); A)
+    (rmul!(A.data, 1 / norm(A, p)); A)
 
 LinearAlgebra.triu!(
     A::QuantumObject{<:AbstractArray{T},OpType},
