@@ -142,8 +142,8 @@ The default keyword argument `rank = prod(dimensions)` (full rank).
 - [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)
 - [K. Życzkowski, et al., Generating random density matrices, Journal of Mathematical Physics 52, 062201 (2011)](http://dx.doi.org/10.1063/1.3595693)
 """
-rand_dm(dimensions::Int; rank::Int=prod(dimensions)) = rand_dm([dimensions], rank = rank)
-function rand_dm(dimensions::Vector{Int}; rank::Int=prod(dimensions))
+rand_dm(dimensions::Int; rank::Int = prod(dimensions)) = rand_dm([dimensions], rank = rank)
+function rand_dm(dimensions::Vector{Int}; rank::Int = prod(dimensions))
     N = prod(dimensions)
     (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
     (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))
