@@ -47,3 +47,5 @@ end
 
 _get_dense_similar(A::AbstractArray, args...) = similar(A, args...)
 _get_dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
+
+_Ginibre_ensemble(n::Int, rank::Int = n) = randn(ComplexF64, n, rank) / sqrt(n)

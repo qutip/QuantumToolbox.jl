@@ -2,7 +2,7 @@
 Functions for generating (common) quantum states.
 =#
 
-export zero_ket, fock, basis, coherent
+export zero_ket, fock, basis, coherent, rand_ket
 export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
 export spin_state, spin_coherent
 export bell_state, singlet_state, triplet_states, w_state, ghz_state
@@ -53,6 +53,22 @@ Generates a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) ``|\a
 This state is constructed via the displacement operator [`displace`](@ref) and zero-fock state [`fock`](@ref): ``|\alpha\rangle = \hat{D}(\alpha) |0\rangle``
 """
 coherent(N::Int, α::T) where {T<:Number} = displace(N, α) * fock(N, 0)
+
+@doc raw"""
+    rand_ket(dimensions)
+
+Generate a random normalized [`Ket`](@ref) vector with given argument `dimensions`.
+
+The `dimensions` can be either the following types:
+- `dimensions::Int`: Number of basis states in the Hilbert space.
+- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+"""
+rand_ket(dimensions::Int) = rand_ket([dimensions])
+function rand_ket(dimensions::Vector{Int})
+    N = prod(dimensions)
+    ψ = rand(ComplexF64, N) .- (0.5 + 0.5im)
+    return QuantumObject(normalize!(ψ); type = Ket, dims = dimensions)
+end
 
 @doc raw"""
     fock_dm(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)
@@ -112,17 +128,30 @@ function maximally_mixed_dm(dimensions::Vector{Int})
 end
 
 @doc raw"""
-    rand_dm(N::Integer; dims::Vector{Int}=[N])
+    rand_dm(dimensions; rank::Int=prod(dimensions))
 
-Generates a random density matrix ``\hat{\rho}``, with the property to be positive semi-definite and ``\textrm{Tr} \left[ \hat{\rho} \right] = 1``.
+Generate a random density matrix from Ginibre ensemble with given argument `dimensions` and `rank`, ensuring that it is positive semi-definite and trace equals to `1`.
 
-It is also possible to specify the list of dimensions `dims` if different subsystems are present.
+The `dimensions` can be either the following types:
+- `dimensions::Int`: Number of basis states in the Hilbert space.
+- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+
+The default keyword argument `rank = prod(dimensions)` (full rank).
+
+# References
+- [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)
+- [K. Życzkowski, et al., Generating random density matrices, Journal of Mathematical Physics 52, 062201 (2011)](http://dx.doi.org/10.1063/1.3595693)
 """
-function rand_dm(N::Integer; dims::Vector{Int} = [N])
-    ρ = rand(ComplexF64, N, N)
-    ρ *= ρ'
+rand_dm(dimensions::Int; rank::Int = prod(dimensions)) = rand_dm([dimensions], rank = rank)
+function rand_dm(dimensions::Vector{Int}; rank::Int = prod(dimensions))
+    N = prod(dimensions)
+    (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
+    (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))
+
+    X = _Ginibre_ensemble(N, rank)
+    ρ = X * X'
     ρ /= tr(ρ)
-    return QuantumObject(ρ; type = Operator, dims = dims)
+    return QuantumObject(ρ; type = Operator, dims = dimensions)
 end
 
 @doc raw"""
