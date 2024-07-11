@@ -4,7 +4,7 @@ using CUDA.CUSPARSE
 QuantumToolbox.about()
 CUDA.versioninfo()
 
-@testset "CUDA Extension" begin
+@testset "CUDA Extension" verbose = true begin
     ψdi = Qobj(Int64[1, 0])
     ψdf = Qobj(Float64[1, 0])
     ψdc = Qobj(ComplexF64[1, 0])
