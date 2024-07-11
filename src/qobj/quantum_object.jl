@@ -324,11 +324,11 @@ Returns the length of the matrix or vector corresponding to the [`QuantumObject`
 Base.length(A::QuantumObject{<:AbstractArray{T}}) where {T} = length(A.data)
 
 Base.isequal(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}) where {T} =
-    isequal(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
-Base.isapprox(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}) where {T} =
-    isapprox(A.data, B.data) && isequal(A.type, B.type) && isequal(A.dims, B.dims)
+    isequal(A.type, B.type) && isequal(A.dims, B.dims) && isequal(A.data, B.data)
+Base.isapprox(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}; kwargs...) where {T} =
+    isequal(A.type, B.type) && isequal(A.dims, B.dims) && isapprox(A.data, B.data; kwargs...)
 Base.:(==)(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}) where {T} =
-    (A.data == B.data) && (A.type == B.type) && (A.dims == B.dims)
+    (A.type == B.type) && (A.dims == B.dims) && (A.data == B.data)
 
 SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(sparse(A.data), A.type, A.dims)
 SparseArrays.nnz(A::QuantumObject{<:AbstractSparseArray}) = nnz(A.data)

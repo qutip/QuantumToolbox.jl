@@ -28,8 +28,7 @@ core_tests = [
 
 if ((GROUP == "All") || (GROUP == "Code-Quality")) && (VERSION >= v"1.9")
     Pkg.add(["Aqua", "JET"])
-    include(joinpath(testdir, "aqua.jl"))
-    include(joinpath(testdir, "jet.jl"))
+    include(joinpath(testdir, "code_quality.jl"))
 end
 
 if (GROUP == "All") || (GROUP == "Core")
