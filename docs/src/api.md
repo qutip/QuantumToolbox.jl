@@ -87,6 +87,7 @@ eigsolve_al
 ```@docs
 ket2dm
 expect
+variance
 LinearAlgebra.kron
 sparse_to_dense
 dense_to_sparse

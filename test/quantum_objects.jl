@@ -249,7 +249,7 @@
         @test opstring == "Quantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
     end
 
-    @testset "Matrix Element" begin
+    @testset "matrix element" begin
         H = Qobj([1 2; 3 4])
         L = liouvillian(H)
         s0 = Qobj(basis(4, 0).data; type = OperatorKet)
@@ -321,10 +321,13 @@
     end
 
     @testset "expectation value" begin
+        # expect and variance
         N = 10
         a = destroy(N)
-        ψ = normalize(fock(N, 3) + 1im * fock(N, 4))
+        ψ = rand_ket(N)
         @test expect(a, ψ) ≈ expect(a, ψ')
+        @test variance(a, ψ) ≈ expect(a^2, ψ) - expect(a, ψ)^2
+
         ψ = fock(N, 3)
         @test norm(ψ' * a) ≈ 2
         @test expect(a' * a, ψ' * a) ≈ 16
