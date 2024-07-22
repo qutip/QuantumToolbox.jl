@@ -215,7 +215,7 @@ LinearAlgebra.Hermitian(
     QuantumObject(Hermitian(A.data, uplo), A.type, A.dims)
 
 @doc raw"""
-    tr(A::QuantumObject})
+    tr(A::QuantumObject)
 
 Returns the trace of [`QuantumObject`](@ref).
 
@@ -325,9 +325,9 @@ Also, see [`norm`](@ref) about its definition for different types of [`QuantumOb
 LinearAlgebra.normalize!(
     A::QuantumObject{<:AbstractArray{T},ObjType},
     p::Real = 2,
-) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = (rmul!(A.data, 1 / norm(A)); A)
+) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject}} = (rmul!(A.data, 1 / norm(A, p)); A)
 LinearAlgebra.normalize!(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, p::Real = 1) where {T} =
-    (rmul!(A.data, 1 / norm(A)); A)
+    (rmul!(A.data, 1 / norm(A, p)); A)
 
 LinearAlgebra.triu!(
     A::QuantumObject{<:AbstractArray{T},OpType},
@@ -355,9 +355,12 @@ LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.dat
     mul!(y, A.data, x, α, β)
 
 @doc raw"""
+    √(A)
     sqrt(A::QuantumObject)
 
-Square root of [`QuantumObject`](@ref)
+Matrix square root of [`QuantumObject`](@ref)
+
+Note that `√(A)` is a synonym for `sqrt(A)`
 """
 LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} =
     QuantumObject(sqrt(sparse_to_dense(A.data)), A.type, A.dims)
@@ -583,23 +586,27 @@ purity(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = 
 @doc raw"""
     tidyup(A::QuantumObject, tol::Real=1e-14)
 
-Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
+Given a [`QuantumObject`](@ref) `A`, check the real and imaginary parts of each element separately. Remove the real or imaginary value if its absolute value is less than `tol`.
 """
 tidyup(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} =
     QuantumObject(tidyup(A.data, tol), A.type, A.dims)
-tidyup(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = @. T(abs(A) > tol) * A
-tidyup(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} = droptol!(copy(A), tol)
+tidyup(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = tidyup!(copy(A), tol)
 
 @doc raw"""
     tidyup!(A::QuantumObject, tol::Real=1e-14)
 
-Removes those elements of a QuantumObject `A` whose absolute value is less than `tol`.
+Given a [`QuantumObject`](@ref) `A`, check the real and imaginary parts of each element separately. Remove the real or imaginary value if its absolute value is less than `tol`.
 
 Note that this function is an in-place version of [`tidyup`](@ref).
 """
 tidyup!(A::QuantumObject{<:AbstractArray{T}}, tol::T2 = 1e-14) where {T,T2<:Real} = (tidyup!(A.data, tol); A)
-tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} = @. A = T(abs(A) > tol) * A
-tidyup!(A::AbstractSparseMatrix{T}, tol::T2 = 1e-14) where {T,T2<:Real} = droptol!(A, tol)
+function tidyup!(A::AbstractSparseArray{T}, tol::T2 = 1e-14) where {T,T2<:Real}
+    tidyup!(nonzeros(A), tol) # tidyup A.nzval in-place (also support for CUDA sparse arrays)
+    return dropzeros!(A)
+end
+tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T<:Real,T2<:Real} = @. A = T(abs(A) > tol) * A
+tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} =
+    @. A = T(abs(real(A)) > tol) * real(A) + 1im * T(abs(imag(A)) > tol) * imag(A)
 
 @doc raw"""
     get_data(A::QuantumObject)

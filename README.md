@@ -58,7 +58,7 @@ QuantumToolbox.jl is equipped with a robust set of features:
 - **Quantum State and Operator Manipulation:** Easily handle quantum states and operators with a rich set of tools, with the same functionalities as QuTiP.
 - **Dynamical Evolution:** Advanced solvers for time evolution of quantum systems, thanks to the powerful [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl) package.
 - **GPU Computing:** Leverage GPU resources for high-performance computing. For example, you run the master equation direclty on the GPU with the same syntax as the CPU case.
-- **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run undreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
+- **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
 - **Easy Extension:** Easily extend the package, taking advantage of the Julia language features, like multiple dispatch and metaprogramming.
 
 ## Installation
@@ -101,7 +101,7 @@ using QuantumToolbox
 N = 20 # cutoff of the Hilbert space dimension
 ω = 1.0 # frequency of the harmonic oscillator
 
-a = destroy(N) # annohilation operator
+a = destroy(N) # annihilation operator
 
 H = ω * a' * a
 ```

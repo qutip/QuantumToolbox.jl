@@ -19,6 +19,10 @@
     for p in 1:bar_width
         output = sprint((t, s) -> next!(s, t), prog)
 
-        @test length(output) == 0
+        if p < bar_width
+            @test length(output) == 0
+        else
+            @test length(output) == strLength + 1
+        end
     end
 end

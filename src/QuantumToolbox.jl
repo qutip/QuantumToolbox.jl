@@ -28,6 +28,7 @@ import FFTW: fft, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import LinearMaps: LinearMap
+import OrdinaryDiffEq: OrdinaryDiffEqAlgorithm
 import Pkg
 import Random
 import SpecialFunctions: loggamma
