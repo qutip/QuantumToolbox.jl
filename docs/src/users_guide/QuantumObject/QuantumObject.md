@@ -58,6 +58,7 @@ Manually specifying the data for each quantum object is inefficient. Even more s
 - [`fock`](@ref) or [`basis`](@ref): fock state ket vector
 - [`fock_dm`](@ref): density matrix of a fock state
 - [`coherent`](@ref): coherent state ket vector 
+- [`rand_ket`](@ref): random ket vector
 - [`coherent_dm`](@ref): density matrix of a coherent state
 - [`thermal_dm`](@ref): density matrix of a thermal state
 - [`maximally_mixed_dm`](@ref): density matrix of a maximally mixed state
