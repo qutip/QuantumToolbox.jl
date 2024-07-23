@@ -35,9 +35,11 @@
               "reltol = $(sol.reltol)\n"
 
         @testset "Type Inference sesolve" begin
-            @inferred sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = false)
-            @inferred sesolve(H, psi0, t_l, progress_bar = false)
-            @inferred sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = false)
+            if VERSION >= v"1.10"
+                @inferred sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = false)
+                @inferred sesolve(H, psi0, t_l, progress_bar = false)
+                @inferred sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = false)
+            end
         end
     end
 
