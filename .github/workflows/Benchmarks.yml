@@ -3,13 +3,21 @@ on:
   push:
     branches:
       - 'main'
-    paths-ignore:
-      - 'docs/**'
+    paths:
+      - '.github/workflows/Benchmarks.yml'
+      - 'src/**'
+      - 'ext/**'
+      - 'benchmarks/**'
+      - 'Project.toml'
   pull_request:
     branches:
       - 'main'
-    paths-ignore:
-      - 'docs/**'
+    paths:
+      - '.github/workflows/Benchmarks.yml'
+      - 'src/**'
+      - 'ext/**'
+      - 'benchmarks/**'
+      - 'Project.toml'
     types:
       - opened
       - reopened
