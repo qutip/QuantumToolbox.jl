@@ -110,7 +110,7 @@ function sesolveProblem(
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(t_l))
-        e_ops2 = QuantumObject{MT1,OperatorQuantumObject}[]
+        e_ops2 = MT1[]
         is_empty_e_ops = true
     else
         expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
