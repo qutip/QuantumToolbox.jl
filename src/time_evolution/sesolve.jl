@@ -26,7 +26,7 @@ end
 @doc raw"""
     sesolveProblem(H::QuantumObject,
         ψ0::QuantumObject,
-        t_l::AbstractVector;
+        tlist::AbstractVector;
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()
         e_ops::AbstractVector=[],
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
@@ -44,7 +44,7 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 
 - `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
-- `t_l::AbstractVector`: The time list of the evolution.
+- `tlist::AbstractVector`: The time list of the evolution.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
 - `e_ops::AbstractVector`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
@@ -55,7 +55,7 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
-- If `e_ops` is specified, the default value of `saveat=[t_l[end]]` (only save the final state), otherwise, `saveat=t_l` (saving the states corresponding to `t_l`). You can also specify `e_ops` and `saveat` separately.
+- If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
@@ -66,7 +66,7 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 function sesolveProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-    t_l::AbstractVector;
+    tlist::AbstractVector;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Vector{QuantumObject{MT2,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
@@ -80,6 +80,8 @@ function sesolveProblem(
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     is_time_dependent = !(H_t === nothing)
+
+    t_l = collect(tlist)
 
     ϕ0 = get_data(ψ0)
     U = -1im * get_data(H)
@@ -141,7 +143,7 @@ end
 @doc raw"""
     sesolve(H::QuantumObject,
         ψ0::QuantumObject,
-        t_l::AbstractVector;
+        tlist::AbstractVector;
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::AbstractVector=[],
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
@@ -159,7 +161,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 
 - `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
-- `t_l::AbstractVector`: List of times at which to save the state of the system.
+- `tlist::AbstractVector`: List of times at which to save the state of the system.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::AbstractVector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
@@ -170,7 +172,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
-- If `e_ops` is specified, the default value of `saveat=[t_l[end]]` (only save the final state), otherwise, `saveat=t_l` (saving the states corresponding to `t_l`). You can also specify `e_ops` and `saveat` separately.
+- If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
 
@@ -181,7 +183,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 function sesolve(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-    t_l::AbstractVector;
+    tlist::AbstractVector;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Vector{QuantumObject{MT2,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[],
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
@@ -192,7 +194,7 @@ function sesolve(
     prob = sesolveProblem(
         H,
         ψ0,
-        t_l;
+        tlist;
         alg = alg,
         e_ops = e_ops,
         H_t = H_t,
@@ -206,9 +208,8 @@ end
 
 function sesolve(prob::ODEProblem, alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob, alg)
-    ψt =
-        isempty(sol.prob.kwargs[:saveat]) ? QuantumObject[] :
-        map(ϕ -> QuantumObject(ϕ, type = Ket, dims = sol.prob.p.Hdims), sol.u)
+
+    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = sol.prob.p.Hdims), sol.u)
 
     return TimeEvolutionSol(
         sol.t,

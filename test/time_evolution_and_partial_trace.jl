@@ -11,7 +11,7 @@
         psi0 = kron(fock(N, 0), fock(2, 0))
         t_l = LinRange(0, 1000, 1000)
         e_ops = [a_d * a]
-        sol = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress_bar = false)
+        sol = sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = false)
         sol2 = sesolve(H, psi0, t_l, progress_bar = false)
         sol3 = sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = false)
         sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
@@ -33,6 +33,14 @@
               "ODE alg.: $(sol.alg)\n" *
               "abstol = $(sol.abstol)\n" *
               "reltol = $(sol.reltol)\n"
+
+        @testset "Type Inference sesolve" begin
+            if VERSION >= v"1.10"
+                @inferred sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = false)
+                @inferred sesolve(H, psi0, t_l, progress_bar = false)
+                @inferred sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = false)
+            end
+        end
     end
 
     @testset "mesolve and mcsolve" begin
