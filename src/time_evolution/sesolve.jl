@@ -32,15 +32,16 @@ function _generate_sesolve_kwargs_with_callback(t_l, kwargs)
     return kwargs2
 end
 
-function _generate_sesolve_kwargs(e_ops::AbstractVector, progress_bar, t_l, kwargs)
-    return _generate_sesolve_kwargs_with_callback(t_l, kwargs)
-end
-
 function _generate_sesolve_kwargs(e_ops, progress_bar::Val{true}, t_l, kwargs)
     return _generate_sesolve_kwargs_with_callback(t_l, kwargs)
 end
 
-_generate_sesolve_kwargs(e_ops, progress_bar, t_l, kwargs) = kwargs
+function _generate_sesolve_kwargs(e_ops, progress_bar::Val{false}, t_l, kwargs)
+    if e_ops isa Nothing
+        return kwargs
+    end
+    return merge(kwargs, (saveat = [t_l[end]],))
+end
 
 @doc raw"""
     sesolveProblem(H::QuantumObject,
@@ -110,7 +111,7 @@ function sesolveProblem(
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(t_l))
-        e_ops2 = QuantumObject{MT1,OperatorQuantumObject}[]
+        e_ops2 = MT1[]
         is_empty_e_ops = true
     else
         expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
