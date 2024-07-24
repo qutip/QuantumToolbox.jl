@@ -39,8 +39,17 @@
     α0_l = [α0]
     dsf_params = (Δ = Δ, F = F, κ = κ, U = U)
 
-    sol_dsf_me =
-        dsf_mesolve(H_dsf, ψ0, tlist, c_ops_dsf, op_list, α0_l, dsf_params, e_ops = e_ops_dsf, progress_bar = Val(false))
+    sol_dsf_me = dsf_mesolve(
+        H_dsf,
+        ψ0,
+        tlist,
+        c_ops_dsf,
+        op_list,
+        α0_l,
+        dsf_params,
+        e_ops = e_ops_dsf,
+        progress_bar = Val(false),
+    )
     sol_dsf_mc = dsf_mcsolve(
         H_dsf,
         ψ0,
@@ -110,8 +119,17 @@
     α0_l = [α0, α0]
     dsf_params = (Δ = Δ, F = F, κ = κ, U = U, J = J)
 
-    sol_dsf_me =
-        dsf_mesolve(H_dsf2, ψ0, tlist, c_ops_dsf2, op_list, α0_l, dsf_params, e_ops = e_ops_dsf2, progress_bar = Val(false))
+    sol_dsf_me = dsf_mesolve(
+        H_dsf2,
+        ψ0,
+        tlist,
+        c_ops_dsf2,
+        op_list,
+        α0_l,
+        dsf_params,
+        e_ops = e_ops_dsf2,
+        progress_bar = Val(false),
+    )
     sol_dsf_mc = dsf_mcsolve(
         H_dsf2,
         ψ0,

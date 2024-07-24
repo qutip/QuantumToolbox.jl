@@ -84,7 +84,7 @@
               "ODE alg.: $(sol_mc.alg)\n" *
               "abstol = $(sol_mc.abstol)\n" *
               "reltol = $(sol_mc.reltol)\n"
-        
+
         @testset "Type Inference mesolve" begin
             if VERSION >= v"1.10"
                 @inferred mesolveProblem(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))

@@ -246,7 +246,7 @@ end
 
 function mesolve(prob::ODEProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob, alg)
-    
+
     ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = sol.prob.p.Hdims), sol.u)
 
     return TimeEvolutionSol(
