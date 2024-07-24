@@ -15,6 +15,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 |:-----------------:|:-------------|
 | **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] |
 | **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] |
+| **Benchmark** | [![Benchmarks][benchmark-img]][benchmark-url] |
 
 [release-img]: https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg
 [release-url]: https://github.com/qutip/QuantumToolbox.jl/releases
@@ -44,6 +45,9 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [docs-stable-url]: https://qutip.github.io/QuantumToolbox.jl/stable
 [docs-develop-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-develop-url]: https://qutip.github.io/QuantumToolbox.jl/dev
+
+[benchmark-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/Benchmarks.yml/badge.svg?branch=main
+[benchmark-url]: https://qutip.org/QuantumToolbox.jl/benchmarks/
 
 ## Introduction
 
