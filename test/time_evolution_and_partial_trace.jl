@@ -36,7 +36,7 @@
 
         @testset "Type Inference sesolve" begin
             if VERSION >= v"1.10"
-                @inferred sesolveProblem(H, psi0, t_l, e_ops)
+                @inferred sesolveProblem(H, psi0, t_l)
                 @inferred sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = Val(false))
                 @inferred sesolve(H, psi0, t_l, progress_bar = Val(false))
                 @inferred sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
