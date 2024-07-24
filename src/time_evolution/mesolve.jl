@@ -37,19 +37,16 @@ function _generate_mesolve_kwargs_with_callback(t_l, kwargs)
     return kwargs2
 end
 
-function _generate_mesolve_kwargs(e_ops::AbstractVector, progress_bar, t_l, kwargs)
-    return _generate_mesolve_kwargs_with_callback(t_l, kwargs)
-end
-
 function _generate_mesolve_kwargs(e_ops, progress_bar::Val{true}, t_l, kwargs)
     return _generate_mesolve_kwargs_with_callback(t_l, kwargs)
 end
 
-function _generate_mesolve_kwargs(e_ops::AbstractVector, progress_bar::Val{true}, t_l, kwargs)
+function _generate_mesolve_kwargs(e_ops, progress_bar::Val{false}, t_l, kwargs)
+    if e_ops isa Nothing
+        return kwargs
+    end
     return _generate_mesolve_kwargs_with_callback(t_l, kwargs)
 end
-
-_generate_mesolve_kwargs(e_ops, progress_bar, t_l, kwargs) = kwargs
 
 @doc raw"""
     mesolveProblem(H::QuantumObject,
