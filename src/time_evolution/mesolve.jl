@@ -45,6 +45,10 @@ function _generate_mesolve_kwargs(e_ops, progress_bar::Val{true}, t_l, kwargs)
     return _generate_mesolve_kwargs_with_callback(t_l, kwargs)
 end
 
+function _generate_mesolve_kwargs(e_ops::AbstractVector, progress_bar::Val{true}, t_l, kwargs)
+    return _generate_mesolve_kwargs_with_callback(t_l, kwargs)
+end
+
 _generate_mesolve_kwargs(e_ops, progress_bar, t_l, kwargs) = kwargs
 
 @doc raw"""
