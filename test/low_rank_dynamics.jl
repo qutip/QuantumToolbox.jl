@@ -44,7 +44,7 @@
     e_ops = (Sz,)
 
     # Full solution
-    mesol = mesolve(H, ρ, tl, c_ops; e_ops = [e_ops...], progress_bar = false)
+    mesol = mesolve(H, ρ, tl, c_ops; e_ops = [e_ops...], progress_bar = Val(false))
     A = Matrix(mesol.states[end].data)
     λ = eigvals(Hermitian(A))
     Strue = -sum(λ .* log2.(λ))

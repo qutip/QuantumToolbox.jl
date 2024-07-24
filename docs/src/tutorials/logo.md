@@ -111,7 +111,7 @@ c_ops = [sqrt(γ) * a]
 
 tlist = range(0, 2π, 100)
 
-sol = mesolve(H, ψ, tlist, c_ops, progress_bar = false)
+sol = mesolve(H, ψ, tlist, c_ops, progress_bar = Val(false))
 nothing # hide
 ```
 
