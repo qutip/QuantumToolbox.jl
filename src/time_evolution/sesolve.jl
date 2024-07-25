@@ -40,7 +40,7 @@ function _generate_sesolve_kwargs(e_ops, progress_bar::Val{false}, t_l, kwargs)
     if e_ops isa Nothing
         return kwargs
     end
-    return merge(kwargs, (saveat = [t_l[end]],))
+    return _generate_sesolve_kwargs_with_callback(t_l, kwargs)
 end
 
 @doc raw"""
