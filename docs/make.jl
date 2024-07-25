@@ -48,7 +48,6 @@ const PAGES = [
             "tutorials/logo.md",
         ],
     ],
-    "Solver Benchmarks" => "benchmarks/benchmark_history.md",
     "API" => "api.md",
     # "Change Log" => "changelog.md",
 ]
