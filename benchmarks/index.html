@@ -2,15 +2,16 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Continuous Benchmarking</title>
+    <title>Benchmarking QuantumToolbox.jl</title>
     <meta
       name="description"
-      content="A benchmark dashboard application designed for Julia projects"
+      content="A continuous solver benchmarks for QuantumToolbox.jl"
     />
     <meta
       name="viewport"
       content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes"
     />
+    <link rel="icon" type="image/x-icon" href="https://github.com/qutip/QuantumToolbox.jl/blob/main/docs/src/assets/favicon.ico">
     <style>
       html {
         font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto,
@@ -35,6 +36,9 @@
         width: 100%;
         display: flex;
         flex-direction: column;
+      }
+      h1 {
+        text-align: center;
       }
       a {
         color: #3273dc;
@@ -105,6 +109,7 @@
         <strong class="header-label">Repository:</strong>
         <a id="repository-link" rel="noopener"></a>
       </div>
+      <h1>Benchmarks</h1>
     </header>
     <main id="main"></main>
     <footer>
@@ -167,7 +172,7 @@
                 const splitted_name = bench.name.split("/");
                 const topic_name = splitted_name[0];
                 const case_name = splitted_name[1];
-                const legend_name = splitted_name[2];
+                const legend_name = splitted_name.slice(2).join("/");
                 if (map.get(topic_name) === undefined) {
                   map.set(topic_name, new Map());
                 }
