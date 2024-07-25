@@ -186,7 +186,7 @@ function mcsolveProblem(
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    t_l = collect(tlist)
+    t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for OrdinaryDiffEq.jl
 
     H_eff = H - T2(0.5im) * mapreduce(op -> op' * op, +, c_ops)
 
