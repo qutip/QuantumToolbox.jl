@@ -102,7 +102,7 @@ function sesolveProblem(
     is_time_dependent = !(H_t isa Nothing)
     progress_bar_val = makeVal(progress_bar)
 
-    t_l = collect(tlist)
+    t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for OrdinaryDiffEq.jl
 
     ϕ0 = get_data(ψ0)
 
