@@ -136,7 +136,7 @@ function mesolveProblem(
         is_empty_e_ops = true
     else
         expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-        e_ops2 = _generate_mesolve_e_op.(e_ops)
+        e_ops2 = [_generate_mesolve_e_op(op) for op in e_ops]
         is_empty_e_ops = isempty(e_ops)
     end
 
