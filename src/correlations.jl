@@ -5,9 +5,11 @@ abstract type SpectrumSolver end
 
 struct FFTCorrelation <: SpectrumSolver end
 
-struct ExponentialSeries <: SpectrumSolver
-    tol::Real
-    calc_steadystate::Bool
+struct ExponentialSeries{T<:Real,CALC_SS} <: SpectrumSolver
+    tol::T
+    function ExponentialSeries(tol::T, calc_steadystate::Bool=false) where T
+        new{T,calc_steadystate}(tol)
+    end
 end
 
 ExponentialSeries(; tol = 1e-14, calc_steadystate = false) = ExponentialSeries(tol, calc_steadystate)
@@ -198,6 +200,25 @@ function _spectrum(
     return ω_l, 2 .* real.(S)
 end
 
+function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T, true}) where T
+    result = eigen(L)
+    rates, vecs = result.values, result.vectors
+
+    return rates, vecs, steadystate(L).data
+end
+
+function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T, false}) where T
+    result = eigen(L)
+    rates, vecs = result.values, result.vectors
+
+    ss_idx = findmin(abs2, rates)[2]
+    ρss = vec2mat(@view(vecs[:, ss_idx]))
+    ρss = (ρss + ρss') / 2
+    ρss ./= tr(ρss)
+
+    return rates, vecs, ρss
+end
+
 function _spectrum(
     H::QuantumObject{<:AbstractArray{T1},HOpType},
     ω_list::AbstractVector,
@@ -213,25 +234,7 @@ function _spectrum(
 
     ω_l = ω_list
 
-    result = eigen(L)
-    rates, vecs = result.values, result.vectors
-
-    # Get the steady state and update the corresponding vector
-    # ss_idx = argmin(abs2.(rates))
-    # ρss = vec2mat(@view(vecs[:,ss_idx]))
-    # ρss2 = (ρss + ρss') / 2
-    # ρss2 ./= tr(ρss2)
-    # ρss .= ρss2
-    # ρss = steadystate(L).data # This solves the problem when multiple states have zero eigenvalue
-    if solver.calc_steadystate
-        ρss = steadystate(L).data
-    else
-        ss_idx = argmin(abs2.(rates))
-        ρss = vec2mat(@view(vecs[:, ss_idx]))
-        ρss2 = (ρss + ρss') / 2
-        ρss2 ./= tr(ρss2)
-        ρss .= ρss2
-    end
+    rates, vecs, ρss = _spectrum_get_rates_vecs_ss(L, solver)
 
     ρ0 = B.data * ρss
     v = vecs \ mat2vec(ρ0)
@@ -239,11 +242,10 @@ function _spectrum(
     amps = map(i -> v[i] * tr(A.data * vec2mat(@view(vecs[:, i]))), eachindex(rates))
     idxs = findall(x -> abs(x) > solver.tol, amps)
     amps, rates = amps[idxs], rates[idxs]
-    # @. amps = abs(amps)
-    # idxs = findall(x -> real(x) < 0, amps)
-    # @. amps[idxs] -= 2*real(amps[idxs])
 
-    spec = map(ω -> 2 * real(sum(@. amps * (1 / (1im * ω - rates)))), ω_l)
+    # spec = map(ω -> 2 * real(sum(@. amps * (1 / (1im * ω - rates)))), ω_l)
+    amps_rates = zip(amps, rates)
+    spec = map(ω -> 2 * real(sum(x->x[1] / (1im * ω - x[2]), amps_rates)), ω_l)
 
     return ω_l, spec
 end
