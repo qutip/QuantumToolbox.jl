@@ -500,7 +500,7 @@ function eigsolve_al(
         alg = alg,
         H_t = H_t,
         params = params,
-        progress_bar = false,
+        progress_bar = Val(false),
         kwargs...,
     )
     integrator = init(prob, alg)

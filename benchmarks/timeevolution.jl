@@ -38,7 +38,7 @@ function benchmark_timeevolution!(SUITE)
     tlist = range(0, 10 / γ, 100)
 
     SUITE["Time Evolution"]["time-independent"]["mesolve"] =
-        @benchmarkable mesolve($H, $ψ0, $tlist, $c_ops, e_ops = $e_ops, progress_bar = false)
+        @benchmarkable mesolve($H, $ψ0, $tlist, $c_ops, e_ops = $e_ops, progress_bar = Val(false))
 
     ## mcsolve ##
 
