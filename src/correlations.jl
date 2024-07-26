@@ -7,9 +7,7 @@ struct FFTCorrelation <: SpectrumSolver end
 
 struct ExponentialSeries{T<:Real,CALC_SS} <: SpectrumSolver
     tol::T
-    function ExponentialSeries(tol::T, calc_steadystate::Bool=false) where T
-        new{T,calc_steadystate}(tol)
-    end
+    ExponentialSeries(tol::T, calc_steadystate::Bool = false) where {T} = new{T,calc_steadystate}(tol)
 end
 
 ExponentialSeries(; tol = 1e-14, calc_steadystate = false) = ExponentialSeries(tol, calc_steadystate)
@@ -200,14 +198,14 @@ function _spectrum(
     return ω_l, 2 .* real.(S)
 end
 
-function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T, true}) where T
+function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T,true}) where {T}
     result = eigen(L)
     rates, vecs = result.values, result.vectors
 
     return rates, vecs, steadystate(L).data
 end
 
-function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T, false}) where T
+function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T,false}) where {T}
     result = eigen(L)
     rates, vecs = result.values, result.vectors
 
@@ -245,7 +243,7 @@ function _spectrum(
 
     # spec = map(ω -> 2 * real(sum(@. amps * (1 / (1im * ω - rates)))), ω_l)
     amps_rates = zip(amps, rates)
-    spec = map(ω -> 2 * real(sum(x->x[1] / (1im * ω - x[2]), amps_rates)), ω_l)
+    spec = map(ω -> 2 * real(sum(x -> x[1] / (1im * ω - x[2]), amps_rates)), ω_l)
 
     return ω_l, spec
 end
