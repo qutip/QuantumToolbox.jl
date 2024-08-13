@@ -189,16 +189,35 @@
         @test ψx ≈ F_3_3' * ψk
     end
 
+    @testset "random unitary" begin
+        U1 = rand_unitary(20)
+        U2 = rand_unitary(20, :exp)
+        U3 = rand_unitary([5, 5])
+        U4 = rand_unitary([5, 5], :exp)
+        @test isunitary(U1)
+        @test isunitary(U2)
+        @test isunitary(U3)
+        @test isunitary(U4)
+        @test U1.dims == U2.dims == [20]
+        @test U3.dims == U4.dims == [5, 5]
+    end
+
     @testset "Spin-j operators" begin
         # Pauli matrices and general Spin-j operators
         J0 = Qobj(spdiagm(0 => [0.0im]))
         Jx, Jy, Jz = spin_J_set(0.5)
+        Sx = sigmax()
+        Sy = sigmay()
+        Sz = sigmaz()
         @test spin_Jx(0) == spin_Jy(0) == spin_Jz(0) == spin_Jp(0) == spin_Jm(0) == J0
-        @test sigmax() ≈ 2 * spin_Jx(0.5) ≈ 2 * Jx ≈ Qobj(sparse([0.0im 1; 1 0]))
-        @test sigmay() ≈ 2 * spin_Jy(0.5) ≈ 2 * Jy ≈ Qobj(sparse([0.0im -1im; 1im 0]))
-        @test sigmaz() ≈ 2 * spin_Jz(0.5) ≈ 2 * Jz ≈ Qobj(sparse([1 0.0im; 0 -1]))
+        @test Sx ≈ 2 * spin_Jx(0.5) ≈ 2 * Jx ≈ Qobj(sparse([0.0im 1; 1 0]))
+        @test Sy ≈ 2 * spin_Jy(0.5) ≈ 2 * Jy ≈ Qobj(sparse([0.0im -1im; 1im 0]))
+        @test Sz ≈ 2 * spin_Jz(0.5) ≈ 2 * Jz ≈ Qobj(sparse([1 0.0im; 0 -1]))
         @test sigmap() ≈ spin_Jp(0.5) ≈ Qobj(sparse([0.0im 1; 0 0]))
         @test sigmam() ≈ spin_Jm(0.5) ≈ Qobj(sparse([0.0im 0; 1 0]))
+        @test isunitary(Sx)
+        @test isunitary(Sy)
+        @test isunitary(Sz)
         for which in [:x, :y, :z, :+, :-]
             @test jmat(2.5, which).dims == [6] # 2.5 * 2 + 1 = 6
 
@@ -290,6 +309,10 @@
         I_op2 = qeye(4, dims = [2, 2])
         I_su1 = qeye(4, type = SuperOperator)
         I_su2 = qeye(4, type = SuperOperator, dims = [2])
+        @test isunitary(I_op1) == true
+        @test isunitary(I_op2) == true
+        @test isunitary(I_su1) == false
+        @test isunitary(I_su2) == false
         @test I_op1.data == I_op2.data == I_su1.data == I_su2.data
         @test (I_op1 == I_op2) == false
         @test (I_op1 == I_su1) == false
