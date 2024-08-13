@@ -115,6 +115,7 @@ singlet_state
 triplet_states
 w_state
 ghz_state
+rand_unitary
 sigmap
 sigmam
 sigmax

@@ -2,6 +2,7 @@
 Functions for generating (common) quantum operators.
 =#
 
+export rand_unitary
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
 export destroy, create, eye, projection
@@ -10,6 +11,52 @@ export fdestroy, fcreate
 export commutator
 export tunneling
 export qft
+
+@doc raw"""
+    rand_unitary(dimensions, distribution=:haar)
+
+Returns a random unitary [`QuantumObject`](@ref).
+
+The `dimensions` can be either the following types:
+- `dimensions::Int`: Number of basis states in the Hilbert space.
+- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+
+The `distribution` specifies which of the method used to obtain the unitary matrix:
+- `:haar`: Haar random unitary matrix using the algorithm from reference 1
+- `:exp`: Uses ``\exp(-iH)``, where ``H`` is a randomly generated Hermitian operator.
+
+# References
+1. [F. Mezzadri, How to generate random matrices from the classical compact groups, arXiv:math-ph/0609050 (2007)](https://arxiv.org/abs/math-ph/0609050)
+"""
+rand_unitary(dimensions::Int, distribution::Symbol = :haar) = rand_unitary([dimensions], Val(distribution))
+rand_unitary(dimensions::Vector{Int}, distribution::Symbol = :haar) = rand_unitary(dimensions, Val(distribution))
+function rand_unitary(dimensions::Vector{Int}, ::Val{:haar})
+    N = prod(dimensions)
+
+    # generate N x N matrix Z of complex standard normal random variates
+    Z = randn(ComplexF64, N, N)
+
+    # find QR decomposition: Z = Q ⋅ R
+    Q, R = LinearAlgebra.qr(Z)
+
+    # Create a diagonal matrix Λ by rescaling the diagonal elements of R.
+    # Because inv(Λ) ⋅ R has real and strictly positive elements, Q · Λ is therefore Haar distributed.
+    Λ = diag(R) # take the diagonal elements of R
+    Λ ./= abs.(Λ) # rescaling the elements
+    return QuantumObject(Q * Diagonal(Λ); type = Operator, dims = dimensions)
+end
+function rand_unitary(dimensions::Vector{Int}, ::Val{:exp})
+    N = prod(dimensions)
+
+    # generate N x N matrix Z of complex standard normal random variates
+    Z = randn(ComplexF64, N, N)
+
+    # generate Hermitian matrix
+    H = QuantumObject((Z + Z') / 2; type = Operator, dims = dimensions)
+
+    return exp(-1.0im * H)
+end
+rand_unitary(dimensions::Vector{Int}, ::Val{T}) where {T} = throw(ArgumentError("Invalid distribution: $(T)"))
 
 @doc raw"""
     commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
