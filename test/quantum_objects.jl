@@ -145,6 +145,8 @@
         @test isequal(a4, a3) == false
         @test a4 ≈ a2
 
+        @test real(a2) == real(a)
+        @test imag(a2) == imag(a)
         @test +a2 == a2
         @test -(-a2) == a2
         @test a2^3 ≈ a2 * a2 * a2

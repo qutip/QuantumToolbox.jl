@@ -330,6 +330,9 @@ Base.isapprox(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractA
 Base.:(==)(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}) where {T} =
     (A.type == B.type) && (A.dims == B.dims) && (A.data == B.data)
 
+Base.real(x::QuantumObject) = QuantumObject(real(x.data), x.type, x.dims)
+Base.imag(x::QuantumObject) = QuantumObject(imag(x.data), x.type, x.dims)
+
 SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(sparse(A.data), A.type, A.dims)
 SparseArrays.nnz(A::QuantumObject{<:AbstractSparseArray}) = nnz(A.data)
 SparseArrays.nonzeros(A::QuantumObject{<:AbstractSparseArray}) = nonzeros(A.data)
