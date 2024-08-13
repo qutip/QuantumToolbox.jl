@@ -38,6 +38,7 @@ issuper
 LinearAlgebra.ishermitian
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
+isunitary
 ```
 
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
