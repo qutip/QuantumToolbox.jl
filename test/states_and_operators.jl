@@ -200,6 +200,7 @@
         @test isunitary(U4)
         @test U1.dims == U2.dims == [20]
         @test U3.dims == U4.dims == [5, 5]
+        @test_throws ArgumentError rand_unitary(20, :wrong)
     end
 
     @testset "Spin-j operators" begin
