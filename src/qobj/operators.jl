@@ -43,7 +43,7 @@ function rand_unitary(dimensions::Vector{Int}, ::Val{:haar})
     # Because inv(Λ) ⋅ R has real and strictly positive elements, Q · Λ is therefore Haar distributed.
     Λ = diag(R) # take the diagonal elements of R
     Λ ./= abs.(Λ) # rescaling the elements
-    return QuantumObject(Q * Diagonal(Λ); type = Operator, dims = dimensions)
+    return QuantumObject(dense_to_sparse(Q * Diagonal(Λ)); type = Operator, dims = dimensions)
 end
 function rand_unitary(dimensions::Vector{Int}, ::Val{:exp})
     N = prod(dimensions)

@@ -200,9 +200,12 @@
         @test isunitary(U4)
         @test U1.dims == U2.dims == [20]
         @test U3.dims == U4.dims == [5, 5]
-        @inferred QuantumObject{Matrix{ComplexF64},OperatorQuantumObject} rand_unitary(10, :haar)
-        @inferred QuantumObject{Matrix{ComplexF64},OperatorQuantumObject} rand_unitary(10, :exp)
+        
         @test_throws ArgumentError rand_unitary(20, :wrong)
+        @testset "Type Inference" begin
+            @inferred rand_unitary(10, :haar)
+            @inferred rand_unitary(10, :exp)
+        end
     end
 
     @testset "Spin-j operators" begin
