@@ -1,0 +1,53 @@
+name: 🐛 Bug Report
+description: Spotted a bug? Report it to us!
+labels: ["bug"]
+body:
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: Tell us what went wrong (including what triggered the bug)
+      placeholder: "A clear and concise description of what the bug is, and the steps to reproduce it"
+    validations:
+      required: true
+  - type: textarea
+    id: code-to-reproduce
+    attributes:
+      label: Code to Reproduce the Bug
+      description: Please provide a minimal working example. Paste your code directly (It will be automatically formatted, so there's no need for backticks)
+      placeholder: "using QuantumToolbox\nprint(qeye(2))"
+      render: shell
+  - type: textarea
+    id: bug-output
+    attributes:
+      label: Code Output
+      description: Please paste the relevant output here (automatically formatted)
+      placeholder: "Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true\n2×2 Diagonal{ComplexF64, Vector{ComplexF64}}:\n 1.0+0.0im      ⋅    \n     ⋅      1.0+0.0im"
+      render: shell
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      label: Expected Behaviour
+      description: What should have happened instead?
+      placeholder: "A clear and concise description of what you expected to happen"
+    validations:
+      required: true
+  - type: textarea
+    id: your-environment
+    attributes:
+      label: Your Environment
+      description: Please use `QuantumToolbox.about()` or `QuantumToolbox.versioninfo()` to get the information about your environment and paste it here (automatically formatted)
+      placeholder: "QuantumToolbox  Ver. ***\nLinearSolve     Ver. ***\nOrdinaryDiffEq  Ver. ***\nJulia Version: ***\nOS       : ***\nWORD_SIZE: ***\nLIBM     : ***\nLLVM     : ***\nBLAS     : ***"
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add anything else you want to tell us.
+      placeholder: "You can include output of `using Pkg; Pkg.status()`, `using Pkg; Pkg.status(; mode = PKGMODE_MANIFEST)`, or even images, plots, etc."
+  - type: markdown
+    id: thank-you
+    attributes:
+      value: Thanks for taking the time to fill out this bug report!
