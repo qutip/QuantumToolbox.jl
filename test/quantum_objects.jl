@@ -405,6 +405,17 @@
         @test logm(expm(Ms)) ≈ expm(logm(Md))
         @test cosm(Ms) ≈ (e_p + e_m) / 2
         @test sinm(Ms) ≈ (e_p - e_m) / 2im
+
+        @testset "Type Inference" begin
+            @inferred expm(Md)
+            @inferred expm(Ms)
+            @inferred logm(Md)
+            @inferred logm(Ms)
+            @inferred sinm(Md)
+            @inferred sinm(Ms)
+            @inferred cosm(Md)
+            @inferred cosm(Ms)
+        end
     end
 
     @testset "tidyup" begin
