@@ -38,6 +38,7 @@ issuper
 LinearAlgebra.ishermitian
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
+isunitary
 ```
 
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
@@ -115,6 +116,7 @@ singlet_state
 triplet_states
 w_state
 ghz_state
+rand_unitary
 sigmap
 sigmam
 sigmax

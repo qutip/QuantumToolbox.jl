@@ -3,6 +3,7 @@ All boolean functions for checking the data or type in `QuantumObject`
 =#
 
 export isket, isbra, isoper, isoperbra, isoperket, issuper
+export isunitary
 
 @doc raw"""
     isbra(A::QuantumObject)
@@ -70,3 +71,13 @@ LinearAlgebra.issymmetric(A::QuantumObject{<:AbstractArray{T}}) where {T} = issy
 Test whether the [`QuantumObject`](@ref) is positive definite (and Hermitian) by trying to perform a Cholesky factorization of `A`.
 """
 LinearAlgebra.isposdef(A::QuantumObject{<:AbstractArray{T}}) where {T} = isposdef(A.data)
+
+@doc raw"""
+    isunitary(U::QuantumObject; kwargs...)
+
+Test whether the [`QuantumObject`](@ref) ``U`` is unitary operator. This function calls `Base.isapprox` to test whether ``U U^\dagger`` is approximately equal to identity operator.
+
+Note that all the keyword arguments will be passed to `Base.isapprox`.
+"""
+isunitary(U::QuantumObject{<:AbstractArray{T}}; kwargs...) where {T} =
+    isoper(U) ? isapprox(U.data * U.data', I(size(U, 1)); kwargs...) : false

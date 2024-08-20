@@ -73,12 +73,14 @@
         @test issuper(a2) == false
         @test isoperket(a2) == false
         @test isoperbra(a2) == false
+        @test isunitary(a2) == false
         @test isket(a3) == true
         @test isbra(a3) == false
         @test isoper(a3) == false
         @test issuper(a3) == false
         @test isoperket(a3) == false
         @test isoperbra(a3) == false
+        @test isunitary(a3) == false
         @test Qobj(a3) == a3
         @test !(Qobj(a3) === a3)
     end
@@ -100,6 +102,7 @@
         @test issuper(a3) == true
         @test isoperket(a3) == false
         @test isoperbra(a3) == false
+        @test isunitary(a3) == false
         @test_throws DimensionMismatch Qobj(a, dims = [2])
     end
 
@@ -117,12 +120,14 @@
         @test issuper(ρ_ket) == false
         @test isoperket(ρ_ket) == true
         @test isoperbra(ρ_ket) == false
+        @test isunitary(ρ_ket) == false
         @test isket(ρ_bra) == false
         @test isbra(ρ_bra) == false
         @test isoper(ρ_bra) == false
         @test issuper(ρ_bra) == false
         @test isoperket(ρ_bra) == false
         @test isoperbra(ρ_bra) == true
+        @test isunitary(ρ_bra) == false
         @test ρ_bra.dims == [2]
         @test ρ_ket.dims == [2]
         @test H * ρ ≈ spre(H) * ρ
