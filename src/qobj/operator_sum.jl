@@ -18,7 +18,7 @@ struct OperatorSum{CT<:Vector{<:Number},OT<:AbstractVector} <: AbstractQuantumOb
         mapreduce(x -> size(x) == size_1, &, operators) ||
             throw(DimensionMismatch("All the operators must have the same dimensions."))
         T = promote_type(
-            mapreduce(x -> eltype(x.data), promote_type, operators),
+            mapreduce(x -> eltype(x), promote_type, operators),
             mapreduce(eltype, promote_type, coefficients),
         )
         coefficients2 = T.(coefficients)
