@@ -52,6 +52,7 @@ include("qobj/states.jl")
 include("qobj/operators.jl")
 include("qobj/superoperators.jl")
 include("qobj/synonyms.jl")
+include("qobj/operator_sum.jl")
 
 # time evolution
 include("time_evolution/time_evolution.jl")
