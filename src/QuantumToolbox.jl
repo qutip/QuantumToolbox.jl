@@ -7,6 +7,7 @@ import Reexport: @reexport
 @reexport using LinearAlgebra
 @reexport using SparseArrays
 @reexport using OrdinaryDiffEq
+@reexport using StochasticDiffEq
 @reexport using LinearSolve
 
 # other functions in LinearAlgebra

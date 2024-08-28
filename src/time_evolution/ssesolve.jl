@@ -4,26 +4,30 @@ export ssesolveProblem
 function _ssesolve_update_coefficients!(ψ, coefficients, c_ops)
     _get_en = op -> real(dot(ψ, op, ψ))
     @. coefficients[2:end-1] = _get_en(c_ops)
-    @. coefficients[end] = -sum(x->x^2, coefficients[2:end-1]) / 2
+    coefficients[end] = -sum(x->x^2, coefficients[2:end-1]) / 2
     return nothing
 end
 
 function ssesolve_ti_drift!(du, u, p, t)
-    _ssesolve_update_coefficients!(u, p.K.coefficients, c_ops)
-
-    # mul!(view(du, :, 1), p.K, u)
-    # @views du[:, 2:end] .= du[:, 1] 
+    _ssesolve_update_coefficients!(u, p.K.coefficients, p.c_ops)
+    
     mul!(du, p.K, u)
     return nothing
 end
 
 function ssesolve_ti_diffusion!(du, u, p, t)
     D = p.D
-    en = p.K.coefficients[2:end-1]
+    @views en = p.K.coefficients[2:end-1]
 
     du_reshaped = reshape(du, :)
     mul!(du_reshaped, D, u)
-    du .-= en 
+
+    #TODO: write something decent
+    for i in 1:length(en)
+        du[:,i] .-= en[i] .* u
+    end
+    
+    return nothing
 end
 
 
@@ -56,7 +60,7 @@ function ssesolveProblem(
     c_ops2 = get_data.(c_ops)
 
     coefficients = [1.0, fill(0.0, length(c_ops)+1)...]
-    operators = [H_eff, c_ops2..., I(prod(H.dims))]
+    operators = [-1im * H_eff, c_ops2..., I(prod(H.dims))]
     K = OperatorSum(coefficients, operators)
     _ssesolve_update_coefficients!(ϕ0, K.coefficients, c_ops2)
 
@@ -75,6 +79,7 @@ function ssesolveProblem(
     end
 
     p = (
+        U = -1im * get_data(H),
         K = K,
         D = D,
         e_ops = e_ops2,
@@ -88,7 +93,7 @@ function ssesolveProblem(
     )
 
     saveat = e_ops isa Nothing ? t_l : [t_l[end]]
-    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
+    default_values = (saveat = saveat, )
     kwargs2 = merge(default_values, kwargs)
     kwargs3 = _generate_sesolve_kwargs(e_ops, progress_bar_val, t_l, kwargs2)
 
