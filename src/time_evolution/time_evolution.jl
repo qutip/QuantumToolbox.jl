@@ -1,4 +1,4 @@
-export OperatorSum, TimeDependentOperatorSum
+export TimeDependentOperatorSum
 export TimeEvolutionSol, TimeEvolutionMCSol
 
 export liouvillian, liouvillian_floquet, liouvillian_generalized
@@ -105,49 +105,7 @@ struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType end
 
 ContinuousLindbladJumpCallback(; interp_points::Int = 10) = ContinuousLindbladJumpCallback(interp_points)
 
-## Sum of operators
-
-struct OperatorSum{CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}} <: AbstractQuantumObject
-    coefficients::CT
-    operators::OT
-    function OperatorSum(coefficients::CT, operators::OT) where {CT<:Vector{<:Number},OT<:Vector{<:QuantumObject}}
-        length(coefficients) == length(operators) ||
-            throw(DimensionMismatch("The number of coefficients must be the same as the number of operators."))
-        # Check if all the operators have the same dimensions
-        dims = operators[1].dims
-        optype = operators[1].type
-        mapreduce(x -> x.dims == dims && x.type == optype, &, operators) ||
-            throw(DimensionMismatch("All the operators must have the same dimensions."))
-        T = promote_type(
-            mapreduce(x -> eltype(x.data), promote_type, operators),
-            mapreduce(eltype, promote_type, coefficients),
-        )
-        coefficients2 = T.(coefficients)
-        return new{Vector{T},OT}(coefficients2, operators)
-    end
-end
-
-Base.size(A::OperatorSum) = size(A.operators[1])
-Base.size(A::OperatorSum, inds...) = size(A.operators[1], inds...)
-Base.length(A::OperatorSum) = length(A.operators[1])
-Base.copy(A::OperatorSum) = OperatorSum(copy(A.coefficients), copy(A.operators))
-Base.deepcopy(A::OperatorSum) = OperatorSum(deepcopy(A.coefficients), deepcopy(A.operators))
-
-function update_coefficients!(A::OperatorSum, coefficients)
-    length(A.coefficients) == length(coefficients) ||
-        throw(DimensionMismatch("The number of coefficients must be the same as the number of operators."))
-    return A.coefficients .= coefficients
-end
-
-@inline function LinearAlgebra.mul!(y::AbstractVector{T}, A::OperatorSum, x::AbstractVector, α, β) where {T}
-    # Note that β is applied only to the first term
-    mul!(y, A.operators[1], x, α * A.coefficients[1], β)
-    @inbounds for i in 2:length(A.operators)
-        A.coefficients[i] == 0 && continue
-        mul!(y, A.operators[i], x, α * A.coefficients[i], 1)
-    end
-    return y
-end
+## Time-dependent sum of operators
 
 struct TimeDependentOperatorSum{CFT,OST<:OperatorSum}
     coefficient_functions::CFT
