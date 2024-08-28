@@ -59,6 +59,7 @@ include("time_evolution/mesolve.jl")
 include("time_evolution/lr_mesolve.jl")
 include("time_evolution/sesolve.jl")
 include("time_evolution/mcsolve.jl")
+include("time_evolution/ssesolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 
 # Others
