@@ -26,6 +26,7 @@ OperatorKet
 SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
+OperatorSum
 size
 eltype
 length
