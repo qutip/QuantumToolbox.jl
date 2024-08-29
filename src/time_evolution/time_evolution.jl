@@ -4,6 +4,7 @@ export TimeEvolutionSol, TimeEvolutionMCSol
 export liouvillian, liouvillian_floquet, liouvillian_generalized
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
+const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
 
 @doc raw"""
     struct TimeEvolutionSol
@@ -90,6 +91,37 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
     print(io, "num_states = $(length(sol.states[1]))\n")
     print(io, "num_expect = $(size(sol.expect, 1))\n")
     print(io, "ODE alg.: $(sol.alg)\n")
+    print(io, "abstol = $(sol.abstol)\n")
+    print(io, "reltol = $(sol.reltol)\n")
+    return nothing
+end
+
+struct TimeEvolutionSSESol{
+    TT<:Vector{<:Real},
+    TS<:AbstractVector,
+    TE<:Matrix{ComplexF64},
+    TEA<:Array{ComplexF64,3},
+    T<:Real,
+}
+    n_traj::Int
+    times::TT
+    states::TS
+    expect::TE
+    expect_all::TEA
+    converged::Bool
+    alg::StochasticDiffEq.StochasticDiffEqAlgorithm
+    abstol::T
+    reltol::T
+end
+
+function Base.show(io::IO, sol::TimeEvolutionSSESol)
+    print(io, "Solution of quantum trajectories\n")
+    print(io, "(converged: $(sol.converged))\n")
+    print(io, "--------------------------------\n")
+    print(io, "num_trajectories = $(sol.n_traj)\n")
+    # print(io, "num_states = $(length(sol.states[1]))\n")
+    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    print(io, "SDE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
     print(io, "reltol = $(sol.reltol)\n")
     return nothing

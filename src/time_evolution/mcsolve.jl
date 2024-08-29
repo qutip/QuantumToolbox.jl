@@ -86,7 +86,7 @@ function _mcsolve_output_func(sol, i)
     return (sol, false)
 end
 
-function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
+function _mcsolve_generate_statistics!(sol, i, times, states, expvals_all, jump_times, jump_which)
     sol_i = sol[:, i]
     !isempty(sol_i.prob.kwargs[:saveat]) ?
     states[i] = [QuantumObject(sol_i.u[i], dims = sol_i.prob.p.Hdims) for i in 1:length(sol_i.u)] : nothing
@@ -524,7 +524,7 @@ function mcsolve(
     jump_which = Vector{Vector{Int16}}(undef, length(sol))
 
     foreach(
-        i -> _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which),
+        i -> _mcsolve_generate_statistics!(sol, i, times, states, expvals_all, jump_times, jump_which),
         eachindex(sol),
     )
     expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
