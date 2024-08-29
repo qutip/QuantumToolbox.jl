@@ -4,19 +4,20 @@ export ssesolveProblem, ssesolveEnsembleProblem, ssesolve
 function _ssesolve_update_coefficients!(ψ, coefficients, c_ops)
     _get_en = op -> real(dot(ψ, op, ψ)) #this is en/2: <Sn + Sn'>/2 = Re<Sn>
     @. coefficients[2:end-1] = _get_en(c_ops) #coefficients of the OperatorSum: Σ Sn * en/2
-    coefficients[end] = - sum(x->x^2, coefficients[2:end-1]) / 2 #this last coefficient is -Σen^2/8
+    coefficients[end] = -sum(x -> x^2, coefficients[2:end-1]) / 2 #this last coefficient is -Σen^2/8
     return nothing
 end
 
 function ssesolve_drift!(du, u, p, t)
     _ssesolve_update_coefficients!(u, p.K.coefficients, p.c_ops)
-    
+
     mul!(du, p.K, u)
+
     return nothing
 end
 
 function ssesolve_diffusion!(du, u, p, t)
-    @views en = p.K.coefficients[2:end-1]
+    @inbounds en = @view(p.K.coefficients[2:end-1])
 
     # du:(H,W). du_reshaped:(H*W,). 
     # H:Hilbert space dimension, W: number of c_ops
@@ -24,11 +25,15 @@ function ssesolve_diffusion!(du, u, p, t)
     mul!(du_reshaped, p.D, u) #du[:,i] = D[i] * u
 
     du .-= u .* reshape(en, 1, :) #du[:,i] -= en[i] * u
+
     return nothing
 end
 
 function _ssesolve_prob_func(prob, i, repeat)
     internal_params = prob.p
+
+    noise_rate_prototype = similar(prob.u0, length(prob.u0), length(internal_params.c_ops))
+    noise = RealWienerProcess!(prob.tspan[1], zeros(length(internal_params.c_ops)))
 
     prm = merge(
         internal_params,
@@ -37,12 +42,11 @@ function _ssesolve_prob_func(prob, i, repeat)
             progr = ProgressBar(size(internal_params.expvals, 2), enable = false),
         ),
     )
-    return remake(prob, p=prm)
+
+    return remake(prob, p = prm, noise_rate_prototype = noise_rate_prototype, noise = noise)
 end
 
-function _ssesolve_output_func(sol, i)
-    return (sol, false)
-end
+_ssesolve_output_func(sol, i) = (sol, false)
 
 function _ssesolve_generate_statistics!(sol, i, states, expvals_all)
     sol_i = sol[:, i]
@@ -58,14 +62,13 @@ function ssesolveProblem(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix}
-
     H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
     haskey(kwargs, :save_idxs) &&
@@ -82,7 +85,7 @@ function ssesolveProblem(
     H_eff = get_data(H - T2(0.5im) * mapreduce(op -> op' * op, +, c_ops))
     c_ops2 = get_data.(c_ops)
 
-    coefficients = [1.0, fill(0.0, length(c_ops)+1)...]
+    coefficients = [1.0, fill(0.0, length(c_ops) + 1)...]
     operators = [-1im * H_eff, c_ops2..., I(prod(H.dims))]
     K = OperatorSum(coefficients, operators)
     _ssesolve_update_coefficients!(ϕ0, K.coefficients, c_ops2)
@@ -102,7 +105,6 @@ function ssesolveProblem(
     end
 
     p = (
-        U = -1im * get_data(H),
         K = K,
         D = D,
         e_ops = e_ops2,
@@ -121,8 +123,18 @@ function ssesolveProblem(
     kwargs3 = _generate_sesolve_kwargs(e_ops, progress_bar_val, t_l, kwargs2)
 
     tspan = (t_l[1], t_l[end])
-    A = similar(ϕ0, length(ϕ0), length(c_ops))
-    return SDEProblem(ssesolve_drift!, ssesolve_diffusion!, ϕ0, tspan, p; noise_rate_prototype=A, kwargs3...)
+    noise = RealWienerProcess!(t_l[1], zeros(length(c_ops)))
+    noise_rate_prototype = similar(ϕ0, length(ϕ0), length(c_ops))
+    return SDEProblem{true}(
+        ssesolve_drift!,
+        ssesolve_diffusion!,
+        ϕ0,
+        tspan,
+        p;
+        noise_rate_prototype = noise_rate_prototype,
+        noise = noise,
+        kwargs3...,
+    )
 end
 
 function ssesolveEnsembleProblem(
@@ -130,7 +142,7 @@ function ssesolveEnsembleProblem(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -138,17 +150,7 @@ function ssesolveEnsembleProblem(
     output_func::Function = _ssesolve_output_func,
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix}
-    prob_sse = ssesolveProblem(
-        H,
-        ψ0,
-        tlist,
-        c_ops;
-        alg = alg,
-        e_ops = e_ops,
-        H_t = H_t,
-        params = params,
-        kwargs...,
-    )
+    prob_sse = ssesolveProblem(H, ψ0, tlist, c_ops; alg = alg, e_ops = e_ops, H_t = H_t, params = params, kwargs...)
 
     ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = false)
 
@@ -160,7 +162,7 @@ function ssesolve(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -170,7 +172,6 @@ function ssesolve(
     output_func::Function = _ssesolve_output_func,
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix}
-
     ens_prob = ssesolveEnsembleProblem(
         H,
         ψ0,
@@ -190,7 +191,7 @@ end
 
 function ssesolve(
     ens_prob::EnsembleProblem;
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
     n_traj::Int = 1,
     ensemble_method = EnsembleThreads(),
 )
@@ -202,7 +203,7 @@ function ssesolve(
         isempty(_sol_1.prob.kwargs[:saveat]) ? fill(QuantumObject[], length(sol)) :
         Vector{Vector{QuantumObject}}(undef, length(sol))
 
-    foreach(i -> _ssesolve_generate_statistics!(sol, i, states, expvals_all), eachindex(sol),)
+    foreach(i -> _ssesolve_generate_statistics!(sol, i, states, expvals_all), eachindex(sol))
     expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
 
     return TimeEvolutionSSESol(
