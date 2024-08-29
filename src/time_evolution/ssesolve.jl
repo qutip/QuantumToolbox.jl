@@ -32,8 +32,7 @@ end
 function _ssesolve_prob_func(prob, i, repeat)
     internal_params = prob.p
 
-    noise_rate_prototype = similar(prob.u0, length(prob.u0), length(internal_params.c_ops))
-    noise = RealWienerProcess!(prob.tspan[1], zeros(length(internal_params.c_ops)))
+    noise = RealWienerProcess!(prob.tspan[1], zeros(length(internal_params.c_ops)), zeros(length(internal_params.c_ops)), save_everystep = false)
 
     prm = merge(
         internal_params,
@@ -43,7 +42,7 @@ function _ssesolve_prob_func(prob, i, repeat)
         ),
     )
 
-    return remake(prob, p = prm, noise_rate_prototype = noise_rate_prototype, noise = noise)
+    return remake(prob, p = prm, noise = noise)
 end
 
 _ssesolve_output_func(sol, i) = (sol, false)
@@ -123,7 +122,7 @@ function ssesolveProblem(
     kwargs3 = _generate_sesolve_kwargs(e_ops, progress_bar_val, t_l, kwargs2)
 
     tspan = (t_l[1], t_l[end])
-    noise = RealWienerProcess!(t_l[1], zeros(length(c_ops)))
+    noise = RealWienerProcess!(t_l[1], zeros(length(c_ops)), zeros(length(c_ops)), save_everystep = false)
     noise_rate_prototype = similar(ϕ0, length(ϕ0), length(c_ops))
     return SDEProblem{true}(
         ssesolve_drift!,
@@ -152,7 +151,7 @@ function ssesolveEnsembleProblem(
 ) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix}
     prob_sse = ssesolveProblem(H, ψ0, tlist, c_ops; alg = alg, e_ops = e_ops, H_t = H_t, params = params, kwargs...)
 
-    ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = false)
+    ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func)
 
     return ensemble_prob
 end
