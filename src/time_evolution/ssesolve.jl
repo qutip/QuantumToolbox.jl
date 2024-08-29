@@ -2,9 +2,9 @@ export ssesolveProblem
 
 #TODO: Check if works in GPU
 function _ssesolve_update_coefficients!(ψ, coefficients, c_ops)
-    _get_en = op -> real(dot(ψ, op, ψ))
-    @. coefficients[2:end-1] = _get_en(c_ops)
-    coefficients[end] = -sum(x->x^2, coefficients[2:end-1]) / 2
+    _get_en = op -> real(dot(ψ, op, ψ)) #this is en/2: <Sn + Sn'>/2 = Re<Sn>
+    @. coefficients[2:end-1] = _get_en(c_ops) #coefficients of the OperatorSum: Σ Sn * en/2
+    coefficients[end] = - sum(x->x^2, coefficients[2:end-1]) / 2 #this last coefficient is -Σen^2/8
     return nothing
 end
 
@@ -19,14 +19,12 @@ function ssesolve_ti_diffusion!(du, u, p, t)
     D = p.D
     @views en = p.K.coefficients[2:end-1]
 
+    # du:(H,W). du_reshaped:(H*W,). 
+    # H:Hilbert space dimension, W: number of c_ops
     du_reshaped = reshape(du, :)
-    mul!(du_reshaped, D, u)
+    mul!(du_reshaped, D, u) #du[:,i] = D[i] * u
 
-    #TODO: write something decent
-    for i in 1:length(en)
-        du[:,i] .-= en[i] .* u
-    end
-    
+    du .-= u .* reshape(en, 1, :) #du[:,i] -= en[i] * u
     return nothing
 end
 
