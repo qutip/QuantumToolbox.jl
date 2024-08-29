@@ -82,6 +82,7 @@ Manually specifying the data for each quantum object is inefficient. Even more s
 - [`phase`](@ref): single-mode Pegg-Barnett phase operator
 - [`QuantumToolbox.position`](@ref): position operator
 - [`QuantumToolbox.momentum`](@ref): momentum operator
+- [`rand_unitary`](@ref): random unitary operator
 - [`sigmax`](@ref): Pauli-``X`` operator
 - [`sigmay`](@ref): Pauli-``Y`` operator
 - [`sigmaz`](@ref): Pauli-``Z`` operator
@@ -168,6 +169,7 @@ println(ishermitian(a)) # Hermitian
 println(isherm(a)) # synonym of ishermitian(a)
 println(issymmetric(a)) # symmetric
 println(isposdef(a)) # positive definite (and Hermitian)
+println(isunitary(a)) # unitary
 ```
 
 ### `data` conversions
