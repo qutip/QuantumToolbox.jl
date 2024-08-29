@@ -73,12 +73,14 @@
         @test issuper(a2) == false
         @test isoperket(a2) == false
         @test isoperbra(a2) == false
+        @test isunitary(a2) == false
         @test isket(a3) == true
         @test isbra(a3) == false
         @test isoper(a3) == false
         @test issuper(a3) == false
         @test isoperket(a3) == false
         @test isoperbra(a3) == false
+        @test isunitary(a3) == false
         @test Qobj(a3) == a3
         @test !(Qobj(a3) === a3)
     end
@@ -100,6 +102,7 @@
         @test issuper(a3) == true
         @test isoperket(a3) == false
         @test isoperbra(a3) == false
+        @test isunitary(a3) == false
         @test_throws DimensionMismatch Qobj(a, dims = [2])
     end
 
@@ -117,12 +120,14 @@
         @test issuper(ρ_ket) == false
         @test isoperket(ρ_ket) == true
         @test isoperbra(ρ_ket) == false
+        @test isunitary(ρ_ket) == false
         @test isket(ρ_bra) == false
         @test isbra(ρ_bra) == false
         @test isoper(ρ_bra) == false
         @test issuper(ρ_bra) == false
         @test isoperket(ρ_bra) == false
         @test isoperbra(ρ_bra) == true
+        @test isunitary(ρ_bra) == false
         @test ρ_bra.dims == [2]
         @test ρ_ket.dims == [2]
         @test H * ρ ≈ spre(H) * ρ
@@ -145,6 +150,8 @@
         @test isequal(a4, a3) == false
         @test a4 ≈ a2
 
+        @test real(a2).data == real(a)
+        @test imag(a2).data == imag(a)
         @test +a2 == a2
         @test -(-a2) == a2
         @test a2^3 ≈ a2 * a2 * a2
@@ -249,7 +256,7 @@
         @test opstring == "Quantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
     end
 
-    @testset "Matrix Element" begin
+    @testset "matrix element" begin
         H = Qobj([1 2; 3 4])
         L = liouvillian(H)
         s0 = Qobj(basis(4, 0).data; type = OperatorKet)
@@ -321,10 +328,13 @@
     end
 
     @testset "expectation value" begin
+        # expect and variance
         N = 10
         a = destroy(N)
-        ψ = normalize(fock(N, 3) + 1im * fock(N, 4))
+        ψ = rand_ket(N)
         @test expect(a, ψ) ≈ expect(a, ψ')
+        @test variance(a, ψ) ≈ expect(a^2, ψ) - expect(a, ψ)^2
+
         ψ = fock(N, 3)
         @test norm(ψ' * a) ≈ 2
         @test expect(a' * a, ψ' * a) ≈ 16
@@ -395,6 +405,17 @@
         @test logm(expm(Ms)) ≈ expm(logm(Md))
         @test cosm(Ms) ≈ (e_p + e_m) / 2
         @test sinm(Ms) ≈ (e_p - e_m) / 2im
+
+        @testset "Type Inference" begin
+            @inferred expm(Md)
+            @inferred expm(Ms)
+            @inferred logm(Md)
+            @inferred logm(Ms)
+            @inferred sinm(Md)
+            @inferred sinm(Ms)
+            @inferred cosm(Md)
+            @inferred cosm(Ms)
+        end
     end
 
     @testset "tidyup" begin

@@ -27,7 +27,7 @@ function benchmark_timeevolution!(SUITE)
     tlist = range(0, 2π * 10 / g, 1000)
 
     SUITE["Time Evolution"]["time-independent"]["sesolve"] =
-        @benchmarkable sesolve($H, $ψ0, $tlist, e_ops = $e_ops, progress_bar = false)
+        @benchmarkable sesolve($H, $ψ0, $tlist, e_ops = $e_ops, progress_bar = Val(false))
 
     ## mesolve ##
 
@@ -38,7 +38,7 @@ function benchmark_timeevolution!(SUITE)
     tlist = range(0, 10 / γ, 100)
 
     SUITE["Time Evolution"]["time-independent"]["mesolve"] =
-        @benchmarkable mesolve($H, $ψ0, $tlist, $c_ops, e_ops = $e_ops, progress_bar = false)
+        @benchmarkable mesolve($H, $ψ0, $tlist, $c_ops, e_ops = $e_ops, progress_bar = Val(false))
 
     ## mcsolve ##
 
@@ -49,7 +49,7 @@ function benchmark_timeevolution!(SUITE)
         $c_ops,
         n_traj = 100,
         e_ops = $e_ops,
-        progress_bar = false,
+        progress_bar = Val(false),
         ensemble_method = EnsembleSerial(),
     )
     SUITE["Time Evolution"]["time-independent"]["mcsolve"]["Multithreaded"] = @benchmarkable mcsolve(
@@ -59,7 +59,7 @@ function benchmark_timeevolution!(SUITE)
         $c_ops,
         n_traj = 100,
         e_ops = $e_ops,
-        progress_bar = false,
+        progress_bar = Val(false),
         ensemble_method = EnsembleThreads(),
     )
 

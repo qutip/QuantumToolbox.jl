@@ -397,7 +397,7 @@ function _spexp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20)
     m = checksquare(A) # Throws exception if not square
 
     mat_norm = norm(A, Inf)
-    mat_norm == 0 && return eye(m).data
+    mat_norm == 0 && return sparse(T(1) * I, m, m)
     scaling_factor = nextpow(2, mat_norm) # Native routine, faster
     A = A ./ scaling_factor
     delta = 1

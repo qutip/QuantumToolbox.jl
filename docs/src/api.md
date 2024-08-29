@@ -26,6 +26,7 @@ OperatorKet
 SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
+OperatorSum
 size
 eltype
 length
@@ -38,6 +39,7 @@ issuper
 LinearAlgebra.ishermitian
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
+isunitary
 ```
 
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
@@ -87,6 +89,7 @@ eigsolve_al
 ```@docs
 ket2dm
 expect
+variance
 LinearAlgebra.kron
 sparse_to_dense
 dense_to_sparse
@@ -114,6 +117,7 @@ singlet_state
 triplet_states
 w_state
 ghz_state
+rand_unitary
 sigmap
 sigmam
 sigmax

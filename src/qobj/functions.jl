@@ -3,7 +3,7 @@ Functions which manipulates QuantumObject
 =#
 
 export ket2dm
-export expect
+export expect, variance
 export sparse_to_dense, dense_to_sparse
 export vec2mat, mat2vec
 
@@ -19,12 +19,13 @@ ket2dm(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = 
 @doc raw"""
     expect(O::QuantumObject, ψ::QuantumObject)
 
-Expectation value of the operator `O` with the state `ψ`. The latter
-can be a [`KetQuantumObject`](@ref), [`BraQuantumObject`](@ref) or a [`OperatorQuantumObject`](@ref).
-If `ψ` is a density matrix, the function calculates ``\Tr \left[ \hat{O} \hat{\psi} \right]``, while if `ψ`
-is a state, the function calculates ``\mel{\psi}{\hat{O}}{\psi}``.
+Expectation value of the [`Operator`](@ref) `O` with the state `ψ`. The state can be a [`Ket`](@ref), [`Bra`](@ref) or [`Operator`](@ref).
 
-The function returns a real number if the operator is hermitian, and returns a complex number otherwise.
+If `ψ` is a [`Ket`](@ref) or [`Bra`](@ref), the function calculates ``\langle\psi|\hat{O}|\psi\rangle``.
+
+If `ψ` is a density matrix ([`Operator`](@ref)), the function calculates ``\textrm{Tr} \left[ \hat{O} \hat{\psi} \right]``
+
+The function returns a real number if `O` is hermitian, and returns a complex number otherwise.
 
 # Examples
 
@@ -59,6 +60,20 @@ function expect(
 ) where {T1,T2}
     return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
 end
+
+@doc raw"""
+    variance(O::QuantumObject, ψ::QuantumObject)
+
+Variance of the [`Operator`](@ref) `O`: ``\langle\hat{O}^2\rangle - \langle\hat{O}\rangle^2``,
+
+where ``\langle\hat{O}\rangle`` is the expectation value of `O` with the state `ψ` (see also [`expect`](@ref)), and the state `ψ` can be a [`Ket`](@ref), [`Bra`](@ref) or [`Operator`](@ref).
+
+The function returns a real number if `O` is hermitian, and returns a complex number otherwise.
+"""
+variance(
+    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
+    ψ::QuantumObject{<:AbstractArray{T2}},
+) where {T1,T2} = expect(O^2, ψ) - expect(O, ψ)^2
 
 @doc raw"""
     sparse_to_dense(A::QuantumObject)

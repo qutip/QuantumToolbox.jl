@@ -11,9 +11,9 @@
         psi0 = kron(fock(N, 0), fock(2, 0))
         t_l = LinRange(0, 1000, 1000)
         e_ops = [a_d * a]
-        sol = sesolve(H, psi0, t_l, e_ops = e_ops, alg = Vern7(), progress_bar = false)
-        sol2 = sesolve(H, psi0, t_l, progress_bar = false)
-        sol3 = sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = false)
+        sol = sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = Val(false))
+        sol2 = sesolve(H, psi0, t_l, progress_bar = Val(false))
+        sol3 = sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
         sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
         @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
         @test ptrace(sol.states[end], 1) ≈ ptrace(ket2dm(sol.states[end]), 1)
@@ -33,6 +33,15 @@
               "ODE alg.: $(sol.alg)\n" *
               "abstol = $(sol.abstol)\n" *
               "reltol = $(sol.reltol)\n"
+
+        @testset "Type Inference sesolve" begin
+            if VERSION >= v"1.10"
+                @inferred sesolveProblem(H, psi0, t_l)
+                @inferred sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = Val(false))
+                @inferred sesolve(H, psi0, t_l, progress_bar = Val(false))
+                @inferred sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
+            end
+        end
     end
 
     @testset "mesolve and mcsolve" begin
@@ -44,10 +53,10 @@
         e_ops = [a_d * a]
         psi0 = basis(N, 3)
         t_l = LinRange(0, 100, 1000)
-        sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, alg = Vern7(), progress_bar = false)
-        sol_me2 = mesolve(H, psi0, t_l, c_ops, progress_bar = false)
-        sol_me3 = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = false)
-        sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = false)
+        sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        sol_me2 = mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
+        sol_me3 = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
+        sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
         sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
         sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
         @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
@@ -76,6 +85,31 @@
               "ODE alg.: $(sol_mc.alg)\n" *
               "abstol = $(sol_mc.abstol)\n" *
               "reltol = $(sol_mc.reltol)\n"
+
+        @testset "Type Inference mesolve" begin
+            if VERSION >= v"1.10"
+                @inferred mesolveProblem(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
+                @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
+                @inferred mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
+                @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
+            end
+        end
+
+        @testset "Type Inference mcsolve" begin
+            if VERSION >= v"1.10"
+                @inferred mcsolveEnsembleProblem(
+                    H,
+                    psi0,
+                    t_l,
+                    c_ops,
+                    n_traj = 500,
+                    e_ops = e_ops,
+                    progress_bar = Val(false),
+                )
+                @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
+                @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
+            end
+        end
     end
 
     @testset "exceptions" begin
@@ -112,8 +146,8 @@
         psi0_2 = normalize(fock(2, 0) + fock(2, 1))
         psi0 = kron(psi0_1, psi0_2)
         t_l = LinRange(0, 20 / γ1, 1000)
-        sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = false)
-        sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = false)
+        sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = false) # Here we don't put Val(false) because we want to test the support for Bool type
+        sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = Val(false))
         @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
         @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], 1))
     end

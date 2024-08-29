@@ -16,8 +16,8 @@ The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
 - `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
 """
-zero_ket(dimensions::Int) = QuantumObject(zeros(dimensions), Ket, [dimensions])
-zero_ket(dimensions::Vector{Int}) = QuantumObject(zeros(prod(dimensions)), Ket, dimensions)
+zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket, [dimensions])
+zero_ket(dimensions::Vector{Int}) = QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket, dimensions)
 
 @doc raw"""
     fock(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)
