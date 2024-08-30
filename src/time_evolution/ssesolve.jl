@@ -1,15 +1,15 @@
 export ssesolveProblem, ssesolveEnsembleProblem, ssesolve
 
 #TODO: Check if works in GPU
-function _ssesolve_update_coefficients!(ψ, coefficients, c_ops)
+function _ssesolve_update_coefficients!(ψ, coefficients, sc_ops)
     _get_en = op -> real(dot(ψ, op, ψ)) #this is en/2: <Sn + Sn'>/2 = Re<Sn>
-    @. coefficients[2:end-1] = _get_en(c_ops) #coefficients of the OperatorSum: Σ Sn * en/2
+    @. coefficients[2:end-1] = _get_en(sc_ops) #coefficients of the OperatorSum: Σ Sn * en/2
     coefficients[end] = -sum(x -> x^2, coefficients[2:end-1]) / 2 #this last coefficient is -Σen^2/8
     return nothing
 end
 
 function ssesolve_drift!(du, u, p, t)
-    _ssesolve_update_coefficients!(u, p.K.coefficients, p.c_ops)
+    _ssesolve_update_coefficients!(u, p.K.coefficients, p.sc_ops)
 
     mul!(du, p.K, u)
 
@@ -20,7 +20,7 @@ function ssesolve_diffusion!(du, u, p, t)
     @inbounds en = @view(p.K.coefficients[2:end-1])
 
     # du:(H,W). du_reshaped:(H*W,). 
-    # H:Hilbert space dimension, W: number of c_ops
+    # H:Hilbert space dimension, W: number of sc_ops
     du_reshaped = reshape(du, :)
     mul!(du_reshaped, p.D, u) #du[:,i] = D[i] * u
 
@@ -34,8 +34,8 @@ function _ssesolve_prob_func(prob, i, repeat)
 
     noise = RealWienerProcess!(
         prob.tspan[1],
-        zeros(length(internal_params.c_ops)),
-        zeros(length(internal_params.c_ops)),
+        zeros(length(internal_params.sc_ops)),
+        zeros(length(internal_params.sc_ops)),
         save_everystep = false,
     )
 
@@ -61,11 +61,67 @@ function _ssesolve_generate_statistics!(sol, i, states, expvals_all)
     return nothing
 end
 
+@doc raw"""
+    ssesolveProblem(H::QuantumObject,
+        ψ0::QuantumObject,
+        tlist::AbstractVector;
+        sc_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()
+        e_ops::Union{Nothing,AbstractVector} = nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
+        params::NamedTuple=NamedTuple(),
+        progress_bar::Union{Val,Bool}=Val(true),
+        kwargs...)
+
+Generates the SDEProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
+    
+    ```math
+    d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
+    ```
+
+where 
+    
+```math
+    K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
+    ```
+    ```math
+    M_n = C_n - \frac{e_n}{2},
+    ```
+    and
+    ```math
+    e_n = \langle C_n + C_n^\dagger \rangle.
+    ```
+
+Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `C_n`.
+
+# Arguments
+
+- `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
+- `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
+- `tlist::AbstractVector`: The time list of the evolution.
+- `sc_ops::Vector`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
+- `e_ops::Union{Nothing,AbstractVector}`: The list of operators to be evaluated during the evolution.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
+- `params::NamedTuple`: The parameters of the system.
+- `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+
+# Notes
+
+- The states will be saved depend on the keyword argument `saveat` in `kwargs`.
+- If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
+- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+
+# Returns
+
+- `prob`: The `SDEProblem` for the Stochastic Schrödinger time evolution of the system.
+"""
 function ssesolveProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
+    sc_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
     alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
@@ -86,15 +142,15 @@ function ssesolveProblem(
 
     ϕ0 = get_data(ψ0)
 
-    H_eff = get_data(H - T2(0.5im) * mapreduce(op -> op' * op, +, c_ops))
-    c_ops2 = get_data.(c_ops)
+    H_eff = get_data(H - T2(0.5im) * mapreduce(op -> op' * op, +, sc_ops))
+    sc_ops2 = get_data.(sc_ops)
 
-    coefficients = [1.0, fill(0.0, length(c_ops) + 1)...]
-    operators = [-1im * H_eff, c_ops2..., MT1(I(prod(H.dims)))]
+    coefficients = [1.0, fill(0.0, length(sc_ops) + 1)...]
+    operators = [-1im * H_eff, sc_ops2..., MT1(I(prod(H.dims)))]
     K = OperatorSum(coefficients, operators)
-    _ssesolve_update_coefficients!(ϕ0, K.coefficients, c_ops2)
+    _ssesolve_update_coefficients!(ϕ0, K.coefficients, sc_ops2)
 
-    D = reduce(vcat, c_ops2)
+    D = reduce(vcat, sc_ops2)
 
     progr = ProgressBar(length(t_l), enable = getVal(progress_bar_val))
 
@@ -112,7 +168,7 @@ function ssesolveProblem(
         K = K,
         D = D,
         e_ops = e_ops2,
-        c_ops = c_ops2,
+        sc_ops = sc_ops2,
         expvals = expvals,
         progr = progr,
         Hdims = H.dims,
@@ -127,8 +183,8 @@ function ssesolveProblem(
     kwargs3 = _generate_sesolve_kwargs(e_ops, progress_bar_val, t_l, kwargs2)
 
     tspan = (t_l[1], t_l[end])
-    noise = RealWienerProcess!(t_l[1], zeros(length(c_ops)), zeros(length(c_ops)), save_everystep = false)
-    noise_rate_prototype = similar(ϕ0, length(ϕ0), length(c_ops))
+    noise = RealWienerProcess!(t_l[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false)
+    noise_rate_prototype = similar(ϕ0, length(ϕ0), length(sc_ops))
     return SDEProblem{true}(
         ssesolve_drift!,
         ssesolve_diffusion!,
@@ -141,11 +197,69 @@ function ssesolveProblem(
     )
 end
 
+@doc raw"""
+    ssesolveEnsembleProblem(H::QuantumObject,
+        ψ0::QuantumObject,
+        tlist::AbstractVector;
+        sc_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()
+        e_ops::Union{Nothing,AbstractVector} = nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
+        params::NamedTuple=NamedTuple(),
+        prob_func::Function=_mcsolve_prob_func,
+        output_func::Function=_mcsolve_output_func,
+        kwargs...)
+
+Generates the SDE EnsembleProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
+    
+    ```math
+    d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
+    ```
+
+where 
+    
+```math
+    K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
+    ```
+    ```math
+    M_n = C_n - \frac{e_n}{2},
+    ```
+    and
+    ```math
+    e_n = \langle C_n + C_n^\dagger \rangle.
+    ```
+
+Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `C_n`.
+
+# Arguments
+
+- `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
+- `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
+- `tlist::AbstractVector`: The time list of the evolution.
+- `sc_ops::Vector`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
+- `e_ops::Union{Nothing,AbstractVector}`: The list of operators to be evaluated during the evolution.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
+- `params::NamedTuple`: The parameters of the system.
+- `prob_func::Function`: Function to use for generating the SDEProblem.
+- `output_func::Function`: Function to use for generating the output of a single trajectory.
+- `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+
+# Notes
+
+- The states will be saved depend on the keyword argument `saveat` in `kwargs`.
+- If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
+- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+
+# Returns
+
+- `prob::EnsembleProblem with SDEProblem`: The Ensemble SDEProblem for the Stochastic Shrödinger time evolution.
+"""
 function ssesolveEnsembleProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
+    sc_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
     alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
@@ -154,18 +268,88 @@ function ssesolveEnsembleProblem(
     output_func::Function = _ssesolve_output_func,
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix}
-    prob_sse = ssesolveProblem(H, ψ0, tlist, c_ops; alg = alg, e_ops = e_ops, H_t = H_t, params = params, kwargs...)
+    prob_sse = ssesolveProblem(H, ψ0, tlist, sc_ops; alg = alg, e_ops = e_ops, H_t = H_t, params = params, kwargs...)
 
     ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func)
 
     return ensemble_prob
 end
 
+
+@doc raw"""
+    ssesolve(H::QuantumObject,
+        ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+        tlist::AbstractVector,
+        sc_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
+        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
+        e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
+        params::NamedTuple=NamedTuple(),
+        n_traj::Int=1,
+        ensemble_method=EnsembleThreads(),
+        prob_func::Function=_mcsolve_prob_func,
+        output_func::Function=_mcsolve_output_func,
+        kwargs...)
+
+
+Stochastic Schrödinger equation evolution of a quantum system given the system Hamiltonian ``\hat{H}`` and a list of stochadtic collapse (jump) operators ``\{\hat{C}_n\}_n``.
+The stochastic evolution of the state ``|\psi(t)\rangle`` is defined by:
+    
+    ```math
+    d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
+    ```
+
+where 
+    
+```math
+    K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
+    ```
+    ```math
+    M_n = C_n - \frac{e_n}{2},
+    ```
+    and
+    ```math
+    e_n = \langle C_n + C_n^\dagger \rangle.
+    ```
+
+Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `C_n`.
+
+
+# Arguments
+
+- `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
+- `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist::AbstractVector`: List of times at which to save the state of the system.
+- `sc_ops::Vector`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
+- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `e_ops::Vector`: List of operators for which to calculate expectation values.
+- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
+- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
+- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
+- `n_traj::Int`: Number of trajectories to use.
+- `ensemble_method`: Ensemble method to use.
+- `prob_func::Function`: Function to use for generating the SDEProblem.
+- `output_func::Function`: Function to use for generating the output of a single trajectory.
+- `kwargs...`: Additional keyword arguments to pass to the solver.
+
+# Notes
+
+- `ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`
+- The states will be saved depend on the keyword argument `saveat` in `kwargs`.
+- If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
+- The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
+- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+
+# Returns
+
+- `sol::TimeEvolutionSSESol`: The solution of the time evolution. See also [`TimeEvolutionSSESol`](@ref)
+"""
+
 function ssesolve(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
+    sc_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
     alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
@@ -180,7 +364,7 @@ function ssesolve(
         H,
         ψ0,
         tlist,
-        c_ops;
+        sc_ops;
         alg = alg,
         e_ops = e_ops,
         H_t = H_t,
