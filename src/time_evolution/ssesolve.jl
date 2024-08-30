@@ -32,7 +32,12 @@ end
 function _ssesolve_prob_func(prob, i, repeat)
     internal_params = prob.p
 
-    noise = RealWienerProcess!(prob.tspan[1], zeros(length(internal_params.c_ops)), zeros(length(internal_params.c_ops)), save_everystep = false)
+    noise = RealWienerProcess!(
+        prob.tspan[1],
+        zeros(length(internal_params.c_ops)),
+        zeros(length(internal_params.c_ops)),
+        save_everystep = false,
+    )
 
     prm = merge(
         internal_params,
@@ -85,11 +90,11 @@ function ssesolveProblem(
     c_ops2 = get_data.(c_ops)
 
     coefficients = [1.0, fill(0.0, length(c_ops) + 1)...]
-    operators = [-1im * H_eff, c_ops2..., I(prod(H.dims))]
+    operators = [-1im * H_eff, c_ops2..., MT1(I(prod(H.dims)))]
     K = OperatorSum(coefficients, operators)
     _ssesolve_update_coefficients!(ϕ0, K.coefficients, c_ops2)
 
-    D = vcat(c_ops2...)
+    D = reduce(vcat, c_ops2)
 
     progr = ProgressBar(length(t_l), enable = getVal(progress_bar_val))
 

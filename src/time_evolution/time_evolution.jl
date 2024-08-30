@@ -101,7 +101,8 @@ struct TimeEvolutionSSESol{
     TS<:AbstractVector,
     TE<:Matrix{ComplexF64},
     TEA<:Array{ComplexF64,3},
-    T<:Real,
+    T1<:Real,
+    T2<:Real,
 }
     n_traj::Int
     times::TT
@@ -110,8 +111,8 @@ struct TimeEvolutionSSESol{
     expect_all::TEA
     converged::Bool
     alg::StochasticDiffEq.StochasticDiffEqAlgorithm
-    abstol::T
-    reltol::T
+    abstol::T1
+    reltol::T2
 end
 
 function Base.show(io::IO, sol::TimeEvolutionSSESol)
