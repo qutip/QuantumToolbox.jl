@@ -44,7 +44,7 @@
         end
     end
 
-    @testset "mesolve and mcsolve" begin
+    @testset "mesolve, mcsolve, and ssesolve" begin
         N = 10
         a = destroy(N)
         a_d = a'
@@ -57,9 +57,12 @@
         sol_me2 = mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
         sol_me3 = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
         sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
+        sol_sse = ssesolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
         sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
         sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
+        sol_sse_string = sprint((t, s) -> show(t, "text/plain", s), sol_sse)
         @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
+        @test sum(abs.(sol_sse.expect .- sol_me.expect)) / length(t_l) < 0.1
         @test length(sol_me.states) == 1
         @test size(sol_me.expect) == (length(e_ops), length(t_l))
         @test length(sol_me2.states) == length(t_l)
@@ -85,6 +88,16 @@
               "ODE alg.: $(sol_mc.alg)\n" *
               "abstol = $(sol_mc.abstol)\n" *
               "reltol = $(sol_mc.reltol)\n"
+        @test sol_sse_string ==
+              "Solution of quantum trajectories\n" *
+              "(converged: $(sol_sse.converged))\n" *
+              "--------------------------------\n" *
+              "num_trajectories = $(sol_sse.n_traj)\n" *
+              "num_states = $(length(sol_sse.states[1]))\n" *
+              "num_expect = $(size(sol_sse.expect, 1))\n" *
+              "SDE alg.: $(sol_sse.alg)\n" *
+              "abstol = $(sol_sse.abstol)\n" *
+              "reltol = $(sol_sse.reltol)\n"
 
         @testset "Type Inference mesolve" begin
             if VERSION >= v"1.10"
@@ -108,6 +121,22 @@
                 )
                 @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
                 @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
+            end
+        end
+
+        @testset "Type Inference ssesolve" begin
+            if VERSION >= v"1.10"
+                @inferred ssesolveEnsembleProblem(
+                    H,
+                    psi0,
+                    t_l,
+                    c_ops,
+                    n_traj = 500,
+                    e_ops = e_ops,
+                    progress_bar = Val(false),
+                )
+                @inferred ssesolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
+                @inferred ssesolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
             end
         end
     end

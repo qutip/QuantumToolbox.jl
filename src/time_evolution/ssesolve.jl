@@ -66,7 +66,7 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector;
         sc_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()
+        alg::StochasticDiffEq.StochasticDiffEqAlgorithm=SRA1()
         e_ops::Union{Nothing,AbstractVector} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -100,7 +100,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: The time list of the evolution.
 - `sc_ops::Vector`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
+- `alg::StochasticDiffEq.StochasticDiffEqAlgorithm`: The algorithm used for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
@@ -122,7 +122,7 @@ function ssesolveProblem(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
+    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -138,7 +138,7 @@ function ssesolveProblem(
 
     progress_bar_val = makeVal(progress_bar)
 
-    t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for OrdinaryDiffEq.jl
+    t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for StochasticDiffEq.jl
 
     ϕ0 = get_data(ψ0)
 
@@ -202,7 +202,7 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector;
         sc_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()
+        alg::StochasticDiffEq.StochasticDiffEqAlgorithm=SRA1()
         e_ops::Union{Nothing,AbstractVector} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -237,7 +237,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: The time list of the evolution.
 - `sc_ops::Vector`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
+- `alg::StochasticDiffEq.StochasticDiffEqAlgorithm`: The algorithm used for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
@@ -260,7 +260,7 @@ function ssesolveEnsembleProblem(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
+    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -275,13 +275,12 @@ function ssesolveEnsembleProblem(
     return ensemble_prob
 end
 
-
 @doc raw"""
     ssesolve(H::QuantumObject,
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
         sc_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::StochasticDiffEq.StochasticDiffEqAlgorithm=SRA1(),
         e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -321,7 +320,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
 - `sc_ops::Vector`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `alg::StochasticDiffEq.StochasticDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Vector`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
@@ -350,7 +349,7 @@ function ssesolve(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
+    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -379,7 +378,7 @@ end
 
 function ssesolve(
     ens_prob::EnsembleProblem;
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = EM(),
+    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
     n_traj::Int = 1,
     ensemble_method = EnsembleThreads(),
 )
