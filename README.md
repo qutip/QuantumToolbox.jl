@@ -16,6 +16,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 | **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] |
 | **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] |
 | **Benchmark** | [![Benchmarks][benchmark-img]][benchmark-url] |
+| **Support** | [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund) |
 
 [release-img]: https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg
 [release-url]: https://github.com/qutip/QuantumToolbox.jl/releases
