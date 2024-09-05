@@ -57,9 +57,16 @@
         sol_me2 = mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
         sol_me3 = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
         sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
+        sol_mc_states = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, saveat = t_l, progress_bar = Val(false))
+
+        ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
+        expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
+        expect_mc_states_mean = sum(expect_mc_states, dims = 2) / size(expect_mc_states, 2)
+
         sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
         sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
         @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
+        @test sum(abs.(vec(expect_mc_states_mean) .- vec(sol_me.expect))) / length(t_l) < 0.1
         @test length(sol_me.states) == 1
         @test size(sol_me.expect) == (length(e_ops), length(t_l))
         @test length(sol_me2.states) == length(t_l)

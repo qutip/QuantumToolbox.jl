@@ -89,7 +89,7 @@ end
 function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
     sol_i = sol[:, i]
     !isempty(sol_i.prob.kwargs[:saveat]) ?
-    states[i] = [QuantumObject(sol_i.u[i], dims = sol_i.prob.p.Hdims) for i in 1:length(sol_i.u)] : nothing
+    states[i] = [QuantumObject(normalize!(sol_i.u[i]), dims = sol_i.prob.p.Hdims) for i in 1:length(sol_i.u)] : nothing
 
     copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
     times[i] = sol_i.t
