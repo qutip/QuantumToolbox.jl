@@ -58,7 +58,8 @@ function expect(
     O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
 ) where {T1,T2}
-    return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
+    A = O * ρ
+    return ishermitian(A) ? real(tr(A)) : tr(A)
 end
 
 @doc raw"""
