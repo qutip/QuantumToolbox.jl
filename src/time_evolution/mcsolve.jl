@@ -186,7 +186,8 @@ function mcsolveProblem(
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    c_ops isa Nothing && throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
+    c_ops isa Nothing &&
+        throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
     t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for OrdinaryDiffEq.jl
 

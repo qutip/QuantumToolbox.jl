@@ -486,10 +486,7 @@ function eigsolve_al(
     maxiter::Int = 200,
     eigstol::Real = 1e-6,
     kwargs...,
-) where {
-    MT1<:AbstractMatrix,
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-}
+) where {MT1<:AbstractMatrix,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, c_ops)
     prob = mesolveProblem(
         L,

@@ -124,7 +124,7 @@ end
 
 function steadystate(
     H::QuantumObject{<:AbstractArray,OpType},
-    c_ops::Union{Nothing,AbstractVector}=nothing;
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
 ) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}

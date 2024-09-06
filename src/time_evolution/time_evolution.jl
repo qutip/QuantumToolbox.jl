@@ -166,10 +166,7 @@ function liouvillian(
     H::QuantumObject{MT1,OpType1},
     c_ops::Union{AbstractVector,Nothing} = nothing,
     Id_cache = I(prod(H.dims)),
-) where {
-    MT1<:AbstractMatrix,
-    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-}
+) where {MT1<:AbstractMatrix,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
         for c_op in c_ops
@@ -179,10 +176,8 @@ function liouvillian(
     return L
 end
 
-liouvillian(
-    H::QuantumObject{<:AbstractMatrix,OperatorQuantumObject},
-    Id_cache::Diagonal = I(prod(H.dims)),
-) = -1im * (spre(H, Id_cache) - spost(H, Id_cache))
+liouvillian(H::QuantumObject{<:AbstractMatrix,OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dims))) =
+    -1im * (spre(H, Id_cache) - spost(H, Id_cache))
 
 liouvillian(H::QuantumObject{<:AbstractMatrix,SuperOperatorQuantumObject}, Id_cache::Diagonal) = H
 
