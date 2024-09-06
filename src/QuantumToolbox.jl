@@ -32,6 +32,7 @@ import OrdinaryDiffEq: OrdinaryDiffEqAlgorithm
 import Pkg
 import Random
 import SpecialFunctions: loggamma
+import StaticArrays: SVector
 
 # Setting the number of threads to 1 allows
 # to achieve better performances for more massive parallelizations
