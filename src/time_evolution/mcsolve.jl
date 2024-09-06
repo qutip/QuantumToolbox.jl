@@ -101,7 +101,7 @@ end
     mcsolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
-        c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
+        c_ops::Union{Nothing,AbstractVector}=nothing;
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
@@ -148,7 +148,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Vector`: List of collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector}`: List of collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
@@ -170,9 +170,9 @@ If the environmental measurements register a quantum jump, the wave function und
 """
 function mcsolveProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray,KetQuantumObject},
     tlist::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
@@ -180,15 +180,17 @@ function mcsolveProblem(
     seeds::Union{Nothing,Vector{Int}} = nothing,
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
+) where {MT1<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
     H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
+    c_ops isa Nothing && throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
+
     t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for OrdinaryDiffEq.jl
 
-    H_eff = H - T2(0.5im) * mapreduce(op -> op' * op, +, c_ops)
+    H_eff = H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(t_l))
@@ -254,15 +256,15 @@ function mcsolveProblem(
 end
 
 function mcsolveProblem(
-    H_eff::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    H_eff::QuantumObject{<:AbstractArray,OperatorQuantumObject},
+    ψ0::QuantumObject{<:AbstractArray,KetQuantumObject},
     t_l::AbstractVector,
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum},
     params::NamedTuple,
     jump_callback::ContinuousLindbladJumpCallback;
     kwargs...,
-) where {T1,T2}
+)
     cb1 = ContinuousCallback(
         LindbladJumpContinuousCondition,
         LindbladJumpAffect!,
@@ -283,9 +285,9 @@ end
     mcsolveEnsembleProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
-        c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
+        c_ops::Union{Nothing,AbstractVector}=nothing;
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
+        e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         jump_callback::TJC=ContinuousLindbladJumpCallback(),
@@ -332,9 +334,9 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Vector`: List of collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector}`: List of collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Vector`: List of operators for which to calculate expectation values.
+- `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
@@ -358,9 +360,9 @@ function mcsolveEnsembleProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Vector{QuantumObject{Te,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[],
+    e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
@@ -368,7 +370,7 @@ function mcsolveEnsembleProblem(
     prob_func::Function = _mcsolve_prob_func,
     output_func::Function = _mcsolve_output_func,
     kwargs...,
-) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
+) where {MT1<:AbstractMatrix,T2,TJC<:LindbladJumpCallbackType}
     prob_mc = mcsolveProblem(
         H,
         ψ0,
@@ -392,9 +394,9 @@ end
     mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
-        c_ops::Vector{QuantumObject{Tc, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[];
+        c_ops::Union{Nothing,AbstractVector}=nothing;
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Vector{QuantumObject{Te, OperatorQuantumObject}}=QuantumObject{Matrix, OperatorQuantumObject}[],
+        e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         n_traj::Int=1,
@@ -441,9 +443,9 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Vector`: List of collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector}`: List of collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Vector`: List of operators for which to calculate expectation values.
+- `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
@@ -470,9 +472,9 @@ function mcsolve(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[];
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Vector{QuantumObject{Te,OperatorQuantumObject}} = QuantumObject{MT1,OperatorQuantumObject}[],
+    e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     seeds::Union{Nothing,Vector{Int}} = nothing,
@@ -482,7 +484,7 @@ function mcsolve(
     prob_func::Function = _mcsolve_prob_func,
     output_func::Function = _mcsolve_output_func,
     kwargs...,
-) where {MT1<:AbstractMatrix,T2,Tc<:AbstractMatrix,Te<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
+) where {MT1<:AbstractMatrix,T2,TJC<:LindbladJumpCallbackType}
     if !isnothing(seeds) && length(seeds) != n_traj
         throw(ArgumentError("Length of seeds must match n_traj ($n_traj), but got $(length(seeds))"))
     end
