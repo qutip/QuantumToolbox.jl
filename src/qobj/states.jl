@@ -17,7 +17,8 @@ The `dimensions` can be either the following types:
 - `dimensions::Union{AbstractVector{Int}, Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 """
 zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket, dimensions)
-zero_ket(dimensions::Union{AbstractVector{Int},Tuple}) = QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket, dimensions)
+zero_ket(dimensions::Union{AbstractVector{Int},Tuple}) =
+    QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket, dimensions)
 
 @doc raw"""
     fock(N::Int, pos::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -26,7 +27,12 @@ Generates a fock state ``\ket{\psi}`` of dimension `N`.
 
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 """
-function fock(N::Int, pos::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N, sparse::Union{Bool,Val} = Val(false))
+function fock(
+    N::Int,
+    pos::Int = 0;
+    dims::Union{Int,AbstractVector{Int},Tuple} = N,
+    sparse::Union{Bool,Val} = Val(false),
+)
     if getVal(makeVal(sparse))
         array = sparsevec([pos + 1], [1.0 + 0im], N)
     else
@@ -77,7 +83,12 @@ Density matrix representation of a Fock state.
 
 Constructed via outer product of [`fock`](@ref).
 """
-function fock_dm(N::Int, pos::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N, sparse::Union{Bool,Val} = Val(false))
+function fock_dm(
+    N::Int,
+    pos::Int = 0;
+    dims::Union{Int,AbstractVector{Int},Tuple} = N,
+    sparse::Union{Bool,Val} = Val(false),
+)
     ψ = fock(N, pos; dims = dims, sparse = sparse)
     return ket2dm(ψ)
 end
@@ -276,7 +287,7 @@ Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
 > [!IMPORTANT]
 > If you want to keep type stability, it is recommended to use `w_state(Val(n))` instead of `w_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
 """
-function w_state(::Val{n}) where n
+function w_state(::Val{n}) where {n}
     nzind = 2 .^ (0:(n-1)) .+ 1
     nzval = fill(ComplexF64(1 / sqrt(n)), n)
     return QuantumObject(SparseVector(2^n, nzind, nzval), Ket, ntuple(x -> 2, Val(n)))
@@ -297,7 +308,7 @@ Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
 > [!IMPORTANT]
 > If you want to keep type stability, it is recommended to use `ghz_state(Val(n); kwargs...)` instead of `ghz_state(n; kwargs...)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
 """
-function ghz_state(::Val{n}; d::Int = 2) where n
+function ghz_state(::Val{n}; d::Int = 2) where {n}
     nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
     nzval = ones(ComplexF64, d) / sqrt(d)
     return QuantumObject(SparseVector(d^n, nzind, nzval), Ket, ntuple(x -> d, Val(n)))

@@ -286,7 +286,7 @@
         # test commutation relations for fermionic creation and annihilation operators
         sites = 4
         SIZE = 2^sites
-        dims = ntuple(i->2, Val(sites))
+        dims = ntuple(i -> 2, Val(sites))
         Q_iden = Qobj(sparse((1.0 + 0.0im) * LinearAlgebra.I, SIZE, SIZE); dims = dims)
         Q_zero = Qobj(spzeros(ComplexF64, SIZE, SIZE); dims = dims)
         for i in 0:(sites-1)

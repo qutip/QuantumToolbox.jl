@@ -29,7 +29,8 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 1. [F. Mezzadri, How to generate random matrices from the classical compact groups, arXiv:math-ph/0609050 (2007)](https://arxiv.org/abs/math-ph/0609050)
 """
 rand_unitary(dimensions::Int, distribution::Symbol = :haar) = rand_unitary(SVector(dimensions), Val(distribution))
-rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, distribution::Symbol = :haar) = rand_unitary(dimensions, Val(distribution))
+rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, distribution::Symbol = :haar) =
+    rand_unitary(dimensions, Val(distribution))
 function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:haar})
     N = prod(dimensions)
 
@@ -56,7 +57,8 @@ function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:exp})
 
     return exp(-1.0im * H)
 end
-rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{T}) where {T} = throw(ArgumentError("Invalid distribution: $(T)"))
+rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{T}) where {T} =
+    throw(ArgumentError("Invalid distribution: $(T)"))
 
 @doc raw"""
     commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
@@ -460,7 +462,7 @@ function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{<:AbstractArray{T},O
     S = 2^(N - j - 1)
     I_tensor = sparse((1.0 + 0.0im) * LinearAlgebra.I, S, S)
 
-    return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator, dims = ntuple(i->2, Val(N)))
+    return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator, dims = ntuple(i -> 2, Val(N)))
 end
 
 @doc raw"""
@@ -522,7 +524,8 @@ The `dimensions` can be either the following types:
 where ``\omega = \exp(\frac{2 \pi i}{N})``.
 """
 qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator, dimensions)
-qft(dimensions::Union{AbstractVector{T}, Tuple}) where T = QuantumObject(_qft_op(prod(dimensions)), Operator, dimensions)
+qft(dimensions::Union{AbstractVector{T},Tuple}) where {T} =
+    QuantumObject(_qft_op(prod(dimensions)), Operator, dimensions)
 function _qft_op(N::Int)
     ω = exp(2.0im * π / N)
     arr = 0:(N-1)

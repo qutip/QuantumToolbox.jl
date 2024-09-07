@@ -54,7 +54,7 @@ struct EigsolveResult{
     T1<:Vector{<:Number},
     T2<:AbstractMatrix{<:Number},
     ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},
-    N
+    N,
 }
     values::T1
     vectors::T2

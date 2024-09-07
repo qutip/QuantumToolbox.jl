@@ -518,8 +518,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{
     return QuantumObject(ρtr, dims = dkeep)
 end
 
-ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) =
-    ptrace(QO', sel)
+ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
 
 function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     length(QO.dims) == 1 && return QO
@@ -563,12 +562,12 @@ function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
     dkeep = dims[sel]
     dtrace = dims[qtrace]
     # Concatenate sel and qtrace without loosing the length information
-    qtrace_sel = ntuple(Val(2*nd)) do i
+    qtrace_sel = ntuple(Val(2 * nd)) do i
         if i <= length(qtrace)
             @inbounds qtrace[i]
-        elseif i <= 2*length(qtrace)
+        elseif i <= 2 * length(qtrace)
             @inbounds qtrace[i-length(qtrace)] + nd
-        elseif i <= 2*length(qtrace) + length(sel)
+        elseif i <= 2 * length(qtrace) + length(sel)
             @inbounds sel[i-length(qtrace)-length(sel)]
         else
             @inbounds sel[i-length(qtrace)-2*length(sel)] + nd
@@ -686,12 +685,16 @@ function permute(
 
     order isa Vector && @warn "The order list should be a Tuple or StaticVector for better performance."
 
-    order_svector = SVector{length(order), Int}(order) # convert it to SVector for performance
+    order_svector = SVector{length(order),Int}(order) # convert it to SVector for performance
 
     # obtain the arguments: dims for reshape; perm for PermutedDimsArray
     dims, perm = _dims_and_perm(A.type, A.dims, order_svector, length(order_svector))
 
-    return QuantumObject(reshape(PermutedDimsArray(reshape(A.data, dims...), Tuple(perm)), size(A)), A.type, A.dims[order_svector])
+    return QuantumObject(
+        reshape(PermutedDimsArray(reshape(A.data, dims...), Tuple(perm)), size(A)),
+        A.type,
+        A.dims[order_svector],
+    )
 end
 
 function _dims_and_perm(
@@ -703,6 +706,6 @@ function _dims_and_perm(
     return reverse(dims), reverse((L + 1) .- order)
 end
 
-function _dims_and_perm(::OperatorQuantumObject, dims::SVector{N,Int}, order::AbstractVector{Int}, L::Int) where N
+function _dims_and_perm(::OperatorQuantumObject, dims::SVector{N,Int}, order::AbstractVector{Int}, L::Int) where {N}
     return reverse(vcat(dims, dims)), reverse((2 * L + 1) .- vcat(order, order .+ L))
 end
