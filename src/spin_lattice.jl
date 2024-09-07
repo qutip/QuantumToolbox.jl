@@ -42,7 +42,7 @@ function TFIM(Jx::Real, Jy::Real, Jz::Real, hx::Real, γ::Real, latt::Lattice; b
     S = [mb(sm, i, latt) for i in 1:latt.N]
     c_ops = sqrt(γ) .* S
 
-    op_sum(S::Vector{QuantumObject{SparseMatrixCSC{ComplexF64,Int64},OperatorQuantumObject}}, i::CartesianIndex) =
+    op_sum(S, i::CartesianIndex) =
         S[latt.lin_idx[i]] * sum(S[latt.lin_idx[nn(i, latt, bc; order = order)]])
 
     H = 0

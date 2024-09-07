@@ -692,13 +692,13 @@ end
 
 function _dims_and_perm(
     ::ObjType,
-    dims::AbstractVector{Int},
+    dims::SVector{N,Int},
     order::AbstractVector{Int},
     L::Int,
-) where {ObjType<:Union{KetQuantumObject,BraQuantumObject}}
-    return reverse(dims), reverse!((L + 1) .- order)
+) where {ObjType<:Union{KetQuantumObject,BraQuantumObject},N}
+    return reverse(dims), reverse((L + 1) .- order)
 end
 
-function _dims_and_perm(::OperatorQuantumObject, dims::AbstractVector{Int}, order::AbstractVector{Int}, L::Int)
-    return reverse!([dims; dims]), reverse!((2 * L + 1) .- [order; order .+ L])
+function _dims_and_perm(::OperatorQuantumObject, dims::SVector{N,Int}, order::AbstractVector{Int}, L::Int) where N
+    return reverse(vcat(dims, dims)), reverse((2 * L + 1) .- vcat(order, order .+ L))
 end
