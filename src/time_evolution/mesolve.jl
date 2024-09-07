@@ -52,7 +52,7 @@ end
     mesolveProblem(H::QuantumObject,
         ψ0::QuantumObject,
         tlist::AbstractVector, 
-        c_ops::AbstractVector=[];
+        c_ops::Union{Nothing,AbstractVector}=nothing;
         alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
@@ -77,7 +77,7 @@ where
 - `H::QuantumObject`: The Hamiltonian ``\hat{H}`` or the Liouvillian of the system.
 - `ψ0::QuantumObject`: The initial state of the system.
 - `tlist::AbstractVector`: The time list of the evolution.
-- `c_ops::AbstractVector=[]`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector}=nothing`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm used for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}=nothing`: The list of the operators for which the expectation values are calculated.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing`: The time-dependent Hamiltonian or Liouvillian.
@@ -100,7 +100,7 @@ function mesolveProblem(
     H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     tlist,
-    c_ops::Vector{QuantumObject{Tc,COpType}} = QuantumObject{MT1,HOpType}[];
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
@@ -110,10 +110,8 @@ function mesolveProblem(
 ) where {
     MT1<:AbstractMatrix,
     T2,
-    Tc<:AbstractMatrix,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
-    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
 }
     H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
@@ -166,7 +164,7 @@ end
     mesolve(H::QuantumObject,
         ψ0::QuantumObject,
         tlist::AbstractVector, 
-        c_ops::AbstractVector=[];
+        c_ops::Union{Nothing,AbstractVector}=nothing;
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
@@ -191,7 +189,7 @@ where
 - `H::QuantumObject`: The Hamiltonian ``\hat{H}`` or the Liouvillian of the system.
 - `ψ0::QuantumObject`: The initial state of the system.
 - `tlist::AbstractVector`: The time list of the evolution.
-- `c_ops::AbstractVector=[]`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector}=nothing`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
@@ -214,7 +212,7 @@ function mesolve(
     H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     tlist::AbstractVector,
-    c_ops::Vector{QuantumObject{Tc,COpType}} = QuantumObject{MT1,HOpType}[];
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
@@ -224,10 +222,8 @@ function mesolve(
 ) where {
     MT1<:AbstractMatrix,
     T2,
-    Tc<:AbstractMatrix,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
-    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
 }
     prob = mesolveProblem(
         H,
