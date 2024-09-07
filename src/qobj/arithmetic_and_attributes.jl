@@ -529,7 +529,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel)
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, (sel,))
 
-function _ptrace_ket(QO::AbstractArray, dims::SVector, sel::SVector)
+function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel::Union{SVector,MVector})
     nd = length(dims)
 
     nd == 1 && return QO, dims
@@ -546,7 +546,7 @@ function _ptrace_ket(QO::AbstractArray, dims::SVector, sel::SVector)
         end
     end
 
-    vmat = reshape(QO, reverse(dims))
+    vmat = reshape(QO, reverse(dims)...)
     topermute = nd + 1 .- sel_qtrace
     vmat = PermutedDimsArray(vmat, topermute)
     vmat = reshape(vmat, prod(dkeep), prod(dtrace))
@@ -554,7 +554,7 @@ function _ptrace_ket(QO::AbstractArray, dims::SVector, sel::SVector)
     return vmat * vmat', dkeep
 end
 
-function _ptrace_oper(QO::AbstractArray, dims::SVector, sel::SVector)
+function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel::Union{SVector,MVector})
     nd = length(dims)
 
     nd == 1 && return QO, dims
@@ -575,7 +575,7 @@ function _ptrace_oper(QO::AbstractArray, dims::SVector, sel::SVector)
         end
     end
 
-    ρmat = reshape(QO, reverse(vcat(dims, dims)))
+    ρmat = reshape(QO, reverse(vcat(dims, dims))...)
     topermute = 2 * nd + 1 .- qtrace_sel
     ρmat = PermutedDimsArray(ρmat, reverse(topermute))
 

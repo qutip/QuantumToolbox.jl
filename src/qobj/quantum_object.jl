@@ -157,7 +157,7 @@ function QuantumObject(
     type::ObjType = nothing,
     dims = nothing,
 ) where {T,ObjType<:Union{Nothing,QuantumObjectType}}
-    _size = size(A)
+    _size = _get_size(A)
 
     if type isa Nothing
         type = (_size[1] == 1 && _size[2] > 1) ? Bra : Operator # default type
@@ -214,7 +214,7 @@ end
 _get_size(A::AbstractMatrix) = size(A)
 _get_size(A::AbstractVector) = (length(A), 1)
 
-_check_dims(dims::Union{NTuple{N,T},SVector{N,T}}) where {N,T<:Integer} =
+_check_dims(dims::Union{NTuple{N,T},SVector{N,T},MVector{N,T}}) where {N,T<:Integer} =
     (all(>(0), dims) && length(dims) > 0) || throw(
         DomainError(
             dims,

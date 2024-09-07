@@ -4,10 +4,10 @@ export dfd_mesolve, dsf_mesolve, dsf_mcsolve
 
 function _reduce_dims(
     QO::AbstractArray{T},
-    dims::Vector{<:Integer},
-    sel::AbstractVector,
-    reduce::AbstractVector,
-) where {T}
+    dims::Union{SVector{N,DT},MVector{N,DT}},
+    sel,
+    reduce,
+) where {T,N,DT<:Integer}
     rd = dims
     nd = length(rd)
     rd_new = zero(rd)
@@ -29,13 +29,13 @@ end
 
 function _increase_dims(
     QO::AbstractArray{T},
-    dims::Vector{<:Integer},
-    sel::AbstractVector,
-    increase::AbstractVector,
-) where {T}
+    dims::Union{SVector{N,DT},MVector{N,DT}},
+    sel,
+    increase,
+) where {T,N,DT<:Integer}
     rd = dims
     nd = length(rd)
-    rd_new = zero(rd)
+    rd_new = MVector(zero(rd)) # Mutable SVector
     rd_new[sel] .= increase
     @. rd_new = rd + rd_new
 
@@ -106,9 +106,9 @@ function _DFDIncreaseReduceAffect!(integrator)
 
     ρt = vec2mat(dfd_ρt_cache)
 
-    @views pillow_increase = pillow_list[increase_list]
-    @views pillow_reduce = pillow_list[reduce_list]
-    dim_increase = findall(increase_list)
+    pillow_increase = pillow_list[increase_list] # TODO: This returns a Vector. Find a way to return an SVector or NTuple
+    pillow_reduce = pillow_list[reduce_list]
+    dim_increase = findall(increase_list) # TODO: This returns a Vector. Find a way to return an SVector or NTuple
     dim_reduce = findall(reduce_list)
 
     if length(dim_increase) > 0
@@ -151,15 +151,15 @@ function dfd_mesolveProblem(
     length(ψ0.dims) != length(maxdims) &&
         throw(DimensionMismatch("'dim_list' and 'maxdims' do not have the same dimension."))
 
-    dim_list = deepcopy(ψ0.dims)
+    dim_list = MVector(ψ0.dims)
     H₀ = H(dim_list, dfd_params)
     c_ops₀ = c_ops(dim_list, dfd_params)
     e_ops₀ = e_ops(dim_list, dfd_params)
 
     dim_list_evo_times = [0.0]
     dim_list_evo = [dim_list]
-    reduce_list = zeros(Bool, length(dim_list))
-    increase_list = zeros(Bool, length(dim_list))
+    reduce_list = MVector(ntuple(i -> false, length(dim_list)))
+    increase_list = MVector(ntuple(i -> false, length(dim_list)))
     pillow_list = _dfd_set_pillow.(dim_list)
 
     params2 = merge(
