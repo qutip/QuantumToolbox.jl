@@ -55,10 +55,10 @@
         @test_throws ArgumentError Qobj(rand(2, 2), dims = (2.0 + 0.0im,))
         @test_throws DomainError Qobj(rand(2, 2), dims = (0,))
         @test_throws DomainError Qobj(rand(2, 2), dims = (2, -2))
-        @test_logs (:warn, "The argument dims should be a Tuple or a StaticVector for better performance.") Qobj(
-            rand(4, 4),
-            dims = [2, 2],
-        )
+        @test_logs (
+            :warn,
+            "The argument dims should be a Tuple or a StaticVector for better performance. Try to use `dims = (2, 2)` or `dims = SVector(2, 2)` instead of `dims = [2, 2]`.",
+        ) Qobj(rand(4, 4), dims = [2, 2])
     end
 
     @testset "Ket and Bra" begin

@@ -683,7 +683,7 @@ function permute(
 
     !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))
 
-    order isa Vector && @warn "The order list should be a Tuple or StaticVector for better performance."
+    _non_static_array_warning("order", order)
 
     order_svector = SVector{length(order),Int}(order) # convert it to SVector for performance
 

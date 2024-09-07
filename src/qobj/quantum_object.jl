@@ -218,27 +218,19 @@ end
 _get_size(A::AbstractMatrix) = size(A)
 _get_size(A::AbstractVector) = (length(A), 1)
 
-_check_dims(dims::Union{NTuple{N,T},SVector{N,T},MVector{N,T}}) where {N,T<:Integer} =
-    (all(>(0), dims) && length(dims) > 0) || throw(
-        DomainError(
-            dims,
-            "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
-        ),
-    )
-function _check_dims(dims::Vector{T}) where {T<:Integer}
-    @warn "The argument dims should be a Tuple or a StaticVector for better performance."
-    return (all(>(0), dims) && length(dims) > 0) || throw(
-        DomainError(
-            dims,
-            "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
-        ),
-    )
+_non_static_array_warning(argname, arg::Tuple{}) =
+    throw(ArgumentError("The argument $argname must be a Tuple or a StaticVector of non-zero length."))
+_non_static_array_warning(argname, arg::Union{SVector{N,T},MVector{N,T},NTuple{N,T}}) where {N,T} = nothing
+_non_static_array_warning(argname, arg::AbstractVector{T}) where {T} =
+    @warn "The argument $argname should be a Tuple or a StaticVector for better performance. Try to use `$argname = $(Tuple(arg))` or `$argname = SVector(" *
+          join(arg, ", ") *
+          ")` instead of `$argname = $arg`." maxlog = 1
+
+function _check_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N}
+    _non_static_array_warning("dims", dims)
+    return (all(>(0), dims) && length(dims) > 0) ||
+           throw(DomainError(dims, "The argument dims must be of non-zero length and contain only positive integers."))
 end
-_check_dims(dims::Tuple{}) = throw(
-    ArgumentError(
-        "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
-    ),
-)
 _check_dims(dims::Any) = throw(
     ArgumentError(
         "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
