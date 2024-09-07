@@ -194,7 +194,7 @@ end
 
 ### LIOUVILLIAN ###
 @doc raw"""
-    liouvillian(H::QuantumObject, c_ops::AbstractVector, Id_cache=I(prod(H.dims)))
+    liouvillian(H::QuantumObject, c_ops::Union{AbstractVector,Nothing}=nothing, Id_cache=I(prod(H.dims)))
 
 Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
 
@@ -214,27 +214,22 @@ See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 """
 function liouvillian(
     H::QuantumObject{MT1,OpType1},
-    c_ops::Vector{QuantumObject{MT2,OpType2}} = Vector{QuantumObject{MT1,OpType1}}([]),
+    c_ops::Union{AbstractVector,Nothing} = nothing,
     Id_cache = I(prod(H.dims)),
-) where {
-    MT1<:AbstractMatrix,
-    MT2<:AbstractMatrix,
-    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-}
+) where {MT1<:AbstractMatrix,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, Id_cache)
-    for c_op in c_ops
-        L += lindblad_dissipator(c_op, Id_cache)
+    if !(c_ops isa Nothing)
+        for c_op in c_ops
+            L += lindblad_dissipator(c_op, Id_cache)
+        end
     end
     return L
 end
 
-liouvillian(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    Id_cache::Diagonal = I(prod(H.dims)),
-) where {MT1<:AbstractMatrix} = -1im * (spre(H, Id_cache) - spost(H, Id_cache))
+liouvillian(H::QuantumObject{<:AbstractMatrix,OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dims))) =
+    -1im * (spre(H, Id_cache) - spost(H, Id_cache))
 
-liouvillian(H::QuantumObject{MT1,SuperOperatorQuantumObject}, Id_cache::Diagonal) where {MT1<:AbstractMatrix} = H
+liouvillian(H::QuantumObject{<:AbstractMatrix,SuperOperatorQuantumObject}, Id_cache::Diagonal) = H
 
 function liouvillian_floquet(
     L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},

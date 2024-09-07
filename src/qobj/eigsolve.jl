@@ -438,7 +438,7 @@ end
 
 @doc raw"""
     eigsolve_al(H::QuantumObject,
-        T::Real, c_ops::AbstractVector=[];
+        T::Real, c_ops::Union{Nothing,AbstractVector}=nothing;
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         H_t::Union{Nothing,Function}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -454,7 +454,7 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 # Arguments
 - `H`: The Hamiltonian (or directly the Liouvillian) of the system.
 - `T`: The time at which to evaluate the time evolution
-- `c_ops`: A vector of collapse operators
+- `c_ops`: A vector of collapse operators. Default is `nothing` meaning the system is closed.
 - `alg`: The differential equation solver algorithm
 - `H_t`: A function `H_t(t)` that returns the additional term at time `t`
 - `params`: A dictionary of additional parameters
@@ -476,7 +476,7 @@ and Floquet open quantum systems. Quantum, 6, 649.
 function eigsolve_al(
     H::QuantumObject{MT1,HOpType},
     T::Real,
-    c_ops::Vector{QuantumObject{MT2,COpType}} = Vector{QuantumObject{MT1,HOpType}}([]);
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     H_t::Union{Nothing,Function} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -486,12 +486,7 @@ function eigsolve_al(
     maxiter::Int = 200,
     eigstol::Real = 1e-6,
     kwargs...,
-) where {
-    MT1<:AbstractMatrix,
-    MT2<:AbstractMatrix,
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-}
+) where {MT1<:AbstractMatrix,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, c_ops)
     prob = mesolveProblem(
         L,

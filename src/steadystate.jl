@@ -43,7 +43,7 @@ end
         H::QuantumObject{MT1,HOpType},
         ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
         tspan::Real = Inf,
-        c_ops::Vector{QuantumObject{Tc,COpType}} = QuantumObject{MT1,HOpType}[];
+        c_ops::Union{Nothing,AbstractVector} = nothing;
         solver::SteadyStateODESolver = SteadyStateODESolver(),
         reltol::Real = 1.0e-8,
         abstol::Real = 1.0e-10,
@@ -68,7 +68,7 @@ or
 - `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
 - `ψ0::QuantumObject`: The initial state of the system.
 - `tspan::Real=Inf`: The final time step for the steady state problem.
-- `c_ops::AbstractVector=[]`: The list of the collapse operators.
+- `c_ops::Union{Nothing,AbstractVector}=nothing`: The list of the collapse operators.
 - `solver::SteadyStateODESolver=SteadyStateODESolver()`: see [`SteadyStateODESolver`](@ref) for more details.
 - `reltol::Real=1.0e-8`: Relative tolerance in steady state terminate condition and solver adaptive timestepping.
 - `abstol::Real=1.0e-10`: Absolute tolerance in steady state terminate condition and solver adaptive timestepping.
@@ -78,7 +78,7 @@ function steadystate(
     H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     tspan::Real = Inf,
-    c_ops::Vector{QuantumObject{Tc,COpType}} = QuantumObject{MT1,HOpType}[];
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     solver::SteadyStateODESolver = SteadyStateODESolver(),
     reltol::Real = 1.0e-8,
     abstol::Real = 1.0e-10,
@@ -86,10 +86,8 @@ function steadystate(
 ) where {
     MT1<:AbstractMatrix,
     T2,
-    Tc<:AbstractMatrix,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
-    COpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
 }
     (H.dims != ψ0.dims) && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
@@ -125,22 +123,14 @@ function _steadystate_ode_condition(integrator, abstol, reltol, min_t)
 end
 
 function steadystate(
-    L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject};
+    H::QuantumObject{<:AbstractArray,OpType},
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
-) where {T}
-    return _steadystate(L, solver; kwargs...)
-end
-
-function steadystate(
-    H::QuantumObject{<:AbstractArray{T},OpType},
-    c_ops::AbstractVector;
-    solver::SteadyStateSolver = SteadyStateDirectSolver(),
-    kwargs...,
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, c_ops)
 
-    return steadystate(L; solver = solver, kwargs...)
+    return _steadystate(L, solver; kwargs...)
 end
 
 function _steadystate(
@@ -232,7 +222,7 @@ end
         H_p::QuantumObject{<:AbstractArray,OpType2},
         H_m::QuantumObject{<:AbstractArray,OpType3},
         ωd::Number,
-        c_ops::AbstractVector = QuantumObject{MT,OpType1}[];
+        c_ops::Union{Nothing,AbstractVector} = nothing;
         n_max::Integer = 2,
         tol::R = 1e-8,
         solver::FSolver = SSFloquetLinearSystem,
@@ -310,7 +300,7 @@ function steadystate_floquet(
     H_p::QuantumObject{<:AbstractArray,OpType2},
     H_m::QuantumObject{<:AbstractArray,OpType3},
     ωd::Number,
-    c_ops::AbstractVector = QuantumObject{MT,OpType1}[];
+    c_ops::Union{Nothing,AbstractVector} = nothing;
     n_max::Integer = 2,
     tol::R = 1e-8,
     solver::FSolver = SSFloquetLinearSystem(),
