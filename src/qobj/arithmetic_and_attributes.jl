@@ -514,7 +514,7 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel)
     length(QO.dims) == 1 && return QO
 
-    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, SVector(sel))
+    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sel)
     return QuantumObject(ρtr, dims = dkeep)
 end
 
@@ -524,12 +524,12 @@ ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel) =
 function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel)
     length(QO.dims) == 1 && return QO
 
-    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, SVector(sel))
+    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sel)
     return QuantumObject(ρtr, dims = dkeep)
 end
-ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, (sel,))
+ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
-function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel::Union{SVector,MVector})
+function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
     nd = length(dims)
 
     nd == 1 && return QO, dims
@@ -554,7 +554,7 @@ function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel::Union
     return vmat * vmat', dkeep
 end
 
-function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel::Union{SVector,MVector})
+function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
     nd = length(dims)
 
     nd == 1 && return QO, dims
