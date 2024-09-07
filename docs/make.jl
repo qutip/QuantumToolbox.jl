@@ -3,6 +3,7 @@
 
 using QuantumToolbox
 using Documenter
+using DocumenterCitations
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
@@ -31,7 +32,7 @@ const PAGES = [
         "Manipulating States and Operators" => "users_guide/states_and_operators.md",
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
         "Time Evolution and Dynamics" => [
-            "Introduction" => "users_guide/time_evolution/intro.md",
+            # "Introduction" => "users_guide/time_evolution/intro.md",
         ],
         "Solving for Steady-State Solutions" => [],
         "Symmetries" => [],
@@ -52,12 +53,15 @@ const PAGES = [
     # "Change Log" => "changelog.md",
 ]
 
+bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"))
+
 makedocs(;
     modules = [QuantumToolbox],
     authors = "Alberto Mercurio, Luca Gravina and Yi-Te Huang",
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",
     pages = PAGES,
+    plugins=[bib],
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://qutip.github.io/QuantumToolbox.jl",
