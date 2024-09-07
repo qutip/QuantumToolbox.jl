@@ -18,7 +18,7 @@ end
 #Definition of many-body operators
 function mb(s::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, i::Integer, N::Integer) where {T1}
     T = s.dims[1]
-    return QuantumObject(kron(eye(T^(i - 1)), s, eye(T^(N - i))); dims = fill(2, N))
+    return QuantumObject(kron(eye(T^(i - 1)), s, eye(T^(N - i))); dims = ntuple(j -> 2, Val(N)))
 end
 mb(s::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, i::Integer, latt::Lattice) where {T1} = mb(s, i, latt.N)
 mb(s::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, row::Integer, col::Integer, latt::Lattice) where {T1} =

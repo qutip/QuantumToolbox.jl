@@ -14,20 +14,20 @@ Returns a zero [`Ket`](@ref) vector with given argument `dimensions`.
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractVector{Int}, Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 """
-zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket, [dimensions])
-zero_ket(dimensions::Vector{Int}) = QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket, dimensions)
+zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket, dimensions)
+zero_ket(dimensions::Union{AbstractVector{Int},Tuple}) = QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket, dimensions)
 
 @doc raw"""
-    fock(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)
+    fock(N::Int, pos::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
 Generates a fock state ``\ket{\psi}`` of dimension `N`. 
 
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 """
-function fock(N::Int, pos::Int = 0; dims::Vector{Int} = [N], sparse::Bool = false)
-    if sparse
+function fock(N::Int, pos::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N, sparse::Union{Bool,Val} = Val(false))
+    if getVal(makeVal(sparse))
         array = sparsevec([pos + 1], [1.0 + 0im], N)
     else
         array = zeros(ComplexF64, N)
@@ -37,13 +37,13 @@ function fock(N::Int, pos::Int = 0; dims::Vector{Int} = [N], sparse::Bool = fals
 end
 
 @doc raw"""
-    basis(N::Int, pos::Int = 0; dims::Vector{Int}=[N])
+    basis(N::Int, pos::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple}=N)
 
 Generates a fock state like [`fock`](@ref).
 
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 """
-basis(N::Int, pos::Int = 0; dims::Vector{Int} = [N]) = fock(N, pos, dims = dims)
+basis(N::Int, pos::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N) = fock(N, pos, dims = dims)
 
 @doc raw"""
     coherent(N::Int, α::Number)
@@ -61,25 +61,25 @@ Generate a random normalized [`Ket`](@ref) vector with given argument `dimension
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 """
-rand_ket(dimensions::Int) = rand_ket([dimensions])
-function rand_ket(dimensions::Vector{Int})
+rand_ket(dimensions::Int) = rand_ket(SVector(dimensions))
+function rand_ket(dimensions::Union{AbstractVector{Int},Tuple})
     N = prod(dimensions)
     ψ = rand(ComplexF64, N) .- (0.5 + 0.5im)
     return QuantumObject(normalize!(ψ); type = Ket, dims = dimensions)
 end
 
 @doc raw"""
-    fock_dm(N::Int, pos::Int=0; dims::Vector{Int}=[N], sparse::Bool=false)
+    fock_dm(N::Int, pos::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
 Density matrix representation of a Fock state.
 
 Constructed via outer product of [`fock`](@ref).
 """
-function fock_dm(N::Int, pos::Int = 0; dims::Vector{Int} = [N], sparse::Bool = false)
+function fock_dm(N::Int, pos::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N, sparse::Union{Bool,Val} = Val(false))
     ψ = fock(N, pos; dims = dims, sparse = sparse)
-    return ψ * ψ'
+    return ket2dm(ψ)
 end
 
 @doc raw"""
@@ -91,24 +91,28 @@ Constructed via outer product of [`coherent`](@ref).
 """
 function coherent_dm(N::Int, α::T) where {T<:Number}
     ψ = coherent(N, α)
-    return ψ * ψ'
+    return ket2dm(ψ)
 end
 
 @doc raw"""
-    thermal_dm(N::Int, n::Real; sparse::Bool=false)
+    thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val}=Val(false))
 
 Density matrix for a thermal state (generating thermal state probabilities) with the following arguments:
 - `N::Int`: Number of basis states in the Hilbert space
 - `n::Real`: Expectation value for number of particles in the thermal state.
+- `sparse::Union{Bool,Val}`: If `true`, return a sparse matrix representation.
+
+> [!IMPORTANT]
+> If you want to keep type stability, it is recommended to use `thermal_dm(N, n, Val(sparse))` instead of `thermal_dm(N, n, sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
 """
-function thermal_dm(N::Int, n::Real; sparse::Bool = false)
+function thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val} = Val(false))
     β = log(1.0 / n + 1.0)
     N_list = Array{Float64}(0:N-1)
     data = exp.(-β .* N_list)
-    if sparse
-        return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator, [N])
+    if getVal(makeVal(sparse))
+        return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator, N)
     else
-        return QuantumObject(diagm(0 => data ./ sum(data)), Operator, [N])
+        return QuantumObject(diagm(0 => data ./ sum(data)), Operator, N)
     end
 end
 
@@ -119,10 +123,10 @@ Returns the maximally mixed density matrix with given argument `dimensions`.
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 """
-maximally_mixed_dm(dimensions::Int) = QuantumObject(I(dimensions) / complex(dimensions), Operator, [dimensions])
-function maximally_mixed_dm(dimensions::Vector{Int})
+maximally_mixed_dm(dimensions::Int) = QuantumObject(I(dimensions) / complex(dimensions), Operator, SVector(dimensions))
+function maximally_mixed_dm(dimensions::Union{AbstractVector{Int},Tuple})
     N = prod(dimensions)
     return QuantumObject(I(N) / complex(N), Operator, dimensions)
 end
@@ -134,7 +138,7 @@ Generate a random density matrix from Ginibre ensemble with given argument `dime
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Vector{Int}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 The default keyword argument `rank = prod(dimensions)` (full rank).
 
@@ -142,8 +146,8 @@ The default keyword argument `rank = prod(dimensions)` (full rank).
 - [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)
 - [K. Życzkowski, et al., Generating random density matrices, Journal of Mathematical Physics 52, 062201 (2011)](http://dx.doi.org/10.1063/1.3595693)
 """
-rand_dm(dimensions::Int; rank::Int = prod(dimensions)) = rand_dm([dimensions], rank = rank)
-function rand_dm(dimensions::Vector{Int}; rank::Int = prod(dimensions))
+rand_dm(dimensions::Int; rank::Int = prod(dimensions)) = rand_dm(SVector(dimensions), rank = rank)
+function rand_dm(dimensions::Union{AbstractVector{Int},Tuple}; rank::Int = prod(dimensions))
     N = prod(dimensions)
     (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
     (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))
@@ -230,10 +234,10 @@ Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 ```
 """
 bell_state(x::Int, z::Int) = bell_state(Val(x), Val(z))
-bell_state(::Val{0}, ::Val{0}) = QuantumObject(ComplexF64[1, 0, 0, 1] / sqrt(2), Ket, [2, 2])
-bell_state(::Val{0}, ::Val{1}) = QuantumObject(ComplexF64[1, 0, 0, -1] / sqrt(2), Ket, [2, 2])
-bell_state(::Val{1}, ::Val{0}) = QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket, [2, 2])
-bell_state(::Val{1}, ::Val{1}) = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket, [2, 2])
+bell_state(::Val{0}, ::Val{0}) = QuantumObject(ComplexF64[1, 0, 0, 1] / sqrt(2), Ket, (2, 2))
+bell_state(::Val{0}, ::Val{1}) = QuantumObject(ComplexF64[1, 0, 0, -1] / sqrt(2), Ket, (2, 2))
+bell_state(::Val{1}, ::Val{0}) = QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket, (2, 2))
+bell_state(::Val{1}, ::Val{1}) = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket, (2, 2))
 bell_state(::Val{T1}, ::Val{T2}) where {T1,T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
 
 @doc raw"""
@@ -241,7 +245,7 @@ bell_state(::Val{T1}, ::Val{T2}) where {T1,T2} = throw(ArgumentError("Invalid Be
 
 Return the two particle singlet state: ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
 """
-singlet_state() = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket, [2, 2])
+singlet_state() = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket, (2, 2))
 
 @doc raw"""
     triplet_states()
@@ -254,29 +258,33 @@ Return a list of the two particle triplet states:
 """
 function triplet_states()
     return QuantumObject[
-        QuantumObject(ComplexF64[0, 0, 0, 1], Ket, [2, 2]),
-        QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket, [2, 2]),
-        QuantumObject(ComplexF64[1, 0, 0, 0], Ket, [2, 2]),
+        QuantumObject(ComplexF64[0, 0, 0, 1], Ket, (2, 2)),
+        QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket, (2, 2)),
+        QuantumObject(ComplexF64[1, 0, 0, 0], Ket, (2, 2)),
     ]
 end
 
 @doc raw"""
-    w_state(n::Int)
+    w_state(n::Union{Int,Val})
 
 Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
 
 ```math
 \frac{1}{\sqrt{n}} \left( |100...0\rangle + |010...0\rangle + \cdots + |00...01\rangle \right)
 ```
+
+> [!IMPORTANT]
+> If you want to keep type stability, it is recommended to use `w_state(Val(n))` instead of `w_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
 """
-function w_state(n::Int)
+function w_state(::Val{n}) where n
     nzind = 2 .^ (0:(n-1)) .+ 1
     nzval = fill(ComplexF64(1 / sqrt(n)), n)
-    return QuantumObject(SparseVector(2^n, nzind, nzval), Ket, fill(2, n))
+    return QuantumObject(SparseVector(2^n, nzind, nzval), Ket, ntuple(x -> 2, Val(n)))
 end
+w_state(n::Int) = w_state(Val(n))
 
 @doc raw"""
-    ghz_state(n::Int; d::Int=2)
+    ghz_state(n::Union{Int,Val}; d::Int=2)
 
 Returns the generalized `n`-qudit [Greenberger–Horne–Zeilinger (GHZ) state](https://en.wikipedia.org/wiki/Greenberger%E2%80%93Horne%E2%80%93Zeilinger_state):
 
@@ -285,9 +293,13 @@ Returns the generalized `n`-qudit [Greenberger–Horne–Zeilinger (GHZ) state](
 ```
 
 Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
+
+> [!IMPORTANT]
+> If you want to keep type stability, it is recommended to use `ghz_state(Val(n); kwargs...)` instead of `ghz_state(n; kwargs...)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
 """
-function ghz_state(n::Int; d::Int = 2)
+function ghz_state(::Val{n}; d::Int = 2) where n
     nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
     nzval = ones(ComplexF64, d) / sqrt(d)
-    return QuantumObject(SparseVector(d^n, nzind, nzval), Ket, fill(d, n))
+    return QuantumObject(SparseVector(d^n, nzind, nzval), Ket, ntuple(x -> d, Val(n)))
 end
+ghz_state(n::Int; d::Int = 2) = ghz_state(Val(n), d = d)

@@ -511,20 +511,20 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
  0.0+0.0im  0.5+0.0im
 ```
 """
-function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel)
+function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     length(QO.dims) == 1 && return QO
 
-    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sel)
+    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, SVector(sel))
     return QuantumObject(ρtr, dims = dkeep)
 end
 
-ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel) =
+ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) =
     ptrace(QO', sel)
 
-function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel)
+function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     length(QO.dims) == 1 && return QO
 
-    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sel)
+    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, SVector(sel))
     return QuantumObject(ρtr, dims = dkeep)
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
@@ -656,7 +656,7 @@ function get_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject})
 end
 
 @doc raw"""
-    permute(A::QuantumObject, order::Vector{Int})
+    permute(A::QuantumObject, order::Union{AbstractVector{Int},Tuple})
 
 Permute the tensor structure of a [`QuantumObject`](@ref) `A` according to the specified `order` list
 
@@ -677,17 +677,21 @@ true
 """
 function permute(
     A::QuantumObject{<:AbstractArray{T},ObjType},
-    order::AbstractVector{Int},
+    order::Union{AbstractVector{Int},Tuple},
 ) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
     (length(order) != length(A.dims)) &&
         throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
 
     !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))
 
-    # obtain the arguments: dims for reshape; perm for PermutedDimsArray
-    dims, perm = _dims_and_perm(A.type, A.dims, order, length(order))
+    order isa Vector && @warn "The order list should be a Tuple or StaticVector for better performance."
 
-    return QuantumObject(reshape(PermutedDimsArray(reshape(A.data, dims...), perm), size(A)), A.type, A.dims[order])
+    order_svector = SVector{length(order), Int}(order) # convert it to SVector for performance
+
+    # obtain the arguments: dims for reshape; perm for PermutedDimsArray
+    dims, perm = _dims_and_perm(A.type, A.dims, order_svector, length(order_svector))
+
+    return QuantumObject(reshape(PermutedDimsArray(reshape(A.data, dims...), Tuple(perm)), size(A)), A.type, A.dims[order_svector])
 end
 
 function _dims_and_perm(

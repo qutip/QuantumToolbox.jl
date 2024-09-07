@@ -140,7 +140,7 @@ struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: Abstract
     type::ObjType
     dims::SVector{N,Int}
 
-    function QuantumObject(data::MT, type::ObjType, dims) where {MT,ObjType}
+    function QuantumObject(data::MT, type::ObjType, dims) where {MT<:AbstractArray,ObjType<:QuantumObjectType}
         _check_dims(dims)
 
         _size = _get_size(data)
@@ -150,6 +150,10 @@ struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: Abstract
 
         return new{MT,ObjType,N}(data, type, SVector{N,Int}(dims))
     end
+end
+
+function QuantumObject(A::AbstractArray, type::ObjType, dims::Integer) where {ObjType<:QuantumObjectType}
+    return QuantumObject(A, type, SVector{1,Int}(dims))
 end
 
 function QuantumObject(
