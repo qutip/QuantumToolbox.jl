@@ -78,7 +78,7 @@ function _DFDIncreaseReduceCondition(u, t, integrator)
         dim_i = dim_list[i]
         pillow_i = pillow_list[i]
         if dim_i < maxdim_i && dim_i > 2 && maxdim_i != 0
-            ρi = _ptrace_oper(vec2mat(dfd_ρt_cache), dim_list, [i])[1]
+            ρi = _ptrace_oper(vec2mat(dfd_ρt_cache), dim_list, SVector(i))[1]
             @views res = norm(ρi[diagind(ρi)[end-pillow_i:end]], 1) * sqrt(dim_i) / pillow_i
             if res > tol_list[i]
                 increase_list[i] = true

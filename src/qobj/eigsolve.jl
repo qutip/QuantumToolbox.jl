@@ -6,11 +6,11 @@ export EigsolveResult
 export eigenenergies, eigenstates, eigsolve, eigsolve_al
 
 @doc raw"""
-    struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
+    struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},N}
         values::T1
         vectors::T2
         type::ObjType
-        dims::Vector{Int}
+        dims::SVector{N,Int}
         iter::Int
         numops::Int
         converged::Bool
@@ -22,7 +22,7 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 - `values::AbstractVector`: the eigenvalues
 - `vectors::AbstractMatrix`: the transformation matrix (eigenvectors)
 - `type::Union{Nothing,QuantumObjectType}`: the type of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
-- `dims::Vector{Int}`: the `dims` of [`QuantumObject`](@ref)
+- `dims::SVector`: the `dims` of [`QuantumObject`](@ref)
 - `iter::Int`: the number of iteration during the solving process
 - `numops::Int` : number of times the linear map was applied in krylov methods
 - `converged::Bool`: Whether the result is converged
@@ -54,11 +54,12 @@ struct EigsolveResult{
     T1<:Vector{<:Number},
     T2<:AbstractMatrix{<:Number},
     ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},
+    N
 }
     values::T1
     vectors::T2
     type::ObjType
-    dims::Vector{Int}
+    dims::SVector{N,Int}
     iter::Int
     numops::Int
     converged::Bool
@@ -271,7 +272,7 @@ function _eigsolve(
     A,
     b::AbstractVector{T},
     type::ObjType,
-    dims::Vector{Int},
+    dims::SVector,
     k::Int = 1,
     m::Int = max(20, 2 * k + 1);
     tol::Real = 1e-8,
@@ -398,7 +399,7 @@ function eigsolve(
     A;
     v0::Union{Nothing,AbstractVector} = nothing,
     type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject} = nothing,
-    dims::Vector{Int} = Int[],
+    dims = SVector{0,Int}(),
     sigma::Union{Nothing,Real} = nothing,
     k::Int = 1,
     krylovdim::Int = max(20, 2 * k + 1),
@@ -410,6 +411,8 @@ function eigsolve(
     T = eltype(A)
     isH = ishermitian(A)
     v0 === nothing && (v0 = normalize!(rand(T, size(A, 1))))
+
+    dims = SVector(dims)
 
     if sigma === nothing
         res = _eigsolve(A, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
