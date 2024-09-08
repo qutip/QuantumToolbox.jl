@@ -39,6 +39,7 @@ Qobj(rand(4, 4))
 ```
 
 ```@example Qobj
+M = rand(ComplexF64, 4, 4)
 Qobj(M, dims = [2, 2])  # dims as Vector
 Qobj(M, dims = (2, 2))  # dims as Tuple (recommended)
 Qobj(M, dims = SVector(2, 2)) # dims as StaticArrays.SVector (recommended)
