@@ -28,13 +28,15 @@ function versioninfo(io::IO = stdout)
         io,
         "Package information:\n",
         "====================================\n",
+        "Julia              Ver. $(VERSION)\n",
         "QuantumToolbox     Ver. $(_get_pkg_version("QuantumToolbox"))\n",
         "LinearSolve        Ver. $(_get_pkg_version("LinearSolve"))\n",
         "OrdinaryDiffEqCore Ver. $(_get_pkg_version("OrdinaryDiffEqCore"))\n",
     )
 
     # print System informations
-    println(io, "System information:\n", "====================================\n", "Julia Version: $(VERSION)")
+    println(io, "System information:")
+    println(io, "====================================")
     println(io, """OS       : $(OS_name) ($(Sys.MACHINE))""")
     println(io, """CPU      : $(length(cpu)) × $(cpu[1].model)""")
     println(io, """Memory   : $(round(Sys.total_memory() / 2 ^ 30, digits=3)) GB""")
