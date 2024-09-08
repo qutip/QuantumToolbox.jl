@@ -332,7 +332,8 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - `kwargs`: Additional keyword arguments passed to the differential equation solver
 
 # Notes
-- For more details about `alg` and extra `kwargs`, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 # Returns
 - `EigsolveResult`: A struct containing the eigenvalues, the eigenvectors, and some information about the eigsolver

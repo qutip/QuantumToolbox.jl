@@ -204,7 +204,8 @@ end
 Time evolution of an open quantum system using master equation, dynamically changing the dimension of the Hilbert subspaces.
 
 # Notes
-- For more details about `alg` and extra `kwargs`, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 """
 function dfd_mesolve(
     H::Function,
@@ -422,7 +423,8 @@ end
 Time evolution of an open quantum system using master equation and the Dynamical Shifted Fock algorithm.
 
 # Notes
-- For more details about `alg` and extra `kwargs`, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 """
 function dsf_mesolve(
     H::Function,
@@ -693,7 +695,8 @@ end
 Time evolution of a quantum system using the Monte Carlo wave function method and the Dynamical Shifted Fock algorithm.
 
 # Notes
-- For more details about `alg` and extra `kwargs`, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 """
 function dsf_mcsolve(
     H::Function,
