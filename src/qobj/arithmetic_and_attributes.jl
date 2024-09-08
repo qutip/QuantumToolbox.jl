@@ -239,8 +239,8 @@ julia> tr(a' * a)
 """
 LinearAlgebra.tr(
     A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    ishermitian(A) ? real(tr(A.data)) : tr(A.data)
+) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = tr(A.data)
+LinearAlgebra.tr(A::QuantumObject{<:Union{<:Hermitian{TF}, Symmetric{TR}},OpType}) where {TF<:BlasFloat,TR<:Real,OpType<:OperatorQuantumObject} = real(tr(A.data))
 
 @doc raw"""
     svdvals(A::QuantumObject)
@@ -673,6 +673,9 @@ julia> ψ_123 = tensor(ψ1, ψ2, ψ3)
 julia> permute(ψ_123, [2, 1, 3]) ≈ tensor(ψ2, ψ1, ψ3)
 true
 ```
+
+!!! warning "Beware of type-stability!"
+    It is highly recommended to use `permute(A, order)` with `order` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function permute(
     A::QuantumObject{<:AbstractArray{T},ObjType},
@@ -691,7 +694,7 @@ function permute(
     dims, perm = _dims_and_perm(A.type, A.dims, order_svector, length(order_svector))
 
     return QuantumObject(
-        reshape(PermutedDimsArray(reshape(A.data, dims...), Tuple(perm)), size(A)),
+        reshape(permutedims(reshape(A.data, dims...), Tuple(perm)), size(A)),
         A.type,
         A.dims[order_svector],
     )
