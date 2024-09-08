@@ -346,48 +346,89 @@
         @test_throws DimensionMismatch sprepost(A_wrong1, A_wrong3)
     end
 
+    @testset "Type Inference (States)" begin
+        @inferred zero_ket(4)
+        @inferred zero_ket((2, 2))
+
+        @inferred fock(4, 1, dims = (2, 2), sparse = Val(true))
+        @inferred fock(4, 1, dims = (2, 2), sparse = Val(false))
+        @inferred basis(4, 1, dims = (2, 2))
+
+        @inferred coherent(5, 0.25im)
+
+        @inferred rand_ket(10)
+        @inferred rand_ket((2, 5))
+
+        @inferred fock_dm(4; dims = (2, 2), sparse = Val(true))
+        @inferred fock_dm(4; dims = (2, 2), sparse = Val(false))
+
+        @inferred coherent_dm(5, 0.25im)
+
+        @inferred thermal_dm(10, 0.123)
+        @inferred thermal_dm(10, 0.123; sparse = Val(true))
+
+        @inferred maximally_mixed_dm(4)
+        @inferred maximally_mixed_dm((2, 2))
+
+        @inferred rand_dm((2, 2))
+        @inferred rand_dm(10, rank = 5)
+
+        @inferred spin_state(3.5, 1.5)
+        @inferred spin_coherent(0.5, π, 2π)
+
+        @inferred bell_state(Val(0), Val(0))
+        @inferred bell_state(Val(0), Val(1))
+        @inferred bell_state(Val(1), Val(0))
+        @inferred bell_state(Val(1), Val(1))
+        @inferred singlet_state()
+        @inferred triplet_states()
+        @inferred w_state(Val(2))
+
+        @inferred ghz_state(Val(2))
+        @inferred ghz_state(Val(3))
+        @inferred ghz_state(Val(3); d = 3)
+    end
+
     @testset "Type Inference (Operators)" begin
-        if VERSION >= v"1.10"
-            @inferred rand_unitary(10, Val(:haar))
-            @inferred rand_unitary(10, Val(:exp))
+        @inferred rand_unitary(10, Val(:haar))
+        @inferred rand_unitary(10, Val(:exp))
 
-            a = destroy(20)
-            a_d = create(20)
-            @inferred commutator(a, a_d)
-            
-            @inferred destroy(20)
-            @inferred create(20)
-            @inferred num(20)
-            @inferred displace(20, 0.5 + 0.5im)
-            @inferred squeeze(20, 0.5 + 0.5im)
-            @inferred position(20)
-            @inferred momentum(20)
+        a = destroy(20)
+        a_d = create(20)
+        @inferred commutator(a, a_d)
+        
+        @inferred destroy(20)
+        @inferred create(20)
+        @inferred num(20)
+        @inferred displace(20, 0.5 + 0.5im)
+        @inferred squeeze(20, 0.5 + 0.5im)
+        @inferred position(20)
+        @inferred momentum(20)
 
-            @inferred phase(20, 0.5)
+        @inferred phase(20, 0.5)
 
-            @inferred jmat(2.5)
-            @inferred jmat(2.5, Val(:x))
-            @inferred jmat(2.5, Val(:y))
-            @inferred jmat(2.5, Val(:z))
+        @inferred jmat(2.5)
+        @inferred jmat(2.5, Val(:x))
+        @inferred jmat(2.5, Val(:y))
+        @inferred jmat(2.5, Val(:z))
 
-            @inferred sigmap()
-            @inferred sigmam()
-            @inferred sigmax()
-            @inferred sigmay()
-            @inferred sigmaz()
+        @inferred sigmap()
+        @inferred sigmam()
+        @inferred sigmax()
+        @inferred sigmay()
+        @inferred sigmaz()
 
-            @inferred eye(20)
+        @inferred eye(20)
 
-            @inferred fdestroy(Val(10), 4)
-            @inferred fcreate(Val(10), 4)
+        @inferred fdestroy(Val(10), 4)
+        @inferred fcreate(Val(10), 4)
 
-            @inferred projection(20, 5, 3)
+        @inferred projection(20, 5, 3)
 
-            @inferred tunneling(20, 1, sparse=Val(false))
-            @inferred tunneling(20, 1, sparse=Val(true))
+        @inferred tunneling(20, 1, sparse=Val(false))
+        @inferred tunneling(20, 1, sparse=Val(true))
 
-            @inferred qft(20)
-            @inferred qft((2, 10))
-        end
+        @inferred qft(20)
+        @inferred qft((2, 10))
     end
 end

@@ -89,22 +89,22 @@ function rand_ket(dimensions::Union{AbstractVector{Int},Tuple})
 end
 
 @doc raw"""
-    fock_dm(N::Int, pos::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
+    fock_dm(N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
 Density matrix representation of a Fock state.
 
 Constructed via outer product of [`fock`](@ref).
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `fock_dm(N, pos, dims=dims, sparse=Val(sparse))` instead of `fock_dm(N, pos, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `fock_dm(N, j, dims=dims, sparse=Val(sparse))` instead of `fock_dm(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function fock_dm(
     N::Int,
-    pos::Int = 0;
+    j::Int = 0;
     dims::Union{Int,AbstractVector{Int},Tuple} = N,
     sparse::Union{Bool,Val} = Val(false),
 )
-    ψ = fock(N, pos; dims = dims, sparse = sparse)
+    ψ = fock(N, j; dims = dims, sparse = sparse)
     return ket2dm(ψ)
 end
 
@@ -243,7 +243,7 @@ function spin_coherent(j::Real, θ::Real, ϕ::Real)
 end
 
 @doc raw"""
-    bell_state(x::Int, z::Int)
+    bell_state(x::Union{Int}, z::Union{Int})
 
 Return the [Bell state](https://en.wikipedia.org/wiki/Bell_state) depending on the arguments `(x, z)`:
 - `(0, 0)`: ``| \Phi^+ \rangle = ( |00\rangle + |11\rangle ) / \sqrt{2}``
@@ -263,7 +263,18 @@ Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
                 0.0 + 0.0im
                 0.0 + 0.0im
  0.7071067811865475 + 0.0im
+
+julia> bell_state(Val(1), Val(0))
+Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
+4-element Vector{ComplexF64}:
+                0.0 + 0.0im
+ 0.7071067811865475 + 0.0im
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
 ```
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `bell_state(Val(x), Val(z))` instead of `bell_state(x, z)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 bell_state(x::Int, z::Int) = bell_state(Val(x), Val(z))
 bell_state(::Val{0}, ::Val{0}) = QuantumObject(ComplexF64[1, 0, 0, 1] / sqrt(2), Ket, (2, 2))

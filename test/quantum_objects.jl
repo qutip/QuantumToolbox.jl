@@ -507,14 +507,12 @@
         @test ρ2.data ≈ ρ2_ptr.data atol = 1e-10
 
         @testset "Type Inference (ptrace)" begin
-            if VERSION >= v"1.10"
-                @inferred ptrace(ρ, 1)
-                @inferred ptrace(ρ, 2)
-                @inferred ptrace(ψ_d, 1)
-                @inferred ptrace(ψ_d, 2)
-                @inferred ptrace(ψ, 1)
-                @inferred ptrace(ψ, 2)
-            end
+            @inferred ptrace(ρ, 1)
+            @inferred ptrace(ρ, 2)
+            @inferred ptrace(ψ_d, 1)
+            @inferred ptrace(ψ_d, 2)
+            @inferred ptrace(ψ, 1)
+            @inferred ptrace(ψ, 2)
         end
     end
 
