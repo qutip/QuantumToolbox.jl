@@ -68,7 +68,7 @@ QuantumToolbox.jl is equipped with a robust set of features:
 
 ## Installation
     
-> **_NOTE:_**  `QuantumToolbox.jl` requires `Julia 1.7+`.
+> **_NOTE:_**  `QuantumToolbox.jl` requires `Julia 1.10+`.
 
 To install `QuantumToolbox.jl`, run the following commands inside Julia's interactive session (also known as REPL):
 ```julia
@@ -77,7 +77,7 @@ Pkg.add("QuantumToolbox")
 ```
 Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
 ```julia-repl
-(1.7) pkg> add QuantumToolbox
+(1.10) pkg> add QuantumToolbox
 ```
 More information about `Julia`'s package manager can be found at [`Pkg.jl`](https://julialang.github.io/Pkg.jl/v1/).
 
