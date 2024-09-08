@@ -141,7 +141,7 @@ function dfd_mesolveProblem(
     c_ops::Function,
     maxdims::Vector{T2},
     dfd_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (dim_list) -> Vector{Vector{T1}}([]),
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -194,7 +194,7 @@ end
     dfd_mesolve(H::Function, ψ0::QuantumObject,
         t_l::AbstractVector, c_ops::Function, maxdims::AbstractVector,
         dfd_params::NamedTuple=NamedTuple();
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Function=(dim_list) -> Vector{Vector{T1}}([]),
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -202,6 +202,9 @@ end
         kwargs...)
 
 Time evolution of an open quantum system using master equation, dynamically changing the dimension of the Hilbert subspaces.
+
+# Notes
+- For more details about `alg` and extra `kwargs`, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
 """
 function dfd_mesolve(
     H::Function,
@@ -210,7 +213,7 @@ function dfd_mesolve(
     c_ops::Function,
     maxdims::Vector{T2},
     dfd_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (dim_list) -> Vector{Vector{T1}}([]),
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -341,7 +344,7 @@ function dsf_mesolveProblem(
     op_list::Vector{TOl},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> Vector{TOl}([]),
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -408,7 +411,7 @@ end
         op_list::Vector{TOl},
         α0_l::Vector{<:Number}=zeros(length(op_list)),
         dsf_params::NamedTuple=NamedTuple();
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Function=(op_list,p) -> Vector{TOl}([]),
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -417,6 +420,9 @@ end
         kwargs...)
 
 Time evolution of an open quantum system using master equation and the Dynamical Shifted Fock algorithm.
+
+# Notes
+- For more details about `alg` and extra `kwargs`, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
 """
 function dsf_mesolve(
     H::Function,
@@ -426,7 +432,7 @@ function dsf_mesolve(
     op_list::Vector{TOl},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> Vector{TOl}([]),
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -461,7 +467,7 @@ function dsf_mesolve(
     op_list::Vector{TOl},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> Vector{TOl}([]),
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -607,7 +613,7 @@ function dsf_mcsolveEnsembleProblem(
     op_list::Vector{TOl},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> Vector{TOl}([]),
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -673,7 +679,7 @@ end
         op_list::Vector{TOl},
         α0_l::Vector{<:Number}=zeros(length(op_list)),
         dsf_params::NamedTuple=NamedTuple();
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Function=(op_list,p) -> Vector{TOl}([]),
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -685,6 +691,9 @@ end
         kwargs...)
 
 Time evolution of a quantum system using the Monte Carlo wave function method and the Dynamical Shifted Fock algorithm.
+
+# Notes
+- For more details about `alg` and extra `kwargs`, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
 """
 function dsf_mcsolve(
     H::Function,
@@ -694,7 +703,7 @@ function dsf_mcsolve(
     op_list::Vector{TOl},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> Vector{TOl}([]),
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),

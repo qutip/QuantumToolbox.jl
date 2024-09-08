@@ -53,7 +53,7 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector, 
         c_ops::Union{Nothing,AbstractVector}=nothing;
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -78,7 +78,7 @@ where
 - `ψ0::QuantumObject`: The initial state of the system.
 - `tlist::AbstractVector`: The time list of the evolution.
 - `c_ops::Union{Nothing,AbstractVector}=nothing`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm used for the time evolution.
+- `alg::OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm used for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}=nothing`: The list of the operators for which the expectation values are calculated.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing`: The time-dependent Hamiltonian or Liouvillian.
 - `params::NamedTuple=NamedTuple()`: The parameters of the time evolution.
@@ -90,7 +90,7 @@ where
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
-- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- For more details about `alg` and extra `kwargs`, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
 
 # Returns
 
@@ -101,7 +101,7 @@ function mesolveProblem(
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     tlist,
     c_ops::Union{Nothing,AbstractVector} = nothing;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -157,7 +157,7 @@ function mesolveProblem(
     dudt! = is_time_dependent ? mesolve_td_dudt! : mesolve_ti_dudt!
 
     tspan = (t_l[1], t_l[end])
-    return ODEProblem{true,SciMLBase.FullSpecialize}(dudt!, ρ0, tspan, p; kwargs3...)
+    return ODEProblem{true,FullSpecialize}(dudt!, ρ0, tspan, p; kwargs3...)
 end
 
 @doc raw"""
@@ -202,7 +202,7 @@ where
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
-- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- For more details about `alg` and extra `kwargs`, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
 
 # Returns
 

@@ -18,7 +18,7 @@ A structure representing an ordinary differential equation (ODE) solver for solv
 
 It includes a field (attribute) `SteadyStateODESolver.alg` that specifies the solving algorithm. Default to `Tsit5()`.
 
-For more details about the solvers, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+For more details about the solvers, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
 """
 Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm} <: SteadyStateSolver
     alg::MT = Tsit5()
@@ -31,8 +31,7 @@ end
 
 struct SteadyStateDirectSolver <: SteadyStateSolver end
 struct SteadyStateEigenSolver <: SteadyStateSolver end
-Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{LinearSolve.SciMLLinearSolveAlgorithm,Nothing}} <:
-                   SteadyStateSolver
+Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{SciMLLinearSolveAlgorithm,Nothing}} <: SteadyStateSolver
     alg::MT = nothing
     Pl::Union{Function,Nothing} = nothing
     Pr::Union{Function,Nothing} = nothing

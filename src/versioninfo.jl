@@ -28,9 +28,9 @@ function versioninfo(io::IO = stdout)
         io,
         "Package information:\n",
         "====================================\n",
-        "QuantumToolbox  Ver. $(_get_pkg_version("QuantumToolbox"))\n",
-        "LinearSolve     Ver. $(_get_pkg_version("LinearSolve"))\n",
-        "OrdinaryDiffEq  Ver. $(_get_pkg_version("OrdinaryDiffEq"))\n",
+        "QuantumToolbox     Ver. $(_get_pkg_version("QuantumToolbox"))\n",
+        "LinearSolve        Ver. $(_get_pkg_version("LinearSolve"))\n",
+        "OrdinaryDiffEqCore Ver. $(_get_pkg_version("OrdinaryDiffEqCore"))\n",
     )
 
     # print System informations

@@ -17,9 +17,7 @@
     @test sum(abs2.(spec2[idxs2] .- test_func2[idxs2])) / sum(abs2.(test_func2[idxs2])) < 0.01
 
     @testset "Type Inference spectrum" begin
-        if VERSION >= v"1.10"
-            @inferred spectrum(H, ω_l, a', a, c_ops, solver = FFTCorrelation(), progress_bar = Val(false))
-            @inferred spectrum(H, ω_l, a', a, c_ops)
-        end
+        @inferred spectrum(H, ω_l, a', a, c_ops, solver = FFTCorrelation(), progress_bar = Val(false))
+        @inferred spectrum(H, ω_l, a', a, c_ops)
     end
 end

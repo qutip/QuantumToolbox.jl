@@ -13,7 +13,7 @@ struct LRTimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{Compl
     M::TM
 end
 
-struct LRMesolveOptions{AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
+struct LRMesolveOptions{AlgType<:OrdinaryDiffEqAlgorithm}
     alg::AlgType
     progress::Bool
     err_max::Real
@@ -27,7 +27,7 @@ struct LRMesolveOptions{AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
 end
 
 function LRMesolveOptions(;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     progress::Bool = true,
     err_max::Real = 0.0,
     p0::Real = 0.0,
@@ -399,7 +399,7 @@ function lr_mesolveProblem(
     f_ops::Tuple = (),
     opt::LRMesolveOptions{AlgType} = LRMesolveOptions(),
     kwargs...,
-) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
+) where {T1,T2,AlgType<:OrdinaryDiffEqAlgorithm}
 
     # Formulation of problem
     H -= 0.5im * sum([Γ' * Γ for Γ in c_ops])
@@ -495,7 +495,7 @@ function lr_mesolve(
     f_ops::Tuple = (),
     opt::LRMesolveOptions{AlgType} = LRMesolveOptions(),
     kwargs...,
-) where {T1,T2,AlgType<:OrdinaryDiffEq.OrdinaryDiffEqAlgorithm}
+) where {T1,T2,AlgType<:OrdinaryDiffEqAlgorithm}
     prob = lr_mesolveProblem(H, z, B, t_l, c_ops; e_ops = e_ops, f_ops = f_ops, opt = opt, kwargs...)
     return lr_mesolve(prob; kwargs...)
 end
