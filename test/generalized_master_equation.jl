@@ -26,7 +26,7 @@
     c_ops = [sqrt(0.01) * a2, sqrt(0.01) * sm2]
     L2 = liouvillian(H_d, c_ops)
 
-    @test (expect(Xp' * Xp, steadystate(L1)) < 1e-10 && expect(Xp' * Xp, steadystate(L2)) > 1e-3)
+    @test (expect(Hermitian(Xp' * Xp), steadystate(L1)) < 1e-10 && expect(Hermitian(Xp' * Xp), steadystate(L2)) > 1e-3)
 
     H = 1 * a' * a + 1 * sz / 2 + 1e-5 * (a * sp + a' * sm)
 
