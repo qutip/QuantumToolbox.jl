@@ -39,7 +39,9 @@ Qobj(rand(4, 4))
 ```
 
 ```@example Qobj
-Qobj(rand(4, 4), dims = (2, 2))
+Qobj(M, dims = [2, 2])  # dims as Vector
+Qobj(M, dims = (2, 2))  # dims as Tuple (recommended)
+Qobj(M, dims = SVector(2, 2)) # dims as StaticArrays.SVector (recommended)
 ```
 
 > [!IMPORTANT]

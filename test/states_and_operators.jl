@@ -15,7 +15,7 @@
     @testset "fock state" begin
         # fock, basis, and fock_dm
         @test fock_dm(4; dims = (2, 2), sparse = true) ≈ ket2dm(basis(4; dims = (2, 2)))
-        @test_throws DimensionMismatch fock(4; dims = (2,))
+        @test_throws DimensionMismatch fock(4; dims = 2)
     end
 
     @testset "coherent state" begin
@@ -314,7 +314,7 @@
         I_op1 = qeye(4)
         I_op2 = qeye(4, dims = (2, 2))
         I_su1 = qeye(4, type = SuperOperator)
-        I_su2 = qeye(4, type = SuperOperator, dims = (2,))
+        I_su2 = qeye(4, type = SuperOperator, dims = 2)
         @test isunitary(I_op1) == true
         @test isunitary(I_op2) == true
         @test isunitary(I_su1) == false
@@ -326,7 +326,7 @@
         @test (I_op2 == I_su1) == false
         @test (I_op2 == I_su2) == false
         @test (I_su1 == I_su2) == true
-        @test_throws DimensionMismatch qeye(4, dims = (2,))
+        @test_throws DimensionMismatch qeye(4, dims = 2)
         @test_throws DimensionMismatch qeye(2, type = SuperOperator)
         @test_throws DimensionMismatch qeye(4, type = SuperOperator, dims = (2, 2))
     end
@@ -335,7 +335,7 @@
         # spre, spost, and sprepost
         Xs = sigmax()
         Xd = sparse_to_dense(Xs)
-        A_wrong1 = Qobj(rand(4, 4), dims = (4,))
+        A_wrong1 = Qobj(rand(4, 4), dims = 4)
         A_wrong2 = Qobj(rand(4, 4), dims = (2, 2))
         A_wrong3 = Qobj(rand(3, 3))
         @test (typeof(spre(Xd).data) <: SparseMatrixCSC) == true
