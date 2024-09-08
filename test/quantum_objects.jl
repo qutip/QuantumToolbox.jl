@@ -1,28 +1,4 @@
 @testset "Quantum Objects" verbose = true begin
-    @testset "Type Inference" begin
-        for T in [ComplexF32, ComplexF64]
-            N = 4
-            a = rand(T, N)
-            @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
-            for type in [Ket, OperatorKet]
-                @inferred Qobj(a, type = type)
-            end
-
-            UnionType = Union{QuantumObject{Matrix{T},BraQuantumObject},QuantumObject{Matrix{T},OperatorQuantumObject}}
-            a = rand(T, 1, N)
-            @inferred UnionType Qobj(a)
-            for type in [Bra, OperatorBra]
-                @inferred Qobj(a, type = type)
-            end
-
-            a = rand(T, N, N)
-            @inferred UnionType Qobj(a)
-            for type in [Operator, SuperOperator]
-                @inferred Qobj(a, type = type)
-            end
-        end
-    end
-
     # ArgumentError: type is incompatible with vector or matrix
     @testset "ArgumentError" begin
         a = rand(ComplexF64, 2)
@@ -294,6 +270,51 @@
         @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
     end
 
+    @testset "Type Inference (QuantumObject)" begin
+        if VERSION >= v"1.10"
+            for T in [ComplexF32, ComplexF64]
+                N = 4
+                a = rand(T, N)
+                @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
+                for type in [Ket, OperatorKet]
+                    @inferred Qobj(a, type = type)
+                end
+    
+                UnionType = Union{QuantumObject{Matrix{T},BraQuantumObject,1},QuantumObject{Matrix{T},OperatorQuantumObject,1}}
+                a = rand(T, 1, N)
+                @inferred UnionType Qobj(a)
+                for type in [Bra, OperatorBra]
+                    @inferred Qobj(a, type = type)
+                end
+    
+                a = rand(T, N, N)
+                @inferred UnionType Qobj(a)
+                for type in [Operator, SuperOperator]
+                    @inferred Qobj(a, type = type)
+                end
+            end
+
+            @testset "Math Operation" begin
+                a = destroy(20)
+                σx = sigmax()
+                @inferred a + a
+                @inferred a + a'
+                @inferred a + 2
+                @inferred 2 * a
+                @inferred a / 2
+                @inferred a ^ 2
+                @inferred a .+ 2
+                @inferred a .* 2
+                @inferred a ./ 2
+                @inferred a .^ 2
+                @inferred a * a
+                @inferred a * a'
+                @inferred kron(a, σx)
+                @inferred kron(a, eye(2))
+            end
+        end
+    end
+
     @testset "projection" begin
         N = 10
         a = fock(N, 3)
@@ -448,6 +469,53 @@
         ρ2 = dense_to_sparse(ρ1)
         @test tidyup(ρ2, tol) != ρ2
         @test dense_to_sparse(tidyup(ρ1, tol)) == tidyup(ρ2, tol)
+    end
+
+    @testset "ptrace" begin
+        g = fock(2, 1)
+        e = fock(2, 0)
+        α = sqrt(0.7)
+        β = sqrt(0.3) * 1im
+        ψ = α * kron(g, e) + β * kron(e, g)
+
+        ρ1 = ptrace(ψ, 1)
+        ρ2 = ptrace(ψ, 2)
+        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
+        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+
+        ψ_d = ψ'
+
+        ρ1 = ptrace(ψ_d, 1)
+        ρ2 = ptrace(ψ_d, 2)
+        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
+        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+
+        ρ = ket2dm(ψ)
+        ρ1 = ptrace(ρ, 1)
+        ρ2 = ptrace(ρ, 2)
+        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
+        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+
+        ψ1 = normalize(g + 1im * e)
+        ψ2 = normalize(g + e)
+        ρ1 = ket2dm(ψ1)
+        ρ2 = ket2dm(ψ2)
+        ρ = kron(ρ1, ρ2)
+        ρ1_ptr = ptrace(ρ, 1)
+        ρ2_ptr = ptrace(ρ, 2)
+        @test ρ1.data ≈ ρ1_ptr.data atol = 1e-10
+        @test ρ2.data ≈ ρ2_ptr.data atol = 1e-10
+
+        @testset "Type Inference (ptrace)" begin
+            if VERSION >= v"1.10"
+                @inferred ptrace(ρ, 1)
+                @inferred ptrace(ρ, 2)
+                @inferred ptrace(ψ_d, 1)
+                @inferred ptrace(ψ_d, 2)
+                @inferred ptrace(ψ, 1)
+                @inferred ptrace(ψ, 2)
+            end
+        end
     end
 
     @testset "permute" begin

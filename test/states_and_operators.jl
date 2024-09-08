@@ -202,10 +202,6 @@
         @test U3.dims == U4.dims == [5, 5]
 
         @test_throws ArgumentError rand_unitary(20, :wrong)
-        @testset "Type Inference" begin
-            @inferred rand_unitary(10, :haar)
-            @inferred rand_unitary(10, :exp)
-        end
     end
 
     @testset "Spin-j operators" begin
@@ -348,5 +344,50 @@
         @test (typeof(sprepost(Xd, Xs).data) <: SparseMatrixCSC) == true
         @test_throws DimensionMismatch sprepost(A_wrong1, A_wrong2)
         @test_throws DimensionMismatch sprepost(A_wrong1, A_wrong3)
+    end
+
+    @testset "Type Inference (Operators)" begin
+        if VERSION >= v"1.10"
+            @inferred rand_unitary(10, Val(:haar))
+            @inferred rand_unitary(10, Val(:exp))
+
+            a = destroy(20)
+            a_d = create(20)
+            @inferred commutator(a, a_d)
+            
+            @inferred destroy(20)
+            @inferred create(20)
+            @inferred num(20)
+            @inferred displace(20, 0.5 + 0.5im)
+            @inferred squeeze(20, 0.5 + 0.5im)
+            @inferred position(20)
+            @inferred momentum(20)
+
+            @inferred phase(20, 0.5)
+
+            @inferred jmat(2.5)
+            @inferred jmat(2.5, Val(:x))
+            @inferred jmat(2.5, Val(:y))
+            @inferred jmat(2.5, Val(:z))
+
+            @inferred sigmap()
+            @inferred sigmam()
+            @inferred sigmax()
+            @inferred sigmay()
+            @inferred sigmaz()
+
+            @inferred eye(20)
+
+            @inferred fdestroy(Val(10), 4)
+            @inferred fcreate(Val(10), 4)
+
+            @inferred projection(20, 5, 3)
+
+            @inferred tunneling(20, 1, sparse=Val(false))
+            @inferred tunneling(20, 1, sparse=Val(true))
+
+            @inferred qft(20)
+            @inferred qft((2, 10))
+        end
     end
 end

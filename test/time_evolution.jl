@@ -16,8 +16,6 @@
         sol3 = sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
         sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
         @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
-        @test ptrace(sol.states[end], 1) ≈ ptrace(ket2dm(sol.states[end]), 1)
-        @test ptrace(sol.states[end]', 1) ≈ ptrace(sol.states[end], 1)
         @test length(sol.states) == 1
         @test size(sol.expect) == (length(e_ops), length(t_l))
         @test length(sol2.states) == length(t_l)

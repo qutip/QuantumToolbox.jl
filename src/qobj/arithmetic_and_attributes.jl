@@ -515,7 +515,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, SVector(sel))
-    return QuantumObject(ρtr, dims = dkeep)
+    return QuantumObject(ρtr, type=Operator, dims = dkeep)
 end
 
 ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
@@ -524,7 +524,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::U
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, SVector(sel))
-    return QuantumObject(ρtr, dims = dkeep)
+    return QuantumObject(ρtr, type=Operator, dims = dkeep)
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
@@ -547,7 +547,7 @@ function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
 
     vmat = reshape(QO, reverse(dims)...)
     topermute = nd + 1 .- sel_qtrace
-    vmat = PermutedDimsArray(vmat, topermute)
+    vmat = permutedims(vmat, topermute) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
     vmat = reshape(vmat, prod(dkeep), prod(dtrace))
 
     return vmat * vmat', dkeep
@@ -576,14 +576,14 @@ function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
 
     ρmat = reshape(QO, reverse(vcat(dims, dims))...)
     topermute = 2 * nd + 1 .- qtrace_sel
-    ρmat = PermutedDimsArray(ρmat, reverse(topermute))
+    ρmat = permutedims(ρmat, reverse(topermute)) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
 
     ## TODO: Check if it works always
 
     # ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
     # res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
     ρmat = reshape(ρmat, prod(dkeep), prod(dkeep), prod(dtrace), prod(dtrace))
-    res = dropdims(mapslices(tr, ρmat, dims = (3, 4)), dims = (3, 4))
+    res = map(tr, eachslice(ρmat, dims = (1, 2)))
 
     return res, dkeep
 end
