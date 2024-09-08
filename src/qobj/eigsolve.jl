@@ -389,7 +389,7 @@ function eigsolve_al(
 
     # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
 
-    Lmap = ArnoldiLindbladIntegratorMap(eltype(MT1),size(L),integrator)
+    Lmap = ArnoldiLindbladIntegratorMap(eltype(MT1), size(L), integrator)
 
     res = _eigsolve(Lmap, mat2vec(ρ0), L.type, L.dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
     # finish!(prog)

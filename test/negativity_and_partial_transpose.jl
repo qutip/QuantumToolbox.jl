@@ -14,6 +14,11 @@
         @test negativity(rho, 2) ≈ Neg
         @test negativity(rho, 1; logarithmic = true) ≈ log2(2 * Neg + 1)
         @test_throws ArgumentError negativity(rho, 3)
+
+        @testset "Type Inference (negativity)" begin
+            @inferred negativity(rho, 1)
+            @inferred negativity(rho, 1; logarithmic = true)
+        end
     end
 
     @testset "partial_transpose" begin
@@ -30,5 +35,10 @@
             end
         end
         @test_throws ArgumentError partial_transpose(A_dense, [true])
+
+        @testset "Type Inference (partial_transpose)" begin
+            @inferred partial_transpose(A_dense, [true, false, true])
+            @inferred partial_transpose(A_sparse, [true, false, true])
+        end
     end
 end

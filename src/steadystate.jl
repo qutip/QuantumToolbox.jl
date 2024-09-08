@@ -31,10 +31,14 @@ end
 
 struct SteadyStateDirectSolver <: SteadyStateSolver end
 struct SteadyStateEigenSolver <: SteadyStateSolver end
-Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{SciMLLinearSolveAlgorithm,Nothing}} <: SteadyStateSolver
-    alg::MT = nothing
-    Pl::Union{Function,Nothing} = nothing
-    Pr::Union{Function,Nothing} = nothing
+Base.@kwdef struct SteadyStateLinearSolver{
+    MT<:Union{SciMLLinearSolveAlgorithm,Nothing},
+    PlT<:Union{Function,Nothing},
+    PrT<:Union{Function,Nothing},
+} <: SteadyStateSolver
+    alg::MT = KrylovJL_GMRES()
+    Pl::PlT = nothing
+    Pr::PrT = nothing
 end
 
 @doc raw"""
@@ -363,13 +367,13 @@ function _steadystate_floquet(
     ρ0 = reshape(ρtot[offset1+1:offset2], Ns, Ns)
     ρ0_tr = tr(ρ0)
     ρ0 = ρ0 / ρ0_tr
-    ρ0 = QuantumObject((ρ0 + ρ0') / 2, dims = L_0.dims)
+    ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator, dims = L_0.dims)
     ρtot = ρtot / ρ0_tr
 
     ρ_list = [ρ0]
     for i in 0:n_max-1
         ρi_m = reshape(ρtot[offset1-(i+1)*N+1:offset1-i*N], Ns, Ns)
-        ρi_m = QuantumObject(ρi_m, dims = L_0.dims)
+        ρi_m = QuantumObject(ρi_m, type = Operator, dims = L_0.dims)
         push!(ρ_list, ρi_m)
     end
 

@@ -48,7 +48,7 @@ where `integrator` is the ODE integrator for the time-evolution. In this way, we
 """
 abstract type AbstractLinearMap{T,TS} end
 
-Base.eltype(A::AbstractLinearMap{T}) where T = T
+Base.eltype(A::AbstractLinearMap{T}) where {T} = T
 
 Base.size(A::AbstractLinearMap) = A.size
 Base.size(A::AbstractLinearMap, i::Int) = A.size[i]

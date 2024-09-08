@@ -396,7 +396,7 @@
         a = destroy(20)
         a_d = create(20)
         @inferred commutator(a, a_d)
-        
+
         @inferred destroy(20)
         @inferred create(20)
         @inferred num(20)
@@ -425,8 +425,8 @@
 
         @inferred projection(20, 5, 3)
 
-        @inferred tunneling(20, 1, sparse=Val(false))
-        @inferred tunneling(20, 1, sparse=Val(true))
+        @inferred tunneling(20, 1, sparse = Val(false))
+        @inferred tunneling(20, 1, sparse = Val(true))
 
         @inferred qft(20)
         @inferred qft((2, 10))

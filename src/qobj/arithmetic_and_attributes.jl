@@ -240,7 +240,9 @@ julia> tr(a' * a)
 LinearAlgebra.tr(
     A::QuantumObject{<:AbstractArray{T},OpType},
 ) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = tr(A.data)
-LinearAlgebra.tr(A::QuantumObject{<:Union{<:Hermitian{TF}, Symmetric{TR}},OpType}) where {TF<:BlasFloat,TR<:Real,OpType<:OperatorQuantumObject} = real(tr(A.data))
+LinearAlgebra.tr(
+    A::QuantumObject{<:Union{<:Hermitian{TF},Symmetric{TR}},OpType},
+) where {TF<:BlasFloat,TR<:Real,OpType<:OperatorQuantumObject} = real(tr(A.data))
 
 @doc raw"""
     svdvals(A::QuantumObject)
@@ -515,7 +517,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, SVector(sel))
-    return QuantumObject(ρtr, type=Operator, dims = dkeep)
+    return QuantumObject(ρtr, type = Operator, dims = dkeep)
 end
 
 ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
@@ -524,7 +526,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::U
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, SVector(sel))
-    return QuantumObject(ρtr, type=Operator, dims = dkeep)
+    return QuantumObject(ρtr, type = Operator, dims = dkeep)
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 

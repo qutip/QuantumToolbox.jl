@@ -279,14 +279,15 @@
                 for type in [Ket, OperatorKet]
                     @inferred Qobj(a, type = type)
                 end
-    
-                UnionType = Union{QuantumObject{Matrix{T},BraQuantumObject,1},QuantumObject{Matrix{T},OperatorQuantumObject,1}}
+
+                UnionType =
+                    Union{QuantumObject{Matrix{T},BraQuantumObject,1},QuantumObject{Matrix{T},OperatorQuantumObject,1}}
                 a = rand(T, 1, N)
                 @inferred UnionType Qobj(a)
                 for type in [Bra, OperatorBra]
                     @inferred Qobj(a, type = type)
                 end
-    
+
                 a = rand(T, N, N)
                 @inferred UnionType Qobj(a)
                 for type in [Operator, SuperOperator]
@@ -302,7 +303,7 @@
                 @inferred a + 2
                 @inferred 2 * a
                 @inferred a / 2
-                @inferred a ^ 2
+                @inferred a^2
                 @inferred a .+ 2
                 @inferred a .* 2
                 @inferred a ./ 2

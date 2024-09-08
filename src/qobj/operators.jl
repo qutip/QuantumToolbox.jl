@@ -31,7 +31,8 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_unitary(dimensions, Val(distribution))` instead of `rand_unitary(dimensions, distribution)`. Also, put `dimensions` as `Tuple` or `SVector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-rand_unitary(dimensions::Int, distribution::Union{Symbol,Val} = Val(:haar)) = rand_unitary(SVector(dimensions), makeVal(distribution))
+rand_unitary(dimensions::Int, distribution::Union{Symbol,Val} = Val(:haar)) =
+    rand_unitary(SVector(dimensions), makeVal(distribution))
 rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, distribution::Union{Symbol,Val} = Val(:haar)) =
     rand_unitary(dimensions, makeVal(distribution))
 function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:haar})
@@ -484,7 +485,7 @@ end
 
 Generates the projection operator ``\hat{O} = \dyad{i}{j}`` with Hilbert space dimension `N`.
 """
-projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type=Operator)
+projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator)
 
 @doc raw"""
     tunneling(N::Int, m::Int=1; sparse::Union{Bool,Val{<:Bool}}=Val(false))

@@ -93,25 +93,25 @@
     @test isapprox(vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])), vec2mat(state3[1]).data, atol = 1e-5)
 
     @testset "Type Inference (eigen)" begin
-      N = 5
-      a = kron(destroy(N), qeye(N))
-      a_d = a'
-      b = kron(qeye(N), destroy(N))
-      b_d = b'
-  
-      ωc = 1
-      ωb = 1
-      g = 0.01
-      κ = 0.1
-      n_thermal = 0.01
-  
-      H = ωc * a_d * a + ωb * b_d * b + g * (a + a_d) * (b + b_d)
-      c_ops = [√((1 + n_thermal) * κ) * a, √κ * b, √(n_thermal * κ) * a_d]
-      L = liouvillian(H, c_ops)
+        N = 5
+        a = kron(destroy(N), qeye(N))
+        a_d = a'
+        b = kron(qeye(N), destroy(N))
+        b_d = b'
 
-      @inferred eigenstates(H, sparse = false)
-      @inferred eigenstates(H, sparse = true)
-      @inferred eigenstates(L, sparse = true)
-      @inferred eigsolve_al(L, 1 \ (40 * κ), k = 10)
+        ωc = 1
+        ωb = 1
+        g = 0.01
+        κ = 0.1
+        n_thermal = 0.01
+
+        H = ωc * a_d * a + ωb * b_d * b + g * (a + a_d) * (b + b_d)
+        c_ops = [√((1 + n_thermal) * κ) * a, √κ * b, √(n_thermal * κ) * a_d]
+        L = liouvillian(H, c_ops)
+
+        @inferred eigenstates(H, sparse = false)
+        @inferred eigenstates(H, sparse = true)
+        @inferred eigenstates(L, sparse = true)
+        @inferred eigsolve_al(L, 1 \ (40 * κ), k = 10)
     end
 end

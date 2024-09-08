@@ -197,10 +197,10 @@ end
 
 function liouvillian_floquet(
     H::QuantumObject{<:AbstractArray{T1},OpType1},
-    c_ops::AbstractVector,
     Hₚ::QuantumObject{<:AbstractArray{T2},OpType2},
     Hₘ::QuantumObject{<:AbstractArray{T3},OpType3},
-    ω::Real;
+    ω::Real,
+    c_ops::Union{AbstractVector,Nothing} = nothing;
     n_max::Int = 3,
     tol::Real = 1e-15,
 ) where {
@@ -226,30 +226,31 @@ function liouvillian_generalized(
     H::QuantumObject{MT,OperatorQuantumObject},
     fields::Vector,
     T_list::Vector{<:Real};
-    N_trunc::Int = size(H, 1),
+    N_trunc::Union{Int,Nothing} = nothing,
     tol::Real = 1e-12,
     σ_filter::Union{Nothing,Real} = nothing,
 ) where {MT<:AbstractMatrix}
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
-    dims = N_trunc == size(H, 1) ? H.dims : SVector(N_trunc)
+    dims = (N_trunc isa Nothing) ? H.dims : SVector(N_trunc)
+    final_size = prod(dims)
     result = eigen(H)
-    E = real.(result.values[1:N_trunc])
+    E = real.(result.values[1:final_size])
     U = QuantumObject(result.vectors, result.type, result.dims)
 
-    H_d = QuantumObject(Diagonal(complex(E)), dims = dims)
+    H_d = QuantumObject(Diagonal(complex(E)), type = Operator, dims = dims)
 
     Ω = E' .- E
     Ωp = triu(dense_to_sparse(Ω, tol), 1)
 
     # Filter in the Hilbert space
     σ = isnothing(σ_filter) ? 500 * maximum([norm(field) / length(field) for field in fields]) : σ_filter
-    F1 = QuantumObject(gaussian.(Ω, 0, σ), dims = dims)
+    F1 = QuantumObject(gaussian.(Ω, 0, σ), type = Operator, dims = dims)
     F1 = dense_to_sparse(F1, tol)
 
     # Filter in the Liouville space
-    # M1 = ones(N_trunc, N_trunc)
-    M1 = similar(E, N_trunc, N_trunc)
+    # M1 = ones(final_size, final_size)
+    M1 = similar(E, final_size, final_size)
     M1 .= 1
     Ω1 = kron(Ω, M1)
     Ω2 = kron(M1, Ω)
@@ -261,16 +262,16 @@ function liouvillian_generalized(
 
     for i in eachindex(fields)
         # The operator that couples the system to the bath in the eigenbasis
-        X_op = dense_to_sparse((U'*fields[i]*U).data[1:N_trunc, 1:N_trunc], tol)
+        X_op = dense_to_sparse((U'*fields[i]*U).data[1:final_size, 1:final_size], tol)
         if ishermitian(fields[i])
             X_op = (X_op + X_op') / 2 # Make sure it's hermitian
         end
 
         # Ohmic reservoir
         N_th = n_th.(Ωp, T_list[i])
-        Sp₀ = QuantumObject(triu(X_op, 1), dims = dims)
-        Sp₁ = QuantumObject(droptol!((@. Ωp * N_th * Sp₀.data), tol), dims = dims)
-        Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), dims = dims)
+        Sp₀ = QuantumObject(triu(X_op, 1), type = Operator, dims = dims)
+        Sp₁ = QuantumObject(droptol!((@. Ωp * N_th * Sp₀.data), tol), type = Operator, dims = dims)
+        Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), type = Operator, dims = dims)
         # S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
 
         L +=
