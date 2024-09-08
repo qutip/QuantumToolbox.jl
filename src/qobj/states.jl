@@ -114,7 +114,7 @@ Density matrix for a thermal state (generating thermal state probabilities) with
 - `sparse::Union{Bool,Val}`: If `true`, return a sparse matrix representation.
 
 > [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `thermal_dm(N, n, Val(sparse))` instead of `thermal_dm(N, n, sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
+> If you want to keep type stability, it is recommended to use `thermal_dm(N, n, Val(sparse))` instead of `thermal_dm(N, n, sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val} = Val(false))
     β = log(1.0 / n + 1.0)
@@ -285,7 +285,7 @@ Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
 ```
 
 > [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `w_state(Val(n))` instead of `w_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
+> If you want to keep type stability, it is recommended to use `w_state(Val(n))` instead of `w_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function w_state(::Val{n}) where {n}
     nzind = 2 .^ (0:(n-1)) .+ 1
@@ -306,7 +306,7 @@ Returns the generalized `n`-qudit [Greenberger–Horne–Zeilinger (GHZ) state](
 Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
 
 > [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `ghz_state(Val(n); kwargs...)` instead of `ghz_state(n; kwargs...)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
+> If you want to keep type stability, it is recommended to use `ghz_state(Val(n); kwargs...)` instead of `ghz_state(n; kwargs...)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function ghz_state(::Val{n}; d::Int = 2) where {n}
     nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)

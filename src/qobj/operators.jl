@@ -428,7 +428,7 @@ d_j = \sigma_z^{\otimes j} \otimes \sigma_{-} \otimes I^{\otimes N-j-1}
 Note that the site index `j` should satisfy: `0 ≤ j ≤ N - 1`.
 
 > [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `fdestroy(Val(N), j)` instead of `fdestroy(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
+> If you want to keep type stability, it is recommended to use `fdestroy(Val(N), j)` instead of `fdestroy(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 fdestroy(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
 
@@ -445,7 +445,7 @@ d_j^\dagger = \sigma_z^{\otimes j} \otimes \sigma_{+} \otimes I^{\otimes N-j-1}
 Note that the site index `j` should satisfy: `0 ≤ j ≤ N - 1`.
 
 > [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `fcreate(Val(N), j)` instead of `fcreate(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
+> If you want to keep type stability, it is recommended to use `fcreate(Val(N), j)` instead of `fcreate(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 fcreate(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmap())
 
@@ -486,7 +486,7 @@ where ``N`` is the number of basis states in the Hilbert space, and ``m`` is the
 If `sparse=true`, the operator is returned as a sparse matrix, otherwise a dense matrix is returned.
 
 > [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `tunneling(N, m, Val(sparse))` instead of `tunneling(N, m, sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for more details.
+> If you want to keep type stability, it is recommended to use `tunneling(N, m, Val(sparse))` instead of `tunneling(N, m, sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function tunneling(N::Int, m::Int = 1; sparse::Union{Bool,Val} = Val(false))
     (m < 1) && throw(ArgumentError("The number of excitations (m) cannot be less than 1"))
