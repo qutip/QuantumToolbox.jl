@@ -39,8 +39,14 @@ Qobj(rand(4, 4))
 ```
 
 ```@example Qobj
-Qobj(rand(4, 4), dims = [2, 2])
+M = rand(ComplexF64, 4, 4)
+Qobj(M, dims = [2, 2])  # dims as Vector
+Qobj(M, dims = (2, 2))  # dims as Tuple (recommended)
+Qobj(M, dims = SVector(2, 2)) # dims as StaticArrays.SVector (recommended)
 ```
+
+> [!IMPORTANT]
+> Please note that here we put the `dims` as a tuple `(2, 2)`. Although it supports also `Vector` type (`dims = [2, 2]`), it is recommended to use `Tuple` or `SVector` from [`StaticArrays.jl`](https://github.com/JuliaArrays/StaticArrays.jl) to improve performance. For a brief explanation on the impact of the type of `dims`, see the Section [The Importance of Type-Stability](@ref doc:Type-Stability).
 
 ```@example Qobj
 Qobj(rand(4, 4), type = SuperOperator)

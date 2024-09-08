@@ -18,7 +18,7 @@ end
 #Definition of many-body operators
 function mb(s::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, i::Integer, N::Integer) where {T1}
     T = s.dims[1]
-    return QuantumObject(kron(eye(T^(i - 1)), s, eye(T^(N - i))); dims = fill(2, N))
+    return QuantumObject(kron(eye(T^(i - 1)), s, eye(T^(N - i))); dims = ntuple(j -> 2, Val(N)))
 end
 mb(s::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, i::Integer, latt::Lattice) where {T1} = mb(s, i, latt.N)
 mb(s::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, row::Integer, col::Integer, latt::Lattice) where {T1} =
@@ -42,8 +42,7 @@ function TFIM(Jx::Real, Jy::Real, Jz::Real, hx::Real, γ::Real, latt::Lattice; b
     S = [mb(sm, i, latt) for i in 1:latt.N]
     c_ops = sqrt(γ) .* S
 
-    op_sum(S::Vector{QuantumObject{SparseMatrixCSC{ComplexF64,Int64},OperatorQuantumObject}}, i::CartesianIndex) =
-        S[latt.lin_idx[i]] * sum(S[latt.lin_idx[nn(i, latt, bc; order = order)]])
+    op_sum(S, i::CartesianIndex) = S[latt.lin_idx[i]] * sum(S[latt.lin_idx[nn(i, latt, bc; order = order)]])
 
     H = 0
     if (Jx != 0 || hx != 0)
