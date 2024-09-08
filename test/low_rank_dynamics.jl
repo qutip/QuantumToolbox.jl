@@ -8,7 +8,7 @@
     M = Nx * Ny + 1
 
     # Define initial state
-    ϕ = Vector{QuantumObject{Vector{ComplexF64},KetQuantumObject}}(undef, M)
+    ϕ = Vector{QuantumObject{Vector{ComplexF64},KetQuantumObject,M - 1}}(undef, M)
     ϕ[1] = tensor(repeat([basis(2, 0)], N_modes)...)
     i = 1
     for j in 1:N_modes
@@ -29,7 +29,7 @@
     B = Matrix(Diagonal([1 + 0im; zeros(M - 1)]))
     S = z' * z
     B = B / tr(S * B)
-    ρ = Qobj(z * B * z', dims = ones(Int, N_modes) * N_cut)
+    ρ = Qobj(z * B * z', dims = ntuple(i -> 1, Val(N_modes)) .* N_cut)
 
     # Define Hamiltonian and collapse operators
     Jx = 0.9

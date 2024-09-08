@@ -62,21 +62,21 @@ function entropy_vn(
 end
 
 """
-    entanglement(QO::QuantumObject, sel::Vector)
+    entanglement(QO::QuantumObject, sel::Union{Int,AbstractVector{Int},Tuple})
 
 Calculates the entanglement by doing the partial trace of `QO`, selecting only the dimensions
 with the indices contained in the `sel` vector, and then using the Von Neumann entropy [`entropy_vn`](@ref).
 """
 function entanglement(
     QO::QuantumObject{<:AbstractArray{T},OpType},
-    sel::Vector{Int},
+    sel::Union{AbstractVector{Int},Tuple},
 ) where {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     ψ = normalize(QO)
     ρ_tr = ptrace(ψ, sel)
     entropy = entropy_vn(ρ_tr)
     return (entropy > 0) * entropy
 end
-entanglement(QO::QuantumObject, sel::Int) = entanglement(QO, [sel])
+entanglement(QO::QuantumObject, sel::Int) = entanglement(QO, (sel,))
 
 @doc raw"""
     tracedist(ρ::QuantumObject, σ::QuantumObject)

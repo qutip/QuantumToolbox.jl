@@ -471,7 +471,7 @@ proj(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * ψ
 proj(ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} = ψ' * ψ
 
 @doc raw"""
-    ptrace(QO::QuantumObject, sel::Vector{Int})
+    ptrace(QO::QuantumObject, sel)
 
 [Partial trace](https://en.wikipedia.org/wiki/Partial_trace) of a quantum state `QO` leaving only the dimensions
 with the indices present in the `sel` vector.
@@ -487,7 +487,7 @@ Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
  0.0 + 0.0im
  0.0 + 0.0im
 
-julia> ptrace(ψ, [2])
+julia> ptrace(ψ, 2)
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
  0.0+0.0im  0.0+0.0im
@@ -504,63 +504,79 @@ Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
                 0.0 + 0.0im
  0.7071067811865475 + 0.0im
 
-julia> ptrace(ψ, [1])
+julia> ptrace(ψ, 1)
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
  0.5+0.0im  0.0+0.0im
  0.0+0.0im  0.5+0.0im
 ```
 """
-function ptrace(QO::QuantumObject{<:AbstractArray{T1},KetQuantumObject}, sel::Vector{T2}) where {T1,T2<:Integer}
+function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     length(QO.dims) == 1 && return QO
 
-    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sel)
+    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, SVector(sel))
     return QuantumObject(ρtr, dims = dkeep)
 end
 
-ptrace(QO::QuantumObject{<:AbstractArray{T1},BraQuantumObject}, sel::Vector{T2}) where {T1,T2<:Integer} =
-    ptrace(QO', sel)
+ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
 
-function ptrace(QO::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, sel::Vector{T2}) where {T1,T2<:Integer}
+function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     length(QO.dims) == 1 && return QO
 
-    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sel)
+    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, SVector(sel))
     return QuantumObject(ρtr, dims = dkeep)
 end
-ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, [sel])
+ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
-function _ptrace_ket(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where {T1,T2<:Integer}
-    rd = dims
-    nd = length(rd)
+function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
+    nd = length(dims)
 
-    nd == 1 && return QO, rd
+    nd == 1 && return QO, dims
 
-    dkeep = rd[sel]
-    qtrace = filter!(e -> e ∉ sel, Vector(1:nd))
-    dtrace = @view(rd[qtrace])
+    qtrace = filter(i -> i ∉ sel, 1:nd)
+    dkeep = dims[sel]
+    dtrace = dims[qtrace]
+    # Concatenate sel and qtrace without loosing the length information
+    sel_qtrace = ntuple(Val(nd)) do i
+        if i <= length(sel)
+            @inbounds sel[i]
+        else
+            @inbounds qtrace[i-length(sel)]
+        end
+    end
 
-    vmat = reshape(QO, reverse(rd)...)
-    topermute = nd + 1 .- vcat(sel, qtrace)
+    vmat = reshape(QO, reverse(dims)...)
+    topermute = nd + 1 .- sel_qtrace
     vmat = PermutedDimsArray(vmat, topermute)
     vmat = reshape(vmat, prod(dkeep), prod(dtrace))
 
     return vmat * vmat', dkeep
 end
 
-function _ptrace_oper(QO::AbstractArray{T1}, dims::Vector{<:Integer}, sel::Vector{T2}) where {T1,T2<:Integer}
-    rd = dims
-    nd = length(rd)
+function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
+    nd = length(dims)
 
-    nd == 1 && return QO, rd
+    nd == 1 && return QO, dims
 
-    dkeep = rd[sel]
-    qtrace = filter!(e -> e ∉ sel, Vector(1:nd))
-    dtrace = @view(rd[qtrace])
+    qtrace = filter(i -> i ∉ sel, 1:nd)
+    dkeep = dims[sel]
+    dtrace = dims[qtrace]
+    # Concatenate sel and qtrace without loosing the length information
+    qtrace_sel = ntuple(Val(2 * nd)) do i
+        if i <= length(qtrace)
+            @inbounds qtrace[i]
+        elseif i <= 2 * length(qtrace)
+            @inbounds qtrace[i-length(qtrace)] + nd
+        elseif i <= 2 * length(qtrace) + length(sel)
+            @inbounds sel[i-length(qtrace)-length(sel)]
+        else
+            @inbounds sel[i-length(qtrace)-2*length(sel)] + nd
+        end
+    end
 
-    ρmat = reshape(QO, reverse!(repeat(rd, 2))...)
-    topermute = 2 * nd + 1 .- vcat(qtrace, qtrace .+ nd, sel, sel .+ nd)
-    reverse!(topermute)
-    ρmat = PermutedDimsArray(ρmat, topermute)
+    ρmat = reshape(QO, reverse(vcat(dims, dims))...)
+    topermute = 2 * nd + 1 .- qtrace_sel
+    ρmat = PermutedDimsArray(ρmat, reverse(topermute))
 
     ## TODO: Check if it works always
 
@@ -639,7 +655,7 @@ function get_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject})
 end
 
 @doc raw"""
-    permute(A::QuantumObject, order::Vector{Int})
+    permute(A::QuantumObject, order::Union{AbstractVector{Int},Tuple})
 
 Permute the tensor structure of a [`QuantumObject`](@ref) `A` according to the specified `order` list
 
@@ -660,28 +676,36 @@ true
 """
 function permute(
     A::QuantumObject{<:AbstractArray{T},ObjType},
-    order::AbstractVector{Int},
+    order::Union{AbstractVector{Int},Tuple},
 ) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
     (length(order) != length(A.dims)) &&
         throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
 
     !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))
 
-    # obtain the arguments: dims for reshape; perm for PermutedDimsArray
-    dims, perm = _dims_and_perm(A.type, A.dims, order, length(order))
+    _non_static_array_warning("order", order)
 
-    return QuantumObject(reshape(PermutedDimsArray(reshape(A.data, dims...), perm), size(A)), A.type, A.dims[order])
+    order_svector = SVector{length(order),Int}(order) # convert it to SVector for performance
+
+    # obtain the arguments: dims for reshape; perm for PermutedDimsArray
+    dims, perm = _dims_and_perm(A.type, A.dims, order_svector, length(order_svector))
+
+    return QuantumObject(
+        reshape(PermutedDimsArray(reshape(A.data, dims...), Tuple(perm)), size(A)),
+        A.type,
+        A.dims[order_svector],
+    )
 end
 
 function _dims_and_perm(
     ::ObjType,
-    dims::AbstractVector{Int},
+    dims::SVector{N,Int},
     order::AbstractVector{Int},
     L::Int,
-) where {ObjType<:Union{KetQuantumObject,BraQuantumObject}}
-    return reverse(dims), reverse!((L + 1) .- order)
+) where {ObjType<:Union{KetQuantumObject,BraQuantumObject},N}
+    return reverse(dims), reverse((L + 1) .- order)
 end
 
-function _dims_and_perm(::OperatorQuantumObject, dims::AbstractVector{Int}, order::AbstractVector{Int}, L::Int)
-    return reverse!([dims; dims]), reverse!((2 * L + 1) .- [order; order .+ L])
+function _dims_and_perm(::OperatorQuantumObject, dims::SVector{N,Int}, order::AbstractVector{Int}, L::Int) where {N}
+    return reverse(vcat(dims, dims)), reverse((2 * L + 1) .- vcat(order, order .+ L))
 end

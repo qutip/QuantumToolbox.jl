@@ -51,19 +51,22 @@
 
     # unsupported type of dims
     @testset "unsupported dims" begin
-        @test_throws ArgumentError Qobj(rand(2, 2), dims = 2)
-        @test_throws ArgumentError Qobj(rand(2, 2), dims = [2.0])
-        @test_throws ArgumentError Qobj(rand(2, 2), dims = [2.0 + 0.0im])
-        @test_throws DomainError Qobj(rand(2, 2), dims = [0])
-        @test_throws DomainError Qobj(rand(2, 2), dims = [2, -2])
+        @test_throws ArgumentError Qobj(rand(2, 2), dims = 2.0)
+        @test_throws ArgumentError Qobj(rand(2, 2), dims = 2.0 + 0.0im)
+        @test_throws DomainError Qobj(rand(2, 2), dims = 0)
+        @test_throws DomainError Qobj(rand(2, 2), dims = (2, -2))
+        @test_logs (
+            :warn,
+            "The argument dims should be a Tuple or a StaticVector for better performance. Try to use `dims = (2, 2)` or `dims = SVector(2, 2)` instead of `dims = [2, 2]`.",
+        ) Qobj(rand(4, 4), dims = [2, 2])
     end
 
     @testset "Ket and Bra" begin
         N = 10
         a = rand(ComplexF64, 10)
         # @test_logs (:warn, "The norm of the input data is not one.") QuantumObject(a)
-        @test_throws DimensionMismatch Qobj(a, dims = [2])
-        @test_throws DimensionMismatch Qobj(a', dims = [2])
+        @test_throws DimensionMismatch Qobj(a, dims = 2)
+        @test_throws DimensionMismatch Qobj(a', dims = 2)
         a2 = Qobj(a')
         a3 = Qobj(a)
         @test dag(a3) == a2 # Here we are also testing the dag function
@@ -103,7 +106,7 @@
         @test isoperket(a3) == false
         @test isoperbra(a3) == false
         @test isunitary(a3) == false
-        @test_throws DimensionMismatch Qobj(a, dims = [2])
+        @test_throws DimensionMismatch Qobj(a, dims = 2)
     end
 
     @testset "OperatorKet and OperatorBra" begin
@@ -137,8 +140,8 @@
         @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
         @test (ρ_bra * L')' == L * ρ_ket
         @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
-        @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet, dims = [4])
-        @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = [4])
+        @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet, dims = 4)
+        @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = 4)
     end
 
     @testset "arithmetic" begin
@@ -452,17 +455,17 @@
         ket_b = Qobj(rand(ComplexF64, 3))
         ket_c = Qobj(rand(ComplexF64, 4))
         ket_d = Qobj(rand(ComplexF64, 5))
-        ket_bdca = permute(tensor(ket_a, ket_b, ket_c, ket_d), [2, 4, 3, 1])
+        ket_bdca = permute(tensor(ket_a, ket_b, ket_c, ket_d), (2, 4, 3, 1))
         bra_a = ket_a'
         bra_b = ket_b'
         bra_c = ket_c'
         bra_d = ket_d'
-        bra_bdca = permute(tensor(bra_a, bra_b, bra_c, bra_d), [2, 4, 3, 1])
+        bra_bdca = permute(tensor(bra_a, bra_b, bra_c, bra_d), (2, 4, 3, 1))
         op_a = Qobj(rand(ComplexF64, 2, 2))
         op_b = Qobj(rand(ComplexF64, 3, 3))
         op_c = Qobj(rand(ComplexF64, 4, 4))
         op_d = Qobj(rand(ComplexF64, 5, 5))
-        op_bdca = permute(tensor(op_a, op_b, op_c, op_d), [2, 4, 3, 1])
+        op_bdca = permute(tensor(op_a, op_b, op_c, op_d), (2, 4, 3, 1))
         correct_dims = [3, 5, 4, 2]
         wrong_order1 = [1]
         wrong_order2 = [2, 3, 4, 5]

@@ -1,7 +1,7 @@
 @testset "States and Operators" verbose = true begin
     @testset "zero state" begin
         v1 = zero_ket(4)
-        v2 = zero_ket([2, 2])
+        v2 = zero_ket((2, 2))
         @test size(v1) == (4,)
         @test size(v2) == (4,)
         @test v1.data == v2.data
@@ -14,8 +14,8 @@
 
     @testset "fock state" begin
         # fock, basis, and fock_dm
-        @test fock_dm(4; dims = [2, 2], sparse = true) ≈ ket2dm(basis(4; dims = [2, 2]))
-        @test_throws DimensionMismatch fock(4; dims = [2])
+        @test fock_dm(4; dims = (2, 2), sparse = true) ≈ ket2dm(basis(4; dims = (2, 2)))
+        @test_throws DimensionMismatch fock(4; dims = 2)
     end
 
     @testset "coherent state" begin
@@ -51,7 +51,7 @@
 
     @testset "maximally mixed state" begin
         ρ1 = maximally_mixed_dm(4)
-        ρ2 = maximally_mixed_dm([2, 2])
+        ρ2 = maximally_mixed_dm((2, 2))
         @test size(ρ1) == (4, 4)
         @test size(ρ2) == (4, 4)
         @test tr(ρ1) ≈ 1.0
@@ -67,7 +67,7 @@
     @testset "random state" begin
         # rand_ket and rand_dm
         ψ = rand_ket(10)
-        ρ_AB = rand_dm([2, 2])
+        ρ_AB = rand_dm((2, 2))
         ρ_A = ptrace(ρ_AB, 1)
         ρ_B = ptrace(ρ_AB, 2)
         rank = 5
@@ -173,7 +173,7 @@
 
     @testset "quantum Fourier transform" begin
         N = 9
-        dims = [3, 3]
+        dims = (3, 3)
         ω = exp(2.0im * π / N)
         x = Qobj(rand(ComplexF64, N))
         ψx = basis(N, 0; dims = dims)
@@ -192,8 +192,8 @@
     @testset "random unitary" begin
         U1 = rand_unitary(20)
         U2 = rand_unitary(20, :exp)
-        U3 = rand_unitary([5, 5])
-        U4 = rand_unitary([5, 5], :exp)
+        U3 = rand_unitary((5, 5))
+        U4 = rand_unitary((5, 5), :exp)
         @test isunitary(U1)
         @test isunitary(U2)
         @test isunitary(U3)
@@ -286,7 +286,7 @@
         # test commutation relations for fermionic creation and annihilation operators
         sites = 4
         SIZE = 2^sites
-        dims = fill(2, sites)
+        dims = ntuple(i -> 2, Val(sites))
         Q_iden = Qobj(sparse((1.0 + 0.0im) * LinearAlgebra.I, SIZE, SIZE); dims = dims)
         Q_zero = Qobj(spzeros(ComplexF64, SIZE, SIZE); dims = dims)
         for i in 0:(sites-1)
@@ -312,9 +312,9 @@
 
     @testset "identity operator" begin
         I_op1 = qeye(4)
-        I_op2 = qeye(4, dims = [2, 2])
+        I_op2 = qeye(4, dims = (2, 2))
         I_su1 = qeye(4, type = SuperOperator)
-        I_su2 = qeye(4, type = SuperOperator, dims = [2])
+        I_su2 = qeye(4, type = SuperOperator, dims = 2)
         @test isunitary(I_op1) == true
         @test isunitary(I_op2) == true
         @test isunitary(I_su1) == false
@@ -326,17 +326,17 @@
         @test (I_op2 == I_su1) == false
         @test (I_op2 == I_su2) == false
         @test (I_su1 == I_su2) == true
-        @test_throws DimensionMismatch qeye(4, dims = [2])
+        @test_throws DimensionMismatch qeye(4, dims = 2)
         @test_throws DimensionMismatch qeye(2, type = SuperOperator)
-        @test_throws DimensionMismatch qeye(4, type = SuperOperator, dims = [2, 2])
+        @test_throws DimensionMismatch qeye(4, type = SuperOperator, dims = (2, 2))
     end
 
     @testset "superoperators" begin
         # spre, spost, and sprepost
         Xs = sigmax()
         Xd = sparse_to_dense(Xs)
-        A_wrong1 = Qobj(rand(4, 4), dims = [4])
-        A_wrong2 = Qobj(rand(4, 4), dims = [2, 2])
+        A_wrong1 = Qobj(rand(4, 4), dims = 4)
+        A_wrong2 = Qobj(rand(4, 4), dims = (2, 2))
         A_wrong3 = Qobj(rand(3, 3))
         @test (typeof(spre(Xd).data) <: SparseMatrixCSC) == true
         @test (typeof(spre(Xs).data) <: SparseMatrixCSC) == true
