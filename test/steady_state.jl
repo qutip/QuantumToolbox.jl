@@ -22,6 +22,7 @@
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
 
+    import LinearSolve: KrylovJL_GMRES
     solver = SteadyStateLinearSolver(alg = KrylovJL_GMRES())
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
@@ -37,7 +38,7 @@
     psi0 = fock(N, 3)
     t_l = LinRange(0, 100 * 2π, 1000)
     H_t_f = TimeDependentOperatorSum([(t, p) -> sin(t)], [liouvillian(H_t)])
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, H_t = H_t_f, alg = Vern7(), progress_bar = Val(false))
+    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, H_t = H_t_f, progress_bar = Val(false))
     ρ_ss1 = steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetLinearSystem())[1]
     ρ_ss2 =
         steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetEffectiveLiouvillian())

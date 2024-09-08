@@ -1,5 +1,7 @@
 using BenchmarkTools
 using QuantumToolbox
+using OrdinaryDiffEq
+using LinearSolve
 
 BLAS.set_num_threads(1)
 

@@ -84,156 +84,9 @@ function Base.show(io::IO, res::EigsolveResult)
     return show(io, MIME("text/plain"), res.vectors)
 end
 
-if VERSION < v"1.10"
-    for (hseqr, elty) in ((:zhseqr_, :ComplexF64), (:chseqr_, :ComplexF32))
-        @eval begin
-            # *     .. Scalar Arguments ..
-            #       CHARACTER          JOB, COMPZ
-            #       INTEGER            N, ILO, IHI, LWORK, LDH, LDZ, INFO
-            # *     ..
-            # *     .. Array Arguments ..
-            #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
-            function hseqr!(
-                job::AbstractChar,
-                compz::AbstractChar,
-                ilo::Int,
-                ihi::Int,
-                H::AbstractMatrix{$elty},
-                Z::AbstractMatrix{$elty},
-            )
-                require_one_based_indexing(H, Z)
-                chkstride1(H)
-                n = checksquare(H)
-                checksquare(Z) == n || throw(DimensionMismatch())
-                ldh = max(1, stride(H, 2))
-                ldz = max(1, stride(Z, 2))
-                w = similar(H, $elty, n)
-                work = Vector{$elty}(undef, 1)
-                lwork = BlasInt(-1)
-                info = Ref{BlasInt}()
-                for i in 1:2  # first call returns lwork as work[1]
-                    ccall(
-                        (@blasfunc($hseqr), libblastrampoline),
-                        Cvoid,
-                        (
-                            Ref{UInt8},
-                            Ref{UInt8},
-                            Ref{BlasInt},
-                            Ref{BlasInt},
-                            Ref{BlasInt},
-                            Ptr{$elty},
-                            Ref{BlasInt},
-                            Ptr{$elty},
-                            Ptr{$elty},
-                            Ref{BlasInt},
-                            Ptr{$elty},
-                            Ref{BlasInt},
-                            Ptr{BlasInt},
-                        ),
-                        job,
-                        compz,
-                        n,
-                        ilo,
-                        ihi,
-                        H,
-                        ldh,
-                        w,
-                        Z,
-                        ldz,
-                        work,
-                        lwork,
-                        info,
-                    )
-                    chklapackerror(info[])
-                    if i == 1
-                        lwork = BlasInt(real(work[1]))
-                        resize!(work, lwork)
-                    end
-                end
-                return H, Z, w
-            end
-        end
-    end
-
-    for (hseqr, elty) in ((:dhseqr_, :Float64), (:shseqr_, :Float32))
-        @eval begin
-            # *     .. Scalar Arguments ..
-            #       CHARACTER          JOB, COMPZ
-            #       INTEGER            N, ILO, IHI, LWORK, LDH, LDZ, INFO
-            # *     ..
-            # *     .. Array Arguments ..
-            #       COMPLEX*16         H( LDH, * ), Z( LDZ, * ), WORK( * )
-            function hseqr!(
-                job::AbstractChar,
-                compz::AbstractChar,
-                ilo::Int,
-                ihi::Int,
-                H::AbstractMatrix{$elty},
-                Z::AbstractMatrix{$elty},
-            )
-                require_one_based_indexing(H, Z)
-                chkstride1(H)
-                n = checksquare(H)
-                checksquare(Z) == n || throw(DimensionMismatch())
-                ldh = max(1, stride(H, 2))
-                ldz = max(1, stride(Z, 2))
-                wr = similar(H, $elty, n)
-                wi = similar(H, $elty, n)
-                work = Vector{$elty}(undef, 1)
-                lwork = BlasInt(-1)
-                info = Ref{BlasInt}()
-                for i in 1:2  # first call returns lwork as work[1]
-                    ccall(
-                        (@blasfunc($hseqr), libblastrampoline),
-                        Cvoid,
-                        (
-                            Ref{UInt8},
-                            Ref{UInt8},
-                            Ref{BlasInt},
-                            Ref{BlasInt},
-                            Ref{BlasInt},
-                            Ptr{$elty},
-                            Ref{BlasInt},
-                            Ptr{$elty},
-                            Ptr{$elty},
-                            Ptr{$elty},
-                            Ref{BlasInt},
-                            Ptr{$elty},
-                            Ref{BlasInt},
-                            Ptr{BlasInt},
-                        ),
-                        job,
-                        compz,
-                        n,
-                        ilo,
-                        ihi,
-                        H,
-                        ldh,
-                        wr,
-                        wi,
-                        Z,
-                        ldz,
-                        work,
-                        lwork,
-                        info,
-                    )
-                    chklapackerror(info[])
-                    if i == 1
-                        lwork = BlasInt(real(work[1]))
-                        resize!(work, lwork)
-                    end
-                end
-                return H, Z, complex.(wr, wi)
-            end
-        end
-    end
-    hseqr!(H::StridedMatrix{T}, Z::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'V', 1, size(H, 1), H, Z)
-    hseqr!(H::StridedMatrix{T}) where {T<:BlasFloat} = hseqr!('S', 'I', 1, size(H, 1), H, similar(H))
-end
-
 function _map_ldiv(linsolve, y, x)
     linsolve.b .= x
-    return y .= LinearSolve.solve!(linsolve).u
+    return y .= solve!(linsolve).u
 end
 
 function _permuteschur!(
@@ -361,13 +214,23 @@ function _eigsolve(
 end
 
 @doc raw"""
-    function eigsolve(A::QuantumObject; v0::Union{Nothing,AbstractVector}=nothing, 
-        sigma::Union{Nothing, Real}=nothing, k::Int = 1, 
-        krylovdim::Int = max(20, 2*k+1), tol::Real = 1e-8, maxiter::Int = 200,
-        solver::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing, kwargs...)
+    eigsolve(A::QuantumObject; 
+        v0::Union{Nothing,AbstractVector}=nothing, 
+        sigma::Union{Nothing, Real}=nothing,
+        k::Int = 1,
+        krylovdim::Int = max(20, 2*k+1),
+        tol::Real = 1e-8,
+        maxiter::Int = 200,
+        solver::Union{Nothing, SciMLLinearSolveAlgorithm} = nothing,
+        kwargs...)
 
 Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi method.
-The keyword arguments are passed to the linear solver.
+
+# Notes
+- For more details about `solver` and extra `kwargs`, please refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/)
+
+# Returns
+- `EigsolveResult`: A struct containing the eigenvalues, the eigenvectors, and some information about the eigsolver
 """
 function eigsolve(
     A::QuantumObject{<:AbstractMatrix};
@@ -377,7 +240,7 @@ function eigsolve(
     krylovdim::Int = max(20, 2 * k + 1),
     tol::Real = 1e-8,
     maxiter::Int = 200,
-    solver::Union{Nothing,LinearSolve.SciMLLinearSolveAlgorithm} = nothing,
+    solver::Union{Nothing,SciMLLinearSolveAlgorithm} = nothing,
     kwargs...,
 )
     return eigsolve(
@@ -405,7 +268,7 @@ function eigsolve(
     krylovdim::Int = max(20, 2 * k + 1),
     tol::Real = 1e-8,
     maxiter::Int = 200,
-    solver::Union{Nothing,LinearSolve.SciMLLinearSolveAlgorithm} = nothing,
+    solver::Union{Nothing,SciMLLinearSolveAlgorithm} = nothing,
     kwargs...,
 )
     T = eltype(A)
@@ -468,13 +331,15 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - `eigstol`: The tolerance for the eigsolver
 - `kwargs`: Additional keyword arguments passed to the differential equation solver
 
+# Notes
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
+
 # Returns
 - `EigsolveResult`: A struct containing the eigenvalues, the eigenvectors, and some information about the eigsolver
 
 # References
-- [1] Minganti, F., & Huybrechts, D. (2022). Arnoldi-Lindblad time evolution: 
-Faster-than-the-clock algorithm for the spectrum of time-independent 
-and Floquet open quantum systems. Quantum, 6, 649.
+- [1] Minganti, F., & Huybrechts, D. (2022). Arnoldi-Lindblad time evolution: Faster-than-the-clock algorithm for the spectrum of time-independent and Floquet open quantum systems. Quantum, 6, 649.
 """
 function eigsolve_al(
     H::QuantumObject{MT1,HOpType},

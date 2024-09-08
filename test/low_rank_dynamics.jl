@@ -61,7 +61,6 @@
     end
 
     opt = LRMesolveOptions(
-        alg = Tsit5(),
         err_max = 1e-3,
         p0 = 0.0,
         atol_inv = 1e-6,

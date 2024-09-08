@@ -26,7 +26,7 @@ struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{Complex
     states::TS
     expect::TE
     retcode::Enum
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm
+    alg::OrdinaryDiffEqAlgorithm
     abstol::Real
     reltol::Real
 end
@@ -78,7 +78,7 @@ struct TimeEvolutionMCSol{
     jump_times::TJT
     jump_which::TJW
     converged::Bool
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm
+    alg::OrdinaryDiffEqAlgorithm
     abstol::Real
     reltol::Real
 end

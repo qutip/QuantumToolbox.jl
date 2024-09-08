@@ -102,7 +102,7 @@ end
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector}=nothing;
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -149,7 +149,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
 - `c_ops::Union{Nothing,AbstractVector}`: List of collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
@@ -162,7 +162,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
-- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 # Returns
 
@@ -173,7 +174,7 @@ function mcsolveProblem(
     ψ0::QuantumObject{<:AbstractArray,KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector} = nothing;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -240,7 +241,7 @@ function mcsolveProblem(
     H_eff::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     t_l::AbstractVector,
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm,
+    alg::OrdinaryDiffEqAlgorithm,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum},
     params::NamedTuple,
     jump_callback::DiscreteLindbladJumpCallback;
@@ -260,7 +261,7 @@ function mcsolveProblem(
     H_eff::QuantumObject{<:AbstractArray,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray,KetQuantumObject},
     t_l::AbstractVector,
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm,
+    alg::OrdinaryDiffEqAlgorithm,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum},
     params::NamedTuple,
     jump_callback::ContinuousLindbladJumpCallback;
@@ -287,7 +288,7 @@ end
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector}=nothing;
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -336,7 +337,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
 - `c_ops::Union{Nothing,AbstractVector}`: List of collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
@@ -351,7 +352,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
-- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 # Returns
 
@@ -362,7 +364,7 @@ function mcsolveEnsembleProblem(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector} = nothing;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -396,7 +398,7 @@ end
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector}=nothing;
-        alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -445,7 +447,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
 - `c_ops::Union{Nothing,AbstractVector}`: List of collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
@@ -463,7 +465,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
-- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 # Returns
 
@@ -474,7 +477,7 @@ function mcsolve(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector} = nothing;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -511,7 +514,7 @@ end
 
 function mcsolve(
     ens_prob_mc::EnsembleProblem;
-    alg::OrdinaryDiffEq.OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     n_traj::Int = 1,
     ensemble_method = EnsembleThreads(),
 )

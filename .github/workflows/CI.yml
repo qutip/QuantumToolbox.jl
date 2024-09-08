@@ -38,8 +38,8 @@ jobs:
       matrix:
         # for core tests (latest and oldest supported versions)
         version:
-          - '1.7'  # oldest
-          - '1'    # latest
+          - '1.10' # oldest
+        #  - '1'    # latest
         os:
           - ubuntu-latest
           - windows-latest
@@ -49,25 +49,21 @@ jobs:
           - Core
 
         include:
-          # for core tests on macOS
-          - version: '1.7'      # oldest (julia v1.7 does not support M-series chip)
-            os: 'macOS-13'      # Intel chip
+          # for core tests on macOS (M-series chip)
+          - version: '1.10'    # oldest
+            os: 'macOS-latest'
             arch: 'x64'
             group: 'Core'
-          - version: '1'        # latest
-            os: 'macOS-latest'  # M-series chip
-            arch: 'arm64'
-            group: 'Core'
+          # - version: '1'       # latest
+          #   os: 'macOS-latest'
+          #   arch: 'arm64'
+          #   group: 'Core'
 
           # for core tests (intermediate versions)
-          - version: '1.8'
-            os: 'ubuntu-latest'
-            arch: 'x64'
-            group: 'Core'
-          - version: '1.9'
-            os: 'ubuntu-latest'
-            arch: 'x64'
-            group: 'Core'
+          # - version: '1.x'
+          #   os: 'ubuntu-latest'
+          #   arch: 'x64'
+          #   group: 'Core'
 
           # for code quality tests
           - version: '1'

@@ -35,12 +35,10 @@
               "reltol = $(sol.reltol)\n"
 
         @testset "Type Inference sesolve" begin
-            if VERSION >= v"1.10"
-                @inferred sesolveProblem(H, psi0, t_l)
-                @inferred sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = Val(false))
-                @inferred sesolve(H, psi0, t_l, progress_bar = Val(false))
-                @inferred sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
-            end
+            @inferred sesolveProblem(H, psi0, t_l)
+            @inferred sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = Val(false))
+            @inferred sesolve(H, psi0, t_l, progress_bar = Val(false))
+            @inferred sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
         end
     end
 
@@ -107,28 +105,24 @@
               "reltol = $(sol_sse.reltol)\n"
 
         @testset "Type Inference mesolve" begin
-            if VERSION >= v"1.10"
-                @inferred mesolveProblem(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
-                @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
-                @inferred mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
-                @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
-            end
+            @inferred mesolveProblem(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
+            @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
         end
 
         @testset "Type Inference mcsolve" begin
-            if VERSION >= v"1.10"
-                @inferred mcsolveEnsembleProblem(
-                    H,
-                    psi0,
-                    t_l,
-                    c_ops,
-                    n_traj = 500,
-                    e_ops = e_ops,
-                    progress_bar = Val(false),
-                )
-                @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
-                @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
-            end
+            @inferred mcsolveEnsembleProblem(
+                H,
+                psi0,
+                t_l,
+                c_ops,
+                n_traj = 500,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+            )
+            @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
         end
 
         @testset "Type Inference ssesolve" begin

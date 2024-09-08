@@ -26,7 +26,7 @@ core_tests = [
     "wigner.jl",
 ]
 
-if ((GROUP == "All") || (GROUP == "Code-Quality")) && (VERSION >= v"1.9")
+if (GROUP == "All") || (GROUP == "Code-Quality")
     Pkg.add(["Aqua", "JET"])
     include(joinpath(testdir, "code_quality.jl"))
 end

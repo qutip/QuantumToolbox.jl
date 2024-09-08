@@ -1,9 +1,10 @@
 module QuantumToolbox
 
 # Re-export:
-#   1. basic functions in LinearAlgebra and SparseArrays
-#   2. the solvers in ODE and LinearSolve
+#   1. StaticArraysCore.SVector for the type of dims
+#   2. basic functions in LinearAlgebra and SparseArrays
 import Reexport: @reexport
+@reexport import StaticArraysCore: SVector
 @reexport using LinearAlgebra
 @reexport using SparseArrays
 @reexport using OrdinaryDiffEq
@@ -13,14 +14,29 @@ import Reexport: @reexport
 # other functions in LinearAlgebra
 import LinearAlgebra: BlasReal, BlasInt, BlasFloat, BlasComplex, checksquare
 import LinearAlgebra.BLAS: @blasfunc
-if VERSION < v"1.10"
-    import LinearAlgebra: chkstride1
-    import LinearAlgebra.BLAS: libblastrampoline
-    import LinearAlgebra.LAPACK: chklapackerror
-    import Base: require_one_based_indexing
-else
-    import LinearAlgebra.LAPACK: hseqr!
-end
+import LinearAlgebra.LAPACK: hseqr!
+
+# SciML packages (for OrdinaryDiffEq and LinearSolve)
+import SciMLBase:
+    solve,
+    solve!,
+    init,
+    reinit!,
+    remake,
+    u_modified!,
+    ODEProblem,
+    EnsembleProblem,
+    EnsembleThreads,
+    FullSpecialize,
+    CallbackSet,
+    ContinuousCallback,
+    DiscreteCallback
+import SciMLOperators: MatrixOperator
+import LinearSolve: LinearSolve, LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
+import DiffEqBase: get_tstops
+import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
+import OrdinaryDiffEqCore: OrdinaryDiffEqCore, OrdinaryDiffEqAlgorithm
+import OrdinaryDiffEqTsit5: Tsit5
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
@@ -30,11 +46,9 @@ import FFTW: fft, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import LinearMaps: LinearMap
-import OrdinaryDiffEq: OrdinaryDiffEqAlgorithm
 import Pkg
 import Random
 import SpecialFunctions: loggamma
-@reexport import StaticArraysCore: SVector
 import StaticArraysCore: MVector
 
 # Setting the number of threads to 1 allows
