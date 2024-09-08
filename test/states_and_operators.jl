@@ -268,7 +268,7 @@
 
         # also verify the equation in: 
         # Robert Jones, Spin Coherent States and Statistical Physics, page 3
-        s = 3.5
+        s = 1.5
         θ1 = π * rand()
         θ2 = π * rand()
         ϕ1 = 2 * π * rand()

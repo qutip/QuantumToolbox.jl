@@ -130,7 +130,7 @@ Define the options for the low-rank evolution
 
 ```@example lowrank
 opt =
-    LRMesolveOptions(alg = Tsit5(), err_max = 1e-3, p0 = 0.0, atol_inv = 1e-6, adj_condition = "variational", Δt = 0.0);
+    LRMesolveOptions(err_max = 1e-3, p0 = 0.0, atol_inv = 1e-6, adj_condition = "variational", Δt = 0.0);
 
 @time lrsol = lr_mesolve(H, z, B, tl, c_ops; e_ops = e_ops, f_ops = (f_purity, f_entropy, f_trace), opt = opt);
 ```
