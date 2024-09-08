@@ -282,7 +282,7 @@ function liouvillian_generalized(
 ) where {MT<:AbstractMatrix}
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
-    dims = N_trunc == size(H, 1) ? H.dims : [N_trunc]
+    dims = N_trunc == size(H, 1) ? H.dims : SVector(N_trunc)
     result = eigen(H)
     E = real.(result.values[1:N_trunc])
     U = QuantumObject(result.vectors, result.type, result.dims)
