@@ -1,28 +1,4 @@
 @testset "Quantum Objects" verbose = true begin
-    @testset "Type Inference" begin
-        for T in [ComplexF32, ComplexF64]
-            N = 4
-            a = rand(T, N)
-            @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
-            for type in [Ket, OperatorKet]
-                @inferred Qobj(a, type = type)
-            end
-
-            UnionType = Union{QuantumObject{Matrix{T},BraQuantumObject},QuantumObject{Matrix{T},OperatorQuantumObject}}
-            a = rand(T, 1, N)
-            @inferred UnionType Qobj(a)
-            for type in [Bra, OperatorBra]
-                @inferred Qobj(a, type = type)
-            end
-
-            a = rand(T, N, N)
-            @inferred UnionType Qobj(a)
-            for type in [Operator, SuperOperator]
-                @inferred Qobj(a, type = type)
-            end
-        end
-    end
-
     # ArgumentError: type is incompatible with vector or matrix
     @testset "ArgumentError" begin
         a = rand(ComplexF64, 2)
@@ -294,40 +270,102 @@
         @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
     end
 
+    @testset "Type Inference (QuantumObject)" begin
+        for T in [ComplexF32, ComplexF64]
+            N = 4
+            a = rand(T, N)
+            @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
+            for type in [Ket, OperatorKet]
+                @inferred Qobj(a, type = type)
+            end
+
+            UnionType =
+                Union{QuantumObject{Matrix{T},BraQuantumObject,1},QuantumObject{Matrix{T},OperatorQuantumObject,1}}
+            a = rand(T, 1, N)
+            @inferred UnionType Qobj(a)
+            for type in [Bra, OperatorBra]
+                @inferred Qobj(a, type = type)
+            end
+
+            a = rand(T, N, N)
+            @inferred UnionType Qobj(a)
+            for type in [Operator, SuperOperator]
+                @inferred Qobj(a, type = type)
+            end
+        end
+
+        @testset "Math Operation" begin
+            a = destroy(20)
+            σx = sigmax()
+            @inferred a + a
+            @inferred a + a'
+            @inferred a + 2
+            @inferred 2 * a
+            @inferred a / 2
+            @inferred a^2
+            @inferred a .+ 2
+            @inferred a .* 2
+            @inferred a ./ 2
+            @inferred a .^ 2
+            @inferred a * a
+            @inferred a * a'
+            @inferred kron(a, σx)
+            @inferred kron(a, eye(2))
+        end
+    end
+
     @testset "projection" begin
         N = 10
-        a = fock(N, 3)
-        @test proj(a) ≈ proj(a') ≈ sparse(ket2dm(a)) ≈ projection(N, 3, 3)
-        @test isket(a') == false
-        @test isbra(a') == true
-        @test shape(a) == (N,)
-        @test shape(a') == (1, N)
-        @test norm(a) ≈ 1
-        @test norm(a') ≈ 1
+        ψ = fock(N, 3)
+        @test proj(ψ) ≈ proj(ψ') ≈ sparse(ket2dm(ψ)) ≈ projection(N, 3, 3)
+        @test isket(ψ') == false
+        @test isbra(ψ') == true
+        @test shape(ψ) == (N,)
+        @test shape(ψ') == (1, N)
+        @test norm(ψ) ≈ 1
+        @test norm(ψ') ≈ 1
+
+        @testset "Type Inference (proj)" begin
+            @inferred proj(ψ)
+            @inferred proj(ψ')
+        end
     end
 
     @testset "dot product" begin
         ψ = rand_ket(10)
         @test dot(ψ, ψ) ≈ ψ' * ψ ≈ norm(ψ) ≈ 1.0
+
+        @testset "Type Inference (dot)" begin
+            @inferred dot(ψ, ψ)
+            @inferred ψ' * ψ
+            @inferred norm(ψ)
+        end
     end
 
     @testset "normalization" begin
         # normalize, normalize!, unit
         N = 10
-        a = Qobj(rand(ComplexF64, N))
-        M = a * a'
-        @test (norm(a) ≈ 1) == false
+        ψ = Qobj(rand(ComplexF64, N))
+        M = ψ * ψ'
+        @test (norm(ψ) ≈ 1) == false
         @test (norm(M) ≈ 1) == false
-        @test (norm(unit(a)) ≈ 1) == true
+        @test (norm(unit(ψ)) ≈ 1) == true
         @test (norm(unit(M)) ≈ 1) == true
-        @test (norm(a) ≈ 1) == false # Again, to be sure that it is still non-normalized
+        @test (norm(ψ) ≈ 1) == false # Again, to be sure that it is still non-normalized
         @test (norm(M) ≈ 1) == false # Again, to be sure that it is still non-normalized
-        normalize!(a)
+        normalize!(ψ)
         normalize!(M)
-        @test (norm(a) ≈ 1) == true
+        @test (norm(ψ) ≈ 1) == true
         @test (norm(M) ≈ 1) == true
-        @test M ≈ a * a'
+        @test M ≈ ψ * ψ'
         @test (unit(qeye(N)) ≈ (qeye(N) / N)) == true
+
+        @testset "Type Inference (normalize)" begin
+            ψ = Qobj(rand(ComplexF64, N))
+            M = ket2dm(ψ)
+            @inferred normalize(ψ)
+            @inferred normalize(M)
+        end
     end
 
     @testset "expectation value" begin
@@ -341,6 +379,19 @@
         ψ = fock(N, 3)
         @test norm(ψ' * a) ≈ 2
         @test expect(a' * a, ψ' * a) ≈ 16
+
+        ρ = rand_dm(N)
+        @test expect(a, ρ) ≈ tr(a * ρ)
+        @test variance(a, ρ) ≈ tr(a^2 * ρ) - tr(a * ρ)^2
+
+        @testset "Type Inference (expect)" begin
+            @inferred expect(a, ψ)
+            @inferred expect(a, ψ')
+            @inferred variance(a, ψ)
+            @inferred variance(a, ψ')
+            @inferred expect(a, ρ)
+            @inferred variance(a, ρ)
+        end
     end
 
     @testset "get coherence" begin
@@ -350,6 +401,11 @@
         ρ = ket2dm(ψ)
         α, δρ = get_coherence(ρ)
         @test isapprox(abs(α), 3, atol = 1e-5) && abs2(δρ[1, 1]) > 0.999
+
+        @testset "Type Inference (get_coherence)" begin
+            @inferred get_coherence(ψ)
+            @inferred get_coherence(ρ)
+        end
     end
 
     @testset "SVD and Schatten p-norm" begin
@@ -361,6 +417,13 @@
         @test svdvals(vs)[1] ≈ √(vs' * vs)
         @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol = 1e-6
         @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol = 1e-6
+
+        @testset "Type Inference (SVD and Schatten p-norm)" begin
+            @inferred svdvals(vd)
+            @inferred svdvals(vs)
+            @inferred norm(Md, 1)
+            @inferred norm(Ms, 1)
+        end
     end
 
     @testset "purity" begin
@@ -374,6 +437,13 @@
         @test purity(ψd) ≈ norm(ψd)^2 ≈ 1.0
         @test purity(ρ1) ≈ 1.0
         @test (1.0 / N) <= purity(ρ2) <= 1.0
+
+        @testset "Type Inference (purity)" begin
+            @inferred purity(ψ)
+            @inferred purity(ψd)
+            @inferred purity(ρ1)
+            @inferred purity(ρ2)
+        end
     end
 
     @testset "trace distance" begin
@@ -386,6 +456,13 @@
         @test tracedist(ρz0, ψz1) ≈ 1.0
         @test tracedist(ψz1, ρz0) ≈ 1.0
         @test tracedist(ρz0, ρz1) ≈ 1.0
+
+        @testset "Type Inference (trace distance)" begin
+            @inferred tracedist(ψz0, ψx0)
+            @inferred tracedist(ρz0, ψz1)
+            @inferred tracedist(ψz1, ρz0)
+            @inferred tracedist(ρz0, ρz1)
+        end
     end
 
     @testset "sqrt and fidelity" begin
@@ -397,6 +474,13 @@
         @test sqrtm(M0) ≈ sqrtm(sparse_to_dense(M0))
         @test isapprox(fidelity(M0, M1), fidelity(ψ1, M0); atol = 1e-6)
         @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1e-6)
+
+        @testset "Type Inference (sqrt and fidelity)" begin
+            @inferred sqrtm(M0)
+            @inferred fidelity(M0, M1)
+            @inferred fidelity(ψ1, M0)
+            @inferred fidelity(ψ1, ψ2)
+        end
     end
 
     @testset "log, exp, sinm, cosm" begin
@@ -448,6 +532,58 @@
         ρ2 = dense_to_sparse(ρ1)
         @test tidyup(ρ2, tol) != ρ2
         @test dense_to_sparse(tidyup(ρ1, tol)) == tidyup(ρ2, tol)
+
+        @testset "Type Inference (tidyup)" begin
+            @inferred tidyup(ψ1, tol)
+            @inferred tidyup(ρ1, tol)
+            @inferred tidyup(ψ2, tol)
+            @inferred tidyup(ρ2, tol)
+        end
+    end
+
+    @testset "ptrace" begin
+        g = fock(2, 1)
+        e = fock(2, 0)
+        α = sqrt(0.7)
+        β = sqrt(0.3) * 1im
+        ψ = α * kron(g, e) + β * kron(e, g)
+
+        ρ1 = ptrace(ψ, 1)
+        ρ2 = ptrace(ψ, 2)
+        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
+        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+
+        ψ_d = ψ'
+
+        ρ1 = ptrace(ψ_d, 1)
+        ρ2 = ptrace(ψ_d, 2)
+        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
+        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+
+        ρ = ket2dm(ψ)
+        ρ1 = ptrace(ρ, 1)
+        ρ2 = ptrace(ρ, 2)
+        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
+        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+
+        ψ1 = normalize(g + 1im * e)
+        ψ2 = normalize(g + e)
+        ρ1 = ket2dm(ψ1)
+        ρ2 = ket2dm(ψ2)
+        ρ = kron(ρ1, ρ2)
+        ρ1_ptr = ptrace(ρ, 1)
+        ρ2_ptr = ptrace(ρ, 2)
+        @test ρ1.data ≈ ρ1_ptr.data atol = 1e-10
+        @test ρ2.data ≈ ρ2_ptr.data atol = 1e-10
+
+        @testset "Type Inference (ptrace)" begin
+            @inferred ptrace(ρ, 1)
+            @inferred ptrace(ρ, 2)
+            @inferred ptrace(ψ_d, 1)
+            @inferred ptrace(ψ_d, 2)
+            @inferred ptrace(ψ, 1)
+            @inferred ptrace(ψ, 2)
+        end
     end
 
     @testset "permute" begin
@@ -484,5 +620,11 @@
         @test_throws ArgumentError permute(bra_bdca, wrong_order2)
         @test_throws ArgumentError permute(op_bdca, wrong_order1)
         @test_throws ArgumentError permute(op_bdca, wrong_order2)
+
+        @testset "Type Inference (permute)" begin
+            @inferred permute(ket_bdca, (2, 4, 3, 1))
+            @inferred permute(bra_bdca, (2, 4, 3, 1))
+            @inferred permute(op_bdca, (2, 4, 3, 1))
+        end
     end
 end

@@ -239,8 +239,10 @@ julia> tr(a' * a)
 """
 LinearAlgebra.tr(
     A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    ishermitian(A) ? real(tr(A.data)) : tr(A.data)
+) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = tr(A.data)
+LinearAlgebra.tr(
+    A::QuantumObject{<:Union{<:Hermitian{TF},Symmetric{TR}},OpType},
+) where {TF<:BlasFloat,TR<:Real,OpType<:OperatorQuantumObject} = real(tr(A.data))
 
 @doc raw"""
     svdvals(A::QuantumObject)
@@ -515,7 +517,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, SVector(sel))
-    return QuantumObject(ρtr, dims = dkeep)
+    return QuantumObject(ρtr, type = Operator, dims = dkeep)
 end
 
 ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
@@ -524,7 +526,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::U
     length(QO.dims) == 1 && return QO
 
     ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, SVector(sel))
-    return QuantumObject(ρtr, dims = dkeep)
+    return QuantumObject(ρtr, type = Operator, dims = dkeep)
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
@@ -547,7 +549,7 @@ function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
 
     vmat = reshape(QO, reverse(dims)...)
     topermute = nd + 1 .- sel_qtrace
-    vmat = PermutedDimsArray(vmat, topermute)
+    vmat = permutedims(vmat, topermute) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
     vmat = reshape(vmat, prod(dkeep), prod(dtrace))
 
     return vmat * vmat', dkeep
@@ -576,14 +578,14 @@ function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
 
     ρmat = reshape(QO, reverse(vcat(dims, dims))...)
     topermute = 2 * nd + 1 .- qtrace_sel
-    ρmat = PermutedDimsArray(ρmat, reverse(topermute))
+    ρmat = permutedims(ρmat, reverse(topermute)) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
 
     ## TODO: Check if it works always
 
     # ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
     # res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
     ρmat = reshape(ρmat, prod(dkeep), prod(dkeep), prod(dtrace), prod(dtrace))
-    res = dropdims(mapslices(tr, ρmat, dims = (3, 4)), dims = (3, 4))
+    res = map(tr, eachslice(ρmat, dims = (1, 2)))
 
     return res, dkeep
 end
@@ -673,6 +675,9 @@ julia> ψ_123 = tensor(ψ1, ψ2, ψ3)
 julia> permute(ψ_123, [2, 1, 3]) ≈ tensor(ψ2, ψ1, ψ3)
 true
 ```
+
+!!! warning "Beware of type-stability!"
+    It is highly recommended to use `permute(A, order)` with `order` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function permute(
     A::QuantumObject{<:AbstractArray{T},ObjType},
@@ -691,7 +696,7 @@ function permute(
     dims, perm = _dims_and_perm(A.type, A.dims, order_svector, length(order_svector))
 
     return QuantumObject(
-        reshape(PermutedDimsArray(reshape(A.data, dims...), Tuple(perm)), size(A)),
+        reshape(permutedims(reshape(A.data, dims...), Tuple(perm)), size(A)),
         A.type,
         A.dims[order_svector],
     )

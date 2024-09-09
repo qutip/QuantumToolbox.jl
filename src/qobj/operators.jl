@@ -13,7 +13,7 @@ export tunneling
 export qft
 
 @doc raw"""
-    rand_unitary(dimensions, distribution=:haar)
+    rand_unitary(dimensions, distribution=Val(:haar))
 
 Returns a random unitary [`QuantumObject`](@ref).
 
@@ -27,10 +27,14 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 
 # References
 1. [F. Mezzadri, How to generate random matrices from the classical compact groups, arXiv:math-ph/0609050 (2007)](https://arxiv.org/abs/math-ph/0609050)
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `rand_unitary(dimensions, Val(distribution))` instead of `rand_unitary(dimensions, distribution)`. Also, put `dimensions` as `Tuple` or `SVector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-rand_unitary(dimensions::Int, distribution::Symbol = :haar) = rand_unitary(SVector(dimensions), Val(distribution))
-rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, distribution::Symbol = :haar) =
-    rand_unitary(dimensions, Val(distribution))
+rand_unitary(dimensions::Int, distribution::Union{Symbol,Val} = Val(:haar)) =
+    rand_unitary(SVector(dimensions), makeVal(distribution))
+rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, distribution::Union{Symbol,Val} = Val(:haar)) =
+    rand_unitary(dimensions, makeVal(distribution))
 function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:haar})
     N = prod(dimensions)
 
@@ -224,7 +228,7 @@ function phase(N::Int, ϕ0::Real = 0)
 end
 
 @doc raw"""
-    jmat(j::Real, which::Symbol)
+    jmat(j::Real, which::Union{Symbol,Val})
 
 Generate higher-order Spin-`j` operators, where `j` is the spin quantum number and can be a non-negative integer or half-integer
 
@@ -250,7 +254,18 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
 2×2 SparseMatrixCSC{ComplexF64, Int64} with 1 stored entry:
      ⋅          ⋅    
  1.0+0.0im      ⋅
+
+julia> jmat(1.5, Val(:z))
+Quantum Object:   type=Operator   dims=[4]   size=(4, 4)   ishermitian=true
+4×4 SparseMatrixCSC{ComplexF64, Int64} with 4 stored entries:
+ 1.5+0.0im      ⋅           ⋅           ⋅    
+     ⋅      0.5+0.0im       ⋅           ⋅    
+     ⋅          ⋅      -0.5+0.0im       ⋅    
+     ⋅          ⋅           ⋅      -1.5+0.0im
 ```
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `jmat(j, Val(which))` instead of `jmat(j, which)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 jmat(j::Real, which::Symbol) = jmat(j, Val(which))
 jmat(j::Real) = (jmat(j, Val(:x)), jmat(j, Val(:y)), jmat(j, Val(:z)))
@@ -427,8 +442,8 @@ d_j = \sigma_z^{\otimes j} \otimes \sigma_{-} \otimes I^{\otimes N-j-1}
 
 Note that the site index `j` should satisfy: `0 ≤ j ≤ N - 1`.
 
-> [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `fdestroy(Val(N), j)` instead of `fdestroy(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `fdestroy(Val(N), j)` instead of `fdestroy(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 fdestroy(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
 
@@ -444,8 +459,8 @@ d_j^\dagger = \sigma_z^{\otimes j} \otimes \sigma_{+} \otimes I^{\otimes N-j-1}
 
 Note that the site index `j` should satisfy: `0 ≤ j ≤ N - 1`.
 
-> [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `fcreate(Val(N), j)` instead of `fcreate(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `fcreate(Val(N), j)` instead of `fcreate(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 fcreate(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmap())
 
@@ -470,7 +485,7 @@ end
 
 Generates the projection operator ``\hat{O} = \dyad{i}{j}`` with Hilbert space dimension `N`.
 """
-projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N))
+projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator)
 
 @doc raw"""
     tunneling(N::Int, m::Int=1; sparse::Union{Bool,Val{<:Bool}}=Val(false))
@@ -485,8 +500,8 @@ where ``N`` is the number of basis states in the Hilbert space, and ``m`` is the
 
 If `sparse=true`, the operator is returned as a sparse matrix, otherwise a dense matrix is returned.
 
-> [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `tunneling(N, m, Val(sparse))` instead of `tunneling(N, m, sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `tunneling(N, m, Val(sparse))` instead of `tunneling(N, m, sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function tunneling(N::Int, m::Int = 1; sparse::Union{Bool,Val} = Val(false))
     (m < 1) && throw(ArgumentError("The number of excitations (m) cannot be less than 1"))
@@ -522,6 +537,9 @@ The `dimensions` can be either the following types:
 ```
 
 where ``\omega = \exp(\frac{2 \pi i}{N})``.
+
+!!! warning "Beware of type-stability!"
+    It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator, dimensions)
 qft(dimensions::Union{AbstractVector{T},Tuple}) where {T} =

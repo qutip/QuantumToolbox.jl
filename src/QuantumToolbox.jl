@@ -40,7 +40,6 @@ import ArrayInterface: allowed_getindex, allowed_setindex!
 import FFTW: fft, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
-import LinearMaps: LinearMap
 import Pkg
 import Random
 import SpecialFunctions: loggamma
@@ -54,6 +53,7 @@ BLAS.set_num_threads(1)
 include("utilities.jl")
 include("versioninfo.jl")
 include("progress_bar.jl")
+include("linear_maps.jl")
 
 # Quantum Object
 include("qobj/quantum_object.jl")

@@ -84,9 +84,27 @@ function Base.show(io::IO, res::EigsolveResult)
     return show(io, MIME("text/plain"), res.vectors)
 end
 
-function _map_ldiv(linsolve, y, x)
-    linsolve.b .= x
-    return y .= solve!(linsolve).u
+struct ArnoldiLindbladIntegratorMap{T,TS,TI} <: AbstractLinearMap{T,TS}
+    elty::Type{T}
+    size::TS
+    integrator::TI
+end
+
+function LinearAlgebra.mul!(y::AbstractVector, A::ArnoldiLindbladIntegratorMap, x::AbstractVector)
+    reinit!(A.integrator, x)
+    solve!(A.integrator)
+    return copyto!(y, A.integrator.u)
+end
+
+struct EigsolveInverseMap{T,TS,TI} <: AbstractLinearMap{T,TS}
+    elty::Type{T}
+    size::TS
+    linsolve::TI
+end
+
+function LinearAlgebra.mul!(y::AbstractVector, A::EigsolveInverseMap, x::AbstractVector)
+    A.linsolve.b .= x
+    return copyto!(y, solve!(A.linsolve).u)
 end
 
 function _permuteschur!(
@@ -293,7 +311,8 @@ function eigsolve(
 
         prob = LinearProblem(Aₛ, v0)
         linsolve = init(prob, solver; kwargs2...)
-        Amap = LinearMap{T}((y, x) -> _map_ldiv(linsolve, y, x), length(v0))
+
+        Amap = EigsolveInverseMap(T, size(A), linsolve)
 
         res = _eigsolve(Amap, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
         vals = @. (1 + sigma * res.values) / res.values
@@ -370,13 +389,7 @@ function eigsolve_al(
 
     # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
 
-    function arnoldi_lindblad_solve(ρ)
-        reinit!(integrator, ρ)
-        solve!(integrator)
-        return integrator.u
-    end
-
-    Lmap = LinearMap{eltype(MT1)}(arnoldi_lindblad_solve, size(L, 1), ismutating = false)
+    Lmap = ArnoldiLindbladIntegratorMap(eltype(MT1), size(L), integrator)
 
     res = _eigsolve(Lmap, mat2vec(ρ0), L.type, L.dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
     # finish!(prog)

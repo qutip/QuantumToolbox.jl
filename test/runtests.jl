@@ -22,7 +22,7 @@ core_tests = [
     "quantum_objects.jl",
     "states_and_operators.jl",
     "steady_state.jl",
-    "time_evolution_and_partial_trace.jl",
+    "time_evolution.jl",
     "wigner.jl",
 ]
 

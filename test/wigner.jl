@@ -20,4 +20,11 @@
     wig2 = maximum(wig) * reshape(kron(wig_tmp1, wig_tmp2), 300, 300)
 
     @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 0.1
+
+    @testset "Type Inference (wigner)" begin
+        @inferred wigner(ψ, xvec, yvec, solver = WignerLaguerre(tol = 1e-6))
+        @inferred wigner(ρ, xvec, yvec, solver = WignerLaguerre(parallel = false))
+        @inferred wigner(ρ, xvec, yvec, solver = WignerLaguerre(parallel = true))
+        @inferred wigner(ψ, xvec, yvec, solver = WignerClenshaw())
+    end
 end

@@ -5,4 +5,9 @@
     rho = state * state'
     @test entanglement(state, 1) / log(2) ≈ 1
     @test entanglement(rho, 1) / log(2) ≈ 1
+
+    @testset "Type Stability (entanglement)" begin
+        @inferred entanglement(state, 1)
+        @inferred entanglement(rho, 1)
+    end
 end

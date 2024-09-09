@@ -8,20 +8,19 @@ function _reduce_dims(
     sel,
     reduce,
 ) where {T,N,DT<:Integer}
-    rd = dims
-    nd = length(rd)
-    rd_new = zero(rd)
-    rd_new[sel] .= reduce
-    @. rd_new = rd - rd_new
+    nd = length(dims)
+    dims_new = zero(dims)
+    dims_new[sel] .= reduce
+    @. dims_new = dims - dims_new
 
     if nd == 1
-        ρmat = similar(QO, rd_new[1], rd_new[1])
-        copyto!(ρmat, view(QO, 1:rd_new[1], 1:rd_new[1]))
+        ρmat = similar(QO, dims_new[1], dims_new[1])
+        copyto!(ρmat, view(QO, 1:dims_new[1], 1:dims_new[1]))
     else
-        ρmat = reshape(QO, reverse!(repeat(rd, 2))...)
-        ρmat2 = similar(QO, reverse!(repeat(rd_new, 2))...)
-        copyto!(ρmat2, view(ρmat, reverse!(repeat([1:n for n in rd_new], 2))...))
-        ρmat = reshape(ρmat2, prod(rd_new), prod(rd_new))
+        ρmat = reshape(QO, reverse(vcat(dims, dims))...)
+        ρmat2 = similar(QO, reverse(vcat(dims_new, dims_new))...)
+        copyto!(ρmat2, view(ρmat, reverse!(repeat([1:n for n in dims_new], 2))...))
+        ρmat = reshape(ρmat2, prod(dims_new), prod(dims_new))
     end
 
     return ρmat
@@ -33,26 +32,25 @@ function _increase_dims(
     sel,
     increase,
 ) where {T,N,DT<:Integer}
-    rd = dims
-    nd = length(rd)
-    rd_new = MVector(zero(rd)) # Mutable SVector
-    rd_new[sel] .= increase
-    @. rd_new = rd + rd_new
+    nd = length(dims)
+    dims_new = MVector(zero(dims)) # Mutable SVector
+    dims_new[sel] .= increase
+    @. dims_new = dims + dims_new
 
     if nd == 1
-        ρmat = similar(QO, rd_new[1], rd_new[1])
-        fill!(selectdim(ρmat, 1, rd[1]+1:rd_new[1]), 0)
-        fill!(selectdim(ρmat, 2, rd[1]+1:rd_new[1]), 0)
-        copyto!(view(ρmat, 1:rd[1], 1:rd[1]), QO)
+        ρmat = similar(QO, dims_new[1], dims_new[1])
+        fill!(selectdim(ρmat, 1, dims[1]+1:dims_new[1]), 0)
+        fill!(selectdim(ρmat, 2, dims[1]+1:dims_new[1]), 0)
+        copyto!(view(ρmat, 1:dims[1], 1:dims[1]), QO)
     else
-        ρmat2 = similar(QO, reverse!(repeat(rd_new, 2))...)
-        ρmat = reshape(QO, reverse!(repeat(rd, 2))...)
+        ρmat2 = similar(QO, reverse(vcat(dims_new, dims_new))...)
+        ρmat = reshape(QO, reverse(vcat(dims, dims))...)
         for i in eachindex(sel)
-            fill!(selectdim(ρmat2, nd - sel[i] + 1, rd[sel[i]]+1:rd_new[sel[i]]), 0)
-            fill!(selectdim(ρmat2, 2 * nd - sel[i] + 1, rd[sel[i]]+1:rd_new[sel[i]]), 0)
+            fill!(selectdim(ρmat2, nd - sel[i] + 1, dims[sel[i]]+1:dims_new[sel[i]]), 0)
+            fill!(selectdim(ρmat2, 2 * nd - sel[i] + 1, dims[sel[i]]+1:dims_new[sel[i]]), 0)
         end
-        copyto!(view(ρmat2, reverse!(repeat([1:n for n in rd], 2))...), ρmat)
-        ρmat = reshape(ρmat2, prod(rd_new), prod(rd_new))
+        copyto!(view(ρmat2, reverse!(repeat([1:n for n in dims], 2))...), ρmat)
+        ρmat = reshape(ρmat2, prod(dims_new), prod(dims_new))
     end
 
     return ρmat
@@ -131,7 +129,9 @@ function _DFDIncreaseReduceAffect!(integrator)
 
     resize!(integrator, size(L, 1))
     copyto!(integrator.u, mat2vec(ρt))
-    return integrator.p = merge(internal_params, (L = L, e_ops = e_ops2, dfd_ρt_cache = similar(integrator.u)))
+    integrator.p = merge(internal_params, (L = L, e_ops = e_ops2, dfd_ρt_cache = similar(integrator.u)))
+
+    return nothing
 end
 
 function dfd_mesolveProblem(
@@ -241,6 +241,7 @@ function dfd_mesolve(
     ρt = map(
         i -> QuantumObject(
             vec2mat(sol.u[i]),
+            type = Operator,
             dims = sol.prob.p.dim_list_evo[searchsortedlast(sol.prob.p.dim_list_evo_times, sol.t[i])],
         ),
         eachindex(sol.t),
