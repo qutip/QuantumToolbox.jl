@@ -271,48 +271,46 @@
     end
 
     @testset "Type Inference (QuantumObject)" begin
-        if VERSION >= v"1.10"
-            for T in [ComplexF32, ComplexF64]
-                N = 4
-                a = rand(T, N)
-                @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
-                for type in [Ket, OperatorKet]
-                    @inferred Qobj(a, type = type)
-                end
-
-                UnionType =
-                    Union{QuantumObject{Matrix{T},BraQuantumObject,1},QuantumObject{Matrix{T},OperatorQuantumObject,1}}
-                a = rand(T, 1, N)
-                @inferred UnionType Qobj(a)
-                for type in [Bra, OperatorBra]
-                    @inferred Qobj(a, type = type)
-                end
-
-                a = rand(T, N, N)
-                @inferred UnionType Qobj(a)
-                for type in [Operator, SuperOperator]
-                    @inferred Qobj(a, type = type)
-                end
+        for T in [ComplexF32, ComplexF64]
+            N = 4
+            a = rand(T, N)
+            @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
+            for type in [Ket, OperatorKet]
+                @inferred Qobj(a, type = type)
             end
 
-            @testset "Math Operation" begin
-                a = destroy(20)
-                σx = sigmax()
-                @inferred a + a
-                @inferred a + a'
-                @inferred a + 2
-                @inferred 2 * a
-                @inferred a / 2
-                @inferred a^2
-                @inferred a .+ 2
-                @inferred a .* 2
-                @inferred a ./ 2
-                @inferred a .^ 2
-                @inferred a * a
-                @inferred a * a'
-                @inferred kron(a, σx)
-                @inferred kron(a, eye(2))
+            UnionType =
+                Union{QuantumObject{Matrix{T},BraQuantumObject,1},QuantumObject{Matrix{T},OperatorQuantumObject,1}}
+            a = rand(T, 1, N)
+            @inferred UnionType Qobj(a)
+            for type in [Bra, OperatorBra]
+                @inferred Qobj(a, type = type)
             end
+
+            a = rand(T, N, N)
+            @inferred UnionType Qobj(a)
+            for type in [Operator, SuperOperator]
+                @inferred Qobj(a, type = type)
+            end
+        end
+
+        @testset "Math Operation" begin
+            a = destroy(20)
+            σx = sigmax()
+            @inferred a + a
+            @inferred a + a'
+            @inferred a + 2
+            @inferred 2 * a
+            @inferred a / 2
+            @inferred a^2
+            @inferred a .+ 2
+            @inferred a .* 2
+            @inferred a ./ 2
+            @inferred a .^ 2
+            @inferred a * a
+            @inferred a * a'
+            @inferred kron(a, σx)
+            @inferred kron(a, eye(2))
         end
     end
 
