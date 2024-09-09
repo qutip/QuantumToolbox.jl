@@ -25,7 +25,7 @@ If `ψ` is a [`Ket`](@ref) or [`Bra`](@ref), the function calculates ``\langle\p
 
 If `ψ` is a density matrix ([`Operator`](@ref)), the function calculates ``\textrm{Tr} \left[ \hat{O} \hat{\psi} \right]``
 
-The function returns a real number if `O` is hermitian, and returns a complex number otherwise.
+The function returns a real number if `O` is of `Hermitian` type or `Symmetric` type, and returns a complex number otherwise. You can make an operator `O` hermitian by using `Hermitian(O)`.
 
 # Examples
 
@@ -34,31 +34,48 @@ julia> ψ = 1 / √2 * (fock(10,2) + fock(10,4));
 
 julia> a = destroy(10);
 
-julia> expect(a' * a, ψ) ≈ 3
-true
+julia> expect(a' * a, ψ) |> round
+3.0 + 0.0im
+
+julia> expect(Hermitian(a' * a), ψ) |> round
+3.0
 ```
 """
 function expect(
     O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
 ) where {T1,T2}
-    ψd = ψ.data
-    Od = O.data
-    return ishermitian(O) ? real(dot(ψd, Od, ψd)) : dot(ψd, Od, ψd)
+    return dot(ψ.data, O.data, ψ.data)
 end
 function expect(
     O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     ψ::QuantumObject{<:AbstractArray{T2},BraQuantumObject},
 ) where {T1,T2}
-    ψd = ψ.data'
-    Od = O.data
-    return ishermitian(O) ? real(dot(ψd, Od, ψd)) : dot(ψd, Od, ψd)
+    return expect(O, ψ')
 end
 function expect(
     O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
 ) where {T1,T2}
-    return ishermitian(O) ? real(tr(O * ρ)) : tr(O * ρ)
+    return tr(O * ρ)
+end
+function expect(
+    O::QuantumObject{<:Union{<:Hermitian{TF},<:Symmetric{TR}},OperatorQuantumObject},
+    ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+) where {TF<:Number,TR<:Real,T2}
+    return real(dot(ψ.data, O.data, ψ.data))
+end
+function expect(
+    O::QuantumObject{<:Union{<:Hermitian{TF},<:Symmetric{TR}},OperatorQuantumObject},
+    ψ::QuantumObject{<:AbstractArray{T2},BraQuantumObject},
+) where {TF<:Number,TR<:Real,T2}
+    return real(expect(O, ψ'))
+end
+function expect(
+    O::QuantumObject{<:Union{<:Hermitian{TF},<:Symmetric{TR}},OperatorQuantumObject},
+    ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
+) where {TF<:Number,TR<:Real,T2}
+    return real(tr(O * ρ))
 end
 
 @doc raw"""

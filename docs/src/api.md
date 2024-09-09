@@ -222,6 +222,12 @@ wigner
 negativity
 ```
 
+## [Linear Maps](@id doc-API:Linear-Maps)
+
+```@docs
+AbstractLinearMap
+```
+
 ## [Utility functions](@id doc-API:Utility-functions)
 
 ```@docs

@@ -53,12 +53,12 @@ function entropy_vn(
     base::Int = 0,
     tol::Real = 1e-15,
 ) where {T}
-    vals = eigvals(ρ)
-    indexes = abs.(vals) .> tol
-    1 ∉ indexes && return 0
+    vals = eigenenergies(ρ)
+    indexes = findall(x -> abs(x) > tol, vals)
+    length(indexes) == 0 && return zero(real(T))
     nzvals = vals[indexes]
     logvals = base != 0 ? log.(base, Complex.(nzvals)) : log.(Complex.(nzvals))
-    return -real(sum(nzvals .* logvals))
+    return -real(mapreduce(*, +, nzvals, logvals))
 end
 
 """

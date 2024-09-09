@@ -15,41 +15,45 @@ Returns a zero [`Ket`](@ref) vector with given argument `dimensions`.
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
 - `dimensions::Union{AbstractVector{Int}, Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+
+!!! warning "Beware of type-stability!"
+    It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket, dimensions)
 zero_ket(dimensions::Union{AbstractVector{Int},Tuple}) =
     QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket, dimensions)
 
 @doc raw"""
-    fock(N::Int, pos::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
+    fock(N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
 Generates a fock state ``\ket{\psi}`` of dimension `N`. 
 
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `fock(N, j, dims=dims, sparse=Val(sparse))` instead of `fock(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function fock(
-    N::Int,
-    pos::Int = 0;
-    dims::Union{Int,AbstractVector{Int},Tuple} = N,
-    sparse::Union{Bool,Val} = Val(false),
-)
+function fock(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N, sparse::Union{Bool,Val} = Val(false))
     if getVal(makeVal(sparse))
-        array = sparsevec([pos + 1], [1.0 + 0im], N)
+        array = sparsevec([j + 1], [1.0 + 0im], N)
     else
         array = zeros(ComplexF64, N)
-        array[pos+1] = 1
+        array[j+1] = 1
     end
     return QuantumObject(array; type = Ket, dims = dims)
 end
 
 @doc raw"""
-    basis(N::Int, pos::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple}=N)
+    basis(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple}=N)
 
 Generates a fock state like [`fock`](@ref).
 
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `basis(N, j, dims=dims)` with `dims` as a `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-basis(N::Int, pos::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N) = fock(N, pos, dims = dims)
+basis(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N) = fock(N, j, dims = dims)
 
 @doc raw"""
     coherent(N::Int, α::Number)
@@ -68,6 +72,9 @@ Generate a random normalized [`Ket`](@ref) vector with given argument `dimension
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
 - `dimensions::Union{AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `rand_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 rand_ket(dimensions::Int) = rand_ket(SVector(dimensions))
 function rand_ket(dimensions::Union{AbstractVector{Int},Tuple})
@@ -77,19 +84,22 @@ function rand_ket(dimensions::Union{AbstractVector{Int},Tuple})
 end
 
 @doc raw"""
-    fock_dm(N::Int, pos::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
+    fock_dm(N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
 Density matrix representation of a Fock state.
 
 Constructed via outer product of [`fock`](@ref).
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `fock_dm(N, j, dims=dims, sparse=Val(sparse))` instead of `fock_dm(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function fock_dm(
     N::Int,
-    pos::Int = 0;
+    j::Int = 0;
     dims::Union{Int,AbstractVector{Int},Tuple} = N,
     sparse::Union{Bool,Val} = Val(false),
 )
-    ψ = fock(N, pos; dims = dims, sparse = sparse)
+    ψ = fock(N, j; dims = dims, sparse = sparse)
     return ket2dm(ψ)
 end
 
@@ -113,8 +123,8 @@ Density matrix for a thermal state (generating thermal state probabilities) with
 - `n::Real`: Expectation value for number of particles in the thermal state.
 - `sparse::Union{Bool,Val}`: If `true`, return a sparse matrix representation.
 
-> [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `thermal_dm(N, n, Val(sparse))` instead of `thermal_dm(N, n, sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `thermal_dm(N, n, sparse=Val(sparse))` instead of `thermal_dm(N, n, sparse=sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val} = Val(false))
     β = log(1.0 / n + 1.0)
@@ -135,6 +145,9 @@ Returns the maximally mixed density matrix with given argument `dimensions`.
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
 - `dimensions::Union{AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 maximally_mixed_dm(dimensions::Int) = QuantumObject(I(dimensions) / complex(dimensions), Operator, SVector(dimensions))
 function maximally_mixed_dm(dimensions::Union{AbstractVector{Int},Tuple})
@@ -152,6 +165,9 @@ The `dimensions` can be either the following types:
 - `dimensions::Union{AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 The default keyword argument `rank = prod(dimensions)` (full rank).
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `rand_dm(dimensions; rank=rank)` with `dimensions` as `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 
 # References
 - [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)
@@ -222,7 +238,7 @@ function spin_coherent(j::Real, θ::Real, ϕ::Real)
 end
 
 @doc raw"""
-    bell_state(x::Int, z::Int)
+    bell_state(x::Union{Int}, z::Union{Int})
 
 Return the [Bell state](https://en.wikipedia.org/wiki/Bell_state) depending on the arguments `(x, z)`:
 - `(0, 0)`: ``| \Phi^+ \rangle = ( |00\rangle + |11\rangle ) / \sqrt{2}``
@@ -242,7 +258,18 @@ Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
                 0.0 + 0.0im
                 0.0 + 0.0im
  0.7071067811865475 + 0.0im
+
+julia> bell_state(Val(1), Val(0))
+Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
+4-element Vector{ComplexF64}:
+                0.0 + 0.0im
+ 0.7071067811865475 + 0.0im
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
 ```
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `bell_state(Val(x), Val(z))` instead of `bell_state(x, z)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 bell_state(x::Int, z::Int) = bell_state(Val(x), Val(z))
 bell_state(::Val{0}, ::Val{0}) = QuantumObject(ComplexF64[1, 0, 0, 1] / sqrt(2), Ket, (2, 2))
@@ -284,8 +311,8 @@ Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
 \frac{1}{\sqrt{n}} \left( |100...0\rangle + |010...0\rangle + \cdots + |00...01\rangle \right)
 ```
 
-> [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `w_state(Val(n))` instead of `w_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `w_state(Val(n))` instead of `w_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function w_state(::Val{n}) where {n}
     nzind = 2 .^ (0:(n-1)) .+ 1
@@ -305,8 +332,8 @@ Returns the generalized `n`-qudit [Greenberger–Horne–Zeilinger (GHZ) state](
 
 Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
 
-> [!IMPORTANT]
-> If you want to keep type stability, it is recommended to use `ghz_state(Val(n); kwargs...)` instead of `ghz_state(n; kwargs...)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `ghz_state(Val(n))` instead of `ghz_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function ghz_state(::Val{n}; d::Int = 2) where {n}
     nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)

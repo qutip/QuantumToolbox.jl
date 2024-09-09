@@ -22,14 +22,40 @@
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
 
-    import LinearSolve: KrylovJL_GMRES
-    solver = SteadyStateLinearSolver(alg = KrylovJL_GMRES())
+    solver = SteadyStateLinearSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
 
     solver = SteadyStateEigenSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
+
+    @testset "Type Inference (steadystate)" begin
+        L = liouvillian(H, c_ops)
+
+        solver = SteadyStateODESolver()
+        @inferred steadystate(H, psi0, t_l[end], c_ops, solver = solver)
+        @inferred steadystate(L, psi0, t_l[end], solver = solver)
+
+        solver = SteadyStateDirectSolver()
+        @inferred steadystate(H, c_ops, solver = solver)
+        @inferred steadystate(L, solver = solver)
+
+        solver = SteadyStateLinearSolver()
+        @inferred steadystate(H, c_ops, solver = solver)
+        @inferred steadystate(L, solver = solver)
+
+        solver = SteadyStateLinearSolver()
+        @inferred steadystate(H, c_ops, solver = solver)
+        @inferred steadystate(L, solver = solver)
+
+        solver = SteadyStateEigenSolver()
+        @inferred steadystate(H, c_ops, solver = solver)
+        @inferred steadystate(L, solver = solver)
+
+        @inferred steadystate(H, c_ops)
+        @inferred steadystate(L)
+    end
 
     H = a_d * a
     H_t = 0.1 * (a + a_d)
@@ -45,4 +71,16 @@
 
     @test abs(sum(sol_me.expect[1, end-100:end]) / 101 - expect(e_ops[1], ρ_ss1)) < 1e-3
     @test abs(sum(sol_me.expect[1, end-100:end]) / 101 - expect(e_ops[1], ρ_ss2)) < 1e-3
+
+    @testset "Type Inference (steadystate_floquet)" begin
+        @inferred steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetLinearSystem())
+        @inferred steadystate_floquet(
+            H,
+            -1im * 0.5 * H_t,
+            1im * 0.5 * H_t,
+            1,
+            c_ops,
+            solver = SSFloquetEffectiveLiouvillian(),
+        )
+    end
 end
