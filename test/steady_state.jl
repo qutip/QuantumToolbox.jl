@@ -45,7 +45,7 @@
         @inferred steadystate(H, c_ops, solver = solver)
         @inferred steadystate(L, solver = solver)
 
-        solver = SteadyStateLinearSolver(alg = KrylovJL_GMRES())
+        solver = SteadyStateLinearSolver()
         @inferred steadystate(H, c_ops, solver = solver)
         @inferred steadystate(L, solver = solver)
 
