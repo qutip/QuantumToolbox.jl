@@ -37,7 +37,7 @@ body:
     attributes:
       label: Your Environment
       description: Please use `QuantumToolbox.about()` or `QuantumToolbox.versioninfo()` to get the information about your environment and paste it here (automatically formatted)
-      placeholder: "QuantumToolbox  Ver. ***\nLinearSolve     Ver. ***\nOrdinaryDiffEq  Ver. ***\nJulia Version: ***\nOS       : ***\nWORD_SIZE: ***\nLIBM     : ***\nLLVM     : ***\nBLAS     : ***"
+      placeholder: "Julia              Ver. ***\nQuantumToolbox     Ver. ***\nLinearSolve        Ver. ***\nOrdinaryDiffEqCore Ver. ***\nOS       : ***\nWORD_SIZE: ***\nLIBM     : ***\nLLVM     : ***\nBLAS     : ***"
       render: shell
     validations:
       required: true

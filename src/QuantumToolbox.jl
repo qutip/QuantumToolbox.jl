@@ -32,10 +32,10 @@ import SciMLBase:
     ContinuousCallback,
     DiscreteCallback
 import SciMLOperators: MatrixOperator
-import LinearSolve: LinearSolve, LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
+import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
-import OrdinaryDiffEqCore: OrdinaryDiffEqCore, OrdinaryDiffEqAlgorithm
+import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
 
 # other dependencies (in alphabetical order)
