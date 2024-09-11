@@ -28,6 +28,6 @@ steps:
         // Only run Buildkite when new commits and PR are made to main branch
         build.message !~ /\[skip ci\]/ &&
         build.message !~ /\[ci skip\]/ &&
-        build.message !~ /\[no ci\]/ &&
-        !build.pull_request.draft         &&
+        build.message !~ /\[no ci\]/   &&
+        !build.pull_request.draft      &&
         (build.branch =~ /main/ || build.pull_request.base_branch =~ /main/)
