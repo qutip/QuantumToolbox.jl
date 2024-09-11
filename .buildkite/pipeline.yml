@@ -1,25 +1,15 @@
+# see: https://github.com/staticfloat/forerunner-buildkite-plugin
 steps:
-  - label: "QuantumToolboxCUDAExt"
+  - label: ":runner: Dynamically launch pipelines"
     plugins:
-      - JuliaCI/julia#v1:
-          version: "1"
-      - JuliaCI/julia-test#v1:
-          test_args: "--quickfail"
-      - JuliaCI/julia-coverage#v1:
-          dirs:
-            - src
-            - ext
+      - staticfloat/forerunner:
+        watch:
+          - ".buildkite/pipeline.yml"
+          - ".buildkite/CUDA_Ext.yml"
+          - "src/**"
+          - "ext/QuantumToolboxCUDAExt.jl"
+          - "test/runtests.jl"
+          - "Project.toml"
+        target: ".buildkite/CUDA_Ext.yml"
     agents:
       queue: "juliagpu"
-      cuda: "*"
-    env:
-      GROUP: "CUDA_Ext"
-      SECRET_CODECOV_TOKEN: "ZfhQu/IcRLqNyZ//ZNs5sjBPaV76IHfU5gui52Qn+Rp8tOurukqgScuyDt+3HQ4R0hJYBw1/Nqg6jmBsvWSc9NEUx8kGsUJFHfN3no0+b+PFxA8oJkWc9EpyIsjht5ZIjlsFWR3f0DpPqMEle/QyWOPcal63CChXR8oAoR+Fz1Bh8GkokLlnC8F9Ugp9xBlu401GCbyZhvLTZnNIgK5yy9q8HBJnBg1cPOhI81J6JvYpEmcIofEzFV/qkfpTUPclu43WNoFX2DZPzbxilf3fsAd5/+nRkRfkNML8KiN4mnmjHxPPbuY8F5zC/PS5ybXtDpfvaMQc01WApXCkZk0ZAQ==;U2FsdGVkX1+eDT7dqCME5+Ox5i8GvWRTQbwiP/VYjapThDbxXFDeSSIC6Opmon+M8go22Bun3bat6Fzie65ang=="
-    timeout_in_minutes: 60
-    if: | 
-        // Don't run Buildkite if the commit message includes the text [skip tests]
-        // Don't run Buildkite for PR draft
-        // Only run Buildkite when new commits and PR are made to main branch
-        build.message !~ /\[skip tests\]/ &&
-        !build.pull_request.draft         &&
-        (build.branch =~ /main/ || build.pull_request.base_branch =~ /main/)
