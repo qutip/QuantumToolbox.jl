@@ -3,13 +3,13 @@ steps:
   - label: ":runner: Dynamically launch pipelines"
     plugins:
       - staticfloat/forerunner:
-        watch:
-          - ".buildkite/pipeline.yml"
-          - ".buildkite/CUDA_Ext.yml"
-          - "src/**"
-          - "ext/QuantumToolboxCUDAExt.jl"
-          - "test/runtests.jl"
-          - "Project.toml"
-        target: ".buildkite/CUDA_Ext.yml"
+          watch:
+            - ".buildkite/pipeline.yml"
+            - ".buildkite/CUDA_Ext.yml"
+            - "src/**"
+            - "ext/QuantumToolboxCUDAExt.jl"
+            - "test/runtests.jl"
+            - "Project.toml"
+          target: ".buildkite/CUDA_Ext.yml"
     agents:
       queue: "juliagpu"
