@@ -13,6 +13,7 @@ This extension will be automatically loaded if user imports both `QuantumToolbox
 using QuantumToolbox
 using CUDA
 using CUDA.CUSPARSE
+CUDA.allowscalar(false) # Avoid unexpected scalar indexing
 ```
 
 We wrapped several functions in `CUDA` and `CUDA.CUSPARSE` in order to not only converting `QuantumObject.data` into GPU arrays, but also changing the element type and word size (`32` and `64`) since some of the GPUs perform better in `32`-bit. The functions are listed as follows (where input `A` is a [`QuantumObject`](@ref)):

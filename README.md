@@ -149,6 +149,7 @@ We can easily pass the computation to the GPU, by simply passing all the `Qobj`s
 ```julia
 using QuantumToolbox
 using CUDA
+CUDA.allowscalar(false) # Avoid unexpected scalar indexing
 
 a_gpu = cu(destroy(N)) # The only difference in the code is the cu() function
 

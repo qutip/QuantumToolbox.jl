@@ -1,5 +1,6 @@
 using CUDA
 using CUDA.CUSPARSE
+CUDA.allowscalar(false) # Avoid unexpected scalar indexing
 
 QuantumToolbox.about()
 CUDA.versioninfo()
