@@ -384,6 +384,11 @@
         @test expect(a, ρ) ≈ tr(a * ρ)
         @test variance(a, ρ) ≈ tr(a^2 * ρ) - tr(a * ρ)^2
 
+        # when input is a vector of states
+        xlist = [1.0, 1.0im, -1.0, -1.0im]
+        ψlist = [normalize!(basis(N, 4) + x * basis(N, 3)) for x in xlist]
+        @test all(expect(a', ψlist) .≈ xlist)
+
         @testset "Type Inference (expect)" begin
             @inferred expect(a, ψ)
             @inferred expect(a, ψ')
@@ -391,6 +396,8 @@
             @inferred variance(a, ψ')
             @inferred expect(a, ρ)
             @inferred variance(a, ρ)
+            @inferred expect(a, ψlist)
+            @inferred variance(a, ψlist)
         end
     end
 
