@@ -1,4 +1,4 @@
-# [States and Operators](@id doc:States-and-Operators)
+# [Manipulating States and Operators](@id doc:Manipulating-States-and-Operators)
 
 ## Introduction
 In the previous guide section [Basic Operations on Quantum Objects](@ref doc:Qobj), we saw how to create states and operators, using the functions built into `QuantumToolbox`. In this portion of the guide, we will look at performing basic operations with states and operators. For more detailed demonstrations on how to use and manipulate these objects, see the examples given in the tutorial section.
