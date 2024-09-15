@@ -309,9 +309,22 @@
             @inferred a .^ 2
             @inferred a * a
             @inferred a * a'
+            @inferred kron(a)
             @inferred kron(a, σx)
             @inferred kron(a, eye(2))
         end
+    end
+
+    @testset "tensor" begin
+        σx = sigmax()
+        X3 = kron(σx, σx, σx)
+        @test tensor(σx) == kron(σx)
+        @test tensor(fill(σx, 3)...) == X3
+        X_warn = @test_logs (
+            :warn,
+            "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead.",
+        ) tensor(fill(σx, 3))
+        @test X_warn == X3
     end
 
     @testset "projection" begin

@@ -184,7 +184,7 @@ Quantum Object:   type=Operator   dims=[2, 2, 2]   size=(8, 8)   ishermitian=tru
  1.0+0.0im      ⋅          ⋅             ⋅          ⋅          ⋅
 ```
 """
-tensor(A::QuantumObject...) = kron(A...)
+tensor(A...) = kron(A...)
 
 @doc raw"""
     ⊗(A::QuantumObject, B::QuantumObject)
