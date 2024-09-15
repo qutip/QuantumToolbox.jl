@@ -14,6 +14,9 @@ The key difference between classical and quantum mechanics is the use of operato
 - `CUDA.CUSPARSE.CuSparseMatrixCSR` (sparse GPU matrix)
 - and even more ...
 
+!!! note "Support for GPU arrays"
+    See [CUDA extension](@ref doc:CUDA) for more details.
+
 We can create a [`QuantumObject`](@ref) with a user defined data set by passing an array of data into the [`QuantumObject`](@ref):
 
 ```@setup Qobj
@@ -53,7 +56,7 @@ Qobj(rand(4, 4), type = SuperOperator)
 ```
 
 !!! note "Difference between `dims` and `size`"
-    Notice that `type`, `dims`, and `size` will change according to the input `data`. Although `dims` and `size` appear to be the same, `dims` keep tracking the dimension of individual Hilbert spaces of a multipartite system, while `size` does not. We refer the reader to the section [tensor products and partial traces](@ref doc:Tensor-products) for more information.
+    Notice that `type`, `dims`, and `size` will change according to the input `data`. Although `dims` and `size` appear to be the same, `dims` keep tracking the dimension of individual Hilbert spaces of a multipartite system, while `size` does not. We refer the reader to the section [Tensor Products and Partial Traces](@ref doc:Tensor-products-and-Partial-Traces) for more information.
 
 ## States and operators
 
