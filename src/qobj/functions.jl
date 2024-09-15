@@ -79,10 +79,7 @@ function expect(
 ) where {TF<:Number,TR<:Real,T2}
     return real(tr(O * ρ))
 end
-function expect(
-    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ρ::Vector{<:QuantumObject},
-) where {T1}
+function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ρ::Vector{<:QuantumObject}) where {T1}
     _expect = _ρ -> expect(O, _ρ)
     return _expect.(ρ)
 end
@@ -102,10 +99,8 @@ variance(
     O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     ψ::QuantumObject{<:AbstractArray{T2}},
 ) where {T1,T2} = expect(O^2, ψ) - expect(O, ψ)^2
-variance(
-    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ::Vector{<:QuantumObject},
-) where {T1} = expect(O^2, ψ) .- expect(O, ψ).^2
+variance(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::Vector{<:QuantumObject}) where {T1} =
+    expect(O^2, ψ) .- expect(O, ψ) .^ 2
 
 @doc raw"""
     sparse_to_dense(A::QuantumObject)
