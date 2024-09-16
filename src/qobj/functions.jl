@@ -183,6 +183,11 @@ function LinearAlgebra.kron(
 ) where {T1,T2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
     return QuantumObject(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
 end
+LinearAlgebra.kron(A::QuantumObject) = A
+function LinearAlgebra.kron(A::Vector{<:QuantumObject})
+    @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."
+    return kron(A...)
+end
 
 @doc raw"""
     vec2mat(A::AbstractVector)

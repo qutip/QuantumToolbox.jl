@@ -514,18 +514,38 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 ```
 """
 function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
-    length(QO.dims) == 1 && return QO
+    ns = length(sel)
+    if ns == 0
+        return tr(QO * QO')
+    else
+        nd = length(QO.dims)
+        !all(nd .>= sel .> 0) && throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(nd) sub-systems"),
+        )
+        ns != length(unique(sel)) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
+        nd == 1 && return QO * QO'  # ptrace should always return Operator
+    end
 
-    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, SVector(sel))
+    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sort(SVector(sel)))
     return QuantumObject(ρtr, type = Operator, dims = dkeep)
 end
 
 ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
 
 function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
-    length(QO.dims) == 1 && return QO
+    ns = length(sel)
+    if ns == 0
+        return tr(QO)
+    else
+        nd = length(QO.dims)
+        !all(nd .>= sel .> 0) && throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(nd) sub-systems"),
+        )
+        ns != length(unique(sel)) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
+        nd == 1 && return QO
+    end
 
-    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, SVector(sel))
+    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sort(SVector(sel)))
     return QuantumObject(ρtr, type = Operator, dims = dkeep)
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
@@ -538,17 +558,20 @@ function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
     qtrace = filter(i -> i ∉ sel, 1:nd)
     dkeep = dims[sel]
     dtrace = dims[qtrace]
-    # Concatenate sel and qtrace without loosing the length information
-    sel_qtrace = ntuple(Val(nd)) do i
-        if i <= length(sel)
-            @inbounds sel[i]
+    nt = length(dtrace)
+
+    # Concatenate qtrace and sel without loosing the length information
+    # Tuple(qtrace..., sel...)
+    qtrace_sel = ntuple(Val(nd)) do i
+        if i <= nt
+            @inbounds qtrace[i]
         else
-            @inbounds qtrace[i-length(sel)]
+            @inbounds sel[i-nt]
         end
     end
 
     vmat = reshape(QO, reverse(dims)...)
-    topermute = nd + 1 .- sel_qtrace
+    topermute = reverse(nd + 1 .- qtrace_sel)
     vmat = permutedims(vmat, topermute) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
     vmat = reshape(vmat, prod(dkeep), prod(dtrace))
 
@@ -563,27 +586,27 @@ function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
     qtrace = filter(i -> i ∉ sel, 1:nd)
     dkeep = dims[sel]
     dtrace = dims[qtrace]
-    # Concatenate sel and qtrace without loosing the length information
+    nk = length(dkeep)
+    nt = length(dtrace)
+    _2_nt = 2 * nt
+
+    # Concatenate qtrace and sel without loosing the length information
+    # Tuple(qtrace..., sel...)
     qtrace_sel = ntuple(Val(2 * nd)) do i
-        if i <= length(qtrace)
+        if i <= nt
             @inbounds qtrace[i]
-        elseif i <= 2 * length(qtrace)
-            @inbounds qtrace[i-length(qtrace)] + nd
-        elseif i <= 2 * length(qtrace) + length(sel)
-            @inbounds sel[i-length(qtrace)-length(sel)]
+        elseif i <= _2_nt
+            @inbounds qtrace[i-nt] + nd
+        elseif i <= _2_nt + nk
+            @inbounds sel[i-_2_nt]
         else
-            @inbounds sel[i-length(qtrace)-2*length(sel)] + nd
+            @inbounds sel[i-_2_nt-nk] + nd
         end
     end
 
     ρmat = reshape(QO, reverse(vcat(dims, dims))...)
-    topermute = 2 * nd + 1 .- qtrace_sel
-    ρmat = permutedims(ρmat, reverse(topermute)) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
-
-    ## TODO: Check if it works always
-
-    # ρmat = row_major_reshape(ρmat, prod(dtrace), prod(dtrace), prod(dkeep), prod(dkeep))
-    # res = dropdims(mapslices(tr, ρmat, dims=(1,2)), dims=(1,2))
+    topermute = reverse(2 * nd + 1 .- qtrace_sel)
+    ρmat = permutedims(ρmat, topermute) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
     ρmat = reshape(ρmat, prod(dkeep), prod(dkeep), prod(dtrace), prod(dtrace))
     res = map(tr, eachslice(ρmat, dims = (1, 2)))
 

@@ -309,9 +309,22 @@
             @inferred a .^ 2
             @inferred a * a
             @inferred a * a'
+            @inferred kron(a)
             @inferred kron(a, σx)
             @inferred kron(a, eye(2))
         end
+    end
+
+    @testset "tensor" begin
+        σx = sigmax()
+        X3 = kron(σx, σx, σx)
+        @test tensor(σx) == kron(σx)
+        @test tensor(fill(σx, 3)...) == X3
+        X_warn = @test_logs (
+            :warn,
+            "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead.",
+        ) tensor(fill(σx, 3))
+        @test X_warn == X3
     end
 
     @testset "projection" begin
@@ -575,6 +588,50 @@
         ρ2_ptr = ptrace(ρ, 2)
         @test ρ1.data ≈ ρ1_ptr.data atol = 1e-10
         @test ρ2.data ≈ ρ2_ptr.data atol = 1e-10
+
+        ψlist = [rand_ket(2), rand_ket(3), rand_ket(4), rand_ket(5)]
+        ρlist = [rand_dm(2), rand_dm(3), rand_dm(4), rand_dm(5)]
+        ψtotal = tensor(ψlist...)
+        ρtotal = tensor(ρlist...)
+        sel_tests = [
+            Int64[],
+            1,
+            2,
+            3,
+            4,
+            (1, 2),
+            (1, 3),
+            (1, 4),
+            (2, 3),
+            (2, 4),
+            (3, 4),
+            (1, 2, 3),
+            (1, 2, 4),
+            (1, 3, 4),
+            (2, 3, 4),
+            (1, 2, 3, 4),
+        ]
+        for sel in sel_tests
+            if length(sel) == 0
+                @test ptrace(ψtotal, sel) ≈ 1.0
+                @test ptrace(ρtotal, sel) ≈ 1.0
+            else
+                @test ptrace(ψtotal, sel) ≈ tensor([ket2dm(ψlist[i]) for i in sel]...)
+                @test ptrace(ρtotal, sel) ≈ tensor([ρlist[i] for i in sel]...)
+            end
+        end
+        @test ptrace(ψtotal, (1, 3, 4)) ≈ ptrace(ψtotal, (4, 3, 1))
+        @test ptrace(ρtotal, (1, 3, 4)) ≈ ptrace(ρtotal, (3, 1, 4))
+        @test_throws ArgumentError ptrace(ψtotal, 0)
+        @test_throws ArgumentError ptrace(ψtotal, 5)
+        @test_throws ArgumentError ptrace(ψtotal, (0, 2))
+        @test_throws ArgumentError ptrace(ψtotal, (2, 5))
+        @test_throws ArgumentError ptrace(ψtotal, (2, 2, 3))
+        @test_throws ArgumentError ptrace(ρtotal, 0)
+        @test_throws ArgumentError ptrace(ρtotal, 5)
+        @test_throws ArgumentError ptrace(ρtotal, (0, 2))
+        @test_throws ArgumentError ptrace(ρtotal, (2, 5))
+        @test_throws ArgumentError ptrace(ρtotal, (2, 2, 3))
 
         @testset "Type Inference (ptrace)" begin
             @inferred ptrace(ρ, 1)
