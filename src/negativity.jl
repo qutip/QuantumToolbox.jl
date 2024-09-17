@@ -3,9 +3,9 @@ export negativity, partial_transpose
 @doc raw"""
     negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool=false)
 
-Compute the [negativity](https://en.wikipedia.org/wiki/Negativity_(quantum_mechanics)) ``N(\rho) = \frac{\Vert \rho^{\Gamma}\Vert_1 - 1}{2}``  
-where ``\rho^{\Gamma}`` is the partial transpose of ``\rho`` with respect to the subsystem,  
-and ``\Vert X \Vert_1=\textrm{Tr}\sqrt{X^\dagger X}`` is the trace norm.
+Compute the [negativity](https://en.wikipedia.org/wiki/Negativity_(quantum_mechanics)) ``N(\hat{\rho}) = \frac{\Vert \hat{\rho}^{\Gamma}\Vert_1 - 1}{2}``  
+where ``\hat{\rho}^{\Gamma}`` is the partial transpose of ``\hat{\rho}`` with respect to the subsystem,  
+and ``\Vert \hat{X} \Vert_1=\textrm{Tr}\sqrt{\hat{X}^\dagger \hat{X}}`` is the trace norm.
 
 # Arguments
 - `ρ::QuantumObject`: The density matrix (`ρ.type` must be [`OperatorQuantumObject`](@ref)).

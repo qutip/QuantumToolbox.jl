@@ -190,7 +190,7 @@ end
 
 Generate the spin state: ``|j, m\rangle``
 
-The eigenstate of the Spin-`j` ``S_z`` operator with eigenvalue `m`, where where `j` is the spin quantum number and can be a non-negative integer or half-integer
+The eigenstate of the Spin-`j` ``\hat{S}_z`` operator with eigenvalue `m`, where where `j` is the spin quantum number and can be a non-negative integer or half-integer
 
 See also [`jmat`](@ref).
 """
@@ -213,14 +213,16 @@ end
 Generate the coherent spin state (rotation of the ``|j, j\rangle`` state), namely
 
 ```math
-|\theta, \phi \rangle = R(\theta, \phi) |j, j\rangle
+|\theta, \phi \rangle = \hat{R}(\theta, \phi) |j, j\rangle
 ```
 
 where the rotation operator is defined as
 
 ```math
-R(\theta, \phi) = \exp \left( \frac{\theta}{2} (S_- e^{i\phi} - S_+ e^{-i\phi}) \right)
+\hat{R}(\theta, \phi) = \exp \left( \frac{\theta}{2} (\hat{S}_- e^{i\phi} - \hat{S}_+ e^{-i\phi}) \right)
 ```
+
+and ``\hat{S}_\pm`` are plus and minus Spin-`j` operators, respectively.
 
 # Arguments
 - `j::Real`: The spin quantum number and can be a non-negative integer or half-integer

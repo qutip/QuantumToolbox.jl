@@ -58,13 +58,13 @@ Solve the stationary state based on time evolution (ordinary differential equati
 The termination condition of the stationary state ``|\rho\rangle\rangle`` is that either the following condition is `true`:
 
 ```math
-\lVert\frac{\partial |\rho\rangle\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\rho\rangle\rangle}{\partial t}+|\rho\rangle\rangle\rVert
+\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}+|\hat{\rho}\rangle\rangle\rVert
 ```
 
 or
 
 ```math
-\lVert\frac{\partial |\rho\rangle\rangle}{\partial t}\rVert \leq \textrm{abstol}
+\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{abstol}
 ```
 
 # Parameters
