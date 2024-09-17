@@ -20,7 +20,7 @@ and then create a lowering operator ``\hat{a}`` corresponding to `5` number stat
 a = destroy(5)
 ```
 
-Now lets apply the lowering operator `a` to our vacuum state `vac`:
+Now lets apply the lowering operator `\hat{a}` to our vacuum state `vac`:
 
 ```@example states_and_operators
 a * vac
@@ -51,7 +51,7 @@ or just taking the square of the raising operator ``\left(\hat{a}^\dagger\right)
 ad^2 * vac
 ```
 
-Applying the raising operator twice gives the expected ``\sqrt{n+1}`` dependence. We can use the product of ``a^\dagger a`` to also apply the number operator to the state vector `vac`:
+Applying the raising operator twice gives the expected ``\sqrt{n+1}`` dependence. We can use the product of ``\hat{a}^\dagger \hat{a}`` to also apply the number operator to the state vector `vac`:
 
 ```@example states_and_operators
 ad * a * vac
@@ -69,7 +69,7 @@ or on the ``|2\rangle`` state:
 ad * a * (ad^2 * vac)
 ```
 
-Notice how in this last example, application of the number operator does not give the expected value ``n=2``, but rather ``2\sqrt{2}``. This is because this last state is not normalized to unity as ``a^\dagger|n\rangle=\sqrt{n+1}|n+1\rangle``. Therefore, we should [`normalize`](@ref) (or use [`unit`](@ref)) our vector first:
+Notice how in this last example, application of the number operator does not give the expected value ``n=2``, but rather ``2\sqrt{2}``. This is because this last state is not normalized to unity as ``\hat{a}^\dagger|n\rangle=\sqrt{n+1}|n+1\rangle``. Therefore, we should [`normalize`](@ref) (or use [`unit`](@ref)) our vector first:
 
 ```@example states_and_operators
 ad * a * normalize(ad^2 * vac)
@@ -204,13 +204,13 @@ At this stage, there is no difference. This should not be surprising as we calle
 create(2) * vac
 ```
 
-For a spin system, the operator analogous to the raising operator is the ``\sigma_+`` operator [`sigmap`](@ref). Applying on the spin state gives:
+For a spin system, the operator analogous to the raising operator is the ``\hat{\sigma}_+`` operator [`sigmap`](@ref). Applying on the spin state gives:
 
 ```@example states_and_operators
 sigmap() * spin
 ```
 
-Now we see the difference! The [`sigmap`](@ref) operator acting on the spin state returns the zero vector. Why is this? To see what happened, let us use the [`sigmaz`](@ref) operator:
+Now we see the difference! The [`sigmap`](@ref) operator acting on the spin state returns the zero vector. Why is this? To see what happened, let us use the ``\hat{\sigma}_z`` ([`sigmaz`](@ref)) operator:
 
 ```@example states_and_operators
 sigmaz()
@@ -228,7 +228,7 @@ spin2 = basis(2, 1)
 sigmaz() * spin2
 ```
 
-The answer is now apparent. Since the `QuantumToolbox` [`sigmaz`](@ref) function uses the standard ``Z``-basis representation of the ``\sigma_z`` spin operator, the `spin` state corresponds to the ``|\uparrow\rangle`` state of a two-level spin system while `spin2` gives the ``|\downarrow\rangle`` state. Therefore, in our previous example `sigmap() * spin`, we raised the qubit state out of the truncated two-level Hilbert space resulting in the zero state.
+The answer is now apparent. Since the `QuantumToolbox` [`sigmaz`](@ref) function uses the standard ``Z``-basis representation of the ``\hat{\sigma}_z`` spin operator, the `spin` state corresponds to the ``|\uparrow\rangle`` state of a two-level spin system while `spin2` gives the ``|\downarrow\rangle`` state. Therefore, in our previous example `sigmap() * spin`, we raised the qubit state out of the truncated two-level Hilbert space resulting in the zero state.
 
 While at first glance this convention might seem somewhat odd, it is in fact quite handy. For one, the spin operators remain in the conventional form. Second, this corresponds nicely with the quantum information definitions of qubit states, where the excited ``|\uparrow\rangle`` state is label as ``|0\rangle``, and the ``|\downarrow\rangle`` state by ``|1\rangle``.
 
@@ -309,9 +309,9 @@ This support is based on the correspondence between linear operators acting on a
 ```math
 \textrm{vec} : \mathcal{L}(\mathcal{H}) \rightarrow \mathcal{H}\otimes\mathcal{H}.
 ```
-Therefore, a given density matrix ``\rho`` can then be vectorized, denoted as 
+Therefore, a given density matrix ``\hat{\rho}`` can then be vectorized, denoted as 
 ```math
-|\rho\rangle\rangle = \textrm{vec}(\rho).
+|\hat{\rho}\rangle\rangle = \textrm{vec}(\hat{\rho}).
 ```
 
 `QuantumToolbox` uses the column-stacking convention for the isomorphism between ``\mathcal{L}(\mathcal{H})`` and ``\mathcal{H}\otimes\mathcal{H}``. This isomorphism is implemented by the functions [`mat2vec`](@ref) and [`vec2mat`](@ref):
@@ -328,7 +328,7 @@ vec_rho = mat2vec(rho)
 rho2 = vec2mat(vec_rho)
 ```
 
-The `QuantumObject.type` attribute indicates whether a quantum object is a vector corresponding to an [`OperatorKet`](@ref), or its Hermitian conjugate [`OperatorBra`](@ref). One can also use [`isoperket`](@ref) and [`isoperbra`](@ref) to check the type:
+The `QuantumObject.type` attribute indicates whether a quantum object is a vector corresponding to an [`OperatorKet`](@ref), or its Hermitian conjugate [`OperatorBra`](@ref). One can also use [`isoper`](@ref), [`isoperket`](@ref), and [`isoperbra`](@ref) to check the type:
 
 ```@example states_and_operators
 println(isoper(vec_rho))
@@ -343,12 +343,12 @@ Because `Julia` is a column-oriented languages (like `Fortran` and `MATLAB`), in
 
 ```math
 \begin{align}
-A\rho~~~ &\rightarrow \textrm{spre}(A) * \textrm{vec}(\rho) = \mathbb{1}\otimes A ~ |\rho\rangle\rangle,\notag\\
-\rho B &\rightarrow \textrm{spost}(B) * \textrm{vec}(\rho) = B^T\otimes \mathbb{1} ~ |\rho\rangle\rangle,\notag\\
-A \rho B &\rightarrow \textrm{sprepost}(A,B) * \textrm{vec}(\rho) = B^T\otimes A ~ |\rho\rangle\rangle,\notag
+\hat{A}\hat{\rho}~~~ &\rightarrow \textrm{spre}(\hat{A}) * \textrm{vec}(\hat{\rho}) = \hat{\mathbb{1}}\otimes \hat{A} ~ |\hat{\rho}\rangle\rangle,\notag\\
+\hat{\rho} \hat{B} &\rightarrow \textrm{spost}(\hat{B}) * \textrm{vec}(\hat{\rho}) = \hat{B}^T\otimes \hat{\mathbb{1}} ~ |\hat{\rho}\rangle\rangle,\notag\\
+\hat{A} \hat{\rho} \hat{B} &\rightarrow \textrm{sprepost}(\hat{A},\hat{B}) * \textrm{vec}(\hat{\rho}) = \hat{B}^T\otimes \hat{A} ~ |\hat{\rho}\rangle\rangle,\notag
 \end{align}
 ```
-where ``\mathbb{1}`` represents the identity operator with Hilbert space dimension equal to ``\rho``.
+where ``\hat{\mathbb{1}}`` represents the identity operator with Hilbert space dimension equal to ``\hat{\rho}``.
 
 ```@example states_and_operators
 A = Qobj([1 2; 3 4])
@@ -375,10 +375,10 @@ println(isoper(S_AB))
 println(issuper(S_AB))
 ```
 
-With the above definitions, the following equality holds in `Julia`:
+With the above definitions, the following equalities hold in `Julia`:
 
 ```math
-\textrm{vec}(A \rho B) = \textrm{spre}(A) * \textrm{spre}(B) * \textrm{vec}(\rho) = \textrm{sprepost}(A,B) * \textrm{vec}(\rho) ~~\forall~~A, B, \rho
+\textrm{vec}(\hat{A} \hat{\rho} \hat{B}) = \textrm{spre}(\hat{A}) * \textrm{spre}(\hat{B}) * \textrm{vec}(\hat{\rho}) = \textrm{sprepost}(\hat{A},\hat{B}) * \textrm{vec}(\hat{\rho}) ~~\forall~~\hat{A}, \hat{B}, \hat{\rho}
 ```
 
 ```@example states_and_operators

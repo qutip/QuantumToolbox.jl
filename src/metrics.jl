@@ -82,7 +82,7 @@ entanglement(QO::QuantumObject, sel::Int) = entanglement(QO, (sel,))
     tracedist(ρ::QuantumObject, σ::QuantumObject)
 
 Calculates the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) between two [`QuantumObject`](@ref):
-``T(\rho, \sigma) = \frac{1}{2} \lVert \rho - \sigma \rVert_1``
+``T(\hat{\rho}, \hat{\sigma}) = \frac{1}{2} \lVert \hat{\rho} - \hat{\sigma} \rVert_1``
 
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
@@ -100,7 +100,7 @@ tracedist(
     fidelity(ρ::QuantumObject, σ::QuantumObject)
 
 Calculate the fidelity of two [`QuantumObject`](@ref):
-``F(\rho, \sigma) = \textrm{Tr} \sqrt{\sqrt{\rho} \sigma \sqrt{\rho}}``
+``F(\hat{\rho}, \hat{\sigma}) = \textrm{Tr} \sqrt{\sqrt{\hat{\rho}} \hat{\sigma} \sqrt{\hat{\rho}}}``
 
 Here, the definition is from Nielsen & Chuang, "Quantum Computation and Quantum Information". It is the square root of the fidelity defined in R. Jozsa, Journal of Modern Optics, 41:12, 2315 (1994).
 

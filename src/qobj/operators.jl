@@ -23,7 +23,7 @@ The `dimensions` can be either the following types:
 
 The `distribution` specifies which of the method used to obtain the unitary matrix:
 - `:haar`: Haar random unitary matrix using the algorithm from reference 1
-- `:exp`: Uses ``\exp(-iH)``, where ``H`` is a randomly generated Hermitian operator.
+- `:exp`: Uses ``\exp(-i\hat{H})``, where ``\hat{H}`` is a randomly generated Hermitian operator.
 
 # References
 1. [F. Mezzadri, How to generate random matrices from the classical compact groups, arXiv:math-ph/0609050 (2007)](https://arxiv.org/abs/math-ph/0609050)
@@ -68,8 +68,8 @@ rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{T}) where {T} =
     commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
 
 Return the commutator (or `anti`-commutator) of the two [`QuantumObject`](@ref):
-- commutator (`anti=false`): ``AB-BA``
-- anticommutator (`anti=true`): ``AB+BA``
+- commutator (`anti=false`): ``\hat{A}\hat{B}-\hat{B}\hat{A}``
+- anticommutator (`anti=true`): ``\hat{A}\hat{B}+\hat{B}\hat{A}``
 
 Note that `A` and `B` must be [`Operator`](@ref)
 """
@@ -233,13 +233,13 @@ end
 Generate higher-order Spin-`j` operators, where `j` is the spin quantum number and can be a non-negative integer or half-integer
 
 The parameter `which` specifies which of the following operator to return.
-- `:x`: ``S_x``
-- `:y`: ``S_y``
-- `:z`: ``S_z``
-- `:+`: ``S_+``
-- `:-`: ``S_-``
+- `:x`: ``\hat{S}_x``
+- `:y`: ``\hat{S}_y``
+- `:z`: ``\hat{S}_z``
+- `:+`: ``\hat{S}_+``
+- `:-`: ``\hat{S}_-``
 
-Note that if the parameter `which` is not specified, returns a set of Spin-`j` operators: ``(S_x, S_y, S_z)``
+Note that if the parameter `which` is not specified, returns a set of Spin-`j` operators: ``(\hat{S}_x, \hat{S}_y, \hat{S}_z)``
 
 # Examples
 ```
@@ -318,7 +318,7 @@ _jz(j::Real) = spdiagm(0 => Array{ComplexF64}(j .- (0:Int(2 * j))))
 @doc raw"""
     spin_Jx(j::Real)
 
-``S_x`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer
+``\hat{S}_x`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -327,7 +327,7 @@ spin_Jx(j::Real) = jmat(j, Val(:x))
 @doc raw"""
     spin_Jy(j::Real)
 
-``S_y`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer
+``\hat{S}_y`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -336,7 +336,7 @@ spin_Jy(j::Real) = jmat(j, Val(:y))
 @doc raw"""
     spin_Jz(j::Real)
 
-``S_z`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer
+``\hat{S}_z`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -345,7 +345,7 @@ spin_Jz(j::Real) = jmat(j, Val(:z))
 @doc raw"""
     spin_Jm(j::Real)
 
-``S_-`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer
+``\hat{S}_-`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -354,7 +354,7 @@ spin_Jm(j::Real) = jmat(j, Val(:-))
 @doc raw"""
     spin_Jp(j::Real)
 
-``S_+`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer
+``\hat{S}_+`` operator for Spin-`j`, where `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -363,7 +363,7 @@ spin_Jp(j::Real) = jmat(j, Val(:+))
 @doc raw"""
     spin_J_set(j::Real)
 
-A set of Spin-`j` operators ``(S_x, S_y, S_z)``, where `j` is the spin quantum number and can be a non-negative integer or half-integer
+A set of Spin-`j` operators ``(\hat{S}_x, \hat{S}_y, \hat{S}_z)``, where `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 Note that this functions is same as `jmat(j)`. See also [`jmat`](@ref).
 """
@@ -372,7 +372,7 @@ spin_J_set(j::Real) = jmat(j)
 @doc raw"""
     sigmap()
 
-Pauli ladder operator ``\hat{\sigma}_+ = \hat{\sigma}_x + i \hat{\sigma}_y``.
+Pauli ladder operator ``\hat{\sigma}_+ = (\hat{\sigma}_x + i \hat{\sigma}_y) / 2``.
 
 See also [`jmat`](@ref).
 """
@@ -381,7 +381,7 @@ sigmap() = jmat(0.5, Val(:+))
 @doc raw"""
     sigmam()
 
-Pauli ladder operator ``\hat{\sigma}_- = \hat{\sigma}_x - i \hat{\sigma}_y``.
+Pauli ladder operator ``\hat{\sigma}_- = (\hat{\sigma}_x - i \hat{\sigma}_y) / 2``.
 
 See also [`jmat`](@ref).
 """
@@ -437,15 +437,17 @@ Construct a fermionic destruction operator acting on the `j`-th site, where the 
 
 Here, we use the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
 ```math
-d_j = \sigma_z^{\otimes j} \otimes \sigma_{-} \otimes I^{\otimes N-j-1}
+\hat{d}_j = \hat{\sigma}_z^{\otimes j-1} \otimes \hat{\sigma}_{+} \otimes \hat{\mathbb{1}}^{\otimes N-j}
 ```
 
-Note that the site index `j` should satisfy: `0 ≤ j ≤ N - 1`.
+The site index `j` should satisfy: `1 ≤ j ≤ N`.
+
+Note that we put ``\hat{\sigma}_{+} = \begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix}`` here because we consider ``|0\rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix}`` to be ground (vacant) state, and ``|1\rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix}`` to be excited (occupied) state.
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fdestroy(Val(N), j)` instead of `fdestroy(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-fdestroy(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
+fdestroy(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmap())
 
 @doc raw"""
     fcreate(N::Union{Int,Val}, j::Int)
@@ -454,27 +456,29 @@ Construct a fermionic creation operator acting on the `j`-th site, where the foc
 
 Here, we use the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
 ```math
-d_j^\dagger = \sigma_z^{\otimes j} \otimes \sigma_{+} \otimes I^{\otimes N-j-1}
+\hat{d}^\dagger_j = \hat{\sigma}_z^{\otimes j-1} \otimes \hat{\sigma}_{-} \otimes \hat{\mathbb{1}}^{\otimes N-j}
 ```
 
-Note that the site index `j` should satisfy: `0 ≤ j ≤ N - 1`.
+The site index `j` should satisfy: `1 ≤ j ≤ N`.
+
+Note that we put ``\hat{\sigma}_{-} = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatrix}`` here because we consider ``|0\rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix}`` to be ground (vacant) state, and ``|1\rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix}`` to be excited (occupied) state.
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fcreate(Val(N), j)` instead of `fcreate(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-fcreate(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmap())
+fcreate(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
 
 _Jordan_Wigner(N::Int, j::Int, op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} =
     _Jordan_Wigner(Val(N), j, op)
 
 function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {N,T}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
-    ((j >= N) || (j < 0)) && throw(ArgumentError("The site index (j) should satisfy: 0 ≤ j ≤ N - 1"))
+    ((j > N) || (j < 1)) && throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
     σz = sigmaz().data
-    Z_tensor = kron(1, 1, fill(σz, j)...)
+    Z_tensor = kron(1, 1, fill(σz, j - 1)...)
 
-    S = 2^(N - j - 1)
+    S = 2^(N - j)
     I_tensor = sparse((1.0 + 0.0im) * LinearAlgebra.I, S, S)
 
     return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator, dims = ntuple(i -> 2, Val(N)))

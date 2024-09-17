@@ -135,7 +135,7 @@ end
 @doc raw"""
     dot(i::QuantumObject, A::QuantumObject j::QuantumObject)
 
-Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | A | j \rangle``
+Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | \hat{A} | j \rangle``
 
 Supports the following inputs:
 - `A` is in the type of [`Operator`](@ref), with `i` and `j` are both [`Ket`](@ref).
@@ -638,7 +638,7 @@ get_data(A::QuantumObject) = A.data
 
 Get the coherence value ``\alpha`` by measuring the expectation value of the destruction operator ``\hat{a}`` on a state ``\ket{\psi}`` or a density matrix ``\hat{\rho}``.
 
-It returns both ``\alpha`` and the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \bar{\alpha} \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``\dyad{\alpha}``.
+It returns both ``\alpha`` and the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
 """
 function get_coherence(ψ::QuantumObject{<:AbstractArray,KetQuantumObject})
     a = destroy(prod(ψ.dims))
@@ -665,7 +665,7 @@ Note that this method currently works for [`Ket`](@ref), [`Bra`](@ref), and [`Op
 
 # Examples
 
-If `order = [2, 1, 3]`, the Hilbert space structure will be re-arranged: H₁ ⊗ H₂ ⊗ H₃ → H₂ ⊗ H₁ ⊗ H₃.
+If `order = [2, 1, 3]`, the Hilbert space structure will be re-arranged: ``\mathcal{H}_1 \otimes \mathcal{H}_2 \otimes \mathcal{H}_3 \rightarrow \mathcal{H}_2 \otimes \mathcal{H}_1 \otimes \mathcal{H}_3``.
 
 ```
 julia> ψ1 = fock(2, 0)

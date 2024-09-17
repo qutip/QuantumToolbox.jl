@@ -58,7 +58,7 @@ dag(A::QuantumObject{<:AbstractArray{T}}) where {T} = adjoint(A)
 @doc raw"""
     matrix_element(i::QuantumObject, A::QuantumObject j::QuantumObject)
 
-Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | A | j \rangle``
+Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | \hat{A} | j \rangle``
 
 Note that this function is same as `dot(i, A, j)`
 

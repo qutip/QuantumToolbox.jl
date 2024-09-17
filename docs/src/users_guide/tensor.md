@@ -43,13 +43,13 @@ tensor(states...)
 ```
 This state is slightly more complicated, describing two qubits in a superposition between the up and down states, while the third qubit is in its ground state.
 
-To construct operators that act on an extended Hilbert space of a combined system, we similarly pass a list of operators for each component system to the [`tensor`](@ref) (or [`kron`](@ref)) function. For example, to form the operator that represents the simultaneous action of the ``\sigma_x`` operator on two qubits:
+To construct operators that act on an extended Hilbert space of a combined system, we similarly pass a list of operators for each component system to the [`tensor`](@ref) (or [`kron`](@ref)) function. For example, to form the operator that represents the simultaneous action of the ``\hat{\sigma}_x`` operator on two qubits:
 
 ```@example tensor_products
 tensor(sigmax(), sigmax())
 ```
 
-To create operators in a combined Hilbert space that only act on a single component, we take the tensor product of the operator acting on the subspace of interest, with the identity operators corresponding to the components that are to be unchanged. For example, the operator that represents ``\sigma_z`` on the first qubit in a two-qubit system, while leaving the second qubit unaffected:
+To create operators in a combined Hilbert space that only act on a single component, we take the tensor product of the operator acting on the subspace of interest, with the identity operators corresponding to the components that are to be unchanged. For example, the operator that represents ``\hat{\sigma}_z`` on the first qubit in a two-qubit system, while leaving the second qubit unaffected:
 
 ```@example tensor_products
 tensor(sigmaz(), qeye(2))
@@ -61,7 +61,7 @@ The [`tensor`](@ref) (or [`kron`](@ref)) function is extensively used when const
 
 ### Two coupled qubits
 
-First, let’s consider a system of two coupled qubits. Assume that both the qubits have equal energy splitting, and that the qubits are coupled through a ``\sigma_x \otimes \sigma_x`` interaction with strength ``g = 0.05`` (in units where the bare qubit energy splitting is unity). The Hamiltonian describing this system is:
+First, let’s consider a system of two coupled qubits. Assume that both the qubits have equal energy splitting, and that the qubits are coupled through a ``\hat{\sigma}_x \otimes \hat{\sigma}_x`` interaction with strength ``g = 0.05`` (in units where the bare qubit energy splitting is unity). The Hamiltonian describing this system is:
 
 ```@example tensor_products
 H = tensor(sigmaz(), qeye(2)) + 
@@ -86,7 +86,7 @@ H = tensor(sigmaz(), qeye(2), qeye(2)) +
 The simplest possible quantum mechanical description for light-matter interaction is encapsulated in the Jaynes-Cummings model, which describes the coupling between a two-level atom and a single-mode electromagnetic field (a cavity mode). Denoting the energy splitting of the atom and cavity ``\omega_a`` and ``\omega_c``, respectively, and the atom-cavity interaction strength ``g``, the Jaynes-Cummings Hamiltonian can be constructed as:
 
 ```math
-H = \frac{\omega_a}{2}\sigma_z + \omega_c a^\dagger a + g (a^\dagger \sigma_- + a \sigma_+)
+H = \frac{\omega_a}{2}\hat{\sigma}_z + \omega_c \hat{a}^\dagger \hat{a} + g (\hat{a}^\dagger \hat{\sigma}_- + \hat{a} \hat{\sigma}_+)
 ```
 
 ```@example tensor_products
