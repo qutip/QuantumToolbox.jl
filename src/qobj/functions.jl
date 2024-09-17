@@ -17,7 +17,7 @@ ket2dm(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * 
 ket2dm(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = ρ
 
 @doc raw"""
-    expect(O::QuantumObject, ψ::QuantumObject)
+    expect(O::QuantumObject, ψ::Union{QuantumObject,Vector{QuantumObject}})
 
 Expectation value of the [`Operator`](@ref) `O` with the state `ψ`. The state can be a [`Ket`](@ref), [`Bra`](@ref) or [`Operator`](@ref).
 
@@ -26,6 +26,8 @@ If `ψ` is a [`Ket`](@ref) or [`Bra`](@ref), the function calculates ``\langle\p
 If `ψ` is a density matrix ([`Operator`](@ref)), the function calculates ``\textrm{Tr} \left[ \hat{O} \hat{\psi} \right]``
 
 The function returns a real number if `O` is of `Hermitian` type or `Symmetric` type, and returns a complex number otherwise. You can make an operator `O` hermitian by using `Hermitian(O)`.
+
+Note that `ψ` can also be given as a list of [`QuantumObject`](@ref), it returns a list of expectation values.
 
 # Examples
 
@@ -77,20 +79,28 @@ function expect(
 ) where {TF<:Number,TR<:Real,T2}
     return real(tr(O * ρ))
 end
+function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ρ::Vector{<:QuantumObject}) where {T1}
+    _expect = _ρ -> expect(O, _ρ)
+    return _expect.(ρ)
+end
 
 @doc raw"""
-    variance(O::QuantumObject, ψ::QuantumObject)
+    variance(O::QuantumObject, ψ::Union{QuantumObject,Vector{QuantumObject}})
 
 Variance of the [`Operator`](@ref) `O`: ``\langle\hat{O}^2\rangle - \langle\hat{O}\rangle^2``,
 
 where ``\langle\hat{O}\rangle`` is the expectation value of `O` with the state `ψ` (see also [`expect`](@ref)), and the state `ψ` can be a [`Ket`](@ref), [`Bra`](@ref) or [`Operator`](@ref).
 
 The function returns a real number if `O` is hermitian, and returns a complex number otherwise.
+
+Note that `ψ` can also be given as a list of [`QuantumObject`](@ref), it returns a list of expectation values.
 """
 variance(
     O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     ψ::QuantumObject{<:AbstractArray{T2}},
 ) where {T1,T2} = expect(O^2, ψ) - expect(O, ψ)^2
+variance(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::Vector{<:QuantumObject}) where {T1} =
+    expect(O^2, ψ) .- expect(O, ψ) .^ 2
 
 @doc raw"""
     sparse_to_dense(A::QuantumObject)
@@ -177,11 +187,15 @@ Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠦
 ```
 """
-function LinearAlgebra.kron(
+LinearAlgebra.kron(
     A::QuantumObject{<:AbstractArray{T1},OpType},
     B::QuantumObject{<:AbstractArray{T2},OpType},
-) where {T1,T2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
-    return QuantumObject(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
+) where {T1,T2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}} =
+    QuantumObject(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
+LinearAlgebra.kron(A::QuantumObject) = A
+function LinearAlgebra.kron(A::Vector{<:QuantumObject})
+    @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."
+    return kron(A...)
 end
 
 @doc raw"""

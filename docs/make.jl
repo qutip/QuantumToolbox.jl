@@ -21,6 +21,7 @@ const PAGES = [
     "Getting Started" => [
         "Introduction" => "index.md",
         "Key differences from QuTiP" => "qutip_differences.md",
+        "The Importance of Type-Stability" => "type_stability.md",
         # "Cite QuantumToolbox.jl" => "cite.md",
     ],
     "Users Guide" => [
@@ -28,7 +29,6 @@ const PAGES = [
             "users_guide/QuantumObject/QuantumObject.md",
             "users_guide/QuantumObject/QuantumObject_functions.md",
         ],
-        "The Importance of Type-Stability" => "users_guide/type_stability.md",
         "Manipulating States and Operators" => "users_guide/states_and_operators.md",
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
         "Time Evolution and Dynamics" => [

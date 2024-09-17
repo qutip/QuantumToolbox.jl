@@ -309,9 +309,22 @@
             @inferred a .^ 2
             @inferred a * a
             @inferred a * a'
+            @inferred kron(a)
             @inferred kron(a, σx)
             @inferred kron(a, eye(2))
         end
+    end
+
+    @testset "tensor" begin
+        σx = sigmax()
+        X3 = kron(σx, σx, σx)
+        @test tensor(σx) == kron(σx)
+        @test tensor(fill(σx, 3)...) == X3
+        X_warn = @test_logs (
+            :warn,
+            "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead.",
+        ) tensor(fill(σx, 3))
+        @test X_warn == X3
     end
 
     @testset "projection" begin
@@ -384,6 +397,11 @@
         @test expect(a, ρ) ≈ tr(a * ρ)
         @test variance(a, ρ) ≈ tr(a^2 * ρ) - tr(a * ρ)^2
 
+        # when input is a vector of states
+        xlist = [1.0, 1.0im, -1.0, -1.0im]
+        ψlist = [normalize!(basis(N, 4) + x * basis(N, 3)) for x in xlist]
+        @test all(expect(a', ψlist) .≈ xlist)
+
         @testset "Type Inference (expect)" begin
             @inferred expect(a, ψ)
             @inferred expect(a, ψ')
@@ -391,6 +409,8 @@
             @inferred variance(a, ψ')
             @inferred expect(a, ρ)
             @inferred variance(a, ρ)
+            @inferred expect(a, ψlist)
+            @inferred variance(a, ψlist)
         end
     end
 
