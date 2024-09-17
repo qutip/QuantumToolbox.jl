@@ -63,13 +63,13 @@ end
 Generates the ODEProblem for the master equation time evolution of an open quantum system:
 
 ```math
-\frac{\partial \rho(t)}{\partial t} = -i[\hat{H}, \rho(t)] + \sum_n \mathcal{D}(\hat{C}_n) [\rho(t)]
+\frac{\partial \hat{\rho}(t)}{\partial t} = -i[\hat{H}, \hat{\rho}(t)] + \sum_n \mathcal{D}(\hat{C}_n) [\hat{\rho}(t)]
 ```
 
 where 
 
 ```math
-\mathcal{D}(\hat{C}_n) [\rho(t)] = \hat{C}_n \rho(t) \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n \rho(t) - \frac{1}{2} \rho(t) \hat{C}_n^\dagger \hat{C}_n
+\mathcal{D}(\hat{C}_n) [\hat{\rho}(t)] = \hat{C}_n \hat{\rho}(t) \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n \hat{\rho}(t) - \frac{1}{2} \hat{\rho}(t) \hat{C}_n^\dagger \hat{C}_n
 ```
 
 # Arguments
@@ -176,13 +176,13 @@ end
 Time evolution of an open quantum system using Lindblad master equation:
 
 ```math
-\frac{\partial \rho(t)}{\partial t} = -i[\hat{H}, \rho(t)] + \sum_n \mathcal{D}(\hat{C}_n) [\rho(t)]
+\frac{\partial \hat{\rho}(t)}{\partial t} = -i[\hat{H}, \hat{\rho}(t)] + \sum_n \mathcal{D}(\hat{C}_n) [\hat{\rho}(t)]
 ```
 
 where 
 
 ```math
-\mathcal{D}(\hat{C}_n) [\rho(t)] = \hat{C}_n \rho(t) \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n \rho(t) - \frac{1}{2} \rho(t) \hat{C}_n^\dagger \hat{C}_n
+\mathcal{D}(\hat{C}_n) [\hat{\rho}(t)] = \hat{C}_n \hat{\rho}(t) \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n \hat{\rho}(t) - \frac{1}{2} \hat{\rho}(t) \hat{C}_n^\dagger \hat{C}_n
 ```
 
 # Arguments

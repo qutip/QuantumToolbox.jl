@@ -285,11 +285,11 @@
         dims = ntuple(i -> 2, Val(sites))
         Q_iden = Qobj(sparse((1.0 + 0.0im) * LinearAlgebra.I, SIZE, SIZE); dims = dims)
         Q_zero = Qobj(spzeros(ComplexF64, SIZE, SIZE); dims = dims)
-        for i in 0:(sites-1)
+        for i in 1:sites
             d_i = fdestroy(sites, i)
             @test d_i' ≈ fcreate(sites, i)
 
-            for j in 0:(sites-1)
+            for j in 1:sites
                 d_j = fdestroy(sites, j)
 
                 if i == j
@@ -301,9 +301,20 @@
                 @test commutator(d_i, d_j; anti = true) ≈ Q_zero
             end
         end
+        zero = zero_ket((2, 2))
+        vac = tensor(basis(2, 0), basis(2, 0))
+        d1 = sigmap() ⊗ qeye(2)
+        d2 = sigmaz() ⊗ sigmap()
+        @test d1 * vac == zero
+        @test d2 * vac == zero
+        @test d1' * vac == tensor(basis(2, 1), basis(2, 0))
+        @test d2' * vac == tensor(basis(2, 0), basis(2, 1))
+        @test d1' * d2' * vac == tensor(basis(2, 1), basis(2, 1))
+        @test d1' * d1' * d2' * vac == zero
+        @test d2' * d1' * d2' * vac == zero
         @test_throws ArgumentError fdestroy(0, 0)
-        @test_throws ArgumentError fdestroy(sites, -1)
-        @test_throws ArgumentError fdestroy(sites, sites)
+        @test_throws ArgumentError fdestroy(sites, 0)
+        @test_throws ArgumentError fdestroy(sites, sites + 1)
     end
 
     @testset "identity operator" begin
