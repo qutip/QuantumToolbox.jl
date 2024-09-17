@@ -197,11 +197,6 @@ function LinearAlgebra.kron(A::Vector{<:QuantumObject})
     @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."
     return kron(A...)
 end
-LinearAlgebra.kron(A::QuantumObject) = A
-function LinearAlgebra.kron(A::Vector{<:QuantumObject})
-    @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."
-    return kron(A...)
-end
 
 @doc raw"""
     vec2mat(A::AbstractVector)
