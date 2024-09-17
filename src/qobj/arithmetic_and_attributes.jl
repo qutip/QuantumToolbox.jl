@@ -475,8 +475,9 @@ proj(ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} = ψ' * �
 @doc raw"""
     ptrace(QO::QuantumObject, sel)
 
-[Partial trace](https://en.wikipedia.org/wiki/Partial_trace) of a quantum state `QO` leaving only the dimensions
-with the indices present in the `sel` vector.
+[Partial trace](https://en.wikipedia.org/wiki/Partial_trace) of a quantum state `QO` leaving only the dimensions with the indices present in the `sel` vector.
+
+Note that this function will always return [`Operator`](@ref). No matter the input [`QuantumObject`](@ref) is a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref)
 
 # Examples
 Two qubits in the state ``\ket{\psi} = \ket{e,g}``:
@@ -515,18 +516,21 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 """
 function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     ns = length(sel)
-    if ns == 0
-        return tr(QO * QO')
+    if ns == 0 # return full trace for empty sel
+        return tr(ket2dm(QO))
     else
         nd = length(QO.dims)
-        !all(nd .>= sel .> 0) && throw(
+
+        (any(>(nd), sel) || any(<(1), sel)) && throw(
             ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(nd) sub-systems"),
         )
-        ns != length(unique(sel)) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
-        nd == 1 && return QO * QO'  # ptrace should always return Operator
+        (ns != length(unique(sel))) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
+        (nd == 1) && return ket2dm(QO) # ptrace should always return Operator
     end
 
-    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, sort(SVector(sel)))
+    _non_static_array_warning("sel", sel)
+    _sort_sel = sort(SVector{length(sel),Int}(sel))
+    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, _sort_sel)
     return QuantumObject(ρtr, type = Operator, dims = dkeep)
 end
 
@@ -534,18 +538,21 @@ ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractV
 
 function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     ns = length(sel)
-    if ns == 0
+    if ns == 0 # return full trace for empty sel
         return tr(QO)
     else
         nd = length(QO.dims)
-        !all(nd .>= sel .> 0) && throw(
+
+        (any(>(nd), sel) || any(<(1), sel)) && throw(
             ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(nd) sub-systems"),
         )
-        ns != length(unique(sel)) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
-        nd == 1 && return QO
+        (ns != length(unique(sel))) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
+        (nd == 1) && return QO
     end
 
-    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, sort(SVector(sel)))
+    _non_static_array_warning("sel", sel)
+    _sort_sel = sort(SVector{length(sel),Int}(sel))
+    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, _sort_sel)
     return QuantumObject(ρtr, type = Operator, dims = dkeep)
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
@@ -560,7 +567,7 @@ function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
     dtrace = dims[qtrace]
     nt = length(dtrace)
 
-    # Concatenate qtrace and sel without loosing the length information
+    # Concatenate qtrace and sel without losing the length information
     # Tuple(qtrace..., sel...)
     qtrace_sel = ntuple(Val(nd)) do i
         if i <= nt
@@ -590,7 +597,7 @@ function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
     nt = length(dtrace)
     _2_nt = 2 * nt
 
-    # Concatenate qtrace and sel without loosing the length information
+    # Concatenate qtrace and sel without losing the length information
     # Tuple(qtrace..., sel...)
     qtrace_sel = ntuple(Val(2 * nd)) do i
         if i <= nt

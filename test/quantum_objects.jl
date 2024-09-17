@@ -627,8 +627,16 @@
                 @test ptrace(ρtotal, sel) ≈ tensor([ρlist[i] for i in sel]...)
             end
         end
-        @test ptrace(ψtotal, (1, 3, 4)) ≈ ptrace(ψtotal, (4, 3, 1))
-        @test ptrace(ρtotal, (1, 3, 4)) ≈ ptrace(ρtotal, (3, 1, 4))
+        @test ptrace(ψtotal, (1, 3, 4)) ≈ ptrace(ψtotal, (4, 3, 1)) # check sort of sel
+        @test ptrace(ρtotal, (1, 3, 4)) ≈ ptrace(ρtotal, (3, 1, 4)) # check sort of sel
+        @test_logs (
+            :warn,
+            "The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` or `sel = SVector(1, 2)` instead of `sel = [1, 2]`.",
+        ) ptrace(ψtotal, [1, 2])
+        @test_logs (
+            :warn,
+            "The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` or `sel = SVector(1, 2)` instead of `sel = [1, 2]`.",
+        ) ptrace(ρtotal, [1, 2])
         @test_throws ArgumentError ptrace(ψtotal, 0)
         @test_throws ArgumentError ptrace(ψtotal, 5)
         @test_throws ArgumentError ptrace(ψtotal, (0, 2))
