@@ -8,7 +8,8 @@ on:
       - '.github/workflows/CI.yml'
       - 'src/**'
       - 'ext/**'
-      - 'test/**'
+      - 'test/runtests.jl'
+      - 'test/core-test/**'
       - 'Project.toml'
   pull_request:
     branches:

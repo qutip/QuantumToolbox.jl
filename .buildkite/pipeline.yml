@@ -2,6 +2,7 @@
 steps:
   - label: ":runner: Dynamically launch pipelines"
     plugins:
+      # CUDA extension
       - staticfloat/forerunner:
           watch:
             - ".buildkite/pipeline.yml"
@@ -9,7 +10,7 @@ steps:
             - "src/**"
             - "ext/QuantumToolboxCUDAExt.jl"
             - "test/runtests.jl"
-            - "test/cuda_ext.jl"
+            - "test/ext-test/cuda_ext.jl"
             - "Project.toml"
           target: ".buildkite/CUDA_Ext.yml"
     agents:
