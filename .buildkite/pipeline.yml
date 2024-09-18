@@ -2,27 +2,17 @@
 steps:
   - label: ":runner: Dynamically launch pipelines"
     plugins:
-      # CUDA extension
       - staticfloat/forerunner:
           watch:
             - ".buildkite/pipeline.yml"
-            - ".buildkite/CUDA_Ext.yml"
+            - ".buildkite/GPU_Ext.yml"
             - "src/**"
             - "ext/QuantumToolboxCUDAExt.jl"
-            - "test/runtests.jl"
-            - "test/ext-test/cuda_ext.jl"
-            - "Project.toml"
-          target: ".buildkite/CUDA_Ext.yml"
-      # Metal extension
-      - staticfloat/forerunner:
-          watch:
-            - ".buildkite/pipeline.yml"
-            - ".buildkite/Metal_Ext.yml"
-            - "src/**"
             - "ext/QuantumToolboxMetalExt.jl"
             - "test/runtests.jl"
+            - "test/ext-test/cuda_ext.jl"
             - "test/ext-test/metal_ext.jl"
             - "Project.toml"
-          target: ".buildkite/Metal_Ext.yml"
+          target: ".buildkite/GPU_Ext.yml"
     agents:
       queue: "juliagpu"

@@ -39,6 +39,7 @@ const PAGES = [
         "Two-time correlation functions" => [],
         "Extensions" => [
             "users_guide/extensions/cuda.md",
+            "users_guide/extensions/metal.md",
         ],
     ],
     "Tutorials" => [
