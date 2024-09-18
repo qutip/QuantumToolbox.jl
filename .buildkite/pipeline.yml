@@ -24,4 +24,3 @@ steps:
           target: ".buildkite/Metal_Ext.yml"
     agents:
       queue: "juliagpu"
-      strict-single-hooks: true
