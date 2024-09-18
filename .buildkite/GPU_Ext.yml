@@ -48,7 +48,7 @@ steps:
             - src
             - ext
     agents:
-      queue: "juliagpu"
+      queue: "juliaecosystem"
       os: "macos"
       arch: "aarch64"
     env:
