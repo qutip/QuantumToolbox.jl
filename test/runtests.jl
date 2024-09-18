@@ -43,3 +43,8 @@ if (GROUP == "CUDA_Ext")# || (GROUP == "All")
     Pkg.add("CUDA")
     include(joinpath(testdir, "ext-test", "cuda_ext.jl"))
 end
+
+if (GROUP == "Metal_Ext")# || (GROUP == "All")
+    Pkg.add("Metal")
+    include(joinpath(testdir, "ext-test", "metal_ext.jl"))
+end
