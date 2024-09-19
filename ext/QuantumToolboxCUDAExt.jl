@@ -1,6 +1,7 @@
 module QuantumToolboxCUDAExt
 
 using QuantumToolbox
+import QuantumToolbox: _convert_u0
 import CUDA: cu, CuArray
 import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR
 import SparseArrays: SparseVector, SparseMatrixCSC
@@ -88,5 +89,8 @@ _change_eltype(::Type{T}, ::Val{64}) where {T<:AbstractFloat} = Float64
 _change_eltype(::Type{T}, ::Val{32}) where {T<:AbstractFloat} = Float32
 _change_eltype(::Type{Complex{T}}, ::Val{64}) where {T<:Union{Int,AbstractFloat}} = ComplexF64
 _change_eltype(::Type{Complex{T}}, ::Val{32}) where {T<:Union{Int,AbstractFloat}} = ComplexF32
+
+# make sure u0 in time evolution is dense vector and has complex element type
+_convert_u0(u0::Union{CuArray{T},CuSparseVector{T}}) where {T<:Number} = convert(CuArray{complex(T)}, u0)
 
 end

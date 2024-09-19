@@ -190,7 +190,7 @@ function mcsolveProblem(
     c_ops isa Nothing &&
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
-    t_l = _convert_tlist(eltype(H), tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    t_l = convert(Vector{real(eltype(ψ0))}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     H_eff = H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2
 
