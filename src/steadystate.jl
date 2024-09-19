@@ -95,12 +95,12 @@ function steadystate(
     (H.dims != ψ0.dims) && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
     N = prod(H.dims)
-    u0 = _convert_u0(mat2vec(ket2dm(ψ0).data))
+    u0 = sparse_to_dense(_CType(ψ0), mat2vec(ket2dm(ψ0).data))
 
     L = MatrixOperator(liouvillian(H, c_ops).data)
 
-    Ftype = real(eltype(u0))
-    prob = ODEProblem{true}(L, u0, (Ftype(0), Ftype(tspan))) # Convert tspan to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    ftype = _FType(ψ0)
+    prob = ODEProblem{true}(L, u0, (ftype(0), ftype(tspan))) # Convert tspan to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
     sol = solve(
         prob,
         solver.alg;
