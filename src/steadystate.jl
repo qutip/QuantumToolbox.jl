@@ -97,12 +97,10 @@ function steadystate(
     N = prod(H.dims)
     u0 = _convert_u0(mat2vec(ket2dm(ψ0).data))
 
-    Ftype = real(eltype(u0))
-    Tspan = (convert(Ftype, 0), convert(Ftype, tspan)) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
-
     L = MatrixOperator(liouvillian(H, c_ops).data)
 
-    prob = ODEProblem{true}(L, u0, Tspan)
+    Ftype = real(eltype(u0))
+    prob = ODEProblem{true}(L, u0, (Ftype(0), Ftype(tspan))) # Convert tspan to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
     sol = solve(
         prob,
         solver.alg;
