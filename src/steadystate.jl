@@ -98,7 +98,7 @@ function steadystate(
     u0 = _convert_u0(mat2vec(ket2dm(ψ0).data))
 
     Ftype = real(eltype(u0))
-    Tspan = (convert(Ftype, 0), convert(Ftype, tspan))
+    Tspan = (convert(Ftype, 0), convert(Ftype, tspan)) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     L = MatrixOperator(liouvillian(H, c_ops).data)
 
