@@ -67,11 +67,11 @@ _non_static_array_warning(argname, arg::AbstractVector{T}) where {T} =
           ")` instead of `$argname = $arg`." maxlog = 1
 
 # convert tlist in time evolution
-_convert_tlist(::Int32, tlist::AbstractVector) = _convert_tlist(Val(32), tlist)
-_convert_tlist(::Float32, tlist::AbstractVector) = _convert_tlist(Val(32), tlist)
-_convert_tlist(::ComplexF32, tlist::AbstractVector) = _convert_tlist(Val(32), tlist)
-_convert_tlist(::Int64, tlist::AbstractVector) = _convert_tlist(Val(64), tlist)
-_convert_tlist(::Float64, tlist::AbstractVector) = _convert_tlist(Val(64), tlist)
-_convert_tlist(::ComplexF64, tlist::AbstractVector) = _convert_tlist(Val(64), tlist)
+_convert_tlist(::Type{Int32}, tlist::AbstractVector) = _convert_tlist(Val(32), tlist)
+_convert_tlist(::Type{Float32}, tlist::AbstractVector) = _convert_tlist(Val(32), tlist)
+_convert_tlist(::Type{ComplexF32}, tlist::AbstractVector) = _convert_tlist(Val(32), tlist)
+_convert_tlist(::Type{Int64}, tlist::AbstractVector) = _convert_tlist(Val(64), tlist)
+_convert_tlist(::Type{Float64}, tlist::AbstractVector) = _convert_tlist(Val(64), tlist)
+_convert_tlist(::Type{ComplexF64}, tlist::AbstractVector) = _convert_tlist(Val(64), tlist)
 _convert_tlist(::Val{32}, tlist::AbstractVector) = convert(Vector{Float32}, tlist)
 _convert_tlist(::Val{64}, tlist::AbstractVector) = convert(Vector{Float64}, tlist)
