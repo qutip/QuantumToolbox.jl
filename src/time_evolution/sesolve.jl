@@ -103,9 +103,9 @@ function sesolveProblem(
     is_time_dependent = !(H_t isa Nothing)
     progress_bar_val = makeVal(progress_bar)
 
-    t_l = _convert_tlist(eltype(H), tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    ϕ0 = _convert_u0(get_data(ψ0))
 
-    ϕ0 = get_data(ψ0)
+    t_l = convert(Vector{real(eltype(ϕ0))}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     U = -1im * get_data(H)
     progr = ProgressBar(length(t_l), enable = getVal(progress_bar_val))

@@ -122,9 +122,9 @@ function mesolveProblem(
     is_time_dependent = !(H_t isa Nothing)
     progress_bar_val = makeVal(progress_bar)
 
-    t_l = _convert_tlist(eltype(H), tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    ρ0 = _convert_u0(mat2vec(ket2dm(ψ0).data))
 
-    ρ0 = mat2vec(ket2dm(ψ0).data)
+    t_l = convert(Vector{real(eltype(ρ0))}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     L = liouvillian(H, c_ops).data
     progr = ProgressBar(length(t_l), enable = getVal(progress_bar_val))
