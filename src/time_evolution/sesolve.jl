@@ -103,9 +103,9 @@ function sesolveProblem(
     is_time_dependent = !(H_t isa Nothing)
     progress_bar_val = makeVal(progress_bar)
 
-    ϕ0 = _convert_u0(get_data(ψ0))
+    ϕ0 = sparse_to_dense(_CType(ψ0), get_data(ψ0)) # Convert it to dense vector with complex element type
 
-    t_l = convert(Vector{real(eltype(ϕ0))}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    t_l = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     U = -1im * get_data(H)
     progr = ProgressBar(length(t_l), enable = getVal(progress_bar_val))

@@ -368,3 +368,7 @@ SparseArrays.SparseMatrixCSC(A::QuantumObject{<:AbstractMatrix}) =
     QuantumObject(SparseMatrixCSC(A.data), A.type, A.dims)
 SparseArrays.SparseMatrixCSC{T}(A::QuantumObject{<:SparseMatrixCSC}) where {T<:Number} =
     QuantumObject(SparseMatrixCSC{T}(A.data), A.type, A.dims)
+
+# functions for getting Float or Complex element type
+_FType(::QuantumObject{<:AbstractArray{T}}) where {T<:Number} = _FType(T)
+_CType(::QuantumObject{<:AbstractArray{T}}) where {T<:Number} = _CType(T)

@@ -33,7 +33,9 @@
               "reltol = $(sol.reltol)\n"
 
         @testset "Type Inference sesolve" begin
-            @inferred sesolveProblem(H, psi0, t_l)
+            @inferred sesolveProblem(H, psi0, t_l, progress_bar = Val(false))
+            @inferred sesolveProblem(H, psi0, [0, 10], progress_bar = Val(false))
+            @inferred sesolveProblem(H, Qobj(zeros(Int64, N * 2); dims = (N, 2)), t_l, progress_bar = Val(false))
             @inferred sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = Val(false))
             @inferred sesolve(H, psi0, t_l, progress_bar = Val(false))
             @inferred sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
@@ -104,6 +106,8 @@
 
         @testset "Type Inference mesolve" begin
             @inferred mesolveProblem(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mesolveProblem(H, psi0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mesolveProblem(H, Qobj(zeros(Int64, N)), t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
             @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
@@ -121,6 +125,8 @@
             )
             @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
             @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
+            @inferred mcsolve(H, psi0, [0, 10], c_ops, n_traj = 500, progress_bar = Val(false))
+            @inferred mcsolve(H, Qobj(zeros(Int64, N)), t_l, c_ops, n_traj = 500, progress_bar = Val(false))
         end
 
         @testset "Type Inference ssesolve" begin
