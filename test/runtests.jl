@@ -39,7 +39,7 @@ if (GROUP == "All") || (GROUP == "Core")
     end
 end
 
-if (GROUP == "CUDA_Ext") || (GROUP == "All")
+if (GROUP == "CUDA_Ext")# || (GROUP == "All")
     Pkg.add("CUDA")
     include(joinpath(testdir, "ext-test", "cuda_ext.jl"))
 end
