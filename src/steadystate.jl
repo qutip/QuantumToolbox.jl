@@ -95,10 +95,14 @@ function steadystate(
     (H.dims != ψ0.dims) && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
     N = prod(H.dims)
-    u0 = mat2vec(ket2dm(ψ0).data)
+    u0 = _convert_u0(mat2vec(ket2dm(ψ0).data))
+
+    Ftype = real(eltype(u0))
+    Tspan = (convert(Ftype, 0), convert(Ftype, tspan))
+
     L = MatrixOperator(liouvillian(H, c_ops).data)
 
-    prob = ODEProblem{true}(L, u0, (0.0, tspan))
+    prob = ODEProblem{true}(L, u0, Tspan)
     sol = solve(
         prob,
         solver.alg;
@@ -109,7 +113,6 @@ function steadystate(
     )
 
     ρss = reshape(sol.u[end], N, N)
-    ρss = (ρss + ρss') / 2 # Hermitianize
     return QuantumObject(ρss, Operator, H.dims)
 end
 
