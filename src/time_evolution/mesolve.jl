@@ -122,9 +122,9 @@ function mesolveProblem(
     is_time_dependent = !(H_t isa Nothing)
     progress_bar_val = makeVal(progress_bar)
 
-    t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for OrdinaryDiffEq.jl
+    ρ0 = sparse_to_dense(_CType(ψ0), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
 
-    ρ0 = mat2vec(ket2dm(ψ0).data)
+    t_l = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     L = liouvillian(H, c_ops).data
     progr = ProgressBar(length(t_l), enable = getVal(progress_bar_val))
