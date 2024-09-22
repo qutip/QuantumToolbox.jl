@@ -48,7 +48,7 @@ function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:haar}
     # Because inv(Λ) ⋅ R has real and strictly positive elements, Q · Λ is therefore Haar distributed.
     Λ = diag(R) # take the diagonal elements of R
     Λ ./= abs.(Λ) # rescaling the elements
-    return QuantumObject(dense_to_sparse(Q * Diagonal(Λ)); type = Operator, dims = dimensions)
+    return QuantumObject(sparse_to_dense(Q * Diagonal(Λ)); type = Operator, dims = dimensions)
 end
 function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:exp})
     N = prod(dimensions)
@@ -59,7 +59,7 @@ function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:exp})
     # generate Hermitian matrix
     H = QuantumObject((Z + Z') / 2; type = Operator, dims = dimensions)
 
-    return exp(-1.0im * H)
+    return sparse_to_dense(exp(-1.0im * H))
 end
 rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{T}) where {T} =
     throw(ArgumentError("Invalid distribution: $(T)"))
