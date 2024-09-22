@@ -12,5 +12,15 @@ steps:
             - "test/ext-test/cuda_ext.jl"
             - "Project.toml"
           target: ".buildkite/CUDA_Ext.yml"
+      - staticfloat/forerunner: # Metal.jl tests
+          watch:
+            - ".buildkite/pipeline.yml"
+            - ".buildkite/Metal_Ext.yml"
+            - "src/**"
+            - "ext/QuantumToolboxMetalExt.jl"
+            - "test/runtests.jl"
+            - "test/ext-test/metal_ext.jl"
+            - "Project.toml"
+          target: ".buildkite/Metal_Ext.yml"
     agents:
       queue: "juliagpu"
