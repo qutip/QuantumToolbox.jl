@@ -29,8 +29,8 @@ on:
 
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.os.arch }} ( ${{ matrix.group }} )
-    runs-on: ${{ matrix.os }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.node.os }} - ${{ matrix.node.arch }} ( ${{ matrix.group }} )
+    runs-on: ${{ matrix.node.os }}
     permissions: # needed to allow julia-actions/cache to delete old caches that it has created
       actions: write
       contents: read
@@ -42,36 +42,37 @@ jobs:
         version:
           - '1.10' # oldest
         #  - '1'    # latest
-        os: 
-          - ubuntu-latest
-            arch: x64
-          - windows-latest
-            arch: x64
-          - macOS-latest
-            arch: arm64
+        node:
+          - os: 'ubuntu-latest'
+            arch: 'x64'
+          - os: 'windows-latest'
+            arch: 'x64'
+          - os: 'macOS-latest'
+            arch: 'arm64'
         group:
-          - Core
+          - 'Core'
 
         include:
           # for code quality tests
           - version: '1'
-            os: 
-              - 'ubuntu-latest'
-                arch: 'x64'
+            node: 
+              os: 'ubuntu-latest'
+              arch: 'x64'
             group: 'Code-Quality'
 
           # for core tests (intermediate versions)
           # - version: '1.x'
-          #   os: 'ubuntu-latest'
-          #   arch: 'x64'
-          #   group: 'Core'     
+          #   node:
+          #     os: 'ubuntu-latest'
+          #     arch: 'x64'
+          #   group: 'Core'
 
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
-          arch: ${{ matrix.os.arch }}
+          arch: ${{ matrix.node.arch }}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
