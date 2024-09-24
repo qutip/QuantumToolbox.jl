@@ -3,8 +3,8 @@ Thank you for contributing to `QuantumToolbox.jl`! Please make sure you have fin
 
 - [ ] Please read [Contributor Covenant Code of Conduct](https://github.com/qutip/QuantumToolbox.jl/blob/main/CODE_OF_CONDUCT.md)
 - [ ] Any code changes were done in a way that does not break public API
-- [ ] Appropriate tests were added.
-- [ ] Any code changes should be formatted by running: `julia -e 'using JuliaFormatter; format(".")'`
+- [ ] Appropriate tests were added and has been tested locally by running: `make test`.
+- [ ] Any code changes should be `julia` formatted by running: `make format`
 - [ ] All documentation (in `docs/` folder) related to code changes were updated.
 
 Request for a review after you have completed all the tasks. If you have not finished them all, you can also open a [Draft Pull Request](https://github.blog/2019-02-14-introducing-draft-pull-requests/) to let the others know this on-going work.
