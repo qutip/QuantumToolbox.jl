@@ -41,12 +41,12 @@ jobs:
         version:
           - 'nightly'
         os:
-          - ubuntu-latest
+          - 'ubuntu-latest'
         arch:
-          - x64
+          - 'x64'
         group:
-          - Core
-          - Code-Quality
+          - 'Core'
+          - 'Code-Quality'
 
     steps:
       - uses: actions/checkout@v4
