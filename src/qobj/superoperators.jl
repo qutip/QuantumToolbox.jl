@@ -25,6 +25,7 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 ```math
 \mathcal{O} \left(\hat{A}\right) \left[ \hat{\rho} \right] = \hat{\mathbb{1}} \otimes \hat{A} ~ |\hat{\rho}\rangle\rangle
 ```
+(see the section in documentation: [Superoperators and Vectorized Operators](@ref doc:Superoperators-and-Vectorized-Operators) for more details)
 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
@@ -42,6 +43,7 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 ```math
 \mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{B}^T \otimes \hat{\mathbb{1}} ~ |\hat{\rho}\rangle\rangle
 ```
+(see the section in documentation: [Superoperators and Vectorized Operators](@ref doc:Superoperators-and-Vectorized-Operators) for more details)
 
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
 the same function is applied multiple times with a known Hilbert space dimension.
@@ -57,8 +59,9 @@ Returns the [`SuperOperator`](@ref) form of `A` and `B` acting on the left and r
 Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{B}^T \otimes \hat{A}``, namely
 
 ```math
-\mathcal{O} \left(\hat{A}, \hat{B}\right) \left[ \hat{\rho} \right] = \hat{B}^T \otimes \hat{A} ~ |\hat{\rho}\rangle\rangle = \textrm{spre}(A) * \textrm{spost}(B) ~ |\hat{\rho}\rangle\rangle
+\mathcal{O} \left(\hat{A}, \hat{B}\right) \left[ \hat{\rho} \right] = \hat{B}^T \otimes \hat{A} ~ |\hat{\rho}\rangle\rangle = \textrm{spre}(\hat{A}) * \textrm{spost}(\hat{B}) ~ |\hat{\rho}\rangle\rangle
 ```
+(see the section in documentation: [Superoperators and Vectorized Operators](@ref doc:Superoperators-and-Vectorized-Operators) for more details)
 
 See also [`spre`](@ref) and [`spost`](@ref).
 """

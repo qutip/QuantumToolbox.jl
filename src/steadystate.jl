@@ -58,13 +58,13 @@ Solve the stationary state based on time evolution (ordinary differential equati
 The termination condition of the stationary state ``|\rho\rangle\rangle`` is that either the following condition is `true`:
 
 ```math
-\lVert\frac{\partial |\rho\rangle\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\rho\rangle\rangle}{\partial t}+|\rho\rangle\rangle\rVert
+\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}+|\hat{\rho}\rangle\rangle\rVert
 ```
 
 or
 
 ```math
-\lVert\frac{\partial |\rho\rangle\rangle}{\partial t}\rVert \leq \textrm{abstol}
+\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{abstol}
 ```
 
 # Parameters
@@ -95,10 +95,12 @@ function steadystate(
     (H.dims != ψ0.dims) && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
 
     N = prod(H.dims)
-    u0 = mat2vec(ket2dm(ψ0).data)
+    u0 = sparse_to_dense(_CType(ψ0), mat2vec(ket2dm(ψ0).data))
+
     L = MatrixOperator(liouvillian(H, c_ops).data)
 
-    prob = ODEProblem{true}(L, u0, (0.0, tspan))
+    ftype = _FType(ψ0)
+    prob = ODEProblem{true}(L, u0, (ftype(0), ftype(tspan))) # Convert tspan to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
     sol = solve(
         prob,
         solver.alg;
@@ -109,7 +111,6 @@ function steadystate(
     )
 
     ρss = reshape(sol.u[end], N, N)
-    ρss = (ρss + ρss') / 2 # Hermitianize
     return QuantumObject(ρss, Operator, H.dims)
 end
 

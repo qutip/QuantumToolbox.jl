@@ -215,17 +215,6 @@ function QuantumObject(
     throw(DomainError(size(A), "The size of the array is not compatible with vector or matrix."))
 end
 
-_get_size(A::AbstractMatrix) = size(A)
-_get_size(A::AbstractVector) = (length(A), 1)
-
-_non_static_array_warning(argname, arg::Tuple{}) =
-    throw(ArgumentError("The argument $argname must be a Tuple or a StaticVector of non-zero length."))
-_non_static_array_warning(argname, arg::Union{SVector{N,T},MVector{N,T},NTuple{N,T}}) where {N,T} = nothing
-_non_static_array_warning(argname, arg::AbstractVector{T}) where {T} =
-    @warn "The argument $argname should be a Tuple or a StaticVector for better performance. Try to use `$argname = $(Tuple(arg))` or `$argname = SVector(" *
-          join(arg, ", ") *
-          ")` instead of `$argname = $arg`." maxlog = 1
-
 function _check_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N}
     _non_static_array_warning("dims", dims)
     return (all(>(0), dims) && length(dims) > 0) ||
@@ -379,3 +368,7 @@ SparseArrays.SparseMatrixCSC(A::QuantumObject{<:AbstractMatrix}) =
     QuantumObject(SparseMatrixCSC(A.data), A.type, A.dims)
 SparseArrays.SparseMatrixCSC{T}(A::QuantumObject{<:SparseMatrixCSC}) where {T<:Number} =
     QuantumObject(SparseMatrixCSC{T}(A.data), A.type, A.dims)
+
+# functions for getting Float or Complex element type
+_FType(::QuantumObject{<:AbstractArray{T}}) where {T<:Number} = _FType(T)
+_CType(::QuantumObject{<:AbstractArray{T}}) where {T<:Number} = _CType(T)

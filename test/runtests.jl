@@ -28,18 +28,18 @@ core_tests = [
 
 if (GROUP == "All") || (GROUP == "Code-Quality")
     Pkg.add(["Aqua", "JET"])
-    include(joinpath(testdir, "code_quality.jl"))
+    include(joinpath(testdir, "core-test", "code_quality.jl"))
 end
 
 if (GROUP == "All") || (GROUP == "Core")
     QuantumToolbox.about()
 
     for test in core_tests
-        include(joinpath(testdir, test))
+        include(joinpath(testdir, "core-test", test))
     end
 end
 
 if (GROUP == "CUDA_Ext")# || (GROUP == "All")
     Pkg.add("CUDA")
-    include(joinpath(testdir, "cuda_ext.jl"))
+    include(joinpath(testdir, "ext-test", "cuda_ext.jl"))
 end

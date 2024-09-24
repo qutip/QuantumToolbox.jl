@@ -54,3 +54,30 @@ makeVal(x::Val{T}) where {T} = x
 makeVal(x) = Val(x)
 
 getVal(x::Val{T}) where {T} = T
+
+_get_size(A::AbstractMatrix) = size(A)
+_get_size(A::AbstractVector) = (length(A), 1)
+
+_non_static_array_warning(argname, arg::Tuple{}) =
+    throw(ArgumentError("The argument $argname must be a Tuple or a StaticVector of non-zero length."))
+_non_static_array_warning(argname, arg::Union{SVector{N,T},MVector{N,T},NTuple{N,T}}) where {N,T} = nothing
+_non_static_array_warning(argname, arg::AbstractVector{T}) where {T} =
+    @warn "The argument $argname should be a Tuple or a StaticVector for better performance. Try to use `$argname = $(Tuple(arg))` or `$argname = SVector(" *
+          join(arg, ", ") *
+          ")` instead of `$argname = $arg`." maxlog = 1
+
+# functions for getting Float or Complex element type
+_FType(::AbstractArray{T}) where {T<:Number} = _FType(T)
+_FType(::Type{Int32}) = Float32
+_FType(::Type{Int64}) = Float64
+_FType(::Type{Float32}) = Float32
+_FType(::Type{Float64}) = Float64
+_FType(::Type{ComplexF32}) = Float32
+_FType(::Type{ComplexF64}) = Float64
+_CType(::AbstractArray{T}) where {T<:Number} = _CType(T)
+_CType(::Type{Int32}) = ComplexF32
+_CType(::Type{Int64}) = ComplexF64
+_CType(::Type{Float32}) = ComplexF32
+_CType(::Type{Float64}) = ComplexF64
+_CType(::Type{ComplexF32}) = ComplexF32
+_CType(::Type{ComplexF64}) = ComplexF64

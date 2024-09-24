@@ -97,9 +97,6 @@ We can extract the expectation value of the number operator ``\hat{a}^\dagger \h
 
 We can easily pass the computation to the GPU, by simply passing all the `Qobj`s to the GPU:
 
-!!! compat "Compat"
-    The described feature requires `Julia 1.9+`. See [CUDA extension](@ref doc:CUDA) for more details.
-
 ```julia
 using QuantumToolbox
 using CUDA

@@ -144,8 +144,6 @@ We can extract the expectation value of the number operator $\hat{a}^\dagger \ha
 
 We can easily pass the computation to the GPU, by simply passing all the `Qobj`s to the GPU:
 
-> **_NOTE:_** The described feature requires `Julia 1.9+`.
-
 ```julia
 using QuantumToolbox
 using CUDA
