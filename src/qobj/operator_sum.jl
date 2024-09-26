@@ -3,7 +3,7 @@ export OperatorSum
 @doc raw"""
     struct OperatorSum
 
-A structure to represent a sum of operators ``\sum_i c_i \hat{O}_i`` with a list of coefficients ``c_i`` and a list of operators ``\hat{O}_i``.
+A constructor to represent a sum of operators ``\sum_i c_i \hat{O}_i`` with a list of coefficients ``c_i`` and a list of operators ``\hat{O}_i``.
 
 This is very useful when we have to update only the coefficients, without allocating memory by performing the sum of the operators.
 """
@@ -46,4 +46,8 @@ end
         mul!(y, A.operators[i], x, α * A.coefficients[i], 1)
     end
     return y
+end
+
+function liouvillian(A::OperatorSum, Id_cache = I(prod(A.operators[1].dims)))
+    return OperatorSum(A.coefficients, liouvillian.(A.operators, Ref(Id_cache)))
 end
