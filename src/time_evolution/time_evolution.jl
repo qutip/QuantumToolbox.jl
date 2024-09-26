@@ -140,6 +140,10 @@ end
     return mul!(y, A.operator_sum, x, α, β)
 end
 
+function liouvillian(A::TimeDependentOperatorSum, Id_cache = I(prod(A.operator_sum.operators[1].dims)))
+    return TimeDependentOperatorSum(A.coefficient_functions, liouvillian(A.operator_sum, Id_cache))
+end
+
 #######################################
 
 ### LIOUVILLIAN ###
