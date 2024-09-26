@@ -139,6 +139,10 @@ function mesolveProblem(
         is_empty_e_ops = isempty(e_ops)
     end
 
+    if H_t isa TimeDependentOperatorSum
+        H_t = liouvillian(H_t)
+    end
+
     p = (
         L = L,
         progr = progr,
