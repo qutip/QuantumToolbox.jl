@@ -46,7 +46,6 @@ jobs:
           - 'x64'
         group:
           - 'Core'
-          - 'Code-Quality'
 
     steps:
       - uses: actions/checkout@v4
