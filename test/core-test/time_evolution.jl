@@ -130,19 +130,17 @@
         end
 
         @testset "Type Inference ssesolve" begin
-            if VERSION >= v"1.10"
-                @inferred ssesolveEnsembleProblem(
-                    H,
-                    psi0,
-                    t_l,
-                    c_ops,
-                    n_traj = 500,
-                    e_ops = e_ops,
-                    progress_bar = Val(false),
-                )
-                @inferred ssesolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
-                @inferred ssesolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
-            end
+            @inferred ssesolveEnsembleProblem(
+                H,
+                psi0,
+                t_l,
+                c_ops,
+                n_traj = 500,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+            )
+            @inferred ssesolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
+            @inferred ssesolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
         end
     end
 

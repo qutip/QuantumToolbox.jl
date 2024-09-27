@@ -34,12 +34,12 @@ import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
-
-using StochasticDiffEq
+import SciMLBase: SDEProblem # add this one above
+import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
+import DiffEqNoiseProcess: RealWienerProcess, RealWienerProcess!
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
-import DiffEqNoiseProcess: RealWienerProcess, RealWienerProcess!
 import FFTW: fft, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu

@@ -124,7 +124,7 @@ struct TimeEvolutionSSESol{
     expect::TE
     expect_all::TEA
     converged::Bool
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm
+    alg::StochasticDiffEqAlgorithm
     abstol::T1
     reltol::T2
 end

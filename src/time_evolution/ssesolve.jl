@@ -66,7 +66,7 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector;
         sc_ops::Union{Nothing,AbstractVector}=nothing;
-        alg::StochasticDiffEq.StochasticDiffEqAlgorithm=SRA1()
+        alg::StochasticDiffEqAlgorithm=SRA1()
         e_ops::Union{Nothing,AbstractVector} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -100,18 +100,20 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: The time list of the evolution.
 - `sc_ops::Union{Nothing,AbstractVector}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::StochasticDiffEq.StochasticDiffEqAlgorithm`: The algorithm used for the time evolution.
+- `alg::StochasticDiffEqAlgorithm`: The algorithm used for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}=nothing`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
 - `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+- `kwargs...`: The keyword arguments passed to the `SDEProblem` constructor.
 
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
-- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 # Returns
 
@@ -122,7 +124,7 @@ function ssesolveProblem(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector} = nothing;
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -205,7 +207,7 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector;
         sc_ops::Union{Nothing,AbstractVector} = nothing;
-        alg::StochasticDiffEq.StochasticDiffEqAlgorithm=SRA1()
+        alg::StochasticDiffEqAlgorithm=SRA1()
         e_ops::Union{Nothing,AbstractVector} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -240,19 +242,21 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: The time list of the evolution.
 - `sc_ops::Union{Nothing,AbstractVector}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::StochasticDiffEq.StochasticDiffEqAlgorithm`: The algorithm used for the time evolution.
+- `alg::StochasticDiffEqAlgorithm`: The algorithm used for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}=nothing`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
 - `prob_func::Function`: Function to use for generating the SDEProblem.
 - `output_func::Function`: Function to use for generating the output of a single trajectory.
-- `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+- `kwargs...`: The keyword arguments passed to the `SDEProblem` constructor.
 
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
-- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (SDE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/sde_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 # Returns
 
@@ -263,7 +267,7 @@ function ssesolveEnsembleProblem(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector} = nothing;
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -283,7 +287,7 @@ end
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
         sc_ops::Union{Nothing, AbstractVector}=nothing;
-        alg::StochasticDiffEq.StochasticDiffEqAlgorithm=SRA1(),
+        alg::StochasticDiffEqAlgorithm=SRA1(),
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -323,7 +327,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
 - `sc_ops::Union{Nothing,AbstractVector}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::StochasticDiffEq.StochasticDiffEqAlgorithm`: Algorithm to use for the time evolution.
+- `alg::StochasticDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
@@ -339,8 +343,9 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
-- The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
-- For more details about `alg` and extra `kwargs`, please refer to [`DifferentialEquations.jl`](https://diffeq.sciml.ai/stable/)
+- The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
+- For more details about `alg` please refer to [`DifferentialEquations.jl` (SDE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/sde_solve/)
+- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 # Returns
 
@@ -351,7 +356,7 @@ function ssesolve(
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector} = nothing;
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
@@ -380,7 +385,7 @@ end
 
 function ssesolve(
     ens_prob::EnsembleProblem;
-    alg::StochasticDiffEq.StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEqAlgorithm = SRA1(),
     n_traj::Int = 1,
     ensemble_method = EnsembleThreads(),
 )
