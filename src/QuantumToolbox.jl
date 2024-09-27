@@ -36,7 +36,7 @@ import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
-import DiffEqNoiseProcess: RealWienerProcess, RealWienerProcess!
+import DiffEqNoiseProcess: RealWienerProcess
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!

@@ -39,6 +39,8 @@ function _ssesolve_prob_func(prob, i, repeat)
         save_everystep = false,
     )
 
+    noise_rate_prototype = similar(prob.u0, length(prob.u0), length(internal_params.sc_ops))
+
     prm = merge(
         internal_params,
         (
@@ -47,7 +49,7 @@ function _ssesolve_prob_func(prob, i, repeat)
         ),
     )
 
-    return remake(prob, p = prm, noise = noise)
+    return remake(prob, p = prm, noise = noise, noise_rate_prototype = noise_rate_prototype)
 end
 
 _ssesolve_output_func(sol, i) = (sol, false)
@@ -277,7 +279,7 @@ function ssesolveEnsembleProblem(
 ) where {MT1<:AbstractMatrix,T2}
     prob_sse = ssesolveProblem(H, ψ0, tlist, sc_ops; alg = alg, e_ops = e_ops, H_t = H_t, params = params, kwargs...)
 
-    ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func)
+    ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = false)
 
     return ensemble_prob
 end
