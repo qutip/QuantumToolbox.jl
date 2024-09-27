@@ -1,9 +1,10 @@
 export TimeDependentOperatorSum
-export TimeEvolutionSol, TimeEvolutionMCSol
+export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionSSESol
 
 export liouvillian, liouvillian_floquet, liouvillian_generalized
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
+const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
 
 @doc raw"""
     struct TimeEvolutionSol
@@ -90,6 +91,52 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
     print(io, "num_states = $(length(sol.states[1]))\n")
     print(io, "num_expect = $(size(sol.expect, 1))\n")
     print(io, "ODE alg.: $(sol.alg)\n")
+    print(io, "abstol = $(sol.abstol)\n")
+    print(io, "reltol = $(sol.reltol)\n")
+    return nothing
+end
+
+@doc raw"""
+     struct TimeEvolutionSSESol
+ A structure storing the results and some information from solving trajectories of the Stochastic Shrodinger equation time evolution.
+ # Fields (Attributes)
+ - `n_traj::Int`: Number of trajectories
+ - `times::AbstractVector`: The time list of the evolution in each trajectory.
+ - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
+ - `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+ - `expect_all::Array`: The expectation values corresponding to each trajectory and each time point in `times`
+ - `converged::Bool`: Whether the solution is converged or not.
+ - `alg`: The algorithm which is used during the solving process.
+ - `abstol::Real`: The absolute tolerance which is used during the solving process.
+ - `reltol::Real`: The relative tolerance which is used during the solving process.
+ """
+struct TimeEvolutionSSESol{
+    TT<:Vector{<:Real},
+    TS<:AbstractVector,
+    TE<:Matrix{ComplexF64},
+    TEA<:Array{ComplexF64,3},
+    T1<:Real,
+    T2<:Real,
+}
+    n_traj::Int
+    times::TT
+    states::TS
+    expect::TE
+    expect_all::TEA
+    converged::Bool
+    alg::StochasticDiffEqAlgorithm
+    abstol::T1
+    reltol::T2
+end
+
+function Base.show(io::IO, sol::TimeEvolutionSSESol)
+    print(io, "Solution of quantum trajectories\n")
+    print(io, "(converged: $(sol.converged))\n")
+    print(io, "--------------------------------\n")
+    print(io, "num_trajectories = $(sol.n_traj)\n")
+    print(io, "num_states = $(length(sol.states[1]))\n")
+    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    print(io, "SDE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
     print(io, "reltol = $(sol.reltol)\n")
     return nothing

@@ -22,18 +22,21 @@ import SciMLBase:
     remake,
     u_modified!,
     ODEProblem,
+    SDEProblem,
     EnsembleProblem,
     EnsembleThreads,
     FullSpecialize,
     CallbackSet,
     ContinuousCallback,
     DiscreteCallback
+import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
 import SciMLOperators: MatrixOperator
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
+import DiffEqNoiseProcess: RealWienerProcess
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
@@ -73,6 +76,7 @@ include("time_evolution/mesolve.jl")
 include("time_evolution/lr_mesolve.jl")
 include("time_evolution/sesolve.jl")
 include("time_evolution/mcsolve.jl")
+include("time_evolution/ssesolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 
 # Others
