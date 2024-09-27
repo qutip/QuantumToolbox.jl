@@ -22,20 +22,20 @@ import SciMLBase:
     remake,
     u_modified!,
     ODEProblem,
+    SDEProblem,
     EnsembleProblem,
     EnsembleThreads,
     FullSpecialize,
     CallbackSet,
     ContinuousCallback,
     DiscreteCallback
+import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
 import SciMLOperators: MatrixOperator
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
-import SciMLBase: SDEProblem # add this one above
-import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
 import DiffEqNoiseProcess: RealWienerProcess, RealWienerProcess!
 
 # other dependencies (in alphabetical order)
