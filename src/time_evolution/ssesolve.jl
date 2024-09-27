@@ -32,7 +32,7 @@ end
 function _ssesolve_prob_func(prob, i, repeat)
     internal_params = prob.p
 
-    noise = RealWienerProcess!(
+    noise = RealWienerProcess(
         prob.tspan[1],
         zeros(length(internal_params.sc_ops)),
         zeros(length(internal_params.sc_ops)),
@@ -188,7 +188,7 @@ function ssesolveProblem(
     kwargs3 = _generate_sesolve_kwargs(e_ops, progress_bar_val, t_l, kwargs2)
 
     tspan = (t_l[1], t_l[end])
-    noise = RealWienerProcess!(t_l[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false)
+    noise = RealWienerProcess(t_l[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false)
     noise_rate_prototype = similar(ϕ0, length(ϕ0), length(sc_ops))
     return SDEProblem{true}(
         ssesolve_drift!,
