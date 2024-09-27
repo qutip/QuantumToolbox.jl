@@ -343,7 +343,6 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 
 - `sol::TimeEvolutionSSESol`: The solution of the time evolution. See also [`TimeEvolutionSSESol`](@ref)
 """
-
 function ssesolve(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
