@@ -195,6 +195,9 @@ liouvillian
 liouvillian_generalized
 steadystate
 steadystate_floquet
+SteadyStateDirectSolver
+SteadyStateEigenSolver
+SteadyStateLinearSolver
 SteadyStateODESolver
 ```
 
