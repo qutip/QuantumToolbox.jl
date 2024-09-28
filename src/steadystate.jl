@@ -177,7 +177,11 @@ _steadystate(
     L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
     solver::SteadyStateODESolver;
     kwargs...,
-) where {T} = throw(ArgumentError("The initial state ψ0 is required for SteadyStateODESolver, use the following call instead: `steadystate(H, ψ0, tspan, c_ops)`."))
+) where {T} = throw(
+    ArgumentError(
+        "The initial state ψ0 is required for SteadyStateODESolver, use the following call instead: `steadystate(H, ψ0, tspan, c_ops)`.",
+    ),
+)
 
 @doc raw"""
     steadystate(
