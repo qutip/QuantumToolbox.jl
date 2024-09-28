@@ -60,7 +60,7 @@
         dsf_params,
         e_ops = e_ops_dsf,
         progress_bar = Val(false),
-        n_traj = 500,
+        ntraj = 500,
     )
     val_ss = abs2(sol0.expect[1, end])
     @test sum(abs2.(sol0.expect[1, :] .- sol_dsf_me.expect[1, :])) / (val_ss * length(tlist)) < 0.1
@@ -140,7 +140,7 @@
         dsf_params,
         e_ops = e_ops_dsf2,
         progress_bar = Val(false),
-        n_traj = 500,
+        ntraj = 500,
     )
 
     val_ss = abs2(sol0.expect[1, end])

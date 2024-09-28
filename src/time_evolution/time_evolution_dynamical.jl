@@ -687,7 +687,7 @@ end
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
-        n_traj::Int=1,
+        ntraj::Int=1,
         ensemble_method=EnsembleThreads(),
         jump_callback::LindbladJumpCallbackType=ContinuousLindbladJumpCallback(),
         krylov_dim::Int=max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
@@ -712,7 +712,7 @@ function dsf_mcsolve(
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    n_traj::Int = 1,
+    ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
@@ -736,5 +736,5 @@ function dsf_mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc; alg = alg, n_traj = n_traj, ensemble_method = ensemble_method)
+    return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
 end

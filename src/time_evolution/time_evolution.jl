@@ -50,7 +50,7 @@ A structure storing the results and some information from solving quantum trajec
 
 # Fields (Attributes)
 
-- `n_traj::Int`: Number of trajectories
+- `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The time list of the evolution in each trajectory.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
 - `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
@@ -70,7 +70,7 @@ struct TimeEvolutionMCSol{
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
 }
-    n_traj::Int
+    ntraj::Int
     times::TT
     states::TS
     expect::TE
@@ -87,7 +87,7 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
     print(io, "Solution of quantum trajectories\n")
     print(io, "(converged: $(sol.converged))\n")
     print(io, "--------------------------------\n")
-    print(io, "num_trajectories = $(sol.n_traj)\n")
+    print(io, "num_trajectories = $(sol.ntraj)\n")
     print(io, "num_states = $(length(sol.states[1]))\n")
     print(io, "num_expect = $(size(sol.expect, 1))\n")
     print(io, "ODE alg.: $(sol.alg)\n")
@@ -100,7 +100,7 @@ end
      struct TimeEvolutionSSESol
  A structure storing the results and some information from solving trajectories of the Stochastic Shrodinger equation time evolution.
  # Fields (Attributes)
- - `n_traj::Int`: Number of trajectories
+ - `ntraj::Int`: Number of trajectories
  - `times::AbstractVector`: The time list of the evolution in each trajectory.
  - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
  - `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
@@ -118,7 +118,7 @@ struct TimeEvolutionSSESol{
     T1<:Real,
     T2<:Real,
 }
-    n_traj::Int
+    ntraj::Int
     times::TT
     states::TS
     expect::TE
@@ -133,7 +133,7 @@ function Base.show(io::IO, sol::TimeEvolutionSSESol)
     print(io, "Solution of quantum trajectories\n")
     print(io, "(converged: $(sol.converged))\n")
     print(io, "--------------------------------\n")
-    print(io, "num_trajectories = $(sol.n_traj)\n")
+    print(io, "num_trajectories = $(sol.ntraj)\n")
     print(io, "num_states = $(length(sol.states[1]))\n")
     print(io, "num_expect = $(size(sol.expect, 1))\n")
     print(io, "SDE alg.: $(sol.alg)\n")
