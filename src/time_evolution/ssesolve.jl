@@ -293,7 +293,7 @@ end
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
-        n_traj::Int=1,
+        ntraj::Int=1,
         ensemble_method=EnsembleThreads(),
         prob_func::Function=_mcsolve_prob_func,
         output_func::Function=_mcsolve_output_func,
@@ -334,7 +334,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
-- `n_traj::Int`: Number of trajectories to use.
+- `ntraj::Int`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use.
 - `prob_func::Function`: Function to use for generating the SDEProblem.
 - `output_func::Function`: Function to use for generating the output of a single trajectory.
@@ -362,7 +362,7 @@ function ssesolve(
     e_ops::Union{Nothing,AbstractVector} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
-    n_traj::Int = 1,
+    ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     prob_func::Function = _ssesolve_prob_func,
     output_func::Function = _ssesolve_output_func,
@@ -382,16 +382,16 @@ function ssesolve(
         kwargs...,
     )
 
-    return ssesolve(ens_prob; alg = alg, n_traj = n_traj, ensemble_method = ensemble_method)
+    return ssesolve(ens_prob; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
 end
 
 function ssesolve(
     ens_prob::EnsembleProblem;
     alg::StochasticDiffEqAlgorithm = SRA1(),
-    n_traj::Int = 1,
+    ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
 )
-    sol = solve(ens_prob, alg, ensemble_method, trajectories = n_traj)
+    sol = solve(ens_prob, alg, ensemble_method, trajectories = ntraj)
     _sol_1 = sol[:, 1]
 
     expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
@@ -403,7 +403,7 @@ function ssesolve(
     expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
 
     return TimeEvolutionSSESol(
-        n_traj,
+        ntraj,
         _sol_1.t,
         states,
         expvals,

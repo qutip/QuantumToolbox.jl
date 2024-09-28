@@ -402,7 +402,7 @@ end
         e_ops::Union{Nothing,AbstractVector}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
-        n_traj::Int=1,
+        ntraj::Int=1,
         ensemble_method=EnsembleThreads(),
         jump_callback::TJC=ContinuousLindbladJumpCallback(),
         kwargs...)
@@ -452,7 +452,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
-- `n_traj::Int`: Number of trajectories to use.
+- `ntraj::Int`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
 - `prob_func::Function`: Function to use for generating the ODEProblem.
@@ -482,15 +482,15 @@ function mcsolve(
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     seeds::Union{Nothing,Vector{Int}} = nothing,
-    n_traj::Int = 1,
+    ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     prob_func::Function = _mcsolve_prob_func,
     output_func::Function = _mcsolve_output_func,
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,TJC<:LindbladJumpCallbackType}
-    if !isnothing(seeds) && length(seeds) != n_traj
-        throw(ArgumentError("Length of seeds must match n_traj ($n_traj), but got $(length(seeds))"))
+    if !isnothing(seeds) && length(seeds) != ntraj
+        throw(ArgumentError("Length of seeds must match ntraj ($ntraj), but got $(length(seeds))"))
     end
 
     ens_prob_mc = mcsolveEnsembleProblem(
@@ -509,16 +509,16 @@ function mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc; alg = alg, n_traj = n_traj, ensemble_method = ensemble_method)
+    return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
 end
 
 function mcsolve(
     ens_prob_mc::EnsembleProblem;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    n_traj::Int = 1,
+    ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
 )
-    sol = solve(ens_prob_mc, alg, ensemble_method, trajectories = n_traj)
+    sol = solve(ens_prob_mc, alg, ensemble_method, trajectories = ntraj)
     _sol_1 = sol[:, 1]
 
     expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
@@ -536,7 +536,7 @@ function mcsolve(
     expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
 
     return TimeEvolutionMCSol(
-        n_traj,
+        ntraj,
         times,
         states,
         expvals,

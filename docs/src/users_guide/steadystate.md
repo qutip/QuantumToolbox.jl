@@ -94,7 +94,7 @@ exp_ss = real(expect(e_ops[1], ρ_ss))
 tlist = LinRange(0, 50, 100)
 
 # monte-carlo
-sol_mc = mcsolve(H, ψ0, tlist, c_op_list, e_ops=e_ops, n_traj=100, progress_bar=false)
+sol_mc = mcsolve(H, ψ0, tlist, c_op_list, e_ops=e_ops, ntraj=100, progress_bar=false)
 exp_mc = real(sol_mc.expect[1, :])
 
 # master eq.

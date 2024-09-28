@@ -54,9 +54,9 @@
         sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
         sol_me2 = mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
         sol_me3 = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
-        sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
-        sol_mc_states = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, saveat = t_l, progress_bar = Val(false))
-        sol_sse = ssesolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
+        sol_mc = mcsolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+        sol_mc_states = mcsolve(H, psi0, t_l, c_ops, ntraj = 500, saveat = t_l, progress_bar = Val(false))
+        sol_sse = ssesolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
 
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
@@ -87,7 +87,7 @@
               "Solution of quantum trajectories\n" *
               "(converged: $(sol_mc.converged))\n" *
               "--------------------------------\n" *
-              "num_trajectories = $(sol_mc.n_traj)\n" *
+              "num_trajectories = $(sol_mc.ntraj)\n" *
               "num_states = $(length(sol_mc.states[1]))\n" *
               "num_expect = $(size(sol_mc.expect, 1))\n" *
               "ODE alg.: $(sol_mc.alg)\n" *
@@ -97,7 +97,7 @@
               "Solution of quantum trajectories\n" *
               "(converged: $(sol_sse.converged))\n" *
               "--------------------------------\n" *
-              "num_trajectories = $(sol_sse.n_traj)\n" *
+              "num_trajectories = $(sol_sse.ntraj)\n" *
               "num_states = $(length(sol_sse.states[1]))\n" *
               "num_expect = $(size(sol_sse.expect, 1))\n" *
               "SDE alg.: $(sol_sse.alg)\n" *
@@ -114,19 +114,11 @@
         end
 
         @testset "Type Inference mcsolve" begin
-            @inferred mcsolveEnsembleProblem(
-                H,
-                psi0,
-                t_l,
-                c_ops,
-                n_traj = 500,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-            )
-            @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mcsolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
-            @inferred mcsolve(H, psi0, [0, 10], c_ops, n_traj = 500, progress_bar = Val(false))
-            @inferred mcsolve(H, Qobj(zeros(Int64, N)), t_l, c_ops, n_traj = 500, progress_bar = Val(false))
+            @inferred mcsolveEnsembleProblem(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mcsolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mcsolve(H, psi0, t_l, c_ops, ntraj = 500, progress_bar = Val(true))
+            @inferred mcsolve(H, psi0, [0, 10], c_ops, ntraj = 500, progress_bar = Val(false))
+            @inferred mcsolve(H, Qobj(zeros(Int64, N)), t_l, c_ops, ntraj = 500, progress_bar = Val(false))
         end
 
         @testset "Type Inference ssesolve" begin
@@ -135,12 +127,12 @@
                 psi0,
                 t_l,
                 c_ops,
-                n_traj = 500,
+                ntraj = 500,
                 e_ops = e_ops,
                 progress_bar = Val(false),
             )
-            @inferred ssesolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = e_ops, progress_bar = Val(false))
-            @inferred ssesolve(H, psi0, t_l, c_ops, n_traj = 500, progress_bar = Val(true))
+            @inferred ssesolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+            @inferred ssesolve(H, psi0, t_l, c_ops, ntraj = 500, progress_bar = Val(true))
         end
     end
 
@@ -179,7 +171,7 @@
         psi0 = kron(psi0_1, psi0_2)
         t_l = LinRange(0, 20 / γ1, 1000)
         sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = false) # Here we don't put Val(false) because we want to test the support for Bool type
-        sol_mc = mcsolve(H, psi0, t_l, c_ops, n_traj = 500, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = Val(false))
+        sol_mc = mcsolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = Val(false))
         @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
         @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], 1))
     end
