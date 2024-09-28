@@ -25,7 +25,9 @@ In `QuantumToolbox.jl`, the steady-state solution for a system Hamiltonian or Li
 The function [`steadystate`](@ref) can take either a Hamiltonian and a list of collapse operators `c_ops` as input, generating internally the corresponding Liouvillian ``\mathcal{L}`` in Lindblad form, or alternatively, a Liouvillian ``\mathcal{L}`` passed by the user.
 
 ```julia
-ρ_ss = steadystate(H, c_ops)
+ρ_ss = steadystate(H)        # Hamiltonian
+ρ_ss = steadystate(H, c_ops) # Hamiltonian and collapse operators
+ρ_ss = steadystate(L)        # Liouvillian
 ```
 where `H` is a quantum object representing the system Hamiltonian ([`Operator`](@ref)) or Liouvillian ([`SuperOperator`](@ref)), and `c_ops` (defaults to `nothing`) can be a list of [`QuantumObject`](@ref) for the system collapse operators. The output, labelled as `ρ_ss`, is the steady-state solution for the systems. If no other keywords are passed to the function, the default solver [`SteadyStateDirectSolver()`](@ref SteadyStateDirectSolver) is used.
 
@@ -76,22 +78,11 @@ a = destroy(N)
 H = a' * a
 ψ0 = basis(N, 10)  # initial state
 κ = 0.1  # coupling to oscillator
+n_th = 2  # temperature with average of 2 excitations
 
-# collapse operators
-c_op_list = QuantumObject[]
-n_th_a = 2  # temperature with average of 2 excitations
-
-# emission
-γ = κ * (1 + n_th_a)
-if γ > 0.0
-    push!(c_op_list, sqrt(γ) * a)
-end
-
-# absorption
-γ = κ * n_th_a
-if γ > 0.0
-    push!(c_op_list, sqrt(γ) * a')
-end
+# collapse operators 
+# c_op_list = [        emission        ;     absorption      ]
+c_op_list = [ sqrt(κ * (1 + n_th)) * a ; sqrt(κ * n_th) * a' ]
 
 # find steady-state solution
 ρ_ss = steadystate(H, c_op_list)
