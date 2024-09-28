@@ -6,6 +6,8 @@ using Documenter
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
+const DRAFT = false # set `true` to disable cell evaluation
+
 const MathEngine = MathJax3(
     Dict(
         :loader => Dict("load" => ["[tex]/physics"]),
@@ -33,6 +35,11 @@ const PAGES = [
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
         "Time Evolution and Dynamics" => [
             "Introduction" => "users_guide/time_evolution/intro.md",
+            "Time Evolution Solutions" => "users_guide/time_evolution/solution.md",
+            "Lindblad Master Equation Solver" => "users_guide/time_evolution/sesolve_and_mesolve.md",
+            "Monte-Carlo Solver" => "users_guide/time_evolution/mcsolve.md",
+            "Stochastic Solver" => "users_guide/time_evolution/stochastic.md",
+            "Solving Problems with Time-dependent Hamiltonians" => "users_guide/time_evolution/time_dependent.md",
         ],
         "Solving for Steady-State Solutions" => [],
         "Symmetries" => [],
@@ -66,7 +73,8 @@ makedocs(;
         assets = ["assets/favicon.ico"],
         mathengine = MathEngine,
         size_threshold_ignore = ["api.md"],
-    )
+    ),
+    draft = DRAFT,
 )
 
 deploydocs(; repo = "github.com/qutip/QuantumToolbox.jl", devbranch = "main")
