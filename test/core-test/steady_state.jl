@@ -13,6 +13,7 @@
     solver = SteadyStateODESolver()
     ρ_ss = steadystate(H, psi0, t_l[end], c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
+    @test_throws ArgumentError steadystate(H, c_ops, solver = solver)
 
     solver = SteadyStateDirectSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
