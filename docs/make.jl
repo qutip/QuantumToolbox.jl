@@ -34,7 +34,7 @@ const PAGES = [
         "Time Evolution and Dynamics" => [
             "Introduction" => "users_guide/time_evolution/intro.md",
         ],
-        "Solving for Steady-State Solutions" => [],
+        "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
         "Symmetries" => [],
         "Two-time correlation functions" => [],
         "Extensions" => [
