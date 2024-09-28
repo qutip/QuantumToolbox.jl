@@ -114,15 +114,7 @@
         end
 
         @testset "Type Inference mcsolve" begin
-            @inferred mcsolveEnsembleProblem(
-                H,
-                psi0,
-                t_l,
-                c_ops,
-                ntraj = 500,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-            )
+            @inferred mcsolveEnsembleProblem(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
             @inferred mcsolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
             @inferred mcsolve(H, psi0, t_l, c_ops, ntraj = 500, progress_bar = Val(true))
             @inferred mcsolve(H, psi0, [0, 10], c_ops, ntraj = 500, progress_bar = Val(false))
