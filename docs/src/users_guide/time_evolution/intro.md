@@ -6,7 +6,8 @@
 Pages = [
     "intro.md",
     "solution.md",
-    "sesolve_and_mesolve.md",
+    "sesolve.md",
+    "mesolve.md",
     "mcsolve.md",
     "stochastic.md",
     "time_dependent.md",

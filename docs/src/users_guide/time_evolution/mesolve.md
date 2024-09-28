@@ -4,8 +4,6 @@
 
 This page is still under construction, please visit [API](@ref doc-API) first.
 
-### Unitary evolution
-
-### Non-unitary evolution
+### Von Neumann equation
 
 ### The Lindblad master equation
