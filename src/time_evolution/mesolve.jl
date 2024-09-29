@@ -150,6 +150,7 @@ function mesolveProblem(
         e_ops = e_ops2,
         expvals = expvals,
         H_t = H_t,
+        times = t_l,
         is_empty_e_ops = is_empty_e_ops,
         params...,
     )
@@ -253,7 +254,7 @@ function mesolve(prob::ODEProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = sol.prob.p.Hdims), sol.u)
 
     return TimeEvolutionSol(
-        sol.t,
+        sol.prob.p.times,
         ρt,
         sol.prob.p.expvals,
         sol.retcode,

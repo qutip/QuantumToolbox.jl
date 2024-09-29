@@ -147,19 +147,19 @@ function _periodicsave_func(integrator)
     return u_modified!(integrator, false)
 end
 
-_save_control_lr_mesolve(u, t, integrator) = t in integrator.p.t_l
+_save_control_lr_mesolve(u, t, integrator) = t in integrator.p.times
 
 function _save_affect_lr_mesolve!(integrator)
     ip = integrator.p
     N, M = ip.N, ip.M
-    idx = select(integrator.t, ip.t_l)
+    idx = select(integrator.t, ip.times)
 
     @views z = reshape(integrator.u[1:N*M], N, M)
     @views B = reshape(integrator.u[N*M+1:end], M, M)
     _calculate_expectation!(ip, z, B, idx)
 
     if integrator.p.opt.progress
-        print("\rProgress: $(round(Int, 100*idx/length(ip.t_l)))%")
+        print("\rProgress: $(round(Int, 100*idx/length(ip.times)))%")
         flush(stdout)
     end
     return u_modified!(integrator, false)
@@ -365,7 +365,7 @@ end
 #=======================================================#
 
 @doc raw"""
-    lr_mesolveProblem(H, z, B, t_l, c_ops; e_ops=(), f_ops=(), opt=LRMesolveOptions(), kwargs...) where T
+    lr_mesolveProblem(H, z, B, tlist, c_ops; e_ops=(), f_ops=(), opt=LRMesolveOptions(), kwargs...) where T
     Formulates the ODEproblem for the low-rank time evolution of the system. The function is called by lr_mesolve.
 
     Parameters
@@ -376,7 +376,7 @@ end
         The initial z matrix.
     B : AbstractMatrix{T}
         The initial B matrix.
-    t_l : AbstractVector{T}
+    tlist : AbstractVector{T}
         The time steps at which the expectation values and function values are calculated.
     c_ops : AbstractVector{QuantumObject}
         The jump operators of the system.
@@ -393,7 +393,7 @@ function lr_mesolveProblem(
     H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     z::AbstractArray{T2,2},
     B::AbstractArray{T2,2},
-    t_l::AbstractVector,
+    tlist::AbstractVector,
     c_ops::AbstractVector = [];
     e_ops::Tuple = (),
     f_ops::Tuple = (),
@@ -406,6 +406,8 @@ function lr_mesolveProblem(
     H = get_data(H)
     c_ops = get_data.(c_ops)
     e_ops = get_data.(e_ops)
+
+    t_l = convert(Vector{_FType(H)}, tlist)
 
     # Initialization of Arrays
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
@@ -421,7 +423,7 @@ function lr_mesolveProblem(
         e_ops = e_ops,
         f_ops = f_ops,
         opt = opt,
-        t_l = t_l,
+        times = t_l,
         expvals = expvals,
         funvals = funvals,
         Ml = Ml,
@@ -489,14 +491,14 @@ function lr_mesolve(
     H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     z::AbstractArray{T2,2},
     B::AbstractArray{T2,2},
-    t_l::AbstractVector,
+    tlist::AbstractVector,
     c_ops::AbstractVector = [];
     e_ops::Tuple = (),
     f_ops::Tuple = (),
     opt::LRMesolveOptions{AlgType} = LRMesolveOptions(),
     kwargs...,
 ) where {T1,T2,AlgType<:OrdinaryDiffEqAlgorithm}
-    prob = lr_mesolveProblem(H, z, B, t_l, c_ops; e_ops = e_ops, f_ops = f_ops, opt = opt, kwargs...)
+    prob = lr_mesolveProblem(H, z, B, tlist, c_ops; e_ops = e_ops, f_ops = f_ops, opt = opt, kwargs...)
     return lr_mesolve(prob; kwargs...)
 end
 
@@ -520,7 +522,7 @@ get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (
         Additional keyword arguments for the ODEProblem.
 """
 function lr_mesolve(prob::ODEProblem; kwargs...)
-    sol = solve(prob, prob.p.opt.alg, tstops = prob.p.t_l)
+    sol = solve(prob, prob.p.opt.alg, tstops = prob.p.times)
     prob.p.opt.progress && print("\n")
 
     N = prob.p.N
@@ -535,5 +537,5 @@ function lr_mesolve(prob::ODEProblem; kwargs...)
         zt = get_z(sol.u, N, Ml)
     end
 
-    return LRTimeEvolutionSol(sol.t, zt, Bt, prob.p.expvals, prob.p.funvals, prob.p.Ml)
+    return LRTimeEvolutionSol(sol.prob.p.times, zt, Bt, prob.p.expvals, prob.p.funvals, prob.p.Ml)
 end

@@ -51,7 +51,7 @@ A structure storing the results and some information from solving quantum trajec
 # Fields (Attributes)
 
 - `ntraj::Int`: Number of trajectories
-- `times::AbstractVector`: The time list of the evolution in each trajectory.
+- `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
 - `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
 - `expect_all::Array`: The expectation values corresponding to each trajectory and each time point in `times`
@@ -63,7 +63,7 @@ A structure storing the results and some information from solving quantum trajec
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionMCSol{
-    TT<:Vector{<:Vector{<:Real}},
+    TT<:Vector{<:Real},
     TS<:AbstractVector,
     TE<:Matrix{ComplexF64},
     TEA<:Array{ComplexF64,3},
@@ -97,19 +97,22 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
 end
 
 @doc raw"""
-     struct TimeEvolutionSSESol
- A structure storing the results and some information from solving trajectories of the Stochastic Shrodinger equation time evolution.
- # Fields (Attributes)
- - `ntraj::Int`: Number of trajectories
- - `times::AbstractVector`: The time list of the evolution in each trajectory.
- - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
- - `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
- - `expect_all::Array`: The expectation values corresponding to each trajectory and each time point in `times`
- - `converged::Bool`: Whether the solution is converged or not.
- - `alg`: The algorithm which is used during the solving process.
- - `abstol::Real`: The absolute tolerance which is used during the solving process.
- - `reltol::Real`: The relative tolerance which is used during the solving process.
- """
+    struct TimeEvolutionSSESol
+
+A structure storing the results and some information from solving trajectories of the Stochastic Shrodinger equation time evolution.
+
+# Fields (Attributes)
+
+- `ntraj::Int`: Number of trajectories
+- `times::AbstractVector`: The time list of the evolution.
+- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
+- `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `expect_all::Array`: The expectation values corresponding to each trajectory and each time point in `times`
+- `converged::Bool`: Whether the solution is converged or not.
+- `alg`: The algorithm which is used during the solving process.
+- `abstol::Real`: The absolute tolerance which is used during the solving process.
+- `reltol::Real`: The relative tolerance which is used during the solving process.
+"""
 struct TimeEvolutionSSESol{
     TT<:Vector{<:Real},
     TS<:AbstractVector,
