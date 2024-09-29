@@ -23,9 +23,12 @@ There are two kinds of quantum systems: open systems that interact with a larger
 
 The following table lists the solvers provided by `QuantumToolbox` for dynamic quantum systems and the corresponding type of solution returned by the solver:
 
-| **Equation** | **Function Call** | **Returned Solution** |
-|:-------------|:------------------|:----------------------|
-| Unitary evolution, Schrödinger equation | [`sesolve`](@ref) | [`TimeEvolutionSol`](@ref) |
-| Lindblad master eqn. or Von Neuman eqn. | [`mesolve`](@ref) | [`TimeEvolutionSol`](@ref) |
-| Monte Carlo evolution | [`mcsolve`](@ref) | [`TimeEvolutionMCSol`](@ref) |
-| Stochastic Schrödinger equation | [`ssesolve`](@ref) | [`TimeEvolutionSSESol`](@ref) |
+| **Equation** | **Function Call** | **Problem** | **Returned Solution** |
+|:-------------|:------------------|:------------|:----------------------|
+| Unitary evolution, Schrödinger equation | [`sesolve`](@ref) | [`sesolveProblem`](@ref) | [`TimeEvolutionSol`](@ref) |
+| Lindblad master eqn. or Von Neuman eqn.| [`mesolve`](@ref) | [`mesolveProblem`](@ref) | [`TimeEvolutionSol`](@ref) |
+| Monte Carlo evolution | [`mcsolve`](@ref) | [`mcsolveProblem`](@ref) [`mcsolveEnsembleProblem`](@ref) | [`TimeEvolutionMCSol`](@ref) |
+| Stochastic Schrödinger equation | [`ssesolve`](@ref) | [`ssesolveProblem`](@ref) [`ssesolveEnsembleProblem`](@ref) | [`TimeEvolutionSSESol`](@ref) |
+
+!!! note "Solving dynamics with pre-defined problems"
+    `QuantumToolbox` provides two different methods to solve the dynamics. One can use the function calls listed above by either taking all the operators (like Hamiltonian and collapse operators, etc.) as inputs directly, or generating the `prob`lems by yourself and take it as an input of the function call, e.g., `sesolve(prob)`.
