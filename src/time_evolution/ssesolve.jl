@@ -180,6 +180,7 @@ function ssesolveProblem(
         progr = progr,
         Hdims = H.dims,
         H_t = H_t,
+        times = t_l,
         is_empty_e_ops = is_empty_e_ops,
         params...,
     )
@@ -404,7 +405,7 @@ function ssesolve(
 
     return TimeEvolutionSSESol(
         ntraj,
-        _sol_1.t,
+        _sol_1.prob.p.times,
         states,
         expvals,
         expvals_all,

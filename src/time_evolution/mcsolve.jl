@@ -86,13 +86,12 @@ function _mcsolve_output_func(sol, i)
     return (sol, false)
 end
 
-function _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which)
+function _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, jump_which)
     sol_i = sol[:, i]
     !isempty(sol_i.prob.kwargs[:saveat]) ?
     states[i] = [QuantumObject(normalize!(sol_i.u[i]), dims = sol_i.prob.p.Hdims) for i in 1:length(sol_i.u)] : nothing
 
     copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
-    times[i] = sol_i.t
     jump_times[i] = sol_i.prob.p.jump_times
     return jump_which[i] = sol_i.prob.p.jump_which
 end
@@ -522,22 +521,18 @@ function mcsolve(
     _sol_1 = sol[:, 1]
 
     expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
-    times = Vector{Vector{Float64}}(undef, length(sol))
     states =
         isempty(_sol_1.prob.kwargs[:saveat]) ? fill(QuantumObject[], length(sol)) :
         Vector{Vector{QuantumObject}}(undef, length(sol))
     jump_times = Vector{Vector{Float64}}(undef, length(sol))
     jump_which = Vector{Vector{Int16}}(undef, length(sol))
 
-    foreach(
-        i -> _mcsolve_generate_statistics(sol, i, times, states, expvals_all, jump_times, jump_which),
-        eachindex(sol),
-    )
+    foreach(i -> _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, jump_which), eachindex(sol))
     expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
 
     return TimeEvolutionMCSol(
         ntraj,
-        times,
+        _sol_1.prob.p.times,
         states,
         expvals,
         expvals_all,

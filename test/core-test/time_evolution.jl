@@ -16,10 +16,13 @@
         sol3 = sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
         sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
         @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
+        @test length(sol.times) == length(t_l)
         @test length(sol.states) == 1
         @test size(sol.expect) == (length(e_ops), length(t_l))
+        @test length(sol2.times) == length(t_l)
         @test length(sol2.states) == length(t_l)
         @test size(sol2.expect) == (0, length(t_l))
+        @test length(sol3.times) == length(t_l)
         @test length(sol3.states) == length(t_l)
         @test size(sol3.expect) == (length(e_ops), length(t_l))
         @test sol_string ==
@@ -68,12 +71,21 @@
         @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
         @test sum(abs.(vec(expect_mc_states_mean) .- vec(sol_me.expect))) / length(t_l) < 0.1
         @test sum(abs.(sol_sse.expect .- sol_me.expect)) / length(t_l) < 0.1
+        @test length(sol_me.times) == length(t_l)
         @test length(sol_me.states) == 1
         @test size(sol_me.expect) == (length(e_ops), length(t_l))
+        @test length(sol_me2.times) == length(t_l)
         @test length(sol_me2.states) == length(t_l)
         @test size(sol_me2.expect) == (0, length(t_l))
+        @test length(sol_me3.times) == length(t_l)
         @test length(sol_me3.states) == length(t_l)
         @test size(sol_me3.expect) == (length(e_ops), length(t_l))
+        @test length(sol_mc.times) == length(t_l)
+        @test size(sol_mc.expect) == (length(e_ops), length(t_l))
+        @test length(sol_mc_states.times) == length(t_l)
+        @test size(sol_mc_states.expect) == (0, length(t_l))
+        @test length(sol_sse.times) == length(t_l)
+        @test size(sol_sse.expect) == (length(e_ops), length(t_l))
         @test sol_me_string ==
               "Solution of time evolution\n" *
               "(return code: $(sol_me.retcode))\n" *

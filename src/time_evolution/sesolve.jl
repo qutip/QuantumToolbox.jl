@@ -127,6 +127,7 @@ function sesolveProblem(
         progr = progr,
         Hdims = H.dims,
         H_t = H_t,
+        times = t_l,
         is_empty_e_ops = is_empty_e_ops,
         params...,
     )
@@ -215,7 +216,7 @@ function sesolve(prob::ODEProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = sol.prob.p.Hdims), sol.u)
 
     return TimeEvolutionSol(
-        sol.t,
+        sol.prob.p.times,
         ψt,
         sol.prob.p.expvals,
         sol.retcode,
