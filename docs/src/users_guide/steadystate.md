@@ -71,7 +71,6 @@ using QuantumToolbox
 using CairoMakie
 CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 
-
 # Define parameters
 N = 20  # number of basis states to consider
 a = destroy(N)
@@ -81,8 +80,10 @@ H = a' * a
 n_th = 2  # temperature with average of 2 excitations
 
 # collapse operators 
-# c_op_list = [        emission        ;     absorption      ]
-c_op_list = [ sqrt(κ * (1 + n_th)) * a ; sqrt(κ * n_th) * a' ]
+c_op_list = [
+    sqrt(κ * (n_th + 1)) * a, # emission
+    sqrt(κ *  n_th     ) * a' # absorption
+]
 
 # find steady-state solution
 ρ_ss = steadystate(H, c_op_list)

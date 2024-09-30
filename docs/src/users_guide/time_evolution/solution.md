@@ -24,7 +24,7 @@ using QuantumToolbox
 To understand how to access the data in solution, we will use an example as a guide, although we do not worry about the simulation details at this stage. The Schrödinger equation solver ([`sesolve`](@ref)) used in this example returns [`TimeEvolutionSol`](@ref):
 
 ```@example TE-solution
-H = 0.5 * sigmax()
+H = 0.5 * sigmay()
 ψ0 = basis(2, 0)
 e_ops = [
     proj(basis(2, 0)),
@@ -32,7 +32,8 @@ e_ops = [
     basis(2, 0) * basis(2, 1)'
 ]
 tlist = LinRange(0, 10, 100)
-sol = sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false)); nothing # hide
+sol = sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
+nothing # hide
 ```
 
 To see what is contained inside the solution, we can use the `print` function:
@@ -46,7 +47,8 @@ It tells us the number of expectation values are computed and the number of stat
 ```@example TE-solution
 expt1 = real(sol.expect[1,:])
 expt2 = real(sol.expect[2,:])
-expt3 = real(sol.expect[3,:]); nothing # hide
+expt3 = real(sol.expect[3,:])
+nothing # hide
 ```
 
 Recall that `Julia` uses `Fortran`-style indexing that begins with one (i.e., `[1,:]` represents the 1-st observable, where `:` represents all values corresponding to `tlist`).
@@ -54,7 +56,8 @@ Recall that `Julia` uses `Fortran`-style indexing that begins with one (i.e., `[
 Together with the array of times at which these expectation values are calculated:
 
 ```@example TE-solution
-times = sol.times; nothing # hide
+times = sol.times
+nothing # hide
 ```
 
 we can plot the resulting expectation values:
@@ -64,10 +67,13 @@ using CairoMakie
 CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 
 fig = Figure()
-ax = Axis(fig[1, 1])
-lines!(ax, times, expt1, label = L"P_00")
-lines!(ax, times, expt2, label = L"P_11")
-lines!(ax, times, expt3, label = L"P_01")
+ax = Axis(fig[1, 1], xlabel = L"t")
+lines!(ax, times, expt1, label = L"\langle 0 | \rho(t) | 0 \rangle")
+lines!(ax, times, expt2, label = L"\langle 1 | \rho(t) | 1 \rangle")
+lines!(ax, times, expt3, label = L"\langle 0 | \rho(t) | 1 \rangle")
+
+ylims!(ax, (-0.5, 1.0))
+axislegend(ax, position = :lb)
 
 fig
 ```
