@@ -164,7 +164,7 @@ end
 
 function TimeDependentOperatorSum(
     coefficient_functions,
-    operators::Vector{<:QuantumObject};
+    operators::Union{AbstractVector{<:QuantumObject},Tuple};
     params = nothing,
     init_time = 0.0,
 )
@@ -198,7 +198,7 @@ end
 
 ### LIOUVILLIAN ###
 @doc raw"""
-    liouvillian(H::QuantumObject, c_ops::Union{AbstractVector,Nothing}=nothing, Id_cache=I(prod(H.dims)))
+    liouvillian(H::QuantumObject, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing, Id_cache=I(prod(H.dims)))
 
 Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
 
@@ -218,7 +218,7 @@ See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 """
 function liouvillian(
     H::QuantumObject{MT1,OpType1},
-    c_ops::Union{AbstractVector,Nothing} = nothing,
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     Id_cache = I(prod(H.dims)),
 ) where {MT1<:AbstractMatrix,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, Id_cache)
@@ -254,7 +254,7 @@ function liouvillian_floquet(
     Hₚ::QuantumObject{<:AbstractArray{T2},OpType2},
     Hₘ::QuantumObject{<:AbstractArray{T3},OpType3},
     ω::Real,
-    c_ops::Union{AbstractVector,Nothing} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     n_max::Int = 3,
     tol::Real = 1e-15,
 ) where {

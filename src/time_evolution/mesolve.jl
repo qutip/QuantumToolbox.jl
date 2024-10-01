@@ -52,9 +52,9 @@ end
     mesolveProblem(H::QuantumObject,
         ψ0::QuantumObject,
         tlist::AbstractVector, 
-        c_ops::Union{Nothing,AbstractVector}=nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector}=nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         progress_bar::Union{Val,Bool}=Val(true),
@@ -77,9 +77,9 @@ where
 - `H::QuantumObject`: The Hamiltonian ``\hat{H}`` or the Liouvillian of the system.
 - `ψ0::QuantumObject`: The initial state of the system.
 - `tlist::AbstractVector`: The time list of the evolution.
-- `c_ops::Union{Nothing,AbstractVector}=nothing`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm used for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}=nothing`: The list of the operators for which the expectation values are calculated.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the operators for which the expectation values are calculated.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing`: The time-dependent Hamiltonian or Liouvillian.
 - `params::NamedTuple=NamedTuple()`: The parameters of the time evolution.
 - `progress_bar::Union{Val,Bool}=Val(true)`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -101,9 +101,9 @@ function mesolveProblem(
     H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     tlist,
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
@@ -170,9 +170,9 @@ end
     mesolve(H::QuantumObject,
         ψ0::QuantumObject,
         tlist::AbstractVector, 
-        c_ops::Union{Nothing,AbstractVector}=nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector}=nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         progress_bar::Union{Val,Bool}=Val(true),
@@ -195,9 +195,9 @@ where
 - `H::QuantumObject`: The Hamiltonian ``\hat{H}`` or the Liouvillian of the system.
 - `ψ0::QuantumObject`: The initial state of the system.
 - `tlist::AbstractVector`: The time list of the evolution.
-- `c_ops::Union{Nothing,AbstractVector}=nothing`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Named Tuple of parameters to pass to the solver.
 - `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -219,9 +219,9 @@ function mesolve(
     H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),

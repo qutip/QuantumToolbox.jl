@@ -42,6 +42,7 @@
             @inferred sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = Val(false))
             @inferred sesolve(H, psi0, t_l, progress_bar = Val(false))
             @inferred sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
+            @inferred sesolve(H, psi0, t_l, e_ops = (a_d * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple of different types
         end
     end
 
@@ -123,6 +124,7 @@
             @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
             @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
+            @inferred mesolve(H, psi0, t_l, (a, a'), e_ops = (a_d * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple of different types
         end
 
         @testset "Type Inference mcsolve" begin
@@ -131,6 +133,7 @@
             @inferred mcsolve(H, psi0, t_l, c_ops, ntraj = 500, progress_bar = Val(true))
             @inferred mcsolve(H, psi0, [0, 10], c_ops, ntraj = 500, progress_bar = Val(false))
             @inferred mcsolve(H, Qobj(zeros(Int64, N)), t_l, c_ops, ntraj = 500, progress_bar = Val(false))
+            @inferred mcsolve(H, psi0, t_l, (a, a'), e_ops = (a_d * a, a'), ntraj = 500, progress_bar = Val(false)) # We test the type inference for Tuple of different types
         end
 
         @testset "Type Inference ssesolve" begin

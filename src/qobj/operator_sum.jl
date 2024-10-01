@@ -7,10 +7,13 @@ A constructor to represent a sum of operators ``\sum_i c_i \hat{O}_i`` with a li
 
 This is very useful when we have to update only the coefficients, without allocating memory by performing the sum of the operators.
 """
-struct OperatorSum{CT<:Vector{<:Number},OT<:AbstractVector} <: AbstractQuantumObject
+struct OperatorSum{CT<:AbstractVector{<:Number},OT<:Union{AbstractVector,Tuple}} <: AbstractQuantumObject
     coefficients::CT
     operators::OT
-    function OperatorSum(coefficients::CT, operators::OT) where {CT<:Vector{<:Number},OT<:AbstractVector}
+    function OperatorSum(
+        coefficients::CT,
+        operators::OT,
+    ) where {CT<:AbstractVector{<:Number},OT<:Union{AbstractVector,Tuple}}
         length(coefficients) == length(operators) ||
             throw(DimensionMismatch("The number of coefficients must be the same as the number of operators."))
         # Check if all the operators have the same dimensions
@@ -22,7 +25,8 @@ struct OperatorSum{CT<:Vector{<:Number},OT<:AbstractVector} <: AbstractQuantumOb
             mapreduce(eltype, promote_type, coefficients),
         )
         coefficients2 = T.(coefficients)
-        return new{Vector{T},OT}(coefficients2, operators)
+        CT2 = typeof(coefficients2)
+        return new{CT2,OT}(coefficients2, operators)
     end
 end
 

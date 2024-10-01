@@ -67,9 +67,9 @@ end
     ssesolveProblem(H::QuantumObject,
         ψ0::QuantumObject,
         tlist::AbstractVector;
-        sc_ops::Union{Nothing,AbstractVector}=nothing;
+        sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         alg::StochasticDiffEqAlgorithm=SRA1()
-        e_ops::Union{Nothing,AbstractVector} = nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         progress_bar::Union{Val,Bool}=Val(true),
@@ -101,9 +101,9 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: The time list of the evolution.
-- `sc_ops::Union{Nothing,AbstractVector}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
+- `sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::StochasticDiffEqAlgorithm`: The algorithm used for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}=nothing`: The list of operators to be evaluated during the evolution.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
 - `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -125,9 +125,9 @@ function ssesolveProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    sc_ops::Union{Nothing,AbstractVector} = nothing;
+    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
@@ -209,9 +209,9 @@ end
     ssesolveEnsembleProblem(H::QuantumObject,
         ψ0::QuantumObject,
         tlist::AbstractVector;
-        sc_ops::Union{Nothing,AbstractVector} = nothing;
+        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::StochasticDiffEqAlgorithm=SRA1()
-        e_ops::Union{Nothing,AbstractVector} = nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         prob_func::Function=_mcsolve_prob_func,
@@ -244,9 +244,9 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: The time list of the evolution.
-- `sc_ops::Union{Nothing,AbstractVector}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
+- `sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::StochasticDiffEqAlgorithm`: The algorithm used for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}=nothing`: The list of operators to be evaluated during the evolution.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
 - `prob_func::Function`: Function to use for generating the SDEProblem.
@@ -269,9 +269,9 @@ function ssesolveEnsembleProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    sc_ops::Union{Nothing,AbstractVector} = nothing;
+    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     prob_func::Function = _ssesolve_prob_func,
@@ -291,7 +291,7 @@ end
         tlist::AbstractVector,
         sc_ops::Union{Nothing, AbstractVector}=nothing;
         alg::StochasticDiffEqAlgorithm=SRA1(),
-        e_ops::Union{Nothing,AbstractVector}=nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         ntraj::Int=1,
@@ -329,9 +329,9 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `sc_ops::Union{Nothing,AbstractVector}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
+- `sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::StochasticDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
@@ -358,9 +358,9 @@ function ssesolve(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    sc_ops::Union{Nothing,AbstractVector} = nothing;
+    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     ntraj::Int = 1,

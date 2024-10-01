@@ -100,9 +100,9 @@ end
     mcsolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
-        c_ops::Union{Nothing,AbstractVector}=nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector}=nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         jump_callback::TJC=ContinuousLindbladJumpCallback(),
@@ -147,9 +147,9 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Union{Nothing,AbstractVector}`: List of collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector,Tuple}`: List of collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
@@ -172,9 +172,9 @@ function mcsolveProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray,KetQuantumObject},
     tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     seeds::Union{Nothing,Vector{Int}} = nothing,
@@ -286,9 +286,9 @@ end
     mcsolveEnsembleProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
-        c_ops::Union{Nothing,AbstractVector}=nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector}=nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         jump_callback::TJC=ContinuousLindbladJumpCallback(),
@@ -335,9 +335,9 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Union{Nothing,AbstractVector}`: List of collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector,Tuple}`: List of collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
@@ -362,9 +362,9 @@ function mcsolveEnsembleProblem(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
@@ -396,9 +396,9 @@ end
     mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
-        c_ops::Union{Nothing,AbstractVector}=nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector}=nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         ntraj::Int=1,
@@ -445,9 +445,9 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Union{Nothing,AbstractVector}`: List of collapse operators ``\{\hat{C}_n\}_n``.
+- `c_ops::Union{Nothing,AbstractVector,Tuple}`: List of collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
@@ -475,9 +475,9 @@ function mcsolve(
     H::QuantumObject{MT1,OperatorQuantumObject},
     ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
     tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     seeds::Union{Nothing,Vector{Int}} = nothing,
