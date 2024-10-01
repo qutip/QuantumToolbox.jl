@@ -103,7 +103,7 @@ sol_me = mesolve(H, ψ0, tlist, c_op_list, e_ops=e_ops, progress_bar=false)
 exp_me = real(sol_me.expect[1, :])
 
 # plot the results
-fig = Figure(size = (800, 400), fontsize = 15)
+fig = Figure(size = (500, 350), fontsize = 15)
 ax = Axis(fig[1, 1], 
     title = L"Decay of Fock state $|10\rangle$ in a thermal environment with $\langle n\rangle=2$",
     xlabel = "Time", 

@@ -83,7 +83,7 @@ wig = wigner(ψ, xvec, yvec, g = 2)
 Finally, we plot the Wigner function using the `heatmap` function from the `CairoMakie` package.
 
 ```@example logo
-fig = Figure(size = (500, 500), figure_padding = 0)
+fig = Figure(size = (250, 250), figure_padding = 0)
 ax = Axis(fig[1, 1])
 heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 1)
 hidespines!(ax)
@@ -120,7 +120,7 @@ And the Wigner function becomes more uniform:
 ```@example logo
 wig = wigner(sol.states[end], xvec, yvec, g = 2)
 
-fig = Figure(size = (500, 500), figure_padding = 0)
+fig = Figure(size = (250, 250), figure_padding = 0)
 ax = Axis(fig[1, 1])
 
 img_wig = heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 1)
@@ -197,7 +197,7 @@ img = set_color_julia.(X, Y, wig_normalized, α1, α2, α3, Ref(cmap1), Ref(cmap
 Finally, we plot the Wigner function with the custom colormap.
 
 ```@example logo
-fig = Figure(size = (500, 500), figure_padding = 0, backgroundcolor = :transparent)
+fig = Figure(size = (250, 250), figure_padding = 0, backgroundcolor = :transparent)
 ax = Axis(fig[1, 1], backgroundcolor = :transparent)
 image!(ax, img', rasterize = 1)
 hidespines!(ax)
