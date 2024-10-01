@@ -66,7 +66,7 @@ end
 @doc raw"""
     steadystate(
         H::QuantumObject,
-        c_ops::Union{Nothing,AbstractVector} = nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         solver::SteadyStateSolver = SteadyStateDirectSolver(),
         kwargs...
     )
@@ -75,13 +75,13 @@ Solve the stationary state based on different solvers.
 
 # Parameters
 - `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
-- `c_ops::Union{Nothing,AbstractVector}=nothing`: The list of the collapse operators.
+- `c_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the collapse operators.
 - `solver::SteadyStateSolver=SteadyStateDirectSolver()`: see documentation [Solving for Steady-State Solutions](@ref doc:Solving-for-Steady-State-Solutions) for different solvers.
 - `kwargs...`: The keyword arguments for the solver.
 """
 function steadystate(
     H::QuantumObject{<:AbstractArray,OpType},
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
 ) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
@@ -188,7 +188,7 @@ _steadystate(
         H::QuantumObject,
         ψ0::QuantumObject,
         tspan::Real = Inf,
-        c_ops::Union{Nothing,AbstractVector} = nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         solver::SteadyStateODESolver = SteadyStateODESolver(),
         reltol::Real = 1.0e-8,
         abstol::Real = 1.0e-10,
@@ -213,7 +213,7 @@ or
 - `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
 - `ψ0::QuantumObject`: The initial state of the system.
 - `tspan::Real=Inf`: The final time step for the steady state problem.
-- `c_ops::Union{Nothing,AbstractVector}=nothing`: The list of the collapse operators.
+- `c_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the collapse operators.
 - `solver::SteadyStateODESolver=SteadyStateODESolver()`: see [`SteadyStateODESolver`](@ref) for more details.
 - `reltol::Real=1.0e-8`: Relative tolerance in steady state terminate condition and solver adaptive timestepping.
 - `abstol::Real=1.0e-10`: Absolute tolerance in steady state terminate condition and solver adaptive timestepping.
@@ -223,7 +223,7 @@ function steadystate(
     H::QuantumObject{MT1,HOpType},
     ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
     tspan::Real = Inf,
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::SteadyStateODESolver = SteadyStateODESolver(),
     reltol::Real = 1.0e-8,
     abstol::Real = 1.0e-10,
@@ -274,7 +274,7 @@ end
         H_p::QuantumObject{<:AbstractArray,OpType2},
         H_m::QuantumObject{<:AbstractArray,OpType3},
         ωd::Number,
-        c_ops::Union{Nothing,AbstractVector} = nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         n_max::Integer = 2,
         tol::R = 1e-8,
         solver::FSolver = SSFloquetLinearSystem,
@@ -341,7 +341,7 @@ In the case of `SSFloquetEffectiveLiouvillian`, instead, the effective Liouvilli
 - `H_p::QuantumObject`: The Hamiltonian or the Liouvillian of the part of the drive that oscillates as ``e^{i \omega t}``.
 - `H_m::QuantumObject`: The Hamiltonian or the Liouvillian of the part of the drive that oscillates as ``e^{-i \omega t}``.
 - `ωd::Number`: The frequency of the drive.
-- `c_ops::AbstractVector = QuantumObject`: The optional collapse operators.
+- `c_ops::Union{Nothing,AbstractVector} = nothing`: The optional collapse operators.
 - `n_max::Integer = 2`: The number of Fourier components to consider.
 - `tol::R = 1e-8`: The tolerance for the solver.
 - `solver::FSolver = SSFloquetLinearSystem`: The solver to use.
@@ -352,7 +352,7 @@ function steadystate_floquet(
     H_p::QuantumObject{<:AbstractArray,OpType2},
     H_m::QuantumObject{<:AbstractArray,OpType3},
     ωd::Number,
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     n_max::Integer = 2,
     tol::R = 1e-8,
     solver::FSolver = SSFloquetLinearSystem(),

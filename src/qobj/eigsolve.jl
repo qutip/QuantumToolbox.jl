@@ -323,7 +323,7 @@ end
 
 @doc raw"""
     eigsolve_al(H::QuantumObject,
-        T::Real, c_ops::Union{Nothing,AbstractVector}=nothing;
+        T::Real, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         H_t::Union{Nothing,Function}=nothing,
         params::NamedTuple=NamedTuple(),
@@ -363,7 +363,7 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 function eigsolve_al(
     H::QuantumObject{MT1,HOpType},
     T::Real,
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     H_t::Union{Nothing,Function} = nothing,
     params::NamedTuple = NamedTuple(),
