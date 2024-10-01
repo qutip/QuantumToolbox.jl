@@ -141,7 +141,7 @@ Plot the results
 m_me = real(mesol.expect[3, :]) / Nx / Ny
 m_lr = real(lrsol.expvals[3, :]) / Nx / Ny
 
-fig = Figure(size = (800, 400), fontsize = 15)
+fig = Figure(size = (500, 350), fontsize = 15)
 ax = Axis(fig[1, 1], xlabel = L"\gamma t", ylabel = L"M_{z}", xlabelsize = 20, ylabelsize = 20)
 lines!(ax, tl, m_lr, label = L"LR $[M=M(t)]$", linewidth = 2)
 lines!(ax, tl, m_me, label = "Fock", linewidth = 2, linestyle = :dash)
