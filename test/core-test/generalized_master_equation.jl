@@ -40,7 +40,7 @@
     a2 = Qobj(dense_to_sparse((U'*a*U).data[1:N_trunc, 1:N_trunc], tol))
     sm2 = Qobj(dense_to_sparse((U'*sm*U).data[1:N_trunc, 1:N_trunc], tol))
 
-    @test abs(expect(Xp' * Xp, steadystate(L1)) - n_th(1, Tlist[1])) / n_th(1, Tlist[1]) < 1e-4
+    @test abs(expect(Xp' * Xp, steadystate(L1)) - n_thermal(1, Tlist[1])) / n_thermal(1, Tlist[1]) < 1e-4
 
     @testset "Type Inference (liouvillian_generalized)" begin
         N_c = 30

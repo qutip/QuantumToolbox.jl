@@ -3,7 +3,7 @@ Utilities:
     internal (or external) functions which will be used throughout the entire package
 =#
 
-export gaussian, n_th
+export gaussian, n_thermal
 export row_major_reshape, meshgrid
 
 @doc raw"""
@@ -34,15 +34,18 @@ where ``\mu`` and ``\sigma^2`` are the mean and the variance respectively.
 gaussian(x::Number, μ::Number, σ::Number) = exp(-(x - μ)^2 / (2 * σ^2))
 
 @doc raw"""
-    n_th(ω::Number, T::Real)
+    n_thermal(ω::Real, ω_th::Real)
 
-Gives the mean number of excitations in a mode with frequency ω at temperature T:
-``n_{\rm th} (\omega, T) = \frac{1}{e^{\omega/T} - 1}``
+Return the number of photons in thermal equilibrium for an harmonic oscillator mode with frequency ``\omega``, at the temperature described by ``\omega_{\textrm{th}} \equiv k_B T / \hbar``:
+```math
+n(\omega, \omega_{\textrm{th}}) = \frac{1}{e^{\omega/\omega_{\textrm{th}}} - 1},
+```
+where ``\hbar`` is the reduced Planck constant, and ``k_B`` is the Boltzmann constant.
 """
-function n_th(ω::Real, T::Real)::Float64
-    (T == 0 || ω == 0) && return 0.0
-    abs(ω / T) > 50 && return 0.0
-    return 1 / (exp(ω / T) - 1)
+function n_thermal(ω::Real, ω_th::Real)::Float64
+    x = exp(ω / ω_th)
+    (x != 1) && (ω_th > 0) ? n = (1 / (x - 1)) : n = 0.0
+    return n
 end
 
 _get_dense_similar(A::AbstractArray, args...) = similar(A, args...)

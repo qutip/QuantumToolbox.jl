@@ -322,7 +322,7 @@ function liouvillian_generalized(
         end
 
         # Ohmic reservoir
-        N_th = n_th.(Ωp, T_list[i])
+        N_th = n_thermal.(Ωp, T_list[i])
         Sp₀ = QuantumObject(triu(X_op, 1), type = Operator, dims = dims)
         Sp₁ = QuantumObject(droptol!((@. Ωp * N_th * Sp₀.data), tol), type = Operator, dims = dims)
         Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), type = Operator, dims = dims)

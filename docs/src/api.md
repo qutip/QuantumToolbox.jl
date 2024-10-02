@@ -238,7 +238,7 @@ AbstractLinearMap
 QuantumToolbox.versioninfo
 QuantumToolbox.about
 gaussian
-n_th
+n_thermal
 row_major_reshape
 meshgrid
 _calculate_expectation!
