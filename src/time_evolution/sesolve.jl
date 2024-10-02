@@ -48,7 +48,7 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector;
         alg::OrdinaryDiffEqAlgorithm=Tsit5()
-        e_ops::Union{Nothing,AbstractVector} = nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         progress_bar::Union{Val,Bool}=Val(true),
@@ -66,7 +66,7 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: The time list of the evolution.
 - `alg::OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}`: The list of operators to be evaluated during the evolution.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
 - `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -89,7 +89,7 @@ function sesolveProblem(
     ψ0::QuantumObject{<:AbstractVector{T2},KetQuantumObject},
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
@@ -148,7 +148,7 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector;
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector} = nothing,
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         progress_bar::Union{Val,Bool}=Val(true),
@@ -166,7 +166,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: List of times at which to save the state of the system.
 - `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector}`: List of operators for which to calculate expectation values.
+- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -189,7 +189,7 @@ function sesolve(
     ψ0::QuantumObject{<:AbstractVector{T2},KetQuantumObject},
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Union{Nothing,AbstractVector} = nothing,
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),

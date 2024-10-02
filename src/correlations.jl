@@ -20,7 +20,7 @@ ExponentialSeries(; tol = 1e-14, calc_steadystate = false) = ExponentialSeries(t
         A::QuantumObject,
         B::QuantumObject,
         C::QuantumObject,
-        c_ops::Union{Nothing,AbstractVector}=nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         kwargs...)
 
 Returns the two-times correlation function of three operators ``\hat{A}``, ``\hat{B}`` and ``\hat{C}``: ``\expval{\hat{A}(t) \hat{B}(t + \tau) \hat{C}(t)}``
@@ -35,7 +35,7 @@ function correlation_3op_2t(
     A::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T4},OperatorQuantumObject},
     C::QuantumObject{<:AbstractArray{T5},OperatorQuantumObject},
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     kwargs...,
 ) where {
     T1,
@@ -65,7 +65,7 @@ end
         τ_l::AbstractVector,
         A::QuantumObject,
         B::QuantumObject,
-        c_ops::Union{Nothing,AbstractVector}=nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         reverse::Bool=false,
         kwargs...)
 
@@ -81,7 +81,7 @@ function correlation_2op_2t(
     τ_l::AbstractVector,
     A::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T4},OperatorQuantumObject},
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     reverse::Bool = false,
     kwargs...,
 ) where {
@@ -108,7 +108,7 @@ end
         τ_l::AbstractVector,
         A::QuantumObject,
         B::QuantumObject,
-        c_ops::Union{Nothing,AbstractVector}=nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         reverse::Bool=false,
         kwargs...)
 
@@ -122,7 +122,7 @@ function correlation_2op_1t(
     τ_l::AbstractVector,
     A::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T4},OperatorQuantumObject},
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     reverse::Bool = false,
     kwargs...,
 ) where {
@@ -143,7 +143,7 @@ end
         ω_list::AbstractVector,
         A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
         B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-        c_ops::Union{Nothing,AbstractVector}=nothing;
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         solver::MySolver=ExponentialSeries(),
         kwargs...)
 
@@ -158,7 +158,7 @@ function spectrum(
     ω_list::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    c_ops::Union{Nothing,AbstractVector} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::MySolver = ExponentialSeries(),
     kwargs...,
 ) where {
