@@ -1,6 +1,6 @@
 # [The Importance of Type-Stability](@id doc:Type-Stability)
 
-You are here because you have probably heard about the excellent performance of Julia compared to other common programming languages like Python. One of the reasons is the Just-In-Time (JIT) compiler of Julia, which is able to generate highly optimized machine code. However, the JIT compiler can only do its job if the code type can be inferred. What does this mean exactly? Here we try to explain it in a simple way.
+You are here because you have probably heard about the excellent performance of Julia compared to other common programming languages like Python. One of the reasons is the Just-In-Time (JIT) compiler of Julia, which is able to generate highly optimized machine code. However, the JIT compiler can only do its job if the code type can be inferred. You can also read the [Performance Tips](https://docs.julialang.org/en/v1/manual/performance-tips/) section in Julia's documentation for more details. Here, we try to explain it briefly, with a focus on the `QuantumToolbox.jl` package.
 
 !!! note
     This page is not a tutorial on `QuantumToolbox.jl`, but rather a general guide to writing Julia code for simulating quantum systems efficiently. If you don't care about the performance of your code, you can skip this page.
@@ -22,6 +22,7 @@ function foo(x)
         return -1.0
     end
 end
+nothing # hide
 ```
 
 The function `foo` apparently seems to be innocent. It takes an argument `x` and returns either `1` or `-1.0` depending on the sign of `x`. However, the return type of `foo` is not clear. If `x` is positive, the return type is `Int`, otherwise it is `Float64`. This is a problem for the JIT compiler, because it has to determine the return type of `foo` at runtime. This is called type instability (even though it is a weak form) and may lead to a significant performance penalty. To avoid this, always aim for type-stable code. This means that the return type of a function should be clear from the types of its arguments. We can check the inferred return type of `foo` using the `@code_warntype` macro:
@@ -40,6 +41,7 @@ function foo(x)
         return -1.0
     end
 end
+nothing # hide
 ```
 
 Or you can ensure the return type matches the type of the argument:
@@ -52,6 +54,7 @@ function foo(x::T) where T
         return -T(1)
     end
 end
+nothing # hide
 ```
 
 The latter example is very important because it takes advantage of Julia's multiple dispatch, which is one of the most powerful features of the language. Depending on the type `T` of the argument `x`, the Julia compiler generates a specialized version of `foo` that is optimized for this type. If the input type is an `Int64`, the return type is `Int64`, if `x` is a `Float64`, the return type is `Float64`, and so on.
@@ -80,6 +83,7 @@ function bar(x)
     end
     return res
 end
+nothing # hide
 ```
 
 The Julia compiler cannot infer the type of `res` because it depends on the type of `y`, which is a global variable that can change at any time of the program. We can check it using the `@code_warntype` macro:
@@ -96,7 +100,7 @@ using BenchmarkTools
 @benchmark bar(3.2)
 ```
 
-Here we see a lot of memory allocations and low performances in general. To fix this, we can declare a `const` variable instead:
+Here we see a lot of memory allocations and low performances in general. To fix this, we can declare a `const` (constant) variable instead:
 
 ```@example type-stability
 const z = 2.4
@@ -170,13 +174,13 @@ fieldnames(obj_type)
 σx_2.type
 ```
 
-`Operator` is a synonym for [`OperatorQuantumObject`](@ref).
+[`Operator`](@ref) is a synonym for [`OperatorQuantumObject`](@ref).
 
 ```@example type-stability
 σx_2.dims
 ```
 
-The `dims` field contains the dimensions of the subsystems (in this case, three subsystems with dimension 2 each). We can see that the type of `dims` is `SVector` instead of `Vector`. As we mentioned before, this is very useful in functions like [`ptrace`](@ref). Let's do a simple example of reshaping an operator internally generated from some `dims` input:
+The `dims` field contains the dimensions of the subsystems (in this case, three subsystems with dimension `2` each). We can see that the type of `dims` is `SVector` instead of `Vector`. As we mentioned before, this is very useful in functions like [`ptrace`](@ref). Let's do a simple example of reshaping an operator internally generated from some `dims` input:
 
 ```@example type-stability
 function reshape_operator_data(dims)
@@ -189,7 +193,7 @@ end
 typeof(reshape_operator_data([2, 2, 2]))
 ```
 
-Let's check the `@code_warntype`:
+Which returns a tensor of size `2x2x2x2x2x2`. Let's check the `@code_warntype`:
 
 ```@example type-stability
 @code_warntype reshape_operator_data([2, 2, 2])
@@ -215,5 +219,67 @@ Finally, let's look at the benchmarks
 @benchmark reshape_operator_data($((2, 2, 2)))
 ```
 
-Which is an innocuous but huge difference in terms of performance. Hence, we highly recommend using `Tuple` or `SVector` when defining the dimensions of a user-defined quantum object.
+Which is an innocuous but huge difference in terms of performance. Hence, we highly recommend using `Tuple` or `SVector` when defining the dimensions of a user-defined [`QuantumObject`](@ref).
+
+### The use of `Val` in some `QuantumToolbox.jl` functions
+
+In some functions of `QuantumToolbox.jl`, you may find the use of the [`Val`](https://docs.julialang.org/en/v1/base/base/#Base.Val) type in the arguments. This is a trick to pass a value at compile time, and it is very useful to avoid type instabilities. Let's make a very simple example, where we want to create a Fock state ``|j\rangle`` of a given dimension `N`, and we give the possibility to create it as a sparse or dense vector. At first, we can write the function without using `Val`:
+
+```@example type-stability
+function my_fock(N::Int, j::Int = 0; sparse::Bool = false)
+    if sparse
+        array = sparsevec([j + 1], [1.0 + 0im], N)
+    else
+        array = zeros(ComplexF64, N)
+        array[j+1] = 1
+    end
+    return QuantumObject(array; type = Ket, dims = dims)
+end
+@show my_fock(2, 1)
+@show my_fock(2, 1; sparse = true)
+nothing # hide
+```
+
+But it is immediately clear that the return type of this function is not clear, because it depends on the value of the `sparse` argument. We can check it using the `@code_warntype` macro:
+
+```@example type-stability
+@code_warntype my_fock(2, 1)
+```
+
+```@example type-stability
+@code_warntype my_fock(2, 1; sparse = true)
+```
+
+We can fix this by using the `Val` type, where we enable the multiple dispatch of the function:
+
+```@example type-stability
+getVal(::Val{N}) where N = N
+function my_fock_good(N::Int, j::Int = 0; sparse::Val = Val(false))
+    if getVal(sparse)
+        array = zeros(ComplexF64, N)
+        array[j+1] = 1
+    else
+        array = sparsevec([j + 1], [1.0 + 0im], N)
+    end
+    return QuantumObject(array; type = Ket, dims = dims)
+end
+@show my_fock_good(2, 1)
+@show my_fock_good(2, 1; sparse = Val(true))
+nothing # hide
+```
+
+And now the return type of the function is clear:
+
+```@example type-stability
+@code_warntype my_fock_good(2, 1)
+```
+
+```@example type-stability
+@code_warntype my_fock_good(2, 1; sparse = Val(true))
+```
+
+### Conclusions
+
+In this page, we have seen the importance of type stability in Julia, and how to write efficient code in the context of `QuantumToolbox.jl`. We have seen that the internal structure of the [`QuantumObject`](@ref) type is already optimized for the compiler, and we have seen some practical examples of how to write efficient code. We have seen that the use of `Vector` should be avoided when the elements don't have the same type, and that the use of `Tuple` or `SVector` is highly recommended when the size of the array is known at compile time. Finally, we have seen the use of `Val` to pass values at compile time, to avoid type instabilities in some functions.
+```
 
