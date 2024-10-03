@@ -44,7 +44,7 @@ where ``\hbar`` is the reduced Planck constant, and ``k_B`` is the Boltzmann con
 """
 function n_thermal(ω::Real, ω_th::Real)::Float64
     x = exp(ω / ω_th)
-    (x != 1) && (ω_th > 0) ? n = (1 / (x - 1)) : n = 0.0
+    n = ((x != 1) && (ω_th > 0)) ? (1.0 / (x - 1.0)) : 0.0
     return n
 end
 
