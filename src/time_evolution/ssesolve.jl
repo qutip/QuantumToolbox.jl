@@ -52,7 +52,10 @@ function _ssesolve_prob_func(prob, i, repeat)
     return remake(prob, p = prm, noise = noise, noise_rate_prototype = noise_rate_prototype)
 end
 
-_ssesolve_output_func(sol, i) = (sol, false)
+function _ssesolve_output_func(sol, i)
+    put!(sol.prob.p.progr_channel, true)
+    return (sol, false)
+end
 
 function _ssesolve_generate_statistics!(sol, i, states, expvals_all)
     sol_i = sol[:, i]
@@ -72,7 +75,6 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
-        progress_bar::Union{Val,Bool}=Val(true),
         kwargs...)
 
 Generates the SDEProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
@@ -106,7 +108,6 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
-- `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `kwargs...`: The keyword arguments passed to the `SDEProblem` constructor.
 
 # Notes
@@ -130,7 +131,6 @@ function ssesolveProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
-    progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2}
     H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
@@ -142,8 +142,6 @@ function ssesolveProblem(
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
     !(H_t isa Nothing) && throw(ArgumentError("Time-dependent Hamiltonians are not currently supported in ssesolve."))
-
-    progress_bar_val = makeVal(progress_bar)
 
     t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for StochasticDiffEq.jl
 
@@ -158,8 +156,6 @@ function ssesolveProblem(
     _ssesolve_update_coefficients!(ϕ0, K.coefficients, sc_ops2)
 
     D = reduce(vcat, sc_ops2)
-
-    progr = ProgressBar(length(t_l), enable = getVal(progress_bar_val))
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(t_l))
@@ -177,7 +173,6 @@ function ssesolveProblem(
         e_ops = e_ops2,
         sc_ops = sc_ops2,
         expvals = expvals,
-        progr = progr,
         Hdims = H.dims,
         H_t = H_t,
         times = t_l,
@@ -188,7 +183,7 @@ function ssesolveProblem(
     saveat = e_ops isa Nothing ? t_l : [t_l[end]]
     default_values = (DEFAULT_SDE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_sesolve_kwargs(e_ops, progress_bar_val, t_l, kwargs2)
+    kwargs3 = _generate_sesolve_kwargs(e_ops, Val(false), t_l, kwargs2)
 
     tspan = (t_l[1], t_l[end])
     noise = RealWienerProcess(t_l[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false)
@@ -298,6 +293,7 @@ end
         ensemble_method=EnsembleThreads(),
         prob_func::Function=_mcsolve_prob_func,
         output_func::Function=_mcsolve_output_func,
+        progress_bar::Union{Val,Bool} = Val(true),
         kwargs...)
 
 
@@ -339,6 +335,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `ensemble_method`: Ensemble method to use.
 - `prob_func::Function`: Function to use for generating the SDEProblem.
 - `output_func::Function`: Function to use for generating the output of a single trajectory.
+- `progress_bar::Union{Val,Bool}`: Whether to show a progress bar.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
 # Notes
@@ -367,23 +364,35 @@ function ssesolve(
     ensemble_method = EnsembleThreads(),
     prob_func::Function = _ssesolve_prob_func,
     output_func::Function = _ssesolve_output_func,
+    progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2}
-    ens_prob = ssesolveEnsembleProblem(
-        H,
-        ψ0,
-        tlist,
-        sc_ops;
-        alg = alg,
-        e_ops = e_ops,
-        H_t = H_t,
-        params = params,
-        prob_func = prob_func,
-        output_func = output_func,
-        kwargs...,
-    )
+    progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+    progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
+    @async while take!(progr_channel)
+        next!(progr)
+    end
 
-    return ssesolve(ens_prob; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
+    try
+        ens_prob = ssesolveEnsembleProblem(
+            H,
+            ψ0,
+            tlist,
+            sc_ops;
+            alg = alg,
+            e_ops = e_ops,
+            H_t = H_t,
+            params = merge(params, (progr_channel = progr_channel,)),
+            prob_func = prob_func,
+            output_func = output_func,
+            kwargs...,
+        )
+
+        return ssesolve(ens_prob; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
+    catch e
+        put!(progr_channel, false)
+        rethrow()
+    end
 end
 
 function ssesolve(
@@ -393,6 +402,9 @@ function ssesolve(
     ensemble_method = EnsembleThreads(),
 )
     sol = solve(ens_prob, alg, ensemble_method, trajectories = ntraj)
+
+    put!(sol[:, 1].prob.p.progr_channel, false)
+
     _sol_1 = sol[:, 1]
 
     expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)

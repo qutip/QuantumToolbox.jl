@@ -691,6 +691,7 @@ end
         ensemble_method=EnsembleThreads(),
         jump_callback::LindbladJumpCallbackType=ContinuousLindbladJumpCallback(),
         krylov_dim::Int=max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
+        progress_bar::Union{Bool,Val} = Val(true)
         kwargs...)
 
 Time evolution of a quantum system using the Monte Carlo wave function method and the Dynamical Shifted Fock algorithm.
@@ -716,25 +717,38 @@ function dsf_mcsolve(
     ensemble_method = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
+    progress_bar::Union{Bool,Val} = Val(true),
     kwargs...,
 ) where {T,TOl,TJC<:LindbladJumpCallbackType}
-    ens_prob_mc = dsf_mcsolveEnsembleProblem(
-        H,
-        ψ0,
-        t_l,
-        c_ops,
-        op_list,
-        α0_l,
-        dsf_params;
-        alg = alg,
-        e_ops = e_ops,
-        H_t = H_t,
-        params = params,
-        δα_list = δα_list,
-        jump_callback = jump_callback,
-        krylov_dim = krylov_dim,
-        kwargs...,
-    )
+    progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+    progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
+    @async while take!(progr_channel)
+        next!(progr)
+    end
 
-    return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
+    # Stop the async task if an error occurs
+    try
+        ens_prob_mc = dsf_mcsolveEnsembleProblem(
+            H,
+            ψ0,
+            t_l,
+            c_ops,
+            op_list,
+            α0_l,
+            dsf_params;
+            alg = alg,
+            e_ops = e_ops,
+            H_t = H_t,
+            params = merge(params, (progr_channel = progr_channel,)),
+            δα_list = δα_list,
+            jump_callback = jump_callback,
+            krylov_dim = krylov_dim,
+            kwargs...,
+        )
+
+        return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
+    catch e
+        put!(progr_channel, false)
+        rethrow()
+    end
 end

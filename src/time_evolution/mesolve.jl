@@ -120,14 +120,13 @@ function mesolveProblem(
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     is_time_dependent = !(H_t isa Nothing)
-    progress_bar_val = makeVal(progress_bar)
 
     ρ0 = sparse_to_dense(_CType(ψ0), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
 
     t_l = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     L = liouvillian(H, c_ops).data
-    progr = ProgressBar(length(t_l), enable = getVal(progress_bar_val))
+    progr = ProgressBar(length(t_l), enable = getVal(progress_bar))
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(t_l))
@@ -158,7 +157,7 @@ function mesolveProblem(
     saveat = e_ops isa Nothing ? t_l : [t_l[end]]
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_mesolve_kwargs(e_ops, progress_bar_val, t_l, kwargs2)
+    kwargs3 = _generate_mesolve_kwargs(e_ops, makeVal(progress_bar), t_l, kwargs2)
 
     dudt! = is_time_dependent ? mesolve_td_dudt! : mesolve_ti_dudt!
 
@@ -241,7 +240,7 @@ function mesolve(
         e_ops = e_ops,
         H_t = H_t,
         params = params,
-        progress_bar = makeVal(progress_bar),
+        progress_bar = progress_bar,
         kwargs...,
     )
 

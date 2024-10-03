@@ -57,6 +57,7 @@ makeVal(x::Val{T}) where {T} = x
 makeVal(x) = Val(x)
 
 getVal(x::Val{T}) where {T} = T
+getVal(x) = x # getVal for any other type
 
 _get_size(A::AbstractMatrix) = size(A)
 _get_size(A::AbstractVector) = (length(A), 1)
