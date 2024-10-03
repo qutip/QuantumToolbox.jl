@@ -221,7 +221,7 @@ Finally, let's look at the benchmarks
 
 Which is an innocuous but huge difference in terms of performance. Hence, we highly recommend using `Tuple` or `SVector` when defining the dimensions of a user-defined [`QuantumObject`](@ref).
 
-### The use of `Val` in some `QuantumToolbox.jl` functions
+## The use of `Val` in some `QuantumToolbox.jl` functions
 
 In some functions of `QuantumToolbox.jl`, you may find the use of the [`Val`](https://docs.julialang.org/en/v1/base/base/#Base.Val) type in the arguments. This is a trick to pass a value at compile time, and it is very useful to avoid type instabilities. Let's make a very simple example, where we want to create a Fock state ``|j\rangle`` of a given dimension `N`, and we give the possibility to create it as a sparse or dense vector. At first, we can write the function without using `Val`:
 
@@ -233,7 +233,7 @@ function my_fock(N::Int, j::Int = 0; sparse::Bool = false)
         array = zeros(ComplexF64, N)
         array[j+1] = 1
     end
-    return QuantumObject(array; type = Ket, dims = dims)
+    return QuantumObject(array; type = Ket)
 end
 @show my_fock(2, 1)
 @show my_fock(2, 1; sparse = true)
@@ -261,7 +261,7 @@ function my_fock_good(N::Int, j::Int = 0; sparse::Val = Val(false))
     else
         array = sparsevec([j + 1], [1.0 + 0im], N)
     end
-    return QuantumObject(array; type = Ket, dims = dims)
+    return QuantumObject(array; type = Ket)
 end
 @show my_fock_good(2, 1)
 @show my_fock_good(2, 1; sparse = Val(true))
@@ -278,7 +278,7 @@ And now the return type of the function is clear:
 @code_warntype my_fock_good(2, 1; sparse = Val(true))
 ```
 
-### Conclusions
+## Conclusions
 
 In this page, we have seen the importance of type stability in Julia, and how to write efficient code in the context of `QuantumToolbox.jl`. We have seen that the internal structure of the [`QuantumObject`](@ref) type is already optimized for the compiler, and we have seen some practical examples of how to write efficient code. We have seen that the use of `Vector` should be avoided when the elements don't have the same type, and that the use of `Tuple` or `SVector` is highly recommended when the size of the array is known at compile time. Finally, we have seen the use of `Val` to pass values at compile time, to avoid type instabilities in some functions.
 ```
