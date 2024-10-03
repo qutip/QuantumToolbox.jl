@@ -63,7 +63,7 @@ const PAGES = [
 
 makedocs(;
     modules = [QuantumToolbox],
-    authors = "Alberto Mercurio, Luca Gravina and Yi-Te Huang",
+    authors = "Alberto Mercurio and Yi-Te Huang",
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",
     pages = PAGES,
