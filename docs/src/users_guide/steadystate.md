@@ -103,14 +103,11 @@ sol_me = mesolve(H, ψ0, tlist, c_op_list, e_ops=e_ops, progress_bar=false)
 exp_me = real(sol_me.expect[1, :])
 
 # plot the results
-fig = Figure(size = (500, 350), fontsize = 15)
+fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], 
     title = L"Decay of Fock state $|10\rangle$ in a thermal environment with $\langle n\rangle=2$",
     xlabel = "Time", 
-    ylabel = "Number of excitations", 
-    titlesize = 24,
-    xlabelsize = 20, 
-    ylabelsize = 20
+    ylabel = "Number of excitations",
 )
 lines!(ax, tlist, exp_mc, label = "Monte-Carlo", linewidth = 2, color = :blue)
 lines!(ax, tlist, exp_me, label = "Master Equation", linewidth = 2, color = :orange, linestyle = :dash)
