@@ -278,6 +278,8 @@ And now the return type of the function is clear:
 @code_warntype my_fock_good(2, 1; sparse = Val(true))
 ```
 
+This is exactly how the current [`fock`](@ref) function is implemented in `QuantumToolbox.jl`. There are many other functions that support this feature, and we highly recommend using it when necessary.
+
 ## Conclusions
 
 In this page, we have seen the importance of type stability in Julia, and how to write efficient code in the context of `QuantumToolbox.jl`. We have seen that the internal structure of the [`QuantumObject`](@ref) type is already optimized for the compiler, and we have seen some practical examples of how to write efficient code. We have seen that the use of `Vector` should be avoided when the elements don't have the same type, and that the use of `Tuple` or `SVector` is highly recommended when the size of the array is known at compile time. Finally, we have seen the use of `Val` to pass values at compile time, to avoid type instabilities in some functions.

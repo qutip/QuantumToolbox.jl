@@ -20,7 +20,7 @@ function versioninfo(io::IO = stdout)
         "≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡\n",
         "Copyright © QuTiP team 2022 and later.\n",
         "Current admin team:\n",
-        "    Alberto Mercurio, Luca Gravina, Yi-Te Huang\n",
+        "    Alberto Mercurio and Yi-Te Huang\n",
     )
 
     # print package informations

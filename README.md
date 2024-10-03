@@ -6,8 +6,7 @@
 # QuantumToolbox.jl
 
 <!-- Current admin team (in chronological order) -->
-[A. Mercurio](https://github.com/albertomercurio),
-[L. Gravina](https://github.com/lgravina1997),
+[A. Mercurio](https://github.com/albertomercurio)
 and [Y.-T. Huang](https://github.com/ytdHuang).
 
 <!-- Table of Badges -->
