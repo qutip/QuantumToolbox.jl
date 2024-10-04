@@ -40,6 +40,7 @@ import DiffEqNoiseProcess: RealWienerProcess
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
+import Distributed: RemoteChannel
 import FFTW: fft, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu

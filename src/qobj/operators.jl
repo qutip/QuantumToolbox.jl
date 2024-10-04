@@ -511,7 +511,7 @@ function tunneling(N::Int, m::Int = 1; sparse::Union{Bool,Val} = Val(false))
     (m < 1) && throw(ArgumentError("The number of excitations (m) cannot be less than 1"))
 
     data = ones(ComplexF64, N - m)
-    if getVal(makeVal(sparse))
+    if getVal(sparse)
         return QuantumObject(spdiagm(m => data, -m => data); type = Operator, dims = N)
     else
         return QuantumObject(diagm(m => data, -m => data); type = Operator, dims = N)

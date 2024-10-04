@@ -83,6 +83,7 @@ end
 function _mcsolve_output_func(sol, i)
     resize!(sol.prob.p.jump_times, sol.prob.p.jump_times_which_idx[] - 1)
     resize!(sol.prob.p.jump_which, sol.prob.p.jump_times_which_idx[] - 1)
+    put!(sol.prob.p.progr_channel, true)
     return (sol, false)
 end
 
@@ -204,7 +205,8 @@ function mcsolveProblem(
     end
 
     saveat = e_ops isa Nothing ? t_l : [t_l[end]]
-    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
+    # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
+    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat, progress_bar = Val(false))
     kwargs2 = merge(default_values, kwargs)
 
     cache_mc = similar(ψ0.data)
@@ -396,15 +398,20 @@ end
     mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
         tlist::AbstractVector,
-        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
-        params::NamedTuple=NamedTuple(),
-        ntraj::Int=1,
-        ensemble_method=EnsembleThreads(),
-        jump_callback::TJC=ContinuousLindbladJumpCallback(),
-        kwargs...)
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
+        params::NamedTuple = NamedTuple(),
+        seeds::Union{Nothing,Vector{Int}} = nothing,
+        ntraj::Int = 1,
+        ensemble_method = EnsembleThreads(),
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        prob_func::Function = _mcsolve_prob_func,
+        output_func::Function = _mcsolve_output_func,
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
 
 Time evolution of an open quantum system using quantum trajectories.
 
@@ -457,6 +464,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob_func::Function`: Function to use for generating the ODEProblem.
 - `output_func::Function`: Function to use for generating the output of a single trajectory.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
+- `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 
 # Notes
 
@@ -486,29 +494,42 @@ function mcsolve(
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     prob_func::Function = _mcsolve_prob_func,
     output_func::Function = _mcsolve_output_func,
+    progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,TJC<:LindbladJumpCallbackType}
     if !isnothing(seeds) && length(seeds) != ntraj
         throw(ArgumentError("Length of seeds must match ntraj ($ntraj), but got $(length(seeds))"))
     end
 
-    ens_prob_mc = mcsolveEnsembleProblem(
-        H,
-        ψ0,
-        tlist,
-        c_ops;
-        alg = alg,
-        e_ops = e_ops,
-        H_t = H_t,
-        params = params,
-        seeds = seeds,
-        jump_callback = jump_callback,
-        prob_func = prob_func,
-        output_func = output_func,
-        kwargs...,
-    )
+    progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+    progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
+    @async while take!(progr_channel)
+        next!(progr)
+    end
 
-    return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
+    # Stop the async task if an error occurs
+    try
+        ens_prob_mc = mcsolveEnsembleProblem(
+            H,
+            ψ0,
+            tlist,
+            c_ops;
+            alg = alg,
+            e_ops = e_ops,
+            H_t = H_t,
+            params = merge(params, (progr_channel = progr_channel,)),
+            seeds = seeds,
+            jump_callback = jump_callback,
+            prob_func = prob_func,
+            output_func = output_func,
+            kwargs...,
+        )
+
+        return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
+    catch e
+        put!(progr_channel, false)
+        rethrow()
+    end
 end
 
 function mcsolve(
@@ -518,6 +539,9 @@ function mcsolve(
     ensemble_method = EnsembleThreads(),
 )
     sol = solve(ens_prob_mc, alg, ensemble_method, trajectories = ntraj)
+
+    put!(sol[:, 1].prob.p.progr_channel, false)
+
     _sol_1 = sol[:, 1]
 
     expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
