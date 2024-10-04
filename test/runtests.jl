@@ -23,6 +23,7 @@ core_tests = [
     "states_and_operators.jl",
     "steady_state.jl",
     "time_evolution.jl",
+    "utilities.jl",
     "wigner.jl",
 ]
 
