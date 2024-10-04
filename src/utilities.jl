@@ -3,7 +3,7 @@ Utilities:
     internal (or external) functions which will be used throughout the entire package
 =#
 
-export gaussian, n_thermal
+export gaussian, n_thermal, convert_unit
 export row_major_reshape, meshgrid
 
 @doc raw"""
@@ -46,6 +46,50 @@ function n_thermal(ω::T1, ω_th::T2) where {T1<:Real,T2<:Real}
     x = exp(ω / ω_th)
     n = ((x != 1) && (ω_th > 0)) ? 1 / (x - 1) : 0
     return _FType(promote_type(T1, T2))(n)
+end
+
+# some fundamental physical constants and common energy units
+const _e = 1.602176634e-19 # elementary charge  (C)
+const _kB = 1.3806488e-23  # Boltzmann constant (J/K)
+const _h = 6.62607015e-34  # Planck constant    (J⋅s)
+const _energy_units::Dict{Symbol,Float64} = Dict(
+    # the values below are all in the unit of Joule
+    :J => 1.0,
+    :eV => _e,
+    :meV => 1e-3 * _e,
+    :GHz => 1e9 * _h,
+    :mK => 1e-3 * _kB,
+)
+
+@doc raw"""
+    convert_unit(value::Real, unit1::Symbol, unit2::Symbol)
+
+Convert the energy `value` from `unit1` to `unit2`.
+
+Note that `unit1` and `unit2` can be either the following `Symbol`:
+- `:J`: Joule
+- `:eV`: electron volt.
+- `:meV`: milli-electron volt.
+- `:GHz`: Giga-Hertz multiplied by Planck constant ``h``.
+- `:mK`: milli-Kelvin multiplied by Boltzmann constant ``k_{\textrm{B}}``.
+
+# Examples
+
+```
+julia> convert_unit(1, :eV, :J)
+1.602176634e-19
+
+julia> convert_unit(1, :GHz, :J)
+6.62607015e-25
+
+julia> convert_unit(1, :meV, :mK)
+11604.519802573976
+```
+"""
+function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T<:Real}
+    !haskey(_energy_units, unit1) && throw(ArgumentError("Invalid unit :$(unit1)"))
+    !haskey(_energy_units, unit2) && throw(ArgumentError("Invalid unit :$(unit2)"))
+    return _FType(T)(value * (_energy_units[unit1] / _energy_units[unit2]))
 end
 
 _get_dense_similar(A::AbstractArray, args...) = similar(A, args...)
