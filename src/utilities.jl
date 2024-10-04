@@ -49,7 +49,7 @@ function n_thermal(ω::T1, ω_th::T2) where {T1<:Real,T2<:Real}
 end
 
 # some fundamental physical constants and common energy units
-const _e = 1.602176634e-19 # elementary charge  (C)
+const _e = 1.602176565e-19 # elementary charge  (C)
 const _kB = 1.3806488e-23  # Boltzmann constant (J/K)
 const _h = 6.62607015e-34  # Planck constant    (J⋅s)
 const _energy_units::Dict{Symbol,Float64} = Dict(
@@ -77,13 +77,13 @@ Note that `unit1` and `unit2` can be either the following `Symbol`:
 
 ```
 julia> convert_unit(1, :eV, :J)
-1.602176634e-19
+1.602176565e-19
 
 julia> convert_unit(1, :GHz, :J)
 6.62607015e-25
 
 julia> convert_unit(1, :meV, :mK)
-11604.519802573976
+11604.51930280894
 ```
 """
 function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T<:Real}
