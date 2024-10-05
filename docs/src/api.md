@@ -239,6 +239,7 @@ QuantumToolbox.versioninfo
 QuantumToolbox.about
 gaussian
 n_thermal
+PhysicalConstants
 convert_unit
 row_major_reshape
 meshgrid

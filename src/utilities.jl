@@ -3,7 +3,8 @@ Utilities:
     internal (or external) functions which will be used throughout the entire package
 =#
 
-export gaussian, n_thermal, convert_unit
+export gaussian, n_thermal
+export PhysicalConstants, convert_unit
 export row_major_reshape, meshgrid
 
 @doc raw"""
@@ -48,42 +49,77 @@ function n_thermal(ω::T1, ω_th::T2) where {T1<:Real,T2<:Real}
     return _FType(promote_type(T1, T2))(n)
 end
 
-# some fundamental physical constants and common energy units
-const _e = 1.602176565e-19 # elementary charge  (C)
-const _kB = 1.3806488e-23  # Boltzmann constant (J/K)
-const _h = 6.62607015e-34  # Planck constant    (J⋅s)
+@doc raw"""
+    const PhysicalConstants
+
+A `NamedTuple` which stores some constant values listed in [*CODATA recommended values of the fundamental physical constants: 2022*](https://physics.nist.gov/cuu/pdf/wall_2022.pdf)
+
+The current stored constants are:
+- `c` : (exact) speed of light in vacuum with unit ``[\textrm{m}\cdot\textrm{s}^{-1}]``
+- `G` : Newtonian constant of gravitation with unit ``[\textrm{m}^3\cdot\textrm{kg}^{−1}\cdot\textrm{s}^{−2}]``
+- `h` : (exact) Planck constant with unit ``[\textrm{J}\cdot\textrm{s}]``
+- `ħ` : reduced Planck constant with unit ``[\textrm{J}\cdot\textrm{s}]``
+- `e` : (exact) elementary charge with unit ``[\textrm{C}]``
+- `μ0` : vacuum magnetic permeability with unit ``[\textrm{N}\cdot\textrm{A}^{-2}]``
+- `ϵ0` : vacuum electric permittivity with unit ``[\textrm{F}\cdot\textrm{m}^{-1}]``
+- `k` : (exact) Boltzmann constant with unit ``[\textrm{J}\cdot\textrm{K}^{-1}]``
+- `NA` : (exact) Avogadro constant with unit ``[\textrm{mol}^{-1}]``
+
+# Examples
+
+```
+julia> PhysicalConstants.ħ
+1.0545718176461565e-34
+```
+"""
+const PhysicalConstants = (
+    c = 299792458.0,
+    G = 6.67430e-11,
+    h = 6.62607015e-34,
+    ħ = 6.62607015e-34 / (2 * π),
+    e = 1.602176634e-19,
+    μ0 = 1.25663706127e-6,
+    ϵ0 = 8.8541878188e-12,
+    k = 1.380649e-23,
+    NA = 6.02214076e23,
+)
+
+# common energy units (the values below are all in the unit of Joule)
 const _energy_units::Dict{Symbol,Float64} = Dict(
-    # the values below are all in the unit of Joule
     :J => 1.0,
-    :eV => _e,
-    :meV => 1e-3 * _e,
-    :GHz => 1e9 * _h,
-    :mK => 1e-3 * _kB,
+    :eV => PhysicalConstants.e,
+    :meV => 1.0e-3 * PhysicalConstants.e,
+    :MHz => 1.0e6 * PhysicalConstants.h,
+    :GHz => 1.0e9 * PhysicalConstants.h,
+    :K => PhysicalConstants.k,
+    :mK => 1.0e-3 * PhysicalConstants.k,
 )
 
 @doc raw"""
     convert_unit(value::Real, unit1::Symbol, unit2::Symbol)
 
-Convert the energy `value` from `unit1` to `unit2`.
+Convert the energy `value` from `unit1` to `unit2`. The `unit1` and `unit2` can be either the following `Symbol`:
+- `:J` : Joule
+- `:eV` : electron volt
+- `:meV` : milli-electron volt
+- `:MHz` : Mega-Hertz multiplied by Planck constant ``h``
+- `:GHz` : Giga-Hertz multiplied by Planck constant ``h``
+- `:K` : Kelvin multiplied by Boltzmann constant ``k``
+- `:mK` : milli-Kelvin multiplied by Boltzmann constant ``k``
 
-Note that `unit1` and `unit2` can be either the following `Symbol`:
-- `:J`: Joule
-- `:eV`: electron volt.
-- `:meV`: milli-electron volt.
-- `:GHz`: Giga-Hertz multiplied by Planck constant ``h``.
-- `:mK`: milli-Kelvin multiplied by Boltzmann constant ``k_{\textrm{B}}``.
+Note that we use the values stored in [`PhysicalConstants`](@ref) to do the conversion.
 
 # Examples
 
 ```
 julia> convert_unit(1, :eV, :J)
-1.602176565e-19
+1.602176634e-19
 
 julia> convert_unit(1, :GHz, :J)
 6.62607015e-25
 
 julia> convert_unit(1, :meV, :mK)
-11604.51930280894
+11604.518121550082
 ```
 """
 function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T<:Real}
