@@ -14,9 +14,21 @@
         @test typeof(n_thermal(Float32(2), Float64(3))) == Float64
     end
 
+    @testset "CODATA Physical Constants" begin
+        c = PhysicalConstants.c
+        h = PhysicalConstants.h
+        ħ = PhysicalConstants.ħ
+        μ0 = PhysicalConstants.μ0
+        ϵ0 = PhysicalConstants.ϵ0
+
+        @test h / ħ ≈ 2 * π
+        @test μ0 / (4e-7 * π) ≈ 1.0
+        @test c^2 * μ0 * ϵ0 ≈ 1.0
+    end
+
     @testset "convert unit" begin
         V = 100 * rand(Float64)
-        _unit_list = [:J, :eV, :meV, :GHz, :mK]
+        _unit_list = [:J, :eV, :meV, :MHz, :GHz, :K, :mK]
         for origin in _unit_list
             for middle in _unit_list
                 for target in _unit_list
