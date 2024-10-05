@@ -67,7 +67,8 @@ QuantumToolbox.jl is equipped with a robust set of features:
 
 ## Installation
     
-> **_NOTE:_**  `QuantumToolbox.jl` requires `Julia 1.10+`.
+> [!NOTE]
+> `QuantumToolbox.jl` requires `Julia 1.10+`.
 
 To install `QuantumToolbox.jl`, run the following commands inside Julia's interactive session (also known as REPL):
 ```julia
