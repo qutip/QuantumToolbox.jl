@@ -52,10 +52,24 @@ function _ssesolve_prob_func(prob, i, repeat)
     return remake(prob, p = prm, noise = noise, noise_rate_prototype = noise_rate_prototype)
 end
 
-function _ssesolve_output_func(sol, i)
-    put!(sol.prob.p.progr_channel, true)
-    return (sol, false)
+# Standard output function
+_ssesolve_output_func(sol, i) = (sol, false)
+
+# Output function with progress bar update
+function _ssesolve_output_func_progress(sol, i)
+    next!(sol.prob.p.progr)
+    return _ssesolve_output_func(sol, i)
 end
+
+# Output function with distributed channel update for progress bar
+function _ssesolve_output_func_distributed(sol, i)
+    put!(sol.prob.p.progr_channel, true)
+    return _ssesolve_output_func(sol, i)
+end
+
+_ssesolve_dispatch_output_func() = _ssesolve_output_func
+_ssesolve_dispatch_output_func(::ET) where {ET<:Union{EnsembleSerial,EnsembleThreads}} = _ssesolve_output_func_progress
+_ssesolve_dispatch_output_func(::EnsembleDistributed) = _ssesolve_output_func_distributed
 
 function _ssesolve_generate_statistics!(sol, i, states, expvals_all)
     sol_i = sol[:, i]
@@ -209,8 +223,11 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
+        ntraj::Int=1,
+        ensemble_method=EnsembleThreads(),
         prob_func::Function=_mcsolve_prob_func,
-        output_func::Function=_mcsolve_output_func,
+        output_func::Function=_ssesolve_dispatch_output_func(ensemble_method),
+        progress_bar::Union{Val,Bool}=Val(true),
         kwargs...)
 
 Generates the SDE EnsembleProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
@@ -244,8 +261,11 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
+- `ntraj::Int`: Number of trajectories to use.
+- `ensemble_method`: Ensemble method to use.
 - `prob_func::Function`: Function to use for generating the SDEProblem.
 - `output_func::Function`: Function to use for generating the output of a single trajectory.
+- `progress_bar::Union{Val,Bool}`: Whether to show a progress bar.
 - `kwargs...`: The keyword arguments passed to the `SDEProblem` constructor.
 
 # Notes
@@ -269,15 +289,38 @@ function ssesolveEnsembleProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
+    ntraj::Int = 1,
+    ensemble_method = EnsembleThreads(),
     prob_func::Function = _ssesolve_prob_func,
-    output_func::Function = _ssesolve_output_func,
+    output_func::Function = _ssesolve_dispatch_output_func(ensemble_method),
+    progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2}
-    prob_sse = ssesolveProblem(H, ψ0, tlist, sc_ops; alg = alg, e_ops = e_ops, H_t = H_t, params = params, kwargs...)
+    progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+    if ensemble_method isa EnsembleDistributed
+        progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
+        @async while take!(progr_channel)
+            next!(progr)
+        end
+        params = merge(params, (progr_channel = progr_channel,))
+    else
+        params = merge(params, (progr_trajectories = progr,))
+    end
 
-    ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = false)
+    # Stop the async task if an error occurs
+    try
+        prob_sse =
+            ssesolveProblem(H, ψ0, tlist, sc_ops; alg = alg, e_ops = e_ops, H_t = H_t, params = params, kwargs...)
 
-    return ensemble_prob
+        ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = false)
+
+        return ensemble_prob
+    catch e
+        if ensemble_method isa EnsembleDistributed
+            put!(progr_channel, false)
+        end
+        rethrow(e)
+    end
 end
 
 @doc raw"""
@@ -291,8 +334,8 @@ end
         params::NamedTuple=NamedTuple(),
         ntraj::Int=1,
         ensemble_method=EnsembleThreads(),
-        prob_func::Function=_mcsolve_prob_func,
-        output_func::Function=_mcsolve_output_func,
+        prob_func::Function=_ssesolve_prob_func,
+        output_func::Function=_ssesolve_dispatch_output_func(ensemble_method),
         progress_bar::Union{Val,Bool} = Val(true),
         kwargs...)
 
@@ -363,7 +406,7 @@ function ssesolve(
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     prob_func::Function = _ssesolve_prob_func,
-    output_func::Function = _ssesolve_output_func,
+    output_func::Function = _ssesolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2}
@@ -373,26 +416,24 @@ function ssesolve(
         next!(progr)
     end
 
-    try
-        ens_prob = ssesolveEnsembleProblem(
-            H,
-            ψ0,
-            tlist,
-            sc_ops;
-            alg = alg,
-            e_ops = e_ops,
-            H_t = H_t,
-            params = merge(params, (progr_channel = progr_channel,)),
-            prob_func = prob_func,
-            output_func = output_func,
-            kwargs...,
-        )
+    ens_prob = ssesolveEnsembleProblem(
+        H,
+        ψ0,
+        tlist,
+        sc_ops;
+        alg = alg,
+        e_ops = e_ops,
+        H_t = H_t,
+        params = params,
+        ntraj = ntraj,
+        ensemble_method = ensemble_method,
+        prob_func = prob_func,
+        output_func = output_func,
+        progress_bar = progress_bar,
+        kwargs...,
+    )
 
-        return ssesolve(ens_prob; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
-    catch e
-        put!(progr_channel, false)
-        rethrow()
-    end
+    return ssesolve(ens_prob; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
 end
 
 function ssesolve(
@@ -401,29 +442,39 @@ function ssesolve(
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
 )
-    sol = solve(ens_prob, alg, ensemble_method, trajectories = ntraj)
+    # Stop the async task if an error occurs
+    try
+        sol = solve(ens_prob, alg, ensemble_method, trajectories = ntraj)
 
-    put!(sol[:, 1].prob.p.progr_channel, false)
+        if ensemble_method isa EnsembleDistributed
+            put!(sol[:, 1].prob.p.progr_channel, false)
+        end
 
-    _sol_1 = sol[:, 1]
+        _sol_1 = sol[:, 1]
 
-    expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
-    states =
-        isempty(_sol_1.prob.kwargs[:saveat]) ? fill(QuantumObject[], length(sol)) :
-        Vector{Vector{QuantumObject}}(undef, length(sol))
+        expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
+        states =
+            isempty(_sol_1.prob.kwargs[:saveat]) ? fill(QuantumObject[], length(sol)) :
+            Vector{Vector{QuantumObject}}(undef, length(sol))
 
-    foreach(i -> _ssesolve_generate_statistics!(sol, i, states, expvals_all), eachindex(sol))
-    expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
+        foreach(i -> _ssesolve_generate_statistics!(sol, i, states, expvals_all), eachindex(sol))
+        expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
 
-    return TimeEvolutionSSESol(
-        ntraj,
-        _sol_1.prob.p.times,
-        states,
-        expvals,
-        expvals_all,
-        sol.converged,
-        _sol_1.alg,
-        _sol_1.prob.kwargs[:abstol],
-        _sol_1.prob.kwargs[:reltol],
-    )
+        return TimeEvolutionSSESol(
+            ntraj,
+            _sol_1.prob.p.times,
+            states,
+            expvals,
+            expvals_all,
+            sol.converged,
+            _sol_1.alg,
+            _sol_1.prob.kwargs[:abstol],
+            _sol_1.prob.kwargs[:reltol],
+        )
+    catch e
+        if ensemble_method isa EnsembleDistributed
+            put!(ens_prob.prob.p.progr_channel, false)
+        end
+        rethrow(e)
+    end
 end
