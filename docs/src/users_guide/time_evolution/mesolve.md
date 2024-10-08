@@ -1,12 +1,10 @@
-# Time Evolution and Quantum System Dynamics
-
-## [Lindblad Master Equation Solver](@id doc-TE:Lindblad-Master-Equation-Solver)
+# [Lindblad Master Equation Solver](@id doc-TE:Lindblad-Master-Equation-Solver)
 
 ```@setup mesolve
 using QuantumToolbox
 ```
 
-### Von Neumann equation
+## Von Neumann equation
 
 While the evolution of the state vector in a closed quantum system is deterministic (as we discussed in the previous section: [Schrödinger Equation Solver](@ref doc-TE:Schrödinger-Equation-Solver)), open quantum systems are stochastic in nature. The effect of an environment on the system of interest is to induce stochastic transitions between energy levels, and to introduce uncertainty in the phase difference between states of the system. The state of an open quantum system is therefore described in terms of ensemble averaged states using the density matrix formalism. A density matrix ``\hat{\rho}`` describes a probability distribution of quantum states ``|\psi_n\rangle`` in a matrix representation, namely
 
@@ -59,4 +57,4 @@ sol.expect
 sol.states
 ```
 
-### The Lindblad master equation
+## The Lindblad master equation

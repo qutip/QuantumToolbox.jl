@@ -12,10 +12,10 @@ Pages = [
     "stochastic.md",
     "time_dependent.md",
 ]
-Depth = 2:3
+Depth = 1:2
 ```
 
-## [Introduction](@id doc-TE:Introduction)
+# [Introduction](@id doc-TE:Introduction)
 
 Although in some cases, we want to find the stationary states of a quantum system, often we are interested in the dynamics: how the state of a system or an ensemble of systems evolves with time. `QuantumToolbox` provides many ways to model dynamics.
 

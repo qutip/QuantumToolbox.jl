@@ -1,7 +1,5 @@
-# Time Evolution and Quantum System Dynamics
-
-## [Stochastic Solver](@id doc-TE:Stochastic-Solver)
+# [Stochastic Solver](@id doc-TE:Stochastic-Solver)
 
 This page is still under construction, please visit [API](@ref doc-API) first.
 
-### Stochastic Schrodinger equation
+## Stochastic Schrodinger equation
