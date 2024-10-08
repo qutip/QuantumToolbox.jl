@@ -88,7 +88,7 @@ where
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
-- If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
+- If `e_ops` is empty, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
@@ -154,7 +154,7 @@ function mesolveProblem(
         params...,
     )
 
-    saveat = e_ops isa Nothing ? t_l : [t_l[end]]
+    saveat = is_empty_e_ops ? t_l : [t_l[end]]
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
     kwargs3 = _generate_mesolve_kwargs(e_ops, makeVal(progress_bar), t_l, kwargs2)
@@ -205,7 +205,7 @@ where
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
-- If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
+- If `e_ops` is empty, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)

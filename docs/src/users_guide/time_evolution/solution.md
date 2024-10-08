@@ -84,7 +84,7 @@ State vectors, or density matrices, are accessed in a similar manner:
 sol.states
 ```
 
-Here, the solution contains only one (final) state. Because the `states` will be saved depend on the keyword argument `saveat` in `kwargs`. If `e_ops` is specified, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). One can also specify `e_ops` and `saveat` separately.
+Here, the solution contains only one (final) state. Because the `states` will be saved depend on the keyword argument `saveat` in `kwargs`. If `e_ops` is empty, the default value of `saveat=[tlist[end]]` (only save the final state), otherwise, `saveat=tlist` (saving the states corresponding to `tlist`). One can also specify `e_ops` and `saveat` separately.
 
 Some other solvers can have other output.
 
