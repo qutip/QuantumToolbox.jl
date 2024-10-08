@@ -620,9 +620,12 @@ function dsf_mcsolveEnsembleProblem(
     e_ops::Function = (op_list, p) -> Vector{TOl}([]),
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
+    ntraj::Int = 1,
+    ensemble_method = EnsembleThreads(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
+    progress_bar::Union{Bool,Val} = Val(true),
     kwargs...,
 ) where {T,TOl,TJC<:LindbladJumpCallbackType}
     op_l = op_list
@@ -669,8 +672,11 @@ function dsf_mcsolveEnsembleProblem(
         alg = alg,
         H_t = H_t,
         params = params2,
+        ntraj = ntraj,
+        ensemble_method = ensemble_method,
         jump_callback = jump_callback,
         prob_func = _dsf_mcsolve_prob_func,
+        progress_bar = progress_bar,
         kwargs2...,
     )
 end
@@ -720,35 +726,26 @@ function dsf_mcsolve(
     progress_bar::Union{Bool,Val} = Val(true),
     kwargs...,
 ) where {T,TOl,TJC<:LindbladJumpCallbackType}
-    progr = ProgressBar(ntraj, enable = getVal(progress_bar))
-    progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
-    @async while take!(progr_channel)
-        next!(progr)
-    end
+    ens_prob_mc = dsf_mcsolveEnsembleProblem(
+        H,
+        ψ0,
+        t_l,
+        c_ops,
+        op_list,
+        α0_l,
+        dsf_params;
+        alg = alg,
+        e_ops = e_ops,
+        H_t = H_t,
+        params = params,
+        ntraj = ntraj,
+        ensemble_method = ensemble_method,
+        δα_list = δα_list,
+        jump_callback = jump_callback,
+        krylov_dim = krylov_dim,
+        progress_bar = progress_bar,
+        kwargs...,
+    )
 
-    # Stop the async task if an error occurs
-    try
-        ens_prob_mc = dsf_mcsolveEnsembleProblem(
-            H,
-            ψ0,
-            t_l,
-            c_ops,
-            op_list,
-            α0_l,
-            dsf_params;
-            alg = alg,
-            e_ops = e_ops,
-            H_t = H_t,
-            params = merge(params, (progr_channel = progr_channel,)),
-            δα_list = δα_list,
-            jump_callback = jump_callback,
-            krylov_dim = krylov_dim,
-            kwargs...,
-        )
-
-        return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
-    catch e
-        put!(progr_channel, false)
-        rethrow()
-    end
+    return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
 end
