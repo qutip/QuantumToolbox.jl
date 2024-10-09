@@ -41,7 +41,7 @@ jobs:
         # for core tests (latest and oldest supported versions)
         version:
           - '1.10' # oldest
-        #  - '1'    # latest
+          - '1'    # latest
         node:
           - os: 'ubuntu-latest'
             arch: 'x64'
