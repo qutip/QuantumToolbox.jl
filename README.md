@@ -12,7 +12,8 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 <!-- Table of Badges -->
 | **Release**       | [![Release][release-img]][release-url] [![License][license-img]][license-url] [![DOI][doi-img]][doi-url] [![Downloads][download-img]][download-url] |
 |:-----------------:|:-------------|
-| **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] |
+| **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] |
+| **Code Quality**  | [![Code Quality][code-quality-img]][code-quality-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] |
 | **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] |
 | **Benchmark** | [![Benchmarks][benchmark-img]][benchmark-url] |
 | **Support** | [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund) |
@@ -34,6 +35,9 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 
 [codecov-img]: https://codecov.io/gh/qutip/QuantumToolbox.jl/branch/main/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/qutip/QuantumToolbox.jl
+
+[code-quality-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/Code-Quality.yml/badge.svg 
+[code-quality-url]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/Code-Quality.yml
 
 [aqua-img]: https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg
 [aqua-url]: https://github.com/JuliaTesting/Aqua.jl
