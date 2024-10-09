@@ -29,6 +29,7 @@ function LindbladJumpAffect!(integrator)
     random_n = internal_params.random_n
     jump_times = internal_params.jump_times
     jump_which = internal_params.jump_which
+    traj_rng = internal_params.traj_rng
     ψ = integrator.u
 
     @inbounds for i in eachindex(weights_mc)
@@ -36,14 +37,12 @@ function LindbladJumpAffect!(integrator)
         weights_mc[i] = real(dot(cache_mc, cache_mc))
     end
     cumsum!(cumsum_weights_mc, weights_mc)
-    collaps_idx = getindex(1:length(weights_mc), findfirst(>(rand() * sum(weights_mc)), cumsum_weights_mc))
+    collaps_idx = getindex(1:length(weights_mc), findfirst(>(rand(traj_rng) * sum(weights_mc)), cumsum_weights_mc))
     mul!(cache_mc, c_ops[collaps_idx], ψ)
     normalize!(cache_mc)
     copyto!(integrator.u, cache_mc)
 
-    # push!(jump_times, integrator.t)
-    # push!(jump_which, collaps_idx)
-    random_n[] = rand()
+    random_n[] = rand(traj_rng)
     jump_times[internal_params.jump_times_which_idx[]] = integrator.t
     jump_which[internal_params.jump_times_which_idx[]] = collaps_idx
     internal_params.jump_times_which_idx[] += 1
@@ -59,8 +58,11 @@ LindbladJumpDiscreteCondition(u, t, integrator) = real(dot(u, u)) < integrator.p
 
 function _mcsolve_prob_func(prob, i, repeat)
     internal_params = prob.p
-    seeds = internal_params.seeds
-    !isnothing(seeds) && Random.seed!(seeds[i])
+
+    global_rng = internal_params.global_rng
+    seed = internal_params.seeds[i]
+    traj_rng = typeof(global_rng)()
+    seed!(traj_rng, seed)
 
     prm = merge(
         internal_params,
@@ -69,7 +71,8 @@ function _mcsolve_prob_func(prob, i, repeat)
             cache_mc = similar(internal_params.cache_mc),
             weights_mc = similar(internal_params.weights_mc),
             cumsum_weights_mc = similar(internal_params.weights_mc),
-            random_n = Ref(rand()),
+            traj_rng = traj_rng,
+            random_n = Ref(rand(traj_rng)),
             progr_mc = ProgressBar(size(internal_params.expvals, 2), enable = false),
             jump_times_which_idx = Ref(1),
             jump_times = similar(internal_params.jump_times),
@@ -122,6 +125,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
+        rng::AbstractRNG=default_rng(),
         jump_callback::TJC=ContinuousLindbladJumpCallback(),
         kwargs...)
 
@@ -169,7 +173,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
+- `rng::AbstractRNG`: Random number generator for reproducibility.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
 - `kwargs...`: Additional keyword arguments to pass to the solver.
 
@@ -194,7 +198,7 @@ function mcsolveProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
-    seeds::Union{Nothing,Vector{Int}} = nothing,
+    rng::AbstractRNG = default_rng(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
 ) where {MT1<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
@@ -238,8 +242,7 @@ function mcsolveProblem(
         e_ops_mc = e_ops2,
         is_empty_e_ops_mc = is_empty_e_ops_mc,
         progr_mc = ProgressBar(length(t_l), enable = false),
-        seeds = seeds,
-        random_n = Ref(rand()),
+        traj_rng = rng,
         c_ops = get_data.(c_ops),
         cache_mc = cache_mc,
         weights_mc = weights_mc,
@@ -361,7 +364,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
+- `rng::AbstractRNG`: Random number generator for reproducibility.
 - `ntraj::Int`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
@@ -391,10 +394,10 @@ function mcsolveEnsembleProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
+    rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
-    seeds::Union{Nothing,Vector{Int}} = nothing,
     prob_func::Function = _mcsolve_prob_func,
     output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
@@ -413,6 +416,7 @@ function mcsolveEnsembleProblem(
 
     # Stop the async task if an error occurs
     try
+        seeds = map(i -> rand(rng, UInt64), 1:ntraj)
         prob_mc = mcsolveProblem(
             H,
             ψ0,
@@ -421,8 +425,8 @@ function mcsolveEnsembleProblem(
             alg = alg,
             e_ops = e_ops,
             H_t = H_t,
-            params = params,
-            seeds = seeds,
+            params = merge(params, (global_rng = rng, seeds = seeds)),
+            rng = rng,
             jump_callback = jump_callback,
             kwargs...,
         )
@@ -447,7 +451,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
         params::NamedTuple = NamedTuple(),
-        seeds::Union{Nothing,Vector{Int}} = nothing,
+        rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
         ensemble_method = EnsembleThreads(),
         jump_callback::TJC = ContinuousLindbladJumpCallback(),
@@ -501,7 +505,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
+- `rng::AbstractRNG`: Random number generator for reproducibility.
 - `ntraj::Int`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use.
 - `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
@@ -532,7 +536,7 @@ function mcsolve(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
-    seeds::Union{Nothing,Vector{Int}} = nothing,
+    rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
@@ -541,10 +545,6 @@ function mcsolve(
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2,TJC<:LindbladJumpCallbackType}
-    if !isnothing(seeds) && length(seeds) != ntraj
-        throw(ArgumentError("Length of seeds must match ntraj ($ntraj), but got $(length(seeds))"))
-    end
-
     ens_prob_mc = mcsolveEnsembleProblem(
         H,
         ψ0,
@@ -554,7 +554,7 @@ function mcsolve(
         e_ops = e_ops,
         H_t = H_t,
         params = params,
-        seeds = seeds,
+        rng = rng,
         ntraj = ntraj,
         ensemble_method = ensemble_method,
         jump_callback = jump_callback,

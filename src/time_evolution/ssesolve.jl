@@ -32,11 +32,17 @@ end
 function _ssesolve_prob_func(prob, i, repeat)
     internal_params = prob.p
 
+    global_rng = internal_params.global_rng
+    seed = internal_params.seeds[i]
+    traj_rng = typeof(global_rng)()
+    seed!(traj_rng, seed)
+
     noise = RealWienerProcess(
         prob.tspan[1],
         zeros(length(internal_params.sc_ops)),
         zeros(length(internal_params.sc_ops)),
         save_everystep = false,
+        rng = traj_rng,
     )
 
     noise_rate_prototype = similar(prob.u0, length(prob.u0), length(internal_params.sc_ops))
@@ -49,7 +55,7 @@ function _ssesolve_prob_func(prob, i, repeat)
         ),
     )
 
-    return remake(prob, p = prm, noise = noise, noise_rate_prototype = noise_rate_prototype)
+    return remake(prob, p = prm, noise = noise, noise_rate_prototype = noise_rate_prototype, seed = seed)
 end
 
 # Standard output function
@@ -89,6 +95,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
+        rng::AbstractRNG=default_rng(),
         kwargs...)
 
 Generates the SDEProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
@@ -122,6 +129,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
+- `rng::AbstractRNG`: The random number generator for reproducibility.
 - `kwargs...`: The keyword arguments passed to the `SDEProblem` constructor.
 
 # Notes
@@ -145,6 +153,7 @@ function ssesolveProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
+    rng::AbstractRNG = default_rng(),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2}
     H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
@@ -200,7 +209,7 @@ function ssesolveProblem(
     kwargs3 = _generate_sesolve_kwargs(e_ops, Val(false), t_l, kwargs2)
 
     tspan = (t_l[1], t_l[end])
-    noise = RealWienerProcess(t_l[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false)
+    noise = RealWienerProcess(t_l[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false, rng = rng)
     noise_rate_prototype = similar(ϕ0, length(ϕ0), length(sc_ops))
     return SDEProblem{true}(
         ssesolve_drift!,
@@ -223,6 +232,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
+        rng::AbstractRNG=default_rng(),
         ntraj::Int=1,
         ensemble_method=EnsembleThreads(),
         prob_func::Function=_mcsolve_prob_func,
@@ -261,6 +271,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of operators to be evaluated during the evolution.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
+- `rng::AbstractRNG`: The random number generator for reproducibility.
 - `ntraj::Int`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use.
 - `prob_func::Function`: Function to use for generating the SDEProblem.
@@ -289,6 +300,7 @@ function ssesolveEnsembleProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
+    rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     prob_func::Function = _ssesolve_prob_func,
@@ -309,10 +321,21 @@ function ssesolveEnsembleProblem(
 
     # Stop the async task if an error occurs
     try
-        prob_sse =
-            ssesolveProblem(H, ψ0, tlist, sc_ops; alg = alg, e_ops = e_ops, H_t = H_t, params = params, kwargs...)
+        seeds = map(i -> rand(rng, UInt64), 1:ntraj)
+        prob_sse = ssesolveProblem(
+            H,
+            ψ0,
+            tlist,
+            sc_ops;
+            alg = alg,
+            e_ops = e_ops,
+            H_t = H_t,
+            params = merge(params, (global_rng = rng, seeds = seeds)),
+            rng = rng,
+            kwargs...,
+        )
 
-        ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = false)
+        ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = true)
 
         return ensemble_prob
     catch e
@@ -332,6 +355,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
         H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
+        rng::AbstractRNG=default_rng(),
         ntraj::Int=1,
         ensemble_method=EnsembleThreads(),
         prob_func::Function=_ssesolve_prob_func,
@@ -373,7 +397,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
 - `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-- `seeds::Union{Nothing, Vector{Int}}`: List of seeds for the random number generator. Length must be equal to the number of trajectories provided.
+- `rng::AbstractRNG`: Random number generator for reproducibility.
 - `ntraj::Int`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use.
 - `prob_func::Function`: Function to use for generating the SDEProblem.
@@ -403,6 +427,7 @@ function ssesolve(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
+    rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     prob_func::Function = _ssesolve_prob_func,
@@ -425,6 +450,7 @@ function ssesolve(
         e_ops = e_ops,
         H_t = H_t,
         params = params,
+        rng = rng,
         ntraj = ntraj,
         ensemble_method = ensemble_method,
         prob_func = prob_func,
