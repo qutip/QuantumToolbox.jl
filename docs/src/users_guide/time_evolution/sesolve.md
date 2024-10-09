@@ -19,7 +19,7 @@ where ``|\psi(t)\rangle`` is the state vector, and the Hamiltonian ``\hat{H}`` i
 
 The Schrödinger equation, which governs the time-evolution of closed quantum systems, is defined by its Hamiltonian and state vector. In the previous sections, [Manipulating States and Operators](@ref doc:Manipulating-States-and-Operators) and [Tensor Products and Partial Traces](@ref doc:Tensor-products-and-Partial-Traces), we showed how Hamiltonians and state vectors are constructed in `QuantumToolbox.jl`. Given a Hamiltonian, we can calculate the unitary (non-dissipative) time-evolution of an arbitrary initial state vector ``|\psi(0)\rangle`` using the `QuantumToolbox` time evolution problem [`sesolveProblem`](@ref) or directly call the function [`sesolve`](@ref). It evolves the state vector ``|\psi(t)\rangle`` and evaluates the expectation values for a set of operators `e_ops` at each given time points, using an ordinary differential equation solver provided by the powerful julia package [`DifferentialEquation.jl`](https://docs.sciml.ai/DiffEqDocs/stable/).
 
-## Example
+## Example: Spin dynamics
 
 ```@setup sesolve
 using QuantumToolbox
