@@ -47,7 +47,7 @@ import FFTW: fft, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import Pkg
-import Random
+import Random: AbstractRNG, default_rng, seed!
 import SpecialFunctions: loggamma
 import StaticArraysCore: MVector
 

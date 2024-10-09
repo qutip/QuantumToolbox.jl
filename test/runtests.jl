@@ -2,6 +2,7 @@ using Test
 using Pkg
 using QuantumToolbox
 using QuantumToolbox: position, momentum
+using Random
 
 const GROUP = get(ENV, "GROUP", "All")
 

@@ -149,6 +149,50 @@
             @inferred ssesolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
             @inferred ssesolve(H, psi0, t_l, c_ops, ntraj = 500, progress_bar = Val(true))
         end
+
+        @testset "mcsolve and ssesolve reproducibility" begin
+            N = 10
+            a = tensor(destroy(N), qeye(2))
+            σm = tensor(qeye(N), sigmam())
+            σp = σm'
+            σz = tensor(qeye(N), sigmaz())
+
+            ω = 1.0
+            g = 0.1
+            γ = 0.01
+            nth = 0.1
+
+            H = ω * a' * a + ω * σz / 2 + g * (a' * σm + a * σp)
+            c_ops = [sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σp]
+            e_ops = [a' * a, σz]
+
+            psi0 = tensor(basis(N, 0), basis(2, 0))
+            tlist = range(0, 20 / γ, 1000)
+
+            rng = MersenneTwister(1234)
+            sleep(0.1) # If we don't sleep, we get an error (why?)
+            sol_mc1 = mcsolve(H, psi0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            sol_sse1 = ssesolve(H, psi0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+
+            rng = MersenneTwister(1234)
+            sleep(0.1)
+            sol_mc2 = mcsolve(H, psi0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            sol_sse2 = ssesolve(H, psi0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+
+            rng = MersenneTwister(1234)
+            sleep(0.1)
+            sol_mc3 = mcsolve(H, psi0, tlist, c_ops, ntraj = 510, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+
+            @test sol_mc1.expect ≈ sol_mc2.expect atol = 1e-10
+            @test sol_mc1.expect_all ≈ sol_mc2.expect_all atol = 1e-10
+            @test sol_mc1.jump_times ≈ sol_mc2.jump_times atol = 1e-10
+            @test sol_mc1.jump_which ≈ sol_mc2.jump_which atol = 1e-10
+
+            @test sol_mc1.expect_all ≈ sol_mc3.expect_all[1:500, :, :] atol = 1e-10
+
+            @test sol_sse1.expect ≈ sol_sse2.expect atol = 1e-10
+            @test sol_sse1.expect_all ≈ sol_sse2.expect_all atol = 1e-10
+        end
     end
 
     @testset "exceptions" begin
