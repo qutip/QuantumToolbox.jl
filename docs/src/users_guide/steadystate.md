@@ -64,7 +64,9 @@ solver = SteadyStateLinearSolver(alg = MKLLUFactorization())
 
 See [`LinearSolve.jl` Solvers](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/) for more details.
 
-## Example: Harmonic Oscillator in Thermal Bath
+## Example: Harmonic oscillator in thermal bath
+
+Here, we demonstrate [`steadystate`](@ref) by using the example with the harmonic oscillator in thermal bath from the previous section ([Lindblad Master Equation Solver](@ref doc-TE:Lindblad-Master-Equation-Solver)).
 
 ```@example steady_state_example
 using QuantumToolbox
@@ -77,16 +79,16 @@ a = destroy(N)
 H = a' * a
 ψ0 = basis(N, 10)  # initial state
 κ = 0.1  # coupling to oscillator
-n_th = 2  # temperature with average of 2 excitations
+n_th = 2 # temperature with average of 2 excitations
 
 # collapse operators 
-c_op_list = [
+c_ops = [
     sqrt(κ * (n_th + 1)) * a, # emission
     sqrt(κ *  n_th     ) * a' # absorption
 ]
 
 # find steady-state solution
-ρ_ss = steadystate(H, c_op_list)
+ρ_ss = steadystate(H, c_ops)
 
 # find expectation value for particle number in steady state
 e_ops = [a' * a]
@@ -95,11 +97,11 @@ exp_ss = real(expect(e_ops[1], ρ_ss))
 tlist = LinRange(0, 50, 100)
 
 # monte-carlo
-sol_mc = mcsolve(H, ψ0, tlist, c_op_list, e_ops=e_ops, ntraj=100, progress_bar=false)
+sol_mc = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ntraj=100, progress_bar=false)
 exp_mc = real(sol_mc.expect[1, :])
 
 # master eq.
-sol_me = mesolve(H, ψ0, tlist, c_op_list, e_ops=e_ops, progress_bar=false)
+sol_me = mesolve(H, ψ0, tlist, c_ops, e_ops=e_ops, progress_bar=false)
 exp_me = real(sol_me.expect[1, :])
 
 # plot the results

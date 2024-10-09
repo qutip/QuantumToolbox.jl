@@ -404,4 +404,4 @@ t = 0.8
 exp(L * t)
 ```
 
-See the section [Time Evolution and Quantum System Dynamics](@ref doc:Time-Evolution-and-Quantum-System-Dynamics) for more details.
+See the section [Lindblad Master Equation Solver](@ref doc-TE:Lindblad-Master-Equation-Solver) for more details.
