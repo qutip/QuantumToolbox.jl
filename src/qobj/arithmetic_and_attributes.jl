@@ -36,84 +36,82 @@ end
 
 for op in (:(+), :(-), :(*))
     @eval begin
-        function LinearAlgebra.$op(
-            A::QuantumObject{<:AbstractArray{T1},OpType},
-            B::QuantumObject{<:AbstractArray{T2},OpType},
-        ) where {T1,T2,OpType<:QuantumObjectType}
+        function LinearAlgebra.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
             A.dims != B.dims &&
-                throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+                throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+            if A isa QuantumObjectEvolution || B isa QuantumObjectEvolution
+                return QuantumObjectEvolution($(op)(A.data, B.data), A.type, A.dims)
+            end
             return QuantumObject($(op)(A.data, B.data), A.type, A.dims)
         end
-        LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject($(op)(A.data), A.type, A.dims)
+        LinearAlgebra.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dims)
 
-        LinearAlgebra.$op(n::T1, A::QuantumObject{<:AbstractArray{T2}}) where {T1<:Number,T2} =
-            QuantumObject($(op)(n * I, A.data), A.type, A.dims)
-        LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T1}}, n::T2) where {T1,T2<:Number} =
-            QuantumObject($(op)(A.data, n * I), A.type, A.dims)
+        LinearAlgebra.$op(n::T, A::AbstractQuantumObject) where {T<:Number} =
+            get_typename_wrapper(A)($(op)(n * I, A.data), A.type, A.dims)
+        LinearAlgebra.$op(A::AbstractQuantumObject, n::T) where {T<:Number} =
+            get_typename_wrapper(A)($(op)(A.data, n * I), A.type, A.dims)
     end
 end
 
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::AbstractQuantumObject{DT1,OperatorQuantumObject},
+    B::QuantumObject{DT2,KetQuantumObject},
+) where {DT1,DT2}
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, Ket, A.dims)
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},BraQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::QuantumObject{DT1,BraQuantumObject},
+    B::AbstractQuantumObject{DT2,OperatorQuantumObject},
+) where {DT1,DT2}
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, Bra, A.dims)
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},BraQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::QuantumObject{DT1,KetQuantumObject},
+    B::QuantumObject{DT2,BraQuantumObject},
+) where {DT1,DT2}
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, Operator, A.dims)
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},BraQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::QuantumObject{DT1,BraQuantumObject},
+    B::QuantumObject{DT2,KetQuantumObject},
+) where {DT1,DT2}
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
     return A.data * B.data
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::AbstractQuantumObject{DT1,SuperOperatorQuantumObject},
+    B::QuantumObject{DT2,OperatorQuantumObject},
+) where {DT1,DT2}
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
     return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator, A.dims)
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::QuantumObject{DT1,OperatorBraQuantumObject},
+    B::QuantumObject{DT2,OperatorKetQuantumObject},
+) where {DT1,DT2}
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
     return A.data * B.data
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::AbstractQuantumObject{DT1,SuperOperatorQuantumObject},
+    B::QuantumObject{DT2,OperatorKetQuantumObject},
+) where {DT1,DT2}
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, OperatorKet, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
+    B::AbstractQuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
     return QuantumObject(A.data * B.data, OperatorBra, A.dims)
 end
 
-LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Number} =
-    QuantumObject(^(A.data, n), A.type, A.dims)
-LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Number} =
-    QuantumObject(/(A.data, n), A.type, A.dims)
+LinearAlgebra.:(^)(A::QuantumObject{DT}, n::T) where {DT,T<:Number} = QuantumObject(^(A.data, n), A.type, A.dims)
+LinearAlgebra.:(/)(A::QuantumObject{DT}, n::T) where {DT,T<:Number} = QuantumObject(/(A.data, n), A.type, A.dims)
 
 @doc raw"""
     dot(A::QuantumObject, B::QuantumObject)
@@ -125,93 +123,91 @@ Note that `A` and `B` should be [`Ket`](@ref) or [`OperatorKet`](@ref)
 `A ⋅ B` (where `⋅` can be typed by tab-completing `\cdot` in the REPL) is a synonym for `dot(A, B)`
 """
 function LinearAlgebra.dot(
-    A::QuantumObject{<:AbstractArray{T1},OpType},
-    B::QuantumObject{<:AbstractArray{T2},OpType},
-) where {T1<:Number,T2<:Number,OpType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+    A::QuantumObject{DT1,OpType},
+    B::QuantumObject{DT2,OpType},
+) where {DT1,DT2,OpType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
     A.dims != B.dims && throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(A.data, B.data)
 end
 
 @doc raw"""
-    dot(i::QuantumObject, A::QuantumObject j::QuantumObject)
+    dot(i::QuantumObject, A::AbstractQuantumObject j::QuantumObject)
 
-Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | \hat{A} | j \rangle``
+Compute the generalized dot product `dot(i, A*j)` between three [`AbstractQuantumObject`](@ref): ``\langle i | \hat{A} | j \rangle``
 
 Supports the following inputs:
 - `A` is in the type of [`Operator`](@ref), with `i` and `j` are both [`Ket`](@ref).
 - `A` is in the type of [`SuperOperator`](@ref), with `i` and `j` are both [`OperatorKet`](@ref)
 """
 function LinearAlgebra.dot(
-    i::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject},
-) where {T1<:Number,T2<:Number,T3<:Number}
+    i::QuantumObject{DT1,KetQuantumObject},
+    A::AbstractQuantumObject{DT2,OperatorQuantumObject},
+    j::QuantumObject{DT3,KetQuantumObject},
+) where {DT1,DT2,DT3}
     ((i.dims != A.dims) || (A.dims != j.dims)) &&
         throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 function LinearAlgebra.dot(
-    i::QuantumObject{<:AbstractArray{T1},OperatorKetQuantumObject},
-    A::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject},
-) where {T1<:Number,T2<:Number,T3<:Number}
+    i::QuantumObject{DT1,OperatorKetQuantumObject},
+    A::AbstractQuantumObject{DT2,SuperOperatorQuantumObject},
+    j::QuantumObject{DT3,OperatorKetQuantumObject},
+) where {DT1,DT2,DT3}
     ((i.dims != A.dims) || (A.dims != j.dims)) &&
         throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 
 @doc raw"""
-    conj(A::QuantumObject)
+    conj(A::AbstractQuantumObject)
 
-Return the element-wise complex conjugation of the [`QuantumObject`](@ref).
+Return the element-wise complex conjugation of the [`AbstractQuantumObject`](@ref).
 """
-Base.conj(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(conj(A.data), A.type, A.dims)
+Base.conj(A::AbstractQuantumObject) = get_typename_wrapper(A)(conj(A.data), A.type, A.dims)
 
 @doc raw"""
-    transpose(A::QuantumObject)
+    transpose(A::AbstractQuantumObject)
 
-Lazy matrix transpose of the [`QuantumObject`](@ref).
+Lazy matrix transpose of the [`AbstractQuantumObject`](@ref).
 """
 LinearAlgebra.transpose(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(transpose(A.data), A.type, A.dims)
+    A::AbstractQuantumObject{DT,OpType},
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    get_typename_wrapper(A)(transpose(A.data), A.type, A.dims)
 
 @doc raw"""
     A'
-    adjoint(A::QuantumObject)
+    adjoint(A::AbstractQuantumObject)
 
-Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
+Lazy adjoint (conjugate transposition) of the [`AbstractQuantumObject`](@ref)
 
 Note that `A'` is a synonym for `adjoint(A)`
 """
 LinearAlgebra.adjoint(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(adjoint(A.data), A.type, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} =
-    QuantumObject(adjoint(A.data), Bra, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} =
-    QuantumObject(adjoint(A.data), Ket, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} =
+    A::AbstractQuantumObject{DT,OpType},
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    get_typename_wrapper(A)(adjoint(A.data), A.type, A.dims)
+LinearAlgebra.adjoint(A::QuantumObject{DT,KetQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Bra, A.dims)
+LinearAlgebra.adjoint(A::QuantumObject{DT,BraQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Ket, A.dims)
+LinearAlgebra.adjoint(A::QuantumObject{DT,OperatorKetQuantumObject}) where {DT} =
     QuantumObject(adjoint(A.data), OperatorBra, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorBraQuantumObject}) where {T} =
+LinearAlgebra.adjoint(A::QuantumObject{DT,OperatorBraQuantumObject}) where {DT} =
     QuantumObject(adjoint(A.data), OperatorKet, A.dims)
 
 @doc raw"""
-    inv(A::QuantumObject)
+    inv(A::AbstractQuantumObject)
 
-Matrix inverse of the [`QuantumObject`](@ref)
+Matrix inverse of the [`AbstractQuantumObject`](@ref). If `A` is a [`QuantumObjectEvolution`](@ref), the inverse is computed at the last computed time.
 """
 LinearAlgebra.inv(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    A::AbstractQuantumObject{DT,OpType},
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(sparse(inv(Matrix(A.data))), A.type, A.dims)
 
 LinearAlgebra.Hermitian(
-    A::QuantumObject{<:AbstractArray{T},OpType},
+    A::QuantumObject{DT,OpType},
     uplo::Symbol = :U,
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(Hermitian(A.data, uplo), A.type, A.dims)
 
 @doc raw"""
@@ -436,8 +432,8 @@ Matrix sine of [`QuantumObject`](@ref), defined as
 Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
 LinearAlgebra.sin(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) - exp(-1im * A)) / 2im
+    A::QuantumObject{DT,ObjType},
+) where {DT,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) - exp(-1im * A)) / 2im
 
 @doc raw"""
     cos(A::QuantumObject)
@@ -659,11 +655,11 @@ tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} =
     @. A = T(abs(real(A)) > tol) * real(A) + 1im * T(abs(imag(A)) > tol) * imag(A)
 
 @doc raw"""
-    get_data(A::QuantumObject)
+    get_data(A::AbstractQuantumObject)
 
-Returns the data of a QuantumObject.
+Returns the data of a [`AbstractQuantumObject`](@ref).
 """
-get_data(A::QuantumObject) = A.data
+get_data(A::AbstractQuantumObject) = A.data
 
 @doc raw"""
     get_coherence(ψ::QuantumObject)

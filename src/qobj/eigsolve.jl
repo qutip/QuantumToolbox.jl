@@ -3,7 +3,8 @@ Eigen solvers and results for QuantumObject
 =#
 
 export EigsolveResult
-export eigenenergies, eigenstates, eigsolve, eigsolve_al
+export eigenenergies, eigenstates, eigsolve
+export eigsolve_al
 
 @doc raw"""
     struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},N}
@@ -377,8 +378,8 @@ function eigsolve_al(
     L = liouvillian(H, c_ops)
     prob = mesolveProblem(
         L,
-        QuantumObject(ρ0, dims = H.dims),
-        [0, T];
+        QuantumObject(ρ0, type=Operator, dims = H.dims),
+        [zero(T), T];
         alg = alg,
         H_t = H_t,
         params = params,

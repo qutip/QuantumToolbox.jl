@@ -17,7 +17,7 @@ ket2dm(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * 
 ket2dm(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = ρ
 
 @doc raw"""
-    expect(O::QuantumObject, ψ::Union{QuantumObject,Vector{QuantumObject}})
+    expect(O::AbstractQuantumObject, ψ::Union{QuantumObject,Vector{QuantumObject}})
 
 Expectation value of the [`Operator`](@ref) `O` with the state `ψ`. The state can be a [`Ket`](@ref), [`Bra`](@ref) or [`Operator`](@ref).
 
@@ -44,15 +44,15 @@ julia> expect(Hermitian(a' * a), ψ) |> round
 ```
 """
 function expect(
-    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-) where {T1,T2}
+    O::AbstractQuantumObject{DT1,OperatorQuantumObject},
+    ψ::QuantumObject{DT2,KetQuantumObject},
+) where {DT1,DT2}
     return dot(ψ.data, O.data, ψ.data)
 end
 function expect(
-    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ::QuantumObject{<:AbstractArray{T2},BraQuantumObject},
-) where {T1,T2}
+    O::AbstractQuantumObject{DT1,OperatorQuantumObject},
+    ψ::QuantumObject{DT2,BraQuantumObject},
+) where {DT1,DT2}
     return expect(O, ψ')
 end
 function expect(
@@ -95,11 +95,9 @@ The function returns a real number if `O` is hermitian, and returns a complex nu
 
 Note that `ψ` can also be given as a list of [`QuantumObject`](@ref), it returns a list of expectation values.
 """
-variance(
-    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ::QuantumObject{<:AbstractArray{T2}},
-) where {T1,T2} = expect(O^2, ψ) - expect(O, ψ)^2
-variance(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ψ::Vector{<:QuantumObject}) where {T1} =
+variance(O::QuantumObject{DT1,OperatorQuantumObject}, ψ::QuantumObject{DT2}) where {DT1,DT2} =
+    expect(O^2, ψ) - expect(O, ψ)^2
+variance(O::QuantumObject{DT1,OperatorQuantumObject}, ψ::Vector{<:QuantumObject}) where {DT1} =
     expect(O^2, ψ) .- expect(O, ψ) .^ 2
 
 @doc raw"""
@@ -149,7 +147,7 @@ function dense_to_sparse(A::VT, tol::Real = 1e-10) where {VT<:AbstractVector}
 end
 
 @doc raw"""
-    kron(A::QuantumObject, B::QuantumObject, ...)
+    kron(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
 
 Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B} \otimes \cdots``.
 
@@ -191,13 +189,17 @@ Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠦
 ```
 """
-LinearAlgebra.kron(
-    A::QuantumObject{<:AbstractArray{T1},OpType},
-    B::QuantumObject{<:AbstractArray{T2},OpType},
-) where {T1,T2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}} =
-    QuantumObject(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
-LinearAlgebra.kron(A::QuantumObject) = A
-function LinearAlgebra.kron(A::Vector{<:QuantumObject})
+function LinearAlgebra.kron(
+    A::AbstractQuantumObject{DT1,OpType},
+    B::AbstractQuantumObject{DT2,OpType},
+) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
+    if A isa QuantumObjectEvolution || B isa QuantumObjectEvolution
+        return QuantumObjectEvolution(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
+    end
+    return QuantumObject(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
+end
+LinearAlgebra.kron(A::AbstractQuantumObject) = A
+function LinearAlgebra.kron(A::Vector{<:AbstractQuantumObject})
     @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."
     return kron(A...)
 end

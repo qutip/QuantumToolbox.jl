@@ -2,7 +2,7 @@
 Synonyms of the functions for QuantumObject
 =#
 
-export Qobj, shape, isherm
+export Qobj, QobjEvo, shape, isherm
 export trans, dag, matrix_element, unit
 export sqrtm, logm, expm, sinm, cosm
 export tensor, ⊗
@@ -13,16 +13,25 @@ export qeye
 
 Generate [`QuantumObject`](@ref)
 
-Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`
+Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`.
 """
 Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
+
+@doc raw"""
+    QobjEvo(op_func_list::Union{Tuple,QuantumObject})
+
+Generate [`QuantumObjectEvolution`](@ref)
+
+Note that this functions is same as `QuantumObjectEvolution(op_func_list)`.
+"""
+QobjEvo(op_func_list::Union{Tuple,QuantumObject}) = QuantumObjectEvolution(op_func_list)
 
 @doc raw"""
     shape(A::QuantumObject)
 
 Returns a tuple containing each dimensions of the array in the [`QuantumObject`](@ref).
 
-Note that this function is same as `size(A)`
+Note that this function is same as `size(A)`.
 """
 shape(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
 
@@ -31,7 +40,7 @@ shape(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
 
 Test whether the [`QuantumObject`](@ref) is Hermitian.
 
-Note that this functions is same as `ishermitian(A)`
+Note that this functions is same as `ishermitian(A)`.
 """
 isherm(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A)
 
@@ -40,7 +49,7 @@ isherm(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A)
 
 Lazy matrix transpose of the [`QuantumObject`](@ref).
 
-Note that this function is same as `transpose(A)`
+Note that this function is same as `transpose(A)`.
 """
 trans(
     A::QuantumObject{<:AbstractArray{T},OpType},
@@ -51,7 +60,7 @@ trans(
 
 Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
 
-Note that this function is same as `adjoint(A)`
+Note that this function is same as `adjoint(A)`.
 """
 dag(A::QuantumObject{<:AbstractArray{T}}) where {T} = adjoint(A)
 
@@ -110,7 +119,7 @@ sqrtm(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = sq
 
 Matrix logarithm of [`QuantumObject`](@ref)
 
-Note that this function is same as `log(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+Note that this function is same as `log(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 logm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
@@ -121,7 +130,7 @@ logm(
 
 Matrix exponential of [`QuantumObject`](@ref)
 
-Note that this function is same as `exp(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+Note that this function is same as `exp(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 expm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
@@ -134,7 +143,7 @@ Matrix sine of [`QuantumObject`](@ref), defined as
 
 ``\sin \left( \hat{A} \right) = \frac{e^{i \hat{A}} - e^{-i \hat{A}}}{2 i}``
 
-Note that this function is same as `sin(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+Note that this function is same as `sin(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 sinm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
@@ -147,7 +156,7 @@ Matrix cosine of [`QuantumObject`](@ref), defined as
 
 ``\cos \left( \hat{A} \right) = \frac{e^{i \hat{A}} + e^{-i \hat{A}}}{2}``
 
-Note that this function is same as `cos(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+Note that this function is same as `cos(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 cosm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
@@ -158,7 +167,7 @@ cosm(
 
 Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B} \otimes \cdots``.
 
-Note that this function is same as `kron(A, B, ...)`
+Note that this function is same as `kron(A, B, ...)`.
 
 # Examples
 
@@ -191,7 +200,7 @@ tensor(A...) = kron(A...)
 
 Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B}``.
 
-Note that this function is same as `kron(A, B)`
+Note that this function is same as `kron(A, B)`.
 
 # Examples
 
@@ -240,7 +249,7 @@ Identity operator ``\hat{\mathbb{1}}`` with size `N`.
 
 It is also possible to specify the list of Hilbert dimensions `dims` if different subsystems are present.
 
-Note that this function is same as `eye(N, type=type, dims=dims)`, and `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref)
+Note that this function is same as `eye(N, type=type, dims=dims)`, and `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref).
 """
 qeye(
     N::Int;

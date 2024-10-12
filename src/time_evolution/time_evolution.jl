@@ -178,13 +178,13 @@ Base.size(A::TimeDependentOperatorSum) = size(A.operator_sum)
 Base.size(A::TimeDependentOperatorSum, inds...) = size(A.operator_sum, inds...)
 Base.length(A::TimeDependentOperatorSum) = length(A.operator_sum)
 
-function update_coefficients!(A::TimeDependentOperatorSum, t, params)
+function op_sum_update_coefficients!(A::TimeDependentOperatorSum, t, params)
     @inbounds @simd for i in 1:length(A.coefficient_functions)
         A.operator_sum.coefficients[i] = A.coefficient_functions[i](t, params)
     end
 end
 
-(A::TimeDependentOperatorSum)(t, params) = (update_coefficients!(A, t, params); A)
+(A::TimeDependentOperatorSum)(t, params) = (op_sum_update_coefficients!(A, t, params); A)
 
 @inline function LinearAlgebra.mul!(y::AbstractVector, A::TimeDependentOperatorSum, x::AbstractVector, α, β)
     return mul!(y, A.operator_sum, x, α, β)

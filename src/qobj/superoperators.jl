@@ -69,7 +69,7 @@ function sprepost(
     A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
 
     return QuantumObject(_sprepost(A.data, B.data), SuperOperator, A.dims)
 end

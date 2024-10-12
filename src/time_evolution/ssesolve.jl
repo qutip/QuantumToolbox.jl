@@ -156,7 +156,7 @@ function ssesolveProblem(
     rng::AbstractRNG = default_rng(),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2}
-    H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
 
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))

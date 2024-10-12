@@ -17,7 +17,13 @@ export QuantumObjectType,
     SuperOperatorQuantumObject
 export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 
-abstract type AbstractQuantumObject end
+@doc raw"""
+    AbstractQuantumObject{DataType,ObjType,N}
+
+Abstract type for all quantum objects like [`QuantumObject`](@ref) and [`QuantumObjectEvolution`](@ref).
+"""
+abstract type AbstractQuantumObject{DataType,ObjType,N} end
+
 abstract type QuantumObjectType end
 
 @doc raw"""
@@ -135,7 +141,7 @@ julia> a isa QuantumObject
 true
 ```
 """
-struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: AbstractQuantumObject
+struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: AbstractQuantumObject{MT,ObjType,N}
     data::MT
     type::ObjType
     dims::SVector{N,Int}
@@ -294,7 +300,7 @@ function Base.show(
     return show(io, MIME("text/plain"), op_data)
 end
 
-function Base.show(io::IO, QO::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:OperatorQuantumObject}
+function Base.show(io::IO, QO::AbstractQuantumObject)
     op_data = QO.data
     println(
         io,
@@ -311,38 +317,38 @@ function Base.show(io::IO, QO::QuantumObject{<:AbstractArray{T},OpType}) where {
 end
 
 @doc raw"""
-    size(A::QuantumObject)
-    size(A::QuantumObject, idx::Int)
+    size(A::AbstractQuantumObject)
+    size(A::AbstractQuantumObject, idx::Int)
 
-Returns a tuple containing each dimensions of the array in the [`QuantumObject`](@ref).
+Returns a tuple containing each dimensions of the array in the [`AbstractQuantumObject`](@ref).
 
 Optionally, you can specify an index (`idx`) to just get the corresponding dimension of the array.
 """
-Base.size(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
-Base.size(A::QuantumObject{<:AbstractArray{T}}, idx::Int) where {T} = size(A.data, idx)
+Base.size(A::AbstractQuantumObject) = size(A.data)
+Base.size(A::AbstractQuantumObject, idx::Int) = size(A.data, idx)
 
-Base.getindex(A::QuantumObject{<:AbstractArray{T}}, inds...) where {T} = getindex(A.data, inds...)
-Base.setindex!(A::QuantumObject{<:AbstractArray{T}}, val, inds...) where {T} = setindex!(A.data, val, inds...)
-
-@doc raw"""
-    eltype(A::QuantumObject)
-
-Returns the elements type of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
-"""
-Base.eltype(A::QuantumObject) = eltype(A.data)
+Base.getindex(A::AbstractQuantumObject, inds...) = getindex(A.data, inds...)
+Base.setindex!(A::AbstractQuantumObject, val, inds...) = setindex!(A.data, val, inds...)
 
 @doc raw"""
-    length(A::QuantumObject)
+    eltype(A::AbstractQuantumObject)
 
-Returns the length of the matrix or vector corresponding to the [`QuantumObject`](@ref) `A`.
+Returns the elements type of the matrix or vector corresponding to the [`AbstractQuantumObject`](@ref) `A`.
 """
-Base.length(A::QuantumObject{<:AbstractArray{T}}) where {T} = length(A.data)
+Base.eltype(A::AbstractQuantumObject) = eltype(A.data)
 
-Base.isequal(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}) where {T} =
+@doc raw"""
+    length(A::AbstractQuantumObject)
+
+Returns the length of the matrix or vector corresponding to the [`AbstractQuantumObject`](@ref) `A`.
+"""
+Base.length(A::AbstractQuantumObject) = length(A.data)
+
+Base.isequal(A::AbstractQuantumObject, B::AbstractQuantumObject) =
     isequal(A.type, B.type) && isequal(A.dims, B.dims) && isequal(A.data, B.data)
-Base.isapprox(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}; kwargs...) where {T} =
+Base.isapprox(A::AbstractQuantumObject, B::AbstractQuantumObject; kwargs...) =
     isequal(A.type, B.type) && isequal(A.dims, B.dims) && isapprox(A.data, B.data; kwargs...)
-Base.:(==)(A::QuantumObject{<:AbstractArray{T}}, B::QuantumObject{<:AbstractArray{T}}) where {T} =
+Base.:(==)(A::AbstractQuantumObject, B::AbstractQuantumObject) =
     (A.type == B.type) && (A.dims == B.dims) && (A.data == B.data)
 
 Base.real(x::QuantumObject) = QuantumObject(real(x.data), x.type, x.dims)
@@ -368,6 +374,8 @@ SparseArrays.SparseMatrixCSC(A::QuantumObject{<:AbstractMatrix}) =
     QuantumObject(SparseMatrixCSC(A.data), A.type, A.dims)
 SparseArrays.SparseMatrixCSC{T}(A::QuantumObject{<:SparseMatrixCSC}) where {T<:Number} =
     QuantumObject(SparseMatrixCSC{T}(A.data), A.type, A.dims)
+
+get_typename_wrapper(A::AbstractQuantumObject) = Base.typename(typeof(A)).wrapper
 
 # functions for getting Float or Complex element type
 _FType(::QuantumObject{<:AbstractArray{T}}) where {T<:Number} = _FType(T)
