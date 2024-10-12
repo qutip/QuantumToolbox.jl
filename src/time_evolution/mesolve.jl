@@ -114,7 +114,7 @@ function mesolveProblem(
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
-    H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
+    check_dims(H, ψ0)
 
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))

@@ -95,7 +95,7 @@ function sesolveProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {MT1<:AbstractMatrix,T2}
-    H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
+    check_dims(H, ψ0)
 
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))

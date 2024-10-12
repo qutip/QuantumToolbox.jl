@@ -37,8 +37,7 @@ end
 for op in (:(+), :(-), :(*))
     @eval begin
         function LinearAlgebra.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
-            A.dims != B.dims &&
-                throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+            check_dims(A, B)
             if A isa QuantumObjectEvolution || B isa QuantumObjectEvolution
                 return QuantumObjectEvolution($(op)(A.data, B.data), A.type, A.dims)
             end
@@ -57,56 +56,56 @@ function LinearAlgebra.:(*)(
     A::AbstractQuantumObject{DT1,OperatorQuantumObject},
     B::QuantumObject{DT2,KetQuantumObject},
 ) where {DT1,DT2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, Ket, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{DT1,BraQuantumObject},
     B::AbstractQuantumObject{DT2,OperatorQuantumObject},
 ) where {DT1,DT2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, Bra, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{DT1,KetQuantumObject},
     B::QuantumObject{DT2,BraQuantumObject},
 ) where {DT1,DT2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, Operator, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{DT1,BraQuantumObject},
     B::QuantumObject{DT2,KetQuantumObject},
 ) where {DT1,DT2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+    check_dims(A, B)
     return A.data * B.data
 end
 function LinearAlgebra.:(*)(
     A::AbstractQuantumObject{DT1,SuperOperatorQuantumObject},
     B::QuantumObject{DT2,OperatorQuantumObject},
 ) where {DT1,DT2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+    check_dims(A, B)
     return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{DT1,OperatorBraQuantumObject},
     B::QuantumObject{DT2,OperatorKetQuantumObject},
 ) where {DT1,DT2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+    check_dims(A, B)
     return A.data * B.data
 end
 function LinearAlgebra.:(*)(
     A::AbstractQuantumObject{DT1,SuperOperatorQuantumObject},
     B::QuantumObject{DT2,OperatorKetQuantumObject},
 ) where {DT1,DT2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, OperatorKet, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
     B::AbstractQuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum object don't have the same Hilbert dimension."))
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, OperatorBra, A.dims)
 end
 
@@ -445,8 +444,8 @@ Matrix cosine of [`QuantumObject`](@ref), defined as
 Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
 LinearAlgebra.cos(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) + exp(-1im * A)) / 2
+    A::QuantumObject{DT,ObjType},
+) where {DT,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) + exp(-1im * A)) / 2
 
 @doc raw"""
     diag(A::QuantumObject, k::Int=0)

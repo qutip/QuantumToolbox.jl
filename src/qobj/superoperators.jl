@@ -69,7 +69,7 @@ function sprepost(
     A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
+    check_dims(A, B)
 
     return QuantumObject(_sprepost(A.data, B.data), SuperOperator, A.dims)
 end
@@ -90,12 +90,50 @@ the same function is applied multiple times with a known Hilbert space dimension
 See also [`spre`](@ref) and [`spost`](@ref).
 """
 function lindblad_dissipator(
-    O::QuantumObject{<:AbstractArray{T},OperatorQuantumObject},
+    O::QuantumObject{DT,OperatorQuantumObject},
     Id_cache = I(size(O, 1)),
-) where {T}
+) where {DT}
     Od_O = O' * O
     return sprepost(O, O') - spre(Od_O, Id_cache) / 2 - spost(Od_O, Id_cache) / 2
 end
 
 # It is already a SuperOperator
-lindblad_dissipator(O::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject}, Id_cache) where {T} = O
+lindblad_dissipator(O::QuantumObject{DT,SuperOperatorQuantumObject}, Id_cache=nothing) where {DT} = O
+
+@doc raw"""
+    liouvillian(H::QuantumObject, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing, Id_cache=I(prod(H.dims)))
+
+Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
+
+```math
+\mathcal{L} [\cdot] = -i[\hat{H}, \cdot] + \sum_n \mathcal{D}(\hat{C}_n) [\cdot]
+```
+
+where 
+
+```math
+\mathcal{D}(\hat{C}_n) [\cdot] = \hat{C}_n [\cdot] \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n [\cdot] - \frac{1}{2} [\cdot] \hat{C}_n^\dagger \hat{C}_n
+```
+
+The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
+
+See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
+"""
+function liouvillian(
+    H::QuantumObject{MT1,OpType1},
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+    Id_cache = I(prod(H.dims)),
+) where {MT1<:AbstractMatrix,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    L = liouvillian(H, Id_cache)
+    if !(c_ops isa Nothing)
+        for c_op in c_ops
+            L += lindblad_dissipator(c_op, Id_cache)
+        end
+    end
+    return L
+end
+
+liouvillian(H::QuantumObject{<:AbstractMatrix,OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dims))) =
+    -1im * (spre(H, Id_cache) - spost(H, Id_cache))
+
+liouvillian(H::QuantumObject{<:AbstractMatrix,SuperOperatorQuantumObject}, Id_cache::Diagonal) = H

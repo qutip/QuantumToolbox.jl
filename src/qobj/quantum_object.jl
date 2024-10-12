@@ -232,6 +232,11 @@ _check_dims(dims::Any) = throw(
     ),
 )
 
+function check_dims(A::AbstractQuantumObject, B::AbstractQuantumObject)
+    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
+    return nothing
+end
+
 function _check_QuantumObject(type::KetQuantumObject, dims, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
     (prod(dims) != m) && throw(DimensionMismatch("Ket with dims = $(dims) does not fit the array size = $((m, n))."))

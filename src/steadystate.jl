@@ -234,7 +234,7 @@ function steadystate(
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
-    (H.dims != ψ0.dims) && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
+    check_dims(H, ψ0)
 
     N = prod(H.dims)
     u0 = sparse_to_dense(_CType(ψ0), mat2vec(ket2dm(ψ0).data))
