@@ -11,6 +11,7 @@ export isunitary
 Checks if the [`QuantumObject`](@ref) `A` is a [`BraQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isbra(A::QuantumObject) = A.type isa BraQuantumObject
+isbra(::Type{QuantumObject{DT,BraQuantumObject,N}}) where {DT,N} = true
 isbra(A) = false # default case
 
 @doc raw"""
@@ -19,6 +20,7 @@ isbra(A) = false # default case
 Checks if the [`QuantumObject`](@ref) `A` is a [`KetQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isket(A::QuantumObject) = A.type isa KetQuantumObject
+isket(::Type{QuantumObject{DT,KetQuantumObject,N}}) where {DT,N} = true
 isket(A) = false # default case
 
 @doc raw"""
@@ -27,6 +29,7 @@ isket(A) = false # default case
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`OperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isoper(A::AbstractQuantumObject) = A.type isa OperatorQuantumObject
+isoper(::Type{QuantumObject{DT,OperatorQuantumObject,N}}) where {DT,N} = true
 isoper(A) = false # default case
 
 @doc raw"""
@@ -35,6 +38,7 @@ isoper(A) = false # default case
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBraQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isoperbra(A::QuantumObject) = A.type isa OperatorBraQuantumObject
+isoperbra(::Type{QuantumObject{DT,OperatorBraQuantumObject,N}}) where {DT,N} = true
 isoperbra(A) = false # default case
 
 @doc raw"""
@@ -43,6 +47,7 @@ isoperbra(A) = false # default case
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKetQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isoperket(A::QuantumObject) = A.type isa OperatorKetQuantumObject
+isoperket(::Type{QuantumObject{DT,OperatorKetQuantumObject,N}}) where {DT,N} = true
 isoperket(A) = false # default case
 
 @doc raw"""
@@ -51,6 +56,7 @@ isoperket(A) = false # default case
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 issuper(A::AbstractQuantumObject) = A.type isa SuperOperatorQuantumObject
+issuper(::Type{QuantumObject{DT,SuperOperatorQuantumObject,N}}) where {DT,N} = true
 issuper(A) = false # default case
 
 @doc raw"""

@@ -90,18 +90,14 @@ struct QuantumObjectEvolution{DT<:AbstractSciMLOperator,ObjType<:QuantumObjectTy
     dims::SVector{N,Int}
 end
 
-function QuantumObjectEvolution(op_func_list::Tuple)
+# Make the QuantumObjectEvolution, with the option to pre-multiply by a scalar
+function QuantumObjectEvolution(op_func_list::Tuple, α = true)
     op = _get_op_func_first(op_func_list)
     dims = op.dims
     type = op.type
     T = eltype(op)
-    data = sum(op_func_list) do op_func
-        if op_func isa Tuple
-            return ScalarOperator(zero(T), update_func = (a, u, p, t) -> op_func[2](p, t)) * MatrixOperator(op_func[1].data)
-        else
-            return MatrixOperator(op_func.data)
-        end
-    end
+
+    data = _generate_data(T, op_func_list, α)
 
     # Preallocate the SciMLOperator cache using a dense vector as a reference
     v0 = sparse_to_dense(similar(op.data, size(op, 1)))
@@ -110,31 +106,75 @@ function QuantumObjectEvolution(op_func_list::Tuple)
     return QuantumObjectEvolution(data, type, dims)
 end
 
-QuantumObjectEvolution(op::QuantumObject) = QuantumObjectEvolution(MatrixOperator(op.data), op.type, op.dims)
+QuantumObjectEvolution(op::QuantumObject, α = true) =
+    QuantumObjectEvolution(MatrixOperator(α * op.data), op.type, op.dims)
 
-function _get_op_func_first(op_func_list)
-    dims_type_op = map(op_func_list) do op_func
-        if op_func isa Tuple
-            length(op_func) == 2 || throw(ArgumentError("The tuple must have two elements."))
-            ((isoper(op_func[1]) || issuper(op_func[1])) && op_func[2] isa Function) || throw(
+@generated function _get_op_func_first(op_func_list::Tuple)
+    op_func_list_types = op_func_list.parameters
+    N = length(op_func_list_types)
+    T = ()
+    dims_expr = ()
+    first_op = nothing
+    for i in 1:N
+        op_func_type = op_func_list_types[i]
+        if op_func_type <: Tuple
+            length(op_func_type.parameters) == 2 || throw(ArgumentError("The tuple must have two elements."))
+            op_type = op_func_type.parameters[1]
+            func_type = op_func_type.parameters[2]
+            ((isoper(op_type) || issuper(op_type)) && func_type <: Function) || throw(
                 ArgumentError(
                     "The first element must be a Operator or SuperOperator, and the second element must be a function.",
                 ),
             )
-            return (op_func[1].dims, op_func[1].type, op_func[1])
+            data_type = op_type.parameters[1]
+            T = (T..., eltype(data_type))
+            dims_expr = (dims_expr..., :(op_func_list[$i][1].dims))
+            if i == 1
+                first_op = :(op_func_list[$i][1])
+            end
         else
-            (isoper(op_func) || issuper(op_func)) || throw(ArgumentError("The element must be a QuantumObject."))
-            return (op_func.dims, op_func.type, op_func)
+            op_type = op_func_type
+            (isoper(op_type) || issuper(op_type)) ||
+                throw(ArgumentError("The element must be a Operator or SuperOperator."))
+            data_type = op_type.parameters[1]
+            T = (T..., eltype(data_type))
+            dims_expr = (dims_expr..., :(op_func_list[$i].dims))
+            if i == 1
+                first_op = :(op_func_list[$i])
+            end
         end
     end
 
-    length(unique(getindex.(dims_type_op, 1))) == 1 ||
-        throw(ArgumentError("The dimensions of the operators must be the same."))
+    length(unique(T)) == 1 || throw(ArgumentError("The types of the operators must be the same."))
 
-    length(unique(getindex.(dims_type_op, 2))) == 1 ||
-        throw(ArgumentError("The types of the operators must be the same."))
+    quote
+        dims = tuple($(dims_expr...))
 
-    return dims_type_op[1][3]
+        length(unique(dims)) == 1 || throw(ArgumentError("The dimensions of the operators must be the same."))
+
+        return $first_op
+    end
+end
+
+@generated function _generate_data(T, op_func_list::Tuple, α)
+    op_func_list_types = op_func_list.parameters
+    N = length(op_func_list_types)
+    data_expr = :(0)
+    for i in 1:N
+        op_func_type = op_func_list_types[i]
+        if op_func_type <: Tuple
+            data_expr = :(
+                $data_expr +
+                ScalarOperator(zero(T), op_func_list[$i][2]) * MatrixOperator(α * op_func_list[$i][1].data)
+            )
+        else
+            data_expr = :($data_expr + MatrixOperator(α * op_func_list[$i].data))
+        end
+    end
+
+    quote
+        return $data_expr
+    end
 end
 
 function (QO::QuantumObjectEvolution)(p, t)

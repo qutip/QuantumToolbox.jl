@@ -89,16 +89,13 @@ the same function is applied multiple times with a known Hilbert space dimension
 
 See also [`spre`](@ref) and [`spost`](@ref).
 """
-function lindblad_dissipator(
-    O::QuantumObject{DT,OperatorQuantumObject},
-    Id_cache = I(size(O, 1)),
-) where {DT}
+function lindblad_dissipator(O::QuantumObject{DT,OperatorQuantumObject}, Id_cache = I(size(O, 1))) where {DT}
     Od_O = O' * O
     return sprepost(O, O') - spre(Od_O, Id_cache) / 2 - spost(Od_O, Id_cache) / 2
 end
 
 # It is already a SuperOperator
-lindblad_dissipator(O::QuantumObject{DT,SuperOperatorQuantumObject}, Id_cache=nothing) where {DT} = O
+lindblad_dissipator(O::QuantumObject{DT,SuperOperatorQuantumObject}, Id_cache = nothing) where {DT} = O
 
 @doc raw"""
     liouvillian(H::QuantumObject, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing, Id_cache=I(prod(H.dims)))

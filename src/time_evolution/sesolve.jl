@@ -4,7 +4,7 @@ function _save_func_sesolve(integrator)
     internal_params = integrator.p
     progr = internal_params.progr
 
-    if !internal_params.is_empty_e_ops
+    if internal_params.is_empty_e_ops
         e_ops = internal_params.e_ops
         expvals = internal_params.expvals
 
@@ -44,14 +44,13 @@ function _generate_sesolve_kwargs(e_ops, progress_bar::Val{false}, t_l, kwargs)
 end
 
 @doc raw"""
-    sesolveProblem(H::QuantumObject,
-        ψ0::QuantumObject,
-        tlist::AbstractVector;
-        alg::OrdinaryDiffEqAlgorithm=Tsit5()
-        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
-        params::NamedTuple=NamedTuple(),
-        progress_bar::Union{Val,Bool}=Val(true),
+    sesolveProblem(H,
+        ψ0,
+        tlist;
+        alg=Tsit5()
+        e_ops = nothing,
+        params=NamedTuple(),
+        progress_bar=Val(true),
         kwargs...)
 
 Generates the ODEProblem for the Schrödinger time evolution of a quantum system:
@@ -62,7 +61,7 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 
 # Arguments
 
-- `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
+- `H::Union{QuantumObject,Tuple}`: The Hamiltonian of the system ``\hat{H}``.
 - `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
 - `tlist::AbstractVector`: The time list of the evolution.
 - `alg::OrdinaryDiffEqAlgorithm`: The algorithm used for the time evolution.
@@ -85,47 +84,43 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 - `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
 """
 function sesolveProblem(
-    H::Union{QuantumObject{MT1,OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{<:AbstractVector{T2},KetQuantumObject},
+    H::Union{QuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector;
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2}
-    check_dims(H, ψ0)
-
+) where {DT1,DT2}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
-
-    is_time_dependent = !(H_t isa Nothing)
 
     ϕ0 = sparse_to_dense(_CType(ψ0), get_data(ψ0)) # Convert it to dense vector with complex element type
 
     t_l = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
-    U = -1im * get_data(H)
+    H_evo = QobjEvo(H, -1im) # pre-multiply by -i
+    isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
+    check_dims(H_evo, ψ0)
+    U = H_evo.data
+
     progr = ProgressBar(length(t_l), enable = getVal(progress_bar))
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(t_l))
-        e_ops2 = MT1[]
+        e_ops_data = ()
         is_empty_e_ops = true
     else
         expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-        e_ops2 = get_data.(e_ops)
+        e_ops_data = get_data.(e_ops)
         is_empty_e_ops = isempty(e_ops)
     end
 
     p = (
-        U = U,
-        e_ops = e_ops2,
+        e_ops = e_ops_data,
         expvals = expvals,
         progr = progr,
-        Hdims = H.dims,
-        H_t = H_t,
+        Hdims = H_evo.dims,
         times = t_l,
         is_empty_e_ops = is_empty_e_ops,
         params...,
@@ -136,10 +131,8 @@ function sesolveProblem(
     kwargs2 = merge(default_values, kwargs)
     kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), t_l, kwargs2)
 
-    dudt! = is_time_dependent ? sesolve_td_dudt! : sesolve_ti_dudt!
-
     tspan = (t_l[1], t_l[end])
-    return ODEProblem{true,FullSpecialize}(dudt!, ϕ0, tspan, p; kwargs3...)
+    return ODEProblem{true}(U, ϕ0, tspan, p; kwargs3...)
 end
 
 @doc raw"""
@@ -184,27 +177,16 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `sol::TimeEvolutionSol`: The solution of the time evolution. See also [`TimeEvolutionSol`](@ref)
 """
 function sesolve(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractVector{T2},KetQuantumObject},
+    H::Union{QuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2}
-    prob = sesolveProblem(
-        H,
-        ψ0,
-        tlist;
-        alg = alg,
-        e_ops = e_ops,
-        H_t = H_t,
-        params = params,
-        progress_bar = progress_bar,
-        kwargs...,
-    )
+) where {DT1,DT2}
+    prob = sesolveProblem(H, ψ0, tlist; e_ops = e_ops, params = params, progress_bar = progress_bar, kwargs...)
 
     return sesolve(prob, alg)
 end
