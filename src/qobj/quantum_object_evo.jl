@@ -92,12 +92,9 @@ end
 
 # Make the QuantumObjectEvolution, with the option to pre-multiply by a scalar
 function QuantumObjectEvolution(op_func_list::Tuple, α = true)
-    op = _get_op_func_first(op_func_list)
+    op, data = _generate_data(op_func_list, α)
     dims = op.dims
     type = op.type
-    T = eltype(op)
-
-    data = _generate_data(T, op_func_list, α)
 
     # Preallocate the SciMLOperator cache using a dense vector as a reference
     v0 = sparse_to_dense(similar(op.data, size(op, 1)))
@@ -109,12 +106,14 @@ end
 QuantumObjectEvolution(op::QuantumObject, α = true) =
     QuantumObjectEvolution(MatrixOperator(α * op.data), op.type, op.dims)
 
-@generated function _get_op_func_first(op_func_list::Tuple)
+@generated function _generate_data(op_func_list::Tuple, α)
     op_func_list_types = op_func_list.parameters
     N = length(op_func_list_types)
-    T = ()
+
     dims_expr = ()
     first_op = nothing
+    data_expr = :(0)
+
     for i in 1:N
         op_func_type = op_func_list_types[i]
         if op_func_type <: Tuple
@@ -126,8 +125,8 @@ QuantumObjectEvolution(op::QuantumObject, α = true) =
                     "The first element must be a Operator or SuperOperator, and the second element must be a function.",
                 ),
             )
+
             data_type = op_type.parameters[1]
-            T = (T..., eltype(data_type))
             dims_expr = (dims_expr..., :(op_func_list[$i][1].dims))
             if i == 1
                 first_op = :(op_func_list[$i][1])
@@ -136,46 +135,33 @@ QuantumObjectEvolution(op::QuantumObject, α = true) =
             op_type = op_func_type
             (isoper(op_type) || issuper(op_type)) ||
                 throw(ArgumentError("The element must be a Operator or SuperOperator."))
+
             data_type = op_type.parameters[1]
-            T = (T..., eltype(data_type))
             dims_expr = (dims_expr..., :(op_func_list[$i].dims))
+
             if i == 1
                 first_op = :(op_func_list[$i])
             end
         end
+        data_expr = :($data_expr + _make_SciMLOperator(op_func_list[$i], α))
     end
-
-    length(unique(T)) == 1 || throw(ArgumentError("The types of the operators must be the same."))
 
     quote
         dims = tuple($(dims_expr...))
 
         length(unique(dims)) == 1 || throw(ArgumentError("The dimensions of the operators must be the same."))
 
-        return $first_op
+        return $first_op, $data_expr
     end
 end
 
-@generated function _generate_data(T, op_func_list::Tuple, α)
-    op_func_list_types = op_func_list.parameters
-    N = length(op_func_list_types)
-    data_expr = :(0)
-    for i in 1:N
-        op_func_type = op_func_list_types[i]
-        if op_func_type <: Tuple
-            data_expr = :(
-                $data_expr +
-                ScalarOperator(zero(T), op_func_list[$i][2]) * MatrixOperator(α * op_func_list[$i][1].data)
-            )
-        else
-            data_expr = :($data_expr + MatrixOperator(α * op_func_list[$i].data))
-        end
-    end
-
-    quote
-        return $data_expr
-    end
+function _make_SciMLOperator(op_func::Tuple, α)
+    T = eltype(op_func[1])
+    update_func = (a, u, p, t) -> op_func[2](p, t)
+    return ScalarOperator(zero(T), update_func) * MatrixOperator(α * op_func[1].data)
 end
+
+_make_SciMLOperator(op::QuantumObject, α) = MatrixOperator(α * op.data)
 
 function (QO::QuantumObjectEvolution)(p, t)
     # We put 0 in the place of `u` because the time-dependence doesn't depend on the state

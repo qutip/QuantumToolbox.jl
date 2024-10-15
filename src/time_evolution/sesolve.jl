@@ -4,7 +4,7 @@ function _save_func_sesolve(integrator)
     internal_params = integrator.p
     progr = internal_params.progr
 
-    if internal_params.is_empty_e_ops
+    if !internal_params.is_empty_e_ops
         e_ops = internal_params.e_ops
         expvals = internal_params.expvals
 
@@ -14,13 +14,6 @@ function _save_func_sesolve(integrator)
     end
     next!(progr)
     return u_modified!(integrator, false)
-end
-
-sesolve_ti_dudt!(du, u, p, t) = mul!(du, p.U, u)
-function sesolve_td_dudt!(du, u, p, t)
-    mul!(du, p.U, u)
-    H_t = p.H_t(t, p)
-    return mul!(du, H_t, u, -1im, 1)
 end
 
 function _generate_sesolve_kwargs_with_callback(t_l, kwargs)
@@ -132,7 +125,7 @@ function sesolveProblem(
     kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), t_l, kwargs2)
 
     tspan = (t_l[1], t_l[end])
-    return ODEProblem{true}(U, ϕ0, tspan, p; kwargs3...)
+    return ODEProblem{true,FullSpecialize}(U, ϕ0, tspan, p; kwargs3...)
 end
 
 @doc raw"""
