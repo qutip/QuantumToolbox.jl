@@ -90,7 +90,7 @@ Sy = mapreduce(i->SingleSiteOperator(sigmay(), i, latt), +, 1:latt.N)
 Sz = mapreduce(i->SingleSiteOperator(sigmaz(), i, latt), +, 1:latt.N)
 
 H, c_ops = DissipativeIsing(Jx, Jy, Jz, hx, hy, hz, γ, latt; boundary_condition = Val(:periodic_bc), order = 1)
-e_ops = (Sx, Sy, Sz, SFxx)
+e_ops = (Sx, Sy, Sz)
 
 tl = range(0, 10, 100)
 nothing # hide

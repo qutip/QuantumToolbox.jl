@@ -61,7 +61,7 @@ const PAGES = [
         ],
     ],
     "API" => "api.md",
-    "Bibliography" => "bibliography.mb",
+    "Bibliography" => "bibliography.md",
     # "Change Log" => "changelog.md",
 ]
 

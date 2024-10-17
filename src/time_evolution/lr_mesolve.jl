@@ -61,7 +61,7 @@ lr_mesolve_options_default = (
 
 select(x::Real, xarr::AbstractArray, retval = false) = retval ? xarr[argmin(abs.(x .- xarr))] : argmin(abs.(x .- xarr))
 
-"""
+#=
     _pinv_smooth!(A, T1, T2; atol::Real=0.0, rtol::Real=(eps(real(float(oneunit(T))))*min(size(A)...))*iszero(atol)) where T
 
 Computes the pseudo-inverse of a matrix A, and stores it in T1. If T2 is provided, it is used as a temporary matrix.
@@ -75,7 +75,7 @@ The difference with respect to the original function is that the cutoff is done 
   - `T2::AbstractMatrix`: A temporary matrix.
   - `atol::Real`: The absolute tolerance.
   - `rtol::Real`: The relative tolerance.
-"""
+=#
 function _pinv_smooth!(
     A::AbstractMatrix{T},
     T1::AbstractMatrix{T},
@@ -98,7 +98,7 @@ function _pinv_smooth!(
     return mul!(T1, SVD.Vt', T2)
 end
 
-"""
+#=
     _calculate_expectation!(p,z,B,idx)
 
 Calculates the expectation values and function values of the operators and functions in p.e_ops and p.f_ops, respectively, and stores them in p.expvals and p.funvals.
@@ -110,7 +110,7 @@ The function is called by the callback _save_affect_lr_mesolve!.
   - `z::AbstractMatrix`: The z matrix of the low-rank algorithm.
   - `B::AbstractMatrix`: The B matrix of the low-rank algorithm.
   - `idx::Integer`: The index of the current time step.
-"""
+=#
 function _calculate_expectation!(p, z, B, idx)
     e_ops = p.e_ops
     f_ops = p.f_ops
@@ -166,7 +166,7 @@ end
 #                CALLBACK FUNCTIONS
 #=======================================================#
 
-"""
+#=
     _adjM_condition_ratio(u, t, integrator)
 
 Condition for the dynamical rank adjustment based on the ratio between the smallest and largest eigenvalues of the density matrix.
@@ -177,7 +177,7 @@ The spectrum of the density matrix is calculated efficiently using the propertie
   - `u::AbstractVector`: The current state of the system.
   - `t::Real`: The current time.
   - `integrator::ODEIntegrator`: The integrator of the problem.
-"""
+=#
 function _adjM_condition_ratio(u, t, integrator)
     ip = integrator.p
     opt = ip.opt
@@ -195,7 +195,7 @@ function _adjM_condition_ratio(u, t, integrator)
     return (err >= opt.err_max && M < N && M < opt.M_max)
 end
 
-"""
+#=
     _adjM_condition_variational(u, t, integrator)
 
 Condition for the dynamical rank adjustment based on the leakage out of the low-rank manifold.
@@ -205,7 +205,7 @@ Condition for the dynamical rank adjustment based on the leakage out of the low-
   - `u::AbstractVector`: The current state of the system.
   - `t::Real`: The current time.
   - `integrator::ODEIntegrator`: The integrator of the problem.
-"""
+=#
 function _adjM_condition_variational(u, t, integrator)
     ip = integrator.p
     opt = ip.opt
@@ -215,7 +215,7 @@ function _adjM_condition_variational(u, t, integrator)
     return (err >= opt.err_max && M < N && M < opt.M_max)
 end
 
-"""
+#=
     _adjM_affect!(integrator)
 
 Affect function for the dynamical rank adjustment. It increases the rank of the low-rank manifold by one, and updates the matrices accordingly.
@@ -224,7 +224,7 @@ If Δt>0, it rewinds the integrator to the previous time step.
 # Arguments
 
   - `integrator::ODEIntegrator`: The integrator of the problem.
-"""
+=#
 function _adjM_affect!(integrator)
     ip = integrator.p
     opt = ip.opt
@@ -281,7 +281,7 @@ end
 #            DYNAMICAL EVOLUTION EQUATIONS
 #=======================================================#
 
-"""
+#=
     dBdz!(du, u, p, t)
 
 Dynamical evolution equations for the low-rank manifold. The function is called by the ODEProblem.
@@ -292,7 +292,7 @@ Dynamical evolution equations for the low-rank manifold. The function is called 
   - `u::AbstractVector`: The state vector.
   - `p::NamedTuple`: The parameters of the problem.
   - `t::Real`: The current time.
-"""
+=#
 function dBdz!(du, u, p, t)
     #NxN
     H, Γ = p.H, p.Γ

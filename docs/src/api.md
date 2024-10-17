@@ -240,7 +240,7 @@ fidelity
 ```@docs
 Lattice
 SingleSiteOperator
-Dissipativeising
+DissipativeIsing
 ```
 
 ## [Miscellaneous](@id doc-API:Miscellaneous)
@@ -267,10 +267,4 @@ PhysicalConstants
 convert_unit
 row_major_reshape
 meshgrid
-_calculate_expectation!
-_adjM_condition_variational
-_adjM_affect!
-_adjM_condition_ratio
-_pinv!
-dBdz!
 ```
