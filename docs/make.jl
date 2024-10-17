@@ -3,10 +3,13 @@
 
 using QuantumToolbox
 using Documenter
+using DocumenterCitations
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
 const DRAFT = false # set `true` to disable cell evaluation
+
+bib = CitationBibliography(joinpath(@__DIR__, "src", "bibliography.bib"), style=:authoryear)
 
 const MathEngine = MathJax3(
     Dict(
@@ -58,6 +61,7 @@ const PAGES = [
         ],
     ],
     "API" => "api.md",
+    "Bibliography" => "bibliography.md",
     # "Change Log" => "changelog.md",
 ]
 
@@ -76,6 +80,7 @@ makedocs(;
         size_threshold_ignore = ["api.md"],
     ),
     draft = DRAFT,
+    plugins = [bib],
 )
 
 deploydocs(; repo = "github.com/qutip/QuantumToolbox.jl", devbranch = "main")
