@@ -219,6 +219,14 @@ tracedist
 fidelity
 ```
 
+## [Spin Lattice](@id doc-API:Spin-Lattice)
+
+```@docs
+Lattice
+SingleSiteOperator
+Dissipativeising
+```
+
 ## [Miscellaneous](@id doc-API:Miscellaneous)
 
 ```@docs
