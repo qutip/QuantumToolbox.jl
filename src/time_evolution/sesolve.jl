@@ -16,8 +16,8 @@ function _save_func_sesolve(integrator)
     return u_modified!(integrator, false)
 end
 
-function _generate_sesolve_kwargs_with_callback(t_l, kwargs)
-    cb1 = PresetTimeCallback(t_l, _save_func_sesolve, save_positions = (false, false))
+function _generate_sesolve_kwargs_with_callback(tlist, kwargs)
+    cb1 = PresetTimeCallback(tlist, _save_func_sesolve, save_positions = (false, false))
     kwargs2 =
         haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(kwargs.callback, cb1),)) :
         merge(kwargs, (callback = cb1,))
@@ -25,15 +25,15 @@ function _generate_sesolve_kwargs_with_callback(t_l, kwargs)
     return kwargs2
 end
 
-function _generate_sesolve_kwargs(e_ops, progress_bar::Val{true}, t_l, kwargs)
-    return _generate_sesolve_kwargs_with_callback(t_l, kwargs)
+function _generate_sesolve_kwargs(e_ops, progress_bar::Val{true}, tlist, kwargs)
+    return _generate_sesolve_kwargs_with_callback(tlist, kwargs)
 end
 
-function _generate_sesolve_kwargs(e_ops, progress_bar::Val{false}, t_l, kwargs)
+function _generate_sesolve_kwargs(e_ops, progress_bar::Val{false}, tlist, kwargs)
     if e_ops isa Nothing
         return kwargs
     end
-    return _generate_sesolve_kwargs_with_callback(t_l, kwargs)
+    return _generate_sesolve_kwargs_with_callback(tlist, kwargs)
 end
 
 @doc raw"""
@@ -77,7 +77,7 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 - `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
 """
 function sesolveProblem(
-    H::Union{QuantumObject{DT1,OperatorQuantumObject},Tuple},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
     ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -88,23 +88,23 @@ function sesolveProblem(
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    ϕ0 = sparse_to_dense(_CType(ψ0), get_data(ψ0)) # Convert it to dense vector with complex element type
-
-    t_l = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    tlist = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     H_evo = QobjEvo(H, -1im) # pre-multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
     check_dims(H_evo, ψ0)
+
+    ψ0 = sparse_to_dense(_CType(ψ0), get_data(ψ0)) # Convert it to dense vector with complex element type
     U = H_evo.data
 
-    progr = ProgressBar(length(t_l), enable = getVal(progress_bar))
+    progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 
     if e_ops isa Nothing
-        expvals = Array{ComplexF64}(undef, 0, length(t_l))
+        expvals = Array{ComplexF64}(undef, 0, length(tlist))
         e_ops_data = ()
         is_empty_e_ops = true
     else
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
+        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
         e_ops_data = get_data.(e_ops)
         is_empty_e_ops = isempty(e_ops)
     end
@@ -114,18 +114,17 @@ function sesolveProblem(
         expvals = expvals,
         progr = progr,
         Hdims = H_evo.dims,
-        times = t_l,
         is_empty_e_ops = is_empty_e_ops,
         params...,
     )
 
-    saveat = is_empty_e_ops ? t_l : [t_l[end]]
+    saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), t_l, kwargs2)
+    kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2)
 
-    tspan = (t_l[1], t_l[end])
-    return ODEProblem{true,FullSpecialize}(U, ϕ0, tspan, p; kwargs3...)
+    tspan = (tlist[1], tlist[end])
+    return ODEProblem{true}(U, ψ0, tspan, p; kwargs3...)
 end
 
 @doc raw"""
@@ -170,7 +169,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `sol::TimeEvolutionSol`: The solution of the time evolution. See also [`TimeEvolutionSol`](@ref)
 """
 function sesolve(
-    H::Union{QuantumObject{DT1,OperatorQuantumObject},Tuple},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
     ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
@@ -181,16 +180,16 @@ function sesolve(
 ) where {DT1,DT2}
     prob = sesolveProblem(H, ψ0, tlist; e_ops = e_ops, params = params, progress_bar = progress_bar, kwargs...)
 
-    return sesolve(prob, alg)
+    return sesolve(prob, tlist, alg)
 end
 
-function sesolve(prob::ODEProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
+function sesolve(prob::ODEProblem, tlist::AbstractVector, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob, alg)
 
     ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = sol.prob.p.Hdims), sol.u)
 
     return TimeEvolutionSol(
-        sol.prob.p.times,
+        tlist,
         ψt,
         sol.prob.p.expvals,
         sol.retcode,

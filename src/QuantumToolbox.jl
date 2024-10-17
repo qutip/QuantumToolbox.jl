@@ -21,6 +21,7 @@ import SciMLBase:
     reinit!,
     remake,
     u_modified!,
+    ODEFunction,
     ODEProblem,
     SDEProblem,
     EnsembleProblem,

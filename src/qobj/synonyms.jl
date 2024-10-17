@@ -18,13 +18,14 @@ Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`.
 Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
 
 @doc raw"""
-    QobjEvo(op_func_list::Union{Tuple,QuantumObject}, α::Real=true)
+    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing)
 
 Generate [`QuantumObjectEvolution`](@ref)
 
 Note that this functions is same as `QuantumObjectEvolution(op_func_list)`. If `α` is provided, all the operators in `op_func_list` will be pre-multiplied by `α`.
 """
-QobjEvo(op_func_list::Union{Tuple,QuantumObject}, α = true) = QuantumObjectEvolution(op_func_list, α)
+QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number} = nothing) =
+    QuantumObjectEvolution(op_func_list, α)
 
 @doc raw"""
     shape(A::QuantumObject)

@@ -91,7 +91,7 @@ struct QuantumObjectEvolution{DT<:AbstractSciMLOperator,ObjType<:QuantumObjectTy
 end
 
 # Make the QuantumObjectEvolution, with the option to pre-multiply by a scalar
-function QuantumObjectEvolution(op_func_list::Tuple, α = true)
+function QuantumObjectEvolution(op_func_list::Tuple, α::Union{Nothing,Number} = nothing)
     op, data = _generate_data(op_func_list, α)
     dims = op.dims
     type = op.type
@@ -103,8 +103,15 @@ function QuantumObjectEvolution(op_func_list::Tuple, α = true)
     return QuantumObjectEvolution(data, type, dims)
 end
 
-QuantumObjectEvolution(op::QuantumObject, α = true) =
-    QuantumObjectEvolution(MatrixOperator(α * op.data), op.type, op.dims)
+QuantumObjectEvolution(op::QuantumObject, α::Union{Nothing,Number} = nothing) =
+    QuantumObjectEvolution(_make_SciMLOperator(op, α), op.type, op.dims)
+
+function QuantumObjectEvolution(op::QuantumObjectEvolution, α::Union{Nothing,Number} = nothing)
+    if α isa Nothing
+        return QuantumObjectEvolution(op.data, op.type, op.dims)
+    end
+    return QuantumObjectEvolution(α * op.data, op.type, op.dims)
+end
 
 @generated function _generate_data(op_func_list::Tuple, α)
     op_func_list_types = op_func_list.parameters
@@ -158,10 +165,18 @@ end
 function _make_SciMLOperator(op_func::Tuple, α)
     T = eltype(op_func[1])
     update_func = (a, u, p, t) -> op_func[2](p, t)
+    if α isa Nothing
+        return ScalarOperator(zero(T), update_func) * MatrixOperator(op_func[1].data)
+    end
     return ScalarOperator(zero(T), update_func) * MatrixOperator(α * op_func[1].data)
 end
 
-_make_SciMLOperator(op::QuantumObject, α) = MatrixOperator(α * op.data)
+function _make_SciMLOperator(op::QuantumObject, α)
+    if α isa Nothing
+        return MatrixOperator(op.data)
+    end
+    return MatrixOperator(α * op.data)
+end
 
 function (QO::QuantumObjectEvolution)(p, t)
     # We put 0 in the place of `u` because the time-dependence doesn't depend on the state

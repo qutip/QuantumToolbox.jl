@@ -117,6 +117,11 @@ function _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, j
     return jump_which[i] = sol_i.prob.p.jump_which
 end
 
+_mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops) = QobjEvo(H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2)
+_mcsolve_make_Heff_QobjEvo(H::Tuple, c_ops) = QobjEvo((H..., -1im * mapreduce(op -> op' * op, +, c_ops) / 2))
+_mcsolve_make_Heff_QobjEvo(H::QuantumObjectEvolution, c_ops) =
+    H + QobjEvo(mapreduce(op -> op' * op, +, c_ops), -1im / 2)
+
 @doc raw"""
     mcsolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
         ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
@@ -191,41 +196,38 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob::ODEProblem`: The ODEProblem for the Monte Carlo wave function time evolution.
 """
 function mcsolveProblem(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray,KetQuantumObject},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
-) where {MT1<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
-    check_dims(H, ψ0)
-
+) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     c_ops isa Nothing &&
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
-    t_l = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    tlist = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
-    H_eff = H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2
+    H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
 
     if e_ops isa Nothing
-        expvals = Array{ComplexF64}(undef, 0, length(t_l))
+        expvals = Array{ComplexF64}(undef, 0, length(tlist))
         is_empty_e_ops_mc = true
-        e_ops2 = MT1[]
+        e_ops_data = ()
     else
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-        e_ops2 = get_data.(e_ops)
+        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
+        e_ops_data = get_data.(e_ops)
         is_empty_e_ops_mc = isempty(e_ops)
     end
 
-    saveat = is_empty_e_ops_mc ? t_l : [t_l[end]]
+    saveat = is_empty_e_ops_mc ? tlist : [tlist[end]]
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat, progress_bar = Val(false))
     kwargs2 = merge(default_values, kwargs)
@@ -243,9 +245,9 @@ function mcsolveProblem(
 
     params2 = (
         expvals = expvals,
-        e_ops_mc = e_ops2,
+        e_ops_mc = e_ops_data,
         is_empty_e_ops_mc = is_empty_e_ops_mc,
-        progr_mc = ProgressBar(length(t_l), enable = false),
+        progr_mc = ProgressBar(length(tlist), enable = false),
         traj_rng = rng,
         c_ops = c_ops_data,
         c_ops_herm = c_ops_herm_data,
@@ -259,39 +261,37 @@ function mcsolveProblem(
         params...,
     )
 
-    return mcsolveProblem(H_eff, ψ0, t_l, alg, H_t, params2, jump_callback; kwargs2...)
+    return mcsolveProblem(H_eff_evo, ψ0, tlist, alg, params2, jump_callback; kwargs2...)
 end
 
 function mcsolveProblem(
-    H_eff::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-    t_l::AbstractVector,
+    H_eff_evo::QuantumObjectEvolution{DT1,OperatorQuantumObject},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
+    tlist::AbstractVector,
     alg::OrdinaryDiffEqAlgorithm,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum},
     params::NamedTuple,
     jump_callback::DiscreteLindbladJumpCallback;
     kwargs...,
-) where {T1,T2}
+) where {DT1,DT2}
     cb1 = DiscreteCallback(LindbladJumpDiscreteCondition, LindbladJumpAffect!, save_positions = (false, false))
-    cb2 = PresetTimeCallback(t_l, _save_func_mcsolve, save_positions = (false, false))
+    cb2 = PresetTimeCallback(tlist, _save_func_mcsolve, save_positions = (false, false))
     kwargs2 = (; kwargs...)
     kwargs2 =
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
         merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
 
-    return sesolveProblem(H_eff, ψ0, t_l; alg = alg, H_t = H_t, params = params, kwargs2...)
+    return sesolveProblem(H_eff_evo, ψ0, tlist; alg = alg, params = params, kwargs2...)
 end
 
 function mcsolveProblem(
-    H_eff::QuantumObject{<:AbstractArray,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray,KetQuantumObject},
-    t_l::AbstractVector,
+    H_eff_evo::QuantumObjectEvolution{DT1,OperatorQuantumObject},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
+    tlist::AbstractVector,
     alg::OrdinaryDiffEqAlgorithm,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum},
     params::NamedTuple,
     jump_callback::ContinuousLindbladJumpCallback;
     kwargs...,
-)
+) where {DT1,DT2}
     cb1 = ContinuousCallback(
         LindbladJumpContinuousCondition,
         LindbladJumpAffect!,
@@ -299,13 +299,13 @@ function mcsolveProblem(
         interp_points = jump_callback.interp_points,
         save_positions = (false, false),
     )
-    cb2 = PresetTimeCallback(t_l, _save_func_mcsolve, save_positions = (false, false))
+    cb2 = PresetTimeCallback(tlist, _save_func_mcsolve, save_positions = (false, false))
     kwargs2 = (; kwargs...)
     kwargs2 =
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
         merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
 
-    return sesolveProblem(H_eff, ψ0, t_l; alg = alg, H_t = H_t, params = params, kwargs2...)
+    return sesolveProblem(H_eff_evo, ψ0, tlist; alg = alg, params = params, kwargs2...)
 end
 
 @doc raw"""
@@ -391,13 +391,12 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob::EnsembleProblem with ODEProblem`: The Ensemble ODEProblem for the Monte Carlo wave function time evolution.
 """
 function mcsolveEnsembleProblem(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
@@ -407,7 +406,7 @@ function mcsolveEnsembleProblem(
     output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2,TJC<:LindbladJumpCallbackType}
+) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
     progr = ProgressBar(ntraj, enable = getVal(progress_bar))
     if ensemble_method isa EnsembleDistributed
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
@@ -429,7 +428,6 @@ function mcsolveEnsembleProblem(
             c_ops;
             alg = alg,
             e_ops = e_ops,
-            H_t = H_t,
             params = merge(params, (global_rng = rng, seeds = seeds)),
             rng = rng,
             jump_callback = jump_callback,
@@ -533,13 +531,12 @@ If the environmental measurements register a quantum jump, the wave function und
 - `sol::TimeEvolutionMCSol`: The solution of the time evolution. See also [`TimeEvolutionMCSol`](@ref)
 """
 function mcsolve(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
@@ -549,7 +546,7 @@ function mcsolve(
     output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2,TJC<:LindbladJumpCallbackType}
+) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
     ens_prob_mc = mcsolveEnsembleProblem(
         H,
         ψ0,
@@ -557,7 +554,6 @@ function mcsolve(
         c_ops;
         alg = alg,
         e_ops = e_ops,
-        H_t = H_t,
         params = params,
         rng = rng,
         ntraj = ntraj,
@@ -569,11 +565,12 @@ function mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
+    return mcsolve(ens_prob_mc, tlist; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
 end
 
 function mcsolve(
-    ens_prob_mc::EnsembleProblem;
+    ens_prob_mc::EnsembleProblem,
+    tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
@@ -599,7 +596,7 @@ function mcsolve(
 
         return TimeEvolutionMCSol(
             ntraj,
-            _sol_1.prob.p.times,
+            tlist,
             states,
             expvals,
             expvals_all,
