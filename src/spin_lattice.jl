@@ -19,14 +19,15 @@ end
 
 A Julia constructor for a single-site operator. `s` is the operator acting on the site. `i` is the site index, and `N` is the total number of sites. The function returns a `QuantumObject` given by ``\\mathbb{1}^{\\otimes (i - 1)} \\otimes \hat{O} \\otimes \\mathbb{1}^{\\otimes (N - i)}``.
 """
-function SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, i::Integer, N::Integer) where DT
+function SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, i::Integer, N::Integer) where {DT}
     T = O.dims[1]
     return QuantumObject(kron(eye(T^(i - 1)), O, eye(T^(N - i))); dims = ntuple(j -> 2, Val(N)))
 end
-SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, i::Integer, latt::Lattice) where DT = SingleSiteOperator(O, i, latt.N)
-SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, row::Integer, col::Integer, latt::Lattice) where DT =
+SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, i::Integer, latt::Lattice) where {DT} =
+    SingleSiteOperator(O, i, latt.N)
+SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, row::Integer, col::Integer, latt::Lattice) where {DT} =
     SingleSiteOperator(O, latt.idx[row, col], latt.N)
-SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, x::CartesianIndex, latt::Lattice) where DT =
+SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, x::CartesianIndex, latt::Lattice) where {DT} =
     SingleSiteOperator(O, latt.idx[x], latt.N)
 
 #Definition of nearest-neighbour sites on lattice
@@ -74,27 +75,39 @@ and the collapse operators
 - `boundary_condition::Union{Symbol, Val}`: The boundary conditions of the lattice. The possible inputs are `periodic_bc` and `open_bc`, for periodic or open boundary conditions, respectively. The default value is `Val(:periodic_bc)`.
 - `order::Integer`: The order of the nearest-neighbour sites. The default value is 1.
 """
-function DissipativeIsing(Jx::Real, Jy::Real, Jz::Real, hx::Real, hy::Real, hz::Real, γ::Real, latt::Lattice; boundary_condition::Union{Symbol, Val} = Val(:periodic_bc), order::Integer = 1)
-    S = [SingleSiteOperator(sm, i, latt) for i in 1:latt.N]
+function DissipativeIsing(
+    Jx::Real,
+    Jy::Real,
+    Jz::Real,
+    hx::Real,
+    hy::Real,
+    hz::Real,
+    γ::Real,
+    latt::Lattice;
+    boundary_condition::Union{Symbol,Val} = Val(:periodic_bc),
+    order::Integer = 1,
+)
+    S = [SingleSiteOperator(sigmam(), i, latt) for i in 1:latt.N]
     c_ops = sqrt(γ) .* S
 
-    op_sum(S, i::CartesianIndex) = S[latt.lin_idx[i]] * sum(S[latt.lin_idx[nearest_neighbor(i, latt, makeVal(boundary_condition); order = order)]])
+    op_sum(S, i::CartesianIndex) =
+        S[latt.lin_idx[i]] * sum(S[latt.lin_idx[nearest_neighbor(i, latt, makeVal(boundary_condition); order = order)]])
 
     H = 0
     if (Jx != 0 || hx != 0)
-        S .= [SingleSiteOperator(sigmax(), i, latt) for i in 1:latt.N]
+        S = [SingleSiteOperator(sigmax(), i, latt) for i in 1:latt.N]
         H += Jx / 2 * mapreduce(i -> op_sum(S, i), +, latt.car_idx) #/2 because we are double counting
         H += hx * sum(S)
     end
     if (Jy != 0 || hy != 0)
-        S .= [SingleSiteOperator(sigmay(), i, latt) for i in 1:latt.N]
+        S = [SingleSiteOperator(sigmay(), i, latt) for i in 1:latt.N]
         H += Jy / 2 * mapreduce(i -> op_sum(S, i), +, latt.car_idx)
         H += hy * sum(S)
     end
     if (Jz != 0 || hz != 0)
-        S .= [SingleSiteOperator(sigmaz(), i, latt) for i in 1:latt.N]
+        S = [SingleSiteOperator(sigmaz(), i, latt) for i in 1:latt.N]
         H += Jz / 2 * mapreduce(i -> op_sum(S, i), +, latt.car_idx)
         H += hz * sum(S)
     end
     return H, c_ops
-end;
+end

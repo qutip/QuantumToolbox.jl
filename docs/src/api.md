@@ -182,23 +182,39 @@ mcsolveProblem
 mcsolveEnsembleProblem
 ssesolveProblem
 ssesolveEnsembleProblem
-lr_mesolveProblem
 sesolve
 mesolve
 mcsolve
 ssesolve
 dfd_mesolve
-dsf_mesolve
-dsf_mcsolve
-lr_mesolve
 liouvillian
 liouvillian_generalized
+```
+
+### [Steady State Solvers](@id doc-API:Steady-State-Solvers)
+
+```@docs
 steadystate
 steadystate_floquet
 SteadyStateDirectSolver
 SteadyStateEigenSolver
 SteadyStateLinearSolver
 SteadyStateODESolver
+```
+
+### [Dynamical Shifted Fock method](@id doc-API:Dynamical-Shifted-Fock-method)
+
+```@docs
+dsf_mesolve
+dsf_mcsolve
+```
+
+### [Low-rank time evolution](@id doc-API:Low-rank-time-evolution)
+
+```@docs
+TimeEvolutionLRSol
+lr_mesolveProblem
+lr_mesolve
 ```
 
 ## [Correlations and Spectrum](@id doc-API:Correlations-and-Spectrum)
