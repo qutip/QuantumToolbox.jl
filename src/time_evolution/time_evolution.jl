@@ -21,14 +21,22 @@ A structure storing the results and some information from solving time evolution
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
-struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{ComplexF64}}
+struct TimeEvolutionSol{
+    TT<:AbstractVector{<:Real},
+    TS<:AbstractVector,
+    TE<:Matrix,
+    RETT<:Enum,
+    AlgT<:OrdinaryDiffEqAlgorithm,
+    AT<:Real,
+    RT<:Real,
+}
     times::TT
     states::TS
     expect::TE
-    retcode::Enum
-    alg::OrdinaryDiffEqAlgorithm
-    abstol::Real
-    reltol::Real
+    retcode::RETT
+    alg::AlgT
+    abstol::AT
+    reltol::RT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionSol)
@@ -63,12 +71,15 @@ A structure storing the results and some information from solving quantum trajec
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionMCSol{
-    TT<:Vector{<:Real},
+    TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Matrix{ComplexF64},
     TEA<:Array{ComplexF64,3},
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
+    AlgT<:OrdinaryDiffEqAlgorithm,
+    AT<:Real,
+    RT<:Real,
 }
     ntraj::Int
     times::TT
@@ -78,9 +89,9 @@ struct TimeEvolutionMCSol{
     jump_times::TJT
     jump_which::TJW
     converged::Bool
-    alg::OrdinaryDiffEqAlgorithm
-    abstol::Real
-    reltol::Real
+    alg::AlgT
+    abstol::AT
+    reltol::RT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionMCSol)
@@ -178,13 +189,13 @@ Base.size(A::TimeDependentOperatorSum) = size(A.operator_sum)
 Base.size(A::TimeDependentOperatorSum, inds...) = size(A.operator_sum, inds...)
 Base.length(A::TimeDependentOperatorSum) = length(A.operator_sum)
 
-function update_coefficients!(A::TimeDependentOperatorSum, t, params)
+function op_sum_update_coefficients!(A::TimeDependentOperatorSum, t, params)
     @inbounds @simd for i in 1:length(A.coefficient_functions)
         A.operator_sum.coefficients[i] = A.coefficient_functions[i](t, params)
     end
 end
 
-(A::TimeDependentOperatorSum)(t, params) = (update_coefficients!(A, t, params); A)
+(A::TimeDependentOperatorSum)(t, params) = (op_sum_update_coefficients!(A, t, params); A)
 
 @inline function LinearAlgebra.mul!(y::AbstractVector, A::TimeDependentOperatorSum, x::AbstractVector, α, β)
     return mul!(y, A.operator_sum, x, α, β)
@@ -195,45 +206,6 @@ function liouvillian(A::TimeDependentOperatorSum, Id_cache = I(prod(A.operator_s
 end
 
 #######################################
-
-### LIOUVILLIAN ###
-@doc raw"""
-    liouvillian(H::QuantumObject, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing, Id_cache=I(prod(H.dims)))
-
-Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
-
-```math
-\mathcal{L} [\cdot] = -i[\hat{H}, \cdot] + \sum_n \mathcal{D}(\hat{C}_n) [\cdot]
-```
-
-where 
-
-```math
-\mathcal{D}(\hat{C}_n) [\cdot] = \hat{C}_n [\cdot] \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n [\cdot] - \frac{1}{2} [\cdot] \hat{C}_n^\dagger \hat{C}_n
-```
-
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
-
-See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
-"""
-function liouvillian(
-    H::QuantumObject{MT1,OpType1},
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    Id_cache = I(prod(H.dims)),
-) where {MT1<:AbstractMatrix,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-    L = liouvillian(H, Id_cache)
-    if !(c_ops isa Nothing)
-        for c_op in c_ops
-            L += lindblad_dissipator(c_op, Id_cache)
-        end
-    end
-    return L
-end
-
-liouvillian(H::QuantumObject{<:AbstractMatrix,OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dims))) =
-    -1im * (spre(H, Id_cache) - spost(H, Id_cache))
-
-liouvillian(H::QuantumObject{<:AbstractMatrix,SuperOperatorQuantumObject}, Id_cache::Diagonal) = H
 
 function liouvillian_floquet(
     L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},

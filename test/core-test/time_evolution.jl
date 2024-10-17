@@ -199,15 +199,16 @@
         N = 10
         a = destroy(N)
         H = a' * a
+        c_ops = [sqrt(0.1) * a]
         psi0 = basis(N, 3)
         t_l = LinRange(0, 100, 1000)
         psi_wrong = basis(N - 1, 3)
         @test_throws DimensionMismatch sesolve(H, psi_wrong, t_l)
-        @test_throws DimensionMismatch mesolve(H, psi_wrong, t_l)
-        @test_throws DimensionMismatch mcsolve(H, psi_wrong, t_l)
+        @test_throws DimensionMismatch mesolve(H, psi_wrong, t_l, c_ops)
+        @test_throws DimensionMismatch mcsolve(H, psi_wrong, t_l, c_ops)
         @test_throws ArgumentError sesolve(H, psi0, t_l, save_idxs = [1, 2])
-        @test_throws ArgumentError mesolve(H, psi0, t_l, save_idxs = [1, 2])
-        @test_throws ArgumentError mcsolve(H, psi0, t_l, save_idxs = [1, 2])
+        @test_throws ArgumentError mesolve(H, psi0, t_l, c_ops, save_idxs = [1, 2])
+        @test_throws ArgumentError mcsolve(H, psi0, t_l, c_ops, save_idxs = [1, 2])
     end
 
     @testset "example" begin
