@@ -193,10 +193,8 @@ function LinearAlgebra.kron(
     A::AbstractQuantumObject{DT1,OpType},
     B::AbstractQuantumObject{DT2,OpType},
 ) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
-    if A isa QuantumObjectEvolution || B isa QuantumObjectEvolution
-        return QuantumObjectEvolution(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
-    end
-    return QuantumObject(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
+    QType = promote_type(A, B)
+    return QType(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
 end
 LinearAlgebra.kron(A::AbstractQuantumObject) = A
 function LinearAlgebra.kron(A::Vector{<:AbstractQuantumObject})

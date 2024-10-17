@@ -3,7 +3,7 @@ All boolean functions for checking the data or type in `QuantumObject`
 =#
 
 export isket, isbra, isoper, isoperbra, isoperket, issuper
-export isunitary
+export isunitary, isconstant
 
 @doc raw"""
     isbra(A)
@@ -89,3 +89,10 @@ Note that all the keyword arguments will be passed to `Base.isapprox`.
 """
 isunitary(U::QuantumObject{<:AbstractArray{T}}; kwargs...) where {T} =
     isoper(U) ? isapprox(U.data * U.data', I(size(U, 1)); kwargs...) : false
+
+@doc raw"""
+    isconstant(A::AbstractQuantumObject)
+
+Test whether the [`AbstractQuantumObject`](@ref) `A` is constant in time. For a [`QuantumObject`](@ref), this function returns `false`, while for a [`QuantumObjectEvolution`](@ref), this function returns `true` if the operator is contant in time.
+"""
+isconstant(A::AbstractQuantumObject) = isconstant(A.data)

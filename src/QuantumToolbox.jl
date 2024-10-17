@@ -34,7 +34,7 @@ import SciMLBase:
     DiscreteCallback
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
 import SciMLOperators:
-    AbstractSciMLOperator, MatrixOperator, ScalarOperator, cache_operator, update_coefficients!, concretize
+    AbstractSciMLOperator, MatrixOperator, ScalarOperator, cache_operator, update_coefficients!, concretize, isconstant
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
@@ -64,6 +64,7 @@ include("progress_bar.jl")
 include("linear_maps.jl")
 
 # Quantum Object
+include("qobj/quantum_object_base.jl")
 include("qobj/quantum_object.jl")
 include("qobj/quantum_object_evo.jl")
 include("qobj/boolean_functions.jl")

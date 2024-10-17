@@ -38,10 +38,8 @@ for op in (:(+), :(-), :(*))
     @eval begin
         function LinearAlgebra.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
             check_dims(A, B)
-            if A isa QuantumObjectEvolution || B isa QuantumObjectEvolution
-                return QuantumObjectEvolution($(op)(A.data, B.data), A.type, A.dims)
-            end
-            return QuantumObject($(op)(A.data, B.data), A.type, A.dims)
+            QType = promote_type(A, B)
+            return QType($(op)(A.data, B.data), A.type, A.dims)
         end
         LinearAlgebra.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dims)
 
@@ -132,7 +130,7 @@ end
 @doc raw"""
     dot(i::QuantumObject, A::AbstractQuantumObject j::QuantumObject)
 
-Compute the generalized dot product `dot(i, A*j)` between three [`AbstractQuantumObject`](@ref): ``\langle i | \hat{A} | j \rangle``
+Compute the generalized dot product `dot(i, A*j)` between a [`AbstractQuantumObject`](@ref) and two [`QuantumObject`](@ref) (`i` and `j`), namely ``\langle i | \hat{A} | j \rangle``.
 
 Supports the following inputs:
 - `A` is in the type of [`Operator`](@ref), with `i` and `j` are both [`Ket`](@ref).
