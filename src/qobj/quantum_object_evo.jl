@@ -82,6 +82,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ⎢⠀⠀⠀⠀⠂⡑⢄⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠂⡑⢄⠀⎥
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡑⎦
+````
 """
 struct QuantumObjectEvolution{
     DT<:AbstractSciMLOperator,
@@ -94,8 +95,8 @@ struct QuantumObjectEvolution{
 end
 
 # Make the QuantumObjectEvolution, with the option to pre-multiply by a scalar
-function QuantumObjectEvolution(op_func_list::Tuple, α::Union{Nothing,Number} = nothing)
-    op, data = _generate_data(op_func_list, α)
+function QuantumObjectEvolution(op_func_list::Tuple, α::Union{Nothing,Number} = nothing; f::Function = identity)
+    op, data = _QobjEvo_generate_data(op_func_list, α; f = f)
     dims = op.dims
     type = op.type
 
@@ -106,23 +107,35 @@ function QuantumObjectEvolution(op_func_list::Tuple, α::Union{Nothing,Number} =
     return QuantumObjectEvolution(data, type, dims)
 end
 
-QuantumObjectEvolution(op::QuantumObject, α::Union{Nothing,Number} = nothing) =
+QuantumObjectEvolution(op::QuantumObject, α::Union{Nothing,Number} = nothing; f::Function = identity) =
     QuantumObjectEvolution(_make_SciMLOperator(op, α), op.type, op.dims)
 
-function QuantumObjectEvolution(op::QuantumObjectEvolution, α::Union{Nothing,Number} = nothing)
+function QuantumObjectEvolution(op::QuantumObjectEvolution, α::Union{Nothing,Number} = nothing; f::Function = identity)
+    f !== identity && throw(ArgumentError("The function `f` is not supported for QuantumObjectEvolution inputs."))
     if α isa Nothing
         return QuantumObjectEvolution(op.data, op.type, op.dims)
     end
     return QuantumObjectEvolution(α * op.data, op.type, op.dims)
 end
 
-@generated function _generate_data(op_func_list::Tuple, α)
+#=
+    _QobjEvo_generate_data(op_func_list::Tuple, α; f::Function=identity)
+
+Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` object. The `op_func_list` is a tuple of tuples or operators. Each element of the tuple can be a tuple with two elements (operator, function) or an operator. The function is used to generate the time-dependent coefficients for the operators. The `α` parameter is used to pre-multiply the operators by a scalar. The `f` parameter is used to pre-applying a function to the operators before converting them to SciML operators. During the parsing, the dimensions of the operators are checked to be the same, and all the constant operators are summed together.
+
+# Arguments
+- `op_func_list::Tuple`: A tuple of tuples or operators.
+- `α`: A scalar to pre-multiply the operators.
+- `f::Function=identity`: A function to pre-apply to the operators.
+=#
+@generated function _QobjEvo_generate_data(op_func_list::Tuple, α; f::Function = identity)
     op_func_list_types = op_func_list.parameters
     N = length(op_func_list_types)
 
     dims_expr = ()
     first_op = nothing
     data_expr = :(0)
+    qobj_expr_const = :(0)
 
     for i in 1:N
         op_func_type = op_func_list_types[i]
@@ -136,11 +149,13 @@ end
                 ),
             )
 
+            op = :(op_func_list[$i][1])
             data_type = op_type.parameters[1]
-            dims_expr = (dims_expr..., :(op_func_list[$i][1].dims))
+            dims_expr = (dims_expr..., :($op.dims))
             if i == 1
-                first_op = :(op_func_list[$i][1])
+                first_op = :(f($op))
             end
+            data_expr = :($data_expr + _make_SciMLOperator(op_func_list[$i], α, f = f))
         else
             op_type = op_func_type
             (isoper(op_type) || issuper(op_type)) ||
@@ -148,37 +163,40 @@ end
 
             data_type = op_type.parameters[1]
             dims_expr = (dims_expr..., :(op_func_list[$i].dims))
-
             if i == 1
                 first_op = :(op_func_list[$i])
             end
+            qobj_expr_const = :($qobj_expr_const + f(op_func_list[$i]))
         end
-        data_expr = :($data_expr + _make_SciMLOperator(op_func_list[$i], α))
     end
+
+    data_expr_const = :(_make_SciMLOperator($qobj_expr_const, α))
 
     quote
         dims = tuple($(dims_expr...))
 
         length(unique(dims)) == 1 || throw(ArgumentError("The dimensions of the operators must be the same."))
 
-        return $first_op, $data_expr
+        data_expr = $data_expr_const + $data_expr
+
+        return $first_op, data_expr
     end
 end
 
-function _make_SciMLOperator(op_func::Tuple, α)
+function _make_SciMLOperator(op_func::Tuple, α; f::Function = identity)
     T = eltype(op_func[1])
     update_func = (a, u, p, t) -> op_func[2](p, t)
     if α isa Nothing
-        return ScalarOperator(zero(T), update_func) * MatrixOperator(op_func[1].data)
+        return ScalarOperator(zero(T), update_func) * MatrixOperator(f(op_func[1]).data)
     end
-    return ScalarOperator(zero(T), update_func) * MatrixOperator(α * op_func[1].data)
+    return ScalarOperator(zero(T), update_func) * MatrixOperator(α * f(op_func[1]).data)
 end
 
-function _make_SciMLOperator(op::QuantumObject, α)
+function _make_SciMLOperator(op::QuantumObject, α; f::Function = identity)
     if α isa Nothing
-        return MatrixOperator(op.data)
+        return MatrixOperator(f(op).data)
     end
-    return MatrixOperator(α * op.data)
+    return MatrixOperator(α * f(op.data))
 end
 
 function (QO::QuantumObjectEvolution)(p, t)

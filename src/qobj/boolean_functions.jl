@@ -93,6 +93,6 @@ isunitary(U::QuantumObject{<:AbstractArray{T}}; kwargs...) where {T} =
 @doc raw"""
     isconstant(A::AbstractQuantumObject)
 
-Test whether the [`AbstractQuantumObject`](@ref) `A` is constant in time. For a [`QuantumObject`](@ref), this function returns `false`, while for a [`QuantumObjectEvolution`](@ref), this function returns `true` if the operator is contant in time.
+Test whether the [`AbstractQuantumObject`](@ref) `A` is constant in time. For a [`QuantumObject`](@ref), this function returns `true`, while for a [`QuantumObjectEvolution`](@ref), this function returns `true` if the operator is contant in time.
 """
 isconstant(A::AbstractQuantumObject) = isconstant(A.data)

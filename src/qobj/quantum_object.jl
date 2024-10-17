@@ -1,9 +1,6 @@
 #=
-This file defines:
-    1. the QuantumObject (Qobj) structure
-    2. all the type structures for QuantumObject
-Also support for fundamental functions in Julia standard library:
-    - Base: show, length, size, eltype, getindex, setindex!, isequal, :(==), isapprox, Vector, Matrix
+This file defines the QuantumObject (Qobj) structure.
+It also implements the fundamental functions in Julia standard library:
     - SparseArrays: sparse, nnz, nonzeros, rowvals, droptol!, dropzeros, dropzeros!, SparseVector, SparseMatrixCSC
 =#
 

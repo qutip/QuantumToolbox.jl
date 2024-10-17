@@ -179,7 +179,7 @@ _steadystate(
     kwargs...,
 ) where {T} = throw(
     ArgumentError(
-        "The initial state ψ0 is required for SteadyStateODESolver, use the following call instead: `steadystate(H, ψ0, tspan, c_ops)`.",
+        "The initial state ψ0 is required for SteadyStateODESolver, use the following call instead: `steadystate(H, ψ0, tmax, c_ops)`.",
     ),
 )
 
@@ -187,7 +187,7 @@ _steadystate(
     steadystate(
         H::QuantumObject,
         ψ0::QuantumObject,
-        tspan::Real = Inf,
+        tmax::Real = Inf,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         solver::SteadyStateODESolver = SteadyStateODESolver(),
         reltol::Real = 1.0e-8,
@@ -212,7 +212,7 @@ or
 # Parameters
 - `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
 - `ψ0::QuantumObject`: The initial state of the system.
-- `tspan::Real=Inf`: The final time step for the steady state problem.
+- `tmax::Real=Inf`: The final time step for the steady state problem.
 - `c_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the collapse operators.
 - `solver::SteadyStateODESolver=SteadyStateODESolver()`: see [`SteadyStateODESolver`](@ref) for more details.
 - `reltol::Real=1.0e-8`: Relative tolerance in steady state terminate condition and solver adaptive timestepping.
@@ -220,40 +220,26 @@ or
 - `kwargs...`: The keyword arguments for the ODEProblem.
 """
 function steadystate(
-    H::QuantumObject{MT1,HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
-    tspan::Real = Inf,
+    H::QuantumObject{DT1,HOpType},
+    ψ0::QuantumObject{DT2,StateOpType},
+    tmax::Real = Inf,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::SteadyStateODESolver = SteadyStateODESolver(),
     reltol::Real = 1.0e-8,
     abstol::Real = 1.0e-10,
     kwargs...,
 ) where {
-    MT1<:AbstractMatrix,
-    T2,
+    DT1,
+    DT2,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
-    check_dims(H, ψ0)
-
-    N = prod(H.dims)
-    u0 = sparse_to_dense(_CType(ψ0), mat2vec(ket2dm(ψ0).data))
-
-    L = MatrixOperator(liouvillian(H, c_ops).data)
-
     ftype = _FType(ψ0)
-    prob = ODEProblem{true}(L, u0, (ftype(0), ftype(tspan))) # Convert tspan to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
-    sol = solve(
-        prob,
-        solver.alg;
-        callback = TerminateSteadyState(abstol, reltol, _steadystate_ode_condition),
-        reltol = reltol,
-        abstol = abstol,
-        kwargs...,
-    )
+    cb = TerminateSteadyState(abstol, reltol, _steadystate_ode_condition)
+    sol = mesolve(H, ψ0, [ftype(0), ftype(tmax)], c_ops, progress_bar = Val(false), callback = cb)
 
-    ρss = reshape(sol.u[end], N, N)
-    return QuantumObject(ρss, Operator, H.dims)
+    ρss = sol.states[end]
+    return ρss
 end
 
 function _steadystate_ode_condition(integrator, abstol, reltol, min_t)

@@ -117,10 +117,18 @@ function _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, j
     return jump_which[i] = sol_i.prob.p.jump_which
 end
 
-_mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops) = QobjEvo(H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2)
-_mcsolve_make_Heff_QobjEvo(H::Tuple, c_ops) = QobjEvo((H..., -1im * mapreduce(op -> op' * op, +, c_ops) / 2))
-_mcsolve_make_Heff_QobjEvo(H::QuantumObjectEvolution, c_ops) =
-    H + QobjEvo(mapreduce(op -> op' * op, +, c_ops), -1im / 2)
+function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
+    c_ops isa Nothing && return QobjEvo(H)
+    return QobjEvo(H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2)
+end
+function _mcsolve_make_Heff_QobjEvo(H::Tuple, c_ops)
+    c_ops isa Nothing && return QobjEvo(H)
+    return QobjEvo((H..., -1im * mapreduce(op -> op' * op, +, c_ops) / 2))
+end
+function _mcsolve_make_Heff_QobjEvo(H::QuantumObjectEvolution, c_ops)
+    c_ops isa Nothing && return H
+    return H + QobjEvo(mapreduce(op -> op' * op, +, c_ops), -1im / 2)
+end
 
 @doc raw"""
     mcsolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
@@ -565,12 +573,11 @@ function mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc, tlist; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
+    return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
 end
 
 function mcsolve(
-    ens_prob_mc::EnsembleProblem,
-    tlist::AbstractVector;
+    ens_prob_mc::EnsembleProblem;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
@@ -596,7 +603,7 @@ function mcsolve(
 
         return TimeEvolutionMCSol(
             ntraj,
-            tlist,
+            _sol_1.prob.times,
             states,
             expvals,
             expvals_all,

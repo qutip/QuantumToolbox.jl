@@ -113,6 +113,7 @@ function sesolveProblem(
         e_ops = e_ops_data,
         expvals = expvals,
         progr = progr,
+        times = tlist,
         Hdims = H_evo.dims,
         is_empty_e_ops = is_empty_e_ops,
         params...,
@@ -124,7 +125,7 @@ function sesolveProblem(
     kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2)
 
     tspan = (tlist[1], tlist[end])
-    return ODEProblem{true}(U, ψ0, tspan, p; kwargs3...)
+    return ODEProblem{true,FullSpecialize}(U, ψ0, tspan, p; kwargs3...)
 end
 
 @doc raw"""
@@ -180,16 +181,16 @@ function sesolve(
 ) where {DT1,DT2}
     prob = sesolveProblem(H, ψ0, tlist; e_ops = e_ops, params = params, progress_bar = progress_bar, kwargs...)
 
-    return sesolve(prob, tlist, alg)
+    return sesolve(prob, alg)
 end
 
-function sesolve(prob::ODEProblem, tlist::AbstractVector, alg::OrdinaryDiffEqAlgorithm = Tsit5())
+function sesolve(prob::ODEProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob, alg)
 
     ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = sol.prob.p.Hdims), sol.u)
 
     return TimeEvolutionSol(
-        tlist,
+        sol.prob.p.times,
         ψt,
         sol.prob.p.expvals,
         sol.retcode,

@@ -362,11 +362,10 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - [1] Minganti, F., & Huybrechts, D. (2022). Arnoldi-Lindblad time evolution: Faster-than-the-clock algorithm for the spectrum of time-independent and Floquet open quantum systems. Quantum, 6, 649.
 """
 function eigsolve_al(
-    H::QuantumObject{MT1,HOpType},
+    H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
     T::Real,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    H_t::Union{Nothing,Function} = nothing,
     params::NamedTuple = NamedTuple(),
     ρ0::AbstractMatrix = rand_dm(prod(H.dims)).data,
     k::Int = 1,
@@ -374,14 +373,13 @@ function eigsolve_al(
     maxiter::Int = 200,
     eigstol::Real = 1e-6,
     kwargs...,
-) where {MT1<:AbstractMatrix,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-    L = liouvillian(H, c_ops)
+) where {DT1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     prob = mesolveProblem(
-        L,
+        L_evo,
         QuantumObject(ρ0, type = Operator, dims = H.dims),
         [zero(T), T];
         alg = alg,
-        H_t = H_t,
         params = params,
         progress_bar = Val(false),
         kwargs...,
@@ -390,9 +388,9 @@ function eigsolve_al(
 
     # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
 
-    Lmap = ArnoldiLindbladIntegratorMap(eltype(MT1), size(L), integrator)
+    Lmap = ArnoldiLindbladIntegratorMap(eltype(DT1), size(L_evo), integrator)
 
-    res = _eigsolve(Lmap, mat2vec(ρ0), L.type, L.dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
+    res = _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo.dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
     # finish!(prog)
 
     vals = similar(res.values)
@@ -400,7 +398,7 @@ function eigsolve_al(
 
     for i in eachindex(res.values)
         vec = view(res.vectors, :, i)
-        vals[i] = dot(vec, L.data, vec)
+        vals[i] = dot(vec, L_evo.data, vec)
         @. vecs[:, i] = vec * exp(-1im * angle(vec[1]))
     end
 

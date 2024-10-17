@@ -28,8 +28,8 @@ end
 
 _generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
 
-function _generate_mesolve_kwargs_with_callback(t_l, kwargs)
-    cb1 = PresetTimeCallback(t_l, _save_func_mesolve, save_positions = (false, false))
+function _generate_mesolve_kwargs_with_callback(tlist, kwargs)
+    cb1 = PresetTimeCallback(tlist, _save_func_mesolve, save_positions = (false, false))
     kwargs2 =
         haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(kwargs.callback, cb1),)) :
         merge(kwargs, (callback = cb1,))
@@ -37,15 +37,27 @@ function _generate_mesolve_kwargs_with_callback(t_l, kwargs)
     return kwargs2
 end
 
-function _generate_mesolve_kwargs(e_ops, progress_bar::Val{true}, t_l, kwargs)
-    return _generate_mesolve_kwargs_with_callback(t_l, kwargs)
+function _generate_mesolve_kwargs(e_ops, progress_bar::Val{true}, tlist, kwargs)
+    return _generate_mesolve_kwargs_with_callback(tlist, kwargs)
 end
 
-function _generate_mesolve_kwargs(e_ops, progress_bar::Val{false}, t_l, kwargs)
+function _generate_mesolve_kwargs(e_ops, progress_bar::Val{false}, tlist, kwargs)
     if e_ops isa Nothing
         return kwargs
     end
-    return _generate_mesolve_kwargs_with_callback(t_l, kwargs)
+    return _generate_mesolve_kwargs_with_callback(tlist, kwargs)
+end
+
+_mesolve_make_L_QobjEvo(H::QuantumObject, c_ops) = QobjEvo(liouvillian(H, c_ops))
+function _mesolve_make_L_QobjEvo(H::Tuple, c_ops)
+    c_ops isa Nothing && return QobjEvo(H)
+    return QobjEvo((H..., mapreduce(op -> lindblad_dissipator(op), +, c_ops)); f = liouvillian)
+end
+# TODO: Add support for Operator type QobEvo
+function _mesolve_make_L_QobjEvo(H::QuantumObjectEvolution, c_ops)
+    issuper(H) || throw(ArgumentError("The time-dependent Hamiltonian must be a SuperOperator."))
+    c_ops isa Nothing && return H
+    return H + QobjEvo((mapreduce(op -> lindblad_dissipator(op), +, c_ops)))
 end
 
 @doc raw"""
@@ -98,71 +110,61 @@ where
 - `prob::ODEProblem`: The ODEProblem for the master equation time evolution.
 """
 function mesolveProblem(
-    H::QuantumObject{MT1,HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
+    ψ0::QuantumObject{DT2,StateOpType},
     tlist,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {
-    MT1<:AbstractMatrix,
-    T2,
+    DT1,
+    DT2,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
-    check_dims(H, ψ0)
-
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    is_time_dependent = !(H_t isa Nothing)
+    tlist = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+
+    L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
+    check_dims(L_evo, ψ0)
 
     ρ0 = sparse_to_dense(_CType(ψ0), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
+    L = L_evo.data
 
-    t_l = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
-
-    L = liouvillian(H, c_ops).data
-    progr = ProgressBar(length(t_l), enable = getVal(progress_bar))
+    progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 
     if e_ops isa Nothing
-        expvals = Array{ComplexF64}(undef, 0, length(t_l))
-        e_ops2 = mat2vec(MT1)[]
+        expvals = Array{ComplexF64}(undef, 0, length(tlist))
+        e_ops_data = ()
         is_empty_e_ops = true
     else
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-        e_ops2 = [_generate_mesolve_e_op(op) for op in e_ops]
+        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
+        e_ops_data = [_generate_mesolve_e_op(op) for op in e_ops]
         is_empty_e_ops = isempty(e_ops)
     end
 
-    if H_t isa TimeDependentOperatorSum
-        H_t = liouvillian(H_t)
-    end
-
     p = (
-        L = L,
-        progr = progr,
-        Hdims = H.dims,
-        e_ops = e_ops2,
+        e_ops = e_ops_data,
         expvals = expvals,
-        H_t = H_t,
-        times = t_l,
+        progr = progr,
+        times = tlist,
+        Hdims = L_evo.dims,
         is_empty_e_ops = is_empty_e_ops,
         params...,
     )
 
-    saveat = is_empty_e_ops ? t_l : [t_l[end]]
+    saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_mesolve_kwargs(e_ops, makeVal(progress_bar), t_l, kwargs2)
+    kwargs3 = _generate_mesolve_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2)
 
-    dudt! = is_time_dependent ? mesolve_td_dudt! : mesolve_ti_dudt!
-
-    tspan = (t_l[1], t_l[end])
-    return ODEProblem{true,FullSpecialize}(dudt!, ρ0, tspan, p; kwargs3...)
+    tspan = (tlist[1], tlist[end])
+    return ODEProblem{true,FullSpecialize}(L, ρ0, tspan, p; kwargs3...)
 end
 
 @doc raw"""
@@ -215,19 +217,18 @@ where
 - `sol::TimeEvolutionSol`: The solution of the time evolution. See also [`TimeEvolutionSol`](@ref)
 """
 function mesolve(
-    H::QuantumObject{MT1,HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
+    ψ0::QuantumObject{DT2,StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {
-    MT1<:AbstractMatrix,
-    T2,
+    DT1,
+    DT2,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
@@ -238,7 +239,6 @@ function mesolve(
         c_ops;
         alg = alg,
         e_ops = e_ops,
-        H_t = H_t,
         params = params,
         progress_bar = progress_bar,
         kwargs...,
