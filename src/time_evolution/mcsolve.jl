@@ -603,7 +603,7 @@ function mcsolve(
 
         return TimeEvolutionMCSol(
             ntraj,
-            _sol_1.prob.times,
+            _sol_1.prob.p.times,
             states,
             expvals,
             expvals_all,

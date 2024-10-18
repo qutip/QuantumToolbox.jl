@@ -129,25 +129,26 @@ function _DFDIncreaseReduceAffect!(integrator)
 
     resize!(integrator, size(L, 1))
     copyto!(integrator.u, mat2vec(ρt))
-    integrator.p = merge(internal_params, (L = L, e_ops = e_ops2, dfd_ρt_cache = similar(integrator.u)))
+    # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
+    integrator.f = ODEFunction{true,FullSpecialize}(MatrixOperator(L))
+    integrator.p = merge(internal_params, (e_ops = e_ops2, dfd_ρt_cache = similar(integrator.u)))
 
     return nothing
 end
 
 function dfd_mesolveProblem(
     H::Function,
-    ψ0::QuantumObject{<:AbstractArray{T1},StateOpType},
+    ψ0::QuantumObject{DT1,StateOpType},
     t_l::AbstractVector,
     c_ops::Function,
     maxdims::Vector{T2},
     dfd_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Function = (dim_list) -> Vector{Vector{T1}}([]),
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
+    e_ops::Function = (dim_list) -> Vector{Vector{DT1}}([]),
     params::NamedTuple = NamedTuple(),
     tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
     kwargs...,
-) where {T1,T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {DT1,T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     length(ψ0.dims) != length(maxdims) &&
         throw(DimensionMismatch("'dim_list' and 'maxdims' do not have the same dimension."))
 
@@ -158,8 +159,8 @@ function dfd_mesolveProblem(
 
     dim_list_evo_times = [0.0]
     dim_list_evo = [dim_list]
-    reduce_list = MVector(ntuple(i -> false, length(dim_list)))
-    increase_list = MVector(ntuple(i -> false, length(dim_list)))
+    reduce_list = MVector(ntuple(i -> false, Val(length(dim_list))))
+    increase_list = MVector(ntuple(i -> false, Val(length(dim_list))))
     pillow_list = _dfd_set_pillow.(dim_list)
 
     params2 = merge(
@@ -187,7 +188,7 @@ function dfd_mesolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb_dfd, kwargs2.callback),)) :
         merge(kwargs2, (callback = cb_dfd,))
 
-    return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, H_t = H_t, params = params2, kwargs2...)
+    return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, params = params2, kwargs2...)
 end
 
 @doc raw"""
@@ -196,7 +197,6 @@ end
         dfd_params::NamedTuple=NamedTuple();
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Function=(dim_list) -> Vector{Vector{T1}}([]),
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         tol_list::Vector{<:Number}=fill(1e-8, length(maxdims)),
         kwargs...)
@@ -216,7 +216,6 @@ function dfd_mesolve(
     dfd_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (dim_list) -> Vector{Vector{T1}}([]),
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
     kwargs...,
@@ -230,7 +229,6 @@ function dfd_mesolve(
         dfd_params;
         alg = alg,
         e_ops = e_ops,
-        H_t = H_t,
         params = params,
         tol_list = tol_list,
         kwargs...,
@@ -335,7 +333,9 @@ function _DSF_mesolve_Affect!(integrator)
     e_ops2 = e_ops(op_l2, dsf_params)
     _mat2vec_data = op -> mat2vec(get_data(op)')
     @. e_ops_vec = _mat2vec_data(e_ops2)
-    return copyto!(internal_params.L, liouvillian(H(op_l2, dsf_params), c_ops(op_l2, dsf_params), dsf_identity).data)
+    # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
+    copyto!(integrator.f.f.A, liouvillian(H(op_l2, dsf_params), c_ops(op_l2, dsf_params), dsf_identity).data)
+    return u_modified!(integrator, true)
 end
 
 function dsf_mesolveProblem(
@@ -348,7 +348,6 @@ function dsf_mesolveProblem(
     dsf_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> Vector{TOl}([]),
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
@@ -403,7 +402,7 @@ function dsf_mesolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb_dsf, kwargs2.callback),)) :
         merge(kwargs2, (callback = cb_dsf,))
 
-    return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, H_t = H_t, params = params2, kwargs2...)
+    return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, params = params2, kwargs2...)
 end
 
 @doc raw"""
@@ -415,7 +414,6 @@ end
         dsf_params::NamedTuple=NamedTuple();
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Function=(op_list,p) -> Vector{TOl}([]),
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         δα_list::Vector{<:Number}=fill(0.2, length(op_list)),
         krylov_dim::Int=max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
@@ -437,7 +435,6 @@ function dsf_mesolve(
     dsf_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> Vector{TOl}([]),
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
@@ -453,7 +450,6 @@ function dsf_mesolve(
         dsf_params;
         alg = alg,
         e_ops = e_ops,
-        H_t = H_t,
         params = params,
         δα_list = δα_list,
         krylov_dim = krylov_dim,
@@ -472,7 +468,6 @@ function dsf_mesolve(
     dsf_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> Vector{TOl}([]),
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
@@ -489,7 +484,6 @@ function dsf_mesolve(
         dsf_params;
         alg = alg,
         e_ops = e_ops,
-        H_t = H_t,
         params = params,
         δα_list = δα_list,
         krylov_dim = krylov_dim,
@@ -745,5 +739,5 @@ function dsf_mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc, t_l; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
+    return mcsolve(ens_prob_mc; alg = alg, ntraj = ntraj, ensemble_method = ensemble_method)
 end

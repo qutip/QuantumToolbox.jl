@@ -19,13 +19,6 @@ function _save_func_mesolve(integrator)
     return u_modified!(integrator, false)
 end
 
-mesolve_ti_dudt!(du, u, p, t) = mul!(du, p.L, u)
-function mesolve_td_dudt!(du, u, p, t)
-    mul!(du, p.L, u)
-    L_t = p.H_t(t, p)
-    return mul!(du, L_t, u, 1, 1)
-end
-
 _generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
 
 function _generate_mesolve_kwargs_with_callback(tlist, kwargs)
