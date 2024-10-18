@@ -2,7 +2,7 @@
 Synonyms of the functions for QuantumObject
 =#
 
-export Qobj, shape, isherm
+export Qobj, QobjEvo, shape, isherm
 export trans, dag, matrix_element, unit
 export sqrtm, logm, expm, sinm, cosm
 export tensor, ⊗
@@ -13,16 +13,103 @@ export qeye
 
 Generate [`QuantumObject`](@ref)
 
-Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`
+Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`.
 """
 Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
+
+@doc raw"""
+    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; f::Function=identity)
+
+Generate [`QuantumObjectEvolution`](@ref)
+
+Note that this functions is same as `QuantumObjectEvolution(op_func_list)`. If `α` is provided, all the operators in `op_func_list` will be pre-multiplied by `α`. The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators.
+
+# Arguments
+- `op_func_list::Union{Tuple,AbstractQuantumObject}`: A tuple of tuples or operators.
+- `α::Union{Nothing,Number}=nothing`: A scalar to pre-multiply the operators.
+- `f::Function=identity`: A function to pre-apply to the operators.
+
+!!! warning "Beware of type-stability!"
+    Please note that, unlike QuTiP, this function doesn't support `op_func_list` as `Vector` type. This is related to the type-stability issue. See the Section [The Importance of Type-Stability](@ref doc:Type-Stability) for more details.
+
+# Examples
+This operator can be initialized in the same way as the QuTiP `QobjEvo` object. For example
+```
+julia> a = tensor(destroy(10), qeye(2))
+Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
+⎡⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⎤
+⎢⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⎦
+
+julia> σm = tensor(qeye(10), sigmam())
+Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 10 stored entries:
+⎡⠂⡀⠀⠀⠀⠀⠀⠀⠀⠀⎤
+⎢⠀⠀⠂⡀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠂⡀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠂⡀⠀⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡀⎦
+
+julia> coef1(p, t) = exp(-1im * t)
+coef1 (generic function with 1 method)
+
+julia> coef2(p, t) = sin(t)
+coef2 (generic function with 1 method)
+
+julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
+Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+(ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
+```
+
+We can also concretize the operator at a specific time `t`
+```
+julia> op1(0.1)
+Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
+⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
+⎢⠀⠀⠂⡑⢄⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠂⡑⢄⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠂⡑⢄⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡑⎦
+```
+
+It also supports parameter-dependent time evolution
+```
+julia> coef1(p, t) = exp(-1im * p.ω1 * t)
+coef1 (generic function with 1 method)
+
+julia> coef2(p, t) = sin(p.ω2 * t)
+coef2 (generic function with 1 method)
+
+julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
+Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+(ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
+
+julia> p = (ω1 = 1.0, ω2 = 0.5)
+(ω1 = 1.0, ω2 = 0.5)
+
+julia> op1(p, 0.1)
+Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
+⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
+⎢⠀⠀⠂⡑⢄⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠂⡑⢄⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠂⡑⢄⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡑⎦
+````
+"""
+QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number} = nothing; f::Function = identity) =
+    QuantumObjectEvolution(op_func_list, α; f = f)
 
 @doc raw"""
     shape(A::QuantumObject)
 
 Returns a tuple containing each dimensions of the array in the [`QuantumObject`](@ref).
 
-Note that this function is same as `size(A)`
+Note that this function is same as `size(A)`.
 """
 shape(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
 
@@ -31,7 +118,7 @@ shape(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
 
 Test whether the [`QuantumObject`](@ref) is Hermitian.
 
-Note that this functions is same as `ishermitian(A)`
+Note that this functions is same as `ishermitian(A)`.
 """
 isherm(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A)
 
@@ -40,7 +127,7 @@ isherm(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A)
 
 Lazy matrix transpose of the [`QuantumObject`](@ref).
 
-Note that this function is same as `transpose(A)`
+Note that this function is same as `transpose(A)`.
 """
 trans(
     A::QuantumObject{<:AbstractArray{T},OpType},
@@ -51,7 +138,7 @@ trans(
 
 Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
 
-Note that this function is same as `adjoint(A)`
+Note that this function is same as `adjoint(A)`.
 """
 dag(A::QuantumObject{<:AbstractArray{T}}) where {T} = adjoint(A)
 
@@ -110,7 +197,7 @@ sqrtm(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = sq
 
 Matrix logarithm of [`QuantumObject`](@ref)
 
-Note that this function is same as `log(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+Note that this function is same as `log(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 logm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
@@ -121,7 +208,7 @@ logm(
 
 Matrix exponential of [`QuantumObject`](@ref)
 
-Note that this function is same as `exp(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+Note that this function is same as `exp(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 expm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
@@ -134,7 +221,7 @@ Matrix sine of [`QuantumObject`](@ref), defined as
 
 ``\sin \left( \hat{A} \right) = \frac{e^{i \hat{A}} - e^{-i \hat{A}}}{2 i}``
 
-Note that this function is same as `sin(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+Note that this function is same as `sin(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 sinm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
@@ -147,7 +234,7 @@ Matrix cosine of [`QuantumObject`](@ref), defined as
 
 ``\cos \left( \hat{A} \right) = \frac{e^{i \hat{A}} + e^{-i \hat{A}}}{2}``
 
-Note that this function is same as `cos(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
+Note that this function is same as `cos(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 cosm(
     A::QuantumObject{<:AbstractMatrix{T},ObjType},
@@ -158,7 +245,7 @@ cosm(
 
 Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B} \otimes \cdots``.
 
-Note that this function is same as `kron(A, B, ...)`
+Note that this function is same as `kron(A, B, ...)`.
 
 # Examples
 
@@ -191,7 +278,7 @@ tensor(A...) = kron(A...)
 
 Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B}``.
 
-Note that this function is same as `kron(A, B)`
+Note that this function is same as `kron(A, B)`.
 
 # Examples
 
@@ -240,7 +327,7 @@ Identity operator ``\hat{\mathbb{1}}`` with size `N`.
 
 It is also possible to specify the list of Hilbert dimensions `dims` if different subsystems are present.
 
-Note that this function is same as `eye(N, type=type, dims=dims)`, and `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref)
+Note that this function is same as `eye(N, type=type, dims=dims)`, and `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref).
 """
 qeye(
     N::Int;

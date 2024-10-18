@@ -64,8 +64,11 @@
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
     t_l = LinRange(0, 100 * 2π, 1000)
-    H_t_f = TimeDependentOperatorSum((((t, p) -> sin(t)),), (H_t,)) # It will be converted to liouvillian internally
-    sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, H_t = H_t_f, progress_bar = Val(false))
+
+    coeff(p, t) = sin(t)
+    H_td = (H, (H_t, coeff))
+
+    sol_me = mesolve(H_td, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
     ρ_ss1 = steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetLinearSystem())[1]
     ρ_ss2 =
         steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetEffectiveLiouvillian())
