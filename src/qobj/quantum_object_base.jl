@@ -1,7 +1,6 @@
-#=
-This file defines the AbstractQuantumObject structure, all the type structures for QuantumObject and fundamental functions in Julia standard library.
-Also support for fundamental functions in Julia standard library:
-    - Base: show, length, size, eltype, getindex, setindex!, isequal, :(==), isapprox, Vector, Matrix
+#=  
+This file defines the AbstractQuantumObject structure, all the type structures for AbstractQuantumObject, and fundamental functions in Julia standard library:  
+    - Base: show, length, size, eltype, getindex, setindex!, isequal, :(==), isapprox  
 =#
 
 export AbstractQuantumObject

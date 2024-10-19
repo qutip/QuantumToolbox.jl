@@ -236,7 +236,7 @@ function steadystate(
 }
     ftype = _FType(ψ0)
     cb = TerminateSteadyState(abstol, reltol, _steadystate_ode_condition)
-    sol = mesolve(H, ψ0, [ftype(0), ftype(tmax)], c_ops, progress_bar = Val(false), callback = cb)
+    sol = mesolve(H, ψ0, [ftype(0), ftype(tmax)], c_ops, progress_bar = Val(false), save_everystep=false, saveat=ftype[], callback = cb)
 
     ρss = sol.states[end]
     return ρss

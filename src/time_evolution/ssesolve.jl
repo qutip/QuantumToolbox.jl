@@ -45,17 +45,19 @@ function _ssesolve_prob_func(prob, i, repeat)
         rng = traj_rng,
     )
 
-    noise_rate_prototype = similar(prob.u0, length(prob.u0), length(internal_params.sc_ops))
+    # noise_rate_prototype = similar(prob.u0, length(prob.u0), length(internal_params.sc_ops))
 
     prm = merge(
         internal_params,
         (
+            K = deepcopy(internal_params.K),
+            D = deepcopy(internal_params.D),
             expvals = similar(internal_params.expvals),
             progr = ProgressBar(size(internal_params.expvals, 2), enable = false),
         ),
     )
 
-    return remake(prob, p = prm, noise = noise, noise_rate_prototype = noise_rate_prototype, seed = seed)
+    return remake(prob, p = prm, noise = noise, seed = seed)
 end
 
 # Standard output function
@@ -151,7 +153,6 @@ function ssesolveProblem(
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     kwargs...,
@@ -164,7 +165,7 @@ function ssesolveProblem(
     sc_ops isa Nothing &&
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
-    !(H_t isa Nothing) && throw(ArgumentError("Time-dependent Hamiltonians are not currently supported in ssesolve."))
+    # !(H_t isa Nothing) && throw(ArgumentError("Time-dependent Hamiltonians are not currently supported in ssesolve."))
 
     t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for StochasticDiffEq.jl
 
@@ -197,7 +198,6 @@ function ssesolveProblem(
         sc_ops = sc_ops2,
         expvals = expvals,
         Hdims = H.dims,
-        H_t = H_t,
         times = t_l,
         is_empty_e_ops = is_empty_e_ops,
         params...,
@@ -230,7 +230,6 @@ end
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::StochasticDiffEqAlgorithm=SRA1()
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         rng::AbstractRNG=default_rng(),
         ntraj::Int=1,
@@ -269,7 +268,6 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::StochasticDiffEqAlgorithm`: The algorithm used for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of operators to be evaluated during the evolution.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
 - `params::NamedTuple`: The parameters of the system.
 - `rng::AbstractRNG`: The random number generator for reproducibility.
 - `ntraj::Int`: Number of trajectories to use.
@@ -298,7 +296,6 @@ function ssesolveEnsembleProblem(
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
@@ -329,13 +326,12 @@ function ssesolveEnsembleProblem(
             sc_ops;
             alg = alg,
             e_ops = e_ops,
-            H_t = H_t,
             params = merge(params, (global_rng = rng, seeds = seeds)),
             rng = rng,
             kwargs...,
         )
 
-        ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = true)
+        ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = false)
 
         return ensemble_prob
     catch e
@@ -353,7 +349,6 @@ end
         sc_ops::Union{Nothing, AbstractVector}=nothing;
         alg::StochasticDiffEqAlgorithm=SRA1(),
         e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
         params::NamedTuple=NamedTuple(),
         rng::AbstractRNG=default_rng(),
         ntraj::Int=1,
@@ -395,7 +390,6 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
 - `alg::StochasticDiffEqAlgorithm`: Algorithm to use for the time evolution.
 - `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
 - `params::NamedTuple`: Dictionary of parameters to pass to the solver.
 - `rng::AbstractRNG`: Random number generator for reproducibility.
 - `ntraj::Int`: Number of trajectories to use.
@@ -425,7 +419,6 @@ function ssesolve(
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
@@ -448,7 +441,6 @@ function ssesolve(
         sc_ops;
         alg = alg,
         e_ops = e_ops,
-        H_t = H_t,
         params = params,
         rng = rng,
         ntraj = ntraj,
