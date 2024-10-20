@@ -143,7 +143,6 @@ function dfd_mesolveProblem(
     c_ops::Function,
     maxdims::Vector{T2},
     dfd_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (dim_list) -> Vector{Vector{DT1}}([]),
     params::NamedTuple = NamedTuple(),
     tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
@@ -188,7 +187,7 @@ function dfd_mesolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb_dfd, kwargs2.callback),)) :
         merge(kwargs2, (callback = cb_dfd,))
 
-    return mesolveProblem(H₀, ψ0, tlist, c_ops₀; e_ops = e_ops₀, alg = alg, params = params2, kwargs2...)
+    return mesolveProblem(H₀, ψ0, tlist, c_ops₀; e_ops = e_ops₀, params = params2, kwargs2...)
 end
 
 @doc raw"""
@@ -227,7 +226,6 @@ function dfd_mesolve(
         c_ops,
         maxdims,
         dfd_params;
-        alg = alg,
         e_ops = e_ops,
         params = params,
         tol_list = tol_list,
@@ -350,7 +348,6 @@ function dsf_mesolveProblem(
     op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
@@ -401,7 +398,7 @@ function dsf_mesolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb_dsf, kwargs2.callback),)) :
         merge(kwargs2, (callback = cb_dsf,))
 
-    return mesolveProblem(H₀, ψ0, tlist, c_ops₀; e_ops = e_ops₀, alg = alg, params = params2, kwargs2...)
+    return mesolveProblem(H₀, ψ0, tlist, c_ops₀; e_ops = e_ops₀, params = params2, kwargs2...)
 end
 
 @doc raw"""
@@ -447,7 +444,6 @@ function dsf_mesolve(
         op_list,
         α0_l,
         dsf_params;
-        alg = alg,
         e_ops = e_ops,
         params = params,
         δα_list = δα_list,
@@ -611,7 +607,6 @@ function dsf_mcsolveEnsembleProblem(
     op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     ntraj::Int = 1,
@@ -663,7 +658,6 @@ function dsf_mcsolveEnsembleProblem(
         tlist,
         c_ops₀;
         e_ops = e_ops₀,
-        alg = alg,
         params = params2,
         ntraj = ntraj,
         ensemble_method = ensemble_method,

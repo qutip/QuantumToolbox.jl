@@ -124,12 +124,13 @@ A structure storing the results and some information from solving trajectories o
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionSSESol{
-    TT<:Vector{<:Real},
+    TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Matrix{ComplexF64},
     TEA<:Array{ComplexF64,3},
-    T1<:Real,
-    T2<:Real,
+    AlgT<:StochasticDiffEqAlgorithm,
+    AT<:Real,
+    RT<:Real,
 }
     ntraj::Int
     times::TT
@@ -137,9 +138,9 @@ struct TimeEvolutionSSESol{
     expect::TE
     expect_all::TEA
     converged::Bool
-    alg::StochasticDiffEqAlgorithm
-    abstol::T1
-    reltol::T2
+    alg::AlgT
+    abstol::AT
+    reltol::RT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionSSESol)

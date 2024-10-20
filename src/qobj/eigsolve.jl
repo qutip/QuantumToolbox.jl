@@ -379,7 +379,6 @@ function eigsolve_al(
         L_evo,
         QuantumObject(ρ0, type = Operator, dims = H.dims),
         [zero(T), T];
-        alg = alg,
         params = params,
         progress_bar = Val(false),
         kwargs...,
