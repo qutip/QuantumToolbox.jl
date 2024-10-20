@@ -171,17 +171,14 @@
             tlist = range(0, 20 / γ, 1000)
 
             rng = MersenneTwister(1234)
-            sleep(0.1) # If we don't sleep, we get an error (why?)
             sol_mc1 = mcsolve(H, psi0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
             sol_sse1 = ssesolve(H, psi0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
 
             rng = MersenneTwister(1234)
-            sleep(0.1)
             sol_mc2 = mcsolve(H, psi0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
             sol_sse2 = ssesolve(H, psi0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
 
             rng = MersenneTwister(1234)
-            sleep(0.1)
             sol_mc3 = mcsolve(H, psi0, tlist, c_ops, ntraj = 510, e_ops = e_ops, progress_bar = Val(false), rng = rng)
 
             @test sol_mc1.expect ≈ sol_mc2.expect atol = 1e-10
