@@ -137,17 +137,18 @@
         end
 
         @testset "Type Inference ssesolve" begin
+            c_ops_tuple = Tuple(c_ops) # To avoid type instability, we must have a Tuple instead of a Vector
             @inferred ssesolveEnsembleProblem(
                 H,
                 psi0,
                 t_l,
-                c_ops,
+                c_ops_tuple,
                 ntraj = 500,
                 e_ops = e_ops,
                 progress_bar = Val(false),
             )
-            @inferred ssesolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
-            @inferred ssesolve(H, psi0, t_l, c_ops, ntraj = 500, progress_bar = Val(true))
+            @inferred ssesolve(H, psi0, t_l, c_ops_tuple, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+            @inferred ssesolve(H, psi0, t_l, c_ops_tuple, ntraj = 500, progress_bar = Val(true))
         end
 
         @testset "mcsolve and ssesolve reproducibility" begin

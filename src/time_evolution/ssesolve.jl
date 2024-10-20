@@ -1,32 +1,48 @@
 export ssesolveProblem, ssesolveEnsembleProblem, ssesolve
 
-#TODO: Check if works in GPU
-function _ssesolve_update_coefficients!(ψ, coefficients, sc_ops)
-    _get_en = op -> real(dot(ψ, op, ψ)) #this is en/2: <Sn + Sn'>/2 = Re<Sn>
-    @. coefficients[2:end-1] = _get_en(sc_ops) #coefficients of the OperatorSum: Σ Sn * en/2
-    coefficients[end] = -sum(x -> x^2, coefficients[2:end-1]) / 2 #this last coefficient is -Σen^2/8
-    return nothing
+#=
+    struct DiffusionOperator
+
+A struct to represent the diffusion operator. This is used to perform the diffusion process on N different Wiener processes.
+=#
+struct DiffusionOperator{T,OT<:Tuple{Vararg{AbstractSciMLOperator}}} <: AbstractSciMLOperator{T}
+    ops::OT
+    function DiffusionOperator(ops::OT) where {OT}
+        T = mapreduce(eltype, promote_type, ops)
+        return new{T,OT}(ops)
+    end
 end
 
-function ssesolve_drift!(du, u, p, t)
-    _ssesolve_update_coefficients!(u, p.K.coefficients, p.sc_ops)
+@generated function update_coefficients!(L::DiffusionOperator, u, p, t)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        Base.@nexprs $N i -> begin
+            update_coefficients!(L.ops[i], u, p, t)
+        end
 
-    mul!(du, p.K, u)
-
-    return nothing
+        nothing
+    end
 end
 
-function ssesolve_diffusion!(du, u, p, t)
-    @inbounds en = @view(p.K.coefficients[2:end-1])
+@generated function LinearAlgebra.mul!(v::AbstractVecOrMat, L::DiffusionOperator, u::AbstractVecOrMat)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        M = length(u)
+        S = size(v)
+        (S[1] == M && S[2] == $N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
+        Base.@nexprs $N i -> begin
+            mul!(@view(v[:, i]), L.ops[i], u)
+        end
+        v
+    end
+end
 
-    # du:(H,W). du_reshaped:(H*W,). 
-    # H:Hilbert space dimension, W: number of sc_ops
-    du_reshaped = reshape(du, :)
-    mul!(du_reshaped, p.D, u) #du[:,i] = D[i] * u
-
-    du .-= u .* reshape(en, 1, :) #du[:,i] -= en[i] * u
-
-    return nothing
+# TODO: Implement the three-argument dot function for SciMLOperators.jl
+# Currently, we are assuming a time-independent MatrixOperator
+function _ssesolve_update_coeff(u, p, t, op)
+    return real(dot(u, op.A, u)) #this is en/2: <Sn + Sn'>/2 = Re<Sn>
 end
 
 function _ssesolve_prob_func(prob, i, repeat)
@@ -37,27 +53,15 @@ function _ssesolve_prob_func(prob, i, repeat)
     traj_rng = typeof(global_rng)()
     seed!(traj_rng, seed)
 
-    noise = RealWienerProcess(
+    noise = RealWienerProcess!(
         prob.tspan[1],
-        zeros(length(internal_params.sc_ops)),
-        zeros(length(internal_params.sc_ops)),
+        zeros(internal_params.n_sc_ops),
+        zeros(internal_params.n_sc_ops),
         save_everystep = false,
         rng = traj_rng,
     )
 
-    # noise_rate_prototype = similar(prob.u0, length(prob.u0), length(internal_params.sc_ops))
-
-    prm = merge(
-        internal_params,
-        (
-            K = deepcopy(internal_params.K),
-            D = deepcopy(internal_params.D),
-            expvals = similar(internal_params.expvals),
-            progr = ProgressBar(size(internal_params.expvals, 2), enable = false),
-        ),
-    )
-
-    return remake(prob, p = prm, noise = noise, seed = seed)
+    return remake(prob, noise = noise, seed = seed)
 end
 
 # Standard output function
@@ -87,6 +91,11 @@ function _ssesolve_generate_statistics!(sol, i, states, expvals_all)
     copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
     return nothing
 end
+
+_ScalarOperator_e(op, f = +) = ScalarOperator(one(eltype(op)), (a, u, p, t) -> f(_ssesolve_update_coeff(u, p, t, op)))
+
+_ScalarOperator_e2_2(op, f = +) =
+    ScalarOperator(one(eltype(op)), (a, u, p, t) -> f(_ssesolve_update_coeff(u, p, t, op)^2 / 2))
 
 @doc raw"""
     ssesolveProblem(H::QuantumObject,
@@ -147,8 +156,8 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `prob`: The `SDEProblem` for the Stochastic Schrödinger time evolution of the system.
 """
 function ssesolveProblem(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
@@ -156,71 +165,68 @@ function ssesolveProblem(
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2}
-    check_dims(H, ψ0)
-
+) where {DT1,DT2}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     sc_ops isa Nothing &&
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
-    # !(H_t isa Nothing) && throw(ArgumentError("Time-dependent Hamiltonians are not currently supported in ssesolve."))
+    tlist = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for StochasticDiffEq.jl
 
-    t_l = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for StochasticDiffEq.jl
+    H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops)
+    isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
+    check_dims(H_eff_evo, ψ0)
+    dims = H_eff_evo.dims
 
-    ϕ0 = get_data(ψ0)
+    ψ0 = get_data(ψ0)
 
-    H_eff = get_data(H - T2(0.5im) * mapreduce(op -> op' * op, +, sc_ops))
-    sc_ops2 = get_data.(sc_ops)
-
-    coefficients = [1.0, fill(0.0, length(sc_ops) + 1)...]
-    operators = [-1im * H_eff, sc_ops2..., MT1(I(prod(H.dims)))]
-    K = OperatorSum(coefficients, operators)
-    _ssesolve_update_coefficients!(ϕ0, K.coefficients, sc_ops2)
-
-    D = reduce(vcat, sc_ops2)
+    progr = ProgressBar(length(tlist), enable = false)
 
     if e_ops isa Nothing
-        expvals = Array{ComplexF64}(undef, 0, length(t_l))
-        e_ops2 = MT1[]
+        expvals = Array{ComplexF64}(undef, 0, length(tlist))
+        e_ops_data = ()
         is_empty_e_ops = true
     else
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-        e_ops2 = get_data.(e_ops)
+        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
+        e_ops_data = get_data.(e_ops)
         is_empty_e_ops = isempty(e_ops)
     end
 
+    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops))
+
+    # Here the coefficients depend on the state, so this is a non-linear operator, which should be implemented with FunctionOperator instead. However, the nonlinearity is only on the coefficients, and it should be safe.
+    K_l = sum(
+        op -> _ScalarOperator_e(op, +) * op + _ScalarOperator_e2_2(op, -) * IdentityOperator(prod(dims)),
+        sc_ops_evo_data,
+    )
+
+    K = -1im * get_data(H_eff_evo) + K_l
+
+    D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(prod(dims)), sc_ops_evo_data)
+    D = DiffusionOperator(D_l)
+
     p = (
-        K = K,
-        D = D,
-        e_ops = e_ops2,
-        sc_ops = sc_ops2,
+        e_ops = e_ops_data,
         expvals = expvals,
-        Hdims = H.dims,
-        times = t_l,
+        progr = progr,
+        times = tlist,
+        Hdims = dims,
         is_empty_e_ops = is_empty_e_ops,
+        n_sc_ops = length(sc_ops),
         params...,
     )
 
-    saveat = is_empty_e_ops ? t_l : [t_l[end]]
+    saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_SDE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_sesolve_kwargs(e_ops, Val(false), t_l, kwargs2)
+    kwargs3 = _generate_sesolve_kwargs(e_ops, Val(false), tlist, kwargs2)
 
-    tspan = (t_l[1], t_l[end])
-    noise = RealWienerProcess(t_l[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false, rng = rng)
-    noise_rate_prototype = similar(ϕ0, length(ϕ0), length(sc_ops))
-    return SDEProblem{true}(
-        ssesolve_drift!,
-        ssesolve_diffusion!,
-        ϕ0,
-        tspan,
-        p;
-        noise_rate_prototype = noise_rate_prototype,
-        noise = noise,
-        kwargs3...,
-    )
+    tspan = (tlist[1], tlist[end])
+    noise =
+        RealWienerProcess!(tlist[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false, rng = rng)
+    noise_rate_prototype = similar(ψ0, length(ψ0), length(sc_ops))
+    return SDEProblem{true}(K, D, ψ0, tspan, p; noise_rate_prototype = noise_rate_prototype, noise = noise, kwargs3...)
 end
 
 @doc raw"""
@@ -290,8 +296,8 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `prob::EnsembleProblem with SDEProblem`: The Ensemble SDEProblem for the Stochastic Shrödinger time evolution.
 """
 function ssesolveEnsembleProblem(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
@@ -304,7 +310,7 @@ function ssesolveEnsembleProblem(
     output_func::Function = _ssesolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2}
+) where {DT1,DT2}
     progr = ProgressBar(ntraj, enable = getVal(progress_bar))
     if ensemble_method isa EnsembleDistributed
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
@@ -331,7 +337,9 @@ function ssesolveEnsembleProblem(
             kwargs...,
         )
 
-        ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = false)
+        # safetycopy is set to true because the K and D functions cannot be currently deepcopied.
+        # the memory overhead shouldn't be too large, compared to the safetycopy=false case.
+        ensemble_prob = EnsembleProblem(prob_sse, prob_func = prob_func, output_func = output_func, safetycopy = true)
 
         return ensemble_prob
     catch e
@@ -413,8 +421,8 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `sol::TimeEvolutionSSESol`: The solution of the time evolution. See also [`TimeEvolutionSSESol`](@ref)
 """
 function ssesolve(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
@@ -427,13 +435,7 @@ function ssesolve(
     output_func::Function = _ssesolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2}
-    progr = ProgressBar(ntraj, enable = getVal(progress_bar))
-    progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
-    @async while take!(progr_channel)
-        next!(progr)
-    end
-
+) where {DT1,DT2}
     ens_prob = ssesolveEnsembleProblem(
         H,
         ψ0,

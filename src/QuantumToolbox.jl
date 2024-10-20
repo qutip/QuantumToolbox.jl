@@ -34,13 +34,20 @@ import SciMLBase:
     DiscreteCallback
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
 import SciMLOperators:
-    AbstractSciMLOperator, MatrixOperator, ScalarOperator, cache_operator, update_coefficients!, concretize, isconstant
+    AbstractSciMLOperator,
+    MatrixOperator,
+    ScalarOperator,
+    IdentityOperator,
+    cache_operator,
+    update_coefficients!,
+    concretize,
+    isconstant
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
-import DiffEqNoiseProcess: RealWienerProcess
+import DiffEqNoiseProcess: RealWienerProcess!
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
