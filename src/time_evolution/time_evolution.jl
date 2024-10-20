@@ -1,4 +1,3 @@
-export TimeDependentOperatorSum
 export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionSSESol
 
 export liouvillian, liouvillian_floquet, liouvillian_generalized
@@ -165,45 +164,6 @@ end
 struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType end
 
 ContinuousLindbladJumpCallback(; interp_points::Int = 10) = ContinuousLindbladJumpCallback(interp_points)
-
-## Time-dependent sum of operators
-
-struct TimeDependentOperatorSum{CFT,OST<:OperatorSum}
-    coefficient_functions::CFT
-    operator_sum::OST
-end
-
-function TimeDependentOperatorSum(
-    coefficient_functions,
-    operators::Union{AbstractVector{<:QuantumObject},Tuple};
-    params = nothing,
-    init_time = 0.0,
-)
-    # promote the type of the coefficients and the operators. Remember that the coefficient_functions si a vector of functions and the operators is a vector of QuantumObjects
-    coefficients = [f(init_time, params) for f in coefficient_functions]
-    operator_sum = OperatorSum(coefficients, operators)
-    return TimeDependentOperatorSum(coefficient_functions, operator_sum)
-end
-
-Base.size(A::TimeDependentOperatorSum) = size(A.operator_sum)
-Base.size(A::TimeDependentOperatorSum, inds...) = size(A.operator_sum, inds...)
-Base.length(A::TimeDependentOperatorSum) = length(A.operator_sum)
-
-function op_sum_update_coefficients!(A::TimeDependentOperatorSum, t, params)
-    @inbounds @simd for i in 1:length(A.coefficient_functions)
-        A.operator_sum.coefficients[i] = A.coefficient_functions[i](t, params)
-    end
-end
-
-(A::TimeDependentOperatorSum)(t, params) = (op_sum_update_coefficients!(A, t, params); A)
-
-@inline function LinearAlgebra.mul!(y::AbstractVector, A::TimeDependentOperatorSum, x::AbstractVector, α, β)
-    return mul!(y, A.operator_sum, x, α, β)
-end
-
-function liouvillian(A::TimeDependentOperatorSum, Id_cache = I(prod(A.operator_sum.operators[1].dims)))
-    return TimeDependentOperatorSum(A.coefficient_functions, liouvillian(A.operator_sum, Id_cache))
-end
 
 #######################################
 

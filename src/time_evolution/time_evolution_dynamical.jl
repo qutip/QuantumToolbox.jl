@@ -139,7 +139,7 @@ end
 function dfd_mesolveProblem(
     H::Function,
     ψ0::QuantumObject{DT1,StateOpType},
-    t_l::AbstractVector,
+    tlist::AbstractVector,
     c_ops::Function,
     maxdims::Vector{T2},
     dfd_params::NamedTuple = NamedTuple();
@@ -188,12 +188,12 @@ function dfd_mesolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb_dfd, kwargs2.callback),)) :
         merge(kwargs2, (callback = cb_dfd,))
 
-    return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, params = params2, kwargs2...)
+    return mesolveProblem(H₀, ψ0, tlist, c_ops₀; e_ops = e_ops₀, alg = alg, params = params2, kwargs2...)
 end
 
 @doc raw"""
     dfd_mesolve(H::Function, ψ0::QuantumObject,
-        t_l::AbstractVector, c_ops::Function, maxdims::AbstractVector,
+        tlist::AbstractVector, c_ops::Function, maxdims::AbstractVector,
         dfd_params::NamedTuple=NamedTuple();
         alg::OrdinaryDiffEqAlgorithm=Tsit5(),
         e_ops::Function=(dim_list) -> Vector{Vector{T1}}([]),
@@ -210,7 +210,7 @@ Time evolution of an open quantum system using master equation, dynamically chan
 function dfd_mesolve(
     H::Function,
     ψ0::QuantumObject{<:AbstractArray{T1},StateOpType},
-    t_l::AbstractVector,
+    tlist::AbstractVector,
     c_ops::Function,
     maxdims::Vector{T2},
     dfd_params::NamedTuple = NamedTuple();
@@ -223,7 +223,7 @@ function dfd_mesolve(
     dfd_prob = dfd_mesolveProblem(
         H,
         ψ0,
-        t_l,
+        tlist,
         c_ops,
         maxdims,
         dfd_params;
@@ -277,7 +277,7 @@ end
 
 function _DSF_mesolve_Affect!(integrator)
     internal_params = integrator.p
-    op_l = internal_params.op_l
+    op_list = internal_params.op_list
     op_l_vec = internal_params.op_l_vec
     αt_list = internal_params.αt_list
     δα_list = internal_params.δα_list
@@ -291,11 +291,10 @@ function _DSF_mesolve_Affect!(integrator)
     dsf_identity = internal_params.dsf_identity
     dsf_displace_cache_full = internal_params.dsf_displace_cache_full
 
-    op_l_length = length(op_l)
-    fill!(dsf_displace_cache_full.coefficients, 0)
+    op_l_length = length(op_list)
 
-    for i in eachindex(op_l)
-        # op = op_l[i]
+    for i in eachindex(op_list)
+        # op = op_list[i]
         op_vec = op_l_vec[i]
         αt = αt_list[i]
         δα = δα_list[i]
@@ -316,12 +315,17 @@ function _DSF_mesolve_Affect!(integrator)
             # arnoldi!(expv_cache, Aᵢ, dsf_cache)
             # expv!(integrator.u, expv_cache, one(αt), dsf_cache)
 
-            dsf_displace_cache_full.coefficients[i] = Δα
-            dsf_displace_cache_full.coefficients[i+op_l_length] = -conj(Δα)
-            dsf_displace_cache_full.coefficients[i+2*op_l_length] = conj(Δα)
-            dsf_displace_cache_full.coefficients[i+3*op_l_length] = -Δα
+            dsf_displace_cache_full.ops[i].λ.val = Δα
+            dsf_displace_cache_full.ops[i+op_l_length].λ.val = -conj(Δα)
+            dsf_displace_cache_full.ops[i+2*op_l_length].λ.val = conj(Δα)
+            dsf_displace_cache_full.ops[i+3*op_l_length].λ.val = -Δα
 
             αt_list[i] += Δα
+        else
+            dsf_displace_cache_full.ops[i].λ.val = 0
+            dsf_displace_cache_full.ops[i+op_l_length].λ.val = 0
+            dsf_displace_cache_full.ops[i+2*op_l_length].λ.val = 0
+            dsf_displace_cache_full.ops[i+3*op_l_length].λ.val = 0
         end
     end
 
@@ -329,7 +333,7 @@ function _DSF_mesolve_Affect!(integrator)
     arnoldi!(expv_cache, dsf_displace_cache_full, dsf_cache)
     expv!(integrator.u, expv_cache, 1, dsf_cache)
 
-    op_l2 = op_l .+ αt_list
+    op_l2 = op_list .+ αt_list
     e_ops2 = e_ops(op_l2, dsf_params)
     _mat2vec_data = op -> mat2vec(get_data(op)')
     @. e_ops_vec = _mat2vec_data(e_ops2)
@@ -340,42 +344,37 @@ end
 
 function dsf_mesolveProblem(
     H::Function,
-    ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
-    t_l::AbstractVector,
+    ψ0::QuantumObject{<:AbstractVector{T},StateOpType},
+    tlist::AbstractVector,
     c_ops::Function,
-    op_list::Vector{TOl},
+    op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Function = (op_list, p) -> Vector{TOl}([]),
+    e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
-) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},TOl}
-    op_l = op_list
-    H₀ = H(op_l .+ α0_l, dsf_params)
-    c_ops₀ = c_ops(op_l .+ α0_l, dsf_params)
-    e_ops₀ = e_ops(op_l .+ α0_l, dsf_params)
+) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    op_list = deepcopy(op_list)
+    H₀ = H(op_list .+ α0_l, dsf_params)
+    c_ops₀ = c_ops(op_list .+ α0_l, dsf_params)
+    e_ops₀ = e_ops(op_list .+ α0_l, dsf_params)
 
     αt_list = convert(Vector{T}, α0_l)
-    op_l_vec = map(op -> mat2vec(get_data(op)'), op_l)
+    op_l_vec = map(op -> mat2vec(get_data(op)'), op_list)
     # Create the Krylov subspace with kron(H₀.data, H₀.data) just for initialize
     expv_cache = arnoldi(kron(H₀.data, H₀.data), mat2vec(ket2dm(ψ0).data), krylov_dim)
     dsf_identity = I(prod(H₀.dims))
-    dsf_displace_cache_left = map(op -> Qobj(kron(op.data, dsf_identity)), op_l)
-    dsf_displace_cache_left_dag = map(op -> Qobj(kron(sparse(op.data'), dsf_identity)), op_l)
-    dsf_displace_cache_right = map(op -> Qobj(kron(dsf_identity, op.data)), op_l)
-    dsf_displace_cache_right_dag = map(op -> Qobj(kron(dsf_identity, sparse(op.data'))), op_l)
-    dsf_displace_cache_full = OperatorSum(
-        zeros(length(op_l) * 4),
-        vcat(
-            dsf_displace_cache_left,
-            dsf_displace_cache_left_dag,
-            dsf_displace_cache_right,
-            dsf_displace_cache_right_dag,
-        ),
-    )
+    dsf_displace_cache_left = sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(op.data, dsf_identity)), op_list)
+    dsf_displace_cache_left_dag =
+        sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(sparse(op.data'), dsf_identity)), op_list)
+    dsf_displace_cache_right = sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(dsf_identity, op.data)), op_list)
+    dsf_displace_cache_right_dag =
+        sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(dsf_identity, sparse(op.data'))), op_list)
+    dsf_displace_cache_full =
+        dsf_displace_cache_left + dsf_displace_cache_left_dag + dsf_displace_cache_right + dsf_displace_cache_right_dag
 
     params2 = params
     params2 = merge(
@@ -384,7 +383,7 @@ function dsf_mesolveProblem(
             H_fun = H,
             c_ops_fun = c_ops,
             e_ops_fun = e_ops,
-            op_l = op_l,
+            op_list = op_list,
             op_l_vec = op_l_vec,
             αt_list = αt_list,
             δα_list = δα_list,
@@ -402,13 +401,13 @@ function dsf_mesolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb_dsf, kwargs2.callback),)) :
         merge(kwargs2, (callback = cb_dsf,))
 
-    return mesolveProblem(H₀, ψ0, t_l, c_ops₀; e_ops = e_ops₀, alg = alg, params = params2, kwargs2...)
+    return mesolveProblem(H₀, ψ0, tlist, c_ops₀; e_ops = e_ops₀, alg = alg, params = params2, kwargs2...)
 end
 
 @doc raw"""
     dsf_mesolve(H::Function,
         ψ0::QuantumObject,
-        t_l::AbstractVector, c_ops::Function,
+        tlist::AbstractVector, c_ops::Function,
         op_list::Vector{TOl},
         α0_l::Vector{<:Number}=zeros(length(op_list)),
         dsf_params::NamedTuple=NamedTuple();
@@ -427,23 +426,23 @@ Time evolution of an open quantum system using master equation and the Dynamical
 """
 function dsf_mesolve(
     H::Function,
-    ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
-    t_l::AbstractVector,
+    ψ0::QuantumObject{<:AbstractVector{T},StateOpType},
+    tlist::AbstractVector,
     c_ops::Function,
-    op_list::Vector{TOl},
+    op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Function = (op_list, p) -> Vector{TOl}([]),
+    e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
-) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},TOl}
+) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     dsf_prob = dsf_mesolveProblem(
         H,
         ψ0,
-        t_l,
+        tlist,
         c_ops,
         op_list,
         α0_l,
@@ -461,23 +460,23 @@ end
 
 function dsf_mesolve(
     H::Function,
-    ψ0::QuantumObject{<:AbstractArray{T},StateOpType},
-    t_l::AbstractVector,
-    op_list::Vector{TOl},
+    ψ0::QuantumObject{<:AbstractVector{T},StateOpType},
+    tlist::AbstractVector,
+    op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Function = (op_list, p) -> Vector{TOl}([]),
+    e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
-) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},TOl}
-    c_ops = op_list -> Vector{TOl}([])
+) where {T,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    c_ops = op_list -> ()
     return dsf_mesolve(
         H,
         ψ0,
-        t_l,
+        tlist,
         c_ops,
         op_list,
         α0_l,
@@ -495,14 +494,14 @@ end
 
 function _DSF_mcsolve_Condition(u, t, integrator)
     internal_params = integrator.p
-    op_l = internal_params.op_l
+    op_list = internal_params.op_list
     δα_list = internal_params.δα_list
 
     ψt = u
 
     condition = false
-    @inbounds for i in eachindex(op_l)
-        op = op_l[i]
+    @inbounds for i in eachindex(op_list)
+        op = op_list[i]
         δα = δα_list[i]
         Δα = dot(ψt, op.data, ψt) / dot(ψt, ψt)
         if δα < abs(Δα)
@@ -514,7 +513,7 @@ end
 
 function _DSF_mcsolve_Affect!(integrator)
     internal_params = integrator.p
-    op_l = internal_params.op_l
+    op_list = internal_params.op_list
     αt_list = internal_params.αt_list
     δα_list = internal_params.δα_list
     H = internal_params.H_fun
@@ -531,11 +530,10 @@ function _DSF_mcsolve_Affect!(integrator)
     copyto!(ψt, integrator.u)
     normalize!(ψt)
 
-    op_l_length = length(op_l)
-    fill!(dsf_displace_cache_full.coefficients, 0)
+    op_l_length = length(op_list)
 
-    for i in eachindex(op_l)
-        op = op_l[i]
+    for i in eachindex(op_list)
+        op = op_list[i]
         αt = αt_list[i]
         δα = δα_list[i]
         Δα = dot(ψt, op.data, ψt)
@@ -550,10 +548,13 @@ function _DSF_mcsolve_Affect!(integrator)
             # arnoldi!(expv_cache, Aᵢ, dsf_cache)
             # expv!(integrator.u, expv_cache, one(αt), dsf_cache)
 
-            dsf_displace_cache_full.coefficients[i] = conj(Δα)
-            dsf_displace_cache_full.coefficients[i+op_l_length] = -Δα
+            dsf_displace_cache_full.ops[i].λ.val = conj(Δα)
+            dsf_displace_cache_full.ops[i+op_l_length].λ.val = -Δα
 
             αt_list[i] += Δα
+        else
+            dsf_displace_cache_full.ops[i].λ.val = 0
+            dsf_displace_cache_full.ops[i+op_l_length].λ.val = 0
         end
     end
 
@@ -561,7 +562,7 @@ function _DSF_mcsolve_Affect!(integrator)
     arnoldi!(expv_cache, dsf_displace_cache_full, dsf_cache)
     expv!(integrator.u, expv_cache, 1, dsf_cache)
 
-    op_l2 = op_l .+ αt_list
+    op_l2 = op_list .+ αt_list
     e_ops2 = e_ops(op_l2, dsf_params)
     c_ops2 = c_ops(op_l2, dsf_params)
     @. e_ops0 = get_data(e_ops2)
@@ -578,8 +579,8 @@ function _dsf_mcsolve_prob_func(prob, i, repeat)
     prm = merge(
         internal_params,
         (
-            e_ops_mc = copy(internal_params.e_ops_mc),
-            c_ops = copy(internal_params.c_ops),
+            e_ops_mc = deepcopy(internal_params.e_ops_mc),
+            c_ops = deepcopy(internal_params.c_ops),
             expvals = similar(internal_params.expvals),
             cache_mc = similar(internal_params.cache_mc),
             weights_mc = similar(internal_params.weights_mc),
@@ -593,10 +594,7 @@ function _dsf_mcsolve_prob_func(prob, i, repeat)
             dsf_cache1 = similar(internal_params.dsf_cache1),
             dsf_cache2 = similar(internal_params.dsf_cache2),
             expv_cache = copy(internal_params.expv_cache),
-            dsf_displace_cache_full = OperatorSum(
-                copy(internal_params.dsf_displace_cache_full.coefficients),
-                internal_params.dsf_displace_cache_full.operators,
-            ),
+            dsf_displace_cache_full = deepcopy(internal_params.dsf_displace_cache_full), # This brutally copies also the MatrixOperators, and it is inefficient.
         ),
     )
 
@@ -607,14 +605,14 @@ end
 
 function dsf_mcsolveEnsembleProblem(
     H::Function,
-    ψ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
-    t_l::AbstractVector,
+    ψ0::QuantumObject{<:AbstractVector{T},KetQuantumObject},
+    tlist::AbstractVector,
     c_ops::Function,
-    op_list::Vector{TOl},
+    op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Function = (op_list, p) -> Vector{TOl}([]),
+    e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
@@ -623,18 +621,18 @@ function dsf_mcsolveEnsembleProblem(
     krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
     progress_bar::Union{Bool,Val} = Val(true),
     kwargs...,
-) where {T,TOl,TJC<:LindbladJumpCallbackType}
-    op_l = op_list
-    H₀ = H(op_l .+ α0_l, dsf_params)
-    c_ops₀ = c_ops(op_l .+ α0_l, dsf_params)
-    e_ops₀ = e_ops(op_l .+ α0_l, dsf_params)
+) where {T,TJC<:LindbladJumpCallbackType}
+    op_list = deepcopy(op_list)
+    H₀ = H(op_list .+ α0_l, dsf_params)
+    c_ops₀ = c_ops(op_list .+ α0_l, dsf_params)
+    e_ops₀ = e_ops(op_list .+ α0_l, dsf_params)
 
     αt_list = convert(Vector{T}, α0_l)
     expv_cache = arnoldi(H₀.data, ψ0.data, krylov_dim)
 
-    dsf_displace_cache = map(op -> Qobj(op.data), op_l)
-    dsf_displace_cache_dag = map(op -> Qobj(sparse(op.data')), op_l)
-    dsf_displace_cache_full = OperatorSum(zeros(length(op_l) * 2), vcat(dsf_displace_cache, dsf_displace_cache_dag))
+    dsf_displace_cache = sum(op -> ScalarOperator(one(T)) * MatrixOperator(op.data), op_list)
+    dsf_displace_cache_dag = sum(op -> ScalarOperator(one(T)) * MatrixOperator(sparse(op.data')), op_list)
+    dsf_displace_cache_full = dsf_displace_cache + dsf_displace_cache_dag
 
     params2 = merge(
         params,
@@ -642,7 +640,7 @@ function dsf_mcsolveEnsembleProblem(
             H_fun = H,
             c_ops_fun = c_ops,
             e_ops_fun = e_ops,
-            op_l = op_l,
+            op_list = op_list,
             αt_list = αt_list,
             δα_list = δα_list,
             dsf_cache1 = similar(ψ0.data),
@@ -662,7 +660,7 @@ function dsf_mcsolveEnsembleProblem(
     return mcsolveEnsembleProblem(
         H₀,
         ψ0,
-        t_l,
+        tlist,
         c_ops₀;
         e_ops = e_ops₀,
         alg = alg,
@@ -679,7 +677,7 @@ end
 @doc raw"""
     dsf_mcsolve(H::Function,
         ψ0::QuantumObject,
-        t_l::AbstractVector, c_ops::Function,
+        tlist::AbstractVector, c_ops::Function,
         op_list::Vector{TOl},
         α0_l::Vector{<:Number}=zeros(length(op_list)),
         dsf_params::NamedTuple=NamedTuple();
@@ -702,14 +700,14 @@ Time evolution of a quantum system using the Monte Carlo wave function method an
 """
 function dsf_mcsolve(
     H::Function,
-    ψ0::QuantumObject{<:AbstractArray{T},KetQuantumObject},
-    t_l::AbstractVector,
+    ψ0::QuantumObject{<:AbstractVector{T},KetQuantumObject},
+    tlist::AbstractVector,
     c_ops::Function,
-    op_list::Vector{TOl},
+    op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    e_ops::Function = (op_list, p) -> Vector{TOl}([]),
+    e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     ntraj::Int = 1,
@@ -718,11 +716,11 @@ function dsf_mcsolve(
     krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
     progress_bar::Union{Bool,Val} = Val(true),
     kwargs...,
-) where {T,TOl,TJC<:LindbladJumpCallbackType}
+) where {T,TJC<:LindbladJumpCallbackType}
     ens_prob_mc = dsf_mcsolveEnsembleProblem(
         H,
         ψ0,
-        t_l,
+        tlist,
         c_ops,
         op_list,
         α0_l,
