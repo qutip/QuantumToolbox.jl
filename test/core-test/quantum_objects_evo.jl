@@ -1,17 +1,24 @@
 @testset "Quantum Objects Evolution" verbose = true begin
     # DomainError: incompatible between size of array and type
-    @testset "DomainError" begin
+    @testset "Thrown Errors" begin
         a = MatrixOperator(rand(ComplexF64, 3, 2))
         for t in [Operator, SuperOperator]
             @test_throws DomainError QobjEvo(a, type = t)
         end
-    end
 
-    @testset "ArgumentErro" begin
         a = MatrixOperator(rand(ComplexF64, 3, 2))
         for t in (Ket, Bra, OperatorKet, OperatorBra)
             @test_throws ArgumentError QobjEvo(a, type = t)
         end
+
+        a = QobjEvo(destroy(20))
+        @test_throws ArgumentError QobjEvo(a, type = SuperOperator)
+
+        a = MatrixOperator(rand(ComplexF64, 5, 5))
+        @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator)
+
+        ψ = fock(10, 3)
+        @test_throws TypeError QobjEvo(ψ)
     end
 
     # unsupported type of dims
@@ -47,6 +54,15 @@
         @test_throws DimensionMismatch QobjEvo(a, dims = 2)
     end
 
+    @testset "Promote Operators Type" begin
+        a = destroy(20)
+        A = QobjEvo(a)
+        @test QuantumToolbox.promote_op_type(a, A) == QuantumObjectEvolution
+        @test QuantumToolbox.promote_op_type(A, a) == QuantumObjectEvolution
+        @test QuantumToolbox.promote_op_type(A, A) == QuantumObjectEvolution
+        @test QuantumToolbox.promote_op_type(a, a) == QuantumObject
+    end
+
     @testset "arithmetic" begin
         a = MatrixOperator(sprand(ComplexF64, 100, 100, 0.1))
         a2 = QobjEvo(a)
@@ -65,7 +81,7 @@
         @test adjoint(a2).data == adjoint(a2.data)
 
         N = 10
-        a = QobjEvo(destroy(N))
+        a = QobjEvo(destroy(N), Operator, N)
         a_d = a'
         X = a + a_d
         # Y = 1im * (a - a_d) # Currently doesn't work. Fix in SciMLOperators.jl
@@ -148,5 +164,16 @@
         @test_throws MethodError QobjEvo([[a, coef1], a' * a, [a', coef2]])
 
         op1 = QobjEvo(((a, coef1), a' * a, (a', coef2)))
+        op1 = QobjEvo(((a, coef1), a' * a, (a', coef2)))
+
+        p = (ω1 = 1, ω2 = 2)
+        @test op1(p, 0.1) ≈ coef1(p, 0.1) * a + a' * a + coef2(p, 0.1) * a'
+
+        ψ = fock(N, 1)
+        @test op1(ψ, p, 0.1) ≈ (coef1(p, 0.1) * a + a' * a + coef2(p, 0.1) * a') * ψ
+
+        @test iscontant(a) == true
+        @test iscontant(op1) == false
+        @test isconstant(Qobj(a)) == true
     end
 end

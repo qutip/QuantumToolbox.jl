@@ -175,7 +175,7 @@ function ssesolveProblem(
     check_dims(H_eff_evo, ψ0)
     dims = H_eff_evo.dims
 
-    ψ0 = get_data(ψ0)
+    ψ0 = sparse_to_dense(_CType(ψ0), get_data(ψ0))
 
     progr = ProgressBar(length(tlist), enable = false)
 

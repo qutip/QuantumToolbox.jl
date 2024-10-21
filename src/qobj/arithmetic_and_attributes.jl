@@ -38,7 +38,7 @@ for op in (:(+), :(-), :(*))
     @eval begin
         function LinearAlgebra.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
             check_dims(A, B)
-            QType = promote_type(A, B)
+            QType = promote_op_type(A, B)
             return QType($(op)(A.data, B.data), A.type, A.dims)
         end
         LinearAlgebra.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dims)

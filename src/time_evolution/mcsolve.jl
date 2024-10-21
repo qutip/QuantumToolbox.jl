@@ -81,7 +81,9 @@ function _mcsolve_prob_func(prob, i, repeat)
         ),
     )
 
-    return remake(prob, p = prm)
+    f = deepcopy(prob.f.f)
+
+    return remake(prob, f = f, p = prm)
 end
 
 # Standard output function

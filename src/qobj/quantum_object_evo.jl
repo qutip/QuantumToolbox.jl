@@ -42,7 +42,7 @@ coef1 (generic function with 1 method)
 julia> coef2(p, t) = sin(t)
 coef2 (generic function with 1 method)
 
-julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
+julia> op1 = QuantumObjectEvolution(((a, coef1), (σm, coef2)))
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 ```
@@ -67,7 +67,7 @@ coef1 (generic function with 1 method)
 julia> coef2(p, t) = sin(p.ω2 * t)
 coef2 (generic function with 1 method)
 
-julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
+julia> op1 = QuantumObjectEvolution(((a, coef1), (σm, coef2)))
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
@@ -270,15 +270,149 @@ function _make_SciMLOperator(op::QuantumObject, α; f::Function = identity)
     return MatrixOperator(α * f(op.data))
 end
 
-function (QO::QuantumObjectEvolution)(p, t)
-    # We put 0 in the place of `u` because the time-dependence doesn't depend on the state
-    update_coefficients!(QO.data, 0, p, t)
-    return QuantumObject(concretize(QO.data), QO.type, QO.dims)
+@doc raw"""
+    (A::QuantumObjectEvolution)(ψout, ψin, p, t)
+
+Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the input state `ψin` at time `t` with parameters `p`. The output state is stored in `ψout`. This function mimics the behavior of a `AbstractSciMLOperator` object.
+
+# Arguments
+- `ψout::QuantumObject`: The output state. It must have the same type as `ψin`.
+- `ψin::QuantumObject`: The input state. It must be either a [`KetQuantumObject`](@ref) or a [`OperatorKetQuantumObject`](@ref).
+- `p`: The parameters of the time-dependent coefficients.
+- `t`: The time at which the coefficients are evaluated.
+
+# Returns
+- `ψout::QuantumObject`: The output state.
+
+# Examples
+```
+julia> a = destroy(20)
+Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
+⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
+⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢⎦
+
+julia> coef1(p, t) = sin(t)
+coef1 (generic function with 1 method)
+
+julia> coef2(p, t) = cos(t)
+coef2 (generic function with 1 method)
+
+julia> A = QobjEvo(((a, coef1), (a', coef2)))
+Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=true
+(ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
+
+julia> ψ1 = fock(20, 3)
+Quantum Object:   type=Ket   dims=[20]   size=(20,)
+20-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 1.0 + 0.0im
+ 0.0 + 0.0im
+     ⋮
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+
+julia> ψ2 = zero_ket(20)
+Quantum Object:   type=Ket   dims=[20]   size=(20,)
+20-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+     ⋮
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+
+julia> A(ψ2, ψ1, nothing, 0.1)
+20-element Vector{ComplexF64}:
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 0.1729165499254989 + 0.0im
+                0.0 + 0.0im
+ 1.9900083305560516 + 0.0im
+                    ⋮
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+```
+"""
+function (A::QuantumObjectEvolution)(
+    ψout::QuantumObject{DT1,QobjType},
+    ψin::QuantumObject{DT2,QobjType},
+    p,
+    t,
+) where {DT1,DT2,QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+    check_dims(ψout, ψin)
+    check_dims(ψout, A)
+
+    if isoper(A) && isoperket(ψin)
+        throw(
+            ArgumentError(
+                "The input state must be a KetQuantumObject if the QuantumObjectEvolution object is an Operator.",
+            ),
+        )
+    elseif issuper(A) && isket(ψin)
+        throw(
+            ArgumentError(
+                "The input state must be an OperatorKetQuantumObject if the QuantumObjectEvolution object is a SuperOperator.",
+            ),
+        )
+    end
+
+    A.data(ψout.data, ψin.data, p, t)
+
+    return ψout
 end
 
-(QO::QuantumObjectEvolution)(t) = QO((), t)
+@doc raw"""
+    (A::QuantumObjectEvolution)(ψ, p, t)
 
-Base.promote_type(A::QuantumObjectEvolution, B::QuantumObjectEvolution) = get_typename_wrapper(A)
-Base.promote_type(A::QuantumObjectEvolution, B::QuantumObject) = get_typename_wrapper(A)
-Base.promote_type(A::QuantumObject, B::QuantumObjectEvolution) = get_typename_wrapper(B)
-Base.promote_type(A::QuantumObject, B::QuantumObject) = get_typename_wrapper(A)
+Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the input state `ψ` at time `t` with parameters `p`. Out-of-place version of [`(A::QuantumObjectEvolution)(ψout, ψin, p, t)`](@ref). The output state is stored in a new [`QuantumObject`](@ref) object. This function mimics the behavior of a `AbstractSciMLOperator` object.
+"""
+function (A::QuantumObjectEvolution)(
+    ψ::QuantumObject{DT,QobjType},
+    p,
+    t,
+) where {DT,QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+    ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dims)
+    return A(ψout, ψ, p, t)
+end
+
+@doc raw"""
+    (A::QuantumObjectEvolution)(p, t)
+
+Calculate the time-dependent [`QuantumObjectEvolution`](@ref) object `A` at time `t` with parameters `p`.
+
+# Arguments
+- `p`: The parameters of the time-dependent coefficients.
+- `t`: The time at which the coefficients are evaluated.
+
+# Returns
+- `A::QuantumObject`: The output state.
+"""
+function (A::QuantumObjectEvolution)(p, t)
+    # We put 0 in the place of `u` because the time-dependence doesn't depend on the state
+    update_coefficients!(A.data, 0, p, t)
+    return QuantumObject(concretize(A.data), A.type, A.dims)
+end
+
+(A::QuantumObjectEvolution)(t) = A(nothing, t)
+
+#=
+`promote_type` should be applied on types. Here I define `promote_op_type` because it is applied to operators.
+=#
+promote_op_type(A::QuantumObjectEvolution, B::QuantumObjectEvolution) = get_typename_wrapper(A)
+promote_op_type(A::QuantumObjectEvolution, B::QuantumObject) = get_typename_wrapper(A)
+promote_op_type(A::QuantumObject, B::QuantumObjectEvolution) = get_typename_wrapper(B)
+promote_op_type(A::QuantumObject, B::QuantumObject) = get_typename_wrapper(A)
