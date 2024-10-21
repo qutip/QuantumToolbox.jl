@@ -20,7 +20,7 @@ Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
 @doc raw"""
     QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing, f::Function=identity)
 
-Generate [`QuantumObjectEvolution`](@ref)
+Generate [`QuantumObjectEvolution`](@ref).
 
 Note that this functions is same as `QuantumObjectEvolution(op_func_list)`. If `α` is provided, all the operators in `op_func_list` will be pre-multiplied by `α`. The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`. The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators.
 
@@ -99,7 +99,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ⎢⠀⠀⠀⠀⠂⡑⢄⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠂⡑⢄⠀⎥
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡑⎦
-````
+```
 """
 QobjEvo(
     op_func_list::Union{Tuple,AbstractQuantumObject},

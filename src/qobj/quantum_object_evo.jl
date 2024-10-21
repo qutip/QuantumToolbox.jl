@@ -13,7 +13,7 @@ Julia struct representing any time-dependent quantum object. The `data` field is
 \hat{O}(t) = \sum_{i} c_i(p, t) \hat{O}_i
 ```
 
-where `c_i(p, t)` is a function that depends on the parameters `p` and time `t`, and `\hat{O}_i` are the operators that form the quantum object. The `type` field is the type of the quantum object, and the `dims` field is the dimensions of the quantum object. For more information about `type` and `dims`, see [`QuantumObject`](@ref). For more information about `AbstractSciMLOperator`, see the [SciML](https://docs.sciml.ai/SciMLOperators/stable/) documentation.
+where ``c_i(p, t)`` is a function that depends on the parameters `p` and time `t`, and ``\hat{O}_i`` are the operators that form the quantum object. The `type` field is the type of the quantum object, and the `dims` field is the dimensions of the quantum object. For more information about `type` and `dims`, see [`QuantumObject`](@ref). For more information about `AbstractSciMLOperator`, see the [SciML](https://docs.sciml.ai/SciMLOperators/stable/) documentation.
 
 # Examples
 This operator can be initialized in the same way as the QuTiP `QobjEvo` object. For example
@@ -82,7 +82,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ⎢⠀⠀⠀⠀⠂⡑⢄⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠂⡑⢄⠀⎥
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡑⎦
-````
+```
 """
 struct QuantumObjectEvolution{
     DT<:AbstractSciMLOperator,

@@ -323,33 +323,34 @@ function eigsolve(
 end
 
 @doc raw"""
-    eigsolve_al(H::QuantumObject,
-        T::Real, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        H_t::Union{Nothing,Function}=nothing,
-        params::NamedTuple=NamedTuple(),
-        ρ0::Union{Nothing, AbstractMatrix} = nothing,
-        k::Int=1,
-        krylovdim::Int=min(10, size(H, 1)),
-        maxiter::Int=200,
-        eigstol::Real=1e-6,
-        kwargs...)
+    eigsolve_al(
+        H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
+        T::Real,
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        params::NamedTuple = NamedTuple(),
+        ρ0::AbstractMatrix = rand_dm(prod(H.dims)).data,
+        k::Int = 1,
+        krylovdim::Int = min(10, size(H, 1)),
+        maxiter::Int = 200,
+        eigstol::Real = 1e-6,
+        kwargs...,
+    )
 
 Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnoldi-Lindblad method.
 
 # Arguments
-- `H`: The Hamiltonian (or directly the Liouvillian) of the system.
-- `T`: The time at which to evaluate the time evolution
+- `H`: The Hamiltonian (or directly the Liouvillian) of the system. It can be a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a tuple of the form supported by [`mesolve`](@ref).
+- `T`: The time at which to evaluate the time evolution.
 - `c_ops`: A vector of collapse operators. Default is `nothing` meaning the system is closed.
-- `alg`: The differential equation solver algorithm
-- `H_t`: A function `H_t(t)` that returns the additional term at time `t`
-- `params`: A dictionary of additional parameters
-- `ρ0`: The initial density matrix. If not specified, a random density matrix is used
-- `k`: The number of eigenvalues to compute
-- `krylovdim`: The dimension of the Krylov subspace
-- `maxiter`: The maximum number of iterations for the eigsolver
-- `eigstol`: The tolerance for the eigsolver
-- `kwargs`: Additional keyword arguments passed to the differential equation solver
+- `alg`: The differential equation solver algorithm. Default is `Tsit5()`.
+- `params`: A `NamedTuple` containing the parameters of the system.
+- `ρ0`: The initial density matrix. If not specified, a random density matrix is used.
+- `k`: The number of eigenvalues to compute.
+- `krylovdim`: The dimension of the Krylov subspace.
+- `maxiter`: The maximum number of iterations for the eigsolver.
+- `eigstol`: The tolerance for the eigsolver.
+- `kwargs`: Additional keyword arguments passed to the differential equation solver.
 
 # Notes
 - For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)

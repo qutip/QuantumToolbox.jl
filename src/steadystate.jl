@@ -65,26 +65,26 @@ end
 
 @doc raw"""
     steadystate(
-        H::QuantumObject,
+        H::QuantumObject{DT,OpType},
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         solver::SteadyStateSolver = SteadyStateDirectSolver(),
-        kwargs...
+        kwargs...,
     )
 
 Solve the stationary state based on different solvers.
 
 # Parameters
-- `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
-- `c_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the collapse operators.
-- `solver::SteadyStateSolver=SteadyStateDirectSolver()`: see documentation [Solving for Steady-State Solutions](@ref doc:Solving-for-Steady-State-Solutions) for different solvers.
-- `kwargs...`: The keyword arguments for the solver.
+- `H`: The Hamiltonian or the Liouvillian of the system.
+- `c_ops`: The list of the collapse operators.
+- `solver`: see documentation [Solving for Steady-State Solutions](@ref doc:Solving-for-Steady-State-Solutions) for different solvers.
+- `kwargs`: The keyword arguments for the solver.
 """
 function steadystate(
-    H::QuantumObject{<:AbstractArray,OpType},
+    H::QuantumObject{DT,OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, c_ops)
 
     return _steadystate(L, solver; kwargs...)
@@ -185,14 +185,14 @@ _steadystate(
 
 @doc raw"""
     steadystate(
-        H::QuantumObject,
-        ψ0::QuantumObject,
+        H::QuantumObject{DT1,HOpType},
+        ψ0::QuantumObject{DT2,StateOpType},
         tmax::Real = Inf,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         solver::SteadyStateODESolver = SteadyStateODESolver(),
         reltol::Real = 1.0e-8,
         abstol::Real = 1.0e-10,
-        kwargs...
+        kwargs...,
     )
 
 Solve the stationary state based on time evolution (ordinary differential equations; `OrdinaryDiffEq.jl`) with a given initial state.
@@ -210,14 +210,14 @@ or
 ```
 
 # Parameters
-- `H::QuantumObject`: The Hamiltonian or the Liouvillian of the system.
-- `ψ0::QuantumObject`: The initial state of the system.
-- `tmax::Real=Inf`: The final time step for the steady state problem.
-- `c_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the collapse operators.
-- `solver::SteadyStateODESolver=SteadyStateODESolver()`: see [`SteadyStateODESolver`](@ref) for more details.
-- `reltol::Real=1.0e-8`: Relative tolerance in steady state terminate condition and solver adaptive timestepping.
-- `abstol::Real=1.0e-10`: Absolute tolerance in steady state terminate condition and solver adaptive timestepping.
-- `kwargs...`: The keyword arguments for the ODEProblem.
+- `H`: The Hamiltonian or the Liouvillian of the system.
+- `ψ0`: The initial state of the system.
+- `tmax=Inf`: The final time step for the steady state problem.
+- `c_ops=nothing`: The list of the collapse operators.
+- `solver`: see [`SteadyStateODESolver`](@ref) for more details.
+- `reltol=1.0e-8`: Relative tolerance in steady state terminate condition and solver adaptive timestepping.
+- `abstol=1.0e-10`: Absolute tolerance in steady state terminate condition and solver adaptive timestepping.
+- `kwargs`: The keyword arguments for the ODEProblem.
 """
 function steadystate(
     H::QuantumObject{DT1,HOpType},

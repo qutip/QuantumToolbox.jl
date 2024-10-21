@@ -54,17 +54,18 @@ function _mesolve_make_L_QobjEvo(H::QuantumObjectEvolution, c_ops)
 end
 
 @doc raw"""
-    mesolveProblem(H::QuantumObject,
-        ψ0::QuantumObject,
-        tlist::AbstractVector, 
-        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
-        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
-        params::NamedTuple=NamedTuple(),
-        progress_bar::Union{Val,Bool}=Val(true),
-        kwargs...)
+    mesolveProblem(
+        H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
+        ψ0::QuantumObject{DT2,StateOpType},
+        tlist,
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        params::NamedTuple = NamedTuple(),
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
 
-Generates the ODEProblem for the master equation time evolution of an open quantum system:
+Generate the ODEProblem for the master equation time evolution of an open quantum system:
 
 ```math
 \frac{\partial \hat{\rho}(t)}{\partial t} = -i[\hat{H}, \hat{\rho}(t)] + \sum_n \mathcal{D}(\hat{C}_n) [\hat{\rho}(t)]
@@ -78,15 +79,14 @@ where
 
 # Arguments
 
-- `H::QuantumObject`: The Hamiltonian ``\hat{H}`` or the Liouvillian of the system.
-- `ψ0::QuantumObject`: The initial state of the system.
-- `tlist::AbstractVector`: The time list of the evolution.
-- `c_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the operators for which the expectation values are calculated.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing`: The time-dependent Hamiltonian or Liouvillian.
-- `params::NamedTuple=NamedTuple()`: The parameters of the time evolution.
-- `progress_bar::Union{Val,Bool}=Val(true)`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `kwargs...`: The keyword arguments for the ODEProblem.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
@@ -157,16 +157,17 @@ function mesolveProblem(
 end
 
 @doc raw"""
-    mesolve(H::QuantumObject,
-        ψ0::QuantumObject,
-        tlist::AbstractVector, 
-        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
-        params::NamedTuple=NamedTuple(),
-        progress_bar::Union{Val,Bool}=Val(true),
-        kwargs...)
+    mesolve(
+        H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
+        ψ0::QuantumObject{DT2,StateOpType},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        params::NamedTuple = NamedTuple(),
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
 
 Time evolution of an open quantum system using Lindblad master equation:
 
@@ -182,16 +183,15 @@ where
 
 # Arguments
 
-- `H::QuantumObject`: The Hamiltonian ``\hat{H}`` or the Liouvillian of the system.
-- `ψ0::QuantumObject`: The initial state of the system.
-- `tlist::AbstractVector`: The time list of the evolution.
-- `c_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of the collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-- `params::NamedTuple`: Named Tuple of parameters to pass to the solver.
-- `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `kwargs...`: Additional keyword arguments to pass to the solver.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `alg`: The algorithm for the ODE solver. The default value is `Tsit5()`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 

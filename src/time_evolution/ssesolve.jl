@@ -98,48 +98,50 @@ _ScalarOperator_e2_2(op, f = +) =
     ScalarOperator(one(eltype(op)), (a, u, p, t) -> f(_ssesolve_update_coeff(u, p, t, op)^2 / 2))
 
 @doc raw"""
-    ssesolveProblem(H::QuantumObject,
-        ψ0::QuantumObject,
-        tlist::AbstractVector;
-        sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
+    ssesolveProblem(
+        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{DT2,KetQuantumObject},
+        tlist::AbstractVector,
+        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
-        params::NamedTuple=NamedTuple(),
-        rng::AbstractRNG=default_rng(),
-        kwargs...)
+        params::NamedTuple = NamedTuple(),
+        rng::AbstractRNG = default_rng(),
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
 
-Generates the SDEProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
+Generate the SDEProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
     
-    ```math
-    d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
-    ```
+```math
+d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
+```
 
 where 
     
 ```math
-    K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
-    ```
-    ```math
-    M_n = C_n - \frac{e_n}{2},
-    ```
-    and
-    ```math
-    e_n = \langle C_n + C_n^\dagger \rangle.
-    ```
+K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
+```
+```math
+M_n = C_n - \frac{e_n}{2},
+```
+and
+```math
+e_n = \langle C_n + C_n^\dagger \rangle.
+```
 
-Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `C_n`.
+Above, `C_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `C_n`.
 
 # Arguments
 
-- `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
-- `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
-- `tlist::AbstractVector`: The time list of the evolution.
-- `sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of operators to be evaluated during the evolution.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
-- `params::NamedTuple`: The parameters of the system.
-- `rng::AbstractRNG`: The random number generator for reproducibility.
-- `kwargs...`: The keyword arguments passed to the `SDEProblem` constructor.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `sc_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `rng`: Random number generator for reproducibility.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
@@ -160,6 +162,7 @@ function ssesolveProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
+    progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {DT1,DT2}
     haskey(kwargs, :save_idxs) &&
@@ -177,7 +180,7 @@ function ssesolveProblem(
 
     ψ0 = sparse_to_dense(_CType(ψ0), get_data(ψ0))
 
-    progr = ProgressBar(length(tlist), enable = false)
+    progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(tlist))
@@ -216,7 +219,7 @@ function ssesolveProblem(
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_SDE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_sesolve_kwargs(e_ops, Val(false), tlist, kwargs2)
+    kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2)
 
     tspan = (tlist[1], tlist[end])
     noise =
@@ -226,56 +229,59 @@ function ssesolveProblem(
 end
 
 @doc raw"""
-    ssesolveEnsembleProblem(H::QuantumObject,
-        ψ0::QuantumObject,
-        tlist::AbstractVector;
+    ssesolveEnsembleProblem(
+        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{DT2,KetQuantumObject},
+        tlist::AbstractVector,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple=NamedTuple(),
-        rng::AbstractRNG=default_rng(),
-        ntraj::Int=1,
-        ensemble_method=EnsembleThreads(),
-        prob_func::Function=_mcsolve_prob_func,
-        output_func::Function=_ssesolve_dispatch_output_func(ensemble_method),
-        progress_bar::Union{Val,Bool}=Val(true),
-        kwargs...)
+        params::NamedTuple = NamedTuple(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 1,
+        ensemble_method = EnsembleThreads(),
+        prob_func::Function = _ssesolve_prob_func,
+        output_func::Function = _ssesolve_dispatch_output_func(ensemble_method),
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
 
-Generates the SDE EnsembleProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
+Generate the SDE EnsembleProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
     
-    ```math
-    d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
-    ```
+```math
+d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
+```
 
 where 
     
 ```math
-    K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
-    ```
-    ```math
-    M_n = C_n - \frac{e_n}{2},
-    ```
-    and
-    ```math
-    e_n = \langle C_n + C_n^\dagger \rangle.
-    ```
+K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
+```
+```math
+M_n = C_n - \frac{e_n}{2},
+```
+and
+```math
+e_n = \langle C_n + C_n^\dagger \rangle.
+```
 
 Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `C_n`.
 
 # Arguments
 
-- `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
-- `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
-- `tlist::AbstractVector`: The time list of the evolution.
-- `sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: The list of operators to be evaluated during the evolution.
-- `params::NamedTuple`: The parameters of the system.
-- `rng::AbstractRNG`: The random number generator for reproducibility.
-- `ntraj::Int`: Number of trajectories to use.
-- `ensemble_method`: Ensemble method to use.
-- `prob_func::Function`: Function to use for generating the SDEProblem.
-- `output_func::Function`: Function to use for generating the output of a single trajectory.
-- `progress_bar::Union{Val,Bool}`: Whether to show a progress bar.
-- `kwargs...`: The keyword arguments passed to the `SDEProblem` constructor.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `sc_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `rng`: Random number generator for reproducibility.
+- `ntraj`: Number of trajectories to use.
+- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
+- `prob_func`: Function to use for generating the ODEProblem.
+- `output_func`: Function to use for generating the output of a single trajectory.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
@@ -325,6 +331,7 @@ function ssesolveEnsembleProblem(
             e_ops = e_ops,
             params = merge(params, (global_rng = rng, seeds = seeds)),
             rng = rng,
+            progress_bar = Val(false),
             kwargs...,
         )
 
@@ -342,65 +349,66 @@ function ssesolveEnsembleProblem(
 end
 
 @doc raw"""
-    ssesolve(H::QuantumObject,
-        ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    ssesolve(
+        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{DT2,KetQuantumObject},
         tlist::AbstractVector,
-        sc_ops::Union{Nothing, AbstractVector}=nothing;
-        alg::StochasticDiffEqAlgorithm=SRA1(),
-        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
-        params::NamedTuple=NamedTuple(),
-        rng::AbstractRNG=default_rng(),
-        ntraj::Int=1,
-        ensemble_method=EnsembleThreads(),
-        prob_func::Function=_ssesolve_prob_func,
-        output_func::Function=_ssesolve_dispatch_output_func(ensemble_method),
+        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        alg::StochasticDiffEqAlgorithm = SRA1(),
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        params::NamedTuple = NamedTuple(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 1,
+        ensemble_method = EnsembleThreads(),
+        prob_func::Function = _ssesolve_prob_func,
+        output_func::Function = _ssesolve_dispatch_output_func(ensemble_method),
         progress_bar::Union{Val,Bool} = Val(true),
-        kwargs...)
+        kwargs...,
+    )
 
 
 Stochastic Schrödinger equation evolution of a quantum system given the system Hamiltonian ``\hat{H}`` and a list of stochadtic collapse (jump) operators ``\{\hat{C}_n\}_n``.
 The stochastic evolution of the state ``|\psi(t)\rangle`` is defined by:
     
-    ```math
-    d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
-    ```
+```math
+d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
+```
 
 where 
     
 ```math
-    K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
-    ```
-    ```math
-    M_n = C_n - \frac{e_n}{2},
-    ```
-    and
-    ```math
-    e_n = \langle C_n + C_n^\dagger \rangle.
-    ```
+K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
+```
+```math
+M_n = C_n - \frac{e_n}{2},
+```
+and
+```math
+e_n = \langle C_n + C_n^\dagger \rangle.
+```
 
-Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `C_n`.
+Above, `C_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `C_n`.
 
 
 # Arguments
 
-- `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
-- `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `sc_ops::Union{Nothing,AbstractVector,Tuple}=nothing`: List of stochastic collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::StochasticDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
-- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-- `rng::AbstractRNG`: Random number generator for reproducibility.
-- `ntraj::Int`: Number of trajectories to use.
-- `ensemble_method`: Ensemble method to use.
-- `prob_func::Function`: Function to use for generating the SDEProblem.
-- `output_func::Function`: Function to use for generating the output of a single trajectory.
-- `progress_bar::Union{Val,Bool}`: Whether to show a progress bar.
-- `kwargs...`: Additional keyword arguments to pass to the solver.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `sc_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `alg`: The algorithm to use for the stochastic differential equation. Default is `SRA1()`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `rng`: Random number generator for reproducibility.
+- `ntraj`: Number of trajectories to use.
+- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `prob_func`: Function to use for generating the ODEProblem.
+- `output_func`: Function to use for generating the output of a single trajectory.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
-- `ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
@@ -409,7 +417,7 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 
 # Returns
 
-- `sol::TimeEvolutionSSESol`: The solution of the time evolution. See also [`TimeEvolutionSSESol`](@ref)
+- `sol::TimeEvolutionSSESol`: The solution of the time evolution. See also [`TimeEvolutionSSESol`](@ref).
 """
 function ssesolve(
     H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},

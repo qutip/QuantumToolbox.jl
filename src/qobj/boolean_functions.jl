@@ -24,7 +24,7 @@ isket(::Type{QuantumObject{DT,KetQuantumObject,N}}) where {DT,N} = true
 isket(A) = false # default case
 
 @doc raw"""
-    isoper(A::AbstractQuantumObject)
+    isoper(A)
 
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`OperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
@@ -33,7 +33,7 @@ isoper(::Type{<:AbstractQuantumObject{DT,OperatorQuantumObject,N}}) where {DT,N}
 isoper(A) = false # default case
 
 @doc raw"""
-    isoperbra(A::QuantumObject)
+    isoperbra(A)
 
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBraQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
@@ -42,7 +42,7 @@ isoperbra(::Type{QuantumObject{DT,OperatorBraQuantumObject,N}}) where {DT,N} = t
 isoperbra(A) = false # default case
 
 @doc raw"""
-    isoperket(A::QuantumObject)
+    isoperket(A)
 
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKetQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
@@ -51,7 +51,7 @@ isoperket(::Type{QuantumObject{DT,OperatorKetQuantumObject,N}}) where {DT,N} = t
 isoperket(A) = false # default case
 
 @doc raw"""
-    issuper(A::AbstractQuantumObject)
+    issuper(A)
 
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """

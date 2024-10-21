@@ -37,15 +37,17 @@ function _generate_sesolve_kwargs(e_ops, progress_bar::Val{false}, tlist, kwargs
 end
 
 @doc raw"""
-    sesolveProblem(H,
-        ψ0,
-        tlist;
-        e_ops = nothing,
-        params=NamedTuple(),
-        progress_bar=Val(true),
-        kwargs...)
+    sesolveProblem(
+        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{DT2,KetQuantumObject},
+        tlist::AbstractVector;
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        params::NamedTuple = NamedTuple(),
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
 
-Generates the ODEProblem for the Schrödinger time evolution of a quantum system:
+Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 
 ```math
 \frac{\partial}{\partial t} |\psi(t)\rangle = -i \hat{H} |\psi(t)\rangle
@@ -53,14 +55,13 @@ Generates the ODEProblem for the Schrödinger time evolution of a quantum system
 
 # Arguments
 
-- `H::Union{QuantumObject,Tuple}`: The Hamiltonian of the system ``\hat{H}``.
-- `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
-- `tlist::AbstractVector`: The time list of the evolution.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}`: The list of operators to be evaluated during the evolution.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: The time-dependent Hamiltonian of the system. If `nothing`, the Hamiltonian is time-independent.
-- `params::NamedTuple`: The parameters of the system.
-- `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `kwargs...`: The keyword arguments passed to the `ODEProblem` constructor.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
@@ -126,15 +127,16 @@ function sesolveProblem(
 end
 
 @doc raw"""
-    sesolve(H::QuantumObject,
-        ψ0::QuantumObject,
+    sesolve(
+        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{DT2,KetQuantumObject},
         tlist::AbstractVector;
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
-        params::NamedTuple=NamedTuple(),
-        progress_bar::Union{Val,Bool}=Val(true),
-        kwargs...)
+        params::NamedTuple = NamedTuple(),
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
 
 Time evolution of a closed quantum system using the Schrödinger equation:
 
@@ -144,15 +146,14 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 
 # Arguments
 
-- `H::QuantumObject`: The Hamiltonian of the system ``\hat{H}``.
-- `ψ0::QuantumObject`: The initial state of the system ``|\psi(0)\rangle``.
-- `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-- `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `kwargs...`: Additional keyword arguments to pass to the solver.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `alg`: The algorithm for the ODE solver. The default is `Tsit5()`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 

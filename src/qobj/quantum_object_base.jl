@@ -17,6 +17,12 @@ export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
     abstract type AbstractQuantumObject{DataType,ObjType,N}
 
 Abstract type for all quantum objects like [`QuantumObject`](@ref) and [`QuantumObjectEvolution`](@ref).
+
+# Example
+```
+julia> sigmax() isa AbstractQuantumObject
+true
+```
 """
 abstract type AbstractQuantumObject{DataType,ObjType,N} end
 
