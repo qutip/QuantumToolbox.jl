@@ -112,57 +112,6 @@ function QuantumObject(
     throw(DomainError(size(A), "The size of the array is not compatible with vector or matrix."))
 end
 
-function _check_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N}
-    _non_static_array_warning("dims", dims)
-    return (all(>(0), dims) && length(dims) > 0) ||
-           throw(DomainError(dims, "The argument dims must be of non-zero length and contain only positive integers."))
-end
-_check_dims(dims::Any) = throw(
-    ArgumentError(
-        "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
-    ),
-)
-
-function _check_QuantumObject(type::KetQuantumObject, dims, m::Int, n::Int)
-    (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
-    (prod(dims) != m) && throw(DimensionMismatch("Ket with dims = $(dims) does not fit the array size = $((m, n))."))
-    return nothing
-end
-
-function _check_QuantumObject(type::BraQuantumObject, dims, m::Int, n::Int)
-    (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Bra"))
-    (prod(dims) != n) && throw(DimensionMismatch("Bra with dims = $(dims) does not fit the array size = $((m, n))."))
-    return nothing
-end
-
-function _check_QuantumObject(type::OperatorQuantumObject, dims, m::Int, n::Int)
-    (m != n) && throw(DomainError((m, n), "The size of the array is not compatible with Operator"))
-    (prod(dims) != m) &&
-        throw(DimensionMismatch("Operator with dims = $(dims) does not fit the array size = $((m, n))."))
-    return nothing
-end
-
-function _check_QuantumObject(type::SuperOperatorQuantumObject, dims, m::Int, n::Int)
-    (m != n) && throw(DomainError((m, n), "The size of the array is not compatible with SuperOperator"))
-    (prod(dims) != sqrt(m)) &&
-        throw(DimensionMismatch("SuperOperator with dims = $(dims) does not fit the array size = $((m, n))."))
-    return nothing
-end
-
-function _check_QuantumObject(type::OperatorKetQuantumObject, dims, m::Int, n::Int)
-    (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorKet"))
-    (prod(dims) != sqrt(m)) &&
-        throw(DimensionMismatch("OperatorKet with dims = $(dims) does not fit the array size = $((m, n))."))
-    return nothing
-end
-
-function _check_QuantumObject(type::OperatorBraQuantumObject, dims, m::Int, n::Int)
-    (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorBra"))
-    (prod(dims) != sqrt(n)) &&
-        throw(DimensionMismatch("OperatorBra with dims = $(dims) does not fit the array size = $((m, n))."))
-    return nothing
-end
-
 function QuantumObject(
     A::QuantumObject{<:AbstractArray{T,N}};
     type::ObjType = A.type,

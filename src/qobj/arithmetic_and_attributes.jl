@@ -108,7 +108,8 @@ function LinearAlgebra.:(*)(
 end
 
 LinearAlgebra.:(^)(A::QuantumObject{DT}, n::T) where {DT,T<:Number} = QuantumObject(^(A.data, n), A.type, A.dims)
-LinearAlgebra.:(/)(A::QuantumObject{DT}, n::T) where {DT,T<:Number} = QuantumObject(/(A.data, n), A.type, A.dims)
+LinearAlgebra.:(/)(A::AbstractQuantumObject{DT}, n::T) where {DT,T<:Number} =
+    get_typename_wrapper(A)(A.data / n, A.type, A.dims)
 
 @doc raw"""
     dot(A::QuantumObject, B::QuantumObject)

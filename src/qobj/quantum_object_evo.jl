@@ -92,13 +92,61 @@ struct QuantumObjectEvolution{
     data::DT
     type::ObjType
     dims::SVector{N,Int}
+
+    function QuantumObjectEvolution(
+        data::DT,
+        type::ObjType,
+        dims,
+    ) where {DT<:AbstractSciMLOperator,ObjType<:QuantumObjectType}
+        (type == Operator || type == SuperOperator) ||
+            throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
+
+        _check_dims(dims)
+
+        _size = _get_size(data)
+        _check_QuantumObject(type, dims, _size[1], _size[2])
+
+        N = length(dims)
+
+        return new{DT,ObjType,N}(data, type, SVector{N,Int}(dims))
+    end
+end
+
+function QuantumObjectEvolution(data::AbstractSciMLOperator, type::QuantumObjectType, dims::Integer)
+    return QuantumObjectEvolution(data, type, SVector{1,Int}(dims))
+end
+
+"""
+    QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
+
+Generate a [`QuantumObjectEvolution`](@ref) object from a [`SciMLOperator`](https://github.com/SciML/SciMLOperators.jl), in the same way as [`QuantumObject`](@ref) for `AbstractArray` inputs.
+"""
+function QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
+    _size = _get_size(data)
+
+    if dims isa Nothing
+        if type == Operator
+            dims = SVector{1,Int}(_size[2])
+        elseif type == SuperOperator
+            dims = SVector{1,Int}(isqrt(_size[2]))
+        end
+    end
+
+    return QuantumObjectEvolution(data, type, dims)
 end
 
 # Make the QuantumObjectEvolution, with the option to pre-multiply by a scalar
-function QuantumObjectEvolution(op_func_list::Tuple, α::Union{Nothing,Number} = nothing; f::Function = identity)
+function QuantumObjectEvolution(
+    op_func_list::Tuple,
+    α::Union{Nothing,Number} = nothing;
+    type::Union{Nothing,QuantumObjectType} = nothing,
+    f::Function = identity,
+)
     op, data = _QobjEvo_generate_data(op_func_list, α; f = f)
     dims = op.dims
-    type = op.type
+    if type isa Nothing
+        type = op.type
+    end
 
     # Preallocate the SciMLOperator cache using a dense vector as a reference
     v0 = sparse_to_dense(similar(op.data, size(op, 1)))
@@ -107,15 +155,38 @@ function QuantumObjectEvolution(op_func_list::Tuple, α::Union{Nothing,Number} =
     return QuantumObjectEvolution(data, type, dims)
 end
 
-QuantumObjectEvolution(op::QuantumObject, α::Union{Nothing,Number} = nothing; f::Function = identity) =
-    QuantumObjectEvolution(_make_SciMLOperator(op, α), op.type, op.dims)
-
-function QuantumObjectEvolution(op::QuantumObjectEvolution, α::Union{Nothing,Number} = nothing; f::Function = identity)
-    f !== identity && throw(ArgumentError("The function `f` is not supported for QuantumObjectEvolution inputs."))
-    if α isa Nothing
-        return QuantumObjectEvolution(op.data, op.type, op.dims)
+function QuantumObjectEvolution(
+    op::QuantumObject,
+    α::Union{Nothing,Number} = nothing;
+    type::Union{Nothing,QuantumObjectType} = nothing,
+    f::Function = identity,
+)
+    if type isa Nothing
+        type = op.type
     end
-    return QuantumObjectEvolution(α * op.data, op.type, op.dims)
+    return QuantumObjectEvolution(_make_SciMLOperator(op, α, f = f), type, op.dims)
+end
+
+function QuantumObjectEvolution(
+    op::QuantumObjectEvolution,
+    α::Union{Nothing,Number} = nothing;
+    type::Union{Nothing,QuantumObjectType} = nothing,
+    f::Function = identity,
+)
+    f !== identity && throw(ArgumentError("The function `f` is not supported for QuantumObjectEvolution inputs."))
+    if type isa Nothing
+        type = op.type
+    else
+        throw(
+            ArgumentError(
+                "The type of the QuantumObjectEvolution object cannot be changed when using another QuantumObjectEvolution object as input.",
+            ),
+        )
+    end
+    if α isa Nothing
+        return QuantumObjectEvolution(op.data, type, op.dims)
+    end
+    return QuantumObjectEvolution(α * op.data, type, op.dims)
 end
 
 #=
@@ -170,14 +241,14 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
         end
     end
 
-    data_expr_const = :(_make_SciMLOperator($qobj_expr_const, α))
-
     quote
         dims = tuple($(dims_expr...))
 
         length(unique(dims)) == 1 || throw(ArgumentError("The dimensions of the operators must be the same."))
 
-        data_expr = $data_expr_const + $data_expr
+        data_expr_const = $qobj_expr_const isa Integer ? $qobj_expr_const : _make_SciMLOperator($qobj_expr_const, α)
+
+        data_expr = data_expr_const + $data_expr
 
         return $first_op, data_expr
     end

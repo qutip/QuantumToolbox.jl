@@ -18,11 +18,11 @@ Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`.
 Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
 
 @doc raw"""
-    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; f::Function=identity)
+    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing, f::Function=identity)
 
 Generate [`QuantumObjectEvolution`](@ref)
 
-Note that this functions is same as `QuantumObjectEvolution(op_func_list)`. If `α` is provided, all the operators in `op_func_list` will be pre-multiplied by `α`. The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators.
+Note that this functions is same as `QuantumObjectEvolution(op_func_list)`. If `α` is provided, all the operators in `op_func_list` will be pre-multiplied by `α`. The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`. The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators.
 
 # Arguments
 - `op_func_list::Union{Tuple,AbstractQuantumObject}`: A tuple of tuples or operators.
@@ -101,46 +101,60 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡑⎦
 ````
 """
-QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number} = nothing; f::Function = identity) =
-    QuantumObjectEvolution(op_func_list, α; f = f)
+QobjEvo(
+    op_func_list::Union{Tuple,AbstractQuantumObject},
+    α::Union{Nothing,Number} = nothing;
+    type::Union{Nothing,QuantumObjectType} = nothing,
+    f::Function = identity,
+) = QuantumObjectEvolution(op_func_list, α; type = type, f = f)
+
+QobjEvo(data::AbstractSciMLOperator, type::QuantumObjectType, dims::Integer) =
+    QuantumObjectEvolution(data, type, SVector{1,Int}(dims))
+
+"""
+    QobjEvo(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
+
+Synonym of [`QuantumObjectEvolution`](@ref) object from a [`SciMLOperator`](https://github.com/SciML/SciMLOperators.jl).  See the documentation for [`QuantumObjectEvolution`](@ref) for more information.
+"""
+QobjEvo(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing) =
+    QuantumObjectEvolution(data; type = type, dims = dims)
 
 @doc raw"""
-    shape(A::QuantumObject)
+    shape(A::AbstractQuantumObject)
 
-Returns a tuple containing each dimensions of the array in the [`QuantumObject`](@ref).
+Returns a tuple containing each dimensions of the array in the [`AbstractQuantumObject`](@ref).
 
 Note that this function is same as `size(A)`.
 """
-shape(A::QuantumObject{<:AbstractArray{T}}) where {T} = size(A.data)
+shape(A::AbstractQuantumObject) = size(A.data)
 
 @doc raw"""
-    isherm(A::QuantumObject)
+    isherm(A::AbstractQuantumObject)
 
-Test whether the [`QuantumObject`](@ref) is Hermitian.
+Test whether the [`AbstractQuantumObject`](@ref) is Hermitian.
 
 Note that this functions is same as `ishermitian(A)`.
 """
-isherm(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A)
+isherm(A::AbstractQuantumObject) = ishermitian(A)
 
 @doc raw"""
-    trans(A::QuantumObject)
+    trans(A::AbstractQuantumObject)
 
-Lazy matrix transpose of the [`QuantumObject`](@ref).
+Lazy matrix transpose of the [`AbstractQuantumObject`](@ref).
 
 Note that this function is same as `transpose(A)`.
 """
-trans(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = transpose(A)
+trans(A::AbstractQuantumObject{DT,OpType}) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    transpose(A)
 
 @doc raw"""
-    dag(A::QuantumObject)
+    dag(A::AbstractQuantumObject)
 
-Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
+Lazy adjoint (conjugate transposition) of the [`AbstractQuantumObject`](@ref)
 
 Note that this function is same as `adjoint(A)`.
 """
-dag(A::QuantumObject{<:AbstractArray{T}}) where {T} = adjoint(A)
+dag(A::AbstractQuantumObject) = adjoint(A)
 
 @doc raw"""
     matrix_element(i::QuantumObject, A::QuantumObject j::QuantumObject)

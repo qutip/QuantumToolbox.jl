@@ -41,10 +41,10 @@ function _generate_mesolve_kwargs(e_ops, progress_bar::Val{false}, tlist, kwargs
     return _generate_mesolve_kwargs_with_callback(tlist, kwargs)
 end
 
-_mesolve_make_L_QobjEvo(H::QuantumObject, c_ops) = QobjEvo(liouvillian(H, c_ops))
+_mesolve_make_L_QobjEvo(H::QuantumObject, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator)
 function _mesolve_make_L_QobjEvo(H::Tuple, c_ops)
     c_ops isa Nothing && return QobjEvo(H)
-    return QobjEvo((H..., mapreduce(op -> lindblad_dissipator(op), +, c_ops)); f = liouvillian)
+    return QobjEvo((H..., mapreduce(op -> lindblad_dissipator(op), +, c_ops)); type = SuperOperator, f = liouvillian)
 end
 # TODO: Add support for Operator type QobEvo
 function _mesolve_make_L_QobjEvo(H::QuantumObjectEvolution, c_ops)
