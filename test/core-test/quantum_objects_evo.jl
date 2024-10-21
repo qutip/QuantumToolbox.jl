@@ -81,7 +81,7 @@
         @test adjoint(a2).data == adjoint(a2.data)
 
         N = 10
-        a = QobjEvo(destroy(N), Operator, N)
+        a = QobjEvo(MatrixOperator(sprand(ComplexF64, N, N, 5 / N)), Operator, N)
         a_d = a'
         X = a + a_d
         # Y = 1im * (a - a_d) # Currently doesn't work. Fix in SciMLOperators.jl
@@ -172,8 +172,8 @@
         ψ = fock(N, 1)
         @test op1(ψ, p, 0.1) ≈ (coef1(p, 0.1) * a + a' * a + coef2(p, 0.1) * a') * ψ
 
-        @test iscontant(a) == true
-        @test iscontant(op1) == false
+        @test isconstant(a) == true
+        @test isconstant(op1) == false
         @test isconstant(Qobj(a)) == true
     end
 end
