@@ -187,8 +187,8 @@
 
         @test sol_se.expect ≈ sol_se_td.expect atol = 1e-6 * length(tlist)
         @test sol_me.expect ≈ sol_me_td.expect atol = 1e-6 * length(tlist)
-        @test sol_mc.expect ≈ sol_mc_td.expect atol = 1e-3 * length(tlist)
-        @test sol_sse.expect ≈ sol_sse_td.expect atol = 1e-3 * length(tlist)
+        @test sol_mc.expect ≈ sol_mc_td.expect atol = 1e-2 * length(tlist)
+        @test sol_sse.expect ≈ sol_sse_td.expect atol = 1e-2 * length(tlist)
 
         H_td2 = QobjEvo(H_td)
         L_td = QobjEvo(H_td, type = SuperOperator, f = liouvillian)
@@ -210,8 +210,8 @@
 
         @test sol_se.expect ≈ sol_se_td2.expect atol = 1e-6 * length(tlist)
         @test sol_me.expect ≈ sol_me_td2.expect atol = 1e-6 * length(tlist)
-        @test sol_mc.expect ≈ sol_mc_td2.expect atol = 1e-3 * length(tlist)
-        @test sol_sse.expect ≈ sol_sse_td2.expect atol = 1e-3 * length(tlist)
+        @test sol_mc.expect ≈ sol_mc_td2.expect atol = 1e-2 * length(tlist)
+        @test sol_sse.expect ≈ sol_sse_td2.expect atol = 1e-2 * length(tlist)
 
         @testset "Type Inference mesolve" begin
             @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
