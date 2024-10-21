@@ -14,7 +14,7 @@ export QuantumObjectType,
 export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 
 @doc raw"""
-    AbstractQuantumObject{DataType,ObjType,N}
+    abstract type AbstractQuantumObject{DataType,ObjType,N}
 
 Abstract type for all quantum objects like [`QuantumObject`](@ref) and [`QuantumObjectEvolution`](@ref).
 """
