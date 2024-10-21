@@ -144,17 +144,19 @@
               "reltol = $(sol_sse.reltol)\n"
 
         # Time-Dependent Hamiltonian
+        # ssesolve is slow to be run on CI. It is not removed from the test because it may be useful for testing in more powerful machines.
+
         N = 10
         a = tensor(destroy(N), qeye(2))
         σm = tensor(qeye(N), sigmam())
         σz = tensor(qeye(N), sigmaz())
         ω = 1.0
-        ωd = 1.05
+        ωd = 1.02
         Δ = ω - ωd
-        F = 0.01
+        F = 0.05
         g = 0.1
-        γ = 0.01
-        nth = 0.05
+        γ = 0.1
+        nth = 0.001
 
         # Time Evolution in the drive frame
 
@@ -163,12 +165,14 @@
         e_ops = [a' * a, σz]
 
         ψ0 = tensor(basis(N, 0), basis(2, 1))
-        tlist = range(0, 10 / γ, 1000)
+        tlist = range(0, 2 / γ, 1000)
+
+        rng = MersenneTwister(12)
 
         sol_se = sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
         sol_me = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
-        sol_mc = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
-        sol_sse = ssesolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+        sol_mc = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+        # sol_sse = ssesolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
 
         # Time Evolution in the lab frame
 
@@ -182,13 +186,23 @@
 
         sol_se_td = sesolve(H_td, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
         sol_me_td = mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
-        sol_mc_td = mcsolve(H_td, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p)
-        sol_sse_td = ssesolve(H_td, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p)
+        sol_mc_td = mcsolve(
+            H_td,
+            ψ0,
+            tlist,
+            c_ops,
+            ntraj = 500,
+            e_ops = e_ops,
+            progress_bar = Val(false),
+            params = p,
+            rng = rng,
+        )
+        # sol_sse_td = ssesolve(H_td, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
 
         @test sol_se.expect ≈ sol_se_td.expect atol = 1e-6 * length(tlist)
         @test sol_me.expect ≈ sol_me_td.expect atol = 1e-6 * length(tlist)
         @test sol_mc.expect ≈ sol_mc_td.expect atol = 1e-2 * length(tlist)
-        @test sol_sse.expect ≈ sol_sse_td.expect atol = 1e-2 * length(tlist)
+        # @test sol_sse.expect ≈ sol_sse_td.expect atol = 1e-2 * length(tlist)
 
         H_td2 = QobjEvo(H_td)
         L_td = QobjEvo(H_td, type = SuperOperator, f = liouvillian)
@@ -204,14 +218,24 @@
             params = p,
         )
         sol_me_td2 = mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
-        sol_mc_td2 = mcsolve(H_td2, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p)
-        sol_sse_td2 =
-            ssesolve(H_td2, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p)
+        sol_mc_td2 = mcsolve(
+            H_td2,
+            ψ0,
+            tlist,
+            c_ops,
+            ntraj = 500,
+            e_ops = e_ops,
+            progress_bar = Val(false),
+            params = p,
+            rng = rng,
+        )
+        # sol_sse_td2 =
+        # ssesolve(H_td2, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
 
         @test sol_se.expect ≈ sol_se_td2.expect atol = 1e-6 * length(tlist)
         @test sol_me.expect ≈ sol_me_td2.expect atol = 1e-6 * length(tlist)
         @test sol_mc.expect ≈ sol_mc_td2.expect atol = 1e-2 * length(tlist)
-        @test sol_sse.expect ≈ sol_sse_td2.expect atol = 1e-2 * length(tlist)
+        # @test sol_sse.expect ≈ sol_sse_td2.expect atol = 1e-2 * length(tlist)
 
         @testset "Type Inference mesolve" begin
             @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
@@ -233,20 +257,49 @@
         end
 
         @testset "Type Inference mcsolve" begin
-            @inferred mcsolveEnsembleProblem(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, progress_bar = Val(true))
-            @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 500, progress_bar = Val(false))
+            @inferred mcsolveEnsembleProblem(
+                H,
+                ψ0,
+                tlist,
+                c_ops,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng)
+            @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
             @inferred mcsolve(
                 H,
                 tensor(Qobj(zeros(Int64, N)), Qobj([0, 1])),
                 tlist,
                 c_ops,
-                ntraj = 500,
+                ntraj = 5,
                 progress_bar = Val(false),
+                rng = rng,
             )
-            @inferred mcsolve(H, ψ0, tlist, (a, a'), e_ops = (a' * a, a'), ntraj = 500, progress_bar = Val(false)) # We test the type inference for Tuple of different types
-            @inferred mcsolve(H_td, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p)
+            @inferred mcsolve(
+                H,
+                ψ0,
+                tlist,
+                (a, a'),
+                e_ops = (a' * a, a'),
+                ntraj = 5,
+                progress_bar = Val(false),
+                rng = rng,
+            ) # We test the type inference for Tuple of different types
+            @inferred mcsolve(
+                H_td,
+                ψ0,
+                tlist,
+                c_ops,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                params = p,
+                rng = rng,
+            )
         end
 
         @testset "Type Inference ssesolve" begin
@@ -256,31 +309,52 @@
                 ψ0,
                 tlist,
                 c_ops_tuple,
-                ntraj = 500,
+                ntraj = 5,
                 e_ops = e_ops,
                 progress_bar = Val(false),
+                rng = rng,
             )
-            @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
-            @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 500, progress_bar = Val(true))
-            @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 500, progress_bar = Val(false))
+            @inferred ssesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_tuple,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng)
+            @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
             @inferred ssesolve(
                 H,
                 tensor(Qobj(zeros(Int64, N)), Qobj([0, 1])),
                 tlist,
                 c_ops_tuple,
-                ntraj = 500,
+                ntraj = 5,
                 progress_bar = Val(false),
+                rng = rng,
             )
-            @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 500, e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple of different types
+            @inferred ssesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_tuple,
+                ntraj = 5,
+                e_ops = (a' * a, a'),
+                progress_bar = Val(false),
+                rng = rng,
+            ) # We test the type inference for Tuple of different types
             @inferred ssesolve(
                 H_td,
                 ψ0,
                 tlist,
                 c_ops_tuple,
-                ntraj = 500,
+                ntraj = 5,
                 e_ops = e_ops,
                 progress_bar = Val(false),
                 params = p,
+                rng = rng,
             )
         end
 

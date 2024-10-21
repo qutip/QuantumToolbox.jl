@@ -8,6 +8,8 @@ const GROUP = get(ENV, "GROUP", "All")
 
 const testdir = dirname(@__FILE__)
 
+println("---- Running tests with $(Threads.nthreads()) threads. ----")
+
 # Put core tests in alphabetical order
 core_tests = [
     "correlations_and_spectrum.jl",
