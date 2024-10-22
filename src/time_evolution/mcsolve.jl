@@ -81,7 +81,9 @@ function _mcsolve_prob_func(prob, i, repeat)
         ),
     )
 
-    return remake(prob, p = prm)
+    f = deepcopy(prob.f.f)
+
+    return remake(prob, f = f, p = prm)
 end
 
 # Standard output function
@@ -117,20 +119,33 @@ function _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, j
     return jump_which[i] = sol_i.prob.p.jump_which
 end
 
-@doc raw"""
-    mcsolveProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-        ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-        tlist::AbstractVector,
-        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
-        params::NamedTuple=NamedTuple(),
-        rng::AbstractRNG=default_rng(),
-        jump_callback::TJC=ContinuousLindbladJumpCallback(),
-        kwargs...)
+function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
+    c_ops isa Nothing && return QobjEvo(H)
+    return QobjEvo(H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2)
+end
+function _mcsolve_make_Heff_QobjEvo(H::Tuple, c_ops)
+    c_ops isa Nothing && return QobjEvo(H)
+    return QobjEvo((H..., -1im * mapreduce(op -> op' * op, +, c_ops) / 2))
+end
+function _mcsolve_make_Heff_QobjEvo(H::QuantumObjectEvolution, c_ops)
+    c_ops isa Nothing && return H
+    return H + QobjEvo(mapreduce(op -> op' * op, +, c_ops), -1im / 2)
+end
 
-Generates the ODEProblem for a single trajectory of the Monte Carlo wave function time evolution of an open quantum system.
+@doc raw"""
+    mcsolveProblem(
+        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{DT2,KetQuantumObject},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        params::NamedTuple = NamedTuple(),
+        rng::AbstractRNG = default_rng(),
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        kwargs...,
+    )
+
+Generate the ODEProblem for a single trajectory of the Monte Carlo wave function time evolution of an open quantum system.
 
 Given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{C}_n\}_n``, the evolution of the state ``|\psi(t)\rangle`` is governed by the Schrodinger equation:
 
@@ -166,24 +181,21 @@ If the environmental measurements register a quantum jump, the wave function und
 
 # Arguments
 
-- `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
-- `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Union{Nothing,AbstractVector,Tuple}`: List of collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-- `rng::AbstractRNG`: Random number generator for reproducibility.
-- `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
-- `kwargs...`: Additional keyword arguments to pass to the solver.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `rng`: Random number generator for reproducibility.
+- `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
-- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 # Returns
@@ -191,41 +203,37 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob::ODEProblem`: The ODEProblem for the Monte Carlo wave function time evolution.
 """
 function mcsolveProblem(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray,KetQuantumObject},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
-) where {MT1<:AbstractMatrix,TJC<:LindbladJumpCallbackType}
-    H.dims != ψ0.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
-
+) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     c_ops isa Nothing &&
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
-    t_l = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    tlist = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
-    H_eff = H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2
+    H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
 
     if e_ops isa Nothing
-        expvals = Array{ComplexF64}(undef, 0, length(t_l))
+        expvals = Array{ComplexF64}(undef, 0, length(tlist))
         is_empty_e_ops_mc = true
-        e_ops2 = MT1[]
+        e_ops_data = ()
     else
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))
-        e_ops2 = get_data.(e_ops)
+        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
+        e_ops_data = get_data.(e_ops)
         is_empty_e_ops_mc = isempty(e_ops)
     end
 
-    saveat = is_empty_e_ops_mc ? t_l : [t_l[end]]
+    saveat = is_empty_e_ops_mc ? tlist : [tlist[end]]
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat, progress_bar = Val(false))
     kwargs2 = merge(default_values, kwargs)
@@ -243,9 +251,9 @@ function mcsolveProblem(
 
     params2 = (
         expvals = expvals,
-        e_ops_mc = e_ops2,
+        e_ops_mc = e_ops_data,
         is_empty_e_ops_mc = is_empty_e_ops_mc,
-        progr_mc = ProgressBar(length(t_l), enable = false),
+        progr_mc = ProgressBar(length(tlist), enable = false),
         traj_rng = rng,
         c_ops = c_ops_data,
         c_ops_herm = c_ops_herm_data,
@@ -259,39 +267,35 @@ function mcsolveProblem(
         params...,
     )
 
-    return mcsolveProblem(H_eff, ψ0, t_l, alg, H_t, params2, jump_callback; kwargs2...)
+    return mcsolveProblem(H_eff_evo, ψ0, tlist, params2, jump_callback; kwargs2...)
 end
 
 function mcsolveProblem(
-    H_eff::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-    t_l::AbstractVector,
-    alg::OrdinaryDiffEqAlgorithm,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum},
+    H_eff_evo::QuantumObjectEvolution{DT1,OperatorQuantumObject},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
+    tlist::AbstractVector,
     params::NamedTuple,
     jump_callback::DiscreteLindbladJumpCallback;
     kwargs...,
-) where {T1,T2}
+) where {DT1,DT2}
     cb1 = DiscreteCallback(LindbladJumpDiscreteCondition, LindbladJumpAffect!, save_positions = (false, false))
-    cb2 = PresetTimeCallback(t_l, _save_func_mcsolve, save_positions = (false, false))
+    cb2 = PresetTimeCallback(tlist, _save_func_mcsolve, save_positions = (false, false))
     kwargs2 = (; kwargs...)
     kwargs2 =
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
         merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
 
-    return sesolveProblem(H_eff, ψ0, t_l; alg = alg, H_t = H_t, params = params, kwargs2...)
+    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...)
 end
 
 function mcsolveProblem(
-    H_eff::QuantumObject{<:AbstractArray,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray,KetQuantumObject},
-    t_l::AbstractVector,
-    alg::OrdinaryDiffEqAlgorithm,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum},
+    H_eff_evo::QuantumObjectEvolution{DT1,OperatorQuantumObject},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
+    tlist::AbstractVector,
     params::NamedTuple,
     jump_callback::ContinuousLindbladJumpCallback;
     kwargs...,
-)
+) where {DT1,DT2}
     cb1 = ContinuousCallback(
         LindbladJumpContinuousCondition,
         LindbladJumpAffect!,
@@ -299,33 +303,34 @@ function mcsolveProblem(
         interp_points = jump_callback.interp_points,
         save_positions = (false, false),
     )
-    cb2 = PresetTimeCallback(t_l, _save_func_mcsolve, save_positions = (false, false))
+    cb2 = PresetTimeCallback(tlist, _save_func_mcsolve, save_positions = (false, false))
     kwargs2 = (; kwargs...)
     kwargs2 =
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
         merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
 
-    return sesolveProblem(H_eff, ψ0, t_l; alg = alg, H_t = H_t, params = params, kwargs2...)
+    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...)
 end
 
 @doc raw"""
-    mcsolveEnsembleProblem(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-        ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    mcsolveEnsembleProblem(
+        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{DT2,KetQuantumObject},
         tlist::AbstractVector,
-        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        e_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum}=nothing,
-        params::NamedTuple=NamedTuple(),
-        ntraj::Int=1,
-        ensemble_method=EnsembleThreads(),
-        jump_callback::TJC=ContinuousLindbladJumpCallback(),
-        prob_func::Function=_mcsolve_prob_func,
-        output_func::Function=_mcsolve_output_func,
-        progress_bar::Union{Val,Bool}=Val(true),
-        kwargs...)
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        params::NamedTuple = NamedTuple(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 1,
+        ensemble_method = EnsembleThreads(),
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        prob_func::Function = _mcsolve_prob_func,
+        output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
 
-Generates the `EnsembleProblem` of `ODEProblem`s for the ensemble of trajectories of the Monte Carlo wave function time evolution of an open quantum system.
+Generate the `EnsembleProblem` of `ODEProblem`s for the ensemble of trajectories of the Monte Carlo wave function time evolution of an open quantum system.
 
 Given a system Hamiltonian ``\hat{H}`` and a list of collapse (jump) operators ``\{\hat{C}_n\}_n``, the evolution of the state ``|\psi(t)\rangle`` is governed by the Schrodinger equation:
 
@@ -361,29 +366,26 @@ If the environmental measurements register a quantum jump, the wave function und
 
 # Arguments
 
-- `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
-- `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Union{Nothing,AbstractVector,Tuple}`: List of collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-- `rng::AbstractRNG`: Random number generator for reproducibility.
-- `ntraj::Int`: Number of trajectories to use.
-- `ensemble_method`: Ensemble method to use.
-- `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
-- `prob_func::Function`: Function to use for generating the ODEProblem.
-- `output_func::Function`: Function to use for generating the output of a single trajectory.
-- `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `kwargs...`: Additional keyword arguments to pass to the solver.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `rng`: Random number generator for reproducibility.
+- `ntraj`: Number of trajectories to use.
+- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
+- `prob_func`: Function to use for generating the ODEProblem.
+- `output_func`: Function to use for generating the output of a single trajectory.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
-- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 # Returns
@@ -391,13 +393,11 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob::EnsembleProblem with ODEProblem`: The Ensemble ODEProblem for the Monte Carlo wave function time evolution.
 """
 function mcsolveEnsembleProblem(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
@@ -407,7 +407,7 @@ function mcsolveEnsembleProblem(
     output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2,TJC<:LindbladJumpCallbackType}
+) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
     progr = ProgressBar(ntraj, enable = getVal(progress_bar))
     if ensemble_method isa EnsembleDistributed
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
@@ -427,9 +427,7 @@ function mcsolveEnsembleProblem(
             ψ0,
             tlist,
             c_ops;
-            alg = alg,
             e_ops = e_ops,
-            H_t = H_t,
             params = merge(params, (global_rng = rng, seeds = seeds)),
             rng = rng,
             jump_callback = jump_callback,
@@ -448,13 +446,13 @@ function mcsolveEnsembleProblem(
 end
 
 @doc raw"""
-    mcsolve(H::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-        ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    mcsolve(
+        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{DT2,KetQuantumObject},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
         params::NamedTuple = NamedTuple(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
@@ -502,22 +500,21 @@ If the environmental measurements register a quantum jump, the wave function und
 
 # Arguments
 
-- `H::QuantumObject`: Hamiltonian of the system ``\hat{H}``.
-- `ψ0::QuantumObject`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist::AbstractVector`: List of times at which to save the state of the system.
-- `c_ops::Union{Nothing,AbstractVector,Tuple}`: List of collapse operators ``\{\hat{C}_n\}_n``.
-- `alg::OrdinaryDiffEqAlgorithm`: Algorithm to use for the time evolution.
-- `e_ops::Union{Nothing,AbstractVector,Tuple}`: List of operators for which to calculate expectation values.
-- `H_t::Union{Nothing,Function,TimeDependentOperatorSum}`: Time-dependent part of the Hamiltonian.
-- `params::NamedTuple`: Dictionary of parameters to pass to the solver.
-- `rng::AbstractRNG`: Random number generator for reproducibility.
-- `ntraj::Int`: Number of trajectories to use.
-- `ensemble_method`: Ensemble method to use.
-- `jump_callback::LindbladJumpCallbackType`: The Jump Callback type: Discrete or Continuous.
-- `prob_func::Function`: Function to use for generating the ODEProblem.
-- `output_func::Function`: Function to use for generating the output of a single trajectory.
-- `kwargs...`: Additional keyword arguments to pass to the solver.
-- `progress_bar::Union{Val,Bool}`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `alg`: The algorithm to use for the ODE solver. Default to `Tsit5()`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: `NamedTuple` of parameters to pass to the solver.
+- `rng`: Random number generator for reproducibility.
+- `ntraj`: Number of trajectories to use.
+- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
+- `prob_func`: Function to use for generating the ODEProblem.
+- `output_func`: Function to use for generating the output of a single trajectory.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
@@ -530,16 +527,15 @@ If the environmental measurements register a quantum jump, the wave function und
 
 # Returns
 
-- `sol::TimeEvolutionMCSol`: The solution of the time evolution. See also [`TimeEvolutionMCSol`](@ref)
+- `sol::TimeEvolutionMCSol`: The solution of the time evolution. See also [`TimeEvolutionMCSol`](@ref).
 """
 function mcsolve(
-    H::QuantumObject{MT1,OperatorQuantumObject},
-    ψ0::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
+    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    H_t::Union{Nothing,Function,TimeDependentOperatorSum} = nothing,
     params::NamedTuple = NamedTuple(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
@@ -549,7 +545,7 @@ function mcsolve(
     output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2,TJC<:LindbladJumpCallbackType}
+) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
     ens_prob_mc = mcsolveEnsembleProblem(
         H,
         ψ0,
@@ -557,7 +553,6 @@ function mcsolve(
         c_ops;
         alg = alg,
         e_ops = e_ops,
-        H_t = H_t,
         params = params,
         rng = rng,
         ntraj = ntraj,

@@ -13,6 +13,7 @@ Pages = ["api.md"]
 ## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 
 ```@docs
+AbstractQuantumObject
 BraQuantumObject
 Bra
 KetQuantumObject
@@ -26,10 +27,15 @@ OperatorKet
 SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
-OperatorSum
+QuantumObjectEvolution
 size
 eltype
 length
+```
+
+## [Qobj boolean functions](@id doc-API:Qobj-boolean-functions)
+
+```@docs
 isbra
 isket
 isoper
@@ -40,6 +46,7 @@ LinearAlgebra.ishermitian
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
 isunitary
+isconstant
 ```
 
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
@@ -154,6 +161,7 @@ lindblad_dissipator
 ## [Synonyms of functions for Qobj](@id doc-API:Synonyms-of-functions-for-Qobj)
 ```@docs
 Qobj
+QobjEvo
 shape
 isherm
 trans

@@ -3,74 +3,82 @@ All boolean functions for checking the data or type in `QuantumObject`
 =#
 
 export isket, isbra, isoper, isoperbra, isoperket, issuper
-export isunitary
+export isunitary, isconstant
 
 @doc raw"""
-    isbra(A::QuantumObject)
+    isbra(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`BraQuantumObject`](@ref).
+Checks if the [`QuantumObject`](@ref) `A` is a [`BraQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
-isbra(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = OpType <: BraQuantumObject
+isbra(A::QuantumObject) = isbra(typeof(A))
+isbra(::Type{QuantumObject{DT,BraQuantumObject,N}}) where {DT,N} = true
+isbra(A) = false # default case
 
 @doc raw"""
-    isket(A::QuantumObject)
+    isket(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`KetQuantumObject`](@ref).
+Checks if the [`QuantumObject`](@ref) `A` is a [`KetQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
-isket(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} = OpType <: KetQuantumObject
+isket(A::QuantumObject) = isket(typeof(A))
+isket(::Type{QuantumObject{DT,KetQuantumObject,N}}) where {DT,N} = true
+isket(A) = false # default case
 
 @doc raw"""
-    isoper(A::QuantumObject)
+    isoper(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorQuantumObject`](@ref).
+Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`OperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
-isoper(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    OpType <: OperatorQuantumObject
+isoper(A::AbstractQuantumObject) = isoper(typeof(A))
+isoper(::Type{<:AbstractQuantumObject{DT,OperatorQuantumObject,N}}) where {DT,N} = true
+isoper(A) = false # default case
 
 @doc raw"""
-    isoperbra(A::QuantumObject)
+    isoperbra(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBraQuantumObject`](@ref).
+Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBraQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
-isoperbra(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    OpType <: OperatorBraQuantumObject
+isoperbra(A::QuantumObject) = isoperbra(typeof(A))
+isoperbra(::Type{QuantumObject{DT,OperatorBraQuantumObject,N}}) where {DT,N} = true
+isoperbra(A) = false # default case
 
 @doc raw"""
-    isoperket(A::QuantumObject)
+    isoperket(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKetQuantumObject`](@ref).
+Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKetQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
-isoperket(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    OpType <: OperatorKetQuantumObject
+isoperket(A::QuantumObject) = isoperket(typeof(A))
+isoperket(::Type{QuantumObject{DT,OperatorKetQuantumObject,N}}) where {DT,N} = true
+isoperket(A) = false # default case
 
 @doc raw"""
-    issuper(A::QuantumObject)
+    issuper(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`SuperOperatorQuantumObject`](@ref).
+Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
-issuper(A::QuantumObject{<:AbstractArray{T},OpType}) where {T,OpType<:QuantumObjectType} =
-    OpType <: SuperOperatorQuantumObject
+issuper(A::AbstractQuantumObject) = issuper(typeof(A))
+issuper(::Type{<:AbstractQuantumObject{DT,SuperOperatorQuantumObject,N}}) where {DT,N} = true
+issuper(A) = false # default case
 
 @doc raw"""
-    ishermitian(A::QuantumObject)
+    ishermitian(A::AbstractQuantumObject)
 
-Test whether the [`QuantumObject`](@ref) is Hermitian.
+Test whether the [`AbstractQuantumObject`](@ref) is Hermitian.
 """
-LinearAlgebra.ishermitian(A::QuantumObject{<:AbstractArray{T}}) where {T} = ishermitian(A.data)
+LinearAlgebra.ishermitian(A::AbstractQuantumObject) = ishermitian(A.data)
 
 @doc raw"""
-    issymmetric(A::QuantumObject)
+    issymmetric(A::AbstractQuantumObject)
 
-Test whether the [`QuantumObject`](@ref) is symmetric.
+Test whether the [`AbstractQuantumObject`](@ref) is symmetric.
 """
-LinearAlgebra.issymmetric(A::QuantumObject{<:AbstractArray{T}}) where {T} = issymmetric(A.data)
+LinearAlgebra.issymmetric(A::AbstractQuantumObject) = issymmetric(A.data)
 
 @doc raw"""
-    isposdef(A::QuantumObject)
+    isposdef(A::AbstractQuantumObject)
 
-Test whether the [`QuantumObject`](@ref) is positive definite (and Hermitian) by trying to perform a Cholesky factorization of `A`.
+Test whether the [`AbstractQuantumObject`](@ref) is positive definite (and Hermitian) by trying to perform a Cholesky factorization of `A`.
 """
-LinearAlgebra.isposdef(A::QuantumObject{<:AbstractArray{T}}) where {T} = isposdef(A.data)
+LinearAlgebra.isposdef(A::AbstractQuantumObject) = isposdef(A.data)
 
 @doc raw"""
     isunitary(U::QuantumObject; kwargs...)
@@ -81,3 +89,10 @@ Note that all the keyword arguments will be passed to `Base.isapprox`.
 """
 isunitary(U::QuantumObject{<:AbstractArray{T}}; kwargs...) where {T} =
     isoper(U) ? isapprox(U.data * U.data', I(size(U, 1)); kwargs...) : false
+
+@doc raw"""
+    isconstant(A::AbstractQuantumObject)
+
+Test whether the [`AbstractQuantumObject`](@ref) `A` is constant in time. For a [`QuantumObject`](@ref), this function returns `true`, while for a [`QuantumObjectEvolution`](@ref), this function returns `true` if the operator is contant in time.
+"""
+isconstant(A::AbstractQuantumObject) = isconstant(A.data)

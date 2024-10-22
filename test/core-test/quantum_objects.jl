@@ -120,6 +120,24 @@
         @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = 4)
     end
 
+    @testset "Checks on non-QuantumObjects" begin
+        x = 1
+        @test isket(x) == false
+        @test isbra(x) == false
+        @test isoper(x) == false
+        @test issuper(x) == false
+        @test isoperket(x) == false
+        @test isoperbra(x) == false
+
+        x = rand(ComplexF64, 2)
+        @test isket(x) == false
+        @test isbra(x) == false
+        @test isoper(x) == false
+        @test issuper(x) == false
+        @test isoperket(x) == false
+        @test isoperbra(x) == false
+    end
+
     @testset "arithmetic" begin
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)

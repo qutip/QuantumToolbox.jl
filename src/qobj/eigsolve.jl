@@ -3,7 +3,8 @@ Eigen solvers and results for QuantumObject
 =#
 
 export EigsolveResult
-export eigenenergies, eigenstates, eigsolve, eigsolve_al
+export eigenenergies, eigenstates, eigsolve
+export eigsolve_al
 
 @doc raw"""
     struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},N}
@@ -322,33 +323,34 @@ function eigsolve(
 end
 
 @doc raw"""
-    eigsolve_al(H::QuantumObject,
-        T::Real, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
-        H_t::Union{Nothing,Function}=nothing,
-        params::NamedTuple=NamedTuple(),
-        ρ0::Union{Nothing, AbstractMatrix} = nothing,
-        k::Int=1,
-        krylovdim::Int=min(10, size(H, 1)),
-        maxiter::Int=200,
-        eigstol::Real=1e-6,
-        kwargs...)
+    eigsolve_al(
+        H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
+        T::Real,
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        params::NamedTuple = NamedTuple(),
+        ρ0::AbstractMatrix = rand_dm(prod(H.dims)).data,
+        k::Int = 1,
+        krylovdim::Int = min(10, size(H, 1)),
+        maxiter::Int = 200,
+        eigstol::Real = 1e-6,
+        kwargs...,
+    )
 
 Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnoldi-Lindblad method.
 
 # Arguments
-- `H`: The Hamiltonian (or directly the Liouvillian) of the system.
-- `T`: The time at which to evaluate the time evolution
+- `H`: The Hamiltonian (or directly the Liouvillian) of the system. It can be a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a tuple of the form supported by [`mesolve`](@ref).
+- `T`: The time at which to evaluate the time evolution.
 - `c_ops`: A vector of collapse operators. Default is `nothing` meaning the system is closed.
-- `alg`: The differential equation solver algorithm
-- `H_t`: A function `H_t(t)` that returns the additional term at time `t`
-- `params`: A dictionary of additional parameters
-- `ρ0`: The initial density matrix. If not specified, a random density matrix is used
-- `k`: The number of eigenvalues to compute
-- `krylovdim`: The dimension of the Krylov subspace
-- `maxiter`: The maximum number of iterations for the eigsolver
-- `eigstol`: The tolerance for the eigsolver
-- `kwargs`: Additional keyword arguments passed to the differential equation solver
+- `alg`: The differential equation solver algorithm. Default is `Tsit5()`.
+- `params`: A `NamedTuple` containing the parameters of the system.
+- `ρ0`: The initial density matrix. If not specified, a random density matrix is used.
+- `k`: The number of eigenvalues to compute.
+- `krylovdim`: The dimension of the Krylov subspace.
+- `maxiter`: The maximum number of iterations for the eigsolver.
+- `eigstol`: The tolerance for the eigsolver.
+- `kwargs`: Additional keyword arguments passed to the differential equation solver.
 
 # Notes
 - For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
@@ -361,11 +363,10 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - [1] Minganti, F., & Huybrechts, D. (2022). Arnoldi-Lindblad time evolution: Faster-than-the-clock algorithm for the spectrum of time-independent and Floquet open quantum systems. Quantum, 6, 649.
 """
 function eigsolve_al(
-    H::QuantumObject{MT1,HOpType},
+    H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
     T::Real,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    H_t::Union{Nothing,Function} = nothing,
     params::NamedTuple = NamedTuple(),
     ρ0::AbstractMatrix = rand_dm(prod(H.dims)).data,
     k::Int = 1,
@@ -373,14 +374,12 @@ function eigsolve_al(
     maxiter::Int = 200,
     eigstol::Real = 1e-6,
     kwargs...,
-) where {MT1<:AbstractMatrix,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-    L = liouvillian(H, c_ops)
+) where {DT1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     prob = mesolveProblem(
-        L,
-        QuantumObject(ρ0, dims = H.dims),
-        [0, T];
-        alg = alg,
-        H_t = H_t,
+        L_evo,
+        QuantumObject(ρ0, type = Operator, dims = H.dims),
+        [zero(T), T];
         params = params,
         progress_bar = Val(false),
         kwargs...,
@@ -389,9 +388,9 @@ function eigsolve_al(
 
     # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
 
-    Lmap = ArnoldiLindbladIntegratorMap(eltype(MT1), size(L), integrator)
+    Lmap = ArnoldiLindbladIntegratorMap(eltype(DT1), size(L_evo), integrator)
 
-    res = _eigsolve(Lmap, mat2vec(ρ0), L.type, L.dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
+    res = _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo.dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
     # finish!(prog)
 
     vals = similar(res.values)
@@ -399,7 +398,7 @@ function eigsolve_al(
 
     for i in eachindex(res.values)
         vec = view(res.vectors, :, i)
-        vals[i] = dot(vec, L.data, vec)
+        vals[i] = dot(vec, L_evo.data, vec)
         @. vecs[:, i] = vec * exp(-1im * angle(vec[1]))
     end
 

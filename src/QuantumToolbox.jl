@@ -21,6 +21,7 @@ import SciMLBase:
     reinit!,
     remake,
     u_modified!,
+    ODEFunction,
     ODEProblem,
     SDEProblem,
     EnsembleProblem,
@@ -32,13 +33,21 @@ import SciMLBase:
     ContinuousCallback,
     DiscreteCallback
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
-import SciMLOperators: MatrixOperator
+import SciMLOperators:
+    AbstractSciMLOperator,
+    MatrixOperator,
+    ScalarOperator,
+    IdentityOperator,
+    cache_operator,
+    update_coefficients!,
+    concretize,
+    isconstant
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
-import DiffEqNoiseProcess: RealWienerProcess
+import DiffEqNoiseProcess: RealWienerProcess!
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
@@ -62,7 +71,9 @@ include("progress_bar.jl")
 include("linear_maps.jl")
 
 # Quantum Object
+include("qobj/quantum_object_base.jl")
 include("qobj/quantum_object.jl")
+include("qobj/quantum_object_evo.jl")
 include("qobj/boolean_functions.jl")
 include("qobj/arithmetic_and_attributes.jl")
 include("qobj/eigsolve.jl")
@@ -71,7 +82,6 @@ include("qobj/states.jl")
 include("qobj/operators.jl")
 include("qobj/superoperators.jl")
 include("qobj/synonyms.jl")
-include("qobj/operator_sum.jl")
 
 # time evolution
 include("time_evolution/time_evolution.jl")

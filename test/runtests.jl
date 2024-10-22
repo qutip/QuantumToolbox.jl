@@ -3,6 +3,7 @@ using Pkg
 using QuantumToolbox
 using QuantumToolbox: position, momentum
 using Random
+using SciMLOperators
 
 const GROUP = get(ENV, "GROUP", "All")
 
@@ -21,6 +22,7 @@ core_tests = [
     "permutation.jl",
     "progress_bar.jl",
     "quantum_objects.jl",
+    "quantum_objects_evo.jl",
     "states_and_operators.jl",
     "steady_state.jl",
     "time_evolution.jl",

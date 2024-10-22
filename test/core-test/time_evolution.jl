@@ -59,18 +59,44 @@
         sol_me2 = mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
         sol_me3 = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
         sol_mc = mcsolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+        sol_mc2 = mcsolve(
+            H,
+            psi0,
+            t_l,
+            c_ops,
+            ntraj = 500,
+            e_ops = e_ops,
+            progress_bar = Val(false),
+            jump_callback = DiscreteLindbladJumpCallback(),
+        )
         sol_mc_states = mcsolve(H, psi0, t_l, c_ops, ntraj = 500, saveat = t_l, progress_bar = Val(false))
+        sol_mc_states2 = mcsolve(
+            H,
+            psi0,
+            t_l,
+            c_ops,
+            ntraj = 500,
+            saveat = t_l,
+            progress_bar = Val(false),
+            jump_callback = DiscreteLindbladJumpCallback(),
+        )
         sol_sse = ssesolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
 
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
         expect_mc_states_mean = sum(expect_mc_states, dims = 2) / size(expect_mc_states, 2)
 
+        ρt_mc2 = [ket2dm.(normalize.(states)) for states in sol_mc_states2.states]
+        expect_mc_states2 = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc2)
+        expect_mc_states_mean2 = sum(expect_mc_states2, dims = 2) / size(expect_mc_states2, 2)
+
         sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
         sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
         sol_sse_string = sprint((t, s) -> show(t, "text/plain", s), sol_sse)
         @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
+        @test sum(abs.(sol_mc2.expect .- sol_me.expect)) / length(t_l) < 0.1
         @test sum(abs.(vec(expect_mc_states_mean) .- vec(sol_me.expect))) / length(t_l) < 0.1
+        @test sum(abs.(vec(expect_mc_states_mean2) .- vec(sol_me.expect))) / length(t_l) < 0.1
         @test sum(abs.(sol_sse.expect .- sol_me.expect)) / length(t_l) < 0.1
         @test length(sol_me.times) == length(t_l)
         @test length(sol_me.states) == 1
@@ -117,37 +143,219 @@
               "abstol = $(sol_sse.abstol)\n" *
               "reltol = $(sol_sse.reltol)\n"
 
+        # Time-Dependent Hamiltonian
+        # ssesolve is slow to be run on CI. It is not removed from the test because it may be useful for testing in more powerful machines.
+
+        N = 10
+        a = tensor(destroy(N), qeye(2))
+        σm = tensor(qeye(N), sigmam())
+        σz = tensor(qeye(N), sigmaz())
+        ω = 1.0
+        ωd = 1.02
+        Δ = ω - ωd
+        F = 0.05
+        g = 0.1
+        γ = 0.1
+        nth = 0.001
+
+        # Time Evolution in the drive frame
+
+        H = Δ * a' * a + Δ * σz / 2 + g * (a' * σm + a * σm') + F * (a + a')
+        c_ops = [sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σm']
+        e_ops = [a' * a, σz]
+
+        ψ0 = tensor(basis(N, 0), basis(2, 1))
+        tlist = range(0, 2 / γ, 1000)
+
+        rng = MersenneTwister(12)
+
+        sol_se = sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
+        sol_me = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        sol_mc = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+        # sol_sse = ssesolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+
+        # Time Evolution in the lab frame
+
+        H = ω * a' * a + ω * σz / 2 + g * (a' * σm + a * σm')
+
+        coef1(p, t) = p.F * exp(1im * p.ωd * t)
+        coef2(p, t) = p.F * exp(-1im * p.ωd * t)
+
+        H_td = (H, (a, coef1), (a', coef2))
+        p = (F = F, ωd = ωd)
+
+        sol_se_td = sesolve(H_td, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
+        sol_me_td = mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+        sol_mc_td = mcsolve(
+            H_td,
+            ψ0,
+            tlist,
+            c_ops,
+            ntraj = 500,
+            e_ops = e_ops,
+            progress_bar = Val(false),
+            params = p,
+            rng = rng,
+        )
+        # sol_sse_td = ssesolve(H_td, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
+
+        @test sol_se.expect ≈ sol_se_td.expect atol = 1e-6 * length(tlist)
+        @test sol_me.expect ≈ sol_me_td.expect atol = 1e-6 * length(tlist)
+        @test sol_mc.expect ≈ sol_mc_td.expect atol = 1e-2 * length(tlist)
+        # @test sol_sse.expect ≈ sol_sse_td.expect atol = 1e-2 * length(tlist)
+
+        H_td2 = QobjEvo(H_td)
+        L_td = QobjEvo(H_td, type = SuperOperator, f = liouvillian)
+
+        sol_se_td2 = sesolve(H_td2, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
+        @test_throws ArgumentError mesolve(
+            H_td2,
+            ψ0,
+            tlist,
+            c_ops,
+            e_ops = e_ops,
+            progress_bar = Val(false),
+            params = p,
+        )
+        sol_me_td2 = mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+        sol_mc_td2 = mcsolve(
+            H_td2,
+            ψ0,
+            tlist,
+            c_ops,
+            ntraj = 500,
+            e_ops = e_ops,
+            progress_bar = Val(false),
+            params = p,
+            rng = rng,
+        )
+        # sol_sse_td2 =
+        # ssesolve(H_td2, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
+
+        @test sol_se.expect ≈ sol_se_td2.expect atol = 1e-6 * length(tlist)
+        @test sol_me.expect ≈ sol_me_td2.expect atol = 1e-6 * length(tlist)
+        @test sol_mc.expect ≈ sol_mc_td2.expect atol = 1e-2 * length(tlist)
+        # @test sol_sse.expect ≈ sol_sse_td2.expect atol = 1e-2 * length(tlist)
+
         @testset "Type Inference mesolve" begin
-            @inferred mesolveProblem(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mesolveProblem(H, psi0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mesolveProblem(H, Qobj(zeros(Int64, N)), t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
-            @inferred mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
-            @inferred mesolve(H, psi0, t_l, (a, a'), e_ops = (a_d * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple of different types
-        end
-
-        @testset "Type Inference mcsolve" begin
-            @inferred mcsolveEnsembleProblem(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mcsolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mcsolve(H, psi0, t_l, c_ops, ntraj = 500, progress_bar = Val(true))
-            @inferred mcsolve(H, psi0, [0, 10], c_ops, ntraj = 500, progress_bar = Val(false))
-            @inferred mcsolve(H, Qobj(zeros(Int64, N)), t_l, c_ops, ntraj = 500, progress_bar = Val(false))
-            @inferred mcsolve(H, psi0, t_l, (a, a'), e_ops = (a_d * a, a'), ntraj = 500, progress_bar = Val(false)) # We test the type inference for Tuple of different types
-        end
-
-        @testset "Type Inference ssesolve" begin
-            @inferred ssesolveEnsembleProblem(
+            @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mesolveProblem(
                 H,
-                psi0,
-                t_l,
+                tensor(Qobj(zeros(Int64, N)), Qobj([0, 1])),
+                tlist,
                 c_ops,
-                ntraj = 500,
                 e_ops = e_ops,
                 progress_bar = Val(false),
             )
-            @inferred ssesolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
-            @inferred ssesolve(H, psi0, t_l, c_ops, ntraj = 500, progress_bar = Val(true))
+            @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+            @inferred mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
+            @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
+            @inferred mesolve(H, ψ0, tlist, (a, a'), e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple
+            @inferred mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+            @inferred mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+        end
+
+        @testset "Type Inference mcsolve" begin
+            @inferred mcsolveEnsembleProblem(
+                H,
+                ψ0,
+                tlist,
+                c_ops,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng)
+            @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
+            @inferred mcsolve(
+                H,
+                tensor(Qobj(zeros(Int64, N)), Qobj([0, 1])),
+                tlist,
+                c_ops,
+                ntraj = 5,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred mcsolve(
+                H,
+                ψ0,
+                tlist,
+                (a, a'),
+                e_ops = (a' * a, a'),
+                ntraj = 5,
+                progress_bar = Val(false),
+                rng = rng,
+            ) # We test the type inference for Tuple of different types
+            @inferred mcsolve(
+                H_td,
+                ψ0,
+                tlist,
+                c_ops,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                params = p,
+                rng = rng,
+            )
+        end
+
+        @testset "Type Inference ssesolve" begin
+            c_ops_tuple = Tuple(c_ops) # To avoid type instability, we must have a Tuple instead of a Vector
+            @inferred ssesolveEnsembleProblem(
+                H,
+                ψ0,
+                tlist,
+                c_ops_tuple,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred ssesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_tuple,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng)
+            @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
+            @inferred ssesolve(
+                H,
+                tensor(Qobj(zeros(Int64, N)), Qobj([0, 1])),
+                tlist,
+                c_ops_tuple,
+                ntraj = 5,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred ssesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_tuple,
+                ntraj = 5,
+                e_ops = (a' * a, a'),
+                progress_bar = Val(false),
+                rng = rng,
+            ) # We test the type inference for Tuple of different types
+            @inferred ssesolve(
+                H_td,
+                ψ0,
+                tlist,
+                c_ops_tuple,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                params = p,
+                rng = rng,
+            )
         end
 
         @testset "mcsolve and ssesolve reproducibility" begin
@@ -170,17 +378,14 @@
             tlist = range(0, 20 / γ, 1000)
 
             rng = MersenneTwister(1234)
-            sleep(0.1) # If we don't sleep, we get an error (why?)
             sol_mc1 = mcsolve(H, psi0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
             sol_sse1 = ssesolve(H, psi0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
 
             rng = MersenneTwister(1234)
-            sleep(0.1)
             sol_mc2 = mcsolve(H, psi0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
             sol_sse2 = ssesolve(H, psi0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
 
             rng = MersenneTwister(1234)
-            sleep(0.1)
             sol_mc3 = mcsolve(H, psi0, tlist, c_ops, ntraj = 510, e_ops = e_ops, progress_bar = Val(false), rng = rng)
 
             @test sol_mc1.expect ≈ sol_mc2.expect atol = 1e-10
@@ -199,15 +404,16 @@
         N = 10
         a = destroy(N)
         H = a' * a
+        c_ops = [sqrt(0.1) * a]
         psi0 = basis(N, 3)
         t_l = LinRange(0, 100, 1000)
         psi_wrong = basis(N - 1, 3)
         @test_throws DimensionMismatch sesolve(H, psi_wrong, t_l)
-        @test_throws DimensionMismatch mesolve(H, psi_wrong, t_l)
-        @test_throws DimensionMismatch mcsolve(H, psi_wrong, t_l)
+        @test_throws DimensionMismatch mesolve(H, psi_wrong, t_l, c_ops)
+        @test_throws DimensionMismatch mcsolve(H, psi_wrong, t_l, c_ops)
         @test_throws ArgumentError sesolve(H, psi0, t_l, save_idxs = [1, 2])
-        @test_throws ArgumentError mesolve(H, psi0, t_l, save_idxs = [1, 2])
-        @test_throws ArgumentError mcsolve(H, psi0, t_l, save_idxs = [1, 2])
+        @test_throws ArgumentError mesolve(H, psi0, t_l, c_ops, save_idxs = [1, 2])
+        @test_throws ArgumentError mcsolve(H, psi0, t_l, c_ops, save_idxs = [1, 2])
     end
 
     @testset "example" begin

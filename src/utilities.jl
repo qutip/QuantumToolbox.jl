@@ -141,6 +141,7 @@ getVal(x) = x # getVal for any other type
 
 _get_size(A::AbstractMatrix) = size(A)
 _get_size(A::AbstractVector) = (length(A), 1)
+_get_size(A::AbstractSciMLOperator) = size(A)
 
 _non_static_array_warning(argname, arg::Tuple{}) =
     throw(ArgumentError("The argument $argname must be a Tuple or a StaticVector of non-zero length."))
