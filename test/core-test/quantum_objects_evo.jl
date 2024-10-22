@@ -81,6 +81,7 @@
         @test adjoint(a2).data == adjoint(a2.data)
 
         N = 10
+        # We use MatrixOperator instead of directly using a Qobj to increase coverage
         a = QobjEvo(MatrixOperator(sprand(ComplexF64, N, N, 5 / N)), Operator, N)
         a_d = a'
         X = a + a_d
