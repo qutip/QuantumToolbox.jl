@@ -102,4 +102,7 @@ include("metrics.jl")
 include("negativity.jl")
 include("steadystate.jl")
 
+# deprecated functions
+include("deprecated.jl")
+
 end
