@@ -112,6 +112,24 @@ struct QuantumObjectEvolution{
     end
 end
 
+function Base.show(io::IO, QO::QuantumObjectEvolution)
+    op_data = QO.data
+    println(
+        io,
+        "Quantum Object Evo.:   type=",
+        QO.type,
+        "   dims=",
+        QO.dims,
+        "   size=",
+        size(op_data),
+        "   ishermitian=",
+        ishermitian(op_data),
+        "   isconstant=",
+        isconstant(op_data),
+    )
+    return show(io, MIME("text/plain"), op_data)
+end
+
 function QuantumObjectEvolution(data::AbstractSciMLOperator, type::QuantumObjectType, dims::Integer)
     return QuantumObjectEvolution(data, type, SVector{1,Int}(dims))
 end

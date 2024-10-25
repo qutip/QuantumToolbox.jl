@@ -93,27 +93,31 @@
         @test issymmetric(Z) == true
     end
 
-    # TODO: Implement a new show method for QuantumObjectEvolution
-    # @testset "REPL show" begin
-    #     N = 10
-    #     a = QobjEvo(destroy(N))
+    @testset "REPL show" begin
+        N = 10
+        a = destroy(N)
+        coef(p, t) = exp(-1im * t)
+        H = QobjEvo((a' * a, (a, coef)))
 
-    #     opstring = sprint((t, s) -> show(t, "text/plain", s), a)
-    #     datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
-    #     a_dims = a.dims
-    #     a_size = size(a)
-    #     a_isherm = isherm(a)
-    #     @test opstring ==
-    #           "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+        opstring = sprint((t, s) -> show(t, "text/plain", s), H)
+        datastring = sprint((t, s) -> show(t, "text/plain", s), H.data)
+        H_dims = H.dims
+        H_size = size(H)
+        H_isherm = isherm(H)
+        H_isconst = isconstant(H)
+        @test opstring ==
+              "Quantum Object Evo.:   type=Operator   dims=$H_dims   size=$H_size   ishermitian=$H_isherm   isconstant=$H_isconst\n$datastring"
 
-    #     a = spre(a)
-    #     opstring = sprint((t, s) -> show(t, "text/plain", s), a)
-    #     datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
-    #     a_dims = a.dims
-    #     a_size = size(a)
-    #     a_isherm = isherm(a)
-    #     @test opstring == "Quantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
-    # end
+        L = QobjEvo(spre(a))
+        opstring = sprint((t, s) -> show(t, "text/plain", s), L)
+        datastring = sprint((t, s) -> show(t, "text/plain", s), L.data)
+        L_dims = L.dims
+        L_size = size(L)
+        L_isherm = isherm(L)
+        L_isconst = isconstant(L)
+        @test opstring ==
+              "Quantum Object Evo.:   type=SuperOperator   dims=$L_dims   size=$L_size   ishermitian=$L_isherm   isconstant=$L_isconst\n$datastring"
+    end
 
     @testset "Type Inference (QuantumObject)" begin
         for T in [ComplexF32, ComplexF64]
