@@ -140,7 +140,7 @@ function Base.show(
     return show(io, MIME("text/plain"), op_data)
 end
 
-function Base.show(io::IO, QO::AbstractQuantumObject)
+function Base.show(io::IO, QO::QuantumObject)
     op_data = QO.data
     println(
         io,
