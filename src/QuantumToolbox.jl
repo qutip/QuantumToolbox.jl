@@ -35,7 +35,6 @@ import SciMLBase:
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
 import SciMLOperators:
     AbstractSciMLOperator,
-    AddedOperator,
     MatrixOperator,
     ScalarOperator,
     IdentityOperator,
