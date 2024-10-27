@@ -16,7 +16,7 @@ body:
       label: Code to Reproduce the Bug
       description: Please provide a minimal working example. Paste your code directly (It will be automatically formatted, so there's no need for backticks)
       placeholder: "using QuantumToolbox\nprint(qeye(2))"
-      render: shell
+      render: julia
   - type: textarea
     id: bug-output
     attributes:
@@ -37,7 +37,7 @@ body:
     attributes:
       label: Your Environment
       description: Please use `QuantumToolbox.about()` or `QuantumToolbox.versioninfo()` to get the information about your environment and paste it here (automatically formatted)
-      placeholder: "Julia              Ver. ***\nQuantumToolbox     Ver. ***\nLinearSolve        Ver. ***\nOrdinaryDiffEqCore Ver. ***\nOS       : ***\nWORD_SIZE: ***\nLIBM     : ***\nLLVM     : ***\nBLAS     : ***"
+      placeholder: "Julia              Ver. ***\nQuantumToolbox     Ver. ***\nSciMLOperators     Ver. ***\nLinearSolve        Ver. ***\nOrdinaryDiffEqCore Ver. ***\nOS       : ***\nWORD_SIZE: ***\nLIBM     : ***\nLLVM     : ***\nBLAS     : ***"
       render: shell
     validations:
       required: true
