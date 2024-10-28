@@ -43,7 +43,7 @@ end
 
 _mesolve_make_L_QobjEvo(H::QuantumObject, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator)
 function _mesolve_make_L_QobjEvo(H::Tuple, c_ops)
-    c_ops isa Nothing && return QobjEvo(H)
+    c_ops isa Nothing && return QobjEvo(H; type = SuperOperator, f = liouvillian)
     return QobjEvo((H..., mapreduce(op -> lindblad_dissipator(op), +, c_ops)); type = SuperOperator, f = liouvillian)
 end
 _mesolve_make_L_QobjEvo(H::QuantumObjectEvolution{DT,OperatorQuantumObject}, c_ops) where {DT<:AbstractSciMLOperator} =
