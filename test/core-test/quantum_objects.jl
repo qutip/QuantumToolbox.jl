@@ -65,10 +65,15 @@
     end
 
     @testset "Operator and SuperOperator" begin
+        N  = 10
+        A = Qobj(rand(ComplexF64, N, N))
+        B = Qobj(rand(ComplexF64, N, N))
+        ρ = rand_dm(N) # random density matrix
+        @test mat2vec(A * ρ * B) ≈ spre(A) * spost(B) * mat2vec(ρ) ≈ sprepost(A, B) * mat2vec(ρ) # we must make sure this equality holds !
+
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator)
-
         @test isket(a2) == false
         @test isbra(a2) == false
         @test isoper(a2) == true
