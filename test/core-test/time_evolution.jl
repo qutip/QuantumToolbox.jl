@@ -205,18 +205,9 @@
         # @test sol_sse.expect ≈ sol_sse_td.expect atol = 1e-2 * length(tlist)
 
         H_td2 = QobjEvo(H_td)
-        L_td = QobjEvo(H_td, type = SuperOperator, f = liouvillian)
+        L_td = liouvillian(H_td2)
 
         sol_se_td2 = sesolve(H_td2, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
-        @test_throws ArgumentError mesolve(
-            H_td2,
-            ψ0,
-            tlist,
-            c_ops,
-            e_ops = e_ops,
-            progress_bar = Val(false),
-            params = p,
-        )
         sol_me_td2 = mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
         sol_mc_td2 = mcsolve(
             H_td2,
@@ -253,6 +244,7 @@
             @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
             @inferred mesolve(H, ψ0, tlist, (a, a'), e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple
             @inferred mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+            @inferred mesolve(H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
             @inferred mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
         end
 

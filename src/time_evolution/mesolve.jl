@@ -42,23 +42,7 @@ function _generate_mesolve_kwargs(e_ops, progress_bar::Val{false}, tlist, kwargs
 end
 
 _mesolve_make_L_QobjEvo(H::QuantumObject, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator)
-function _mesolve_make_L_QobjEvo(H::Tuple, c_ops)
-    c_ops isa Nothing && return QobjEvo(H; type = SuperOperator, f = liouvillian)
-    return QobjEvo((H..., mapreduce(op -> lindblad_dissipator(op), +, c_ops)); type = SuperOperator, f = liouvillian)
-end
-_mesolve_make_L_QobjEvo(H::QuantumObjectEvolution{DT,OperatorQuantumObject}, c_ops) where {DT<:AbstractSciMLOperator} =
-    throw(
-        ArgumentError(
-            "This function does not support the data type of time-dependent Operator `H` currently. Try to provide `H` as a time-dependent SuperOperator or Tuple instead.",
-        ),
-    )
-function _mesolve_make_L_QobjEvo(
-    H::QuantumObjectEvolution{DT,SuperOperatorQuantumObject},
-    c_ops,
-) where {DT<:AbstractSciMLOperator}
-    c_ops isa Nothing && return H
-    return H + QobjEvo((mapreduce(op -> lindblad_dissipator(op), +, c_ops)))
-end
+_mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
 
 @doc raw"""
     mesolveProblem(
