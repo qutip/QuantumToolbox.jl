@@ -65,7 +65,7 @@
     end
 
     @testset "Operator and SuperOperator" begin
-        N  = 10
+        N = 10
         A = Qobj(rand(ComplexF64, N, N))
         B = Qobj(rand(ComplexF64, N, N))
         ρ = rand_dm(N) # random density matrix
