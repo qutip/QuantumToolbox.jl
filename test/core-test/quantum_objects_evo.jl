@@ -176,7 +176,7 @@
         @test H_td(ψ, p, t) ≈ H_ti * ψ
         @test isconstant(a) == true
         @test isconstant(H_td) == false
-        @test isconstant(Qobj(a)) == true
+        @test isconstant(QobjEvo(a)) == true
         @test isoper(H_td) == true
 
         # SuperOperator

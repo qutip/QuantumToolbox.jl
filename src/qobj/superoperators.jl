@@ -134,7 +134,7 @@ function liouvillian(
 ) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
-        L += mapreduce(c_op -> lindblad_dissipator(c_op), +, c_ops)
+        L += mapreduce(lindblad_dissipator, +, c_ops)
     end
     return L
 end
