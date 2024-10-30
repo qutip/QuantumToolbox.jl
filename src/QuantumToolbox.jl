@@ -37,6 +37,8 @@ import SciMLOperators:
     AbstractSciMLOperator,
     MatrixOperator,
     ScalarOperator,
+    ScaledOperator,
+    AddedOperator,
     IdentityOperator,
     cache_operator,
     update_coefficients!,

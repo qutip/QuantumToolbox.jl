@@ -160,25 +160,37 @@
     #     @test X_warn == X3
     # end
 
-    @testset "Time Dependent Operators" begin
+    @testset "Time Dependent Operators and SuperOperators" begin
         N = 10
         a = destroy(N)
         coef1(p, t) = exp(-1im * p.ω1 * t)
         coef2(p, t) = sin(p.ω2 * t)
+        t = rand()
+        p = (ω1 = rand(), ω2 = rand())
+
+        # Operator
+        H_td = QobjEvo(((a, coef1), a' * a, (a', coef2)))
+        H_ti = coef1(p, t) * a + a' * a + coef2(p, t) * a'
+        ψ = rand_ket(N)
+        @test H_td(p, t) ≈ H_ti
+        @test H_td(ψ, p, t) ≈ H_ti * ψ
+        @test isconstant(a) == true
+        @test isconstant(H_td) == false
+        @test isconstant(QobjEvo(a)) == true
+        @test isoper(H_td) == true
+
+        # SuperOperator
+        c_ops = [sqrt(rand()) * a]
+        L_td = liouvillian(H_td, c_ops)
+        L_td2 = -1im * spre(H_td) + 1im * spost(H_td) + lindblad_dissipator(c_ops[1])
+        ρvec = mat2vec(rand_dm(N))
+        @test L_td(p, t) ≈ L_td2(p, t)
+        @test L_td(ρvec, p, t) ≈ L_td2(ρvec, p, t)
+        @test isconstant(L_td) == false
+        @test issuper(L_td) == true
 
         @test_throws MethodError QobjEvo([[a, coef1], a' * a, [a', coef2]])
-
-        op1 = QobjEvo(((a, coef1), a' * a, (a', coef2)))
-        op1 = QobjEvo(((a, coef1), a' * a, (a', coef2)))
-
-        p = (ω1 = 1, ω2 = 2)
-        @test op1(p, 0.1) ≈ coef1(p, 0.1) * a + a' * a + coef2(p, 0.1) * a'
-
-        ψ = fock(N, 1)
-        @test op1(ψ, p, 0.1) ≈ (coef1(p, 0.1) * a + a' * a + coef2(p, 0.1) * a') * ψ
-
-        @test isconstant(a) == true
-        @test isconstant(op1) == false
-        @test isconstant(Qobj(a)) == true
+        @test_throws ArgumentError H_td(ρvec, p, t)
+        @test_throws ArgumentError L_td(ψ, p, t)
     end
 end

@@ -2,10 +2,10 @@
 Functions for generating (common) quantum super-operators.
 =#
 
-export spre, spost, sprepost, lindblad_dissipator
+export spre, spost, sprepost, liouvillian, lindblad_dissipator
 
 # intrinsic functions for super-operators
-# (keep these because they take AbstractMatrix as input)
+# (keep these because they take AbstractMatrix as input and ensure the output is sparse matrix)
 _spre(A::AbstractMatrix, Id::AbstractMatrix) = kron(Id, sparse(A))
 _spre(A::AbstractSparseMatrix, Id::AbstractMatrix) = kron(Id, A)
 _spost(B::AbstractMatrix, Id::AbstractMatrix) = kron(transpose(sparse(B)), Id)
@@ -14,9 +14,22 @@ _sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), spa
 _sprepost(A::AbstractMatrix, B::AbstractSparseMatrix) = kron(transpose(B), sparse(A))
 _sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), A)
 _sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(transpose(B), A)
+_liouvillian(H::AbstractMatrix, Id::AbstractMatrix) = -1im * (_spre(H, Id) - _spost(H, Id))
+
+# (if input is AbstractSciMLOperator)
+_spre(A::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spre(A.A, Id))
+_spre(A::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(A.λ, _spre(A.L, Id))
+_spre(A::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _spre(op, Id), +, A.ops)
+_spost(B::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spost(B.A, Id))
+_spost(B::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(B.λ, _spost(B.L, Id))
+_spost(B::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _spost(op, Id), +, B.ops)
+_liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
+_liouvillian(H::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(H.λ, _liouvillian(H.L, Id))
+_liouvillian(H::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _liouvillian(op, Id), +, H.ops)
+# TODO: support `_sprepost`, `sprepost`, and `lindblad_dissipator` for AbstractSciMLOperator (allow c_ops with Vector{QobjEvo})
 
 @doc raw"""
-    spre(A::QuantumObject, Id_cache=I(size(A,1)))
+    spre(A::AbstractQuantumObject, Id_cache=I(size(A,1)))
 
 Returns the [`SuperOperator`](@ref) form of `A` acting on the left of the density matrix operator: ``\mathcal{O} \left(\hat{A}\right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho}``.
 
@@ -27,14 +40,13 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 ```
 (see the section in documentation: [Superoperators and Vectorized Operators](@ref doc:Superoperators-and-Vectorized-Operators) for more details)
 
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
-the same function is applied multiple times with a known Hilbert space dimension.
+The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
 """
-spre(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(A, 1))) where {T} =
-    QuantumObject(_spre(A.data, Id_cache), SuperOperator, A.dims)
+spre(A::AbstractQuantumObject{DT,OperatorQuantumObject}, Id_cache = I(size(A, 1))) where {DT} =
+    get_typename_wrapper(A)(_spre(A.data, Id_cache), SuperOperator, A.dims)
 
 @doc raw"""
-    spost(B::QuantumObject, Id_cache=I(size(B,1)))
+    spost(B::AbstractQuantumObject, Id_cache=I(size(B,1)))
 
 Returns the [`SuperOperator`](@ref) form of `B` acting on the right of the density matrix operator: ``\mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{\rho} \hat{B}``.
 
@@ -45,11 +57,10 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 ```
 (see the section in documentation: [Superoperators and Vectorized Operators](@ref doc:Superoperators-and-Vectorized-Operators) for more details)
 
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
-the same function is applied multiple times with a known Hilbert space dimension.
+The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
 """
-spost(B::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}, Id_cache = I(size(B, 1))) where {T} =
-    QuantumObject(_spost(B.data, Id_cache), SuperOperator, B.dims)
+spost(B::AbstractQuantumObject{DT,OperatorQuantumObject}, Id_cache = I(size(B, 1))) where {DT} =
+    get_typename_wrapper(B)(_spost(B.data, Id_cache), SuperOperator, B.dims)
 
 @doc raw"""
     sprepost(A::QuantumObject, B::QuantumObject)
@@ -84,21 +95,21 @@ Returns the Lindblad [`SuperOperator`](@ref) defined as
 \hat{O}^\dagger \hat{O} \hat{\rho} - \hat{\rho} \hat{O}^\dagger \hat{O} \right)
 ```
 
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when
-the same function is applied multiple times with a known Hilbert space dimension.
+The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
 
-See also [`spre`](@ref) and [`spost`](@ref).
+See also [`spre`](@ref), [`spost`](@ref), and [`sprepost`](@ref).
 """
 function lindblad_dissipator(O::QuantumObject{DT,OperatorQuantumObject}, Id_cache = I(size(O, 1))) where {DT}
     Od_O = O' * O
-    return sprepost(O, O') - spre(Od_O, Id_cache) / 2 - spost(Od_O, Id_cache) / 2
+    return sprepost(O, O') - (spre(Od_O, Id_cache) + spost(Od_O, Id_cache)) / 2
 end
+# TODO: suppport collapse operator given as QobjEvo-type
 
 # It is already a SuperOperator
 lindblad_dissipator(O::QuantumObject{DT,SuperOperatorQuantumObject}, Id_cache = nothing) where {DT} = O
 
 @doc raw"""
-    liouvillian(H::QuantumObject, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing, Id_cache=I(prod(H.dims)))
+    liouvillian(H::AbstractQuantumObject, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing, Id_cache=I(prod(H.dims)))
 
 Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
 
@@ -117,20 +128,18 @@ The optional argument `Id_cache` can be used to pass a precomputed identity matr
 See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 """
 function liouvillian(
-    H::QuantumObject{MT1,OpType1},
+    H::AbstractQuantumObject{DT,OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     Id_cache = I(prod(H.dims)),
-) where {MT1<:AbstractMatrix,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
-        for c_op in c_ops
-            L += lindblad_dissipator(c_op, Id_cache)
-        end
+        L += mapreduce(lindblad_dissipator, +, c_ops)
     end
     return L
 end
 
-liouvillian(H::QuantumObject{<:AbstractMatrix,OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dims))) =
-    -1im * (spre(H, Id_cache) - spost(H, Id_cache))
+liouvillian(H::AbstractQuantumObject{DT,OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dims))) where {DT} =
+    get_typename_wrapper(H)(_liouvillian(H.data, Id_cache), SuperOperator, H.dims)
 
-liouvillian(H::QuantumObject{<:AbstractMatrix,SuperOperatorQuantumObject}, Id_cache::Diagonal) = H
+liouvillian(H::AbstractQuantumObject{DT,SuperOperatorQuantumObject}, Id_cache::Diagonal) where {DT} = H
