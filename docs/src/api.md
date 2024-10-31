@@ -190,23 +190,39 @@ mcsolveProblem
 mcsolveEnsembleProblem
 ssesolveProblem
 ssesolveEnsembleProblem
-lr_mesolveProblem
 sesolve
 mesolve
 mcsolve
 ssesolve
 dfd_mesolve
-dsf_mesolve
-dsf_mcsolve
-lr_mesolve
 liouvillian
 liouvillian_generalized
+```
+
+### [Steady State Solvers](@id doc-API:Steady-State-Solvers)
+
+```@docs
 steadystate
 steadystate_floquet
 SteadyStateDirectSolver
 SteadyStateEigenSolver
 SteadyStateLinearSolver
 SteadyStateODESolver
+```
+
+### [Dynamical Shifted Fock method](@id doc-API:Dynamical-Shifted-Fock-method)
+
+```@docs
+dsf_mesolve
+dsf_mcsolve
+```
+
+### [Low-rank time evolution](@id doc-API:Low-rank-time-evolution)
+
+```@docs
+TimeEvolutionLRSol
+lr_mesolveProblem
+lr_mesolve
 ```
 
 ## [Correlations and Spectrum](@id doc-API:Correlations-and-Spectrum)
@@ -225,6 +241,14 @@ entropy_vn
 entanglement
 tracedist
 fidelity
+```
+
+## [Spin Lattice](@id doc-API:Spin-Lattice)
+
+```@docs
+Lattice
+SingleSiteOperator
+DissipativeIsing
 ```
 
 ## [Miscellaneous](@id doc-API:Miscellaneous)
@@ -251,10 +275,4 @@ PhysicalConstants
 convert_unit
 row_major_reshape
 meshgrid
-_calculate_expectation!
-_adjM_condition_variational
-_adjM_affect!
-_adjM_condition_ratio
-_pinv!
-dBdz!
 ```
