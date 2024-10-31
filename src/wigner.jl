@@ -17,7 +17,7 @@ WignerLaguerre(; parallel = false, tol = 1e-14) = WignerLaguerre(parallel, tol)
         xvec::AbstractVector,
         yvec::AbstractVector;
         g::Real = √2,
-        method::MySolver = WignerClenshaw(),
+        method::WignerSolver = WignerClenshaw(),
     )
 
 Generates the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) of `state` at points `xvec + 1im * yvec` in phase space. The `g` parameter is a scaling factor related to the value of ``\hbar`` in the commutation relation ``[x, y] = i \hbar`` via ``\hbar=2/g^2`` giving the default value ``\hbar=1``.
@@ -29,7 +29,7 @@ The `method` parameter can be either `WignerLaguerre()` or `WignerClenshaw()`. T
 - `xvec::AbstractVector`: The x-coordinates of the phase space grid.
 - `yvec::AbstractVector`: The y-coordinates of the phase space grid.
 - `g::Real`: The scaling factor related to the value of ``\hbar`` in the commutation relation ``[x, y] = i \hbar`` via ``\hbar=2/g^2``.
-- `method`: The method used to calculate the Wigner function. It can be either `WignerLaguerre()` or `WignerClenshaw()`, with `WignerClenshaw()` as default. The `WignerLaguerre` method has the optional `parallel` and `tol` parameters, with default values `true` and `1e-14`, respectively.
+- `method::WignerSolver`: The method used to calculate the Wigner function. It can be either `WignerLaguerre()` or `WignerClenshaw()`, with `WignerClenshaw()` as default. The `WignerLaguerre` method has the optional `parallel` and `tol` parameters, with default values `true` and `1e-14`, respectively.
 
 # Returns
 - `W::Matrix`: The Wigner function of the state at the points `xvec + 1im * yvec` in phase space.
@@ -91,8 +91,8 @@ function wigner(
     xvec::AbstractVector,
     yvec::AbstractVector;
     g::Real = √2,
-    method::MySolver = WignerClenshaw(),
-) where {DT,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject},MySolver<:WignerSolver}
+    method::WignerSolver = WignerClenshaw(),
+) where {DT,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     ρ = ket2dm(state).data
 
     return _wigner(ρ, xvec, yvec, g, method)
