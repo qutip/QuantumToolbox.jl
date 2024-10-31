@@ -209,8 +209,6 @@ function _check_QuantumObject(type::OperatorBraQuantumObject, dims, m::Int, n::I
     return nothing
 end
 
-get_typename_wrapper(A::AbstractQuantumObject) = Base.typename(typeof(A)).wrapper
-
 # functions for getting Float or Complex element type
 _FType(A::AbstractQuantumObject) = _FType(eltype(A))
 _CType(A::AbstractQuantumObject) = _CType(eltype(A))

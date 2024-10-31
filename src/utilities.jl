@@ -128,6 +128,8 @@ function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T<:Real}
     return _FType(T)(value * (_energy_units[unit1] / _energy_units[unit2]))
 end
 
+get_typename_wrapper(A) = Base.typename(typeof(A)).wrapper
+
 _get_dense_similar(A::AbstractArray, args...) = similar(A, args...)
 _get_dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
 
