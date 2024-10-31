@@ -165,8 +165,9 @@
         a = destroy(N)
         coef1(p, t) = exp(-1im * p.ω1 * t)
         coef2(p, t) = sin(p.ω2 * t)
+        coef3(p, t) = sin(p.ω3 * t)
         t = rand()
-        p = (ω1 = rand(), ω2 = rand())
+        p = (ω1 = rand(), ω2 = rand(), ω3 = rand())
 
         # Operator
         H_td = QobjEvo(((a, coef1), a' * a, (a', coef2)))
@@ -180,12 +181,21 @@
         @test isoper(H_td) == true
 
         # SuperOperator
-        c_ops = [sqrt(rand()) * a]
-        L_td = liouvillian(H_td, c_ops)
-        L_td2 = -1im * spre(H_td) + 1im * spost(H_td) + lindblad_dissipator(c_ops[1])
+        c_op1 = QobjEvo(((a', coef1),))
+        c_op2 = QobjEvo(((a, coef2), (a * a', coef3)))
+        c_ops = [c_op1, c_op2]
+        D1_ti = abs2(coef1(p, t)) * lindblad_dissipator(a')
+        D2_ti = @test_logs (:warn,) (:warn,) lindblad_dissipator(c_op2)(p, t)
+        L_ti = liouvillian(H_ti) + D1_ti + D2_ti
+        L_td = @test_logs (:warn,) (:warn,) liouvillian(H_td, c_ops)
         ρvec = mat2vec(rand_dm(N))
-        @test L_td(p, t) ≈ L_td2(p, t)
-        @test L_td(ρvec, p, t) ≈ L_td2(ρvec, p, t)
+        @test L_td(p, t) ≈ L_ti
+        # TODO: L_td here is ComposedOperator and need to setup cache first for the following test
+        # TODO: (maybe can support `iscached` and `cache_operator` for QobjEvo in the future)
+        # @test iscached(L_td) == false
+        # @test L_td = cache_operator(L_td, ρvec)
+        # @test iscached(L_td) == true
+        # @test L_td(ρvec, p, t) ≈ L_ti * ρvec 
         @test isconstant(L_td) == false
         @test issuper(L_td) == true
 
