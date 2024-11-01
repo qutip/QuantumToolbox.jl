@@ -230,6 +230,7 @@
 
         @testset "Type Inference mesolve" begin
             coef(p, t) = exp(-t)
+            ad_t = QobjEvo(((a', coef),))
             @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolveProblem(
@@ -243,7 +244,7 @@
             @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
             @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
-            @inferred mesolve(H, ψ0, tlist, (a, QobjEvo(((a', coef),))), e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple
+            @inferred mesolve(H, ψ0, tlist, (a, ad_t), e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple
             @inferred mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
             @inferred mesolve(H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
             @inferred mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
