@@ -181,13 +181,18 @@
         @test isoper(H_td) == true
 
         # SuperOperator
+        X = a * a'
         c_op1 = QobjEvo(((a', coef1),))
-        c_op2 = QobjEvo(((a, coef2), (a * a', coef3)))
+        c_op2 = QobjEvo(((a, coef2), (X, coef3)))
         c_ops = [c_op1, c_op2]
         D1_ti = abs2(coef1(p, t)) * lindblad_dissipator(a')
-        D2_ti = @test_logs (:warn,) (:warn,) lindblad_dissipator(c_op2)(p, t)
+        D2_ti =
+            abs2(coef2(p, t)) * lindblad_dissipator(a) + # normal dissipator for first  element in c_op2
+            abs2(coef3(p, t)) * lindblad_dissipator(X) + # normal dissipator for second element in c_op2
+            coef2(p, t) * conj(coef3(p, t)) * (spre(a) * spost(X') - 0.5 * spre(X' * a) - 0.5 * spost(X' * a)) + # cross terms
+            conj(coef2(p, t)) * coef3(p, t) * (spre(X) * spost(a') - 0.5 * spre(a' * X) - 0.5 * spost(a' * X))   # cross terms
         L_ti = liouvillian(H_ti) + D1_ti + D2_ti
-        L_td = @test_logs (:warn,) (:warn,) liouvillian(H_td, c_ops)
+        L_td = @test_logs (:warn,) (:warn,) liouvillian(H_td, c_ops) # warnings from lazy tensor in `lindblad_dissipator(c_op2)`
         ρvec = mat2vec(rand_dm(N))
         @test L_td(p, t) ≈ L_ti
         # TODO: L_td here is ComposedOperator and need to setup cache first for the following test
@@ -199,6 +204,7 @@
         @test isconstant(L_td) == false
         @test issuper(L_td) == true
 
+        @test_logs (:warn,) (:warn,) liouvillian(H_td * H_td) # warnings from lazy tensor
         @test_throws MethodError QobjEvo([[a, coef1], a' * a, [a', coef2]])
         @test_throws ArgumentError H_td(ρvec, p, t)
         @test_throws ArgumentError L_td(ψ, p, t)

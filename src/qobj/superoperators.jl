@@ -19,15 +19,9 @@ function _sprepost(A, B) # for any other input types
     return _spre(A, Id_cache) * _spost(B, Id_cache)
 end
 
-_liouvillian(H::AbstractMatrix, Id::AbstractMatrix) = -1im * (_spre(H, Id) - _spost(H, Id))
-function _lindblad_dissipator(O::AbstractMatrix, Id::AbstractMatrix)
-    Od_O = O' * O
-    return _sprepost(O, O') - (_spre(Od_O, Id) + _spost(Od_O, Id)) / 2
-end
-
-## if input is AbstractSciMLOperator
-_lazy_tensor_warning(func_name::String, data::AbstractSciMLOperator) =
-    @warn "The function `$func_name` uses lazy tensor (which can hurt performance) for data type: $(get_typename_wrapper(data))"
+## if input is AbstractSciMLOperator 
+## some of them are optimzed to speed things up
+## the rest of the SciMLOperators will just use lazy tensor (and prompt a warning)
 _spre(A::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spre(A.A, Id))
 _spre(A::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(A.λ, _spre(A.L, Id))
 _spre(A::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _spre(op, Id), +, A.ops)
@@ -44,10 +38,18 @@ function _spost(B::AbstractSciMLOperator, Id::AbstractMatrix)
     return kron(transpose(B), Id)
 end
 
+## intrinsic liouvillian 
+_liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}} =
+    -1im * (_spre(H, Id) - _spost(H, Id))
 _liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
 _liouvillian(H::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(H.λ, _liouvillian(H.L, Id))
 _liouvillian(H::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _liouvillian(op, Id), +, H.ops)
-_liouvillian(H::AbstractSciMLOperator, Id::AbstractMatrix) = -1im * (_spre(H, Id) - _spost(H, Id))
+
+# intrinsic lindblad_dissipator
+function _lindblad_dissipator(O::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
+    Od_O = O' * O
+    return _sprepost(O, O') - (_spre(Od_O, Id) + _spost(Od_O, Id)) / 2
+end
 function _lindblad_dissipator(O::MatrixOperator, Id::AbstractMatrix)
     _O = O.A
     Od_O = _O' * _O
@@ -56,10 +58,6 @@ end
 function _lindblad_dissipator(O::ScaledOperator, Id::AbstractMatrix)
     λc_λ = conj(O.λ) * O.λ
     return ScaledOperator(λc_λ, _lindblad_dissipator(O.L, Id))
-end
-function _lindblad_dissipator(O::AbstractSciMLOperator, Id::AbstractMatrix)
-    Od_O = O' * O
-    return _sprepost(O, O') - (_spre(Od_O, Id) + _spost(Od_O, Id)) / 2
 end
 
 @doc raw"""
