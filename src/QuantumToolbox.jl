@@ -8,16 +8,7 @@ import Reexport: @reexport
 @reexport import StaticArraysCore: SVector
 @reexport using LinearAlgebra
 @reexport using SparseArrays
-@reexport import SciMLOperators:
-    AbstractSciMLOperator,
-    MatrixOperator,
-    ScalarOperator,
-    ScaledOperator,
-    AddedOperator,
-    IdentityOperator,
-    cache_operator,
-    iscached,
-    isconstant
+@reexport import SciMLOperators: cache_operator, iscached, isconstant
 
 # other functions in LinearAlgebra
 import LinearAlgebra: BlasReal, BlasInt, BlasFloat, BlasComplex, checksquare
@@ -44,7 +35,16 @@ import SciMLBase:
     ContinuousCallback,
     DiscreteCallback
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
-import SciMLOperators: SciMLOperators, update_coefficients!, concretize
+import SciMLOperators:
+    SciMLOperators,
+    AbstractSciMLOperator,
+    MatrixOperator,
+    ScalarOperator,
+    ScaledOperator,
+    AddedOperator,
+    IdentityOperator,
+    update_coefficients!,
+    concretize
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState

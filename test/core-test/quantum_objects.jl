@@ -80,12 +80,17 @@
         @test issuper(a2) == false
         @test isoperket(a2) == false
         @test isoperbra(a2) == false
+        @test iscached(a2) == true
+        @test isconstant(a2) == true
+        @test isunitary(a2) == false
         @test isket(a3) == false
         @test isbra(a3) == false
         @test isoper(a3) == false
         @test issuper(a3) == true
         @test isoperket(a3) == false
         @test isoperbra(a3) == false
+        @test iscached(a3) == true
+        @test isconstant(a3) == true
         @test isunitary(a3) == false
         @test_throws DimensionMismatch Qobj(a, dims = 2)
     end
