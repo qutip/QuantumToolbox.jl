@@ -205,6 +205,7 @@
         @test isconstant(L_td) == false
         @test issuper(L_td) == true
 
+        @test_logs (:warn,) (:warn,) liouvillian(H_td * H_td) # warnings from lazy tensor
         @test_throws MethodError QobjEvo([[a, coef1], a' * a, [a', coef2]])
         @test_throws ArgumentError H_td(ρvec, p, t)
         @test_throws ArgumentError cache_operator(H_td, ρvec)
