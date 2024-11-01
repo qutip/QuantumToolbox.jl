@@ -184,11 +184,9 @@ function ssesolveProblem(
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(tlist))
-        e_ops_data = ()
         is_empty_e_ops = true
     else
         expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
-        e_ops_data = get_data.(e_ops)
         is_empty_e_ops = isempty(e_ops)
     end
 
@@ -205,16 +203,7 @@ function ssesolveProblem(
     D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(prod(dims)), sc_ops_evo_data)
     D = DiffusionOperator(D_l)
 
-    p = (
-        e_ops = e_ops_data,
-        expvals = expvals,
-        progr = progr,
-        times = tlist,
-        Hdims = dims,
-        is_empty_e_ops = is_empty_e_ops,
-        n_sc_ops = length(sc_ops),
-        params...,
-    )
+    p = (expvals = expvals, progr = progr, times = tlist, Hdims = dims, n_sc_ops = length(sc_ops), params...)
 
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_SDE_SOLVER_OPTIONS..., saveat = saveat)

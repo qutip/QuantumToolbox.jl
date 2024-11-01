@@ -1,39 +1,55 @@
 export sesolveProblem, sesolve
 
+# When e_ops is Nothing
 function _save_func_sesolve(integrator)
-    internal_params = integrator.p
-    progr = internal_params.progr
-
-    if !internal_params.is_empty_e_ops
-        e_ops = internal_params.e_ops
-        expvals = internal_params.expvals
-
-        ψ = integrator.u
-        _expect = op -> dot(ψ, op, ψ)
-        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
-    end
-    next!(progr)
+    next!(integrator.p.progr)
     return u_modified!(integrator, false)
 end
 
-function _generate_sesolve_kwargs_with_callback(tlist, kwargs)
-    cb1 = PresetTimeCallback(tlist, _save_func_sesolve, save_positions = (false, false))
+# When e_ops is a list of operators
+function _save_func_sesolve(integrator, e_ops, is_empty_e_ops)
+    expvals = integrator.p.expvals
+    progr = integrator.p.progr
+    if !is_empty_e_ops
+        ψ = integrator.u
+        _expect = op -> dot(ψ, get_data(op), ψ)
+        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
+    end
+    return _save_func_sesolve(integrator)
+end
+
+# Generate the callback depending on the e_ops type
+function _generate_sesolve_callback(e_ops::Nothing, tlist)
+    f = integrator -> _save_func_sesolve(integrator)
+    return PresetTimeCallback(tlist, f, save_positions = (false, false))
+end
+
+function _generate_sesolve_callback(e_ops, tlist)
+    is_empty_e_ops = isempty(e_ops)
+    f = integrator -> _save_func_sesolve(integrator, e_ops, is_empty_e_ops)
+    return PresetTimeCallback(tlist, f, save_positions = (false, false))
+end
+
+function _merge_sesolve_kwargs_with_callback(kwargs, cb)
     kwargs2 =
-        haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(kwargs.callback, cb1),)) :
-        merge(kwargs, (callback = cb1,))
+        haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(kwargs.callback, cb),)) :
+        merge(kwargs, (callback = cb,))
 
     return kwargs2
 end
 
+# Multiple dispatch depending on the progress_bar and e_ops types
 function _generate_sesolve_kwargs(e_ops, progress_bar::Val{true}, tlist, kwargs)
-    return _generate_sesolve_kwargs_with_callback(tlist, kwargs)
+    cb = _generate_sesolve_callback(e_ops, tlist)
+    return _merge_sesolve_kwargs_with_callback(kwargs, cb)
 end
 
 function _generate_sesolve_kwargs(e_ops, progress_bar::Val{false}, tlist, kwargs)
     if e_ops isa Nothing
         return kwargs
     end
-    return _generate_sesolve_kwargs_with_callback(tlist, kwargs)
+    cb = _generate_sesolve_callback(e_ops, tlist)
+    return _merge_sesolve_kwargs_with_callback(kwargs, cb)
 end
 
 _sesolve_make_U_QobjEvo(H::QuantumObjectEvolution{<:MatrixOperator}) =
@@ -103,23 +119,13 @@ function sesolveProblem(
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(tlist))
-        e_ops_data = ()
         is_empty_e_ops = true
     else
         expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
-        e_ops_data = get_data.(e_ops)
         is_empty_e_ops = isempty(e_ops)
     end
 
-    p = (
-        e_ops = e_ops_data,
-        expvals = expvals,
-        progr = progr,
-        times = tlist,
-        Hdims = H_evo.dims,
-        is_empty_e_ops = is_empty_e_ops,
-        params...,
-    )
+    p = QuantumTimeEvoParameters(expvals, progr, params)
 
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
@@ -127,7 +133,9 @@ function sesolveProblem(
     kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2)
 
     tspan = (tlist[1], tlist[end])
-    return ODEProblem{true,FullSpecialize}(U, ψ0, tspan, p; kwargs3...)
+    prob = ODEProblem{true,FullSpecialize}(U, ψ0, tspan, p; kwargs3...)
+
+    return QuantumTimeEvoProblem(prob, tlist, H_evo.dims)
 end
 
 @doc raw"""
@@ -186,13 +194,13 @@ function sesolve(
     return sesolve(prob, alg)
 end
 
-function sesolve(prob::ODEProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
-    sol = solve(prob, alg)
+function sesolve(prob::QuantumTimeEvoProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
+    sol = solve(prob.prob, alg)
 
-    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = sol.prob.p.Hdims), sol.u)
+    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = prob.dims), sol.u)
 
     return TimeEvolutionSol(
-        sol.prob.p.times,
+        prob.times,
         ψt,
         sol.prob.p.expvals,
         sol.retcode,

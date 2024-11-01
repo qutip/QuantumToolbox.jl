@@ -270,6 +270,8 @@ function mcsolveProblem(
         jump_which = jump_which,
         jump_times_which_init_size = jump_times_which_init_size,
         jump_times_which_idx = Ref(1),
+        times = tlist, # Temporary fix
+        Hdims = H_eff_evo.dims, # Temporary fix
         params...,
     )
 
@@ -291,7 +293,7 @@ function mcsolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
         merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
 
-    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...)
+    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...).prob # Temporary fix
 end
 
 function mcsolveProblem(
@@ -315,7 +317,7 @@ function mcsolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
         merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
 
-    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...)
+    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...).prob # Temporary fix
 end
 
 @doc raw"""
