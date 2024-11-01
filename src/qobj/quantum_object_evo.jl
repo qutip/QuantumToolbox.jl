@@ -157,7 +157,7 @@ end
 function QuantumObjectEvolution(
     op_func_list::Tuple,
     α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing
+    type::Union{Nothing,QuantumObjectType} = nothing,
 )
     op, data = _QobjEvo_generate_data(op_func_list, α)
     dims = op.dims
@@ -175,7 +175,7 @@ end
 function QuantumObjectEvolution(
     op::QuantumObject,
     α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing
+    type::Union{Nothing,QuantumObjectType} = nothing,
 )
     if type isa Nothing
         type = op.type
@@ -186,7 +186,7 @@ end
 function QuantumObjectEvolution(
     op::QuantumObjectEvolution,
     α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing
+    type::Union{Nothing,QuantumObjectType} = nothing,
 )
     if type isa Nothing
         type = op.type
@@ -371,15 +371,11 @@ function (A::QuantumObjectEvolution)(
     check_dims(ψout, A)
 
     if isoper(A) && isoperket(ψin)
-        throw(
-            ArgumentError(
-                "The input state must be a KetQuantumObject if the QuantumObjectEvolution object is an Operator.",
-            ),
-        )
+        throw(ArgumentError("The input state must be a Ket if the QuantumObjectEvolution object is an Operator."))
     elseif issuper(A) && isket(ψin)
         throw(
             ArgumentError(
-                "The input state must be an OperatorKetQuantumObject if the QuantumObjectEvolution object is a SuperOperator.",
+                "The input state must be an OperatorKet if the QuantumObjectEvolution object is a SuperOperator.",
             ),
         )
     end

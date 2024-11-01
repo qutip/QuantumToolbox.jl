@@ -103,7 +103,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 QobjEvo(
     op_func_list::Union{Tuple,AbstractQuantumObject},
     α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing
+    type::Union{Nothing,QuantumObjectType} = nothing,
 ) = QuantumObjectEvolution(op_func_list, α; type = type)
 
 QobjEvo(data::AbstractSciMLOperator, type::QuantumObjectType, dims::Integer) =
