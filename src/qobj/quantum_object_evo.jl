@@ -194,7 +194,7 @@ function QuantumObjectEvolution(
     f !== identity && throw(ArgumentError("The function `f` is not supported for QuantumObjectEvolution inputs."))
     if type isa Nothing
         type = op.type
-    else
+    elseif type != op.type
         throw(
             ArgumentError(
                 "The type of the QuantumObjectEvolution object cannot be changed when using another QuantumObjectEvolution object as input.",
