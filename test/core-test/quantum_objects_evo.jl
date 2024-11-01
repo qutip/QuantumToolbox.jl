@@ -174,6 +174,9 @@
         H_ti = coef1(p, t) * a + a' * a + coef2(p, t) * a'
         ψ = rand_ket(N)
         @test H_td(p, t) ≈ H_ti
+        @test iscached(H_td) == true
+        H_td = cache_operator(H_td, ψ)
+        @test iscached(H_td) == true
         @test H_td(ψ, p, t) ≈ H_ti * ψ
         @test isconstant(a) == true
         @test isconstant(H_td) == false
@@ -195,18 +198,18 @@
         L_td = @test_logs (:warn,) (:warn,) liouvillian(H_td, c_ops) # warnings from lazy tensor in `lindblad_dissipator(c_op2)`
         ρvec = mat2vec(rand_dm(N))
         @test L_td(p, t) ≈ L_ti
-        # TODO: L_td here is ComposedOperator and need to setup cache first for the following test
-        # TODO: (maybe can support `iscached` and `cache_operator` for QobjEvo in the future)
-        # @test iscached(L_td) == false
-        # @test L_td = cache_operator(L_td, ρvec)
-        # @test iscached(L_td) == true
-        # @test L_td(ρvec, p, t) ≈ L_ti * ρvec 
+        @test iscached(L_td) == false
+        L_td = cache_operator(L_td, ρvec)
+        @test iscached(L_td) == true
+        @test L_td(ρvec, p, t) ≈ L_ti * ρvec
         @test isconstant(L_td) == false
         @test issuper(L_td) == true
 
         @test_logs (:warn,) (:warn,) liouvillian(H_td * H_td) # warnings from lazy tensor
         @test_throws MethodError QobjEvo([[a, coef1], a' * a, [a', coef2]])
         @test_throws ArgumentError H_td(ρvec, p, t)
+        @test_throws ArgumentError cache_operator(H_td, ρvec)
         @test_throws ArgumentError L_td(ψ, p, t)
+        @test_throws ArgumentError cache_operator(L_td, ψ)
     end
 end

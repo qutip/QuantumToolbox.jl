@@ -28,9 +28,10 @@ SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
 QuantumObjectEvolution
-size
-eltype
-length
+Base.size
+Base.eltype
+Base.length
+SciMLOperators.cache_operator
 ```
 
 ## [Qobj boolean functions](@id doc-API:Qobj-boolean-functions)
@@ -46,7 +47,8 @@ LinearAlgebra.ishermitian
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
 isunitary
-isconstant
+SciMLOperators.iscached
+SciMLOperators.isconstant
 ```
 
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)

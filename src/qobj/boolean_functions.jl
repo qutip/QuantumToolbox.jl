@@ -3,7 +3,7 @@ All boolean functions for checking the data or type in `QuantumObject`
 =#
 
 export isket, isbra, isoper, isoperbra, isoperket, issuper
-export isunitary, isconstant
+export isunitary
 
 @doc raw"""
     isbra(A)
@@ -91,8 +91,15 @@ isunitary(U::QuantumObject{<:AbstractArray{T}}; kwargs...) where {T} =
     isoper(U) ? isapprox(U.data * U.data', I(size(U, 1)); kwargs...) : false
 
 @doc raw"""
-    isconstant(A::AbstractQuantumObject)
+    SciMLOperators.iscached(A::AbstractQuantumObject)
+
+Test whether the [`AbstractQuantumObject`](@ref) `A` has preallocated caches for inplace evaluations.
+"""
+SciMLOperators.iscached(A::AbstractQuantumObject) = iscached(A.data)
+
+@doc raw"""
+    SciMLOperators.isconstant(A::AbstractQuantumObject)
 
 Test whether the [`AbstractQuantumObject`](@ref) `A` is constant in time. For a [`QuantumObject`](@ref), this function returns `true`, while for a [`QuantumObjectEvolution`](@ref), this function returns `true` if the operator is contant in time.
 """
-isconstant(A::AbstractQuantumObject) = isconstant(A.data)
+SciMLOperators.isconstant(A::AbstractQuantumObject) = isconstant(A.data)

@@ -3,17 +3,28 @@ module QuantumToolbox
 # Re-export:
 #   1. StaticArraysCore.SVector for the type of dims
 #   2. basic functions in LinearAlgebra and SparseArrays
+#   3. some functions in SciMLOperators
 import Reexport: @reexport
 @reexport import StaticArraysCore: SVector
 @reexport using LinearAlgebra
 @reexport using SparseArrays
+@reexport import SciMLOperators:
+    AbstractSciMLOperator,
+    MatrixOperator,
+    ScalarOperator,
+    ScaledOperator,
+    AddedOperator,
+    IdentityOperator,
+    cache_operator,
+    iscached,
+    isconstant
 
 # other functions in LinearAlgebra
 import LinearAlgebra: BlasReal, BlasInt, BlasFloat, BlasComplex, checksquare
 import LinearAlgebra.BLAS: @blasfunc
 import LinearAlgebra.LAPACK: hseqr!
 
-# SciML packages (for OrdinaryDiffEq and LinearSolve)
+# SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
 import SciMLBase:
     solve,
     solve!,
@@ -33,17 +44,7 @@ import SciMLBase:
     ContinuousCallback,
     DiscreteCallback
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
-import SciMLOperators:
-    AbstractSciMLOperator,
-    MatrixOperator,
-    ScalarOperator,
-    ScaledOperator,
-    AddedOperator,
-    IdentityOperator,
-    cache_operator,
-    update_coefficients!,
-    concretize,
-    isconstant
+import SciMLOperators: SciMLOperators, update_coefficients!, concretize
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
