@@ -180,11 +180,8 @@ function QuantumObjectEvolution(
     return QuantumObjectEvolution(data, type, dims)
 end
 
-QuantumObjectEvolution(
-    op::QuantumObject,
-    f::Function;
-    type::Union{Nothing,QuantumObjectType} = nothing
-) = QuantumObjectEvolution(((op, f),); type = type)
+QuantumObjectEvolution(op::QuantumObject, f::Function; type::Union{Nothing,QuantumObjectType} = nothing) =
+    QuantumObjectEvolution(((op, f),); type = type)
 
 function QuantumObjectEvolution(
     op::QuantumObject,

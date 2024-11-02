@@ -43,11 +43,8 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=tru
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 """
-QobjEvo(
-    op::QuantumObject,
-    f::Function;
-    type::Union{Nothing,QuantumObjectType} = nothing
-) = QobjEvo(((op, f),); type = type)
+QobjEvo(op::QuantumObject, f::Function; type::Union{Nothing,QuantumObjectType} = nothing) =
+    QobjEvo(((op, f),); type = type)
 
 @doc raw"""
     QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing)
