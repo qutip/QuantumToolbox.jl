@@ -230,7 +230,7 @@
 
         @testset "Type Inference mesolve" begin
             coef(p, t) = exp(-t)
-            ad_t = QobjEvo(((a', coef),))
+            ad_t = QobjEvo(a', coef)
             @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolveProblem(

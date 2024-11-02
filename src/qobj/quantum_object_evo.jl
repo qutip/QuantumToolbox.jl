@@ -27,6 +27,20 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ⎢⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⎥
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⎦
 
+julia> coef1(p, t) = exp(-1im * t)
+coef1 (generic function with 1 method)
+
+julia> op = QuantumObjectEvolution(a, coef1)
+Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
+```
+
+If there are more than 2 operators, we need to put each set of operator and coefficient function into a two-element `Tuple`, and put all these sets together in a large `Tuple`:
+
+```
+julia> coef2(p, t) = sin(t)
+coef2 (generic function with 1 method)
+
 julia> σm = tensor(qeye(10), sigmam())
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 10 stored entries:
@@ -35,12 +49,6 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ⎢⠀⠀⠀⠀⠂⡀⠀⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠂⡀⠀⠀⎥
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡀⎦
-
-julia> coef1(p, t) = exp(-1im * t)
-coef1 (generic function with 1 method)
-
-julia> coef2(p, t) = sin(t)
-coef2 (generic function with 1 method)
 
 julia> op1 = QuantumObjectEvolution(((a, coef1), (σm, coef2)))
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
@@ -134,7 +142,7 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator, type::QuantumObject
     return QuantumObjectEvolution(data, type, SVector{1,Int}(dims))
 end
 
-"""
+@doc raw"""
     QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
 
 Generate a [`QuantumObjectEvolution`](@ref) object from a [`SciMLOperator`](https://github.com/SciML/SciMLOperators.jl), in the same way as [`QuantumObject`](@ref) for `AbstractArray` inputs.
@@ -171,6 +179,12 @@ function QuantumObjectEvolution(
 
     return QuantumObjectEvolution(data, type, dims)
 end
+
+QuantumObjectEvolution(
+    op::QuantumObject,
+    f::Function;
+    type::Union{Nothing,QuantumObjectType} = nothing
+) = QuantumObjectEvolution(((op, f),); type = type)
 
 function QuantumObjectEvolution(
     op::QuantumObject,
