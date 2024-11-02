@@ -11,10 +11,12 @@
         psi0 = kron(fock(N, 0), fock(2, 0))
         t_l = LinRange(0, 1000, 1000)
         e_ops = [a_d * a]
-        sol = sesolve(H, psi0, t_l, e_ops = e_ops, progress_bar = Val(false))
+        prob = sesolveProblem(H, psi0, t_l, e_ops = e_ops, progress_bar = Val(false))
+        sol = sesolve(prob)
         sol2 = sesolve(H, psi0, t_l, progress_bar = Val(false))
         sol3 = sesolve(H, psi0, t_l, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
         sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
+        @test prob.f.f isa MatrixOperator
         @test sum(abs.(sol.expect[1, :] .- sin.(η * t_l) .^ 2)) / length(t_l) < 0.1
         @test length(sol.times) == length(t_l)
         @test length(sol.states) == 1
@@ -55,9 +57,11 @@
         e_ops = [a_d * a]
         psi0 = basis(N, 3)
         t_l = LinRange(0, 100, 1000)
-        sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        prob_me = mesolveProblem(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        sol_me = mesolve(prob_me)
         sol_me2 = mesolve(H, psi0, t_l, c_ops, progress_bar = Val(false))
         sol_me3 = mesolve(H, psi0, t_l, c_ops, e_ops = e_ops, saveat = t_l, progress_bar = Val(false))
+        prob_mc = mcsolveProblem(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
         sol_mc = mcsolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
         sol_mc2 = mcsolve(
             H,
@@ -93,6 +97,8 @@
         sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
         sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
         sol_sse_string = sprint((t, s) -> show(t, "text/plain", s), sol_sse)
+        @test prob_me.f.f isa MatrixOperator
+        @test prob_mc.f.f isa ScaledOperator # TODO: can be optimized as MatrixOperator
         @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
         @test sum(abs.(sol_mc2.expect .- sol_me.expect)) / length(t_l) < 0.1
         @test sum(abs.(vec(expect_mc_states_mean) .- vec(sol_me.expect))) / length(t_l) < 0.1
@@ -230,7 +236,7 @@
 
         @testset "Type Inference mesolve" begin
             coef(p, t) = exp(-t)
-            ad_t = QobjEvo(((a', coef),))
+            ad_t = QobjEvo(a', coef)
             @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolveProblem(

@@ -18,6 +18,35 @@ Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`.
 Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
 
 @doc raw"""
+    QobjEvo(op::QuantumObject, f::Function; type::Union{Nothing,QuantumObjectType} = nothing)
+
+Generate [`QuantumObjectEvolution`](@ref).
+
+Note that this functions is same as `QuantumObjectEvolution(op, f; type = type)`. The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators. The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`.
+
+# Examples
+```
+julia> a = tensor(destroy(10), qeye(2))
+Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
+⎡⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⎤
+⎢⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⎦
+
+julia> coef(p, t) = exp(-1im * t)
+coef1 (generic function with 1 method)
+
+julia> op = QobjEvo(a, coef)
+Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
+```
+"""
+QobjEvo(op::QuantumObject, f::Function; type::Union{Nothing,QuantumObjectType} = nothing) =
+    QuantumObjectEvolution(op, f; type = type)
+
+@doc raw"""
     QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing)
 
 Generate [`QuantumObjectEvolution`](@ref).

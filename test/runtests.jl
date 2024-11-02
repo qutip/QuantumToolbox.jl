@@ -4,6 +4,7 @@ using QuantumToolbox
 using QuantumToolbox: position, momentum
 using Random
 using SciMLOperators
+import SciMLOperators: ScaledOperator
 
 const GROUP = get(ENV, "GROUP", "All")
 

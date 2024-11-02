@@ -185,7 +185,7 @@
 
         # SuperOperator
         X = a * a'
-        c_op1 = QobjEvo(((a', coef1),))
+        c_op1 = QobjEvo(a', coef1)
         c_op2 = QobjEvo(((a, coef2), (X, coef3)))
         c_ops = [c_op1, c_op2]
         D1_ti = abs2(coef1(p, t)) * lindblad_dissipator(a')
@@ -213,7 +213,7 @@
         @test_throws ArgumentError cache_operator(L_td, ψ)
 
         @testset "Type Inference" begin
-            @inferred liouvillian(H_td, (a, QobjEvo(((a', coef1),))))
+            @inferred liouvillian(H_td, (a, QobjEvo(a', coef1)))
         end
     end
 end
