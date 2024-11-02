@@ -128,6 +128,8 @@ function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T<:Real}
     return _FType(T)(value * (_energy_units[unit1] / _energy_units[unit2]))
 end
 
+get_typename_wrapper(A) = Base.typename(typeof(A)).wrapper
+
 _get_dense_similar(A::AbstractArray, args...) = similar(A, args...)
 _get_dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
 
@@ -150,6 +152,9 @@ _non_static_array_warning(argname, arg::AbstractVector{T}) where {T} =
     @warn "The argument $argname should be a Tuple or a StaticVector for better performance. Try to use `$argname = $(Tuple(arg))` or `$argname = SVector(" *
           join(arg, ", ") *
           ")` instead of `$argname = $arg`." maxlog = 1
+
+_lazy_tensor_warning(func_name::String, data::AbstractSciMLOperator) =
+    @warn "The function `$func_name` uses lazy tensor (which can hurt performance) for data type: $(get_typename_wrapper(data))"
 
 # functions for getting Float or Complex element type
 _FType(::AbstractArray{T}) where {T<:Number} = _FType(T)

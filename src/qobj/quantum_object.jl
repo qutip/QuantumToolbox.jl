@@ -3,6 +3,7 @@ This file defines the QuantumObject (Qobj) structure.
 It also implements the fundamental functions in Julia standard library:
     - Base: show, real, imag, Vector, Matrix
     - SparseArrays: sparse, nnz, nonzeros, rowvals, droptol!, dropzeros, dropzeros!, SparseVector, SparseMatrixCSC
+    - SciMLOperators: cache_operator
 =#
 
 export QuantumObject
@@ -166,6 +167,41 @@ SparseArrays.rowvals(A::QuantumObject{<:AbstractSparseArray}) = rowvals(A.data)
 SparseArrays.droptol!(A::QuantumObject{<:AbstractSparseArray}, tol::Real) = (droptol!(A.data, tol); return A)
 SparseArrays.dropzeros(A::QuantumObject{<:AbstractSparseArray}) = QuantumObject(dropzeros(A.data), A.type, A.dims)
 SparseArrays.dropzeros!(A::QuantumObject{<:AbstractSparseArray}) = (dropzeros!(A.data); return A)
+
+@doc raw"""
+    SciMLOperators.cached_operator(L::AbstractQuantumObject, u)
+
+Allocate caches for [`AbstractQuantumObject`](@ref) `L` for in-place evaluation with `u`-like input vectors.
+
+Here, `u` can be in either the following types:
+- `AbstractVector`
+- [`Ket`](@ref)-type [`QuantumObject`](@ref) (if `L` is an [`Operator`](@ref))
+- [`OperatorKet`](@ref)-type [`QuantumObject`](@ref) (if `L` is a [`SuperOperator`](@ref))
+"""
+SciMLOperators.cache_operator(
+    L::AbstractQuantumObject{DT,OpType},
+    u::AbstractVector,
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    get_typename_wrapper(L)(cache_operator(L.data, sparse_to_dense(similar(u))), L.type, L.dims)
+
+function SciMLOperators.cache_operator(
+    L::AbstractQuantumObject{DT1,OpType},
+    u::QuantumObject{DT2,SType},
+) where {
+    DT1,
+    DT2,
+    OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    SType<:Union{KetQuantumObject,OperatorKetQuantumObject},
+}
+    check_dims(L, u)
+
+    if isoper(L) && isoperket(u)
+        throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))
+    elseif issuper(L) && isket(u)
+        throw(ArgumentError("The input state `u` must be an OperatorKet if `L` is a SuperOperator."))
+    end
+    return cache_operator(L, u.data)
+end
 
 # data type conversions
 Base.Vector(A::QuantumObject{<:AbstractVector}) = QuantumObject(Vector(A.data), A.type, A.dims)

@@ -158,9 +158,8 @@ function QuantumObjectEvolution(
     op_func_list::Tuple,
     α::Union{Nothing,Number} = nothing;
     type::Union{Nothing,QuantumObjectType} = nothing,
-    f::Function = identity,
 )
-    op, data = _QobjEvo_generate_data(op_func_list, α; f = f)
+    op, data = _QobjEvo_generate_data(op_func_list, α)
     dims = op.dims
     if type isa Nothing
         type = op.type
@@ -177,24 +176,21 @@ function QuantumObjectEvolution(
     op::QuantumObject,
     α::Union{Nothing,Number} = nothing;
     type::Union{Nothing,QuantumObjectType} = nothing,
-    f::Function = identity,
 )
     if type isa Nothing
         type = op.type
     end
-    return QuantumObjectEvolution(_make_SciMLOperator(op, α, f = f), type, op.dims)
+    return QuantumObjectEvolution(_make_SciMLOperator(op, α), type, op.dims)
 end
 
 function QuantumObjectEvolution(
     op::QuantumObjectEvolution,
     α::Union{Nothing,Number} = nothing;
     type::Union{Nothing,QuantumObjectType} = nothing,
-    f::Function = identity,
 )
-    f !== identity && throw(ArgumentError("The function `f` is not supported for QuantumObjectEvolution inputs."))
     if type isa Nothing
         type = op.type
-    else
+    elseif type != op.type
         throw(
             ArgumentError(
                 "The type of the QuantumObjectEvolution object cannot be changed when using another QuantumObjectEvolution object as input.",
@@ -217,7 +213,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
 - `α`: A scalar to pre-multiply the operators.
 - `f::Function=identity`: A function to pre-apply to the operators.
 =#
-@generated function _QobjEvo_generate_data(op_func_list::Tuple, α; f::Function = identity)
+@generated function _QobjEvo_generate_data(op_func_list::Tuple, α)
     op_func_list_types = op_func_list.parameters
     N = length(op_func_list_types)
 
@@ -242,9 +238,9 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
             data_type = op_type.parameters[1]
             dims_expr = (dims_expr..., :($op.dims))
             if i == 1
-                first_op = :(f($op))
+                first_op = :($op)
             end
-            data_expr = :($data_expr + _make_SciMLOperator(op_func_list[$i], α, f = f))
+            data_expr = :($data_expr + _make_SciMLOperator(op_func_list[$i], α))
         else
             op_type = op_func_type
             (isoper(op_type) || issuper(op_type)) ||
@@ -255,7 +251,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
             if i == 1
                 first_op = :(op_func_list[$i])
             end
-            qobj_expr_const = :($qobj_expr_const + f(op_func_list[$i]))
+            qobj_expr_const = :($qobj_expr_const + op_func_list[$i])
         end
     end
 
@@ -272,20 +268,20 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
     end
 end
 
-function _make_SciMLOperator(op_func::Tuple, α; f::Function = identity)
+function _make_SciMLOperator(op_func::Tuple, α)
     T = eltype(op_func[1])
     update_func = (a, u, p, t) -> op_func[2](p, t)
     if α isa Nothing
-        return ScalarOperator(zero(T), update_func) * MatrixOperator(f(op_func[1]).data)
+        return ScalarOperator(zero(T), update_func) * MatrixOperator(op_func[1].data)
     end
-    return ScalarOperator(zero(T), update_func) * MatrixOperator(α * f(op_func[1]).data)
+    return ScalarOperator(zero(T), update_func) * MatrixOperator(α * op_func[1].data)
 end
 
-function _make_SciMLOperator(op::QuantumObject, α; f::Function = identity)
+function _make_SciMLOperator(op::QuantumObject, α)
     if α isa Nothing
-        return MatrixOperator(f(op).data)
+        return MatrixOperator(op.data)
     end
-    return MatrixOperator(α * f(op.data))
+    return MatrixOperator(α * op.data)
 end
 
 @doc raw"""
@@ -375,15 +371,11 @@ function (A::QuantumObjectEvolution)(
     check_dims(ψout, A)
 
     if isoper(A) && isoperket(ψin)
-        throw(
-            ArgumentError(
-                "The input state must be a KetQuantumObject if the QuantumObjectEvolution object is an Operator.",
-            ),
-        )
+        throw(ArgumentError("The input state must be a Ket if the QuantumObjectEvolution object is an Operator."))
     elseif issuper(A) && isket(ψin)
         throw(
             ArgumentError(
-                "The input state must be an OperatorKetQuantumObject if the QuantumObjectEvolution object is a SuperOperator.",
+                "The input state must be an OperatorKet if the QuantumObjectEvolution object is a SuperOperator.",
             ),
         )
     end

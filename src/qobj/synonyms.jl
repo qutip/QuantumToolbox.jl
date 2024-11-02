@@ -18,7 +18,7 @@ Note that this functions is same as `QuantumObject(A; type=type, dims=dims)`.
 Qobj(A; kwargs...) = QuantumObject(A; kwargs...)
 
 @doc raw"""
-    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing, f::Function=identity)
+    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing)
 
 Generate [`QuantumObjectEvolution`](@ref).
 
@@ -27,7 +27,6 @@ Note that this functions is same as `QuantumObjectEvolution(op_func_list)`. If `
 # Arguments
 - `op_func_list::Union{Tuple,AbstractQuantumObject}`: A tuple of tuples or operators.
 - `α::Union{Nothing,Number}=nothing`: A scalar to pre-multiply the operators.
-- `f::Function=identity`: A function to pre-apply to the operators.
 
 !!! warning "Beware of type-stability!"
     Please note that, unlike QuTiP, this function doesn't support `op_func_list` as `Vector` type. This is related to the type-stability issue. See the Section [The Importance of Type-Stability](@ref doc:Type-Stability) for more details.
@@ -105,8 +104,7 @@ QobjEvo(
     op_func_list::Union{Tuple,AbstractQuantumObject},
     α::Union{Nothing,Number} = nothing;
     type::Union{Nothing,QuantumObjectType} = nothing,
-    f::Function = identity,
-) = QuantumObjectEvolution(op_func_list, α; type = type, f = f)
+) = QuantumObjectEvolution(op_func_list, α; type = type)
 
 QobjEvo(data::AbstractSciMLOperator, type::QuantumObjectType, dims::Integer) =
     QuantumObjectEvolution(data, type, SVector{1,Int}(dims))

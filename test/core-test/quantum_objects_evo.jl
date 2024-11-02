@@ -165,14 +165,18 @@
         a = destroy(N)
         coef1(p, t) = exp(-1im * p.ω1 * t)
         coef2(p, t) = sin(p.ω2 * t)
+        coef3(p, t) = sin(p.ω3 * t)
         t = rand()
-        p = (ω1 = rand(), ω2 = rand())
+        p = (ω1 = rand(), ω2 = rand(), ω3 = rand())
 
         # Operator
         H_td = QobjEvo(((a, coef1), a' * a, (a', coef2)))
         H_ti = coef1(p, t) * a + a' * a + coef2(p, t) * a'
         ψ = rand_ket(N)
         @test H_td(p, t) ≈ H_ti
+        @test iscached(H_td) == true
+        H_td = cache_operator(H_td, ψ)
+        @test iscached(H_td) == true
         @test H_td(ψ, p, t) ≈ H_ti * ψ
         @test isconstant(a) == true
         @test isconstant(H_td) == false
@@ -180,17 +184,36 @@
         @test isoper(H_td) == true
 
         # SuperOperator
-        c_ops = [sqrt(rand()) * a]
-        L_td = liouvillian(H_td, c_ops)
-        L_td2 = -1im * spre(H_td) + 1im * spost(H_td) + lindblad_dissipator(c_ops[1])
+        X = a * a'
+        c_op1 = QobjEvo(((a', coef1),))
+        c_op2 = QobjEvo(((a, coef2), (X, coef3)))
+        c_ops = [c_op1, c_op2]
+        D1_ti = abs2(coef1(p, t)) * lindblad_dissipator(a')
+        D2_ti =
+            abs2(coef2(p, t)) * lindblad_dissipator(a) + # normal dissipator for first  element in c_op2
+            abs2(coef3(p, t)) * lindblad_dissipator(X) + # normal dissipator for second element in c_op2
+            coef2(p, t) * conj(coef3(p, t)) * (spre(a) * spost(X') - 0.5 * spre(X' * a) - 0.5 * spost(X' * a)) + # cross terms
+            conj(coef2(p, t)) * coef3(p, t) * (spre(X) * spost(a') - 0.5 * spre(a' * X) - 0.5 * spost(a' * X))   # cross terms
+        L_ti = liouvillian(H_ti) + D1_ti + D2_ti
+        L_td = @test_logs (:warn,) (:warn,) liouvillian(H_td, c_ops) # warnings from lazy tensor in `lindblad_dissipator(c_op2)`
         ρvec = mat2vec(rand_dm(N))
-        @test L_td(p, t) ≈ L_td2(p, t)
-        @test L_td(ρvec, p, t) ≈ L_td2(ρvec, p, t)
+        @test L_td(p, t) ≈ L_ti
+        @test iscached(L_td) == false
+        L_td = cache_operator(L_td, ρvec)
+        @test iscached(L_td) == true
+        @test L_td(ρvec, p, t) ≈ L_ti * ρvec
         @test isconstant(L_td) == false
         @test issuper(L_td) == true
 
+        @test_logs (:warn,) (:warn,) liouvillian(H_td * H_td) # warnings from lazy tensor
         @test_throws MethodError QobjEvo([[a, coef1], a' * a, [a', coef2]])
         @test_throws ArgumentError H_td(ρvec, p, t)
+        @test_throws ArgumentError cache_operator(H_td, ρvec)
         @test_throws ArgumentError L_td(ψ, p, t)
+        @test_throws ArgumentError cache_operator(L_td, ψ)
+
+        @testset "Type Inference" begin
+            @inferred liouvillian(H_td, (a, QobjEvo(((a', coef1),))))
+        end
     end
 end
