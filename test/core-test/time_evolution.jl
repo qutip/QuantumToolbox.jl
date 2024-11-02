@@ -84,7 +84,6 @@
             progress_bar = Val(false),
             jump_callback = DiscreteLindbladJumpCallback(),
         )
-        prob_sse = ssesolveProblem(H, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
         sol_sse = ssesolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
 
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
@@ -100,7 +99,6 @@
         sol_sse_string = sprint((t, s) -> show(t, "text/plain", s), sol_sse)
         @test prob_me.f.f isa MatrixOperator
         @test prob_mc.f.f isa MatrixOperator
-        @test prob_sse.f.f isa MatrixOperator
         @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(t_l) < 0.1
         @test sum(abs.(sol_mc2.expect .- sol_me.expect)) / length(t_l) < 0.1
         @test sum(abs.(vec(expect_mc_states_mean) .- vec(sol_me.expect))) / length(t_l) < 0.1

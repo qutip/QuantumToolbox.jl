@@ -119,15 +119,16 @@ function _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, j
     return jump_which[i] = sol_i.prob.p.jump_which
 end
 
-function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
-    c_ops isa Nothing && return QobjEvo(H)
-    return QobjEvo(H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2)
+function _mcsolve_make_H_eff(H::QuantumObject, c_ops)
+    # this will be convert to QobjEvo in sesolveProblem (avoid extra ScalarOperator)
+    c_ops isa Nothing && return H
+    return H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2
 end
-function _mcsolve_make_Heff_QobjEvo(H::Tuple, c_ops)
+function _mcsolve_make_H_eff(H::Tuple, c_ops)
     c_ops isa Nothing && return QobjEvo(H)
     return QobjEvo((H..., -1im * mapreduce(op -> op' * op, +, c_ops) / 2))
 end
-function _mcsolve_make_Heff_QobjEvo(H::QuantumObjectEvolution, c_ops)
+function _mcsolve_make_H_eff(H::QuantumObjectEvolution, c_ops)
     c_ops isa Nothing && return H
     return H + QobjEvo(mapreduce(op -> op' * op, +, c_ops), -1im / 2)
 end
@@ -221,7 +222,7 @@ function mcsolveProblem(
 
     tlist = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
-    H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
+    H_eff = _mcsolve_make_H_eff(H, c_ops)
 
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(tlist))
@@ -267,11 +268,11 @@ function mcsolveProblem(
         params...,
     )
 
-    return mcsolveProblem(H_eff_evo, ψ0, tlist, params2, jump_callback; kwargs2...)
+    return mcsolveProblem(H_eff, ψ0, tlist, params2, jump_callback; kwargs2...)
 end
 
 function mcsolveProblem(
-    H_eff_evo::QuantumObjectEvolution{DT1,OperatorQuantumObject},
+    H_eff::AbstractQuantumObject{DT1,OperatorQuantumObject},
     ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     params::NamedTuple,
@@ -285,11 +286,11 @@ function mcsolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
         merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
 
-    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...)
+    return sesolveProblem(H_eff, ψ0, tlist; params = params, kwargs2...)
 end
 
 function mcsolveProblem(
-    H_eff_evo::QuantumObjectEvolution{DT1,OperatorQuantumObject},
+    H_eff::AbstractQuantumObject{DT1,OperatorQuantumObject},
     ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector,
     params::NamedTuple,
@@ -309,7 +310,7 @@ function mcsolveProblem(
         haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
         merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
 
-    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...)
+    return sesolveProblem(H_eff, ψ0, tlist; params = params, kwargs2...)
 end
 
 @doc raw"""
