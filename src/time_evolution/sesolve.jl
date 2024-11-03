@@ -36,6 +36,10 @@ function _generate_sesolve_kwargs(e_ops, progress_bar::Val{false}, tlist, kwargs
     return _generate_sesolve_kwargs_with_callback(tlist, kwargs)
 end
 
+_sesolve_make_U_QobjEvo(H::QuantumObjectEvolution{<:MatrixOperator}) =
+    QobjEvo(MatrixOperator(-1im * H.data.A), dims = H.dims, type = Operator)
+_sesolve_make_U_QobjEvo(H) = QobjEvo(H, -1im)
+
 @doc raw"""
     sesolveProblem(
         H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
@@ -88,7 +92,7 @@ function sesolveProblem(
 
     tlist = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
-    H_evo = QobjEvo(H, -1im) # pre-multiply by -i
+    H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
     check_dims(H_evo, ψ0)
 
