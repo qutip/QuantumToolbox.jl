@@ -43,7 +43,7 @@ if (GROUP == "All") || (GROUP == "Core")
 end
 
 if (GROUP == "CUDA_Ext")# || (GROUP == "All")
-    Pkg.activate("gpu")
+    Pkg.activate("ext-test/gpu")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
     include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
