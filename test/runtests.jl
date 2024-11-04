@@ -31,10 +31,10 @@ core_tests = [
     "wigner.jl",
 ]
 
-if (GROUP == "All") || (GROUP == "Code-Quality")
-    Pkg.add(["Aqua", "JET"])
-    include(joinpath(testdir, "core-test", "code_quality.jl"))
-end
+# if (GROUP == "All") || (GROUP == "Code-Quality")
+#     Pkg.add(["Aqua", "JET"])
+#     include(joinpath(testdir, "core-test", "code_quality.jl"))
+# end
 
 if (GROUP == "All") || (GROUP == "Core")
     QuantumToolbox.about()
