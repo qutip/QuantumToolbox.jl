@@ -99,7 +99,7 @@ We can also create superpositions of states:
 ket = normalize(basis(5, 0) + basis(5, 1))
 ```
 
-where we have used the `normalize` function again to normalize the state. Apply the number opeartor again:
+where we have used the `normalize` function again to normalize the state. Apply the number operator again:
 
 ```@example states_and_operators
 n * ket

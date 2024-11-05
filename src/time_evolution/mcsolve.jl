@@ -38,14 +38,14 @@ function LindbladJumpAffect!(integrator)
     end
     cumsum!(cumsum_weights_mc, weights_mc)
     r = rand(traj_rng) * sum(weights_mc)
-    collaps_idx = getindex(1:length(weights_mc), findfirst(>(r), cumsum_weights_mc))
-    mul!(cache_mc, c_ops[collaps_idx], ψ)
+    collapse_idx = getindex(1:length(weights_mc), findfirst(>(r), cumsum_weights_mc))
+    mul!(cache_mc, c_ops[collapse_idx], ψ)
     normalize!(cache_mc)
     copyto!(integrator.u, cache_mc)
 
     random_n[] = rand(traj_rng)
     jump_times[internal_params.jump_times_which_idx[]] = integrator.t
-    jump_which[internal_params.jump_times_which_idx[]] = collaps_idx
+    jump_which[internal_params.jump_times_which_idx[]] = collapse_idx
     internal_params.jump_times_which_idx[] += 1
     if internal_params.jump_times_which_idx[] > length(jump_times)
         resize!(jump_times, length(jump_times) + internal_params.jump_times_which_init_size)

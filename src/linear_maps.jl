@@ -18,7 +18,7 @@ A **linear map** is a transformation `L` that satisfies:
     L(cu) = cL(u)
     ```
 
-It is typically represented as a matrix with dimensions given by `size`, and this abtract type helps to define this map when the matrix is not explicitly available.
+It is typically represented as a matrix with dimensions given by `size`, and this abstract type helps to define this map when the matrix is not explicitly available.
 
 ## Methods
 
