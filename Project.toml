@@ -33,6 +33,7 @@ CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 QuantumToolboxCUDAExt = "CUDA"
 
 [compat]
+Aqua = "0.8"
 ArrayInterface = "6, 7"
 CUDA = "5"
 DiffEqBase = "6"
@@ -42,6 +43,7 @@ Distributed = "1"
 FFTW = "1.5"
 Graphs = "1.7"
 IncompleteLU = "0.2"
+JET = "0.9"
 LinearAlgebra = "1"
 LinearSolve = "2"
 OrdinaryDiffEqCore = "1"
@@ -59,8 +61,9 @@ Test = "1"
 julia = "1.10"
 
 [extras]
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Aqua", "JET", "Test"]
