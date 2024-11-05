@@ -9,7 +9,7 @@ steps:
             - "src/**"
             - "ext/QuantumToolboxCUDAExt.jl"
             - "test/runtests.jl"
-            - "test/ext-test/cuda_ext.jl"
+            - "test/ext-test/gpu/**"
             - "Project.toml"
           target: ".buildkite/CUDA_Ext.yml"
     agents:

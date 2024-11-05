@@ -1,10 +1,5 @@
 using Test
 using Pkg
-using QuantumToolbox
-using QuantumToolbox: position, momentum
-using Random
-using SciMLOperators
-import SciMLOperators: ScaledOperator
 
 const GROUP = get(ENV, "GROUP", "All")
 
@@ -31,12 +26,19 @@ core_tests = [
     "wigner.jl",
 ]
 
-# if (GROUP == "All") || (GROUP == "Code-Quality")
-#     Pkg.add(["Aqua", "JET"])
-#     include(joinpath(testdir, "core-test", "code_quality.jl"))
-# end
+if (GROUP == "All") || (GROUP == "Code-Quality")
+    using QuantumToolbox
+    using Aqua, JET
+
+    include(joinpath(testdir, "core-test", "code_quality.jl"))
+end
 
 if (GROUP == "All") || (GROUP == "Core")
+    using QuantumToolbox
+    import QuantumToolbox: position, momentum
+    import Random: MersenneTwister
+    import SciMLOperators: MatrixOperator
+
     QuantumToolbox.about()
 
     for test in core_tests
@@ -45,6 +47,17 @@ if (GROUP == "All") || (GROUP == "Core")
 end
 
 if (GROUP == "CUDA_Ext")# || (GROUP == "All")
-    Pkg.add("CUDA")
-    include(joinpath(testdir, "ext-test", "cuda_ext.jl"))
+    Pkg.activate("ext-test/gpu")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+
+    using QuantumToolbox
+    using CUDA
+    using CUDA.CUSPARSE
+    CUDA.allowscalar(false) # Avoid unexpected scalar indexing
+
+    QuantumToolbox.about()
+    CUDA.versioninfo()
+
+    include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
 end

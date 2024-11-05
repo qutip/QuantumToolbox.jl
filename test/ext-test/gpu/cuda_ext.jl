@@ -1,10 +1,3 @@
-using CUDA
-using CUDA.CUSPARSE
-CUDA.allowscalar(false) # Avoid unexpected scalar indexing
-
-QuantumToolbox.about()
-CUDA.versioninfo()
-
 @testset "CUDA Extension" verbose = true begin
     ψdi = Qobj(Int64[1, 0])
     ψdf = Qobj(Float64[1, 0])
