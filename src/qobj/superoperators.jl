@@ -20,7 +20,7 @@ function _sprepost(A, B) # for any other input types
 end
 
 ## if input is AbstractSciMLOperator 
-## some of them are optimzed to speed things up
+## some of them are optimized to speed things up
 ## the rest of the SciMLOperators will just use lazy tensor (and prompt a warning)
 _spre(A::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spre(A.A, Id))
 _spre(A::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(A.λ, _spre(A.L, Id))

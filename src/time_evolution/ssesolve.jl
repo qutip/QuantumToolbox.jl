@@ -5,11 +5,11 @@ export ssesolveProblem, ssesolveEnsembleProblem, ssesolve
 
 A struct to represent the diffusion operator. This is used to perform the diffusion process on N different Wiener processes.
 =#
-struct DiffusionOperator{T,OT<:Tuple{Vararg{AbstractSciMLOperator}}} <: AbstractSciMLOperator{T}
-    ops::OT
-    function DiffusionOperator(ops::OT) where {OT}
+struct DiffusionOperator{T,OpType<:Tuple{Vararg{AbstractSciMLOperator}}} <: AbstractSciMLOperator{T}
+    ops::OpType
+    function DiffusionOperator(ops::OpType) where {OpType}
         T = mapreduce(eltype, promote_type, ops)
-        return new{T,OT}(ops)
+        return new{T,OpType}(ops)
     end
 end
 

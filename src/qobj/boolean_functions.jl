@@ -100,6 +100,6 @@ SciMLOperators.iscached(A::AbstractQuantumObject) = iscached(A.data)
 @doc raw"""
     SciMLOperators.isconstant(A::AbstractQuantumObject)
 
-Test whether the [`AbstractQuantumObject`](@ref) `A` is constant in time. For a [`QuantumObject`](@ref), this function returns `true`, while for a [`QuantumObjectEvolution`](@ref), this function returns `true` if the operator is contant in time.
+Test whether the [`AbstractQuantumObject`](@ref) `A` is constant in time. For a [`QuantumObject`](@ref), this function returns `true`, while for a [`QuantumObjectEvolution`](@ref), this function returns `true` if the operator is constant in time.
 """
 SciMLOperators.isconstant(A::AbstractQuantumObject) = isconstant(A.data)

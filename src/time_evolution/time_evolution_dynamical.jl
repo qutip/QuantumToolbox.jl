@@ -8,12 +8,12 @@ function _reduce_dims(
     sel,
     reduce,
 ) where {T,N,DT<:Integer}
-    nd = length(dims)
+    n_d = length(dims)
     dims_new = zero(dims)
     dims_new[sel] .= reduce
     @. dims_new = dims - dims_new
 
-    if nd == 1
+    if n_d == 1
         ρmat = similar(QO, dims_new[1], dims_new[1])
         copyto!(ρmat, view(QO, 1:dims_new[1], 1:dims_new[1]))
     else
@@ -32,12 +32,12 @@ function _increase_dims(
     sel,
     increase,
 ) where {T,N,DT<:Integer}
-    nd = length(dims)
+    n_d = length(dims)
     dims_new = MVector(zero(dims)) # Mutable SVector
     dims_new[sel] .= increase
     @. dims_new = dims + dims_new
 
-    if nd == 1
+    if n_d == 1
         ρmat = similar(QO, dims_new[1], dims_new[1])
         fill!(selectdim(ρmat, 1, dims[1]+1:dims_new[1]), 0)
         fill!(selectdim(ρmat, 2, dims[1]+1:dims_new[1]), 0)
@@ -46,8 +46,8 @@ function _increase_dims(
         ρmat2 = similar(QO, reverse(vcat(dims_new, dims_new))...)
         ρmat = reshape(QO, reverse(vcat(dims, dims))...)
         for i in eachindex(sel)
-            fill!(selectdim(ρmat2, nd - sel[i] + 1, dims[sel[i]]+1:dims_new[sel[i]]), 0)
-            fill!(selectdim(ρmat2, 2 * nd - sel[i] + 1, dims[sel[i]]+1:dims_new[sel[i]]), 0)
+            fill!(selectdim(ρmat2, n_d - sel[i] + 1, dims[sel[i]]+1:dims_new[sel[i]]), 0)
+            fill!(selectdim(ρmat2, 2 * n_d - sel[i] + 1, dims[sel[i]]+1:dims_new[sel[i]]), 0)
         end
         copyto!(view(ρmat2, reverse!(repeat([1:n for n in dims], 2))...), ρmat)
         ρmat = reshape(ρmat2, prod(dims_new), prod(dims_new))

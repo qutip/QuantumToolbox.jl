@@ -106,11 +106,11 @@ function _steadystate(
     idx_range = collect(1:N)
     rows = _get_dense_similar(L_tmp, N)
     cols = _get_dense_similar(L_tmp, N)
-    datas = _get_dense_similar(L_tmp, N)
+    _data = _get_dense_similar(L_tmp, N)
     fill!(rows, 1)
     copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
-    fill!(datas, weight)
-    Tn = sparse(rows, cols, datas, N^2, N^2)
+    fill!(_data, weight)
+    Tn = sparse(rows, cols, _data, N^2, N^2)
     L_tmp = L_tmp + Tn
 
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
@@ -160,11 +160,11 @@ function _steadystate(
     idx_range = collect(1:N)
     rows = _get_dense_similar(L_tmp, N)
     cols = _get_dense_similar(L_tmp, N)
-    datas = _get_dense_similar(L_tmp, N)
+    _data = _get_dense_similar(L_tmp, N)
     fill!(rows, 1)
     copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
-    fill!(datas, weight)
-    Tn = sparse(rows, cols, datas, N^2, N^2)
+    fill!(_data, weight)
+    Tn = sparse(rows, cols, _data, N^2, N^2)
     L_tmp = L_tmp + Tn
 
     ρss_vec = L_tmp \ v0 # This is still not supported on GPU, yet
