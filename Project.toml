@@ -28,14 +28,17 @@ StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 
 [weakdeps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 
 [extensions]
 QuantumToolboxCUDAExt = "CUDA"
+QuantumToolboxCairoMakieExt = "CairoMakie"
 
 [compat]
 Aqua = "0.8"
 ArrayInterface = "6, 7"
 CUDA = "5"
+CairoMakie = "0.12.15"
 DiffEqBase = "6"
 DiffEqCallbacks = "4.2.1 - 4"
 DiffEqNoiseProcess = "5"
