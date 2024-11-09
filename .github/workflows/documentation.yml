@@ -40,20 +40,16 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Julia
-        uses: julia-actions/setup-julia@v2
-      - name: Pull Julia cache
-        uses: julia-actions/cache@v2
-      - name: Install documentation dependencies
-        run: julia --project=docs -e 'using Pkg; pkg"dev ."; Pkg.instantiate(); Pkg.precompile(); Pkg.status()'
-      #- name: Creating new mds from src
-      - name: Build and deploy docs
-        uses: julia-actions/julia-docdeploy@v1
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
-          GKSwstype: "100" # for Plots.jl plots (if you have them)
           JULIA_DEBUG: "Documenter"
           DATADEPS_ALWAYS_ACCEPT: true
+          # GKSwstype: "100" # for Plots.jl plots (if you have them)

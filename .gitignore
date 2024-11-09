@@ -6,7 +6,8 @@
 Manifest.toml
 
 .vscode
-*.json
+
+benchmarks/benchmarks_output.json
 
 .ipynb_checkpoints
 *.ipynb

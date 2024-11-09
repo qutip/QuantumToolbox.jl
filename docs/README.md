@@ -25,3 +25,23 @@ Run the following command:
 ```shell
 julia --project=docs docs/make.jl
 ```
+
+# How to start a local Vitepress site ?
+
+> [!NOTE]
+> You need to install `Node.js` and `npm` first. 
+
+Enter `docs` directory first:
+```shell
+cd /path/to/QuantumToolbox.jl/docs
+```
+
+Install `npm` dependencies:
+```shell
+npm i
+```
+
+Run the following command:
+```shell
+npm run docs:dev
+```
