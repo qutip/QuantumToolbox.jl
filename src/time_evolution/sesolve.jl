@@ -64,6 +64,7 @@ _sesolve_make_U_QobjEvo(H) = QobjEvo(H, -1im)
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params::NamedTuple = NamedTuple(),
         progress_bar::Union{Val,Bool} = Val(true),
+        inplace::Union{Val,Bool} = Val(true),
         kwargs...,
     )
 
@@ -81,6 +82,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NamedTuple` of parameters to pass to the solver.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -101,6 +103,7 @@ function sesolveProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
+    inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {DT1,DT2}
     haskey(kwargs, :save_idxs) &&
@@ -133,7 +136,7 @@ function sesolveProblem(
     kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2)
 
     tspan = (tlist[1], tlist[end])
-    prob = ODEProblem{true,FullSpecialize}(U, ψ0, tspan, p; kwargs3...)
+    prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, p; kwargs3...)
 
     return QuantumTimeEvoProblem(prob, tlist, H_evo.dims)
 end
@@ -147,6 +150,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params::NamedTuple = NamedTuple(),
         progress_bar::Union{Val,Bool} = Val(true),
+        inplace::Union{Val,Bool} = Val(true),
         kwargs...,
     )
 
@@ -165,6 +169,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NamedTuple` of parameters to pass to the solver.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -187,9 +192,10 @@ function sesolve(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params::NamedTuple = NamedTuple(),
     progress_bar::Union{Val,Bool} = Val(true),
+    inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {DT1,DT2}
-    prob = sesolveProblem(H, ψ0, tlist; e_ops = e_ops, params = params, progress_bar = progress_bar, kwargs...)
+    prob = sesolveProblem(H, ψ0, tlist; e_ops = e_ops, params = params, progress_bar = progress_bar, inplace = inplace, kwargs...)
 
     return sesolve(prob, alg)
 end
