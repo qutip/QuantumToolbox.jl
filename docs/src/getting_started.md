@@ -2,29 +2,6 @@
 CurrentModule = QuantumToolbox
 ```
 
-## [Installation](@id doc:Installation)
-
-!!! note "Requirements"
-    `QuantumToolbox.jl` requires `Julia 1.10+`.
-
-To install `QuantumToolbox.jl`, run the following commands inside Julia's interactive session (also known as REPL):
-```julia
-using Pkg
-Pkg.add("QuantumToolbox")
-```
-Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
-```julia-REPL
-(1.10) pkg> add QuantumToolbox
-```
-More information about `Julia`'s package manager can be found at [`Pkg.jl`](https://julialang.github.io/Pkg.jl/v1/).
-
-To load the package and check the version information, use either [`QuantumToolbox.versioninfo()`](@ref) or [`QuantumToolbox.about()`](@ref), namely
-```julia
-using QuantumToolbox
-QuantumToolbox.versioninfo()
-QuantumToolbox.about()
-```
-
 ## Brief Example
 
 We now provide a brief example to demonstrate the similarity between [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) and [QuTiP](https://github.com/qutip/qutip).

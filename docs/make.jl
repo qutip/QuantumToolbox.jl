@@ -10,12 +10,15 @@ DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recu
 
 const DRAFT = false # set `true` to disable cell evaluation
 
-bib = CitationBibliography(joinpath(@__DIR__, "src", "bibliography.bib"), style=:authoryear)
+bib = CitationBibliography(
+    joinpath(@__DIR__, "src", "resources", "bibliography.bib"), 
+    style=:authoryear,
+)
 
 const PAGES = [
     "Home" => "index.md",
     "Getting Started" => [
-        "Introduction" => "getting_started.md",
+        "Brief Example" => "getting_started.md",
         "Key differences from QuTiP" => "qutip_differences.md",
         "The Importance of Type-Stability" => "type_stability.md",
         # "Cite QuantumToolbox.jl" => "cite.md",
@@ -51,9 +54,11 @@ const PAGES = [
             "tutorials/logo.md",
         ],
     ],
-    "API" => "api.md",
-    "Bibliography" => "bibliography.md",
-    # "Change Log" => "changelog.md",
+    "Resources" => [
+        "API" => "resources/api.md",
+        # "Change Log" => "resources/changelog.md",
+        "Bibliography" => "resources/bibliography.md",
+    ],
 ]
 
 makedocs(;
