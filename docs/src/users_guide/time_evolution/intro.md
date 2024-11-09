@@ -1,5 +1,6 @@
 # [Time Evolution and Quantum System Dynamics](@id doc:Time-Evolution-and-Quantum-System-Dynamics)
 
+<!-- Disable this first (until we find a way to fix it)
 **Table of contents**
 
 ```@contents
@@ -14,6 +15,7 @@ Pages = [
 ]
 Depth = 1:2
 ```
+-->
 
 # [Introduction](@id doc-TE:Introduction)
 

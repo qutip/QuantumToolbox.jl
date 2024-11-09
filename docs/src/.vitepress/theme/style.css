@@ -95,10 +95,13 @@ code {
             #9558B2 30%,
             #CB3C33);
 
+    --vp-home-hero-image-background-image: none; /* remove the blur background */
+    /* (default setting)
     --vp-home-hero-image-background-image: linear-gradient(-45deg,
             #9558B2 30%,
             #389826 30%,
             #CB3C33);
+    */
     --vp-home-hero-image-filter: blur(40px);
 }
 
