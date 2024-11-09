@@ -12,20 +12,10 @@ const DRAFT = false # set `true` to disable cell evaluation
 
 bib = CitationBibliography(joinpath(@__DIR__, "src", "bibliography.bib"), style=:authoryear)
 
-# const MathEngine = MathJax3(
-#     Dict(
-#         :loader => Dict("load" => ["[tex]/physics"]),
-#         :tex => Dict(
-#             "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
-#             "tags" => "ams",
-#             "packages" => ["base", "ams", "autoload", "physics"],
-#         ),
-#     )
-# )
-
 const PAGES = [
+    "Home" => "index.md",
     "Getting Started" => [
-        "Introduction" => "index.md",
+        "Introduction" => "getting_started.md",
         "Key differences from QuTiP" => "qutip_differences.md",
         "The Importance of Type-Stability" => "type_stability.md",
         # "Cite QuantumToolbox.jl" => "cite.md",
@@ -72,23 +62,12 @@ makedocs(;
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",
     pages = PAGES,
-    # format = Documenter.HTML(;
-    #     prettyurls = get(ENV, "CI", "false") == "true",
-    #     canonical = "https://qutip.github.io/QuantumToolbox.jl",
-    #     edit_link = "main",
-    #     assets = ["assets/favicon.ico"],
-    #     mathengine = MathEngine,
-    #     size_threshold_ignore = ["api.md"],
-    # ),
     format = DocumenterVitepress.MarkdownVitepress(
         repo = "https://qutip.github.io/QuantumToolbox.jl",
-        # deploy_url = "https://qutip.org/QuantumToolbox.jl/",
     ),
     draft = DRAFT,
     plugins = [bib],
 )
-
-# deploydocs(; repo = "github.com/qutip/QuantumToolbox.jl", devbranch = "main")
 
 deploydocs(;
     repo = "github.com/qutip/QuantumToolbox.jl",
