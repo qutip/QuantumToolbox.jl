@@ -217,15 +217,15 @@ Note that this function only supports for [`Operator`](@ref) and [`SuperOperator
 
 # Examples
 
-```
+```jldoctest
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
-⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢
+⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
+⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢⎦
 
 julia> tr(a' * a)
 190.0 + 0.0im
@@ -257,7 +257,7 @@ Return the standard vector `p`-norm or [Schatten](https://en.wikipedia.org/wiki/
 
 # Examples
 
-```
+```jldoctest
 julia> ψ = fock(10, 2)
 Quantum Object:   type=Ket   dims=[10]   size=(10,)
 10-element Vector{ComplexF64}:
@@ -474,8 +474,9 @@ proj(ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} = ψ' * �
 Note that this function will always return [`Operator`](@ref). No matter the input [`QuantumObject`](@ref) is a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
 
 # Examples
+
 Two qubits in the state ``\ket{\psi} = \ket{e,g}``:
-```
+```jldoctest
 julia> ψ = kron(fock(2,0), fock(2,1))
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
@@ -492,7 +493,7 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 ```
 
 or in an entangled state ``\ket{\psi} = \frac{1}{\sqrt{2}} \left( \ket{e,e} + \ket{g,g} \right)``:
-```
+```jldoctest
 julia> ψ = 1 / √2 * (kron(fock(2,0), fock(2,0)) + kron(fock(2,1), fock(2,1)))
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
@@ -693,12 +694,16 @@ Note that this method currently works for [`Ket`](@ref), [`Bra`](@ref), and [`Op
 
 If `order = [2, 1, 3]`, the Hilbert space structure will be re-arranged: ``\mathcal{H}_1 \otimes \mathcal{H}_2 \otimes \mathcal{H}_3 \rightarrow \mathcal{H}_2 \otimes \mathcal{H}_1 \otimes \mathcal{H}_3``.
 
-```
-julia> ψ1 = fock(2, 0)
-julia> ψ2 = fock(3, 1)
-julia> ψ3 = fock(4, 2)
-julia> ψ_123 = tensor(ψ1, ψ2, ψ3)
-julia> permute(ψ_123, [2, 1, 3]) ≈ tensor(ψ2, ψ1, ψ3)
+```jldoctest
+julia> ψ1 = fock(2, 0);
+
+julia> ψ2 = fock(3, 1);
+
+julia> ψ3 = fock(4, 2);
+
+julia> ψ_123 = tensor(ψ1, ψ2, ψ3);
+
+julia> permute(ψ_123, (2, 1, 3)) ≈ tensor(ψ2, ψ1, ψ3)
 true
 ```
 

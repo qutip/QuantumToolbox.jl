@@ -25,7 +25,7 @@ Generate [`QuantumObjectEvolution`](@ref).
 Note that this functions is same as `QuantumObjectEvolution(op, f; type = type)`. The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators. The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`.
 
 # Examples
-```
+```jldoctest
 julia> a = tensor(destroy(10), qeye(2))
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
@@ -36,10 +36,10 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⎦
 
 julia> coef(p, t) = exp(-1im * t)
-coef1 (generic function with 1 method)
+coef (generic function with 1 method)
 
 julia> op = QobjEvo(a, coef)
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 """
@@ -62,7 +62,7 @@ Note that this functions is same as `QuantumObjectEvolution(op_func_list)`. If `
 
 # Examples
 This operator can be initialized in the same way as the QuTiP `QobjEvo` object. For example
-```
+```jldoctest qobjevo
 julia> a = tensor(destroy(10), qeye(2))
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
@@ -88,12 +88,12 @@ julia> coef2(p, t) = sin(t)
 coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 ```
 
 We can also concretize the operator at a specific time `t`
-```
+```jldoctest qobjevo
 julia> op1(0.1)
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
@@ -105,7 +105,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ```
 
 It also supports parameter-dependent time evolution
-```
+```jldoctest qobjevo
 julia> coef1(p, t) = exp(-1im * p.ω1 * t)
 coef1 (generic function with 1 method)
 
@@ -113,7 +113,7 @@ julia> coef2(p, t) = sin(p.ω2 * t)
 coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
 julia> p = (ω1 = 1.0, ω2 = 0.5)
@@ -290,7 +290,7 @@ Note that this function is same as `kron(A, B, ...)`.
 
 # Examples
 
-```
+```jldoctest
 julia> x = sigmax()
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 SparseMatrixCSC{ComplexF64, Int64} with 2 stored entries:
@@ -299,17 +299,11 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 
 julia> x_list = fill(x, 3);
 
-julia> tensor(x_list...)
-Quantum Object:   type=Operator   dims=[2, 2, 2]   size=(8, 8)   ishermitian=true
-8×8 SparseMatrixCSC{ComplexF64, Int64} with 8 stored entries:
-     ⋅          ⋅          ⋅      …      ⋅          ⋅      1.0+0.0im
-     ⋅          ⋅          ⋅             ⋅      1.0+0.0im      ⋅
-     ⋅          ⋅          ⋅         1.0+0.0im      ⋅          ⋅
-     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅
-     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅
-     ⋅          ⋅      1.0+0.0im  …      ⋅          ⋅          ⋅
-     ⋅      1.0+0.0im      ⋅             ⋅          ⋅          ⋅
- 1.0+0.0im      ⋅          ⋅             ⋅          ⋅          ⋅
+julia> tensor(x_list...).dims
+3-element SVector{3, Int64} with indices SOneTo(3):
+ 2
+ 2
+ 2
 ```
 """
 tensor(A...) = kron(A...)
@@ -323,40 +317,23 @@ Note that this function is same as `kron(A, B)`.
 
 # Examples
 
-```
+```jldoctest
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
-⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢
+⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
+⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢⎦
 
-julia> a ⊗ a
-Quantum Object:   type=Operator   dims=[20, 20]   size=(400, 400)   ishermitian=false
-400×400 SparseMatrixCSC{ComplexF64, Int64} with 361 stored entries:
-⠀⠀⠘⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠦
+julia> O = a ⊗ a;
+
+julia> size(a), size(O)
+((20, 20), (400, 400))
+
+julia> a.dims, O.dims
+([20], [20, 20])
 ```
 """
 ⊗(A::QuantumObject, B::QuantumObject) = kron(A, B)

@@ -67,7 +67,7 @@ The current stored constants are:
 
 # Examples
 
-```
+```jldoctest
 julia> PhysicalConstants.ħ
 1.0545718176461565e-34
 ```
@@ -111,15 +111,15 @@ Note that we use the values stored in [`PhysicalConstants`](@ref) to do the conv
 
 # Examples
 
-```
+```jldoctest
 julia> convert_unit(1, :eV, :J)
 1.602176634e-19
 
 julia> convert_unit(1, :GHz, :J)
 6.62607015e-25
 
-julia> convert_unit(1, :meV, :mK)
-11604.518121550082
+julia> round(convert_unit(1, :meV, :mK), digits=4)
+11604.5181
 ```
 """
 function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T<:Real}

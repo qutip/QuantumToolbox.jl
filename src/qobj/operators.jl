@@ -88,7 +88,7 @@ This operator acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
 
 # Examples
 
-```
+```jldoctest
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
@@ -113,7 +113,7 @@ This operator acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ke
 
 # Examples
 
-```
+```jldoctest
 julia> a_d = create(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
@@ -242,14 +242,14 @@ The parameter `which` specifies which of the following operator to return.
 Note that if the parameter `which` is not specified, returns a set of Spin-`j` operators: ``(\hat{S}_x, \hat{S}_y, \hat{S}_z)``
 
 # Examples
-```
+```jldoctest
 julia> jmat(0.5, :x)
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 SparseMatrixCSC{ComplexF64, Int64} with 2 stored entries:
      ⋅      0.5+0.0im
  0.5+0.0im      ⋅
 
-julia> jmat(0.5, :-)
+julia> jmat(0.5, Val(:-))
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
 2×2 SparseMatrixCSC{ComplexF64, Int64} with 1 stored entry:
      ⋅          ⋅    

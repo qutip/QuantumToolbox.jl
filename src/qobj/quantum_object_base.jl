@@ -19,7 +19,7 @@ export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 Abstract type for all quantum objects like [`QuantumObject`](@ref) and [`QuantumObjectEvolution`](@ref).
 
 # Example
-```
+```jldoctest
 julia> sigmax() isa AbstractQuantumObject
 true
 ```
