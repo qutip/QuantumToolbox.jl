@@ -1,4 +1,4 @@
-# How to build documentation locally ?
+# How to build documentation and start Vitepress site locally ?
 
 ## Working Directory
 All the commands should be run under the root folder of the package: `/path/to/QuantumToolbox.jl/`
@@ -6,12 +6,19 @@ All the commands should be run under the root folder of the package: `/path/to/Q
 The document pages will be generated in the directory: `/path/to/QuantumToolbox.jl/docs/build/` (which is ignored by git).
 
 ## Method 1: Run with `make` command
-Run the following command:
+Run the following command to instantiate and build the documentation:
 ```shell
 make docs
 ```
 
-## Method 2: Run `julia` command manually
+Run the following command to start Vitepress site of documentation:
+> [!NOTE]
+> You need to install `Node.js` and `npm` first.
+```shell
+make vitepress
+```
+
+## Method 2: Run commands manually
 
 ### Build Pkg
 Run the following command:
@@ -26,22 +33,16 @@ Run the following command:
 julia --project=docs docs/make.jl
 ```
 
-# How to start a local Vitepress site ?
-
+### Start a local Vitepress site
 > [!NOTE]
-> You need to install `Node.js` and `npm` first. 
-
-Enter `docs` directory first:
-```shell
-cd /path/to/QuantumToolbox.jl/docs
-```
+> You need to install `Node.js` and `npm` first.
 
 Install `npm` dependencies:
 ```shell
-npm i
+npm --prefix docs i
 ```
 
 Run the following command:
 ```shell
-npm run docs:dev
+npm --prefix docs run docs:dev
 ```

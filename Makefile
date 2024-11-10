@@ -12,13 +12,18 @@ docs:
 	${JULIA} --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
 	${JULIA} --project=docs docs/make.jl
 
-all: format test docs
+vitepress:
+	npm --prefix docs i
+	npm --prefix docs run docs:dev
+
+all: format test docs vitepress
 
 help:
 	@echo "The following make commands are available:"
 	@echo " - make format: format codes with JuliaFormatter"
 	@echo " - make test: run the tests"
 	@echo " - make docs: instantiate and build the documentation"
+	@echo " - make vitepress: start Vitepress site of documentation"
 	@echo " - make all: run every commands in the above order"
 
-.PHONY: default format test docs all help
+.PHONY: default format test docs vitepress all help

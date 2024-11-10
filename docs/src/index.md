@@ -5,7 +5,7 @@ layout: home
 
 hero:
   name: "QuantumToolbox.jl"
-  tagline: High-performance quantum simulations made simple
+  tagline: A pure Julia framework designed for High-performance quantum physics simulations
   image:
     src: /logo.png
     alt: QuantumToolbox
@@ -25,17 +25,21 @@ hero:
 
 
 features:
+  - icon: <img width="64" height="64" src="https://qutip.org/images/logo.png" alt="markdown"/>
+    title: QuTiP
+    details: Easily handle quantum states and operators with a rich set of tools, with the same functionalities as Python QuTiP.
+    link: https://qutip.org/
   - icon: <img width="64" height="64" src="https://docs.sciml.ai/DiffEqDocs/stable/assets/logo.png" alt="markdown"/>
     title: Dynamical Evolution
     details: Advanced solvers for time evolution of quantum systems, thanks to the powerful DifferentialEquations.jl package.
     link: /users_guide/time_evolution/intro
   - icon: <img width="64" height="64" src="https://cuda.juliagpu.org/stable/assets/logo.png" />
     title: GPU Computing
-    details: Leverage GPU resources for high-performance computing. Simulate the master equation directly on the GPU with the same syntax as the CPU case.
+    details: Leverage GPU resources for high-performance computing. Simulate quantum dynamics directly on the GPU with the same syntax as the CPU case.
     link: /getting_started
   - icon: <img width="64" height="64" src="https://img.icons8.com/?size=100&id=1W4Bkj363ov0&format=png&color=000000" />
     title: Distributed Computing
-    details: Distribute the computation over multiple nodes (e.g., a cluster). Simulate undreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
+    details: Distribute the computation over multiple nodes (e.g., a cluster). Simulate hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
     link: /users_guide/time_evolution/mcsolve
 ---
 ```
