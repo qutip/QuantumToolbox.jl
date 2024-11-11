@@ -34,8 +34,8 @@ Quantum Object:   type=Operator   dims=[2, 2]   size=(4, 4)   ishermitian=true
  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
  0.5+0.0im  0.0+0.0im  0.0+0.0im  0.5+0.0im
 
-julia> negativity(ρ, 2) |> round
-0.0
+julia> round(negativity(ρ, 2), digits=2)
+0.5
 ```
 """
 function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool = false)
