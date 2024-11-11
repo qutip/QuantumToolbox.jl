@@ -29,7 +29,7 @@ export default defineConfig({
     outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
     head: [
       ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
-      ['script', {src: `/versions.js`}],
+      ['script', {src: `/QuantumToolbox.jl/versions.js`}],
       ['script', {src: `${baseTemp.base}siteinfo.js`}]
     ],
     ignoreDeadLinks: true,
