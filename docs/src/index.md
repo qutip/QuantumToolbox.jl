@@ -22,13 +22,12 @@ hero:
     - theme: alt
       text: API
       link: /api
+    - theme: alt
+      text: Visit QuTiP.org
+      link: https://qutip.org/
 
 
 features:
-  - icon: <img width="64" height="64" src="https://qutip.org/images/logo.png" alt="markdown"/>
-    title: QuTiP
-    details: Easily handle quantum states and operators with a rich set of tools, with the same functionalities as Python QuTiP.
-    link: https://qutip.org/
   - icon: <img width="64" height="64" src="https://docs.sciml.ai/DiffEqDocs/stable/assets/logo.png" alt="markdown"/>
     title: Dynamical Evolution
     details: Advanced solvers for time evolution of quantum systems, thanks to the powerful DifferentialEquations.jl package.
@@ -61,7 +60,7 @@ using Pkg
 Pkg.add("QuantumToolbox")
 ```
 Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
-```julia-REPL
+```julia-repl
 (1.10) pkg> add QuantumToolbox
 ```
 More information about `Julia`'s package manager can be found at [`Pkg.jl`](https://julialang.github.io/Pkg.jl/v1/).
