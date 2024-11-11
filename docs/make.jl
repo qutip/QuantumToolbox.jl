@@ -3,28 +3,22 @@
 
 using QuantumToolbox
 using Documenter
+using DocumenterVitepress
 using DocumenterCitations
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
 const DRAFT = false # set `true` to disable cell evaluation
 
-bib = CitationBibliography(joinpath(@__DIR__, "src", "bibliography.bib"), style=:authoryear)
-
-const MathEngine = MathJax3(
-    Dict(
-        :loader => Dict("load" => ["[tex]/physics"]),
-        :tex => Dict(
-            "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
-            "tags" => "ams",
-            "packages" => ["base", "ams", "autoload", "physics"],
-        ),
-    )
+bib = CitationBibliography(
+    joinpath(@__DIR__, "src", "resources", "bibliography.bib"), 
+    style=:authoryear,
 )
 
 const PAGES = [
+    "Home" => "index.md",
     "Getting Started" => [
-        "Introduction" => "index.md",
+        "Brief Example" => "getting_started.md",
         "Key differences from QuTiP" => "qutip_differences.md",
         "The Importance of Type-Stability" => "type_stability.md",
         # "Cite QuantumToolbox.jl" => "cite.md",
@@ -60,9 +54,11 @@ const PAGES = [
             "tutorials/logo.md",
         ],
     ],
-    "API" => "api.md",
-    "Bibliography" => "bibliography.md",
-    # "Change Log" => "changelog.md",
+    "Resources" => [
+        "API" => "resources/api.md",
+        # "Change Log" => "resources/changelog.md",
+        "Bibliography" => "resources/bibliography.md",
+    ],
 ]
 
 makedocs(;
@@ -71,16 +67,17 @@ makedocs(;
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",
     pages = PAGES,
-    format = Documenter.HTML(;
-        prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://qutip.github.io/QuantumToolbox.jl",
-        edit_link = "main",
-        assets = ["assets/favicon.ico"],
-        mathengine = MathEngine,
-        size_threshold_ignore = ["api.md"],
+    format = DocumenterVitepress.MarkdownVitepress(
+        repo = "github.com/qutip/QuantumToolbox.jl",
     ),
     draft = DRAFT,
     plugins = [bib],
 )
 
-deploydocs(; repo = "github.com/qutip/QuantumToolbox.jl", devbranch = "main")
+deploydocs(;
+    repo = "github.com/qutip/QuantumToolbox.jl",
+    target = "build", # this is where Vitepress stores its output
+    devbranch = "main",
+    branch = "gh-pages",
+    push_preview = true,
+)

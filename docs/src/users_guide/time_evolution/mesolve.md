@@ -4,7 +4,7 @@
 using QuantumToolbox
 ```
 
-## Von Neumann equation
+## [Von Neumann equation](@id doc-TE:Von-Neumann-equation)
 
 While the evolution of the state vector in a closed quantum system is deterministic (as we discussed in the previous section: [Schrödinger Equation Solver](@ref doc-TE:Schrödinger-Equation-Solver)), open quantum systems are stochastic in nature. The effect of an environment on the system of interest is to induce stochastic transitions between energy levels, and to introduce uncertainty in the phase difference between states of the system. The state of an open quantum system is therefore described in terms of ensemble averaged states using the density matrix formalism. A density matrix ``\hat{\rho}`` describes a probability distribution of quantum states ``|\psi_n\rangle`` in a matrix representation, namely
 
@@ -18,7 +18,6 @@ The time evolution of the density matrix ``\hat{\rho}(t)`` under closed system d
 
 ```math
 \begin{equation}
-\label{von-Neumann-Eq}
 \frac{d}{dt}\hat{\rho}(t) = -\frac{i}{\hbar}\left[\hat{H}, \hat{\rho}(t)\right],
 \end{equation}
 ```
@@ -62,13 +61,12 @@ sol.expect
 sol.states
 ```
 
-## The Lindblad master equation
+## [The Lindblad master equation](@id doc-TE:The-Lindblad-master-equation)
 
-The standard approach for deriving the equations of motion for a system interacting with its environment is to expand the scope of the system to include the environment. The combined quantum system is then closed, and its evolution is governed by the von Neumann equation given in Eq. \eqref{von-Neumann-Eq}
+The standard approach for deriving the equations of motion for a system interacting with its environment is to expand the scope of the system to include the environment. The combined quantum system is then closed, and its evolution is also governed by the von Neumann equation
 
 ```math
 \begin{equation}
-\label{tot-von-Neumann-Eq}
 \frac{d}{dt}\hat{\rho}_{\textrm{tot}}(t) = -\frac{i}{\hbar}\left[\hat{H}_{\textrm{tot}}, \hat{\rho}_{\textrm{tot}}(t)\right].
 \end{equation}
 ```
@@ -79,27 +77,26 @@ Here, the total Hamiltonian
 \hat{H}_{\textrm{tot}} = \hat{H}_{\textrm{sys}} + \hat{H}_{\textrm{env}} + \hat{H}_{\textrm{int}},
 ```
 
-includes the original system Hamiltonian ``\hat{H}_{\textrm{sys}}``, the Hamiltonian for the environment ``\hat{H}_{\textrm{env}}``, and a term representing the interaction between the system and its environment ``\hat{H}_{\textrm{int}}``. Since we are only interested in the dynamics of the system, we can, perform a partial trace over the environmental degrees of freedom in Eq. \eqref{tot-von-Neumann-Eq}, and thereby obtain a master equation for the motion of the original system density matrix ``\hat{\rho}_{\textrm{sys}}(t)=\textrm{Tr}_{\textrm{env}}[\hat{\rho}_{\textrm{tot}}(t)]``. The most general trace-preserving and completely positive form of this evolution is the Lindblad master equation for the reduced density matrix, namely
+includes the original system Hamiltonian ``\hat{H}_{\textrm{sys}}``, the Hamiltonian for the environment ``\hat{H}_{\textrm{env}}``, and a term representing the interaction between the system and its environment ``\hat{H}_{\textrm{int}}``. Since we are only interested in the dynamics of the system, we can, perform a partial trace over the environmental degrees of freedom, and thereby obtain a master equation for the motion of the original system density matrix ``\hat{\rho}_{\textrm{sys}}(t)=\textrm{Tr}_{\textrm{env}}[\hat{\rho}_{\textrm{tot}}(t)]``. The most general trace-preserving and completely positive form of this evolution is the Lindblad master equation for the reduced density matrix, namely
 
 ```math
 \begin{equation}
-\label{Lindblad-master-Eq}
 \frac{d}{dt}\hat{\rho}_{\textrm{sys}}(t) = -\frac{i}{\hbar}\left[\hat{H}_{\textrm{sys}}, \hat{\rho}_{\textrm{sys}}(t)\right] + \sum_n \hat{C}_n \hat{\rho}_{\textrm{sys}}(t) \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n \hat{\rho}_{\textrm{sys}}(t) - \frac{1}{2} \hat{\rho}_{\textrm{sys}}(t) \hat{C}_n^\dagger \hat{C}_n
 \end{equation}
 ```
 
-where ``\hat{C}_n \equiv \sqrt{\gamma_n}\hat{A}_n`` are the collapse operators, ``\hat{A}_n`` are the operators acting on the system in ``\hat{H}_{\textrm{int}}`` which describes the system-environment interaction, and ``\gamma_n`` are the corresponding rates. The derivation of Eq. \eqref{Lindblad-master-Eq} may be found in several sources, and will not be reproduced here. Instead, we emphasize the approximations that are required to arrive at the master equation in the form of Eq. \eqref{Lindblad-master-Eq} from physical arguments, and hence perform a calculation in `QuantumToolbox`:
+where ``\hat{C}_n \equiv \sqrt{\gamma_n}\hat{A}_n`` are the collapse operators, ``\hat{A}_n`` are the operators acting on the system in ``\hat{H}_{\textrm{int}}`` which describes the system-environment interaction, and ``\gamma_n`` are the corresponding rates. The derivation of Lindblad master equation may be found in several sources, and will not be reproduced here. Instead, we emphasize the approximations that are required to arrive at the above Lindblad master equation from physical arguments, and hence perform a calculation in `QuantumToolbox`:
 
 - **Separability:** At ``t = 0``, there are no correlations between the system and environment, such that the total density matrix can be written as a tensor product, namely ``\hat{\rho}_{\textrm{tot}}(0)=\hat{\rho}_{\textrm{sys}}(0)\otimes\hat{\rho}_{\textrm{env}}(0)``.
 - **Born approximation:** Requires: (i) the state of the environment does not significantly change as a result of the interaction with the system; (ii) the system and the environment remain separable throughout the evolution. These assumptions are justified if the interaction is weak, and if the environment is much larger than the system. In summary, ``\hat{\rho}_{\textrm{tot}}(t)\approx\hat{\rho}_{\textrm{sys}}(t)\otimes\hat{\rho}_{\textrm{env}}(0)``.
 - **Markov approximation:** The time-scale of decay for the environment ``\tau_{\textrm{env}}`` is much shorter than the smallest time-scale of the system dynamics, i.e., ``\tau_{\textrm{sys}}\gg\tau_{\textrm{env}}``. This approximation is often deemed a “short-memory environment” as it requires the environmental correlation functions decay in a fast time-scale compared to those of the system.
-- **Secular approximation:** Stipulates that elements in the master equation corresponding to transition frequencies satisfy ``|\omega_{ab}-\omega_{cd}| \ll 1/\tau_{\textrm{sys}}``, i.e., all fast rotating terms in the interaction picture can be neglected. It also ignores terms that lead to a small renormalization of the system energy levels. This approximation is not strictly necessary for all master-equation formalisms (e.g., the Block-Redfield master equation), but it is required for arriving at the Lindblad form in Eq. \eqref{Lindblad-master-Eq} which is used in [`mesolve`](@ref).
+- **Secular approximation:** Stipulates that elements in the master equation corresponding to transition frequencies satisfy ``|\omega_{ab}-\omega_{cd}| \ll 1/\tau_{\textrm{sys}}``, i.e., all fast rotating terms in the interaction picture can be neglected. It also ignores terms that lead to a small renormalization of the system energy levels. This approximation is not strictly necessary for all master-equation formalisms (e.g., the Block-Redfield master equation), but it is required for arriving at the Lindblad form in the above equation which is used in [`mesolve`](@ref).
 
-For systems with environments satisfying the conditions outlined above, the Lindblad master equation in Eq. \eqref{Lindblad-master-Eq} governs the time-evolution of the system density matrix, giving an ensemble average of the system dynamics. In order to ensure that these approximations are not violated, it is important that the decay rates ``\gamma_n`` be smaller than the minimum energy splitting in the system Hamiltonian. Situations that demand special attention therefore include, for example, systems strongly coupled to their environment, and systems with degenerate or nearly degenerate energy levels.
+For systems with environments satisfying the conditions outlined above, the Lindblad master equation governs the time-evolution of the system density matrix, giving an ensemble average of the system dynamics. In order to ensure that these approximations are not violated, it is important that the decay rates ``\gamma_n`` be smaller than the minimum energy splitting in the system Hamiltonian. Situations that demand special attention therefore include, for example, systems strongly coupled to their environment, and systems with degenerate or nearly degenerate energy levels.
 
 What is new in the master equation compared to the Schrödinger equation (or von Neumann equation) are processes that describe dissipation in the quantum system due to its interaction with an environment. For example, evolution that includes incoherent processes such as relaxation and dephasing. These environmental interactions are defined by the operators ``\hat{A}_n`` through which the system couples to the environment, and rates ``\gamma_n`` that describe the strength of the processes.
 
-In `QuantumToolbox`, the function [`mesolve`](@ref) can also be used for solving the master equation. This is done by passing a list of collapse operators (`c_ops`) as the fourth argument of the [`mesolve`](@ref) function in order to define the dissipation processes of the master equation in Eq. \eqref{Lindblad-master-Eq}. As we mentioned above, each collapse operator ``\hat{C}_n`` is the product of ``\sqrt{\gamma_n}`` (the square root of the rate) and ``\hat{A}_n`` (operator which describes the dissipation process). 
+In `QuantumToolbox`, the function [`mesolve`](@ref) can also be used for solving the master equation. This is done by passing a list of collapse operators (`c_ops`) as the fourth argument of the [`mesolve`](@ref) function in order to define the dissipation processes of the Lindblad master equation. As we mentioned above, each collapse operator ``\hat{C}_n`` is the product of ``\sqrt{\gamma_n}`` (the square root of the rate) and ``\hat{A}_n`` (operator which describes the dissipation process). 
 
 Furthermore, `QuantumToolbox` solves the master equation in the [`SuperOperator`](@ref) formalism. That is, a Liouvillian [`SuperOperator`](@ref) will be generated internally in [`mesolve`](@ref) by the input system Hamiltonian ``\hat{H}_{\textrm{sys}}`` and the collapse operators ``\hat{C}_n``. One can also generate the Liouvillian [`SuperOperator`](@ref) manually for special purposes, and pass it as the first argument of the [`mesolve`](@ref) function. To do so, it is useful to read the section [Superoperators and Vectorized Operators](@ref doc:Superoperators-and-Vectorized-Operators), and also the docstrings of the following functions:
 - [`spre`](@ref)
@@ -108,7 +105,7 @@ Furthermore, `QuantumToolbox` solves the master equation in the [`SuperOperator`
 - [`liouvillian`](@ref)
 - [`lindblad_dissipator`](@ref)
 
-## Example: Spin dynamics
+## [Example: Dissipative Spin dynamics](@id doc-TE:Example:Dissipative-Spin-dynamics)
 
 Using the example with the dynamics of spin-``\frac{1}{2}`` from the previous section ([Schrödinger Equation Solver](@ref doc-TE:Schrödinger-Equation-Solver)), we can easily add a relaxation process (describing the dissipation of energy from the spin to the environment), by adding `[sqrt(γ) * sigmax()]` in the fourth parameter of the [`mesolve`](@ref) function.
 
@@ -143,7 +140,7 @@ axislegend(ax, position = :rt)
 fig
 ```
 
-## Example: Harmonic oscillator in thermal bath
+## [Example: Harmonic oscillator in thermal bath](@id doc-TE:Example:Harmonic-oscillator-in-thermal-bath)
 
 Consider a harmonic oscillator (single-mode cavity) couples to a thermal bath. If the single-mode cavity initially is in a `10`-photon [`fock`](@ref) state, the dynamics is calculated with the following code:
 
@@ -181,7 +178,7 @@ lines!(ax, tlist, Num)
 fig
 ```
 
-## Example: Two-level atom coupled to dissipative single-mode cavity
+## [Example: Two-level atom coupled to dissipative single-mode cavity](@id doc-TE:Example:Two-level-atom-coupled-to-dissipative-single-mode-cavity)
 
 Consider a two-level atom coupled to a dissipative single-mode cavity through a dipole-type interaction, which supports a coherent exchange of quanta between the two systems. If the atom initially is in its ground state and the cavity in a `5`-photon [`fock`](@ref) state, the dynamics is calculated with the following code:
 

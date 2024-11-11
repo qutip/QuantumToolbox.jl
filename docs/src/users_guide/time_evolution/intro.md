@@ -2,18 +2,23 @@
 
 **Table of contents**
 
-```@contents
-Pages = [
-    "intro.md",
-    "solution.md",
-    "sesolve.md",
-    "mesolve.md",
-    "mcsolve.md",
-    "stochastic.md",
-    "time_dependent.md",
-]
-Depth = 1:2
-```
+- [Introduction](@ref doc-TE:Introduction)
+- [Time Evolution Solutions](@ref doc-TE:Time-Evolution-Solutions)
+    - [Solution](@ref doc-TE:Solution)
+    - [Multiple trajectories solution](@ref doc-TE:Multiple-trajectories-solution)
+    - [Accessing data in solutions](@ref doc-TE:Accessing-data-in-solutions)
+- [Schrödinger Equation Solver](@ref doc-TE:Schrödinger-Equation-Solver)
+    - [Unitary evolution](@ref doc-TE:Unitary-evolution)
+    - [Example: Spin dynamics](@ref doc-TE:Example:Spin-dynamics)
+- [Lindblad Master Equation Solver](@ref doc-TE:Lindblad-Master-Equation-Solver)
+    - [Von Neumann equation](@ref doc-TE:Von-Neumann-equation)
+    - [The Lindblad master equation](@ref doc-TE:The-Lindblad-master-equation)
+    - [Example: Dissipative Spin dynamics](@ref doc-TE:Example:Dissipative-Spin-dynamics)
+    - [Example: Harmonic oscillator in thermal bath](@ref doc-TE:Example:Harmonic-oscillator-in-thermal-bath)
+    - [Example: Two-level atom coupled to dissipative single-mode cavity](@ref doc-TE:Example:Two-level-atom-coupled-to-dissipative-single-mode-cavity)
+- [Monte-Carlo Solver](@ref doc-TE:Monte-Carlo-Solver)
+- [Stochastic Solver](@ref doc-TE:Stochastic-Solver)
+- [Solving Problems with Time-dependent Hamiltonians](@ref doc-TE:Solving-Problems-with-Time-dependent-Hamiltonians)
 
 # [Introduction](@id doc-TE:Introduction)
 

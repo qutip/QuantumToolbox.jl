@@ -4,7 +4,7 @@
 using QuantumToolbox
 ```
 
-## Solution
+## [Solution](@id doc-TE:Solution)
 `QuantumToolbox` utilizes the powerful [`DifferentialEquation.jl`](https://docs.sciml.ai/DiffEqDocs/stable/) to simulate different kinds of quantum system dynamics. Thus, we will first look at the data structure used for returning the solution (`sol`) from [`DifferentialEquation.jl`](https://docs.sciml.ai/DiffEqDocs/stable/). The solution stores all the crucial data needed for analyzing and plotting the results of a simulation. A generic structure [`TimeEvolutionSol`](@ref) contains the following properties for storing simulation data:
 
 | **Fields (Attributes)** | **Description** |
@@ -17,7 +17,7 @@ using QuantumToolbox
 | `sol.reltol` | The relative tolerance which is used during the solving process. |
 | `sol.retcode` (or `sol.converged`) | The returned status from the solver. |
 
-## Accessing data in solutions
+## [Accessing data in solutions](@id doc-TE:Accessing-data-in-solutions)
 
 To understand how to access the data in solution, we will use an example as a guide, although we do not worry about the simulation details at this stage. The Schrödinger equation solver ([`sesolve`](@ref)) used in this example returns [`TimeEvolutionSol`](@ref):
 
@@ -86,6 +86,6 @@ Here, the solution contains only one (final) state. Because the `states` will be
 
 Some other solvers can have other output.
 
-## Multiple trajectories solution
+## [Multiple trajectories solution](@id doc-TE:Multiple-trajectories-solution)
 
 This part is still under construction, please visit [API](@ref doc-API) first.
