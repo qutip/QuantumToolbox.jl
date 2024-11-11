@@ -28,6 +28,11 @@ export default defineConfig({
 
     markdown: {
         math: true,
+
+        // options for @mdit-vue/plugin-toc
+        // https://github.com/mdit-vue/mdit-vue/tree/main/packages/plugin-toc#options
+        toc: { level: [1, 2] },
+
         config(md) {
             md.use(tabsMarkdownPlugin),
                 md.use(mathjax3),
@@ -54,8 +59,8 @@ export default defineConfig({
             { icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }
         ],
         footer: {
-            message: 'Made with <a href="https://luxdl.github.io/DocumenterVitepress.jl/dev/" target="_blank"><strong>DocumenterVitepress.jl</strong></a><br>',
-            copyright: `© Copyright ${new Date().getUTCFullYear()}.`
+            message: 'Made with <a href="https://documenter.juliadocs.org/stable/" target="_blank"><strong>Documenter.jl</strong></a>, <a href="https://vitepress.dev" target="_blank"><strong>VitePress</strong></a> and <a href="https://luxdl.github.io/DocumenterVitepress.jl/stable" target="_blank"><strong>DocumenterVitepress.jl</strong></a><br>Released under the BSD 3-Clause License. Powered by the <a href="https://www.julialang.org" target="_blank">Julia Programming Language</a>.<br>',
+            copyright: `© Copyright ${new Date().getUTCFullYear()} <a href="https://qutip.org/" target="_blank"><strong>QuTiP.org</strong></a>.`
         }
     }
 })
