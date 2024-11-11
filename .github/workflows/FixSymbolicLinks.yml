@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: Fix Symbolic Links
 
 on:
   # Runs on pushes targeting the default branch
@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0 # Not needed if lastUpdated is not enabled
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Fix Symlinks for Vitepress
+      - name: Fix Symbolic links for Vitepress
         run: |
           find -type l -exec bash -c 'dir="$0"; newlnk=${dir:2}; lnk="$(readlink -m "$0")"; orglnk=$(basename $lnk); echo "$newlnk <--> $orglnk"; rm "$0"; cp -r $lnk "$0"; cd "$0"; grep "$orglnk" . -lr | xargs sed -i "s/$orglnk/$newlnk/g"; cd ..' {} \;
           ls -al;
