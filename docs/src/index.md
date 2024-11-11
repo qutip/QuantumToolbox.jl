@@ -21,7 +21,7 @@ hero:
       link: https://github.com/qutip/QuantumToolbox.jl
     - theme: alt
       text: API
-      link: /api
+      link: /resources/api
     - theme: alt
       text: Visit QuTiP.org
       link: https://qutip.org/
