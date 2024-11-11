@@ -17,7 +17,7 @@ where ``c_i(p, t)`` is a function that depends on the parameters `p` and time `t
 
 # Examples
 This operator can be initialized in the same way as the QuTiP `QobjEvo` object. For example
-```
+```jldoctest qobjevo
 julia> a = tensor(destroy(10), qeye(2))
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
@@ -31,13 +31,13 @@ julia> coef1(p, t) = exp(-1im * t)
 coef1 (generic function with 1 method)
 
 julia> op = QuantumObjectEvolution(a, coef1)
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 
 If there are more than 2 operators, we need to put each set of operator and coefficient function into a two-element `Tuple`, and put all these `Tuple`s together in a larger `Tuple`:
 
-```
+```jldoctest qobjevo
 julia> σm = tensor(qeye(10), sigmam())
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 10 stored entries:
@@ -51,12 +51,12 @@ julia> coef2(p, t) = sin(t)
 coef2 (generic function with 1 method)
 
 julia> op1 = QuantumObjectEvolution(((a, coef1), (σm, coef2)))
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 ```
 
 We can also concretize the operator at a specific time `t`
-```
+```jldoctest qobjevo
 julia> op1(0.1)
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
@@ -68,7 +68,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ```
 
 It also supports parameter-dependent time evolution
-```
+```jldoctest qobjevo
 julia> coef1(p, t) = exp(-1im * p.ω1 * t)
 coef1 (generic function with 1 method)
 
@@ -76,7 +76,7 @@ julia> coef2(p, t) = sin(p.ω2 * t)
 coef2 (generic function with 1 method)
 
 julia> op1 = QuantumObjectEvolution(((a, coef1), (σm, coef2)))
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true
+Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
 julia> p = (ω1 = 1.0, ω2 = 0.5)
@@ -310,7 +310,7 @@ Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the inpu
 - `ψout::QuantumObject`: The output state.
 
 # Examples
-```
+```jldoctest
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
@@ -327,49 +327,15 @@ julia> coef2(p, t) = cos(t)
 coef2 (generic function with 1 method)
 
 julia> A = QobjEvo(((a, coef1), (a', coef2)))
-Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=true
+Quantum Object Evo.:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
-julia> ψ1 = fock(20, 3)
-Quantum Object:   type=Ket   dims=[20]   size=(20,)
-20-element Vector{ComplexF64}:
- 0.0 + 0.0im
- 0.0 + 0.0im
- 0.0 + 0.0im
- 1.0 + 0.0im
- 0.0 + 0.0im
-     ⋮
- 0.0 + 0.0im
- 0.0 + 0.0im
- 0.0 + 0.0im
- 0.0 + 0.0im
+julia> ψ1 = fock(20, 3);
 
-julia> ψ2 = zero_ket(20)
-Quantum Object:   type=Ket   dims=[20]   size=(20,)
-20-element Vector{ComplexF64}:
- 0.0 + 0.0im
- 0.0 + 0.0im
- 0.0 + 0.0im
- 0.0 + 0.0im
- 0.0 + 0.0im
-     ⋮
- 0.0 + 0.0im
- 0.0 + 0.0im
- 0.0 + 0.0im
- 0.0 + 0.0im
+julia> ψ2 = zero_ket(20);
 
-julia> A(ψ2, ψ1, nothing, 0.1)
-20-element Vector{ComplexF64}:
-                0.0 + 0.0im
-                0.0 + 0.0im
- 0.1729165499254989 + 0.0im
-                0.0 + 0.0im
- 1.9900083305560516 + 0.0im
-                    ⋮
-                0.0 + 0.0im
-                0.0 + 0.0im
-                0.0 + 0.0im
-                0.0 + 0.0im
+julia> A(ψ2, ψ1, nothing, 0.1) ≈ A(0.1) * ψ1
+true
 ```
 """
 function (A::QuantumObjectEvolution)(

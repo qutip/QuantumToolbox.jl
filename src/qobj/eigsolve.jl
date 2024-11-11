@@ -30,10 +30,19 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 
 # Examples
 One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-type eigenvectors by:
-```
-julia> result = eigenstates(sigmax());
+```jldoctest
+julia> result = eigenstates(sigmax())
+EigsolveResult:   type=Operator   dims=[2]
+values:
+2-element Vector{ComplexF64}:
+ -1.0 + 0.0im
+  1.0 + 0.0im
+vectors:
+2×2 Matrix{ComplexF64}:
+ -0.707107+0.0im  0.707107+0.0im
+  0.707107+0.0im  0.707107+0.0im
 
-julia> λ, ψ, T = result;
+julia> λ, ψ, U = result;
 
 julia> λ
 2-element Vector{ComplexF64}:
@@ -41,11 +50,17 @@ julia> λ
   1.0 + 0.0im
 
 julia> ψ
-2-element Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject}}:
- QuantumObject{Vector{ComplexF64}, KetQuantumObject}(ComplexF64[-0.7071067811865475 + 0.0im, 0.7071067811865475 + 0.0im], KetQuantumObject(), [2])
- QuantumObject{Vector{ComplexF64}, KetQuantumObject}(ComplexF64[0.7071067811865475 + 0.0im, 0.7071067811865475 + 0.0im], KetQuantumObject(), [2])
+2-element Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject, 1}}:
+ Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ -0.7071067811865475 + 0.0im
+  0.7071067811865475 + 0.0im
+ Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 0.7071067811865475 + 0.0im
+ 0.7071067811865475 + 0.0im
 
-julia> T
+julia> U
 2×2 Matrix{ComplexF64}:
  -0.707107+0.0im  0.707107+0.0im
   0.707107+0.0im  0.707107+0.0im
@@ -411,27 +426,20 @@ end
 Calculates the eigenvalues and eigenvectors of the [`QuantumObject`](@ref) `A` using
 the Julia [LinearAlgebra](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/) package.
 
-```
+```jldoctest
 julia> a = destroy(5);
 
-julia> H = a + a'
-Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
-5×5 SparseMatrixCSC{ComplexF64, Int64} with 8 stored entries:
-     ⋅          1.0+0.0im          ⋅              ⋅          ⋅
- 1.0+0.0im          ⋅      1.41421+0.0im          ⋅          ⋅
-     ⋅      1.41421+0.0im          ⋅      1.73205+0.0im      ⋅
-     ⋅              ⋅      1.73205+0.0im          ⋅      2.0+0.0im
-     ⋅              ⋅              ⋅          2.0+0.0im      ⋅
+julia> H = a + a';
 
 julia> E, ψ, U = eigen(H)
 EigsolveResult:   type=Operator   dims=[5]
 values:
-5-element Vector{Float64}:
- -2.8569700138728
- -1.3556261799742608
-  1.3322676295501878e-15
-  1.3556261799742677
-  2.8569700138728056
+5-element Vector{ComplexF64}:
+       -2.8569700138728 + 0.0im
+    -1.3556261799742608 + 0.0im
+ 1.3322676295501878e-15 + 0.0im
+     1.3556261799742677 + 0.0im
+     2.8569700138728056 + 0.0im
 vectors:
 5×5 Matrix{ComplexF64}:
   0.106101+0.0im  -0.471249-0.0im  …   0.471249-0.0im  0.106101-0.0im

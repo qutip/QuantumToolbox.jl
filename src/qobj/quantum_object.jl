@@ -19,7 +19,7 @@ Julia struct representing any quantum objects.
 
 # Examples
 
-```
+```jldoctest
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:

@@ -30,7 +30,7 @@ It is typically represented as a matrix with dimensions given by `size`, and thi
 
 As an example, we now define the linear map used in the [`eigsolve_al`](@ref) function for Arnoldi-Lindblad eigenvalue solver:
 
-```julia-repl
+```julia
 struct ArnoldiLindbladIntegratorMap{T,TS,TI} <: AbstractLinearMap{T,TS}
     elty::Type{T}
     size::TS

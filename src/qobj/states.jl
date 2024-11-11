@@ -252,7 +252,7 @@ Here, `x = 1` (`z = 1`) means applying Pauli-``X`` ( Pauli-``Z``) unitary transf
 
 # Example
 
-```
+```jldoctest
 julia> bell_state(0, 0)
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
