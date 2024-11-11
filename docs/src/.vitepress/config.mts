@@ -3,6 +3,10 @@ import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
 
+const baseTemp = {
+    base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
+}
+
 const navTemp = {
   nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
 }
@@ -17,13 +21,17 @@ const nav = [
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-    base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
+    base: baseTemp.base,
     title: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     description: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     lastUpdated: true,
     cleanUrls: true,
     outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
-    head: [['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }]],
+    head: [
+      ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
+      ['script', {src: `/versions.js`}],
+      ['script', {src: `${baseTemp.base}siteinfo.js`}]
+    ],
     ignoreDeadLinks: true,
 
     markdown: {
