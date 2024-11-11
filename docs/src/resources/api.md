@@ -4,13 +4,9 @@ CurrentModule = QuantumToolbox
 
 # [API](@id doc-API)
 
-<!-- Disable this first (until we find a way to fix it)
 **Table of contents**
 
-```@contents
-Pages = ["api.md"]
-```
--->
+[[toc]]
 
 ## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 

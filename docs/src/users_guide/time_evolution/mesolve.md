@@ -4,7 +4,7 @@
 using QuantumToolbox
 ```
 
-## Von Neumann equation
+## [Von Neumann equation](@id doc-TE:Von-Neumann-equation)
 
 While the evolution of the state vector in a closed quantum system is deterministic (as we discussed in the previous section: [Schrödinger Equation Solver](@ref doc-TE:Schrödinger-Equation-Solver)), open quantum systems are stochastic in nature. The effect of an environment on the system of interest is to induce stochastic transitions between energy levels, and to introduce uncertainty in the phase difference between states of the system. The state of an open quantum system is therefore described in terms of ensemble averaged states using the density matrix formalism. A density matrix ``\hat{\rho}`` describes a probability distribution of quantum states ``|\psi_n\rangle`` in a matrix representation, namely
 
@@ -62,7 +62,7 @@ sol.expect
 sol.states
 ```
 
-## The Lindblad master equation
+## [The Lindblad master equation](@id doc-TE:The-Lindblad-master-equation)
 
 The standard approach for deriving the equations of motion for a system interacting with its environment is to expand the scope of the system to include the environment. The combined quantum system is then closed, and its evolution is governed by the von Neumann equation given in Eq. \eqref{von-Neumann-Eq}
 
@@ -108,7 +108,7 @@ Furthermore, `QuantumToolbox` solves the master equation in the [`SuperOperator`
 - [`liouvillian`](@ref)
 - [`lindblad_dissipator`](@ref)
 
-## Example: Spin dynamics
+## [Example: Dissipative Spin dynamics](@id doc-TE:Example:Dissipative-Spin-dynamics)
 
 Using the example with the dynamics of spin-``\frac{1}{2}`` from the previous section ([Schrödinger Equation Solver](@ref doc-TE:Schrödinger-Equation-Solver)), we can easily add a relaxation process (describing the dissipation of energy from the spin to the environment), by adding `[sqrt(γ) * sigmax()]` in the fourth parameter of the [`mesolve`](@ref) function.
 
@@ -143,7 +143,7 @@ axislegend(ax, position = :rt)
 fig
 ```
 
-## Example: Harmonic oscillator in thermal bath
+## [Example: Harmonic oscillator in thermal bath](@id doc-TE:Example:Harmonic-oscillator-in-thermal-bath)
 
 Consider a harmonic oscillator (single-mode cavity) couples to a thermal bath. If the single-mode cavity initially is in a `10`-photon [`fock`](@ref) state, the dynamics is calculated with the following code:
 
@@ -181,7 +181,7 @@ lines!(ax, tlist, Num)
 fig
 ```
 
-## Example: Two-level atom coupled to dissipative single-mode cavity
+## [Example: Two-level atom coupled to dissipative single-mode cavity](@id doc-TE:Example:Two-level-atom-coupled-to-dissipative-single-mode-cavity)
 
 Consider a two-level atom coupled to a dissipative single-mode cavity through a dipole-type interaction, which supports a coherent exchange of quanta between the two systems. If the atom initially is in its ground state and the cavity in a `5`-photon [`fock`](@ref) state, the dynamics is calculated with the following code:
 
