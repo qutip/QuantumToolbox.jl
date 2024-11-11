@@ -5,7 +5,7 @@ on:
     types: [closed]
 
 jobs:
-  doc-preview-cleanup:
+  cleanup-preview-doc:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout gh-pages branch
