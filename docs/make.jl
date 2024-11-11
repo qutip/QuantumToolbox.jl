@@ -69,7 +69,6 @@ makedocs(;
     pages = PAGES,
     format = DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/qutip/QuantumToolbox.jl",
-        deploy_url = "https://qutip.org/QuantumToolbox.jl",
     ),
     draft = DRAFT,
     plugins = [bib],
