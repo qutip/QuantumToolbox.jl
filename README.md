@@ -164,3 +164,9 @@ e_ops = [a_gpu' * a_gpu]
 
 sol = mesolve(H_gpu, ψ0_gpu, tlist, c_ops, e_ops = e_ops)
 ```
+
+## Contributing to QuantumToolbox.jl
+
+You are most welcome to contribute to `QuantumToolbox.jl` development by forking this repository and sending pull requests (PRs), or filing bug reports at the issues page. You can also help out with users' questions, or discuss proposed changes in the [QuTiP discussion group](https://groups.google.com/g/qutip).
+
+For more information about contribution, including technical advice, please see the [Contributing to QuantumToolbox.jl](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing) section of the documentation.
