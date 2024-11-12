@@ -18,10 +18,10 @@ bib = CitationBibliography(
 const PAGES = [
     "Home" => "index.md",
     "Getting Started" => [
-        "Brief Example" => "getting_started.md",
-        "Key differences from QuTiP" => "qutip_differences.md",
-        "The Importance of Type-Stability" => "type_stability.md",
-        # "Cite QuantumToolbox.jl" => "cite.md",
+        "Brief Example" => "getting_started/brief_example.md",
+        "Key differences from QuTiP" => "getting_started/qutip_differences.md",
+        "The Importance of Type-Stability" => "getting_started/type_stability.md",
+        # "Cite QuantumToolbox.jl" => "getting_started/cite.md",
     ],
     "Users Guide" => [
         "Basic Operations on Quantum Objects" => [

@@ -2,9 +2,11 @@
 CurrentModule = QuantumToolbox
 ```
 
-## Brief Example
+# Brief Example
 
-We now provide a brief example to demonstrate the similarity between [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) and [QuTiP](https://github.com/qutip/qutip).
+We now provide a brief example to demonstrate the similarity between [`QuantumToolbox.jl`](https://github.com/qutip/QuantumToolbox.jl) and [`QuTiP`](https://github.com/qutip/qutip).
+
+## CPU Computation
 
 Let's consider a quantum harmonic oscillator with a Hamiltonian given by:
 
@@ -37,6 +39,9 @@ where ``\hat{\rho}`` is the density matrix, ``\gamma`` is the damping rate, and 
 \mathcal{D}[\hat{a}]\hat{\rho} = \hat{a}\hat{\rho}\hat{a}^\dagger - \frac{1}{2}\hat{a}^\dagger\hat{a}\hat{\rho} - \frac{1}{2}\hat{\rho}\hat{a}^\dagger\hat{a}
 ```
 
+!!! note "Lindblad master equation"
+    See [here](@ref doc-TE:Lindblad-Master-Equation-Solver) for more details about Lindblad master equation.
+
 We now compute the time evolution of the system using the [`mesolve`](@ref) function, starting from the initial state ``\ket{\psi (0)} = \ket{3}``:
 
 ```julia
@@ -54,15 +59,20 @@ sol = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops)
 
 We can extract the expectation value of the number operator ``\hat{a}^\dagger \hat{a}`` with the command `sol.expect`, and the states with the command `sol.states`.
 
-### Support for GPU calculation
+## GPU Computation
 
-We can easily pass the computation to the GPU, by simply passing all the `Qobj`s to the GPU:
+!!! note "Extension for CUDA.jl"
+    `QuantumToolbox.jl` provides an extension to support GPU computation. To trigger the extension, you need to install and import [`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl) together with `QuantumToolbox.jl`. See [here](@ref doc:CUDA) for more details.
 
 ```julia
 using QuantumToolbox
 using CUDA
 CUDA.allowscalar(false) # Avoid unexpected scalar indexing
+```
 
+We can easily pass the computation to the GPU, by simply passing all the [`QuantumObject`](@ref)s to the GPU:
+
+```julia
 a_gpu = cu(destroy(N)) # The only difference in the code is the cu() function
 
 H_gpu = ω * a_gpu' * a_gpu

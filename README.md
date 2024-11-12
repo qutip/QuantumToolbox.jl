@@ -55,19 +55,19 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 
 ## Introduction
 
-[QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) is a cutting-edge Julia package designed for quantum physics simulations, closely emulating the popular Python [QuTiP](https://github.com/qutip/qutip) package. It uniquely combines the simplicity and power of Julia with advanced features like GPU acceleration and distributed computing, making simulation of quantum systems more accessible and efficient.
+[QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) is a cutting-edge [`Julia`](https://julialang.org/) package designed for quantum physics simulations, closely emulating the popular Python [`QuTiP`](https://github.com/qutip/qutip) package. It uniquely combines the simplicity and power of [`Julia`](https://julialang.org/) with advanced features like GPU acceleration and distributed computing, making simulation of quantum systems more accessible and efficient.
 
 *With this package, moving from Python to Julia for quantum physics simulations has never been easier*, due to the similar syntax and functionalities.
 
 ## Features
 
-QuantumToolbox.jl is equipped with a robust set of features:
+`QuantumToolbox.jl` is equipped with a robust set of features:
 
-- **Quantum State and Operator Manipulation:** Easily handle quantum states and operators with a rich set of tools, with the same functionalities as QuTiP.
-- **Dynamical Evolution:** Advanced solvers for time evolution of quantum systems, thanks to the powerful [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl) package.
+- **Quantum State and Operator Manipulation:** Easily handle quantum states and operators with a rich set of tools, with the same functionalities as `QuTiP`.
+- **Dynamical Evolution:** Advanced solvers for time evolution of quantum systems, thanks to the powerful [`DifferentialEquations.jl`](https://github.com/SciML/DifferentialEquations.jl) package.
 - **GPU Computing:** Leverage GPU resources for high-performance computing. Simulate quantum dynamics directly on the GPU with the same syntax as the CPU case.
 - **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
-- **Easy Extension:** Easily extend the package, taking advantage of the Julia language features, like multiple dispatch and metaprogramming.
+- **Easy Extension:** Easily extend the package, taking advantage of the `Julia` language features, like multiple dispatch and metaprogramming.
 
 ## Installation
     
@@ -79,7 +79,7 @@ To install `QuantumToolbox.jl`, run the following commands inside Julia's intera
 using Pkg
 Pkg.add("QuantumToolbox")
 ```
-Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
+Alternatively, this can also be done in `Julia`'s [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
 ```julia-repl
 (1.10) pkg> add QuantumToolbox
 ```
@@ -94,7 +94,7 @@ QuantumToolbox.about()
 
 ## Brief Example
 
-We now provide a brief example to demonstrate the similarity between [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) and [QuTiP](https://github.com/qutip/qutip).
+We now provide a brief example to demonstrate the similarity between [`QuantumToolbox.jl`](https://github.com/qutip/QuantumToolbox.jl) and [`QuTiP`](https://github.com/qutip/qutip).
 
 Let's consider a quantum harmonic oscillator with a Hamiltonian given by:
 
