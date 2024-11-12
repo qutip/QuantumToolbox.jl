@@ -58,6 +58,7 @@ const PAGES = [
         "API" => "resources/api.md",
         # "Change Log" => "resources/changelog.md",
         "Bibliography" => "resources/bibliography.md",
+        "Contributing to QuantumToolbox.jl" => "resources/contributing.md",
     ],
 ]
 
