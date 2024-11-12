@@ -6,7 +6,7 @@ CurrentModule = QuantumToolbox
 
 **Table of contents**
 
-[[toc]]
+[[toc]] <!-- the level setting is in ".vitepress/config.mts" -->
 
 ## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 

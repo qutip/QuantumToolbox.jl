@@ -12,7 +12,7 @@ hero:
   actions:
     - theme: brand
       text: Getting Started
-      link: /getting_started
+      link: /getting_started/brief_example
     - theme: alt
       text: Users Guide
       link: /users_guide/QuantumObject/QuantumObject
@@ -35,7 +35,7 @@ features:
   - icon: <img width="64" height="64" src="https://cuda.juliagpu.org/stable/assets/logo.png" />
     title: GPU Computing
     details: Leverage GPU resources for high-performance computing. Simulate quantum dynamics directly on the GPU with the same syntax as the CPU case.
-    link: /getting_started
+    link: /users_guide/extensions/cuda
   - icon: <img width="64" height="64" src="https://img.icons8.com/?size=100&id=1W4Bkj363ov0&format=png&color=000000" />
     title: Distributed Computing
     details: Distribute the computation over multiple nodes (e.g., a cluster). Simulate hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
@@ -45,7 +45,7 @@ features:
 
 # [Introduction](@id doc:Introduction)
 
-[QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) is a cutting-edge Julia package designed for quantum physics simulations, closely emulating the popular Python [QuTiP](https://github.com/qutip/qutip) package. It uniquely combines the simplicity and power of Julia with advanced features like GPU acceleration and distributed computing, making simulation of quantum systems more accessible and efficient. Taking advantage of the Julia language features (like multiple dispatch and metaprogramming), QuantumToolbox.jl is designed to be easily extendable, allowing users to build upon the existing functionalities.
+[`QuantumToolbox.jl`](https://github.com/qutip/QuantumToolbox.jl) is a cutting-edge [`Julia`](https://julialang.org/) package designed for quantum physics simulations, closely emulating the popular [`Python QuTiP`](https://github.com/qutip/qutip) package. It uniquely combines the simplicity and power of Julia with advanced features like GPU acceleration and distributed computing, making simulation of quantum systems more accessible and efficient. Taking advantage of the [`Julia`](https://julialang.org/) language features (like multiple dispatch and metaprogramming), [`QuantumToolbox.jl`](https://github.com/qutip/QuantumToolbox.jl) is designed to be easily extendable, allowing users to build upon the existing functionalities.
 
 *__With this package, moving from Python to Julia for quantum physics simulations has never been easier__*, due to the similar syntax and functionalities.
 
@@ -59,7 +59,7 @@ To install `QuantumToolbox.jl`, run the following commands inside Julia's intera
 using Pkg
 Pkg.add("QuantumToolbox")
 ```
-Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
+Alternatively, this can also be done in `Julia`'s [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
 ```julia-repl
 (1.10) pkg> add QuantumToolbox
 ```

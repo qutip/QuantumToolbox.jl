@@ -39,7 +39,7 @@ export default defineConfig({
 
         // options for @mdit-vue/plugin-toc
         // https://github.com/mdit-vue/mdit-vue/tree/main/packages/plugin-toc#options
-        toc: { level: [1, 2] },
+        toc: { level: [2, 3, 4] }, // for API page, triggered by: [[toc]]
 
         config(md) {
             md.use(tabsMarkdownPlugin),
