@@ -1,4 +1,4 @@
-# Change Log
+# ChangeLog
 
 All notable changes to [`QuantumToolbox.jl`](https://github.com/qutip/QuantumToolbox.jl) will be documented in this file.
 

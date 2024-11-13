@@ -21,7 +21,7 @@ bib = CitationBibliography(
 Changelog.generate(
     Changelog.Documenter(),
     joinpath(@__DIR__, "..", "CHANGELOG.md"),
-    joinpath(@__DIR__, "src", "resources", "change_log.md");
+    joinpath(@__DIR__, "src", "resources", "changelog.md");
     repo = "qutip/QuantumToolbox.jl",
 )
 
@@ -67,7 +67,7 @@ const PAGES = [
     "Resources" => [
         "API" => "resources/api.md",
         "Bibliography" => "resources/bibliography.md",
-        "Change Log" => "resources/change_log.md",
+        "Change Log" => "resources/changelog.md",
         "Contributing to QuantumToolbox.jl" => "resources/contributing.md",
     ],
 ]
