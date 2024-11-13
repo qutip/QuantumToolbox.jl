@@ -72,7 +72,7 @@ This will start a local Vitepress site of documentation at `http://localhost:517
 
 ## [Update ChangeLog](@id doc-Contribute:Update-ChangeLog)
 
-The changelog is recorded in the file `CHANGELOG.md` in the repository. If you add some changes to the package and made a PR, you should also add some messages or release notes together with the related PRs or issues entires to `CHANGELOG.md`. After that, you can run the following command under the *__root directory of the repository__* you are working on:
+The changelog is recorded in the file `CHANGELOG.md` in the repository. If you add some changes to the package and made a PR, you should also add some messages or release notes together with the related PRs or issues entries to `CHANGELOG.md`. After that, you can run the following command under the *__root directory of the repository__* you are working on:
 
 !!! note "Requirements"
     If this is your first time running `make` command in the local repository you are working on or you just had reinstalled `Julia`, you should run `make setup` first.
