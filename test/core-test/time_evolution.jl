@@ -14,7 +14,7 @@
     # Jaynes-Cummings Hamiltonian
     H = ωc * a' * a + ωq / 2 * σz + g * (a' * σm + a * σm')
     ψ0 = kron(fock(N, 0), fock(2, 0))
-    tlist = range(0, 1000, 1000)
+    
     e_ops = [a' * a, σz]
     c_ops = [sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σm']
 
