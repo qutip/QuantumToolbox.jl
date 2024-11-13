@@ -72,7 +72,7 @@ This will start a local Vitepress site of documentation at `http://localhost:517
 
 ## [Update ChangeLog](@id doc-Contribute:Update-ChangeLog)
 
-The changelog is written in the file `CHANGELOG.md` in the repository. If you add some changes to the package and made a PR, you should also add some messages or release notes together with the related PRs or issues entries to `CHANGELOG.md`, for example:
+The changelog is written in the file `CHANGELOG.md` in the repository. If you add some changes to the repository and made a PR, you should also add some messages or release notes together with the related PRs/issues entries to `CHANGELOG.md`. For example, add a new line in `CHANGELOG.md`:
 
 ```markdown
 - some messages to describe the changes. ([#issue-ID], [#PR-ID])
@@ -89,6 +89,6 @@ After that, you can run the following command under the *__root directory of the
 make changelog
 ```
 
-This will automatically generate the full URLs for the references to PRs or issues by utilizing [`Changelog.jl`](https://github.com/JuliaDocs/Changelog.jl).
+This will automatically generate the full URLs for the references to PRs/issues by utilizing [`Changelog.jl`](https://github.com/JuliaDocs/Changelog.jl).
 
 If the changes you made are not necessary to be recorded in `CHANGELOG.md`, you can add the label `[Skip ChangeLog]` to the PR you made in the GitHub repository.
