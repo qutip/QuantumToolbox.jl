@@ -1,0 +1,14 @@
+# Enforces the update of the file CHANGELOG.md on every pull request
+# Can be skipped with the `Skip ChangeLog` label
+name: ChangeLog Update Check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: dangoslen/changelog-enforcer@v3
+      with:
+        skipLabels: 'Skip ChangeLog'
