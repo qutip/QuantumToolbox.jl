@@ -78,7 +78,7 @@ The changelog is written in the file `CHANGELOG.md` in the repository. If you ad
 - some messages to describe the changes. ([#issue-ID], [#PR-ID])
 ```
 
-See also the [Change Log page](@ref ChangeLog) for more examples.
+See also the [ChangeLog page](@ref ChangeLog) for more examples.
 
 After that, you can run the following command under the *__root directory of the repository__* you are working on:
 
