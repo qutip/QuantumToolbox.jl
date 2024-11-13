@@ -4,19 +4,19 @@
 
 `QuantumToolbox.jl` is developed using the [`git`](https://git-scm.com/) version-control system, with the [main repository](https://github.com/qutip/QuantumToolbox.jl) hosted in the [qutip organisation on GitHub](https://github.com/qutip). You will need to be familiar with [`git`](https://git-scm.com/) as a tool, and the [GitHub Flow](https://docs.github.com/en/get-started/quickstart/github-flow) workflow for branching and making pull requests. The exact details of environment set-up, build process, and runtests vary by repository are discussed below. In overview, the steps to contribute are:
 
-1. Consider creating an issue on the GitHub page of the relevant repository, describing the change you think should be made and why, so we can discuss details with you and make sure it is appropriate.
-2. *__If this is your first contribution__*, make a fork of the relevant repository on GitHub and clone it to your local computer. Also add our copy as a remote called `qutip`: `git remote add qutip https://github.com/qutip/<repo-name>`.
-3. Start from the `main` branch in your local computer (`git checkout main`), and pull all the changes from the remote repository (on GitHub) to make sure you have an up-to-date copy: `git pull qutip main`.
-4. Switch to a new `git` branch: `git checkout -b <branch-name>`.
-5. Make the changes you want
-6. Go through the following build processes (if the changes you made relates to any of them) for the repository to build the final result so you can check your changes work sensibly:
+- Consider creating an issue on the GitHub page of the relevant repository, describing the change you think should be made and why, so we can discuss details with you and make sure it is appropriate.
+- *__If this is your first contribution__*, make a fork of the relevant repository on GitHub (which will be called as `origin`) and clone it to your local computer. Also add our copy as a remote (let's call it `qutip` here): `git remote add qutip https://github.com/qutip/<repo-name>`.
+- Start from the `main` branch in your local computer (`git checkout main`), and pull all the changes from the remote (`qutip`) repository (on GitHub) to make sure you have an up-to-date copy: `git pull qutip main`.
+- Switch to a new `git` branch in your local computer: `git checkout -b <branch-name>`.
+- Make the changes you want.
+- Go through the following build processes (if the changes you made relates to any of them) locally in your computer to build the final result so you can check your changes work sensibly:
     - Write and make sure all the runtests pass. See [here](@ref doc-Contribute:Runtests) for more details.
     - Make sure all the changes match the `Julia` code format (style). See [here](@ref doc-Contribute:Julia-Code-Format) for more details.
     - Improve and make sure the documentation can be built successfully. See [here](@ref doc-Contribute:Documentation) for more details.
     - Update changelog. See [here](@ref doc-Contribute:Update-ChangeLog) for more details.
-7. Add the changed files to the `git` staging area `git add <file1> <file2> ...`, and then create some commits with short-but-descriptive names `git commit`.
-8. Push the changes to your fork (`origin`) `git push -u origin <branch-name>`. You won’t be able to push to the remote `qutip` repositories directly.
-9. Go to the GitHub website for the repository you are contributing to, click on the “Pull Requests” tab, click the “New Pull Request” button, and follow the instructions there.
+- Add the changed files to the `git` staging area `git add <file1> <file2> ...`, and then create some commits with short-but-descriptive names: `git commit`.
+- Push the changes to your fork (`origin`): `git push -u origin <branch-name>`. You won’t be able to push to the remote (`qutip`) repositories directly.
+- Go to the GitHub website for the repository you are contributing to, click on the “Pull Requests” tab, click the “New Pull Request” button, and follow the instructions there.
 
 Once the pull request (PR) is created, some members of the QuTiP admin team will review the code to make sure it is suitable for inclusion in the library, to check the programming, and to ensure everything meets our standards. For some repositories, several automated CI pipelines will run whenever you create or modify a PR. In general, these will basically be the same ones which you can run locally, and all CI pipelines are required to pass online before your changes are merged to the remote `main` branch. There might be some feedbacks and requested changes. You can add more commits to address these, and push them to the branch (`<branch-name>`) of your fork (`origin`) to update the PR.
 
@@ -65,7 +65,7 @@ To read the documentation in a browser, you can run the following command:
 make vitepress
 ```
 
-This will start a local Vitepress site of documentation at `http://localhost:5173/QuantumToolbox.jl/`
+This will start a local Vitepress site of documentation at `http://localhost:5173/QuantumToolbox.jl/` in your computer.
 
 ## [Update ChangeLog](@id doc-Contribute:Update-ChangeLog)
 
