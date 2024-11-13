@@ -5,14 +5,24 @@ using QuantumToolbox
 using Documenter
 using DocumenterVitepress
 using DocumenterCitations
+using Changelog
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
 const DRAFT = false # set `true` to disable cell evaluation
 
+# generate bibliography
 bib = CitationBibliography(
     joinpath(@__DIR__, "src", "resources", "bibliography.bib"), 
     style=:authoryear,
+)
+
+# generate changelog
+Changelog.generate(
+    Changelog.Documenter(),
+    joinpath(@__DIR__, "..", "CHANGELOG.md"),
+    joinpath(@__DIR__, "src", "resources", "change_log.md");
+    repo = "qutip/QuantumToolbox.jl",
 )
 
 const PAGES = [
@@ -56,8 +66,8 @@ const PAGES = [
     ],
     "Resources" => [
         "API" => "resources/api.md",
-        # "Change Log" => "resources/changelog.md",
         "Bibliography" => "resources/bibliography.md",
+        "Change Log" => "resources/change_log.md",
         "Contributing to QuantumToolbox.jl" => "resources/contributing.md",
     ],
 ]
