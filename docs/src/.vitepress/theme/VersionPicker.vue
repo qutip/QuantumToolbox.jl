@@ -34,7 +34,7 @@ const getBaseRepository = () => {
   if ((origin.includes('qutip.org')) || (origin.includes('github.io'))) {
     // Extract the first part of the path as the repository name
     const pathParts = pathname.split('/').filter(Boolean);
-    const baseRepo = pathParts.length > 0 ? `/${pathParts[0]}/` : '/';
+    const baseRepo = pathParts.length > 0 ? `/${pathParts[0]}` : '';
     return `${origin}${baseRepo}`;
   } else {
     // For custom domains, use just the origin (e.g., https://docs.makie.org)
