@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - *__We will start to write changelog once we have the first standard release.__*
 
+## [v0.21.5] (2024-11-15)
+
+- This is a demonstration of how to bump version number and also modify `CHANGELOG.md` before new release. ([#309])
+
 ## [v0.21.4] (2024-11-13)
 
 - This is just a demonstration about [`Changelog.jl`](https://github.com/JuliaDocs/Changelog.jl). ([#139], [#306])
@@ -19,3 +23,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.21.4]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.21.4
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#306]: https://github.com/qutip/QuantumToolbox.jl/issues/306
+[#309]: https://github.com/qutip/QuantumToolbox.jl/issues/309
