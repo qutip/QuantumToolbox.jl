@@ -32,7 +32,7 @@
         amp_rabi = g^2 / Ω_rabi^2
         ##
 
-        @test prob.f.f isa MatrixOperator
+        @test prob.prob.f.f isa MatrixOperator
         @test sum(abs.(sol.expect[1, :] .- amp_rabi .* sin.(Ω_rabi * tlist) .^ 2)) / length(tlist) < 0.1
         @test length(sol.times) == length(tlist)
         @test length(sol.states) == 1

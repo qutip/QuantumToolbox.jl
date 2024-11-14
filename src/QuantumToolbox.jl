@@ -45,6 +45,7 @@ import SciMLOperators:
     IdentityOperator,
     update_coefficients!,
     concretize
+import SciMLStructures: isscimlstructure, ismutablescimlstructure, hasportion, canonicalize, replace, replace!, Tunable
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
@@ -87,6 +88,7 @@ include("qobj/superoperators.jl")
 include("qobj/synonyms.jl")
 
 # time evolution
+include("time_evolution/time_evo_parameters.jl")
 include("time_evolution/time_evolution.jl")
 include("time_evolution/mesolve.jl")
 include("time_evolution/lr_mesolve.jl")
