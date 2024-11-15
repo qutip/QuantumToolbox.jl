@@ -141,17 +141,7 @@ end
 
 function _normalize_state!(u, dims, normalize_states)
     getVal(normalize_states) && normalize!(u)
-    return QuantumObject(u, dims = dims)
-end
-
-function _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, jump_which, normalize_states, dims)
-    sol_i = sol[:, i]
-    !isempty(sol_i.prob.kwargs[:saveat]) ? states[i] = map(u -> _normalize_state!(u, dims, normalize_states), sol_i.u) :
-    nothing
-
-    copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
-    jump_times[i] = sol_i.prob.p.mcsolve_params.jump_times
-    return jump_which[i] = sol_i.prob.p.mcsolve_params.jump_which
+    return QuantumObject(u, type = Ket, dims = dims)
 end
 
 function _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs)
@@ -308,15 +298,15 @@ function mcsolveProblem(
     kwargs2 = merge(default_values, kwargs)
     kwargs3 = _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs2)
 
-    cache_mc = similar(ψ0.data)
-    weights_mc = similar(ψ0.data, length(c_ops)) # It should be a Float64 Vector, but we have to keep the same type for all the parameters due to SciMLStructures.jl
+    cache_mc = similar(ψ0.data, T)
+    weights_mc = similar(ψ0.data, T, length(c_ops)) # It should be a Float64 Vector, but we have to keep the same type for all the parameters due to SciMLStructures.jl
     cumsum_weights_mc = similar(weights_mc)
 
-    jump_times = similar(ψ0.data, jump_times_which_init_size)
-    jump_which = similar(ψ0.data, jump_times_which_init_size)
+    jump_times = similar(ψ0.data, T, jump_times_which_init_size)
+    jump_which = similar(ψ0.data, T, jump_times_which_init_size)
     jump_times_which_idx = T[1] # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl
 
-    random_n = similar(ψ0.data, 1) # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl.
+    random_n = similar(ψ0.data, T, 1) # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl.
     random_n[1] = rand(rng)
 
     progr = ProgressBar(length(tlist), enable = false)
@@ -432,6 +422,10 @@ function mcsolveEnsembleProblem(
     output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
 ) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
+    _prob_func = prob_func isa Nothing ? _mcsolve_dispatch_prob_func(rng, ntraj) : prob_func
+    _output_func =
+        output_func isa Nothing ? _mcsolve_dispatch_output_func(ensemble_method, progress_bar, ntraj) : output_func
+
     prob_mc = mcsolveProblem(
         H,
         ψ0,
@@ -439,17 +433,13 @@ function mcsolveEnsembleProblem(
         c_ops;
         e_ops = e_ops,
         params = params,
-        rng = deepcopy(rng), # By deepcopying, we avoid to also count the initialization of mcsolveProblem
+        rng = rng,
         jump_callback = jump_callback,
         kwargs...,
     )
 
-    _prob_func = prob_func isa Nothing ? _mcsolve_dispatch_prob_func(rng, ntraj) : prob_func
-    _output_func =
-        output_func isa Nothing ? _mcsolve_dispatch_output_func(ensemble_method, progress_bar, ntraj) : output_func
-
     ensemble_prob = TimeEvolutionProblem(
-        EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
+        EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
         prob_mc.times,
         prob_mc.dims,
         (progr = _output_func[2], channel = _output_func[3]),
@@ -558,7 +548,7 @@ function mcsolve(
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     progress_bar::Union{Val,Bool} = Val(true),
     prob_func::Union{Function,Nothing} = nothing,
-    output_func::Union{Function,Nothing} = nothing,
+    output_func::Union{Tuple,Nothing} = nothing,
     normalize_states::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
@@ -580,53 +570,59 @@ function mcsolve(
         kwargs...,
     )
 
-    return mcsolve(
-        ens_prob_mc;
-        alg = alg,
-        ntraj = ntraj,
-        ensemble_method = ensemble_method,
-        normalize_states = normalize_states,
-    )
+    return mcsolve(ens_prob_mc, alg, ntraj, ensemble_method, normalize_states)
+end
+
+function _mcsolve_solve_ens(
+    ens_prob_mc::TimeEvolutionProblem,
+    alg::OrdinaryDiffEqAlgorithm,
+    ensemble_method::ET,
+    ntraj::Int,
+) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
+    sol = nothing
+
+    @sync begin
+        @async while take!(ens_prob_mc.kwargs.channel)
+            next!(ens_prob_mc.kwargs.progr)
+        end
+
+        @async begin
+            sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+            put!(ens_prob_mc.kwargs.channel, false)
+        end
+    end
+
+    return sol
+end
+
+function _mcsolve_solve_ens(
+    ens_prob_mc::TimeEvolutionProblem,
+    alg::OrdinaryDiffEqAlgorithm,
+    ensemble_method,
+    ntraj::Int,
+)
+    sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+    return sol
 end
 
 function mcsolve(
-    ens_prob_mc::TimeEvolutionProblem;
+    ens_prob_mc::TimeEvolutionProblem,
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
-    normalize_states::Union{Val,Bool} = Val(true),
+    normalize_states = Val(true),
 )
-    if typeof(ensemble_method) <: Union{EnsembleSplitThreads,EnsembleDistributed}
-        @sync begin
-            @async while take!(ens_prob_mc.kwargs.channel)
-                next!(ens_prob_mc.kwargs.progr)
-            end
-
-            @async begin
-                sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
-                put!(ens_prob_mc.kwargs.channel, false)
-            end
-        end
-    else
-        sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
-    end
+    sol = _mcsolve_solve_ens(ens_prob_mc, alg, ensemble_method, ntraj)
 
     dims = ens_prob_mc.dims
     _sol_1 = sol[:, 1]
 
-    expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
-    states =
-        isempty(_sol_1.prob.kwargs[:saveat]) ?
-        fill(QuantumObject{Vector{ComplexF64},KetQuantumObject,length(dims)}[], length(sol)) :
-        Vector{Vector{QuantumObject}}(undef, length(sol))
-    jump_times = Vector{Vector{Float64}}(undef, length(sol))
-    jump_which = Vector{Vector{Int16}}(undef, length(sol))
+    expvals_all = mapreduce(i -> sol[:, i].prob.p.expvals, (x, y) -> cat(x, y, dims = 3), eachindex(sol))
+    states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
+    jump_times = map(i -> real.(sol[:, i].prob.p.mcsolve_params.jump_times), eachindex(sol))
+    jump_which = map(i -> round.(Int, sol[:, i].prob.p.mcsolve_params.jump_which), eachindex(sol))
 
-    foreach(
-        i -> _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, jump_which, normalize_states, dims),
-        eachindex(sol),
-    )
-    expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
+    expvals = dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
 
     return TimeEvolutionMCSol(
         ntraj,
