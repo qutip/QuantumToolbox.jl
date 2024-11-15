@@ -28,9 +28,10 @@ export default defineConfig({
     cleanUrls: true,
     outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
     head: [
-      ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
-      ['script', {src: `/QuantumToolbox.jl/versions.js`}],
-      ['script', {src: `${baseTemp.base}siteinfo.js`}]
+        ['link', { rel: 'icon', href: '/QuantumToolbox.jl/favicon.ico' }],
+        ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
+        ['script', {src: `/QuantumToolbox.jl/versions.js`}],
+        ['script', {src: `${baseTemp.base}siteinfo.js`}]
     ],
     ignoreDeadLinks: true,
 
