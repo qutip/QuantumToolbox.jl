@@ -1,36 +1,5 @@
 export sesolveProblem, sesolve
 
-# When e_ops is Nothing
-function _save_func_sesolve(integrator)
-    next!(integrator.p.progr)
-    u_modified!(integrator, false)
-    return nothing
-end
-
-# When e_ops is a list of operators
-function _save_func_sesolve(integrator, e_ops, is_empty_e_ops)
-    expvals = integrator.p.expvals
-    progr = integrator.p.progr
-    if !is_empty_e_ops
-        ψ = integrator.u
-        _expect = op -> dot(ψ, get_data(op), ψ)
-        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
-    end
-    return _save_func_sesolve(integrator)
-end
-
-# Generate the callback depending on the e_ops type
-function _generate_sesolve_callback(e_ops::Nothing, tlist)
-    f = integrator -> _save_func_sesolve(integrator)
-    return PresetTimeCallback(tlist, f, save_positions = (false, false))
-end
-
-function _generate_sesolve_callback(e_ops, tlist)
-    is_empty_e_ops = isempty(e_ops)
-    f = integrator -> _save_func_sesolve(integrator, e_ops, is_empty_e_ops)
-    return PresetTimeCallback(tlist, f, save_positions = (false, false))
-end
-
 function _merge_sesolve_kwargs_with_callback(kwargs, cb)
     kwargs2 =
         haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(kwargs.callback, cb),)) :

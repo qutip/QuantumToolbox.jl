@@ -92,6 +92,7 @@ include("qobj/synonyms.jl")
 # time evolution
 include("time_evolution/time_evo_parameters.jl")
 include("time_evolution/time_evolution.jl")
+include("time_evolution/callback_helpers.jl")
 include("time_evolution/mesolve.jl")
 include("time_evolution/lr_mesolve.jl")
 include("time_evolution/sesolve.jl")

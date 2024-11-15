@@ -1,64 +1,6 @@
 export mcsolveProblem, mcsolveEnsembleProblem, mcsolve
 export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
 
-const jump_times_which_init_size = 200
-
-function _save_func_mcsolve(integrator, e_ops, is_empty_e_ops)
-    expvals = integrator.p.expvals
-    progr = integrator.p.progr
-    cache_mc = integrator.p.mcsolve_params.cache_mc
-    if !is_empty_e_ops
-        copyto!(cache_mc, integrator.u)
-        normalize!(cache_mc)
-        ψ = cache_mc
-        _expect = op -> dot(ψ, get_data(op), ψ)
-        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
-    end
-    next!(progr)
-    u_modified!(integrator, false)
-    return nothing
-end
-
-function LindbladJumpAffect!(integrator, c_ops, c_ops_herm)
-    params = integrator.p
-    cache_mc = params.mcsolve_params.cache_mc
-    weights_mc = params.mcsolve_params.weights_mc
-    cumsum_weights_mc = params.mcsolve_params.cumsum_weights_mc
-    random_n = params.mcsolve_params.random_n
-    jump_times = params.mcsolve_params.jump_times
-    jump_which = params.mcsolve_params.jump_which
-    jump_times_which_idx = params.mcsolve_params.jump_times_which_idx
-    traj_rng = params.mcsolve_params.traj_rng
-    ψ = integrator.u
-
-    @inbounds for i in eachindex(weights_mc)
-        weights_mc[i] = real(dot(ψ, c_ops_herm[i], ψ))
-    end
-    cumsum!(cumsum_weights_mc, weights_mc)
-    r = rand(traj_rng) * sum(real, weights_mc)
-    collapse_idx = getindex(1:length(weights_mc), findfirst(x -> real(x) > r, cumsum_weights_mc))
-    mul!(cache_mc, c_ops[collapse_idx], ψ)
-    normalize!(cache_mc)
-    copyto!(integrator.u, cache_mc)
-
-    @inbounds random_n[1] = rand(traj_rng)
-
-    @inbounds idx = round(Int, real(jump_times_which_idx[1]))
-    @inbounds jump_times[idx] = integrator.t
-    @inbounds jump_which[idx] = collapse_idx
-    @inbounds jump_times_which_idx[1] += 1
-    @inbounds if real(jump_times_which_idx[1]) > length(jump_times)
-        resize!(jump_times, length(jump_times) + jump_times_which_init_size)
-        resize!(jump_which, length(jump_which) + jump_times_which_init_size)
-    end
-end
-
-_mcsolve_continuous_condition(u, t, integrator) =
-    @inbounds real(integrator.p.mcsolve_params.random_n[1]) - real(dot(u, u))
-
-_mcsolve_discrete_condition(u, t, integrator) =
-    @inbounds real(dot(u, u)) < real(integrator.p.mcsolve_params.random_n[1])
-
 function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds)
     params = prob.p
 
@@ -142,40 +84,6 @@ end
 function _normalize_state!(u, dims, normalize_states)
     getVal(normalize_states) && normalize!(u)
     return QuantumObject(u, type = Ket, dims = dims)
-end
-
-function _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs)
-    c_ops_data = get_data.(c_ops)
-    c_ops_herm_data = map(op -> op' * op, c_ops_data)
-
-    _affect = integrator -> LindbladJumpAffect!(integrator, c_ops_data, c_ops_herm_data)
-
-    if jump_callback isa DiscreteLindbladJumpCallback
-        cb1 = DiscreteCallback(_mcsolve_discrete_condition, _affect, save_positions = (false, false))
-    else
-        cb1 = ContinuousCallback(
-            _mcsolve_continuous_condition,
-            _affect,
-            nothing,
-            interp_points = jump_callback.interp_points,
-            save_positions = (false, false),
-        )
-    end
-
-    if e_ops isa Nothing
-        kwargs2 =
-            haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, kwargs.callback),)) :
-            merge(kwargs, (callback = cb1,))
-        return kwargs2
-    else
-        is_empty_e_ops = isempty(e_ops)
-        f = integrator -> _save_func_mcsolve(integrator, e_ops, is_empty_e_ops)
-        cb2 = PresetTimeCallback(tlist, f, save_positions = (false, false))
-        kwargs2 =
-            haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, cb2, kwargs.callback),)) :
-            merge(kwargs, (callback = CallbackSet(cb1, cb2),))
-        return kwargs2
-    end
 end
 
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
@@ -302,8 +210,8 @@ function mcsolveProblem(
     weights_mc = similar(ψ0.data, T, length(c_ops)) # It should be a Float64 Vector, but we have to keep the same type for all the parameters due to SciMLStructures.jl
     cumsum_weights_mc = similar(weights_mc)
 
-    jump_times = similar(ψ0.data, T, jump_times_which_init_size)
-    jump_which = similar(ψ0.data, T, jump_times_which_init_size)
+    jump_times = similar(ψ0.data, T, JUMP_TIMES_WHICH_INIT_SIZE)
+    jump_which = similar(ψ0.data, T, JUMP_TIMES_WHICH_INIT_SIZE)
     jump_times_which_idx = T[1] # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl
 
     random_n = similar(ψ0.data, T, 1) # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl.
@@ -439,7 +347,7 @@ function mcsolveEnsembleProblem(
     )
 
     ensemble_prob = TimeEvolutionProblem(
-        EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
+        EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob_mc.times,
         prob_mc.dims,
         (progr = _output_func[2], channel = _output_func[3]),
