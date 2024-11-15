@@ -3,7 +3,8 @@ export sesolveProblem, sesolve
 # When e_ops is Nothing
 function _save_func_sesolve(integrator)
     next!(integrator.p.progr)
-    return u_modified!(integrator, false)
+    u_modified!(integrator, false)
+    return nothing
 end
 
 # When e_ops is a list of operators
@@ -62,7 +63,7 @@ _sesolve_make_U_QobjEvo(H) = QobjEvo(H, -1im)
         ψ0::QuantumObject{DT2,KetQuantumObject},
         tlist::AbstractVector;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::Union{NamedTuple, AbstractVector} = NamedTuple(),
+        params::Union{NamedTuple, AbstractVector, TimeEvolutionParameters} = eltype(ψ0)[],
         progress_bar::Union{Val,Bool} = Val(true),
         inplace::Union{Val,Bool} = Val(true),
         kwargs...,
@@ -80,7 +81,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver.
+- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver. For more advanced usage, you can use the [`TimeEvolutionParameters`](@ref) struct.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -94,14 +95,14 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 
 # Returns
 
-- `prob`: The `ODEProblem` for the Schrödinger time evolution of the system.
+- `prob`: The [`TimeEvolutionProblem`](@ref) containing the `ODEProblem` for the Schrödinger time evolution of the system.
 """
 function sesolveProblem(
     H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
     ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::Union{NamedTuple,AbstractVector} = NamedTuple(),
+    params::Union{NamedTuple,AbstractVector,TimeEvolutionParameters} = eltype(ψ0)[],
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
@@ -128,7 +129,15 @@ function sesolveProblem(
         is_empty_e_ops = isempty(e_ops)
     end
 
-    p = QuantumTimeEvoParameters(expvals, progr, params)
+    if params isa TimeEvolutionParameters
+        (!getVal(progress_bar) && (e_ops isa Nothing)) || throw(
+            ArgumentError(
+                "The parameter `params` cannot be a TimeEvolutionParameters object when `e_ops` is not Nothing and `progress_bar` is true.",
+            ),
+        )
+    end
+
+    p = params isa TimeEvolutionParameters ? params : TimeEvolutionParameters(params, expvals, progr)
 
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
@@ -138,7 +147,7 @@ function sesolveProblem(
     tspan = (tlist[1], tlist[end])
     prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, p; kwargs3...)
 
-    return QuantumTimeEvoProblem(prob, tlist, H_evo.dims)
+    return TimeEvolutionProblem(prob, tlist, H_evo.dims)
 end
 
 @doc raw"""
@@ -148,7 +157,7 @@ end
         tlist::AbstractVector;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::Union{NamedTuple, AbstractVector} = NamedTuple(),
+        params::Union{NamedTuple, AbstractVector} = eltype(ψ0)[],
         progress_bar::Union{Val,Bool} = Val(true),
         inplace::Union{Val,Bool} = Val(true),
         kwargs...,
@@ -190,7 +199,7 @@ function sesolve(
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::Union{NamedTuple,AbstractVector} = NamedTuple(),
+    params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
@@ -209,7 +218,7 @@ function sesolve(
     return sesolve(prob, alg)
 end
 
-function sesolve(prob::QuantumTimeEvoProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
+function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob.prob, alg)
 
     ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = prob.dims), sol.u)

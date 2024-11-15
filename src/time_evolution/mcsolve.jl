@@ -1,128 +1,191 @@
 export mcsolveProblem, mcsolveEnsembleProblem, mcsolve
 export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
 
-function _save_func_mcsolve(integrator)
-    internal_params = integrator.p
-    progr = internal_params.progr_mc
+const jump_times_which_init_size = 200
 
-    if !internal_params.is_empty_e_ops_mc
-        e_ops = internal_params.e_ops_mc
-        expvals = internal_params.expvals
-        cache_mc = internal_params.cache_mc
-
+function _save_func_mcsolve(integrator, e_ops, is_empty_e_ops)
+    expvals = integrator.p.expvals
+    progr = integrator.p.progr
+    cache_mc = integrator.p.mcsolve_params.cache_mc
+    if !is_empty_e_ops
         copyto!(cache_mc, integrator.u)
         normalize!(cache_mc)
         ψ = cache_mc
-        _expect = op -> dot(ψ, op, ψ)
+        _expect = op -> dot(ψ, get_data(op), ψ)
         @. expvals[:, progr.counter[]+1] = _expect(e_ops)
     end
     next!(progr)
-    return u_modified!(integrator, false)
+    u_modified!(integrator, false)
+    return nothing
 end
 
-function LindbladJumpAffect!(integrator)
-    internal_params = integrator.p
-    c_ops = internal_params.c_ops
-    c_ops_herm = internal_params.c_ops_herm
-    cache_mc = internal_params.cache_mc
-    weights_mc = internal_params.weights_mc
-    cumsum_weights_mc = internal_params.cumsum_weights_mc
-    random_n = internal_params.random_n
-    jump_times = internal_params.jump_times
-    jump_which = internal_params.jump_which
-    traj_rng = internal_params.traj_rng
+function LindbladJumpAffect!(integrator, c_ops, c_ops_herm)
+    params = integrator.p
+    cache_mc = params.mcsolve_params.cache_mc
+    weights_mc = params.mcsolve_params.weights_mc
+    cumsum_weights_mc = params.mcsolve_params.cumsum_weights_mc
+    random_n = params.mcsolve_params.random_n
+    jump_times = params.mcsolve_params.jump_times
+    jump_which = params.mcsolve_params.jump_which
+    jump_times_which_idx = params.mcsolve_params.jump_times_which_idx
+    traj_rng = params.mcsolve_params.traj_rng
     ψ = integrator.u
 
     @inbounds for i in eachindex(weights_mc)
         weights_mc[i] = real(dot(ψ, c_ops_herm[i], ψ))
     end
     cumsum!(cumsum_weights_mc, weights_mc)
-    r = rand(traj_rng) * sum(weights_mc)
-    collapse_idx = getindex(1:length(weights_mc), findfirst(>(r), cumsum_weights_mc))
+    r = rand(traj_rng) * sum(real, weights_mc)
+    collapse_idx = getindex(1:length(weights_mc), findfirst(x -> real(x) > r, cumsum_weights_mc))
     mul!(cache_mc, c_ops[collapse_idx], ψ)
     normalize!(cache_mc)
     copyto!(integrator.u, cache_mc)
 
-    random_n[] = rand(traj_rng)
-    jump_times[internal_params.jump_times_which_idx[]] = integrator.t
-    jump_which[internal_params.jump_times_which_idx[]] = collapse_idx
-    internal_params.jump_times_which_idx[] += 1
-    if internal_params.jump_times_which_idx[] > length(jump_times)
-        resize!(jump_times, length(jump_times) + internal_params.jump_times_which_init_size)
-        resize!(jump_which, length(jump_which) + internal_params.jump_times_which_init_size)
+    @inbounds random_n[1] = rand(traj_rng)
+
+    @inbounds idx = round(Int, real(jump_times_which_idx[1]))
+    @inbounds jump_times[idx] = integrator.t
+    @inbounds jump_which[idx] = collapse_idx
+    @inbounds jump_times_which_idx[1] += 1
+    @inbounds if real(jump_times_which_idx[1]) > length(jump_times)
+        resize!(jump_times, length(jump_times) + jump_times_which_init_size)
+        resize!(jump_which, length(jump_which) + jump_times_which_init_size)
     end
 end
 
-LindbladJumpContinuousCondition(u, t, integrator) = integrator.p.random_n[] - real(dot(u, u))
+_mcsolve_continuous_condition(u, t, integrator) =
+    @inbounds real(integrator.p.mcsolve_params.random_n[1]) - real(dot(u, u))
 
-LindbladJumpDiscreteCondition(u, t, integrator) = real(dot(u, u)) < integrator.p.random_n[]
+_mcsolve_discrete_condition(u, t, integrator) =
+    @inbounds real(dot(u, u)) < real(integrator.p.mcsolve_params.random_n[1])
 
-function _mcsolve_prob_func(prob, i, repeat)
-    internal_params = prob.p
+function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds)
+    params = prob.p
 
-    global_rng = internal_params.global_rng
-    seed = internal_params.seeds[i]
+    seed = seeds[i]
     traj_rng = typeof(global_rng)()
     seed!(traj_rng, seed)
 
-    prm = merge(
-        internal_params,
-        (
-            expvals = similar(internal_params.expvals),
-            cache_mc = similar(internal_params.cache_mc),
-            weights_mc = similar(internal_params.weights_mc),
-            cumsum_weights_mc = similar(internal_params.weights_mc),
-            traj_rng = traj_rng,
-            random_n = Ref(rand(traj_rng)),
-            progr_mc = ProgressBar(size(internal_params.expvals, 2), enable = false),
-            jump_times_which_idx = Ref(1),
-            jump_times = similar(internal_params.jump_times),
-            jump_which = similar(internal_params.jump_which),
-        ),
+    expvals = similar(params.expvals)
+    progr = ProgressBar(size(expvals, 2), enable = false)
+
+    T = eltype(expvals)
+
+    mcsolve_params = (
+        traj_rng = traj_rng,
+        random_n = T[rand(traj_rng)],
+        cache_mc = similar(params.mcsolve_params.cache_mc),
+        weights_mc = similar(params.mcsolve_params.weights_mc),
+        cumsum_weights_mc = similar(params.mcsolve_params.weights_mc),
+        jump_times = similar(params.mcsolve_params.jump_times),
+        jump_which = similar(params.mcsolve_params.jump_which),
+        jump_times_which_idx = T[1],
     )
+
+    p = TimeEvolutionParameters(params.params, expvals, progr, mcsolve_params)
 
     f = deepcopy(prob.f.f)
 
-    return remake(prob, f = f, p = prm)
+    return remake(prob, f = f, p = p)
+end
+
+function _mcsolve_dispatch_prob_func(rng, ntraj)
+    seeds = map(i -> rand(rng, UInt64), 1:ntraj)
+    return (prob, i, repeat) -> _mcsolve_prob_func(prob, i, repeat, rng, seeds)
 end
 
 # Standard output function
 function _mcsolve_output_func(sol, i)
-    resize!(sol.prob.p.jump_times, sol.prob.p.jump_times_which_idx[] - 1)
-    resize!(sol.prob.p.jump_which, sol.prob.p.jump_times_which_idx[] - 1)
+    @inbounds idx = round(Int, real(sol.prob.p.mcsolve_params.jump_times_which_idx[1]))
+    resize!(sol.prob.p.mcsolve_params.jump_times, idx - 1)
+    resize!(sol.prob.p.mcsolve_params.jump_which, idx - 1)
     return (sol, false)
 end
 
 # Output function with progress bar update
-function _mcsolve_output_func_progress(sol, i)
-    next!(sol.prob.p.progr_trajectories)
+function _mcsolve_output_func_progress(sol, i, progr)
+    next!(progr)
     return _mcsolve_output_func(sol, i)
 end
 
 # Output function with distributed channel update for progress bar
-function _mcsolve_output_func_distributed(sol, i)
-    put!(sol.prob.p.progr_channel, true)
+function _mcsolve_output_func_distributed(sol, i, channel)
+    put!(channel, true)
     return _mcsolve_output_func(sol, i)
 end
 
-_mcsolve_dispatch_output_func() = _mcsolve_output_func
-_mcsolve_dispatch_output_func(::ET) where {ET<:Union{EnsembleSerial,EnsembleThreads}} = _mcsolve_output_func_progress
-_mcsolve_dispatch_output_func(::EnsembleDistributed) = _mcsolve_output_func_distributed
+function _mcsolve_dispatch_output_func(::ET, progress_bar, ntraj) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
+    if getVal(progress_bar)
+        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        f = (sol, i) -> _mcsolve_output_func_progress(sol, i, progr)
+        return (f, progr, nothing)
+    else
+        return (_mcsolve_output_func, nothing, nothing)
+    end
+end
+function _mcsolve_dispatch_output_func(
+    ::ET,
+    progress_bar,
+    ntraj,
+) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
+    if getVal(progress_bar)
+        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
+
+        f = (sol, i) -> _mcsolve_output_func_distributed(sol, i, progr_channel)
+        return (f, progr, progr_channel)
+    else
+        return (_mcsolve_output_func, nothing, nothing)
+    end
+end
 
 function _normalize_state!(u, dims, normalize_states)
     getVal(normalize_states) && normalize!(u)
     return QuantumObject(u, dims = dims)
 end
 
-function _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, jump_which, normalize_states)
+function _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, jump_which, normalize_states, dims)
     sol_i = sol[:, i]
-    dims = sol_i.prob.p.Hdims
     !isempty(sol_i.prob.kwargs[:saveat]) ? states[i] = map(u -> _normalize_state!(u, dims, normalize_states), sol_i.u) :
     nothing
 
     copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
-    jump_times[i] = sol_i.prob.p.jump_times
-    return jump_which[i] = sol_i.prob.p.jump_which
+    jump_times[i] = sol_i.prob.p.mcsolve_params.jump_times
+    return jump_which[i] = sol_i.prob.p.mcsolve_params.jump_which
+end
+
+function _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs)
+    c_ops_data = get_data.(c_ops)
+    c_ops_herm_data = map(op -> op' * op, c_ops_data)
+
+    _affect = integrator -> LindbladJumpAffect!(integrator, c_ops_data, c_ops_herm_data)
+
+    if jump_callback isa DiscreteLindbladJumpCallback
+        cb1 = DiscreteCallback(_mcsolve_discrete_condition, _affect, save_positions = (false, false))
+    else
+        cb1 = ContinuousCallback(
+            _mcsolve_continuous_condition,
+            _affect,
+            nothing,
+            interp_points = jump_callback.interp_points,
+            save_positions = (false, false),
+        )
+    end
+
+    if e_ops isa Nothing
+        kwargs2 =
+            haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, kwargs.callback),)) :
+            merge(kwargs, (callback = cb1,))
+        return kwargs2
+    else
+        is_empty_e_ops = isempty(e_ops)
+        f = integrator -> _save_func_mcsolve(integrator, e_ops, is_empty_e_ops)
+        cb2 = PresetTimeCallback(tlist, f, save_positions = (false, false))
+        kwargs2 =
+            haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, cb2, kwargs.callback),)) :
+            merge(kwargs, (callback = CallbackSet(cb1, cb2),))
+        return kwargs2
+    end
 end
 
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
@@ -145,7 +208,7 @@ end
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
         rng::AbstractRNG = default_rng(),
         jump_callback::TJC = ContinuousLindbladJumpCallback(),
         kwargs...,
@@ -192,7 +255,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -206,7 +269,7 @@ If the environmental measurements register a quantum jump, the wave function und
 
 # Returns
 
-- `prob::ODEProblem`: The ODEProblem for the Monte Carlo wave function time evolution.
+- `prob`: The [`TimeEvolutionProblem`](@ref) containing the `ODEProblem` for the Monte Carlo wave function time evolution.
 """
 function mcsolveProblem(
     H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
@@ -214,7 +277,7 @@ function mcsolveProblem(
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
     rng::AbstractRNG = default_rng(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
@@ -229,95 +292,48 @@ function mcsolveProblem(
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
 
+    T = Base.promote_eltype(H_eff_evo, ψ0)
+
     if e_ops isa Nothing
-        expvals = Array{ComplexF64}(undef, 0, length(tlist))
-        is_empty_e_ops_mc = true
-        e_ops_data = ()
+        expvals = Array{T}(undef, 0, length(tlist))
+        is_empty_e_ops = true
     else
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
-        e_ops_data = get_data.(e_ops)
-        is_empty_e_ops_mc = isempty(e_ops)
+        expvals = Array{T}(undef, length(e_ops), length(tlist))
+        is_empty_e_ops = isempty(e_ops)
     end
 
-    saveat = is_empty_e_ops_mc ? tlist : [tlist[end]]
+    saveat = is_empty_e_ops ? tlist : [tlist[end]]
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat, progress_bar = Val(false))
     kwargs2 = merge(default_values, kwargs)
+    kwargs3 = _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs2)
 
     cache_mc = similar(ψ0.data)
-    weights_mc = Array{Float64}(undef, length(c_ops))
+    weights_mc = similar(ψ0.data, length(c_ops)) # It should be a Float64 Vector, but we have to keep the same type for all the parameters due to SciMLStructures.jl
     cumsum_weights_mc = similar(weights_mc)
 
-    jump_times_which_init_size = 200
-    jump_times = Vector{Float64}(undef, jump_times_which_init_size)
-    jump_which = Vector{Int16}(undef, jump_times_which_init_size)
+    jump_times = similar(ψ0.data, jump_times_which_init_size)
+    jump_which = similar(ψ0.data, jump_times_which_init_size)
+    jump_times_which_idx = T[1] # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl
 
-    c_ops_data = get_data.(c_ops)
-    c_ops_herm_data = map(op -> op' * op, c_ops_data)
+    random_n = similar(ψ0.data, 1) # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl.
+    random_n[1] = rand(rng)
 
-    params2 = (
-        expvals = expvals,
-        e_ops_mc = e_ops_data,
-        is_empty_e_ops_mc = is_empty_e_ops_mc,
-        progr_mc = ProgressBar(length(tlist), enable = false),
+    progr = ProgressBar(length(tlist), enable = false)
+
+    mcsolve_params = (
         traj_rng = rng,
-        c_ops = c_ops_data,
-        c_ops_herm = c_ops_herm_data,
+        random_n = random_n,
         cache_mc = cache_mc,
         weights_mc = weights_mc,
         cumsum_weights_mc = cumsum_weights_mc,
         jump_times = jump_times,
         jump_which = jump_which,
-        jump_times_which_init_size = jump_times_which_init_size,
-        jump_times_which_idx = Ref(1),
-        times = tlist, # Temporary fix
-        Hdims = H_eff_evo.dims, # Temporary fix
-        params...,
+        jump_times_which_idx = jump_times_which_idx,
     )
+    p = TimeEvolutionParameters(params, expvals, progr, mcsolve_params)
 
-    return mcsolveProblem(H_eff_evo, ψ0, tlist, params2, jump_callback; kwargs2...)
-end
-
-function mcsolveProblem(
-    H_eff_evo::QuantumObjectEvolution{DT1,OperatorQuantumObject},
-    ψ0::QuantumObject{DT2,KetQuantumObject},
-    tlist::AbstractVector,
-    params::NamedTuple,
-    jump_callback::DiscreteLindbladJumpCallback;
-    kwargs...,
-) where {DT1,DT2}
-    cb1 = DiscreteCallback(LindbladJumpDiscreteCondition, LindbladJumpAffect!, save_positions = (false, false))
-    cb2 = PresetTimeCallback(tlist, _save_func_mcsolve, save_positions = (false, false))
-    kwargs2 = (; kwargs...)
-    kwargs2 =
-        haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
-        merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
-
-    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...).prob # Temporary fix
-end
-
-function mcsolveProblem(
-    H_eff_evo::QuantumObjectEvolution{DT1,OperatorQuantumObject},
-    ψ0::QuantumObject{DT2,KetQuantumObject},
-    tlist::AbstractVector,
-    params::NamedTuple,
-    jump_callback::ContinuousLindbladJumpCallback;
-    kwargs...,
-) where {DT1,DT2}
-    cb1 = ContinuousCallback(
-        LindbladJumpContinuousCondition,
-        LindbladJumpAffect!,
-        nothing,
-        interp_points = jump_callback.interp_points,
-        save_positions = (false, false),
-    )
-    cb2 = PresetTimeCallback(tlist, _save_func_mcsolve, save_positions = (false, false))
-    kwargs2 = (; kwargs...)
-    kwargs2 =
-        haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
-        merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
-
-    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs2...).prob # Temporary fix
+    return sesolveProblem(H_eff_evo, ψ0, tlist; params = p, kwargs3...)
 end
 
 @doc raw"""
@@ -327,14 +343,14 @@ end
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
         ensemble_method = EnsembleThreads(),
         jump_callback::TJC = ContinuousLindbladJumpCallback(),
-        prob_func::Function = _mcsolve_prob_func,
-        output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
         progress_bar::Union{Val,Bool} = Val(true),
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple,Nothing} = nothing,
         kwargs...,
     )
 
@@ -379,14 +395,14 @@ If the environmental measurements register a quantum jump, the wave function und
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
-- `prob_func`: Function to use for generating the ODEProblem.
-- `output_func`: Function to use for generating the output of a single trajectory.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `prob_func`: Function to use for generating the ODEProblem.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -398,7 +414,7 @@ If the environmental measurements register a quantum jump, the wave function und
 
 # Returns
 
-- `prob::EnsembleProblem with ODEProblem`: The Ensemble ODEProblem for the Monte Carlo wave function time evolution.
+- `prob`: The [`TimeEvolutionProblem`](@ref) containing the Ensemble `ODEProblem` for the Monte Carlo wave function time evolution.
 """
 function mcsolveEnsembleProblem(
     H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
@@ -406,51 +422,40 @@ function mcsolveEnsembleProblem(
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
-    prob_func::Function = _mcsolve_prob_func,
-    output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
+    prob_func::Union{Function,Nothing} = nothing,
+    output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
 ) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
-    progr = ProgressBar(ntraj, enable = getVal(progress_bar))
-    if ensemble_method isa EnsembleDistributed
-        progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
-        @async while take!(progr_channel)
-            next!(progr)
-        end
-        params = merge(params, (progr_channel = progr_channel,))
-    else
-        params = merge(params, (progr_trajectories = progr,))
-    end
+    prob_mc = mcsolveProblem(
+        H,
+        ψ0,
+        tlist,
+        c_ops;
+        e_ops = e_ops,
+        params = params,
+        rng = deepcopy(rng), # By deepcopying, we avoid to also count the initialization of mcsolveProblem
+        jump_callback = jump_callback,
+        kwargs...,
+    )
 
-    # Stop the async task if an error occurs
-    try
-        seeds = map(i -> rand(rng, UInt64), 1:ntraj)
-        prob_mc = mcsolveProblem(
-            H,
-            ψ0,
-            tlist,
-            c_ops;
-            e_ops = e_ops,
-            params = merge(params, (global_rng = rng, seeds = seeds)),
-            rng = rng,
-            jump_callback = jump_callback,
-            kwargs...,
-        )
+    _prob_func = prob_func isa Nothing ? _mcsolve_dispatch_prob_func(rng, ntraj) : prob_func
+    _output_func =
+        output_func isa Nothing ? _mcsolve_dispatch_output_func(ensemble_method, progress_bar, ntraj) : output_func
 
-        ensemble_prob = EnsembleProblem(prob_mc, prob_func = prob_func, output_func = output_func, safetycopy = false)
+    ensemble_prob = TimeEvolutionProblem(
+        EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
+        prob_mc.times,
+        prob_mc.dims,
+        (progr = _output_func[2], channel = _output_func[3]),
+    )
 
-        return ensemble_prob
-    catch e
-        if ensemble_method isa EnsembleDistributed
-            put!(progr_channel, false)
-        end
-        rethrow()
-    end
+    return ensemble_prob
 end
 
 @doc raw"""
@@ -461,14 +466,14 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
         ensemble_method = EnsembleThreads(),
         jump_callback::TJC = ContinuousLindbladJumpCallback(),
-        prob_func::Function = _mcsolve_prob_func,
-        output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
         progress_bar::Union{Val,Bool} = Val(true),
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple,Nothing} = nothing,
         normalize_states::Union{Val,Bool} = Val(true),
         kwargs...,
     )
@@ -515,14 +520,14 @@ If the environmental measurements register a quantum jump, the wave function und
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm to use for the ODE solver. Default to `Tsit5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
-- `prob_func`: Function to use for generating the ODEProblem.
-- `output_func`: Function to use for generating the output of a single trajectory.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `prob_func`: Function to use for generating the ODEProblem.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `normalize_states`: Whether to normalize the states. Default to `Val(true)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
@@ -546,14 +551,14 @@ function mcsolve(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
-    prob_func::Function = _mcsolve_prob_func,
-    output_func::Function = _mcsolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
+    prob_func::Union{Function,Nothing} = nothing,
+    output_func::Union{Function,Nothing} = nothing,
     normalize_states::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
@@ -569,9 +574,9 @@ function mcsolve(
         ntraj = ntraj,
         ensemble_method = ensemble_method,
         jump_callback = jump_callback,
+        progress_bar = progress_bar,
         prob_func = prob_func,
         output_func = output_func,
-        progress_bar = progress_bar,
         kwargs...,
     )
 
@@ -585,51 +590,55 @@ function mcsolve(
 end
 
 function mcsolve(
-    ens_prob_mc::EnsembleProblem;
+    ens_prob_mc::TimeEvolutionProblem;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
     normalize_states::Union{Val,Bool} = Val(true),
 )
-    try
-        sol = solve(ens_prob_mc, alg, ensemble_method, trajectories = ntraj)
+    if typeof(ensemble_method) <: Union{EnsembleSplitThreads,EnsembleDistributed}
+        @sync begin
+            @async while take!(ens_prob_mc.kwargs.channel)
+                next!(ens_prob_mc.kwargs.progr)
+            end
 
-        if ensemble_method isa EnsembleDistributed
-            put!(sol[:, 1].prob.p.progr_channel, false)
+            @async begin
+                sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+                put!(ens_prob_mc.kwargs.channel, false)
+            end
         end
-
-        _sol_1 = sol[:, 1]
-
-        expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
-        states =
-            isempty(_sol_1.prob.kwargs[:saveat]) ? fill(QuantumObject[], length(sol)) :
-            Vector{Vector{QuantumObject}}(undef, length(sol))
-        jump_times = Vector{Vector{Float64}}(undef, length(sol))
-        jump_which = Vector{Vector{Int16}}(undef, length(sol))
-
-        foreach(
-            i -> _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, jump_which, normalize_states),
-            eachindex(sol),
-        )
-        expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
-
-        return TimeEvolutionMCSol(
-            ntraj,
-            _sol_1.prob.p.times,
-            states,
-            expvals,
-            expvals_all,
-            jump_times,
-            jump_which,
-            sol.converged,
-            _sol_1.alg,
-            _sol_1.prob.kwargs[:abstol],
-            _sol_1.prob.kwargs[:reltol],
-        )
-    catch e
-        if ensemble_method isa EnsembleDistributed
-            put!(ens_prob_mc.prob.p.progr_channel, false)
-        end
-        rethrow()
+    else
+        sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
     end
+
+    dims = ens_prob_mc.dims
+    _sol_1 = sol[:, 1]
+
+    expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
+    states =
+        isempty(_sol_1.prob.kwargs[:saveat]) ?
+        fill(QuantumObject{Vector{ComplexF64},KetQuantumObject,length(dims)}[], length(sol)) :
+        Vector{Vector{QuantumObject}}(undef, length(sol))
+    jump_times = Vector{Vector{Float64}}(undef, length(sol))
+    jump_which = Vector{Vector{Int16}}(undef, length(sol))
+
+    foreach(
+        i -> _mcsolve_generate_statistics(sol, i, states, expvals_all, jump_times, jump_which, normalize_states, dims),
+        eachindex(sol),
+    )
+    expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
+
+    return TimeEvolutionMCSol(
+        ntraj,
+        ens_prob_mc.times,
+        states,
+        expvals,
+        expvals_all,
+        jump_times,
+        jump_which,
+        sol.converged,
+        _sol_1.alg,
+        _sol_1.prob.kwargs[:abstol],
+        _sol_1.prob.kwargs[:reltol],
+    )
 end

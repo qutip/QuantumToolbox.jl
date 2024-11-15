@@ -29,11 +29,13 @@ import SciMLBase:
     EnsembleProblem,
     EnsembleSerial,
     EnsembleThreads,
+    EnsembleSplitThreads,
     EnsembleDistributed,
     FullSpecialize,
     CallbackSet,
     ContinuousCallback,
-    DiscreteCallback
+    DiscreteCallback,
+    AbstractSciMLProblem
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
 import SciMLOperators:
     SciMLOperators,

@@ -5,11 +5,26 @@ export liouvillian_floquet, liouvillian_generalized
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
 const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
 
-struct QuantumTimeEvoProblem{PT,TT<:AbstractVector,DT<:AbstractVector}
+@doc raw"""
+    struct TimeEvolutionProblem
+
+A Julia constructor for handling the `ODEProblem` of the time evolution of quantum systems.
+
+# Fields (Attributes)
+
+- `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
+- `times::Abstractvector`: The time list of the evolution.
+- `dims::Abstractvector`: The dimensions of the Hilbert space.
+- `kwargs::KWT`: Generic keyword arguments.
+"""
+struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractVector,KWT}
     prob::PT
     times::TT
     dims::DT
+    kwargs::KWT
 end
+
+TimeEvolutionProblem(prob, times, dims) = TimeEvolutionProblem(prob, times, dims, nothing)
 
 @doc raw"""
     struct TimeEvolutionSol
