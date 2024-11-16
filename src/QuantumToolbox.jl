@@ -35,7 +35,8 @@ import SciMLBase:
     CallbackSet,
     ContinuousCallback,
     DiscreteCallback,
-    AbstractSciMLProblem
+    AbstractSciMLProblem,
+    AbstractODEIntegrator
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
 import SciMLOperators:
     SciMLOperators,

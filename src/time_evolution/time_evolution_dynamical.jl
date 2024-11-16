@@ -489,9 +489,9 @@ end
 # Dynamical Shifted Fock mcsolve
 
 function _DSF_mcsolve_Condition(u, t, integrator)
-    internal_params = integrator.p
-    op_list = internal_params.op_list
-    δα_list = internal_params.δα_list
+    params = integrator.p
+    op_list = params.op_list
+    δα_list = params.δα_list
 
     ψt = u
 
@@ -508,20 +508,24 @@ function _DSF_mcsolve_Condition(u, t, integrator)
 end
 
 function _DSF_mcsolve_Affect!(integrator)
-    internal_params = integrator.p
-    op_list = internal_params.op_list
-    αt_list = internal_params.αt_list
-    δα_list = internal_params.δα_list
-    H = internal_params.H_fun
-    c_ops = internal_params.c_ops_fun
-    e_ops = internal_params.e_ops_fun
-    e_ops0 = internal_params.e_ops_mc
-    c_ops0 = internal_params.c_ops
-    ψt = internal_params.dsf_cache1
-    dsf_cache = internal_params.dsf_cache2
-    expv_cache = internal_params.expv_cache
-    dsf_params = internal_params.dsf_params
-    dsf_displace_cache_full = internal_params.dsf_displace_cache_full
+    params = integrator.p
+    op_list = params.op_list
+    αt_list = params.αt_list
+    δα_list = params.δα_list
+    H = params.H_fun
+    c_ops = params.c_ops_fun
+    e_ops = params.e_ops_fun
+    ψt = params.dsf_cache1
+    dsf_cache = params.dsf_cache2
+    expv_cache = params.expv_cache
+    dsf_params = params.dsf_params
+    dsf_displace_cache_full = params.dsf_displace_cache_full
+
+    # e_ops0 = params.e_ops
+    # c_ops0 = params.c_ops
+
+    e_ops0 = _mcsolve_get_e_ops(integrator)
+    c_ops0, c_ops0_herm = _mcsolve_get_c_ops(integrator)
 
     copyto!(ψt, integrator.u)
     normalize!(ψt)
@@ -561,42 +565,58 @@ function _DSF_mcsolve_Affect!(integrator)
     op_l2 = op_list .+ αt_list
     e_ops2 = e_ops(op_l2, dsf_params)
     c_ops2 = c_ops(op_l2, dsf_params)
+
+    ## By copying the data, we are assuming that the variables are Vectors and not Tuple
     @. e_ops0 = get_data(e_ops2)
     @. c_ops0 = get_data(c_ops2)
-    H_nh = lmul!(convert(eltype(ψt), 0.5im), mapreduce(op -> op' * op, +, c_ops0))
+    c_ops0_herm .= map(op -> op' * op, c_ops0)
+
+    H_nh = convert(eltype(ψt), 0.5im) * sum(c_ops0_herm)
     # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
     copyto!(integrator.f.f.A, lmul!(-1im, H(op_l2, dsf_params).data - H_nh))
     return u_modified!(integrator, true)
 end
 
 function _dsf_mcsolve_prob_func(prob, i, repeat)
-    internal_params = prob.p
+    params = prob.p
 
-    prm = merge(
-        internal_params,
+    expvals = similar(params.expvals)
+    progr = ProgressBar(size(expvals, 2), enable = false)
+
+    T = eltype(expvals)
+
+    mcsolve_params = merge(
+        params.mcsolve_params,
         (
-            e_ops_mc = deepcopy(internal_params.e_ops_mc),
-            c_ops = deepcopy(internal_params.c_ops),
-            expvals = similar(internal_params.expvals),
-            cache_mc = similar(internal_params.cache_mc),
-            weights_mc = similar(internal_params.weights_mc),
-            cumsum_weights_mc = similar(internal_params.weights_mc),
-            random_n = Ref(rand()),
-            progr_mc = ProgressBar(size(internal_params.expvals, 2), enable = false),
-            jump_times_which_idx = Ref(1),
-            jump_times = similar(internal_params.jump_times),
-            jump_which = similar(internal_params.jump_which),
-            αt_list = copy(internal_params.αt_list),
-            dsf_cache1 = similar(internal_params.dsf_cache1),
-            dsf_cache2 = similar(internal_params.dsf_cache2),
-            expv_cache = copy(internal_params.expv_cache),
-            dsf_displace_cache_full = deepcopy(internal_params.dsf_displace_cache_full), # This brutally copies also the MatrixOperators, and it is inefficient.
+            random_n = T[rand()],
+            cache_mc = similar(params.mcsolve_params.cache_mc),
+            weights_mc = similar(params.mcsolve_params.weights_mc),
+            cumsum_weights_mc = similar(params.mcsolve_params.weights_mc),
+            jump_times = similar(params.mcsolve_params.jump_times),
+            jump_which = similar(params.mcsolve_params.jump_which),
+            jump_times_which_idx = T[1],
         ),
     )
 
+    prm = merge(
+        params.params,
+        (
+            αt_list = copy(params.params.αt_list),
+            dsf_cache1 = similar(params.params.dsf_cache1),
+            dsf_cache2 = similar(params.params.dsf_cache2),
+            expv_cache = copy(params.params.expv_cache),
+            dsf_displace_cache_full = deepcopy(params.params.dsf_displace_cache_full), # This brutally copies also the MatrixOperators, and it is inefficient.
+        ),
+    )
+
+    p = TimeEvolutionParameters(prm, expvals, progr, mcsolve_params)
+
     f = deepcopy(prob.f.f)
 
-    return remake(prob, f = f, p = prm)
+    # We need to deepcopy the callbacks because they contain the c_ops and e_ops, which are modified in the affect function
+    cb = deepcopy(prob.kwargs[:callback])
+
+    return remake(prob, f = f, p = p, callback = cb)
 end
 
 function dsf_mcsolveEnsembleProblem(
