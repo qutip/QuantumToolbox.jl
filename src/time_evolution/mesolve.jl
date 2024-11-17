@@ -1,7 +1,5 @@
 export mesolveProblem, mesolve
 
-_generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
-
 _mesolve_make_L_QobjEvo(H::QuantumObject, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator)
 _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
 

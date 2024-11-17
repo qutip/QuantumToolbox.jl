@@ -27,3 +27,13 @@ function _save_func_mesolve(integrator, e_ops, progr, iter, expvals)
 
     return _save_func(integrator, progr)
 end
+
+function _mesolve_callbacks_new_e_ops!(integrator::AbstractODEIntegrator, e_ops)
+    cb = _se_me_sse_get_save_callback(integrator)
+    if cb isa Nothing
+        return nothing
+    else
+        cb.affect!.e_ops .= e_ops # Only works if e_ops is a Vector of operators
+        return nothing
+    end
+end
