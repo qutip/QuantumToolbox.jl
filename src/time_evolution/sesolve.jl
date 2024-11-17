@@ -25,7 +25,7 @@ _sesolve_make_U_QobjEvo(H) = QobjEvo(H, -1im)
         ψ0::QuantumObject{DT2,KetQuantumObject},
         tlist::AbstractVector;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params = eltype(ψ0)[],
+        params = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
         inplace::Union{Val,Bool} = Val(true),
         kwargs...,
@@ -43,7 +43,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver. For more advanced usage, any custom struct can be used.
+- `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -64,7 +64,7 @@ function sesolveProblem(
     ψ0::QuantumObject{DT2,KetQuantumObject},
     tlist::AbstractVector;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = eltype(ψ0)[],
+    params = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
@@ -102,7 +102,7 @@ end
         tlist::AbstractVector;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params = eltype(ψ0)[],
+        params = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
         inplace::Union{Val,Bool} = Val(true),
         kwargs...,
@@ -121,7 +121,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `alg`: The algorithm for the ODE solver. The default is `Tsit5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver. For more advanced usage, any custom struct can be used.
+- `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -144,7 +144,7 @@ function sesolve(
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = eltype(ψ0)[],
+    params = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,

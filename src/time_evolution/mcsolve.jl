@@ -104,7 +104,7 @@ end
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params = eltype(ψ0)[],
+        params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         jump_callback::TJC = ContinuousLindbladJumpCallback(),
         kwargs...,
@@ -151,7 +151,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver. For more advanced usage, any custom struct can be used.
+- `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -173,7 +173,7 @@ function mcsolveProblem(
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = eltype(ψ0)[],
+    params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
@@ -231,7 +231,7 @@ end
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
+        params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
         ensemble_method = EnsembleThreads(),
@@ -283,7 +283,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver.
+- `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
@@ -310,7 +310,7 @@ function mcsolveEnsembleProblem(
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
+    params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
@@ -354,7 +354,7 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
+        params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
         ensemble_method = EnsembleThreads(),
@@ -408,7 +408,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm to use for the ODE solver. Default to `Tsit5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver.
+- `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
@@ -439,7 +439,7 @@ function mcsolve(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
+    params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),

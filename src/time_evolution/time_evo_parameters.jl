@@ -48,6 +48,7 @@ function _vectorize_params(p::TimeEvolutionParameters{ParT}) where {ParT<:NamedT
     buffer = isempty(p.params) ? ComplexF64[] : collect(values(p.params))
     return (buffer, false)
 end
+_vectorize_params(p::TimeEvolutionParameters{ParT}) where {ParT<:NullParameters} = (ComplexF64[], false)
 _vectorize_params(p::TimeEvolutionParameters{ParT}) where {ParT<:AbstractVector} = (p.params, true)
 
 function canonicalize(::Tunable, p::TimeEvolutionParameters)
