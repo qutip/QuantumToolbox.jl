@@ -45,7 +45,7 @@ A structure storing the results and some information from solving time evolution
 struct TimeEvolutionSol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
-    TE<:Matrix,
+    TE<:AbstractMatrix,
     RETT<:Enum,
     AlgT<:OrdinaryDiffEqAlgorithm,
     AT<:Real,

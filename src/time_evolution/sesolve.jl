@@ -189,7 +189,7 @@ function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
         sol.prob.p.expvals,
         sol.retcode,
         sol.alg,
-        sol.prob.kwargs[:abstol],
-        sol.prob.kwargs[:reltol],
+        NamedTuple(sol.prob.kwargs).abstol,
+        NamedTuple(sol.prob.kwargs).reltol,
     )
 end
