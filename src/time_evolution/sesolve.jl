@@ -45,7 +45,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`.
+- `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`. It is recommended to use `Val(true)` for better performance, but it is sometimes necessary to use `Val(false)`, for example when performing automatic differentiation using [Zygote.jl](https://github.com/FluxML/Zygote.jl).
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -123,7 +123,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`.
+- `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`. It is recommended to use `Val(true)` for better performance, but it is sometimes necessary to use `Val(false)`, for example when performing automatic differentiation using [Zygote.jl](https://github.com/FluxML/Zygote.jl).
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
