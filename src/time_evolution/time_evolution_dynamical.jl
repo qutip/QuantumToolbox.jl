@@ -580,10 +580,7 @@ end
 function _dsf_mcsolve_prob_func(prob, i, repeat)
     params = prob.p
 
-    expvals = similar(params.expvals)
-    progr = ProgressBar(size(expvals, 2), enable = false)
-
-    T = eltype(expvals)
+    T = eltype(prob.u0)
 
     mcsolve_params = merge(
         params.mcsolve_params,
@@ -609,7 +606,7 @@ function _dsf_mcsolve_prob_func(prob, i, repeat)
         ),
     )
 
-    p = TimeEvolutionParameters(prm, expvals, mcsolve_params)
+    p = TimeEvolutionParameters(prm, mcsolve_params)
 
     f = deepcopy(prob.f.f)
 

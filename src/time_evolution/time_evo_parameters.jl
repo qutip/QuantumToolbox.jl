@@ -4,13 +4,12 @@
 
 A Julia constructor for handling the parameters of the time evolution of quantum systems.
 """
-struct TimeEvolutionParameters{ParT,TE<:AbstractMatrix,MCST}
+struct TimeEvolutionParameters{ParT,MCST}
     params::ParT
-    expvals::TE
     mcsolve_params::MCST
 end
 
-TimeEvolutionParameters(params, expvals) = TimeEvolutionParameters(params, expvals, nothing)
+TimeEvolutionParameters(params) = TimeEvolutionParameters(params, nothing)
 
 #=
 By defining a custom `getproperty` method for the `TimeEvolutionParameters` struct, we can access the fields of `params` directly.
@@ -46,7 +45,7 @@ ismutablescimlstructure(::TimeEvolutionParameters{ParT}) where {ParT<:AbstractVe
 hasportion(::Tunable, ::TimeEvolutionParameters) = true
 
 function _vectorize_params(p::TimeEvolutionParameters{ParT}) where {ParT<:NamedTuple}
-    buffer = isempty(p.params) ? eltype(p.expvals)[] : collect(values(p.params))
+    buffer = isempty(p.params) ? ComplexF64[] : collect(values(p.params))
     return (buffer, false)
 end
 _vectorize_params(p::TimeEvolutionParameters{ParT}) where {ParT<:AbstractVector} = (p.params, true)
@@ -69,12 +68,12 @@ end
 function replace(::Tunable, p::TimeEvolutionParameters{ParT}, newbuffer) where {ParT<:NamedTuple}
     @assert length(newbuffer) == length(p.params)
     new_params = NamedTuple{keys(p.params)}(Tuple(newbuffer))
-    return TimeEvolutionParameters(new_params, p.expvals, p.mcsolve_params)
+    return TimeEvolutionParameters(new_params, p.mcsolve_params)
 end
 
 function replace(::Tunable, p::TimeEvolutionParameters{ParT}, newbuffer) where {ParT<:AbstractVector}
     @assert length(newbuffer) == length(p.params)
-    return TimeEvolutionParameters(newbuffer, p.expvals, p.mcsolve_params)
+    return TimeEvolutionParameters(newbuffer, p.mcsolve_params)
 end
 
 function replace!(::Tunable, p::TimeEvolutionParameters{ParT}, newbuffer) where {ParT<:AbstractVector}

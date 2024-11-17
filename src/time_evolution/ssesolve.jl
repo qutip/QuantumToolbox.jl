@@ -83,15 +83,6 @@ _ssesolve_dispatch_output_func() = _ssesolve_output_func
 _ssesolve_dispatch_output_func(::ET) where {ET<:Union{EnsembleSerial,EnsembleThreads}} = _ssesolve_output_func_progress
 _ssesolve_dispatch_output_func(::EnsembleDistributed) = _ssesolve_output_func_distributed
 
-function _ssesolve_generate_statistics!(sol, i, states, expvals_all)
-    sol_i = sol[:, i]
-    !isempty(sol_i.prob.kwargs[:saveat]) ?
-    states[i] = [QuantumObject(sol_i.u[i], dims = sol_i.prob.p.Hdims) for i in 1:length(sol_i.u)] : nothing
-
-    copyto!(view(expvals_all, i, :, :), sol_i.prob.p.expvals)
-    return nothing
-end
-
 _ScalarOperator_e(op, f = +) = ScalarOperator(one(eltype(op)), (a, u, p, t) -> f(_ssesolve_update_coeff(u, p, t, op)))
 
 _ScalarOperator_e2_2(op, f = +) =
@@ -182,14 +173,6 @@ function ssesolveProblem(
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 
-    if e_ops isa Nothing
-        expvals = Array{ComplexF64}(undef, 0, length(tlist))
-        is_empty_e_ops = true
-    else
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
-        is_empty_e_ops = isempty(e_ops)
-    end
-
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops))
 
     # Here the coefficients depend on the state, so this is a non-linear operator, which should be implemented with FunctionOperator instead. However, the nonlinearity is only on the coefficients, and it should be safe.
@@ -203,7 +186,9 @@ function ssesolveProblem(
     D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(prod(dims)), sc_ops_evo_data)
     D = DiffusionOperator(D_l)
 
-    p = (expvals = expvals, progr = progr, times = tlist, Hdims = dims, n_sc_ops = length(sc_ops), params...)
+    p = (progr = progr, times = tlist, Hdims = dims, n_sc_ops = length(sc_ops), params...)
+
+    is_empty_e_ops = (e_ops isa Nothing) ? true : isempty(e_ops)
 
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_SDE_SOLVER_OPTIONS..., saveat = saveat)
@@ -458,14 +443,17 @@ function ssesolve(
         end
 
         _sol_1 = sol[:, 1]
+        _expvals_sol_1 = _sesolve_get_expvals(_sol_1)
 
-        expvals_all = Array{ComplexF64}(undef, length(sol), size(_sol_1.prob.p.expvals)...)
-        states =
-            isempty(_sol_1.prob.kwargs[:saveat]) ? fill(QuantumObject[], length(sol)) :
-            Vector{Vector{QuantumObject}}(undef, length(sol))
+        normalize_states = Val(false)
+        dims = _sol_1.prob.p.Hdims
+        _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _sesolve_get_expvals(sol[:, i]), eachindex(sol))
+        expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all)
+        states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
 
-        foreach(i -> _ssesolve_generate_statistics!(sol, i, states, expvals_all), eachindex(sol))
-        expvals = dropdims(sum(expvals_all, dims = 1), dims = 1) ./ length(sol)
+        expvals =
+            _sesolve_get_expvals(_sol_1) isa Nothing ? nothing :
+            dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
 
         return TimeEvolutionSSESol(
             ntraj,

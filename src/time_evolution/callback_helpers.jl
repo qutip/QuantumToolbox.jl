@@ -4,13 +4,14 @@ This file contains helper functions for callbacks. The affect! function are defi
 
 ########## SESOLVE ##########
 
-struct SaveFuncSESolve{TE,PT<:Union{Nothing,ProgressBar},IT}
+struct SaveFuncSESolve{TE,PT<:Union{Nothing,ProgressBar},IT,TEXPV<:Union{Nothing,AbstractMatrix}}
     e_ops::TE
     progr::PT
     iter::IT
+    expvals::TEXPV
 end
 
-(f::SaveFuncSESolve)(integrator) = _save_func_sesolve(integrator, f.e_ops, f.progr, f.iter)
+(f::SaveFuncSESolve)(integrator) = _save_func_sesolve(integrator, f.e_ops, f.progr, f.iter, f.expvals)
 (f::SaveFuncSESolve{Nothing})(integrator) = _save_func_sesolve(integrator, f.progr)
 
 ##
@@ -29,8 +30,7 @@ function _save_func_sesolve(integrator, progr::Nothing)
 end
 
 # When e_ops is a list of operators
-function _save_func_sesolve(integrator, e_ops, progr, iter)
-    expvals = integrator.p.expvals
+function _save_func_sesolve(integrator, e_ops, progr, iter, expvals)
     ψ = integrator.u
     _expect = op -> dot(ψ, op, ψ)
     @. expvals[:, iter[]] = _expect(e_ops)
@@ -44,18 +44,40 @@ function _generate_sesolve_callback(e_ops, tlist, progress_bar)
 
     progr = getVal(progress_bar) ? ProgressBar(length(tlist), enable = getVal(progress_bar)) : nothing
 
-    _save_affect! = SaveFuncSESolve(e_ops_data, progr, Ref(1))
-    return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+    expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
+
+    _save_affect! = SaveFuncSESolve(e_ops_data, progr, Ref(1), expvals)
+    return _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
 end
+
+function _sesolve_get_expvals(sol::AbstractODESolution)
+    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
+    if hasproperty(kwargs, :callback)
+        return _sesolve_get_expvals(kwargs.callback)
+    else
+        return nothing
+    end
+end
+function _sesolve_get_expvals(cb::CallbackSet)
+    _cb = cb.discrete_callbacks[1]
+    return _sesolve_get_expvals(_cb)
+end
+_sesolve_get_expvals(cb::DiscreteCallback) = if cb.affect! isa SaveFuncSESolve
+        return cb.affect!.expvals
+    else
+        return nothing
+    end
+_sesolve_get_expvals(cb::ContinuousCallback) = nothing
 
 ########## MCSOLVE ##########
 
-struct SaveFuncMCSolve{TE,IT}
+struct SaveFuncMCSolve{TE,IT,TEXPV}
     e_ops::TE
     iter::IT
+    expvals::TEXPV
 end
 
-(f::SaveFuncMCSolve)(integrator) = _save_func_mcsolve(integrator, f.e_ops, f.iter)
+(f::SaveFuncMCSolve)(integrator) = _save_func_mcsolve(integrator, f.e_ops, f.iter, f.expvals)
 
 struct LindbladJump{T1,T2}
     c_ops::T1
@@ -66,8 +88,7 @@ end
 
 ##
 
-function _save_func_mcsolve(integrator, e_ops, iter)
-    expvals = integrator.p.expvals
+function _save_func_mcsolve(integrator, e_ops, iter, expvals)
     cache_mc = integrator.p.mcsolve_params.cache_mc
 
     copyto!(cache_mc, integrator.u)
@@ -100,12 +121,15 @@ function _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs)
     end
 
     if e_ops isa Nothing
+        # We are implicitly saying that we don't have a `ProgressBar`
         kwargs2 =
             haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, kwargs.callback),)) :
             merge(kwargs, (callback = cb1,))
         return kwargs2
     else
-        _save_affect! = SaveFuncMCSolve(get_data.(e_ops), Ref(1))
+        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
+
+        _save_affect! = SaveFuncMCSolve(get_data.(e_ops), Ref(1), expvals)
         cb2 = _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
         kwargs2 =
             haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, cb2, kwargs.callback),)) :
@@ -178,35 +202,67 @@ function _mcsolve_get_e_ops(integrator::AbstractODEIntegrator)
     return cb.affect!.e_ops
 end
 
-#=
-    _mcsolve_callbacks_new_iter(prob, tlist)
-
-Return the same callbacks of the `prob`, but with the `iter` variable reinitialized to 1.
-=#
-function _mcsolve_callbacks_new_iter(prob, tlist)
-    cb = prob.kwargs[:callback]
-    return _mcsolve_callbacks_new_iter(cb, tlist)
+function _mcsolve_get_expvals(sol::AbstractODESolution)
+    cb = NamedTuple(sol.prob.kwargs).callback
+    if _mcsolve_has_discrete_callbacks(cb)
+        return _mcsolve_get_expvals(cb)
+    else
+        return nothing
+    end
 end
-function _mcsolve_callbacks_new_iter(cb::CallbackSet, tlist)
+function _mcsolve_get_expvals(cb::CallbackSet)
+    idx = _mcsolve_has_continuous_jump(cb) ? 1 : 2
+    _cb = cb.discrete_callbacks[idx]
+    return _mcsolve_get_expvals(_cb)
+end
+_mcsolve_get_expvals(cb::DiscreteCallback) =
+    if cb.affect! isa SaveFuncMCSolve
+        return cb.affect!.expvals
+    else
+        nothing
+    end
+_mcsolve_get_expvals(cb::ContinuousCallback) = nothing
+
+#=
+    _mcsolve_callbacks_new_iter_expvals(prob, tlist)
+
+Return the same callbacks of the `prob`, but with the `iter` variable reinitialized to 1 and the `expvals` variable reinitialized to a new matrix.
+=#
+function _mcsolve_callbacks_new_iter_expvals(prob, tlist)
+    cb = prob.kwargs[:callback]
+    return _mcsolve_callbacks_new_iter_expvals(cb, tlist)
+end
+function _mcsolve_callbacks_new_iter_expvals(cb::CallbackSet, tlist)
     cb_continuous = cb.continuous_callbacks
     cb_discrete = cb.discrete_callbacks
 
-    if length(cb_continuous) > 0
+    if _mcsolve_has_continuous_jump(cb)
         idx = 1
         e_ops = cb_discrete[idx].affect!.e_ops
-        _save_affect! = SaveFuncMCSolve(e_ops, Ref(1))
+        expvals = similar(cb_discrete[idx].affect!.expvals)
+        _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
         cb_save = _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
         return CallbackSet(cb_continuous..., cb_save, cb_discrete[2:end]...)
     else
         idx = 2
         e_ops = cb_discrete[idx].affect!.e_ops
-        _save_affect! = SaveFuncMCSolve(e_ops, Ref(1))
+        expvals = similar(cb_discrete[idx].affect!.expvals)
+        _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
         cb_save = _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
         return CallbackSet(cb_continuous..., cb_discrete[1], cb_save, cb_discrete[3:end]...)
     end
 end
-_mcsolve_callbacks_new_iter(cb::ContinuousCallback, tlist) = cb
-_mcsolve_callbacks_new_iter(cb::DiscreteCallback, tlist) = cb
+_mcsolve_callbacks_new_iter_expvals(cb::ContinuousCallback, tlist) = cb # It is only the continuous LindbladJump callback  
+_mcsolve_callbacks_new_iter_expvals(cb::DiscreteCallback, tlist) = cb # It is only the discrete LindbladJump callback
+
+_mcsolve_has_discrete_callbacks(cb::CallbackSet) = length(cb.discrete_callbacks) > 0
+_mcsolve_has_discrete_callbacks(cb::ContinuousCallback) = false
+_mcsolve_has_discrete_callbacks(cb::DiscreteCallback) = true
+
+_mcsolve_has_continuous_jump(cb::CallbackSet) =
+    (length(cb.continuous_callbacks) > 0) && (cb.continuous_callbacks[1].affect! isa LindbladJump)
+_mcsolve_has_continuous_jump(cb::ContinuousCallback) = true
+_mcsolve_has_continuous_jump(cb::DiscreteCallback) = false
 
 ## Temporary function to avoid errors. Waiting for the PR In DiffEqCallbacks.jl to be merged.
 

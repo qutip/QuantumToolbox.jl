@@ -8,9 +8,7 @@ function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds, tlist)
     traj_rng = typeof(global_rng)()
     seed!(traj_rng, seed)
 
-    expvals = similar(params.expvals)
-
-    T = eltype(expvals)
+    T = eltype(prob.u0)
 
     mcsolve_params = (
         traj_rng = traj_rng,
@@ -23,10 +21,10 @@ function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds, tlist)
         jump_times_which_idx = T[1],
     )
 
-    p = TimeEvolutionParameters(params.params, expvals, mcsolve_params)
+    p = TimeEvolutionParameters(params.params, mcsolve_params)
 
     f = deepcopy(prob.f.f)
-    cb = _mcsolve_callbacks_new_iter(prob, tlist)
+    cb = _mcsolve_callbacks_new_iter_expvals(prob, tlist)
 
     return remake(prob, f = f, p = p, callback = cb)
 end
@@ -106,7 +104,7 @@ end
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
+        params = eltype(ψ0)[],
         rng::AbstractRNG = default_rng(),
         jump_callback::TJC = ContinuousLindbladJumpCallback(),
         kwargs...,
@@ -153,7 +151,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver.
+- `params`: `NamedTuple` or `AbstractVector` of parameters to pass to the solver. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -175,7 +173,7 @@ function mcsolveProblem(
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::Union{NamedTuple,AbstractVector} = eltype(ψ0)[],
+    params = eltype(ψ0)[],
     rng::AbstractRNG = default_rng(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
@@ -192,13 +190,7 @@ function mcsolveProblem(
 
     T = Base.promote_eltype(H_eff_evo, ψ0)
 
-    if e_ops isa Nothing
-        expvals = Array{T}(undef, 0, length(tlist))
-        is_empty_e_ops = true
-    else
-        expvals = Array{T}(undef, length(e_ops), length(tlist))
-        is_empty_e_ops = isempty(e_ops)
-    end
+    is_empty_e_ops = e_ops isa Nothing ? true : isempty(e_ops)
 
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
@@ -217,8 +209,6 @@ function mcsolveProblem(
     random_n = similar(ψ0.data, T, 1) # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl.
     random_n[1] = rand(rng)
 
-    progr = ProgressBar(length(tlist), enable = false)
-
     mcsolve_params = (
         traj_rng = rng,
         random_n = random_n,
@@ -229,7 +219,7 @@ function mcsolveProblem(
         jump_which = jump_which,
         jump_times_which_idx = jump_times_which_idx,
     )
-    p = TimeEvolutionParameters(params, expvals, mcsolve_params)
+    p = TimeEvolutionParameters(params, mcsolve_params)
 
     return sesolveProblem(H_eff_evo, ψ0, tlist; params = p, kwargs3...)
 end
@@ -524,13 +514,15 @@ function mcsolve(
 
     dims = ens_prob_mc.dims
     _sol_1 = sol[:, 1]
+    _expvals_sol_1 = _mcsolve_get_expvals(_sol_1)
 
-    expvals_all = mapreduce(i -> sol[:, i].prob.p.expvals, (x, y) -> cat(x, y, dims = 3), eachindex(sol))
+    _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _mcsolve_get_expvals(sol[:, i]), eachindex(sol))
+    expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all)
     states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
     jump_times = map(i -> real.(sol[:, i].prob.p.mcsolve_params.jump_times), eachindex(sol))
     jump_which = map(i -> round.(Int, sol[:, i].prob.p.mcsolve_params.jump_which), eachindex(sol))
 
-    expvals = dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
+    expvals = _expvals_sol_1 isa Nothing ? nothing : dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
 
     return TimeEvolutionMCSol(
         ntraj,

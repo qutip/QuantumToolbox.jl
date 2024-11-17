@@ -26,6 +26,7 @@
         sol2 = sesolve(H, ψ0, tlist, progress_bar = Val(false))
         sol3 = sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
         sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
+        sol_string2 = sprint((t, s) -> show(t, "text/plain", s), sol2)
 
         ## Analytical solution for the expectation value of a' * a
         Ω_rabi = sqrt(g^2 + ((ωc - ωq) / 2)^2)
@@ -39,7 +40,7 @@
         @test size(sol.expect) == (length(e_ops), length(tlist))
         @test length(sol2.times) == length(tlist)
         @test length(sol2.states) == length(tlist)
-        @test size(sol2.expect) == (0, length(tlist))
+        @test sol2.expect === nothing
         @test length(sol3.times) == length(tlist)
         @test length(sol3.states) == length(tlist)
         @test size(sol3.expect) == (length(e_ops), length(tlist))
@@ -52,6 +53,15 @@
               "ODE alg.: $(sol.alg)\n" *
               "abstol = $(sol.abstol)\n" *
               "reltol = $(sol.reltol)\n"
+        @test sol_string2 ==
+              "Solution of time evolution\n" *
+              "(return code: $(sol2.retcode))\n" *
+              "--------------------------\n" *
+              "num_states = $(length(sol2.states))\n" *
+              "num_expect = 0\n" *
+              "ODE alg.: $(sol2.alg)\n" *
+              "abstol = $(sol2.abstol)\n" *
+              "reltol = $(sol2.reltol)\n"
 
         @testset "Memory Allocations" begin
             allocs_tot = @allocations sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false)) # Warm-up
@@ -116,6 +126,7 @@
 
         sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
         sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
+        sol_mc_string_states = sprint((t, s) -> show(t, "text/plain", s), sol_mc_states)
         sol_sse_string = sprint((t, s) -> show(t, "text/plain", s), sol_sse)
         @test prob_me.f.f isa MatrixOperator
         @test prob_mc.prob.f.f isa MatrixOperator
@@ -136,7 +147,7 @@
         @test length(sol_mc.times) == length(tlist)
         @test size(sol_mc.expect) == (length(e_ops), length(tlist))
         @test length(sol_mc_states.times) == length(tlist)
-        @test size(sol_mc_states.expect) == (0, length(tlist))
+        @test sol_mc_states.expect === nothing
         @test length(sol_sse.times) == length(tlist)
         @test size(sol_sse.expect) == (length(e_ops), length(tlist))
         @test sol_me_string ==
@@ -158,6 +169,16 @@
               "ODE alg.: $(sol_mc.alg)\n" *
               "abstol = $(sol_mc.abstol)\n" *
               "reltol = $(sol_mc.reltol)\n"
+        @test sol_mc_string_states ==
+              "Solution of quantum trajectories\n" *
+              "(converged: $(sol_mc_states.converged))\n" *
+              "--------------------------------\n" *
+              "num_trajectories = $(sol_mc_states.ntraj)\n" *
+              "num_states = $(length(sol_mc_states.states[1]))\n" *
+              "num_expect = 0\n" *
+              "ODE alg.: $(sol_mc_states.alg)\n" *
+              "abstol = $(sol_mc_states.abstol)\n" *
+              "reltol = $(sol_mc_states.reltol)\n"
         @test sol_sse_string ==
               "Solution of quantum trajectories\n" *
               "(converged: $(sol_sse.converged))\n" *
