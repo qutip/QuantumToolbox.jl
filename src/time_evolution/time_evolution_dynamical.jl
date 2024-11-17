@@ -609,7 +609,7 @@ function _dsf_mcsolve_prob_func(prob, i, repeat)
         ),
     )
 
-    p = TimeEvolutionParameters(prm, expvals, progr, mcsolve_params)
+    p = TimeEvolutionParameters(prm, expvals, mcsolve_params)
 
     f = deepcopy(prob.f.f)
 

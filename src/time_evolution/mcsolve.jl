@@ -1,7 +1,7 @@
 export mcsolveProblem, mcsolveEnsembleProblem, mcsolve
 export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
 
-function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds)
+function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds, tlist)
     params = prob.p
 
     seed = seeds[i]
@@ -9,7 +9,6 @@ function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds)
     seed!(traj_rng, seed)
 
     expvals = similar(params.expvals)
-    progr = ProgressBar(size(expvals, 2), enable = false)
 
     T = eltype(expvals)
 
@@ -24,16 +23,17 @@ function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds)
         jump_times_which_idx = T[1],
     )
 
-    p = TimeEvolutionParameters(params.params, expvals, progr, mcsolve_params)
+    p = TimeEvolutionParameters(params.params, expvals, mcsolve_params)
 
     f = deepcopy(prob.f.f)
+    cb = _mcsolve_callbacks_new_iter(prob, tlist)
 
-    return remake(prob, f = f, p = p)
+    return remake(prob, f = f, p = p, callback = cb)
 end
 
-function _mcsolve_dispatch_prob_func(rng, ntraj)
+function _mcsolve_dispatch_prob_func(rng, ntraj, tlist)
     seeds = map(i -> rand(rng, UInt64), 1:ntraj)
-    return (prob, i, repeat) -> _mcsolve_prob_func(prob, i, repeat, rng, seeds)
+    return (prob, i, repeat) -> _mcsolve_prob_func(prob, i, repeat, rng, seeds, tlist)
 end
 
 # Standard output function
@@ -229,7 +229,7 @@ function mcsolveProblem(
         jump_which = jump_which,
         jump_times_which_idx = jump_times_which_idx,
     )
-    p = TimeEvolutionParameters(params, expvals, progr, mcsolve_params)
+    p = TimeEvolutionParameters(params, expvals, mcsolve_params)
 
     return sesolveProblem(H_eff_evo, ψ0, tlist; params = p, kwargs3...)
 end
@@ -330,7 +330,7 @@ function mcsolveEnsembleProblem(
     output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
 ) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
-    _prob_func = prob_func isa Nothing ? _mcsolve_dispatch_prob_func(rng, ntraj) : prob_func
+    _prob_func = prob_func isa Nothing ? _mcsolve_dispatch_prob_func(rng, ntraj, tlist) : prob_func
     _output_func =
         output_func isa Nothing ? _mcsolve_dispatch_output_func(ensemble_method, progress_bar, ntraj) : output_func
 

@@ -1,22 +1,16 @@
 # This function should be implemented after Julia v1.12
-Base.@constprop :aggressive function _delete_field(a::NamedTuple{an}, field::Symbol) where {an}
-    names = Base.diff_names(an, (field,))
-    return NamedTuple{names}(a)
-end
-
 @doc raw"""
     struct TimeEvolutionParameters
 
 A Julia constructor for handling the parameters of the time evolution of quantum systems.
 """
-struct TimeEvolutionParameters{ParT,TE<:AbstractMatrix,PT<:ProgressBar,MCST}
+struct TimeEvolutionParameters{ParT,TE<:AbstractMatrix,MCST}
     params::ParT
     expvals::TE
-    progr::PT
     mcsolve_params::MCST
 end
 
-TimeEvolutionParameters(params, expvals, progr) = TimeEvolutionParameters(params, expvals, progr, nothing)
+TimeEvolutionParameters(params, expvals) = TimeEvolutionParameters(params, expvals, nothing)
 
 #=
 By defining a custom `getproperty` method for the `TimeEvolutionParameters` struct, we can access the fields of `params` directly.
@@ -39,7 +33,7 @@ Base.getindex(obj::TimeEvolutionParameters, i::Int) = getindex(obj.params, i)
 Base.length(obj::TimeEvolutionParameters) = length(obj.params)
 
 # function Base.merge(a::TimeEvolutionParameters, b::NamedTuple)
-#     return TimeEvolutionParameters(merge(a.params, b), a.expvals, a.progr, a.mcsolve_params)
+#     return TimeEvolutionParameters(merge(a.params, b), a.expvals, a.mcsolve_params)
 # end
 
 ########## Mark the struct as a SciMLStructure ##########
@@ -75,12 +69,12 @@ end
 function replace(::Tunable, p::TimeEvolutionParameters{ParT}, newbuffer) where {ParT<:NamedTuple}
     @assert length(newbuffer) == length(p.params)
     new_params = NamedTuple{keys(p.params)}(Tuple(newbuffer))
-    return TimeEvolutionParameters(new_params, p.expvals, p.progr, p.mcsolve_params)
+    return TimeEvolutionParameters(new_params, p.expvals, p.mcsolve_params)
 end
 
 function replace(::Tunable, p::TimeEvolutionParameters{ParT}, newbuffer) where {ParT<:AbstractVector}
     @assert length(newbuffer) == length(p.params)
-    return TimeEvolutionParameters(newbuffer, p.expvals, p.progr, p.mcsolve_params)
+    return TimeEvolutionParameters(newbuffer, p.expvals, p.mcsolve_params)
 end
 
 function replace!(::Tunable, p::TimeEvolutionParameters{ParT}, newbuffer) where {ParT<:AbstractVector}

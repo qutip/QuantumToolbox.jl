@@ -4,49 +4,58 @@ This file contains helper functions for callbacks. The affect! function are defi
 
 ########## SESOLVE ##########
 
-struct SaveFuncSESolve{T1,T2}
-    e_ops::T1
-    is_empty_e_ops::T2
+struct SaveFuncSESolve{TE,PT<:Union{Nothing,ProgressBar},IT}
+    e_ops::TE
+    progr::PT
+    iter::IT
 end
 
-(f::SaveFuncSESolve)(integrator) = _save_func_sesolve(integrator, f.e_ops, f.is_empty_e_ops)
-(f::SaveFuncSESolve{Nothing})(integrator) = _save_func_sesolve(integrator)
+(f::SaveFuncSESolve)(integrator) = _save_func_sesolve(integrator, f.e_ops, f.progr, f.iter)
+(f::SaveFuncSESolve{Nothing})(integrator) = _save_func_sesolve(integrator, f.progr)
 
 ##
 
 # When e_ops is Nothing
-function _save_func_sesolve(integrator)
-    next!(integrator.p.progr)
+function _save_func_sesolve(integrator, progr)
+    next!(progr)
+    u_modified!(integrator, false)
+    return nothing
+end
+
+# When progr is Nothing
+function _save_func_sesolve(integrator, progr::Nothing)
     u_modified!(integrator, false)
     return nothing
 end
 
 # When e_ops is a list of operators
-function _save_func_sesolve(integrator, e_ops, is_empty_e_ops)
+function _save_func_sesolve(integrator, e_ops, progr, iter)
     expvals = integrator.p.expvals
-    progr = integrator.p.progr
-    if !is_empty_e_ops
-        ψ = integrator.u
-        _expect = op -> dot(ψ, op, ψ)
-        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
-    end
-    return _save_func_sesolve(integrator)
+    ψ = integrator.u
+    _expect = op -> dot(ψ, op, ψ)
+    @. expvals[:, iter[]] = _expect(e_ops)
+    iter[] += 1
+
+    return _save_func_sesolve(integrator, progr)
 end
 
-function _generate_sesolve_callback(e_ops, tlist)
-    is_empty_e_ops = e_ops isa Nothing ? true : isempty(e_ops)
-    _save_affect! = SaveFuncSESolve(get_data.(e_ops), is_empty_e_ops)
+function _generate_sesolve_callback(e_ops, tlist, progress_bar)
+    e_ops_data = e_ops isa Nothing ? nothing : get_data.(e_ops)
+
+    progr = getVal(progress_bar) ? ProgressBar(length(tlist), enable = getVal(progress_bar)) : nothing
+
+    _save_affect! = SaveFuncSESolve(e_ops_data, progr, Ref(1))
     return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
 end
 
 ########## MCSOLVE ##########
 
-struct SaveFuncMCSolve{T1,T2}
-    e_ops::T1
-    is_empty_e_ops::T2
+struct SaveFuncMCSolve{TE,IT}
+    e_ops::TE
+    iter::IT
 end
 
-(f::SaveFuncMCSolve)(integrator) = _save_func_mcsolve(integrator, f.e_ops, f.is_empty_e_ops)
+(f::SaveFuncMCSolve)(integrator) = _save_func_mcsolve(integrator, f.e_ops, f.iter)
 
 struct LindbladJump{T1,T2}
     c_ops::T1
@@ -57,18 +66,17 @@ end
 
 ##
 
-function _save_func_mcsolve(integrator, e_ops, is_empty_e_ops)
+function _save_func_mcsolve(integrator, e_ops, iter)
     expvals = integrator.p.expvals
-    progr = integrator.p.progr
     cache_mc = integrator.p.mcsolve_params.cache_mc
-    if !is_empty_e_ops
-        copyto!(cache_mc, integrator.u)
-        normalize!(cache_mc)
-        ψ = cache_mc
-        _expect = op -> dot(ψ, op, ψ)
-        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
-    end
-    next!(progr)
+
+    copyto!(cache_mc, integrator.u)
+    normalize!(cache_mc)
+    ψ = cache_mc
+    _expect = op -> dot(ψ, op, ψ)
+    @. expvals[:, iter[]] = _expect(e_ops)
+    iter[] += 1
+
     u_modified!(integrator, false)
     return nothing
 end
@@ -97,8 +105,7 @@ function _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs)
             merge(kwargs, (callback = cb1,))
         return kwargs2
     else
-        is_empty_e_ops = isempty(e_ops)
-        _save_affect! = SaveFuncMCSolve(get_data.(e_ops), is_empty_e_ops)
+        _save_affect! = SaveFuncMCSolve(get_data.(e_ops), Ref(1))
         cb2 = _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
         kwargs2 =
             haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, cb2, kwargs.callback),)) :
@@ -170,6 +177,36 @@ function _mcsolve_get_e_ops(integrator::AbstractODEIntegrator)
     cb = length(cb_set.continuous_callbacks) > 0 ? cb_set.discrete_callbacks[1] : cb_set.discrete_callbacks[2]
     return cb.affect!.e_ops
 end
+
+#=
+    _mcsolve_callbacks_new_iter(prob, tlist)
+
+Return the same callbacks of the `prob`, but with the `iter` variable reinitialized to 1.
+=#
+function _mcsolve_callbacks_new_iter(prob, tlist)
+    cb = prob.kwargs[:callback]
+    return _mcsolve_callbacks_new_iter(cb, tlist)
+end
+function _mcsolve_callbacks_new_iter(cb::CallbackSet, tlist)
+    cb_continuous = cb.continuous_callbacks
+    cb_discrete = cb.discrete_callbacks
+
+    if length(cb_continuous) > 0
+        idx = 1
+        e_ops = cb_discrete[idx].affect!.e_ops
+        _save_affect! = SaveFuncMCSolve(e_ops, Ref(1))
+        cb_save = _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+        return CallbackSet(cb_continuous..., cb_save, cb_discrete[2:end]...)
+    else
+        idx = 2
+        e_ops = cb_discrete[idx].affect!.e_ops
+        _save_affect! = SaveFuncMCSolve(e_ops, Ref(1))
+        cb_save = _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+        return CallbackSet(cb_continuous..., cb_discrete[1], cb_save, cb_discrete[3:end]...)
+    end
+end
+_mcsolve_callbacks_new_iter(cb::ContinuousCallback, tlist) = cb
+_mcsolve_callbacks_new_iter(cb::DiscreteCallback, tlist) = cb
 
 ## Temporary function to avoid errors. Waiting for the PR In DiffEqCallbacks.jl to be merged.
 

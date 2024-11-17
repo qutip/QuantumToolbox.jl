@@ -9,18 +9,11 @@ function _merge_sesolve_kwargs_with_callback(kwargs, cb)
 end
 
 # Multiple dispatch depending on the progress_bar and e_ops types
-function _generate_sesolve_kwargs(e_ops, progress_bar::Val{true}, tlist, kwargs)
-    cb = _generate_sesolve_callback(e_ops, tlist)
+function _generate_sesolve_kwargs(e_ops, progress_bar, tlist, kwargs)
+    cb = _generate_sesolve_callback(e_ops, tlist, progress_bar)
     return _merge_sesolve_kwargs_with_callback(kwargs, cb)
 end
-
-function _generate_sesolve_kwargs(e_ops, progress_bar::Val{false}, tlist, kwargs)
-    if e_ops isa Nothing
-        return kwargs
-    end
-    cb = _generate_sesolve_callback(e_ops, tlist)
-    return _merge_sesolve_kwargs_with_callback(kwargs, cb)
-end
+_generate_sesolve_kwargs(e_ops::Nothing, progress_bar::Val{false}, tlist, kwargs) = kwargs
 
 _sesolve_make_U_QobjEvo(H::QuantumObjectEvolution{<:MatrixOperator}) =
     QobjEvo(MatrixOperator(-1im * H.data.A), dims = H.dims, type = Operator)
@@ -88,8 +81,6 @@ function sesolveProblem(
     ψ0 = sparse_to_dense(_CType(ψ0), get_data(ψ0)) # Convert it to dense vector with complex element type
     U = H_evo.data
 
-    progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
-
     if e_ops isa Nothing
         expvals = Array{ComplexF64}(undef, 0, length(tlist))
         is_empty_e_ops = true
@@ -99,14 +90,14 @@ function sesolveProblem(
     end
 
     if params isa TimeEvolutionParameters
-        (!getVal(progress_bar) && (e_ops isa Nothing)) || throw(
+        (e_ops isa Nothing) || throw(
             ArgumentError(
-                "The parameter `params` cannot be a TimeEvolutionParameters object when `e_ops` is not Nothing and `progress_bar` is true.",
+                "The parameter `params` cannot be a TimeEvolutionParameters object when `e_ops` is not Nothing",
             ),
         )
     end
 
-    p = params isa TimeEvolutionParameters ? params : TimeEvolutionParameters(params, expvals, progr)
+    p = params isa TimeEvolutionParameters ? params : TimeEvolutionParameters(params, expvals)
 
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)

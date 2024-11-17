@@ -214,6 +214,8 @@ function QuantumObjectEvolution(
     return QuantumObjectEvolution(α * op.data, type, op.dims)
 end
 
+_all_equal(dims) = all(x -> x == first(dims), dims)
+
 #=
     _QobjEvo_generate_data(op_func_list::Tuple, α; f::Function=identity)
 
@@ -269,7 +271,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
     quote
         dims = tuple($(dims_expr...))
 
-        length(unique(dims)) == 1 || throw(ArgumentError("The dimensions of the operators must be the same."))
+        _all_equal(dims) || throw(ArgumentError("The dimensions of the operators must be the same."))
 
         data_expr_const = $qobj_expr_const isa Integer ? $qobj_expr_const : _make_SciMLOperator($qobj_expr_const, α)
 
