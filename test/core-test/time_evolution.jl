@@ -128,7 +128,7 @@
         sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
         sol_mc_string_states = sprint((t, s) -> show(t, "text/plain", s), sol_mc_states)
         sol_sse_string = sprint((t, s) -> show(t, "text/plain", s), sol_sse)
-        @test prob_me.f.f isa MatrixOperator
+        @test prob_me.prob.f.f isa MatrixOperator
         @test prob_mc.prob.f.f isa MatrixOperator
         @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(tlist) < 0.1
         @test sum(abs.(sol_mc2.expect .- sol_me.expect)) / length(tlist) < 0.1
@@ -140,7 +140,7 @@
         @test size(sol_me.expect) == (length(e_ops), length(tlist))
         @test length(sol_me2.times) == length(tlist)
         @test length(sol_me2.states) == length(tlist)
-        @test size(sol_me2.expect) == (0, length(tlist))
+        @test sol_me2.expect === nothing
         @test length(sol_me3.times) == length(tlist)
         @test length(sol_me3.states) == length(tlist)
         @test size(sol_me3.expect) == (length(e_ops), length(tlist))

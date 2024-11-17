@@ -1,20 +1,5 @@
 export sesolveProblem, sesolve
 
-function _merge_sesolve_kwargs_with_callback(kwargs, cb)
-    kwargs2 =
-        haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb, kwargs.callback),)) :
-        merge(kwargs, (callback = cb,))
-
-    return kwargs2
-end
-
-# Multiple dispatch depending on the progress_bar and e_ops types
-function _generate_sesolve_kwargs(e_ops, progress_bar, tlist, kwargs)
-    cb = _generate_sesolve_callback(e_ops, tlist, progress_bar)
-    return _merge_sesolve_kwargs_with_callback(kwargs, cb)
-end
-_generate_sesolve_kwargs(e_ops::Nothing, progress_bar::Val{false}, tlist, kwargs) = kwargs
-
 _sesolve_make_U_QobjEvo(H::QuantumObjectEvolution{<:MatrixOperator}) =
     QobjEvo(MatrixOperator(-1im * H.data.A), dims = H.dims, type = Operator)
 _sesolve_make_U_QobjEvo(H) = QobjEvo(H, -1im)
@@ -87,7 +72,7 @@ function sesolveProblem(
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2)
+    kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncSESolve)
 
     tspan = (tlist[1], tlist[end])
     prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, params; kwargs3...)
@@ -171,7 +156,7 @@ function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
     return TimeEvolutionSol(
         prob.times,
         ψt,
-        _sesolve_get_expvals(sol),
+        _se_me_sse_get_expvals(sol),
         sol.retcode,
         sol.alg,
         NamedTuple(sol.prob.kwargs).abstol,

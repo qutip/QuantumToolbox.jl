@@ -193,7 +193,7 @@ function ssesolveProblem(
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_SDE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_sesolve_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2)
+    kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncSESolve)
 
     tspan = (tlist[1], tlist[end])
     noise =
@@ -443,16 +443,17 @@ function ssesolve(
         end
 
         _sol_1 = sol[:, 1]
-        _expvals_sol_1 = _sesolve_get_expvals(_sol_1)
+        _expvals_sol_1 = _se_me_sse_get_expvals(_sol_1)
 
         normalize_states = Val(false)
         dims = _sol_1.prob.p.Hdims
-        _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _sesolve_get_expvals(sol[:, i]), eachindex(sol))
+        _expvals_all =
+            _expvals_sol_1 isa Nothing ? nothing : map(i -> _se_me_sse_get_expvals(sol[:, i]), eachindex(sol))
         expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all)
         states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
 
         expvals =
-            _sesolve_get_expvals(_sol_1) isa Nothing ? nothing :
+            _se_me_sse_get_expvals(_sol_1) isa Nothing ? nothing :
             dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
 
         return TimeEvolutionSSESol(
