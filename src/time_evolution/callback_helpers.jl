@@ -47,7 +47,7 @@ function _generate_sesolve_callback(e_ops, tlist, progress_bar)
     expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
 
     _save_affect! = SaveFuncSESolve(e_ops_data, progr, Ref(1), expvals)
-    return _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+    return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
 end
 
 function _sesolve_get_expvals(sol::AbstractODESolution)
@@ -62,7 +62,8 @@ function _sesolve_get_expvals(cb::CallbackSet)
     _cb = cb.discrete_callbacks[1]
     return _sesolve_get_expvals(_cb)
 end
-_sesolve_get_expvals(cb::DiscreteCallback) = if cb.affect! isa SaveFuncSESolve
+_sesolve_get_expvals(cb::DiscreteCallback) =
+    if cb.affect! isa SaveFuncSESolve
         return cb.affect!.expvals
     else
         return nothing
@@ -130,7 +131,7 @@ function _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs)
         expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
 
         _save_affect! = SaveFuncMCSolve(get_data.(e_ops), Ref(1), expvals)
-        cb2 = _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+        cb2 = PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
         kwargs2 =
             haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, cb2, kwargs.callback),)) :
             merge(kwargs, (callback = CallbackSet(cb1, cb2),))
@@ -241,14 +242,14 @@ function _mcsolve_callbacks_new_iter_expvals(cb::CallbackSet, tlist)
         e_ops = cb_discrete[idx].affect!.e_ops
         expvals = similar(cb_discrete[idx].affect!.expvals)
         _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
-        cb_save = _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+        cb_save = PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
         return CallbackSet(cb_continuous..., cb_save, cb_discrete[2:end]...)
     else
         idx = 2
         e_ops = cb_discrete[idx].affect!.e_ops
         expvals = similar(cb_discrete[idx].affect!.expvals)
         _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
-        cb_save = _PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+        cb_save = PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
         return CallbackSet(cb_continuous..., cb_discrete[1], cb_save, cb_discrete[3:end]...)
     end
 end
@@ -263,52 +264,3 @@ _mcsolve_has_continuous_jump(cb::CallbackSet) =
     (length(cb.continuous_callbacks) > 0) && (cb.continuous_callbacks[1].affect! isa LindbladJump)
 _mcsolve_has_continuous_jump(cb::ContinuousCallback) = true
 _mcsolve_has_continuous_jump(cb::DiscreteCallback) = false
-
-## Temporary function to avoid errors. Waiting for the PR In DiffEqCallbacks.jl to be merged.
-
-import SciMLBase: INITIALIZE_DEFAULT, add_tstop!
-
-function _PresetTimeCallback(
-    tstops,
-    user_affect!;
-    initialize = INITIALIZE_DEFAULT,
-    filter_tstops = true,
-    sort_inplace = false,
-    kwargs...,
-)
-    if !(tstops isa AbstractVector) && !(tstops isa Number)
-        throw(ArgumentError("tstops must either be a number or a Vector. Was $tstops"))
-    end
-
-    tstops = tstops isa Number ? [tstops] : (sort_inplace ? sort!(tstops) : sort(tstops))
-
-    condition = let
-        function (u, t, integrator)
-            if hasproperty(integrator, :dt)
-                insorted(t, tstops) && (integrator.t - integrator.dt) != integrator.t
-            else
-                insorted(t, tstops)
-            end
-        end
-    end
-
-    # Initialization: first call to `f` should be *before* any time steps have been taken:
-    initialize_preset = function (c, u, t, integrator)
-        initialize(c, u, t, integrator)
-
-        if filter_tstops
-            tdir = integrator.tdir
-            tspan = integrator.sol.prob.tspan
-            _tstops = tstops[@. tdir * tspan[1] < tdir * tstops < tdir * tspan[2]]
-        else
-            _tstops = tstops
-        end
-        for tstop in _tstops
-            add_tstop!(integrator, tstop)
-        end
-        if t ∈ tstops
-            user_affect!(integrator)
-        end
-    end
-    return DiscreteCallback(condition, user_affect!; initialize = initialize_preset, kwargs...)
-end
