@@ -131,7 +131,7 @@ function _DFDIncreaseReduceAffect!(integrator)
     copyto!(integrator.u, mat2vec(ρt))
     # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
     integrator.f = ODEFunction{true,FullSpecialize}(MatrixOperator(L))
-    resize!(dfd_ρt_cache, length(integrator.u))
+    integrator.p = merge(internal_params, (dfd_ρt_cache = similar(integrator.u), ))
     _mesolve_callbacks_new_e_ops!(integrator, e_ops2)
 
     return nothing
@@ -333,7 +333,7 @@ function _DSF_mesolve_Affect!(integrator)
 
     op_l2 = op_list .+ αt_list
     e_ops2 = e_ops(op_l2, dsf_params)
-    _mesolve_callbacks_new_e_ops!(integrator, _generate_mesolve_e_op.(e_ops2))
+    _mesolve_callbacks_new_e_ops!(integrator, [_generate_mesolve_e_op(op) for op in e_ops2])
     # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
     copyto!(integrator.f.f.A, liouvillian(H(op_l2, dsf_params), c_ops(op_l2, dsf_params), dsf_identity).data)
     return u_modified!(integrator, true)

@@ -2,10 +2,6 @@
 This file contains helper functions for callbacks. The affect! function are defined taking advantage of the Julia struct, which allows to store some cache exclusively for the callback.
 =#
 
-include("sesolve_callback_helpers.jl")
-include("mesolve_callback_helpers.jl")
-include("mcsolve_callback_helpers.jl")
-
 ##
 
 # Multiple dispatch depending on the progress_bar and e_ops types
@@ -35,7 +31,7 @@ function _generate_save_callback(e_ops, tlist, progress_bar, method)
 end
 
 _get_e_ops_data(e_ops, ::Type{SaveFuncSESolve}) = get_data.(e_ops)
-_get_e_ops_data(e_ops, ::Type{SaveFuncMESolve}) = _generate_mesolve_e_op.(e_ops)
+_get_e_ops_data(e_ops, ::Type{SaveFuncMESolve}) = [_generate_mesolve_e_op(op) for op in e_ops] # Broadcasting generates type instabilities on Julia v1.10
 
 _generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
 
