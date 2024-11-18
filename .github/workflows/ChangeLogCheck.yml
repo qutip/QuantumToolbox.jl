@@ -8,7 +8,32 @@ on:
 jobs:
   changelog:
     runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
     steps:
-    - uses: dangoslen/changelog-enforcer@v3
-      with:
-        skipLabels: 'Skip ChangeLog'
+      # check whether CHANGELOG.md is updated
+      - uses: dangoslen/changelog-enforcer@v3
+        with:
+          skipLabels: 'Skip ChangeLog'
+      
+      # check whether the format of CHANGELOG.md is correct
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - name: Install and Run Changelog
+        run: |
+          julia -e 'import Pkg; Pkg.add("Changelog")'
+          julia -e 'using Changelog; Changelog.generate(Changelog.CommonMark(), "CHANGELOG.md"; repo = "qutip/QuantumToolbox.jl")'
+  
+      - name: CHANGELOG Format Check
+        run: |
+          julia -e '
+            output = Cmd(`git diff --name-only`) |> read |> String
+            if output == ""
+                exit(0)
+            else
+                @error "The format of CHANGELOG.md is not correct !!!"
+                write(stdout, "Please format it by running the following command:\n")
+                write(stdout, "make changelog")
+                exit(1)
+            end'
