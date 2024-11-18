@@ -4,6 +4,28 @@ export liouvillian_floquet, liouvillian_generalized
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
 const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
+const JUMP_TIMES_WHICH_INIT_SIZE = 200
+
+@doc raw"""
+    struct TimeEvolutionProblem
+
+A Julia constructor for handling the `ODEProblem` of the time evolution of quantum systems.
+
+# Fields (Attributes)
+
+- `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
+- `times::Abstractvector`: The time list of the evolution.
+- `dims::Abstractvector`: The dimensions of the Hilbert space.
+- `kwargs::KWT`: Generic keyword arguments.
+"""
+struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractVector,KWT}
+    prob::PT
+    times::TT
+    dims::DT
+    kwargs::KWT
+end
+
+TimeEvolutionProblem(prob, times, dims) = TimeEvolutionProblem(prob, times, dims, nothing)
 
 @doc raw"""
     struct TimeEvolutionSol
@@ -14,7 +36,7 @@ A structure storing the results and some information from solving time evolution
 
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{QuantumObject}`: The list of result states.
-- `expect::Matrix`: The expectation values corresponding to each time point in `times`.
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each time point in `times`.
 - `retcode`: The return code from the solver.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -23,7 +45,7 @@ A structure storing the results and some information from solving time evolution
 struct TimeEvolutionSol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
-    TE<:Matrix,
+    TE<:Union{AbstractMatrix,Nothing},
     RETT<:Enum,
     AlgT<:OrdinaryDiffEqAlgorithm,
     AT<:Real,
@@ -43,7 +65,11 @@ function Base.show(io::IO, sol::TimeEvolutionSol)
     print(io, "(return code: $(sol.retcode))\n")
     print(io, "--------------------------\n")
     print(io, "num_states = $(length(sol.states))\n")
-    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    if sol.expect isa Nothing
+        print(io, "num_expect = 0\n")
+    else
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
+    end
     print(io, "ODE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
     print(io, "reltol = $(sol.reltol)\n")
@@ -60,8 +86,8 @@ A structure storing the results and some information from solving quantum trajec
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
-- `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `expect_all::Array`: The expectation values corresponding to each trajectory and each time point in `times`
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `expect_all::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
 - `jump_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
 - `jump_which::Vector{Vector{Int}}`: The indices of the jump operators in `c_ops` that describe the corresponding quantum jumps occurred in each trajectory.
 - `converged::Bool`: Whether the solution is converged or not.
@@ -72,8 +98,8 @@ A structure storing the results and some information from solving quantum trajec
 struct TimeEvolutionMCSol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
-    TE<:Matrix{ComplexF64},
-    TEA<:Array{ComplexF64,3},
+    TE<:Union{AbstractMatrix,Nothing},
+    TEA<:Union{AbstractArray,Nothing},
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
     AlgT<:OrdinaryDiffEqAlgorithm,
@@ -99,7 +125,11 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
     print(io, "--------------------------------\n")
     print(io, "num_trajectories = $(sol.ntraj)\n")
     print(io, "num_states = $(length(sol.states[1]))\n")
-    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    if sol.expect isa Nothing
+        print(io, "num_expect = 0\n")
+    else
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
+    end
     print(io, "ODE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
     print(io, "reltol = $(sol.reltol)\n")
@@ -116,8 +146,8 @@ A structure storing the results and some information from solving trajectories o
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
-- `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `expect_all::Array`: The expectation values corresponding to each trajectory and each time point in `times`
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `expect_all::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -126,8 +156,8 @@ A structure storing the results and some information from solving trajectories o
 struct TimeEvolutionSSESol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
-    TE<:Matrix{ComplexF64},
-    TEA<:Array{ComplexF64,3},
+    TE<:Union{AbstractMatrix,Nothing},
+    TEA<:Union{AbstractArray,Nothing},
     AlgT<:StochasticDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
@@ -149,7 +179,11 @@ function Base.show(io::IO, sol::TimeEvolutionSSESol)
     print(io, "--------------------------------\n")
     print(io, "num_trajectories = $(sol.ntraj)\n")
     print(io, "num_states = $(length(sol.states[1]))\n")
-    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    if sol.expect isa Nothing
+        print(io, "num_expect = 0\n")
+    else
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
+    end
     print(io, "SDE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
     print(io, "reltol = $(sol.reltol)\n")

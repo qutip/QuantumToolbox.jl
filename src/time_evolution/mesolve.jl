@@ -1,46 +1,5 @@
 export mesolveProblem, mesolve
 
-function _save_func_mesolve(integrator)
-    internal_params = integrator.p
-    progr = internal_params.progr
-
-    if !internal_params.is_empty_e_ops
-        expvals = internal_params.expvals
-        e_ops = internal_params.e_ops
-        # This is equivalent to tr(op * ρ), when both are matrices.
-        # The advantage of using this convention is that I don't need
-        # to reshape u to make it a matrix, but I reshape the e_ops once.
-
-        ρ = integrator.u
-        _expect = op -> dot(op, ρ)
-        @. expvals[:, progr.counter[]+1] = _expect(e_ops)
-    end
-    next!(progr)
-    return u_modified!(integrator, false)
-end
-
-_generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
-
-function _generate_mesolve_kwargs_with_callback(tlist, kwargs)
-    cb1 = PresetTimeCallback(tlist, _save_func_mesolve, save_positions = (false, false))
-    kwargs2 =
-        haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(kwargs.callback, cb1),)) :
-        merge(kwargs, (callback = cb1,))
-
-    return kwargs2
-end
-
-function _generate_mesolve_kwargs(e_ops, progress_bar::Val{true}, tlist, kwargs)
-    return _generate_mesolve_kwargs_with_callback(tlist, kwargs)
-end
-
-function _generate_mesolve_kwargs(e_ops, progress_bar::Val{false}, tlist, kwargs)
-    if e_ops isa Nothing
-        return kwargs
-    end
-    return _generate_mesolve_kwargs_with_callback(tlist, kwargs)
-end
-
 _mesolve_make_L_QobjEvo(H::QuantumObject, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator)
 _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
 
@@ -51,8 +10,9 @@ _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvil
         tlist,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
+        inplace::Union{Val,Bool} = Val(true),
         kwargs...,
     )
 
@@ -75,8 +35,9 @@ where
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`. It is recommended to use `Val(true)` for better performance, but it is sometimes necessary to use `Val(false)`, for example when performing automatic differentiation using [Zygote.jl](https://github.com/FluxML/Zygote.jl).
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -96,8 +57,9 @@ function mesolveProblem(
     tlist,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
+    inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {
     DT1,
@@ -113,38 +75,21 @@ function mesolveProblem(
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     check_dims(L_evo, ψ0)
 
-    ρ0 = sparse_to_dense(_CType(ψ0), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
+    T = Base.promote_eltype(L_evo, ψ0)
+    ρ0 = sparse_to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
     L = L_evo.data
 
-    progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
-
-    if e_ops isa Nothing
-        expvals = Array{ComplexF64}(undef, 0, length(tlist))
-        e_ops_data = ()
-        is_empty_e_ops = true
-    else
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
-        e_ops_data = [_generate_mesolve_e_op(op) for op in e_ops]
-        is_empty_e_ops = isempty(e_ops)
-    end
-
-    p = (
-        e_ops = e_ops_data,
-        expvals = expvals,
-        progr = progr,
-        times = tlist,
-        Hdims = L_evo.dims,
-        is_empty_e_ops = is_empty_e_ops,
-        params...,
-    )
+    is_empty_e_ops = (e_ops isa Nothing) ? true : isempty(e_ops)
 
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_mesolve_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2)
+    kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncMESolve)
 
     tspan = (tlist[1], tlist[end])
-    return ODEProblem{true,FullSpecialize}(L, ρ0, tspan, p; kwargs3...)
+    prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
+
+    return TimeEvolutionProblem(prob, tlist, L_evo.dims)
 end
 
 @doc raw"""
@@ -155,8 +100,9 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
+        inplace::Union{Val,Bool} = Val(true),
         kwargs...,
     )
 
@@ -180,8 +126,9 @@ where
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm for the ODE solver. The default value is `Tsit5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`. It is recommended to use `Val(true)` for better performance, but it is sometimes necessary to use `Val(false)`, for example when performing automatic differentiation using [Zygote.jl](https://github.com/FluxML/Zygote.jl).
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -203,8 +150,9 @@ function mesolve(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
+    inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {
     DT1,
@@ -221,24 +169,25 @@ function mesolve(
         e_ops = e_ops,
         params = params,
         progress_bar = progress_bar,
+        inplace = inplace,
         kwargs...,
     )
 
     return mesolve(prob, alg)
 end
 
-function mesolve(prob::ODEProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
-    sol = solve(prob, alg)
+function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
+    sol = solve(prob.prob, alg)
 
-    ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = sol.prob.p.Hdims), sol.u)
+    ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = prob.dims), sol.u)
 
     return TimeEvolutionSol(
-        sol.prob.p.times,
+        prob.times,
         ρt,
-        sol.prob.p.expvals,
+        _se_me_sse_get_expvals(sol),
         sol.retcode,
         sol.alg,
-        sol.prob.kwargs[:abstol],
-        sol.prob.kwargs[:reltol],
+        NamedTuple(sol.prob.kwargs).abstol,
+        NamedTuple(sol.prob.kwargs).reltol,
     )
 end

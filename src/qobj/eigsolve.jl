@@ -391,14 +391,15 @@ function eigsolve_al(
     kwargs...,
 ) where {DT1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
-    prob = mesolveProblem(
-        L_evo,
-        QuantumObject(ρ0, type = Operator, dims = H.dims),
-        [zero(T), T];
-        params = params,
-        progress_bar = Val(false),
-        kwargs...,
-    )
+    prob =
+        mesolveProblem(
+            L_evo,
+            QuantumObject(ρ0, type = Operator, dims = H.dims),
+            [zero(T), T];
+            params = params,
+            progress_bar = Val(false),
+            kwargs...,
+        ).prob
     integrator = init(prob, alg)
 
     # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
