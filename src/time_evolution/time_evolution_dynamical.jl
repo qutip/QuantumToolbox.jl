@@ -578,40 +578,23 @@ end
 function _dsf_mcsolve_prob_func(prob, i, repeat)
     params = prob.p
 
-    T = eltype(prob.u0)
-
-    mcsolve_params = merge(
-        params.mcsolve_params,
-        (
-            random_n = T[rand()],
-            cache_mc = similar(params.mcsolve_params.cache_mc),
-            weights_mc = similar(params.mcsolve_params.weights_mc),
-            cumsum_weights_mc = similar(params.mcsolve_params.weights_mc),
-            jump_times = similar(params.mcsolve_params.jump_times),
-            jump_which = similar(params.mcsolve_params.jump_which),
-            jump_times_which_idx = T[1],
-        ),
-    )
-
     prm = merge(
-        params.params,
+        params,
         (
-            αt_list = copy(params.params.αt_list),
-            dsf_cache1 = similar(params.params.dsf_cache1),
-            dsf_cache2 = similar(params.params.dsf_cache2),
-            expv_cache = copy(params.params.expv_cache),
-            dsf_displace_cache_full = deepcopy(params.params.dsf_displace_cache_full), # This brutally copies also the MatrixOperators, and it is inefficient.
+            αt_list = copy(params.αt_list),
+            dsf_cache1 = similar(params.dsf_cache1),
+            dsf_cache2 = similar(params.dsf_cache2),
+            expv_cache = copy(params.expv_cache),
+            dsf_displace_cache_full = deepcopy(params.dsf_displace_cache_full), # This brutally copies also the MatrixOperators, and it is inefficient.
         ),
     )
-
-    p = TimeEvolutionParameters(prm, mcsolve_params)
 
     f = deepcopy(prob.f.f)
 
-    # We need to deepcopy the callbacks because they contain the c_ops and e_ops, which are modified in the affect function
+    # We need to deepcopy the callbacks because they contain the c_ops and e_ops, which are modified in the affect function. They also contain all the cache variables needed for mcsolve.
     cb = deepcopy(prob.kwargs[:callback])
 
-    return remake(prob, f = f, p = p, callback = cb)
+    return remake(prob, f = f, p = prm, callback = cb)
 end
 
 function dsf_mcsolveEnsembleProblem(

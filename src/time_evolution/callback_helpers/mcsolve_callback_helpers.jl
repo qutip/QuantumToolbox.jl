@@ -10,17 +10,47 @@ end
 
 (f::SaveFuncMCSolve)(integrator) = _save_func_mcsolve(integrator, f.e_ops, f.iter, f.expvals)
 
-struct LindbladJump{T1,T2}
+struct LindbladJump{
+    T1,
+    T2,
+    RNGType<:AbstractRNG,
+    RandT,
+    CT<:AbstractVector,
+    WT<:AbstractVector,
+    JTT<:AbstractVector,
+    JWT<:AbstractVector,
+    JTWIT,
+}
     c_ops::T1
     c_ops_herm::T2
+    traj_rng::RNGType
+    random_n::RandT
+    cache_mc::CT
+    weights_mc::WT
+    cumsum_weights_mc::WT
+    jump_times::JTT
+    jump_which::JWT
+    jump_times_which_idx::JTWIT
 end
 
-(f::LindbladJump)(integrator) = _lindblad_jump_affect!(integrator, f.c_ops, f.c_ops_herm)
+(f::LindbladJump)(integrator) = _lindblad_jump_affect!(
+    integrator,
+    f.c_ops,
+    f.c_ops_herm,
+    f.traj_rng,
+    f.random_n,
+    f.cache_mc,
+    f.weights_mc,
+    f.cumsum_weights_mc,
+    f.jump_times,
+    f.jump_which,
+    f.jump_times_which_idx,
+)
 
 ##
 
 function _save_func_mcsolve(integrator, e_ops, iter, expvals)
-    cache_mc = integrator.p.mcsolve_params.cache_mc
+    cache_mc = _mc_get_jump_callback(integrator).affect!.cache_mc
 
     copyto!(cache_mc, integrator.u)
     normalize!(cache_mc)
@@ -33,11 +63,32 @@ function _save_func_mcsolve(integrator, e_ops, iter, expvals)
     return nothing
 end
 
-function _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs)
+function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rng, kwargs)
     c_ops_data = get_data.(c_ops)
     c_ops_herm_data = map(op -> op' * op, c_ops_data)
 
-    _affect! = LindbladJump(c_ops_data, c_ops_herm_data)
+    cache_mc = similar(ψ0.data, T)
+    weights_mc = Vector{Float64}(undef, length(c_ops))
+    cumsum_weights_mc = similar(weights_mc)
+
+    jump_times = Vector{Float64}(undef, JUMP_TIMES_WHICH_INIT_SIZE)
+    jump_which = Vector{Int}(undef, JUMP_TIMES_WHICH_INIT_SIZE)
+    jump_times_which_idx = Ref(1)
+
+    random_n = Ref(rand(rng))
+
+    _affect! = LindbladJump(
+        c_ops_data,
+        c_ops_herm_data,
+        rng,
+        random_n,
+        cache_mc,
+        weights_mc,
+        cumsum_weights_mc,
+        jump_times,
+        jump_which,
+        jump_times_which_idx,
+    )
 
     if jump_callback isa DiscreteLindbladJumpCallback
         cb1 = DiscreteCallback(_mcsolve_discrete_condition, _affect!, save_positions = (false, false))
@@ -69,35 +120,38 @@ function _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs)
     end
 end
 
-function _lindblad_jump_affect!(integrator, c_ops, c_ops_herm)
-    params = integrator.p
-    cache_mc = params.mcsolve_params.cache_mc
-    weights_mc = params.mcsolve_params.weights_mc
-    cumsum_weights_mc = params.mcsolve_params.cumsum_weights_mc
-    random_n = params.mcsolve_params.random_n
-    jump_times = params.mcsolve_params.jump_times
-    jump_which = params.mcsolve_params.jump_which
-    jump_times_which_idx = params.mcsolve_params.jump_times_which_idx
-    traj_rng = params.mcsolve_params.traj_rng
+function _lindblad_jump_affect!(
+    integrator,
+    c_ops,
+    c_ops_herm,
+    traj_rng,
+    random_n,
+    cache_mc,
+    weights_mc,
+    cumsum_weights_mc,
+    jump_times,
+    jump_which,
+    jump_times_which_idx,
+)
     ψ = integrator.u
 
     @inbounds for i in eachindex(weights_mc)
         weights_mc[i] = real(dot(ψ, c_ops_herm[i], ψ))
     end
     cumsum!(cumsum_weights_mc, weights_mc)
-    r = rand(traj_rng) * sum(real, weights_mc)
-    collapse_idx = getindex(1:length(weights_mc), findfirst(x -> real(x) > r, cumsum_weights_mc))
+    r = rand(traj_rng) * sum(weights_mc)
+    collapse_idx = getindex(1:length(weights_mc), findfirst(>(r), cumsum_weights_mc))
     mul!(cache_mc, c_ops[collapse_idx], ψ)
     normalize!(cache_mc)
     copyto!(integrator.u, cache_mc)
 
-    @inbounds random_n[1] = rand(traj_rng)
+    random_n[] = rand(traj_rng)
 
-    @inbounds idx = round(Int, real(jump_times_which_idx[1]))
+    idx = jump_times_which_idx[]
     @inbounds jump_times[idx] = integrator.t
     @inbounds jump_which[idx] = collapse_idx
-    @inbounds jump_times_which_idx[1] += 1
-    @inbounds if real(jump_times_which_idx[1]) > length(jump_times)
+    jump_times_which_idx[] += 1
+    if jump_times_which_idx[] > length(jump_times)
         resize!(jump_times, length(jump_times) + JUMP_TIMES_WHICH_INIT_SIZE)
         resize!(jump_which, length(jump_which) + JUMP_TIMES_WHICH_INIT_SIZE)
     end
@@ -106,20 +160,71 @@ function _lindblad_jump_affect!(integrator, c_ops, c_ops_herm)
 end
 
 _mcsolve_continuous_condition(u, t, integrator) =
-    @inbounds real(integrator.p.mcsolve_params.random_n[1]) - real(dot(u, u))
+    @inbounds _mc_get_jump_callback(integrator).affect!.random_n[] - real(dot(u, u))
 
 _mcsolve_discrete_condition(u, t, integrator) =
-    @inbounds real(dot(u, u)) < real(integrator.p.mcsolve_params.random_n[1])
+    @inbounds real(dot(u, u)) < _mc_get_jump_callback(integrator).affect!.random_n[]
+
+##
+
+#=
+    _mc_get_save_callback
+
+Return the Callback that is responsible for saving the expectation values of the system.
+=#
+function _mc_get_save_callback(sol::AbstractODESolution)
+    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
+    return _mc_get_save_callback(kwargs.callback) # There is always the Jump callback
+end
+_mc_get_save_callback(integrator::AbstractODEIntegrator) = _mc_get_save_callback(integrator.opts.callback)
+function _mc_get_save_callback(cb::CallbackSet)
+    cbs_discrete = cb.discrete_callbacks
+
+    if length(cbs_discrete) > 0
+        idx = _mcsolve_has_continuous_jump(cb) ? 1 : 2
+        _cb = cb.discrete_callbacks[idx]
+        return _mc_get_save_callback(_cb)
+    else
+        return nothing
+    end
+end
+_mc_get_save_callback(cb::DiscreteCallback) =
+    if cb.affect! isa SaveFuncMCSolve
+        return cb
+    else
+        return nothing
+    end
+_mc_get_save_callback(cb::ContinuousCallback) = nothing
+
+##
+
+function _mc_get_jump_callback(sol::AbstractODESolution)
+    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
+    return _mc_get_jump_callback(kwargs.callback) # There is always the Jump callback
+end
+_mc_get_jump_callback(integrator::AbstractODEIntegrator) = _mc_get_jump_callback(integrator.opts.callback)
+_mc_get_jump_callback(cb::CallbackSet) =
+    if _mcsolve_has_continuous_jump(cb)
+        return cb.continuous_callbacks[1]
+    else
+        return cb.discrete_callbacks[1]
+    end
+_mc_get_jump_callback(cb::ContinuousCallback) = cb
+_mc_get_jump_callback(cb::DiscreteCallback) = cb
+
+##
 
 #=
 With this function we extract the c_ops and c_ops_herm from the LindbladJump `affect!` function of the callback of the integrator.
 This callback can be a DiscreteLindbladJumpCallback or a ContinuousLindbladJumpCallback.
 =#
 function _mcsolve_get_c_ops(integrator::AbstractODEIntegrator)
-    cb_set = integrator.opts.callback # This is supposed to be a CallbackSet
-    (cb_set isa CallbackSet) || throw(ArgumentError("The callback must be a CallbackSet."))
-    cb = isempty(cb_set.continuous_callbacks) ? cb_set.discrete_callback[1] : cb_set.continuous_callbacks[1]
-    return cb.affect!.c_ops, cb.affect!.c_ops_herm
+    cb = _mc_get_jump_callback(integrator)
+    if cb isa Nothing
+        return nothing
+    else
+        return cb.affect!.c_ops, cb.affect!.c_ops_herm
+    end
 end
 
 #=
@@ -127,68 +232,109 @@ With this function we extract the e_ops from the SaveFuncMCSolve `affect!` funct
 This callback can only be a PresetTimeCallback (DiscreteCallback).
 =#
 function _mcsolve_get_e_ops(integrator::AbstractODEIntegrator)
-    cb_set = integrator.opts.callback # This is supposed to be a CallbackSet
-    (cb_set isa CallbackSet) || throw(ArgumentError("The callback must be a CallbackSet."))
-    cb = length(cb_set.continuous_callbacks) > 0 ? cb_set.discrete_callbacks[1] : cb_set.discrete_callbacks[2]
-    return cb.affect!.e_ops
+    cb = _mc_get_save_callback(integrator)
+    if cb isa Nothing
+        return nothing
+    else
+        return cb.affect!.e_ops
+    end
 end
 
 function _mcsolve_get_expvals(sol::AbstractODESolution)
-    cb = NamedTuple(sol.prob.kwargs).callback
-    if _mcsolve_has_discrete_callbacks(cb)
-        return _mcsolve_get_expvals(cb)
-    else
+    cb = _mc_get_save_callback(sol)
+    if cb isa Nothing
         return nothing
-    end
-end
-function _mcsolve_get_expvals(cb::CallbackSet)
-    idx = _mcsolve_has_continuous_jump(cb) ? 1 : 2
-    _cb = cb.discrete_callbacks[idx]
-    return _mcsolve_get_expvals(_cb)
-end
-_mcsolve_get_expvals(cb::DiscreteCallback) =
-    if cb.affect! isa SaveFuncMCSolve
-        return cb.affect!.expvals
     else
-        nothing
+        return cb.affect!.expvals
     end
-_mcsolve_get_expvals(cb::ContinuousCallback) = nothing
+end
 
 #=
-    _mcsolve_callbacks_new_iter_expvals(prob, tlist)
+    _mcsolve_initialize_callbacks(prob, tlist)
 
 Return the same callbacks of the `prob`, but with the `iter` variable reinitialized to 1 and the `expvals` variable reinitialized to a new matrix.
 =#
-function _mcsolve_callbacks_new_iter_expvals(prob, tlist)
+function _mcsolve_initialize_callbacks(prob, tlist, traj_rng)
     cb = prob.kwargs[:callback]
-    return _mcsolve_callbacks_new_iter_expvals(cb, tlist)
+    return _mcsolve_initialize_callbacks(cb, tlist, traj_rng)
 end
-function _mcsolve_callbacks_new_iter_expvals(cb::CallbackSet, tlist)
+function _mcsolve_initialize_callbacks(cb::CallbackSet, tlist, traj_rng)
     cb_continuous = cb.continuous_callbacks
     cb_discrete = cb.discrete_callbacks
 
     if _mcsolve_has_continuous_jump(cb)
         idx = 1
-        e_ops = cb_discrete[idx].affect!.e_ops
-        expvals = similar(cb_discrete[idx].affect!.expvals)
-        _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
-        cb_save = PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
-        return CallbackSet(cb_continuous..., cb_save, cb_discrete[2:end]...)
+        if cb_discrete[idx].affect! isa SaveFuncMCSolve
+            e_ops = cb_discrete[idx].affect!.e_ops
+            expvals = similar(cb_discrete[idx].affect!.expvals)
+            _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
+            cb_save = (PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false)),)
+        else
+            cb_save = ()
+        end
+
+        _jump_affect! = _similar_affect!(cb_continuous[1].affect!, traj_rng)
+        cb_jump = _modify_field(cb_continuous[1], :affect!, _jump_affect!)
+
+        return CallbackSet((cb_jump, cb_continuous[2:end]...), (cb_save..., cb_discrete[2:end]...))
     else
         idx = 2
-        e_ops = cb_discrete[idx].affect!.e_ops
-        expvals = similar(cb_discrete[idx].affect!.expvals)
-        _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
-        cb_save = PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
-        return CallbackSet(cb_continuous..., cb_discrete[1], cb_save, cb_discrete[3:end]...)
+        if cb_discrete[idx].affect! isa SaveFuncMCSolve
+            e_ops = cb_discrete[idx].affect!.e_ops
+            expvals = similar(cb_discrete[idx].affect!.expvals)
+            _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
+            cb_save = (PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false)),)
+        else
+            cb_save = ()
+        end
+
+        _jump_affect! = _similar_affect!(cb_discrete[1].affect!, traj_rng)
+        cb_jump = _modify_field(cb_discrete[1], :affect!, _jump_affect!)
+
+        return CallbackSet(cb_continuous, (cb_jump, cb_save..., cb_discrete[3:end]...))
     end
 end
-_mcsolve_callbacks_new_iter_expvals(cb::ContinuousCallback, tlist) = cb # It is only the continuous LindbladJump callback  
-_mcsolve_callbacks_new_iter_expvals(cb::DiscreteCallback, tlist) = cb # It is only the discrete LindbladJump callback
+# _mcsolve_initialize_callbacks(cb::ContinuousCallback, tlist) = cb # It is only the continuous LindbladJump callback  
+# _mcsolve_initialize_callbacks(cb::DiscreteCallback, tlist) = cb # It is only the discrete LindbladJump callback
+function _mcsolve_initialize_callbacks(cb::CBT, tlist, traj_rng) where {CBT<:Union{ContinuousCallback,DiscreteCallback}}
+    _jump_affect! = _similar_affect!(cb.affect!, traj_rng)
+    return _modify_field(cb, :affect!, _jump_affect!)
+end
 
-_mcsolve_has_discrete_callbacks(cb::CallbackSet) = length(cb.discrete_callbacks) > 0
-_mcsolve_has_discrete_callbacks(cb::ContinuousCallback) = false
-_mcsolve_has_discrete_callbacks(cb::DiscreteCallback) = true
+#=
+    _similar_affect!
+
+Return a new LindbladJump with the same fields as the input LindbladJump but with new memory.
+=#
+function _similar_affect!(affect::LindbladJump, traj_rng)
+    random_n = Ref(rand(traj_rng))
+    cache_mc = similar(affect.cache_mc)
+    weights_mc = similar(affect.weights_mc)
+    cumsum_weights_mc = similar(affect.cumsum_weights_mc)
+    jump_times = similar(affect.jump_times)
+    jump_which = similar(affect.jump_which)
+    jump_times_which_idx = Ref(1)
+
+    return LindbladJump(
+        affect.c_ops,
+        affect.c_ops_herm,
+        traj_rng,
+        random_n,
+        cache_mc,
+        weights_mc,
+        cumsum_weights_mc,
+        jump_times,
+        jump_which,
+        jump_times_which_idx,
+    )
+end
+
+function _modify_field(obj::T, field_name::Symbol, field_val) where {T}
+    # Create a NamedTuple of fields, deepcopying only the selected ones
+    fields = (name != field_name ? (getfield(obj, name)) : field_val for name in fieldnames(T))
+    # Reconstruct the struct with the updated fields
+    return Base.typename(T).wrapper(fields...)
+end
 
 _mcsolve_has_continuous_jump(cb::CallbackSet) =
     (length(cb.continuous_callbacks) > 0) && (cb.continuous_callbacks[1].affect! isa LindbladJump)

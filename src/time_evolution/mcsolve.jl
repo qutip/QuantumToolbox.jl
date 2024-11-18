@@ -2,31 +2,14 @@ export mcsolveProblem, mcsolveEnsembleProblem, mcsolve
 export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
 
 function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds, tlist)
-    params = prob.p
-
     seed = seeds[i]
     traj_rng = typeof(global_rng)()
     seed!(traj_rng, seed)
 
-    T = eltype(prob.u0)
-
-    mcsolve_params = (
-        traj_rng = traj_rng,
-        random_n = T[rand(traj_rng)],
-        cache_mc = similar(params.mcsolve_params.cache_mc),
-        weights_mc = similar(params.mcsolve_params.weights_mc),
-        cumsum_weights_mc = similar(params.mcsolve_params.weights_mc),
-        jump_times = similar(params.mcsolve_params.jump_times),
-        jump_which = similar(params.mcsolve_params.jump_which),
-        jump_times_which_idx = T[1],
-    )
-
-    p = TimeEvolutionParameters(params.params, mcsolve_params)
-
     f = deepcopy(prob.f.f)
-    cb = _mcsolve_callbacks_new_iter_expvals(prob, tlist)
+    cb = _mcsolve_initialize_callbacks(prob, tlist, traj_rng)
 
-    return remake(prob, f = f, p = p, callback = cb)
+    return remake(prob, f = f, callback = cb)
 end
 
 function _mcsolve_dispatch_prob_func(rng, ntraj, tlist)
@@ -36,9 +19,9 @@ end
 
 # Standard output function
 function _mcsolve_output_func(sol, i)
-    @inbounds idx = round(Int, real(sol.prob.p.mcsolve_params.jump_times_which_idx[1]))
-    resize!(sol.prob.p.mcsolve_params.jump_times, idx - 1)
-    resize!(sol.prob.p.mcsolve_params.jump_which, idx - 1)
+    idx = _mc_get_jump_callback(sol).affect!.jump_times_which_idx[]
+    resize!(_mc_get_jump_callback(sol).affect!.jump_times, idx - 1)
+    resize!(_mc_get_jump_callback(sol).affect!.jump_which, idx - 1)
     return (sol, false)
 end
 
@@ -196,32 +179,9 @@ function mcsolveProblem(
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = saveat, progress_bar = Val(false))
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_mcsolve_kwargs(e_ops, tlist, c_ops, jump_callback, kwargs2)
+    kwargs3 = _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rng, kwargs2)
 
-    cache_mc = similar(ψ0.data, T)
-    weights_mc = similar(ψ0.data, T, length(c_ops)) # It should be a Float64 Vector, but we have to keep the same type for all the parameters due to SciMLStructures.jl
-    cumsum_weights_mc = similar(weights_mc)
-
-    jump_times = similar(ψ0.data, T, JUMP_TIMES_WHICH_INIT_SIZE)
-    jump_which = similar(ψ0.data, T, JUMP_TIMES_WHICH_INIT_SIZE)
-    jump_times_which_idx = T[1] # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl
-
-    random_n = similar(ψ0.data, T, 1) # We could use a Ref, but we have to keep the same type for all the parameters due to SciMLStructures.jl.
-    random_n[1] = rand(rng)
-
-    mcsolve_params = (
-        traj_rng = rng,
-        random_n = random_n,
-        cache_mc = cache_mc,
-        weights_mc = weights_mc,
-        cumsum_weights_mc = cumsum_weights_mc,
-        jump_times = jump_times,
-        jump_which = jump_which,
-        jump_times_which_idx = jump_times_which_idx,
-    )
-    p = TimeEvolutionParameters(params, mcsolve_params)
-
-    return sesolveProblem(H_eff_evo, ψ0, tlist; params = p, kwargs3...)
+    return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs3...)
 end
 
 @doc raw"""
@@ -519,8 +479,8 @@ function mcsolve(
     _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _mcsolve_get_expvals(sol[:, i]), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all)
     states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
-    jump_times = map(i -> real.(sol[:, i].prob.p.mcsolve_params.jump_times), eachindex(sol))
-    jump_which = map(i -> round.(Int, sol[:, i].prob.p.mcsolve_params.jump_which), eachindex(sol))
+    jump_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.jump_times, eachindex(sol))
+    jump_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.jump_which, eachindex(sol))
 
     expvals = _expvals_sol_1 isa Nothing ? nothing : dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
 
@@ -534,7 +494,7 @@ function mcsolve(
         jump_which,
         sol.converged,
         _sol_1.alg,
-        _sol_1.prob.kwargs[:abstol],
-        _sol_1.prob.kwargs[:reltol],
+        NamedTuple(_sol_1.prob.kwargs).abstol,
+        NamedTuple(_sol_1.prob.kwargs).reltol,
     )
 end
