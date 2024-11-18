@@ -50,7 +50,6 @@ import SciMLOperators:
     IdentityOperator,
     update_coefficients!,
     concretize
-import SciMLStructures: isscimlstructure, ismutablescimlstructure, hasportion, canonicalize, replace, replace!, Tunable
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState

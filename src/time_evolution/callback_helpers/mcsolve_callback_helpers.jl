@@ -294,8 +294,6 @@ function _mcsolve_initialize_callbacks(cb::CallbackSet, tlist, traj_rng)
         return CallbackSet(cb_continuous, (cb_jump, cb_save..., cb_discrete[3:end]...))
     end
 end
-# _mcsolve_initialize_callbacks(cb::ContinuousCallback, tlist) = cb # It is only the continuous LindbladJump callback  
-# _mcsolve_initialize_callbacks(cb::DiscreteCallback, tlist) = cb # It is only the discrete LindbladJump callback
 function _mcsolve_initialize_callbacks(cb::CBT, tlist, traj_rng) where {CBT<:Union{ContinuousCallback,DiscreteCallback}}
     _jump_affect! = _similar_affect!(cb.affect!, traj_rng)
     return _modify_field(cb, :affect!, _jump_affect!)
@@ -329,7 +327,7 @@ function _similar_affect!(affect::LindbladJump, traj_rng)
     )
 end
 
-function _modify_field(obj::T, field_name::Symbol, field_val) where {T}
+Base.@constprop :aggressive function _modify_field(obj::T, field_name::Symbol, field_val) where {T}
     # Create a NamedTuple of fields, deepcopying only the selected ones
     fields = (name != field_name ? (getfield(obj, name)) : field_val for name in fieldnames(T))
     # Reconstruct the struct with the updated fields
