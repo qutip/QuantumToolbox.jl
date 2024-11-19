@@ -66,7 +66,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 - **Quantum State and Operator Manipulation:** Easily handle quantum states and operators with a rich set of tools, with the same functionalities as `QuTiP`.
 - **Dynamical Evolution:** Advanced solvers for time evolution of quantum systems, thanks to the powerful [`DifferentialEquations.jl`](https://github.com/SciML/DifferentialEquations.jl) package.
 - **GPU Computing:** Leverage GPU resources for high-performance computing. Simulate quantum dynamics directly on the GPU with the same syntax as the CPU case.
-- **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
+- **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case. See [this tutorial](https://qutip.org/QuantumToolbox.jl/stable/tutorials/cluster) for more information.
 - **Easy Extension:** Easily extend the package, taking advantage of the `Julia` language features, like multiple dispatch and metaprogramming.
 
 ## Installation
