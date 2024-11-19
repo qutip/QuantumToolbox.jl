@@ -165,6 +165,12 @@ e_ops = [a_gpu' * a_gpu]
 sol = mesolve(H_gpu, ψ0_gpu, tlist, c_ops, e_ops = e_ops)
 ```
 
+## Performance comparison with other packages
+
+Here we provide a brief performance comparison between `QuantumToolbox.jl` and other popular quantum physics simulation packages, such as [`QuTiP`](https://github.com/qutip/qutip) (Python), [`dynamiqs`](https://github.com/dynamiqs/dynamiqs) (Python - JAX) and [`QuantumOptics.jl`](https://github.com/qojulia/QuantumOptics.jl) (Julia). We clearly show that `QuantumToolbox.jl` is the fastest package among the four. A detailed code is available [here](https://albertomercurio.github.io/QuantumToolbox-Benchmarks/package_comparison.html).
+
+![](https://raw.githubusercontent.com/albertomercurio/QuantumToolbox-Benchmarks/refs/heads/gh-pages/package_comparison_files/figure-html/cell-12-output-1.svg)
+
 ## Contributing to QuantumToolbox.jl
 
 You are most welcome to contribute to `QuantumToolbox.jl` development by forking this repository and sending pull requests (PRs), or filing bug reports at the issues page. You can also help out with users' questions, or discuss proposed changes in the [QuTiP discussion group](https://groups.google.com/g/qutip).
