@@ -6,7 +6,7 @@ Here we compare the performance of [`QuantumToolbox.jl`](https://github.com/quti
 - [`dynamiqs`](https://github.com/dynamiqs/dynamiqs) (Python - JAX)
 - [`QuantumOptics.jl`](https://github.com/qojulia/QuantumOptics.jl) (Julia)
 
-To allow reproducibility, this page is generated with [`Literate.jl`](https://github.com/fredrikekre/Literate.jl) based on this source file: [`package_comparison.jl`](@__REPO_ROOT_URL__/benchmarks/package_comparison/package_comparison.jl). Moreover, to keep the code clean, we use the [`PythonCall.jl`](https://github.com/JuliaPy/PythonCall.jl) package to call Python code from Julia. We tested that the overhead of calling Python code from Julia is negligible for the purpose of this benchmark.
+To allow reproducibility, this page is generated with [`Literate.jl`](https://github.com/fredrikekre/Literate.jl) based on [this envitonment](https://github.com/qutip/QuantumToolbox.jl/blob/main/benchmarks/package_comparison). Moreover, to keep the code clean, we use the [`PythonCall.jl`](https://github.com/JuliaPy/PythonCall.jl) package to call Python code from Julia. We tested that the overhead of calling Python code from Julia is negligible for the purpose of this benchmark.
 
 ## Importing the Required Packages
 =#
@@ -227,11 +227,13 @@ elements = [PolyElement(polycolor = colors[i]) for i in 1:length(labels)]
 
 axislegend(ax, elements, labels, position = :lt)
 
-# save("package_comparison.png", fig)
+save("package_comparison.png", fig);
 
-fig
+## fig
 
 #=
+![](package_comparison.png)
+
 ---
 
 ## System Information

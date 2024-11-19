@@ -169,7 +169,7 @@ sol = mesolve(H_gpu, ψ0_gpu, tlist, c_ops, e_ops = e_ops)
 
 Here we provide a brief performance comparison between `QuantumToolbox.jl` and other popular quantum physics simulation packages, such as [`QuTiP`](https://github.com/qutip/qutip) (Python), [`dynamiqs`](https://github.com/dynamiqs/dynamiqs) (Python - JAX) and [`QuantumOptics.jl`](https://github.com/qojulia/QuantumOptics.jl) (Julia). We clearly show that `QuantumToolbox.jl` is the fastest package among the four. A detailed code is available [here](https://qutip.org/QuantumToolbox.jl/stable/resources/package_comparison).
 
-![](benchmarks/package_comparison/package_comparison.png)
+![](docs/src/resources/package_comparison.png)
 
 ## Contributing to QuantumToolbox.jl
 
