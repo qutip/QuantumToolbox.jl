@@ -62,6 +62,7 @@ const PAGES = [
         ],
         "Miscellaneous Tutorials" => [
             "tutorials/logo.md",
+            "tutorials/cluster.md",
         ],
     ],
     "Resources" => [

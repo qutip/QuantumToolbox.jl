@@ -39,7 +39,7 @@ features:
   - icon: <img width="64" height="64" src="https://img.icons8.com/?size=100&id=1W4Bkj363ov0&format=png&color=000000" />
     title: Distributed Computing
     details: Distribute the computation over multiple nodes (e.g., a cluster). Simulate hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
-    link: /users_guide/time_evolution/mcsolve
+    link: /tutorials/cluster
 ---
 ```
 
