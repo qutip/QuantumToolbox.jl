@@ -181,6 +181,7 @@ qeye
 ## [Time evolution](@id doc-API:Time-evolution)
 
 ```@docs
+TimeEvolutionProblem
 TimeEvolutionSol
 TimeEvolutionMCSol
 TimeEvolutionSSESol

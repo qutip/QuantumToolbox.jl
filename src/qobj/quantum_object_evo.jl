@@ -269,7 +269,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
     quote
         dims = tuple($(dims_expr...))
 
-        length(unique(dims)) == 1 || throw(ArgumentError("The dimensions of the operators must be the same."))
+        allequal(dims) || throw(ArgumentError("The dimensions of the operators must be the same."))
 
         data_expr_const = $qobj_expr_const isa Integer ? $qobj_expr_const : _make_SciMLOperator($qobj_expr_const, α)
 

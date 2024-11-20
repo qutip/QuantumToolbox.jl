@@ -66,7 +66,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 - **Quantum State and Operator Manipulation:** Easily handle quantum states and operators with a rich set of tools, with the same functionalities as `QuTiP`.
 - **Dynamical Evolution:** Advanced solvers for time evolution of quantum systems, thanks to the powerful [`DifferentialEquations.jl`](https://github.com/SciML/DifferentialEquations.jl) package.
 - **GPU Computing:** Leverage GPU resources for high-performance computing. Simulate quantum dynamics directly on the GPU with the same syntax as the CPU case.
-- **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
+- **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case. See [this tutorial](https://qutip.org/QuantumToolbox.jl/stable/tutorials/cluster) for more information.
 - **Easy Extension:** Easily extend the package, taking advantage of the `Julia` language features, like multiple dispatch and metaprogramming.
 
 ## Installation
@@ -164,6 +164,12 @@ e_ops = [a_gpu' * a_gpu]
 
 sol = mesolve(H_gpu, ψ0_gpu, tlist, c_ops, e_ops = e_ops)
 ```
+
+## Performance comparison with other packages
+
+Here we provide a brief performance comparison between `QuantumToolbox.jl` and other popular quantum physics simulation packages, such as [`QuTiP`](https://github.com/qutip/qutip) (Python), [`dynamiqs`](https://github.com/dynamiqs/dynamiqs) (Python - JAX) and [`QuantumOptics.jl`](https://github.com/qojulia/QuantumOptics.jl) (Julia). We clearly show that `QuantumToolbox.jl` is the fastest package among the four. A detailed code is available [here](https://albertomercurio.github.io/QuantumToolbox-Benchmarks/package_comparison.html).
+
+![](https://raw.githubusercontent.com/albertomercurio/QuantumToolbox-Benchmarks/refs/heads/gh-pages/package_comparison_files/figure-html/cell-12-output-1.svg)
 
 ## Contributing to QuantumToolbox.jl
 
