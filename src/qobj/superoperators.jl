@@ -24,7 +24,7 @@ end
 ## the rest of the SciMLOperators will just use lazy tensor (and prompt a warning)
 _spre(A::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spre(A.A, Id))
 _spre(A::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(A.λ, _spre(A.L, Id))
-_spre(A::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _spre(op, Id), +, A.ops)
+_spre(A::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _spre(op, Id), A.ops))
 function _spre(A::AbstractSciMLOperator, Id::AbstractMatrix)
     _lazy_tensor_warning("spre", A)
     return kron(Id, A)
@@ -32,7 +32,7 @@ end
 
 _spost(B::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spost(B.A, Id))
 _spost(B::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(B.λ, _spost(B.L, Id))
-_spost(B::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _spost(op, Id), +, B.ops)
+_spost(B::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _spost(op, Id), B.ops))
 function _spost(B::AbstractSciMLOperator, Id::AbstractMatrix)
     _lazy_tensor_warning("spost", B)
     return kron(transpose(B), Id)
@@ -43,7 +43,7 @@ _liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,Abstract
     -1im * (_spre(H, Id) - _spost(H, Id))
 _liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
 _liouvillian(H::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(H.λ, _liouvillian(H.L, Id))
-_liouvillian(H::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _liouvillian(op, Id), +, H.ops)
+_liouvillian(H::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _liouvillian(op, Id), H.ops))
 
 # intrinsic lindblad_dissipator
 function _lindblad_dissipator(O::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
@@ -166,16 +166,18 @@ function liouvillian(
 ) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
-        # sum all the Qobj first
-        c_ops_ti = filter(op -> isa(op, QuantumObject), c_ops)
+        c_ops_tuple = Tuple(c_ops) # we must convert it to a tuple, so filter below also return tuple
+
+        # sum all the (time-independent) c_ops first
+        c_ops_ti = filter(op -> isa(op, QuantumObject), c_ops_tuple)
         if !isempty(c_ops_ti)
             L += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_ti)
         end
 
         # sum rest of the QobjEvo together
-        c_ops_td = filter(op -> isa(op, QuantumObjectEvolution), c_ops)
+        c_ops_td = filter(op -> isa(op, QuantumObjectEvolution), c_ops_tuple)
         if !isempty(c_ops_td)
-            L += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_td)
+            L += AddedOperator(map(op -> lindblad_dissipator(op, Id_cache), c_ops_td)) # it becomes AddedOperator at the end anyway
         end
     end
     return L
