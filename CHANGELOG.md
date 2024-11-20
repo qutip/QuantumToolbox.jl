@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Change the parameters structure of `sesolve`, `mesolve` and `mcsolve` functions to possibly support automatic differentiation. ([#311])
+- Fix type instability and reduce extra memory allocation in `liouvillian`. ([#315], [#318])
 
 
 ## [v0.21.5] (2024-11-15)
@@ -27,3 +28,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#306]: https://github.com/qutip/QuantumToolbox.jl/issues/306
 [#309]: https://github.com/qutip/QuantumToolbox.jl/issues/309
 [#311]: https://github.com/qutip/QuantumToolbox.jl/issues/311
+[#315]: https://github.com/qutip/QuantumToolbox.jl/issues/315
+[#318]: https://github.com/qutip/QuantumToolbox.jl/issues/318

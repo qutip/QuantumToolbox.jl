@@ -213,7 +213,15 @@
         @test_throws ArgumentError cache_operator(L_td, ψ)
 
         @testset "Type Inference" begin
-            @inferred liouvillian(H_td, (a, QobjEvo(a', coef1)))
+            # we use destroy and create here because they somehow causes type instability before
+            H_td2 = H_td + QobjEvo(destroy(N) + create(N), coef3)
+            c_ops1 = (destroy(N), create(N))
+            c_ops2 = (destroy(N), QobjEvo(create(N), coef1))
+
+            @inferred liouvillian(H_td, c_ops1)
+            @inferred liouvillian(H_td, c_ops2)
+            @inferred liouvillian(H_td2, c_ops1)
+            @inferred liouvillian(H_td2, c_ops2)
         end
     end
 end
