@@ -5,7 +5,7 @@ All notable changes to [`QuantumToolbox.jl`](https://github.com/qutip/QuantumToo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [v0.22.0] (2024-11-20)
 
 - Change the parameters structure of `sesolve`, `mesolve` and `mcsolve` functions to possibly support automatic differentiation. ([#311])
 - Fix type instability and reduce extra memory allocation in `liouvillian`. ([#315], [#318])
@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [v0.21.4]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.21.4
 [v0.21.5]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.21.5
+[v0.22.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.22.0
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#306]: https://github.com/qutip/QuantumToolbox.jl/issues/306
 [#309]: https://github.com/qutip/QuantumToolbox.jl/issues/309
