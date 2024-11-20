@@ -215,8 +215,8 @@
         @testset "Type Inference" begin
             H_td2 = H_td + QobjEvo(a + a', coef3)
 
-            # we use destroy and create here because it somehow might cause type instability
-            c_ops1 = (destroy(N), create(N)) 
+            # we use destroy and create here because they somehow causes type instability before
+            c_ops1 = (destroy(N), create(N))
             c_ops2 = (destroy(N), QobjEvo(create(N), coef1))
 
             @inferred liouvillian(H_td, c_ops1)
