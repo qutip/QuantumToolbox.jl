@@ -213,9 +213,8 @@
         @test_throws ArgumentError cache_operator(L_td, ψ)
 
         @testset "Type Inference" begin
-            H_td2 = H_td + QobjEvo(a + a', coef3)
-
             # we use destroy and create here because they somehow causes type instability before
+            H_td2 = H_td + QobjEvo(destroy(N) + create(N), coef3)
             c_ops1 = (destroy(N), create(N))
             c_ops2 = (destroy(N), QobjEvo(create(N), coef1))
 
