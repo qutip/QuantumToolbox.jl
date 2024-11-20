@@ -213,7 +213,13 @@
         @test_throws ArgumentError cache_operator(L_td, ψ)
 
         @testset "Type Inference" begin
-            @inferred liouvillian(H_td, (a, QobjEvo(a', coef1)))
+            H_td2 = H_td + QobjEvo(a + a', coef3)
+            c_ops1 = (a, a')
+            c_ops2 = (a, QobjEvo(a', coef1))
+            @inferred liouvillian(H_td, c_ops1)
+            @inferred liouvillian(H_td, c_ops2)
+            @inferred liouvillian(H_td2, c_ops1)
+            @inferred liouvillian(H_td2, c_ops2)
         end
     end
 end
