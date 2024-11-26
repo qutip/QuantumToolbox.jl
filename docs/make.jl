@@ -51,7 +51,7 @@ const PAGES = [
         ],
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
         "Symmetries" => [],
-        "Two-time correlation functions" => "two_time_corr_func.md",
+        "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
         "Extensions" => [
             "users_guide/extensions/cuda.md",
         ],
