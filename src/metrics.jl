@@ -8,7 +8,7 @@ export entropy_vn, entanglement, tracedist, fidelity
     entropy_vn(ρ::QuantumObject; base::Int=0, tol::Real=1e-15)
 
 Calculates the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neumann_entropy)
-``S = - \Tr \left[ \hat{\rho} \log \left( \hat{\rho} \right) \right]`` where ``\hat{\rho}``
+``S = - \textrm{Tr} \left[ \hat{\rho} \log \left( \hat{\rho} \right) \right]`` where ``\hat{\rho}``
 is the density matrix of the system.
 
 The `base` parameter specifies the base of the logarithm to use, and when using the default value 0,
