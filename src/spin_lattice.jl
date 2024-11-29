@@ -1,4 +1,4 @@
-export Lattice, SingleSiteOperator, DissipativeIsing
+export Lattice, MultiSiteOperator, DissipativeIsing
 
 @doc raw"""
     Lattice
@@ -15,20 +15,60 @@ end
 
 #Definition of many-body operators
 @doc raw"""
-    SingleSiteOperator(O::QuantumObject, i::Integer, N::Integer)
+    MultiSiteOperator(dims::Union{AbstractVector, Tuple}, pairs::Pair{<:Integer,<:QuantumObject}...)
 
-A Julia constructor for a single-site operator. `s` is the operator acting on the site. `i` is the site index, and `N` is the total number of sites. The function returns a `QuantumObject` given by ``\\mathbb{1}^{\\otimes (i - 1)} \\otimes \hat{O} \\otimes \\mathbb{1}^{\\otimes (N - i)}``.
+A Julia function for generating a multi-site operator ``\\hat{O} = \\hat{O}_i \\hat{O}_j \\cdots \\hat{O}_k``. The function takes a vector of dimensions `dims` and a list of pairs `pairs` where the first element of the pair is the site index and the second element is the operator acting on that site.
+
+# Arguments
+- `dims::Union{AbstractVector, Tuple}`: A vector of dimensions of the lattice.
+- `pairs::Pair{<:Integer,<:QuantumObject}...`: A list of pairs where the first element of the pair is the site index and the second element is the operator acting on that site.
+    
+# Returns
+`QuantumObject`: A `QuantumObject` representing the multi-site operator.
+
+# Example
+```jldoctest
+julia> op = MultiSiteOperator(Val(8), 5=>sigmax(), 7=>sigmaz());
+
+julia> op.dims
+8-element SVector{8, Int64} with indices SOneTo(8):
+ 2
+ 2
+ 2
+ 2
+ 2
+ 2
+ 2
+ 2
+```
 """
-function SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, i::Integer, N::Integer) where {DT}
-    T = O.dims[1]
-    return QuantumObject(kron(eye(T^(i - 1)), O, eye(T^(N - i))); dims = ntuple(j -> 2, Val(N)))
+function MultiSiteOperator(dims::Union{AbstractVector,Tuple}, pairs::Pair{<:Integer,<:QuantumObject}...)
+    sites_unsorted = collect(first.(pairs))
+    idxs = sortperm(sites_unsorted)
+    _sites = sites_unsorted[idxs]
+    _ops = collect(last.(pairs))[idxs]
+    _dims = collect(dims) # Use this instead of a Tuple, to avoid type instability when indexing on a slice
+
+    sites, ops = _get_unique_sites_ops(_sites, _ops)
+
+    collect(dims)[sites] == [op.dims[1] for op in ops] || throw(ArgumentError("The dimensions of the operators do not match the dimensions of the lattice."))
+
+    data = kron(I(prod(_dims[1:sites[1]-1])), ops[1].data)
+    for i in 2:length(sites)
+        data = kron(data, I(prod(_dims[sites[i-1]+1:sites[i]-1])), ops[i].data)
+    end
+    data = kron(data, I(prod(_dims[sites[end]+1:end])))
+
+    return QuantumObject(data; type = Operator, dims = dims)
 end
-SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, i::Integer, latt::Lattice) where {DT} =
-    SingleSiteOperator(O, i, latt.N)
-SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, row::Integer, col::Integer, latt::Lattice) where {DT} =
-    SingleSiteOperator(O, latt.idx[row, col], latt.N)
-SingleSiteOperator(O::QuantumObject{DT,OperatorQuantumObject}, x::CartesianIndex, latt::Lattice) where {DT} =
-    SingleSiteOperator(O, latt.idx[x], latt.N)
+function MultiSiteOperator(N::Union{Integer,Val}, pairs::Pair{<:Integer,<:QuantumObject}...)
+    dims = ntuple(j -> 2, makeVal(N))
+
+    return MultiSiteOperator(dims, pairs...)
+end
+function MultiSiteOperator(latt::Lattice, pairs::Pair{<:Integer,<:QuantumObject}...)
+    return MultiSiteOperator(makeVal(latt.N), pairs...)
+end
 
 #Definition of nearest-neighbour sites on lattice
 periodic_boundary_conditions(i::Integer, N::Integer) = 1 + (i - 1 + N) % N
@@ -87,7 +127,7 @@ function DissipativeIsing(
     boundary_condition::Union{Symbol,Val} = Val(:periodic_bc),
     order::Integer = 1,
 )
-    S = [SingleSiteOperator(sigmam(), i, latt) for i in 1:latt.N]
+    S = [MultiSiteOperator(latt, i => sigmam()) for i in 1:latt.N]
     c_ops = sqrt(γ) .* S
 
     op_sum(S, i::CartesianIndex) =
@@ -95,19 +135,26 @@ function DissipativeIsing(
 
     H = 0
     if (Jx != 0 || hx != 0)
-        S = [SingleSiteOperator(sigmax(), i, latt) for i in 1:latt.N]
+        S = [MultiSiteOperator(latt, i => sigmax()) for i in 1:latt.N]
         H += Jx / 2 * mapreduce(i -> op_sum(S, i), +, latt.car_idx) #/2 because we are double counting
         H += hx * sum(S)
     end
     if (Jy != 0 || hy != 0)
-        S = [SingleSiteOperator(sigmay(), i, latt) for i in 1:latt.N]
+        S = [MultiSiteOperator(latt, i => sigmay()) for i in 1:latt.N]
         H += Jy / 2 * mapreduce(i -> op_sum(S, i), +, latt.car_idx)
         H += hy * sum(S)
     end
     if (Jz != 0 || hz != 0)
-        S = [SingleSiteOperator(sigmaz(), i, latt) for i in 1:latt.N]
+        S = [MultiSiteOperator(latt, i => sigmaz()) for i in 1:latt.N]
         H += Jz / 2 * mapreduce(i -> op_sum(S, i), +, latt.car_idx)
         H += hz * sum(S)
     end
     return H, c_ops
+end
+
+function _get_unique_sites_ops(sites, ops)
+    unique_sites = unique(sites)
+    unique_ops = map(i -> prod(ops[findall(==(i), sites)]), unique_sites)
+
+    return unique_sites, unique_ops
 end

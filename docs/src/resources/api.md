@@ -248,7 +248,7 @@ fidelity
 
 ```@docs
 Lattice
-SingleSiteOperator
+MultiSiteOperator
 DissipativeIsing
 ```
 
