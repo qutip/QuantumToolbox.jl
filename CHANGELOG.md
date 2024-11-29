@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Change `SingleSiteOperator` with the more general `MultiSiteOperator`. ([#324])
+
 ## [v0.22.0] (2024-11-20)
 
 - Change the parameters structure of `sesolve`, `mesolve` and `mcsolve` functions to possibly support automatic differentiation. ([#311])
@@ -33,3 +35,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#311]: https://github.com/qutip/QuantumToolbox.jl/issues/311
 [#315]: https://github.com/qutip/QuantumToolbox.jl/issues/315
 [#318]: https://github.com/qutip/QuantumToolbox.jl/issues/318
+[#324]: https://github.com/qutip/QuantumToolbox.jl/issues/324
