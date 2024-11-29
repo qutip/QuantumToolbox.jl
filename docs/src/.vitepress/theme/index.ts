@@ -1,5 +1,5 @@
 // .vitepress/theme/index.ts
-import { h } from 'vue'
+import { h, watch } from "vue";
 import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import VersionPicker from "./VersionPicker.vue"
