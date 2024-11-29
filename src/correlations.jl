@@ -149,7 +149,7 @@ end
 Returns the emission spectrum 
 
 ```math
-S(\omega) = \int_{-\infty}^\infty \left\langle \hat{A}(\tau) \hat{B}(0)} e^{-i \omega \tau \right\rangle d \tau
+S(\omega) = \int_{-\infty}^\infty \left\langle \hat{A}(\tau) \hat{B}(0) \right\rangle e^{-i \omega \tau} d \tau
 ```
 """
 function spectrum(
