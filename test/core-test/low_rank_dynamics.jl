@@ -15,12 +15,12 @@
     i = 1
     for j in 1:N_modes
         i += 1
-        i <= M && (ϕ[i] = SingleSiteOperator(sigmap(), j, latt) * ϕ[1])
+        i <= M && (ϕ[i] = MultiSiteOperator(latt, j => sigmap()) * ϕ[1])
     end
     for k in 1:N_modes-1
         for l in k+1:N_modes
             i += 1
-            i <= M && (ϕ[i] = SingleSiteOperator(sigmap(), k, latt) * SingleSiteOperator(sigmap(), l, latt) * ϕ[1])
+            i <= M && (ϕ[i] = MultiSiteOperator(latt, k => sigmap(), l => sigmap()) * ϕ[1])
         end
     end
     for i in i+1:M
@@ -43,11 +43,11 @@
     hz = 0.0
     γ = 1
 
-    Sx = mapreduce(i -> SingleSiteOperator(sigmax(), i, latt), +, 1:latt.N)
-    Sy = mapreduce(i -> SingleSiteOperator(sigmay(), i, latt), +, 1:latt.N)
-    Sz = mapreduce(i -> SingleSiteOperator(sigmaz(), i, latt), +, 1:latt.N)
+    Sx = mapreduce(i -> MultiSiteOperator(latt, i => sigmax()), +, 1:latt.N)
+    Sy = mapreduce(i -> MultiSiteOperator(latt, i => sigmay()), +, 1:latt.N)
+    Sz = mapreduce(i -> MultiSiteOperator(latt, i => sigmaz()), +, 1:latt.N)
     SFxx = mapreduce(
-        x -> SingleSiteOperator(sigmax(), x[1], latt) * SingleSiteOperator(sigmax(), x[2], latt),
+        x -> MultiSiteOperator(latt, x[1] => sigmax(), x[2] => sigmax()),
         +,
         Iterators.product(1:latt.N, 1:latt.N),
     )
