@@ -23,7 +23,7 @@ ExponentialSeries(; tol = 1e-14, calc_steadystate = false) = ExponentialSeries(t
         c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         kwargs...)
 
-Returns the two-times correlation function of three operators ``\hat{A}``, ``\hat{B}`` and ``\hat{C}``: ``\expval{\hat{A}(t) \hat{B}(t + \tau) \hat{C}(t)}``
+Returns the two-times correlation function of three operators ``\hat{A}``, ``\hat{B}`` and ``\hat{C}``: ``\left\langle \hat{A}(t) \hat{B}(t + \tau) \hat{C}(t) \right\rangle``
 
 for a given initial state ``\ket{\psi_0}``.
 """
@@ -69,9 +69,9 @@ end
         kwargs...)
 
 Returns the two-times correlation function of two operators ``\hat{A}`` and ``\hat{B}`` 
-at different times: ``\expval{\hat{A}(t + \tau) \hat{B}(t)}``.
+at different times: ``\left\langle \hat{A}(t + \tau) \hat{B}(t) \right\rangle``.
 
-When `reverse=true`, the correlation function is calculated as ``\expval{\hat{A}(t) \hat{B}(t + \tau)}``.
+When `reverse=true`, the correlation function is calculated as ``\left\langle \hat{A}(t) \hat{B}(t + \tau) \right\rangle``.
 """
 function correlation_2op_2t(
     H::QuantumObject{<:AbstractArray{T1},HOpType},
@@ -111,9 +111,9 @@ end
         reverse::Bool=false,
         kwargs...)
 
-Returns the one-time correlation function of two operators ``\hat{A}`` and ``\hat{B}`` at different times ``\expval{\hat{A}(\tau) \hat{B}(0)}``.
+Returns the one-time correlation function of two operators ``\hat{A}`` and ``\hat{B}`` at different times ``\left\langle \hat{A}(\tau) \hat{B}(0) \right\rangle``.
 
-When `reverse=true`, the correlation function is calculated as ``\expval{\hat{A}(0) \hat{B}(\tau)}``.
+When `reverse=true`, the correlation function is calculated as ``\left\langle \hat{A}(0) \hat{B}(\tau) \right\rangle``.
 """
 function correlation_2op_1t(
     H::QuantumObject{<:AbstractArray{T1},HOpType},
@@ -149,7 +149,7 @@ end
 Returns the emission spectrum 
 
 ```math
-S(\omega) = \int_{-\infty}^\infty \expval{\hat{A}(\tau) \hat{B}(0)} e^{-i \omega \tau} d \tau
+S(\omega) = \int_{-\infty}^\infty \left\langle \hat{A}(\tau) \hat{B}(0)} e^{-i \omega \tau \right\rangle d \tau
 ```
 """
 function spectrum(

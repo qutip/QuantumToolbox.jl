@@ -10,7 +10,7 @@ export vec2mat, mat2vec
 @doc raw"""
     ket2dm(ψ::QuantumObject)
 
-Transform the ket state ``\ket{\psi}`` into a pure density matrix ``\hat{\rho} = \dyad{\psi}``.
+Transform the ket state ``\ket{\psi}`` into a pure density matrix ``\hat{\rho} = |\psi\rangle\langle\psi|``.
 """
 ket2dm(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * ψ'
 

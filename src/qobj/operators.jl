@@ -408,7 +408,7 @@ sigmay() = rmul!(jmat(0.5, Val(:y)), 2)
 @doc raw"""
     sigmaz()
 
-Pauli operator ``\hat{\sigma}_z = \comm{\hat{\sigma}_+}{\hat{\sigma}_-}``.
+Pauli operator ``\hat{\sigma}_z = \left[ \hat{\sigma}_+ , \hat{\sigma}_- \right]``.
 
 See also [`jmat`](@ref).
 """
@@ -487,7 +487,7 @@ end
 @doc raw"""
     projection(N::Int, i::Int, j::Int)
 
-Generates the projection operator ``\hat{O} = \dyad{i}{j}`` with Hilbert space dimension `N`.
+Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N`.
 """
 projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator)
 
