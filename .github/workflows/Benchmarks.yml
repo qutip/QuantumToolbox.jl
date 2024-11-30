@@ -49,6 +49,7 @@ jobs:
             Pkg.instantiate();
             include("runbenchmarks.jl")'
 
+      # this will update benchmarks/data.js in gh-pages branch
       - name: Parse & Upload Benchmark Results
         uses: benchmark-action/github-action-benchmark@v1
         with:
