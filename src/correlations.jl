@@ -46,8 +46,7 @@ function correlation_3op_2t(
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
-    (H.dims == ψ0.dims && H.dims == A.dims && H.dims == B.dims && H.dims == C.dims) ||
-        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    allequal((H.dims, ψ0.dims, A.dims, B.dims, C.dims)) || throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     kwargs2 = merge((saveat = collect(t_l),), (; kwargs...))
     ρt = mesolve(H, ψ0, t_l, c_ops; kwargs2...).states
@@ -143,7 +142,7 @@ end
         A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
         B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
         c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
-        solver::MySolver=ExponentialSeries(),
+        solver::SpectrumSolver=ExponentialSeries(),
         kwargs...)
 
 Returns the emission spectrum 
@@ -158,14 +157,13 @@ function spectrum(
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    solver::MySolver = ExponentialSeries(),
+    solver::SpectrumSolver = ExponentialSeries(),
     kwargs...,
 ) where {
     MT1<:AbstractMatrix,
     T2,
     T3,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    MySolver<:SpectrumSolver,
 }
     return _spectrum(H, ω_list, A, B, c_ops, solver; kwargs...)
 end
@@ -223,11 +221,9 @@ function _spectrum(
     solver::ExponentialSeries;
     kwargs...,
 ) where {T1,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-    (H.dims == A.dims == B.dims) || throw(DimensionMismatch("The dimensions of H, A and B must be the same"))
+    allequal((H.dims, A.dims, B.dims)) || throw(DimensionMismatch("The dimensions of H, A and B must be the same"))
 
     L = liouvillian(H, c_ops)
-
-    ω_l = ω_list
 
     rates, vecs, ρss = _spectrum_get_rates_vecs_ss(L, solver)
 
@@ -238,9 +234,9 @@ function _spectrum(
     idxs = findall(x -> abs(x) > solver.tol, amps)
     amps, rates = amps[idxs], rates[idxs]
 
-    # spec = map(ω -> 2 * real(sum(@. amps * (1 / (1im * ω - rates)))), ω_l)
+    # spec = map(ω -> 2 * real(sum(@. amps * (1 / (1im * ω - rates)))), ω_list)
     amps_rates = zip(amps, rates)
-    spec = map(ω -> 2 * real(sum(x -> x[1] / (1im * ω - x[2]), amps_rates)), ω_l)
+    spec = map(ω -> 2 * real(sum(x -> x[1] / (1im * ω - x[2]), amps_rates)), ω_list)
 
-    return ω_l, spec
+    return spec
 end
