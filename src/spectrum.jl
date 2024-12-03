@@ -1,5 +1,5 @@
 export spectrum, spectrum_correlation_fft
-export SpectrumSolver, ExponentialSeries#, PseudoInverse
+export SpectrumSolver, ExponentialSeries, PseudoInverse
 
 abstract type SpectrumSolver end
 
@@ -14,6 +14,17 @@ struct ExponentialSeries{T<:Real,CALC_SS} <: SpectrumSolver
 end
 
 ExponentialSeries(; tol = 1e-14, calc_steadystate = false) = ExponentialSeries(tol, calc_steadystate)
+
+@doc raw"""
+    PseudoInverse(; alg::SciMLLinearSolveAlgorithm = KrylovJL_GMRES())
+
+A solver which solves [`spectrum`](@ref) by finding the inverse of Liouvillian [`SuperOperator`](@ref) using the `alg`orithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/).
+"""
+struct PseudoInverse{MT<:SciMLLinearSolveAlgorithm} <: SpectrumSolver
+    alg::MT
+end
+
+PseudoInverse(; alg::SciMLLinearSolveAlgorithm = KrylovJL_GMRES()) = PseudoInverse(alg)
 
 @doc raw"""
     spectrum(H::QuantumObject,
@@ -32,6 +43,7 @@ S(\omega) = \int_{-\infty}^\infty \lim_{t \rightarrow \infty} \left\langle \hat{
 
 See also the following list for `SpectrumSolver` docstrings:
 - [`ExponentialSeries`](@ref)
+- [`PseudoInverse`](@ref)
 """
 function spectrum(
     H::QuantumObject{MT1,HOpType},
@@ -91,7 +103,7 @@ function _spectrum(
     return spec
 end
 
-#= function _spectrum(
+function _spectrum(
     L::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
     ωlist::AbstractVector,
     A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
@@ -99,10 +111,39 @@ end
     solver::PseudoInverse;
     kwargs...,
 ) where {T1,T2,T3}
-    allequal((L.dims, A.dims, B.dims)) || throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    allequal((L.dims, A.dims, B.dims)) ||
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+
+    ωList = convert(Vector{_FType(L)}, ωlist) # Convert it to support GPUs and avoid type instabilities
+    Length = length(ωList)
+    spec = Vector{_FType(L)}(undef, Length)
+
+    # calculate vectorized steadystate, multiply by operator B on the left (spre)
+    ρss = mat2vec(steadystate(L))
+    b = (spre(B) * ρss).data
+
+    # multiply by operator A on the left (spre) and then perform trace operation
+    D = prod(L.dims)
+    _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(_CType(L), D)) # same as vec(system_identity_matrix)
+    _tr_A = transpose(_tr) * spre(A).data
+
+    cache = nothing
+    I_cache = I(D^2)
+    for (idx, ω) in enumerate(ωList)
+        if idx == 1
+            cache = init(LinearProblem(L.data - 1im * ω * I_cache, b), solver.alg, kwargs...)
+            sol = solve!(cache)
+        else
+            cache.A = L.data - 1im * ω * I_cache
+            sol = solve!(cache)
+        end
+
+        # trace over the Hilbert space of system (expectation value)
+        spec[idx] = -2 * real(dot(_tr_A, sol.u))
+    end
 
     return spec
-end =#
+end
 
 @doc raw"""
     spectrum_correlation_fft(tlist, corr; inverse=false)

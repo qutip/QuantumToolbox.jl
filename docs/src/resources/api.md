@@ -235,6 +235,7 @@ correlation_2op_1t
 spectrum_correlation_fft
 spectrum
 ExponentialSeries
+PseudoInverse
 ```
 
 ## [Metrics](@id doc-API:Metrics)
