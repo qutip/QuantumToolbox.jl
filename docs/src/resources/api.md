@@ -232,7 +232,9 @@ lr_mesolve
 correlation_3op_2t
 correlation_2op_2t
 correlation_2op_1t
+spectrum_correlation_fft
 spectrum
+ExponentialSeries
 ```
 
 ## [Metrics](@id doc-API:Metrics)
