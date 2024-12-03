@@ -230,6 +230,7 @@ lr_mesolve
 
 ```@docs
 correlation_3op_2t
+correlation_3op_1t
 correlation_2op_2t
 correlation_2op_1t
 spectrum_correlation_fft
