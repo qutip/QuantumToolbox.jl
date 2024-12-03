@@ -1,8 +1,10 @@
 export correlation_3op_2t, correlation_3op_1t, correlation_2op_2t, correlation_2op_1t
 
 function _check_correlation_time_list(tlist::AbstractVector)
-    any(t -> t == 0, tlist) || throw(ArgumentError("The time list for calculating correlation function must contain the element `0`"))
-    all(>=(0), tlist) || throw(ArgumentError("All the elements in the time list for calculating correlation function must be positive."))
+    any(t -> t == 0, tlist) ||
+        throw(ArgumentError("The time list for calculating correlation function must contain the element `0`"))
+    all(>=(0), tlist) ||
+        throw(ArgumentError("All the elements in the time list for calculating correlation function must be positive."))
     return nothing
 end
 
