@@ -6,7 +6,7 @@
     t_l = range(0, 333 * π, length = 1000)
     corr = correlation_2op_1t(H, nothing, t_l, c_ops, a', a; progress_bar = Val(false))
     ω_l1, spec1 = spectrum_correlation_fft(t_l, corr)
-    
+
     ω_l2 = range(0, 3, length = 1000)
     spec2 = spectrum(H, ω_l2, c_ops, a', a)
 

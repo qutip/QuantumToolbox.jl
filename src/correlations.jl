@@ -39,7 +39,8 @@ function correlation_3op_2t(
         ψ0 = steadystate(L)
     end
 
-    allequal((L.dims, ψ0.dims, A.dims, B.dims, C.dims)) || throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    allequal((L.dims, ψ0.dims, A.dims, B.dims, C.dims)) ||
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     kwargs2 = merge((saveat = collect(tlist),), (; kwargs...))
     ρt = mesolve(L, ψ0, tlist; kwargs2...).states

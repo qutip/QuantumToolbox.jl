@@ -41,12 +41,7 @@ function spectrum(
     B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject};
     solver::SpectrumSolver = ExponentialSeries(),
     kwargs...,
-) where {
-    MT1<:AbstractMatrix,
-    T2,
-    T3,
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-}
+) where {MT1<:AbstractMatrix,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     return _spectrum(liouvillian(H, c_ops), ωlist, A, B, solver; kwargs...)
 end
 
@@ -77,7 +72,8 @@ function _spectrum(
     solver::ExponentialSeries;
     kwargs...,
 ) where {T1,T2,T3}
-    allequal((L.dims, A.dims, B.dims)) || throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    allequal((L.dims, A.dims, B.dims)) ||
+        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     rates, vecs, ρss = _spectrum_get_rates_vecs_ss(L, solver)
 
@@ -122,11 +118,11 @@ Calculate the power spectrum corresponding to a two-time correlation function us
 - `ωlist`: the list of angular frequencies ``\omega``.
 - `Slist`: the list of the power spectrum corresponding to the angular frequencies in `ωlist`.
 """
-function spectrum_correlation_fft(tlist::AbstractVector, corr::AbstractVector; inverse::Bool=false)
+function spectrum_correlation_fft(tlist::AbstractVector, corr::AbstractVector; inverse::Bool = false)
     N = length(tlist)
     dt_list = diff(tlist)
     dt = dt_list[1]
-    
+
     all(≈(dt), dt_list) || ArgumentError("tlist must be equally spaced for FFT.")
 
     # power spectrum list

@@ -16,4 +16,6 @@ end
 
 export FFTCorrelation
 
-FFTCorrelation() = error("`FFTCorrelation` has been deprecated and will be removed in next major release, please use `spectrum_correlation_fft` to calculate the spectrum with FFT method instead.")
+FFTCorrelation() = error(
+    "`FFTCorrelation` has been deprecated and will be removed in next major release, please use `spectrum_correlation_fft` to calculate the spectrum with FFT method instead.",
+)

@@ -14,13 +14,14 @@ function benchmark_correlations_and_spectrum!(SUITE)
     function _calculate_fft_spectrum(H, tlist, c_ops, A, B)
         corr = correlation_2op_1t(H, nothing, tlist, c_ops, A, B; progress_bar = Val(false))
         ωlist, spec = spectrum_correlation_fft(tlist, corr)
-        nothing
+        return nothing
     end
 
     SUITE["Correlations and Spectrum"]["FFT Correlation"] =
         @benchmarkable _calculate_fft_spectrum($H, $t_l, $c_ops, $(a'), $a)
 
-    SUITE["Correlations and Spectrum"]["Spectrum"]["Exponential Series"] = @benchmarkable spectrum($H, $ω_l, $c_ops, $(a'), $a)
+    SUITE["Correlations and Spectrum"]["Spectrum"]["Exponential Series"] =
+        @benchmarkable spectrum($H, $ω_l, $c_ops, $(a'), $a)
 
     return nothing
 end
