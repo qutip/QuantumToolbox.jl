@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Change `SingleSiteOperator` with the more general `MultiSiteOperator`. ([#324])
+- Make `spectrum` and `correlation` align with `QuTiP`, remove `FFTCorrelation`, and introduce `spectrum_correlation_fft`. ([#330])
 
 ## [v0.22.0] (2024-11-20)
 
@@ -36,3 +37,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#315]: https://github.com/qutip/QuantumToolbox.jl/issues/315
 [#318]: https://github.com/qutip/QuantumToolbox.jl/issues/318
 [#324]: https://github.com/qutip/QuantumToolbox.jl/issues/324
+[#330]: https://github.com/qutip/QuantumToolbox.jl/issues/330
