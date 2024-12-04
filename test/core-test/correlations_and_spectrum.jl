@@ -35,8 +35,10 @@
     end
 
     # tlist and τlist checks
+    t_fft_wrong = [0, 1, 10]
     t_wrong1 = [1, 2, 3]
     t_wrong2 = [-1, 0, 1]
+    @test_throws ArgumentError spectrum_correlation_fft(t_fft_wrong, corr1)
     @test_throws ArgumentError correlation_3op_2t(H, nothing, t_l, t_wrong1, c_ops, Id, a', a)
     @test_throws ArgumentError correlation_3op_2t(H, nothing, t_l, t_wrong2, c_ops, Id, a', a)
     @test_throws ArgumentError correlation_3op_2t(H, nothing, t_wrong1, t_l, c_ops, Id, a', a)

@@ -164,7 +164,7 @@ function spectrum_correlation_fft(tlist::AbstractVector, corr::AbstractVector; i
     dt_list = diff(tlist)
     dt = dt_list[1]
 
-    all(≈(dt), dt_list) || ArgumentError("tlist must be equally spaced for FFT.")
+    all(≈(dt), dt_list) || throw(ArgumentError("tlist must be equally spaced for FFT."))
 
     # power spectrum list
     F = inverse ? N * ifft(corr) : fft(corr)
