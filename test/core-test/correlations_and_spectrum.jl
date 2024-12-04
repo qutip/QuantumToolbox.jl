@@ -1,6 +1,7 @@
 @testset "Correlations and Spectrum" begin
-    Id = qeye(10)
-    a = destroy(10)
+    N = 10
+    Id = qeye(N)
+    a = destroy(N)
     H = a' * a
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
 
@@ -33,6 +34,7 @@
         @inferred spectrum(H, ω_l2, c_ops, a', a; solver = PseudoInverse())
     end
 
+    # tlist and τlist checks
     t_wrong1 = [1, 2, 3]
     t_wrong2 = [-1, 0, 1]
     @test_throws ArgumentError correlation_3op_2t(H, nothing, t_l, t_wrong1, c_ops, Id, a', a)
@@ -43,5 +45,13 @@
     @test_throws ArgumentError correlation_3op_2t(H, nothing, t_wrong1, t_wrong2, c_ops, Id, a', a)
     @test_throws ArgumentError correlation_3op_2t(H, nothing, t_wrong2, t_wrong1, c_ops, Id, a', a)
     @test_throws ArgumentError correlation_3op_2t(H, nothing, t_wrong2, t_wrong2, c_ops, Id, a', a)
-    @test_throws ErrorException FFTCorrelation()
+
+    @testset "Deprecated Errors" begin
+        ρ0 = rand_dm(N)
+        @test_throws ErrorException FFTCorrelation()
+        @test_throws ErrorException correlation_3op_2t(H, ρ0, t_l, t_l, a, a', a, c_ops)
+        @test_throws ErrorException correlation_3op_1t(H, ρ0, t_l, a, a', a, c_ops)
+        @test_throws ErrorException correlation_2op_2t(H, ρ0, t_l, t_l, a', a, c_ops)
+        @test_throws ErrorException correlation_2op_1t(H, ρ0, t_l, a', a, c_ops)
+    end
 end
