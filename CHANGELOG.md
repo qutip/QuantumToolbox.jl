@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Change `SingleSiteOperator` with the more general `MultiSiteOperator`. ([#324])
-- Make `spectrum` and `correlation` align with `QuTiP`, remove `FFTCorrelation`, and introduce `spectrum_correlation_fft`. ([#330])
+- Make `spectrum` and `correlation` functions align with `Python QuTiP`, introduce spectrum solver `PseudoInverse`, remove spectrum solver `FFTCorrelation`, and introduce `spectrum_correlation_fft`. ([#330])
 
 ## [v0.22.0] (2024-11-20)
 
