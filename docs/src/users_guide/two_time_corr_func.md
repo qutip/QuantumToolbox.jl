@@ -9,7 +9,7 @@ With the `QuantumToolbox.jl` time-evolution function [`mesolve`](@ref), a state 
 ```
 where ``\mathcal{G}(t, t_0)\{\cdot\}`` is the propagator defined by the equation of motion. The resulting density matrix can then be used to evaluate the expectation values of arbitrary combinations of same-time operators.
 
-To calculate two-time correlation functions on the form ``\left\langle \hat{A}(t+\tau) \hat{B}(t) \right\rangle``, we can use the quantum regression theorem (see, e.g., [Gardiner-Zoller2004](@cite)) to write
+To calculate two-time correlation functions on the form ``\left\langle \hat{A}(t+\tau) \hat{B}(t) \right\rangle``, we can use the quantum regression theorem [see, e.g., [Gardiner-Zoller2004](@cite)] to write
 
 ```math
 \left\langle \hat{A}(t+\tau) \hat{B}(t) \right\rangle = \textrm{Tr} \left[\hat{A} \mathcal{G}(t+\tau, t)\{\hat{B}\hat{\rho}(t)\} \right] = \textrm{Tr} \left[\hat{A} \mathcal{G}(t+\tau, t)\{\hat{B} \mathcal{G}(t, 0)\{\hat{\rho}(0)\}\} \right],
@@ -71,7 +71,7 @@ fig
 
 ## Emission spectrum
 
-Given a correlation function ``\langle \hat{A}(\tau) \hat{B}(0) \rangle``, we can define the corresponding power spectrum as
+Given a correlation function ``\left\langle \hat{A}(\tau) \hat{B}(0) \right\rangle``, we can define the corresponding power spectrum as
 
 ```math
 S(\omega) = \int_{-\infty}^\infty \left\langle \hat{A}(\tau) \hat{B}(0) \right\rangle e^{-i \omega \tau} d \tau
@@ -133,8 +133,132 @@ fig
 
 ## Non-steadystate correlation function
 
-The following part of this page is still under construction, please visit [API](@ref doc-API) first.
+More generally, we can also calculate correlation functions of the kind ``\left\langle \hat{A}(t_1 + t_2) \hat{B}(t_1) \right\rangle``, i.e., the correlation function of a system that is not in its steady state. In `QuantumToolbox.jl`, we can evaluate such correlation functions using the function [`correlation_2op_2t`](@ref). The default behavior of this function is to return a matrix with the correlations as a function of the two time coordinates (``t_1`` and ``t_2``).
+
+```@example correlation_and_spectrum
+tlist = LinRange(0, 10.0, 200)
+
+N = 10
+a = destroy(N)
+x = a' + a
+H = a' * a
+
+c_ops = [sqrt(0.25) * a]
+
+α = 2.5
+ρ0 = coherent_dm(N, α)
+
+corr = correlation_2op_2t(H, ρ0, tlist, tlist, c_ops, x, x; progress_bar = Val(false))
+
+# plot by CairoMakie.jl
+fig = Figure(size = (500, 400))
+
+ax = Axis(fig[1, 1], title = L"\langle \hat{x}(t_1 + t_2) \hat{x}(t_1) \rangle", xlabel = L"Time $t_2$", ylabel = L"Time $t_1$")
+heatmap!(ax, tlist, tlist, real.(corr))
+
+fig
+```
 
 ### Example: first-order optical coherence function
 
+This example demonstrates how to calculate a correlation function on the form ``\left\langle \hat{A}(\tau) \hat{B}(0) \right\rangle`` for a non-steady initial state. Consider an oscillator that is interacting with a thermal environment. If the oscillator initially is in a coherent state, it will gradually decay to a thermal (incoherent) state. The amount of coherence can be quantified using the first-order optical coherence function
+
+```math
+g^{(1)}(\tau) = \frac{\left\langle \hat{a}^\dagger(\tau) \hat{a}(0) \right\rangle}{\sqrt{\left\langle \hat{a}^\dagger(\tau) \hat{a}(\tau) \right\rangle \left\langle \hat{a}^\dagger(0) \hat{a}(0)\right\rangle}}.
+```
+For a coherent state ``\vert g^{(1)}(\tau) \vert = 1``, and for a completely incoherent (thermal) state ``g^{(1)}(\tau) = 0``. The following code calculates and plots ``g^{(1)}(\tau)`` as a function of ``\tau``:
+
+```@example correlation_and_spectrum
+τlist = LinRange(0, 10, 200)
+
+# Hamiltonian
+N = 15
+a = destroy(N)
+H = 2 * π * a' * a
+
+# collapse operator
+G1 = 0.75
+n_th = 2.00  # bath temperature in terms of excitation number
+c_ops = [
+    sqrt(G1 * (1 + n_th)) * a,
+    sqrt(G1 *      n_th)  * a'
+]
+
+# start with a coherent state of α = 2.0
+ρ0 = coherent_dm(N, 2.0)
+
+# first calculate the occupation number as a function of time
+n = mesolve(H, ρ0, τlist, c_ops, e_ops = [a' * a], progress_bar = Val(false)).expect[1,:]
+n0 = n[1] # occupation number at τ = 0
+
+# calculate the correlation function G1 and normalize with n to obtain g1
+g1 = correlation_2op_1t(H, ρ0, τlist, c_ops, a', a, progress_bar = Val(false))
+g1 = g1 ./ sqrt.(n .* n0)
+
+# plot by CairoMakie.jl
+fig = Figure(size = (500, 350))
+ax = Axis(fig[1, 1], title = "Decay of a coherent state to an incoherent (thermal) state", xlabel = L"Time $\tau$")
+lines!(ax, τlist, real(g1), label = L"g^{(1)}(\tau)", linestyle = :solid)
+lines!(ax, τlist, real(n), label = L"n(\tau)", linestyle = :dash)
+
+axislegend(ax, position = :rt)
+
+fig
+```
+
 ### Example: second-order optical coherence function
+
+The second-order optical coherence function, with time-delay ``\tau``, is defined as
+
+```math
+g^{(2)}(\tau) = \frac{\left\langle \hat{a}^\dagger(0) \hat{a}^\dagger(\tau) \hat{a}(\tau) \hat{a}(0) \right\rangle}{\left\langle \hat{a}^\dagger(0) \hat{a}(0) \right\rangle^2}.
+```
+
+For a coherent state ``g^{(2)}(\tau) = 1``, for a thermal state ``g^{(2)}(\tau = 0) = 2`` and it decreases as a function of time (bunched photons, they tend to appear together), and for a Fock state with ``n``-photons ``g^{(2)}(\tau = 0) = n(n-1)/n^2 < 1`` and it increases with time (anti-bunched photons, more likely to arrive separated in time).
+
+To calculate this type of correlation function with `QuantumToolbox.jl`, we can use [`correlation_3op_1t`](@ref), which computes a correlation function on the form ``\left\langle \hat{A}(0) \hat{B}(\tau) \hat{C}(0) \right\rangle`` (three operators and one delay-time vector). We first have to combine the central two operators into one single one as they are evaluated at the same time, e.g. here we do ``\hat{B}(\tau) = \hat{a}^\dagger(\tau) \hat{a}(\tau) = (\hat{a}^\dagger\hat{a})(\tau)``.
+
+The following code calculates and plots ``g^{(2)}(\tau)`` as a function of ``\tau`` for a coherent, thermal and Fock state:
+
+```@example correlation_and_spectrum
+τlist = LinRange(0, 25, 200)
+
+# Hamiltonian
+N = 25
+a = destroy(N)
+H = 2 * π * a' * a
+
+κ = 0.25
+n_th = 2.0  # bath temperature in terms of excitation number
+c_ops = [
+    sqrt(κ * (1 + n_th)) * a,
+    sqrt(κ *      n_th)  * a'
+]
+
+cases = [
+    Dict("state" => coherent_dm(N, sqrt(2)), "label" => "coherent state", "lstyle" => :solid),
+    Dict("state" => thermal_dm(N, 2), "label" => "thermal state", "lstyle" => :dash),
+    Dict("state" => fock_dm(N, 2), "label" => "Fock state", "lstyle" => :dashdot),
+]
+
+# plot by CairoMakie.jl
+fig = Figure(size = (500, 350))
+ax = Axis(fig[1, 1], xlabel = L"Time $\tau$", ylabel = L"g^{(2)}(\tau)")
+
+for case in cases
+    ρ0 = case["state"]
+
+    # calculate the occupation number at τ = 0
+    n0 = expect(a' * a, ρ0)
+
+    # calculate the correlation function g2
+    g2 = correlation_3op_1t(H, ρ0, τlist, c_ops, a', a' * a, a, progress_bar = Val(false))
+    g2 = g2 ./ n0^2
+
+    lines!(ax, τlist, real(g2), label = case["label"], linestyle = case["lstyle"])
+end
+
+axislegend(ax, position = :rt)
+
+fig
+```

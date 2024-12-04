@@ -50,7 +50,6 @@ const PAGES = [
             "Solving Problems with Time-dependent Hamiltonians" => "users_guide/time_evolution/time_dependent.md",
         ],
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
-        "Symmetries" => [],
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
         "Extensions" => [
             "users_guide/extensions/cuda.md",
