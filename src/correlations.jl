@@ -59,7 +59,10 @@ function correlation_3op_2t(
 
     corr = map((t, ρ) -> mesolve(L, C * ρ * A, τlist .+ t, e_ops = [B]; kwargs...).expect[1, :], tlist, ρt)
 
-    return reduce(hcat, corr)
+    # make the output correlation Matrix align with QuTiP
+    # 1st dimension corresponds to tlist
+    # 2nd dimension corresponds to τlist
+    return reduce(vcat, transpose.(corr))
 end
 
 @doc raw"""
@@ -96,7 +99,7 @@ function correlation_3op_1t(
 }
     corr = correlation_3op_2t(H, ψ0, [0], τlist, c_ops, A, B, C; kwargs...)
 
-    return corr[:, 1]
+    return corr[1, :] # 1 means tlist[1] = 0
 end
 
 @doc raw"""
@@ -179,5 +182,5 @@ function correlation_2op_1t(
 }
     corr = correlation_2op_2t(H, ψ0, [0], τlist, c_ops, A, B; reverse = reverse, kwargs...)
 
-    return corr[:, 1]
+    return corr[1, :] # 1 means tlist[1] = 0
 end

@@ -136,7 +136,8 @@ fig
 More generally, we can also calculate correlation functions of the kind ``\left\langle \hat{A}(t_1 + t_2) \hat{B}(t_1) \right\rangle``, i.e., the correlation function of a system that is not in its steady state. In `QuantumToolbox.jl`, we can evaluate such correlation functions using the function [`correlation_2op_2t`](@ref). The default behavior of this function is to return a matrix with the correlations as a function of the two time coordinates (``t_1`` and ``t_2``).
 
 ```@example correlation_and_spectrum
-tlist = LinRange(0, 10.0, 200)
+t1_list = LinRange(0, 10.0, 200)
+t2_list = LinRange(0, 10.0, 200)
 
 N = 10
 a = destroy(N)
@@ -148,13 +149,14 @@ c_ops = [sqrt(0.25) * a]
 α = 2.5
 ρ0 = coherent_dm(N, α)
 
-corr = correlation_2op_2t(H, ρ0, tlist, tlist, c_ops, x, x; progress_bar = Val(false))
+corr = correlation_2op_2t(H, ρ0, t1_list, t2_list, c_ops, x, x; progress_bar = Val(false))
 
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 400))
 
-ax = Axis(fig[1, 1], title = L"\langle \hat{x}(t_1 + t_2) \hat{x}(t_1) \rangle", xlabel = L"Time $t_2$", ylabel = L"Time $t_1$")
-heatmap!(ax, tlist, tlist, real.(corr))
+ax = Axis(fig[1, 1], title = L"\langle \hat{x}(t_1 + t_2) \hat{x}(t_1) \rangle", xlabel = L"Time $t_1$", ylabel = L"Time $t_2$")
+
+heatmap!(ax, t1_list, t2_list, real(corr))
 
 fig
 ```
