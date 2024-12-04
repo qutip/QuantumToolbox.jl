@@ -55,9 +55,9 @@ function correlation_3op_2t(
         throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     kwargs2 = merge((saveat = collect(tlist),), (; kwargs...))
-    ρt = mesolve(L, ψ0, tlist; kwargs2...).states
+    ρt_list = mesolve(L, ψ0, tlist; kwargs2...).states
 
-    corr = map((t, ρ) -> mesolve(L, C * ρ * A, τlist .+ t, e_ops = [B]; kwargs...).expect[1, :], tlist, ρt)
+    corr = map((t, ρt) -> mesolve(L, C * ρt * A, τlist .+ t, e_ops = [B]; kwargs...).expect[1, :], tlist, ρt_list)
 
     # make the output correlation Matrix align with QuTiP
     # 1st dimension corresponds to tlist
