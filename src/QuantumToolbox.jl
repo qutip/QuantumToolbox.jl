@@ -60,7 +60,7 @@ import DiffEqNoiseProcess: RealWienerProcess!
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
 import Distributed: RemoteChannel
-import FFTW: fft, fftshift
+import FFTW: fft, ifft, fftfreq, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import Pkg
@@ -107,6 +107,7 @@ include("time_evolution/time_evolution_dynamical.jl")
 # Others
 include("permutation.jl")
 include("correlations.jl")
+include("spectrum.jl")
 include("wigner.jl")
 include("spin_lattice.jl")
 include("arnoldi.jl")
