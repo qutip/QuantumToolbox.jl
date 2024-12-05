@@ -2,6 +2,9 @@
 
 ```@setup mesolve
 using QuantumToolbox
+
+using CairoMakie
+CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 ```
 
 ## [Von Neumann equation](@id doc-TE:Von-Neumann-equation)
@@ -123,13 +126,11 @@ sol = mesolve(H, ψ0, tlist, c_ops, e_ops = [sigmaz(), sigmay()])
 We can therefore plot the expectation values:
 
 ```@example mesolve
-using CairoMakie
-CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
-
 times = sol.times
 expt_z = real(sol.expect[1,:])
 expt_y = real(sol.expect[2,:])
 
+# plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = "Time", ylabel = "Expectation values")
 lines!(ax, times, expt_z, label = L"\langle\hat{\sigma}_z\rangle", linestyle = :solid)
@@ -166,7 +167,7 @@ e_ops = [a' * a]
 sol = mesolve(H, ψ0, tlist, c_ops, e_ops=e_ops)
 Num = real(sol.expect[1, :])
 
-# plot the results
+# plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], 
     title = L"Decay of Fock state $|10\rangle$ in a thermal environment with $\langle n\rangle=2$",
@@ -213,6 +214,7 @@ times = sol.times
 N_atom   = real(sol.expect[1,:])
 N_cavity = real(sol.expect[2,:])
 
+# plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = "Time", ylabel = "Expectation values")
 lines!(ax, times, N_atom, label = "atom excitation probability", linestyle = :solid)

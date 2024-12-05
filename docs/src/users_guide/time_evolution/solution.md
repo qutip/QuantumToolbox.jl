@@ -2,6 +2,9 @@
 
 ```@setup TE-solution
 using QuantumToolbox
+
+using CairoMakie
+CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 ```
 
 ## [Solution](@id doc-TE:Solution)
@@ -61,9 +64,7 @@ nothing # hide
 we can plot the resulting expectation values:
 
 ```@example TE-solution
-using CairoMakie
-CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
-
+# plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = L"t")
 lines!(ax, times, expt1, label = L"\langle 0 | \rho(t) | 0 \rangle")
