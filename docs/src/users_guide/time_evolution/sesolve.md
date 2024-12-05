@@ -23,6 +23,9 @@ The Schrödinger equation, which governs the time-evolution of closed quantum sy
 
 ```@setup sesolve
 using QuantumToolbox
+
+using CairoMakie
+CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 ```
 
 For example, the time evolution of a quantum spin-``\frac{1}{2}`` system (initialized in spin-``\uparrow``) with tunneling rate ``0.1`` is calculated, and the expectation values of the Pauli-Z operator ``\hat{\sigma}_z`` is also evaluated, with the following code
@@ -68,12 +71,10 @@ print(size(expt))
 We can therefore plot the expectation values:
 
 ```@example sesolve
-using CairoMakie
-CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
-
 expt_z = real(expt[1,:])
 expt_y = real(expt[2,:])
 
+# plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = "Time", ylabel = "Expectation values")
 lines!(ax, times, expt_z, label = L"\langle\hat{\sigma}_z\rangle", linestyle = :solid)

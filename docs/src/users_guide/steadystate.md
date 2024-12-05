@@ -104,7 +104,7 @@ exp_mc = real(sol_mc.expect[1, :])
 sol_me = mesolve(H, ψ0, tlist, c_ops, e_ops=e_ops, progress_bar=false)
 exp_me = real(sol_me.expect[1, :])
 
-# plot the results
+# plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], 
     title = L"Decay of Fock state $|10\rangle$ in a thermal environment with $\langle n\rangle=2$",
