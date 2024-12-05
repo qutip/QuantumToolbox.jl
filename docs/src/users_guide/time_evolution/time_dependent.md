@@ -93,16 +93,16 @@ e = basis(3, 1) # excited state
 g = basis(3, 2) #  ground state
 
 # operators
-ge = tensor(qeye(N), g * e')  # |g><e|
-ue = tensor(qeye(N), u * e')  # |u><e|
-uu = tensor(qeye(N), u * u')  # |u><u|
-gg = tensor(qeye(N), g * g')  # |g><g|
+g_e = tensor(qeye(N), g * e')  # |g><e|
+u_e = tensor(qeye(N), u * e')  # |u><e|
+u_u = tensor(qeye(N), u * u')  # |u><u|
+g_g = tensor(qeye(N), g * g')  # |g><g|
 a = tensor(destroy(N), qeye(3))
 
 # Hamiltonian
 g = 5  # coupling strength
-H0 = -g * (ge' * a + a' * ge)
-H1 = ue' + ue
+H0 = -g * (g_e' * a + a' * g_e)
+H1 = u_e' + u_e
 f1(p, t) = 9 * exp(-(t / 5)^2)
 H_t = QobjEvo(
     (
@@ -116,8 +116,8 @@ H_t = QobjEvo(
 γ0 = 6   # Atomic decay rate
 c_ops = [
     sqrt(κ) * a,
-    sqrt(4 * γ0 / 9) * ge, # Use Rb branching ratio of 4/9 e -> g
-    sqrt(5 * γ0 / 9) * ue  # 5/9 e -> u
+    sqrt(4 * γ0 / 9) * g_e, # Use Rb branching ratio of 4/9 e -> g
+    sqrt(5 * γ0 / 9) * u_e  # 5/9 e -> u
 ]
 
 tlist = LinRange(0, 4, 200) # Define time vector
@@ -126,8 +126,8 @@ tlist = LinRange(0, 4, 200) # Define time vector
 # Build observables
 e_ops = [
     a' * a,
-    uu,
-    gg
+    u_u,
+    g_g
 ]
 
 # solve dynamics 
