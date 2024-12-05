@@ -49,6 +49,7 @@ const PAGES = [
             "Stochastic Solver" => "users_guide/time_evolution/stochastic.md",
             "Solving Problems with Time-dependent Hamiltonians" => "users_guide/time_evolution/time_dependent.md",
         ],
+        "Hierarchical Equations of Motion" => "users_guide/HEOM.md",
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
         "Extensions" => [
