@@ -5,7 +5,13 @@ All notable changes to [`QuantumToolbox.jl`](https://github.com/qutip/QuantumToo
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
+
+
+
+## [v0.23.1] (2024-12-06)
+
+- Update `[compat]` to fix the incompatibility between `QuantumToolbox v0.22.0+` and `DiffEqCallbacks < v4.2.1`. ([#335])
 
 ## [v0.23.0] (2024-12-04)
 
@@ -32,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.21.5]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.21.5
 [v0.22.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.22.0
 [v0.23.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.23.0
+[v0.23.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.23.1
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#306]: https://github.com/qutip/QuantumToolbox.jl/issues/306
 [#309]: https://github.com/qutip/QuantumToolbox.jl/issues/309
@@ -40,3 +47,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#318]: https://github.com/qutip/QuantumToolbox.jl/issues/318
 [#324]: https://github.com/qutip/QuantumToolbox.jl/issues/324
 [#330]: https://github.com/qutip/QuantumToolbox.jl/issues/330
+[#335]: https://github.com/qutip/QuantumToolbox.jl/issues/335
