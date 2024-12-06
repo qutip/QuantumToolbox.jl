@@ -144,7 +144,7 @@ nothing # hide
 
 Thus, we highly recommend using `Vector` only when we are sure that it contains elements of the same type, and only when we don't need to know its size at compile time. On the other hand, `Tuple`s are less flexible but more efficient in terms of performance. A third option is to use the `SVector` type from the [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) package. This is similar to `Vector`, where the elements should have the same type, but it is fixed-size and immutable. One may ask when it is necessary to know the array size at compile time. A practical example is the case of [`ptrace`](@ref), where it internally reshapes the quantum state into a tensor whose dimensions depend on the number of subsystems. We will see this in more detail in the next section.
 
-## The [`QuantumObject`](@ref) internal structure
+## The `QuantumObject` internal structure
 
 Before making a practical example, let's see the internal structure of the [`QuantumObject`](@ref) type. As an example, we consider the case of three qubits, and we study the internal structure of the ``\hat{\sigma}_x^{(2)}`` operator:
 
