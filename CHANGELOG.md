@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.23.1] (2024-12-06)
 
-- Update `[compat]` to fix the incompatibility between `QuantumToolbox v0.22.0+` and `DiffEqCallbacks < v4.2.1`. ([#333])
+- Update `[compat]` to fix the incompatibility between `QuantumToolbox v0.22.0+` and `DiffEqCallbacks < v4.2.1`. ([#335])
 
 ## [v0.23.0] (2024-12-04)
 
@@ -47,4 +47,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#318]: https://github.com/qutip/QuantumToolbox.jl/issues/318
 [#324]: https://github.com/qutip/QuantumToolbox.jl/issues/324
 [#330]: https://github.com/qutip/QuantumToolbox.jl/issues/330
-[#333]: https://github.com/qutip/QuantumToolbox.jl/issues/333
+[#335]: https://github.com/qutip/QuantumToolbox.jl/issues/335
