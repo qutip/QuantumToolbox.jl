@@ -9,25 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-## [v0.23.1] (2024-12-06)
+## [v0.23.1]
+Release date: 2024-12-06
 
 - Update `[compat]` to fix the incompatibility between `QuantumToolbox v0.22.0+` and `DiffEqCallbacks < v4.2.1`. ([#335])
 
-## [v0.23.0] (2024-12-04)
+## [v0.23.0]
+Release date: 2024-12-04
 
 - Change `SingleSiteOperator` with the more general `MultiSiteOperator`. ([#324])
 - Make `spectrum` and `correlation` functions align with `Python QuTiP`, introduce spectrum solver `PseudoInverse`, remove spectrum solver `FFTCorrelation`, and introduce `spectrum_correlation_fft`. ([#330])
 
-## [v0.22.0] (2024-11-20)
+## [v0.22.0]
+Release date: 2024-11-20
 
 - Change the parameters structure of `sesolve`, `mesolve` and `mcsolve` functions to possibly support automatic differentiation. ([#311])
 - Fix type instability and reduce extra memory allocation in `liouvillian`. ([#315], [#318])
 
-## [v0.21.5] (2024-11-15)
+## [v0.21.5]
+Release date: 2024-11-15
 
 - This is a demonstration of how to bump version number and also modify `CHANGELOG.md` before new release. ([#309])
 
-## [v0.21.4] (2024-11-13)
+## [v0.21.4]
+Release date: 2024-11-13
 
 - This is just a demonstration about [`Changelog.jl`](https://github.com/JuliaDocs/Changelog.jl). ([#139], [#306])
 
