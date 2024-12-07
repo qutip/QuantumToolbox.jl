@@ -9,7 +9,8 @@ using Changelog
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
-const DRAFT = false # set `true` to disable cell evaluation
+const DRAFT = false  # set `true`  to disable cell evaluation
+const DOCTEST = true # set `false` to skip doc tests
 
 # generate bibliography
 bib = CitationBibliography(
@@ -83,6 +84,7 @@ makedocs(;
         repo = "github.com/qutip/QuantumToolbox.jl",
     ),
     draft = DRAFT,
+    doctest = DOCTEST,
     plugins = [bib],
 )
 
