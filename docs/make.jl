@@ -9,6 +9,7 @@ using Changelog
 
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
+# some options for `makedocs`
 const DRAFT = false  # set `true`  to disable cell evaluation
 const DOCTEST = true # set `false` to skip doc tests
 
