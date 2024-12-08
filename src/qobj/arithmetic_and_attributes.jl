@@ -697,24 +697,123 @@ get_data(A::AbstractQuantumObject) = A.data
 @doc raw"""
     get_coherence(ψ::QuantumObject)
 
-Get the coherence value ``\alpha`` by measuring the expectation value of the destruction operator ``\hat{a}`` on a state ``\ket{\psi}`` or a density matrix ``\hat{\rho}``.
-
-It returns both ``\alpha`` and the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
+Returns the coherence value ``\alpha`` by measuring the expectation value of the destruction operator ``\hat{a}`` on a state ``\ket{\psi}`` or a density matrix ``\hat{\rho}``.
 """
 function get_coherence(ψ::QuantumObject{<:AbstractArray,KetQuantumObject})
-    a = destroy(prod(ψ.dims))
-    α = expect(a, ψ)
-    D = exp(α * a' - conj(α) * a)
+    if length(ψ.dims) == 1
+        return mapreduce(n -> sqrt(n - 1) * ψ.data[n] * conj(ψ.data[n-1]), +, 2:ψ.dims[1])
+    else
+        R = CartesianIndices((ψ.dims...,))
+        off = circshift(ψ.dims, 1)
+        off[end] = 1
 
-    return α, D' * ψ
+        x = sum(R) do j
+            j_tuple = Tuple(j) .- 1
+            if 0 in j_tuple
+                return 0
+            end
+
+            J = dot(j_tuple, off) + 1
+            J2 = dot(j_tuple .- 1, off) + 1
+            return prod(sqrt.(j_tuple)) * ψ[J] * conj(ψ[J2])
+        end
+
+        return x
+    end
 end
 
 function get_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject})
-    a = destroy(prod(ρ.dims))
-    α = expect(a, ρ)
-    D = exp(α * a' - conj(α) * a)
+    if length(ρ.dims) == 1
+        return mapreduce(n -> sqrt(n - 1) * ρ.data[n, n-1], +, 2:ρ.dims[1])
+    else
+        R = CartesianIndices((ρ.dims...,))
+        off = circshift(ρ.dims, 1)
+        off[end] = 1
 
-    return α, D' * ρ * D
+        x = sum(R) do j
+            j_tuple = Tuple(j) .- 1
+            if 0 in j_tuple
+                return 0
+            end
+
+            J = dot(j_tuple, off) + 1
+            J2 = dot(j_tuple .- 1, off) + 1
+            return prod(sqrt.(j_tuple)) * ρ[J, J2]
+        end
+
+        return x
+    end
+end
+
+@doc raw"""
+    remove_coherence(ψ::QuantumObject)
+
+Returns the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
+"""
+function remove_coherence(ψ::QuantumObject{<:AbstractArray,KetQuantumObject,1})
+    α = get_coherence(ψ)
+    D = displace(ψ.dims[1], α)
+
+    return D' * ψ
+end
+
+function remove_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject,1})
+    α = get_coherence(ρ)
+    D = displace(ρ.dims[1], α)
+
+    return D' * ρ * D
+end
+
+@doc raw"""
+    mean_occupation(ψ::QuantumObject)
+
+Get the mean occupation number ``n`` by measuring the expectation value of the number operator ``\hat{n}`` on a state ``\ket{\psi}``, a density matrix ``\hat{\rho}`` or a vectorized density matrix ``\ket{\hat{\rho}}``.
+
+It returns the expectation value of the number operator.
+"""
+function mean_occupation(ψ::QuantumObject{T,KetQuantumObject}) where {T}
+    if length(ψ.dims) == 1
+        return mapreduce(k -> abs2(ψ[k]) * (k - 1), +, 1:ρ.dims[1])
+    else
+        R = CartesianIndices((ψ.dims...,))
+        off = circshift(ψ.dims, 1)
+        off[end] = 1
+
+        x = sum(R) do j
+            j_tuple = Tuple(j) .- 1
+            J = dot(j_tuple, off) + 1
+            return abs2(ψ[J]) * prod(j_tuple)
+        end
+
+        return x
+    end
+end
+
+function mean_occupation(ρ::QuantumObject{T,OperatorQuantumObject}) where {T}
+    if length(ρ.dims) == 1
+        return real(mapreduce(k -> ρ[k, k] * (k - 1), +, 1:ρ.dims[1]))
+    else
+        R = CartesianIndices((ρ.dims...,))
+        off = circshift(ψ.dims, 1)
+        off[end] = 1
+
+        x = sum(R) do j
+            j_tuple = Tuple(j) .- 1
+            J = dot(j_tuple, off) + 1
+            return ρ[J, J] * prod(j_tuple)
+        end
+
+        return real(x)
+    end
+end
+
+function mean_occupation(ρ::QuantumObject{T,OperatorKetQuantumObject}) where {T}
+    if length(ρ.dims) > 1
+        throw(ArgumentError("Mean photon number not implemented for composite OPeratorKetQuantumObject"))
+    end
+
+    d = ρ.dims[1]
+    return real(mapreduce(k -> ρ[(k-1)*r+k] * (k - 1), +, 1:d))
 end
 
 @doc raw"""

@@ -450,17 +450,54 @@
         end
     end
 
-    @testset "get coherence" begin
+    @testset "get and remove coherence" begin
         ψ = coherent(30, 3)
-        α, δψ = get_coherence(ψ)
-        @test isapprox(abs(α), 3, atol = 1e-5) && abs2(δψ[1]) > 0.999
+        α = get_coherence(ψ)
+        @test isapprox(abs(α), 3, atol = 1e-5)
+        δψ = remove_coherence(ψ)
+        @test abs2(δψ[1]) > 0.999
         ρ = ket2dm(ψ)
-        α, δρ = get_coherence(ρ)
-        @test isapprox(abs(α), 3, atol = 1e-5) && abs2(δρ[1, 1]) > 0.999
+        α = get_coherence(ρ)
+        @test isapprox(abs(α), 3, atol = 1e-5)
+        δρ = remove_coherence(ρ)
+        @test abs2(δρ[1, 1]) > 0.999
 
         @testset "Type Inference (get_coherence)" begin
             @inferred get_coherence(ψ)
             @inferred get_coherence(ρ)
+            @inferred remove_coherence(ψ)
+            @inferred remove_coherence(ρ)
+        end
+    end
+
+    @testset "mean occupation" begin
+        N1 = 9.0
+        ψ1 = coherent(50, 3.0)
+        ρ1 = ket2dm(ψ1)
+        v1 = mat2vec(ρ1)
+
+        @test mean_occupation(ψ) ≈ N1
+        @test mean_occupation(ρ) ≈ N1
+        @test mean_occupation(v) ≈ N1
+
+        N2 = 4.0
+        Nc = N1 * N2
+        ψ2 = coherent(30, 2.0)
+        ψc = ψ1 ⊗ ψ2
+        ρc = ket2dm(ψc)
+        vc = mat2vec(ρc)
+
+        @test mean_occupation(ψ2) ≈ N2
+        @test mean_occupation(ρ2) ≈ N2
+        @test mean_occupation(v2) ≈ N2
+
+        @test mean_occupation(ψc) ≈ Nc
+        @test mean_occupation(ρc) ≈ Nc
+
+        @testset "Type Inference (mean_occupation)" begin
+            @inferred mean_occupation(ψ)
+            @inferred mean_occupation(ρ)
+            @inferred mean_occupation(v)
         end
     end
 
