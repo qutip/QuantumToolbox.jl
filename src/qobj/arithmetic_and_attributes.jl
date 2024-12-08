@@ -6,7 +6,7 @@ Arithmetic and Attributes for QuantumObject
 
 export proj, ptrace, purity, permute
 export tidyup, tidyup!
-export get_data, get_coherence
+export get_data, get_coherence, remove_coherence, mean_occupation
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
