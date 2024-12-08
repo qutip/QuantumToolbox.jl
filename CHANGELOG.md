@@ -7,9 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Improve the construction of `QobjEvo` ([#338], [#339]):
-    - add new methods to generate `QobjEvo` with input type `Tuple{QuantumObject,Function}`.
-    - add argument checks for each coefficient `Function`.
+- Improve the construction of `QobjEvo`. ([#338], [#339])
 
 ## [v0.23.1]
 Release date: 2024-12-06
