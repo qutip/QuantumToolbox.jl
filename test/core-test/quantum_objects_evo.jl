@@ -182,6 +182,7 @@
         @test isconstant(H_td) == false
         @test isconstant(QobjEvo(a)) == true
         @test isoper(H_td) == true
+        @test QobjEvo(a, coef1) == QobjEvo((a, coef1))
 
         # SuperOperator
         X = a * a'
@@ -205,7 +206,9 @@
         @test isconstant(L_td) == false
         @test issuper(L_td) == true
 
+        coef_wrong(t) = exp(-t)
         @test_logs (:warn,) (:warn,) liouvillian(H_td * H_td) # warnings from lazy tensor
+        @test_throws ArgumentError QobjEvo(a, coef_wrong)
         @test_throws MethodError QobjEvo([[a, coef1], a' * a, [a', coef2]])
         @test_throws ArgumentError H_td(ρvec, p, t)
         @test_throws ArgumentError cache_operator(H_td, ρvec)

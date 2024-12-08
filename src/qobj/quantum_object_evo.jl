@@ -180,8 +180,12 @@ function QuantumObjectEvolution(
     return QuantumObjectEvolution(data, type, dims)
 end
 
-QuantumObjectEvolution(op::QuantumObject, f::Function; type::Union{Nothing,QuantumObjectType} = nothing) =
-    QuantumObjectEvolution(((op, f),); type = type)
+# this is a extra method if user accidentally specify `QuantumObjectEvolution( (op, func) )` or `QuantumObjectEvolution( ((op, func)) )`
+QuantumObjectEvolution(op_func::Tuple{QuantumObject,Function}, α::Union{Nothing,Number} = nothing; type::Union{Nothing,QuantumObjectType} = nothing) =
+    QuantumObjectEvolution((op_func,), α; type = type)
+
+QuantumObjectEvolution(op::QuantumObject, f::Function, α::Union{Nothing,Number} = nothing; type::Union{Nothing,QuantumObjectType} = nothing) =
+    QuantumObjectEvolution(((op, f),), α; type = type)
 
 function QuantumObjectEvolution(
     op::QuantumObject,
@@ -229,6 +233,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
     N = length(op_func_list_types)
 
     dims_expr = ()
+    func_methods_expr = ()
     first_op = nothing
     data_expr = :(0)
     qobj_expr_const = :(0)
@@ -236,6 +241,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
     for i in 1:N
         op_func_type = op_func_list_types[i]
         if op_func_type <: Tuple
+            # check the structure of the tuple
             length(op_func_type.parameters) == 2 || throw(ArgumentError("The tuple must have two elements."))
             op_type = op_func_type.parameters[1]
             func_type = op_func_type.parameters[2]
@@ -248,6 +254,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
             op = :(op_func_list[$i][1])
             data_type = op_type.parameters[1]
             dims_expr = (dims_expr..., :($op.dims))
+            func_methods_expr = (func_methods_expr..., :(methods(op_func_list[$i][2], [Any, Real]))) # [Any, Real] means each func must accept 2 arguments
             if i == 1
                 first_op = :($op)
             end
@@ -267,9 +274,15 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
     end
 
     quote
+        # check the dims of the operators
         dims = tuple($(dims_expr...))
-
         allequal(dims) || throw(ArgumentError("The dimensions of the operators must be the same."))
+
+        # check if each func accepts 2 arguments
+        func_methods = tuple($(func_methods_expr...))
+        for f_method in func_methods
+            length(f_method.ms) == 0 && throw(ArgumentError("The following function must accept two arguments: `$(f_method.mt.name)(p, t)` with t<:Real"))
+        end
 
         data_expr_const = $qobj_expr_const isa Integer ? $qobj_expr_const : _make_SciMLOperator($qobj_expr_const, α)
 
