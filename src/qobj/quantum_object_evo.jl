@@ -181,11 +181,18 @@ function QuantumObjectEvolution(
 end
 
 # this is a extra method if user accidentally specify `QuantumObjectEvolution( (op, func) )` or `QuantumObjectEvolution( ((op, func)) )`
-QuantumObjectEvolution(op_func::Tuple{QuantumObject,Function}, α::Union{Nothing,Number} = nothing; type::Union{Nothing,QuantumObjectType} = nothing) =
-    QuantumObjectEvolution((op_func,), α; type = type)
+QuantumObjectEvolution(
+    op_func::Tuple{QuantumObject,Function},
+    α::Union{Nothing,Number} = nothing;
+    type::Union{Nothing,QuantumObjectType} = nothing,
+) = QuantumObjectEvolution((op_func,), α; type = type)
 
-QuantumObjectEvolution(op::QuantumObject, f::Function, α::Union{Nothing,Number} = nothing; type::Union{Nothing,QuantumObjectType} = nothing) =
-    QuantumObjectEvolution(((op, f),), α; type = type)
+QuantumObjectEvolution(
+    op::QuantumObject,
+    f::Function,
+    α::Union{Nothing,Number} = nothing;
+    type::Union{Nothing,QuantumObjectType} = nothing,
+) = QuantumObjectEvolution(((op, f),), α; type = type)
 
 function QuantumObjectEvolution(
     op::QuantumObject,
@@ -281,7 +288,11 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
         # check if each func accepts 2 arguments
         func_methods = tuple($(func_methods_expr...))
         for f_method in func_methods
-            length(f_method.ms) == 0 && throw(ArgumentError("The following function must accept two arguments: `$(f_method.mt.name)(p, t)` with t<:Real"))
+            length(f_method.ms) == 0 && throw(
+                ArgumentError(
+                    "The following function must accept two arguments: `$(f_method.mt.name)(p, t)` with t<:Real",
+                ),
+            )
         end
 
         data_expr_const = $qobj_expr_const isa Integer ? $qobj_expr_const : _make_SciMLOperator($qobj_expr_const, α)
