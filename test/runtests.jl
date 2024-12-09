@@ -26,9 +26,7 @@ core_tests = [
     "wigner.jl",
 ]
 
-ext_tests = [
-    joinpath("cairomakie", "cairomakie_ext.jl"),
-]
+ext_tests = [joinpath("cairomakie", "cairomakie_ext.jl")]
 
 if (GROUP == "All") || (GROUP == "Code-Quality")
     using QuantumToolbox
