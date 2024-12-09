@@ -16,7 +16,7 @@ const DOCTEST = true # set `false` to skip doc tests
 # generate bibliography
 bib = CitationBibliography(
     joinpath(@__DIR__, "src", "resources", "bibliography.bib"), 
-    style=:authoryear,
+    style=:numeric,
 )
 
 # generate changelog

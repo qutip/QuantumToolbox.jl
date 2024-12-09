@@ -1,6 +1,6 @@
 # [Low rank master equation](@id doc-tutor:Low-rank-master-equation)
 
-In this tutorial, we will show how to solve the master equation using the low-rank method. For a detailed explanation of the method, we recommend to read the article [gravina2024adaptive](@cite).
+In this tutorial, we will show how to solve the master equation using the low-rank method. For a detailed explanation of the method, we recommend to read the article [gravina2024adaptive](@citet).
 
 As a test, we will consider the dissipative Ising model with a transverse field. The Hamiltonian is given by
 
