@@ -7,6 +7,9 @@ using DocumenterVitepress
 using DocumenterCitations
 using Changelog
 
+# Load of packages required to compile the extension documentation
+using CairoMakie
+
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
 # some options for `makedocs`
@@ -76,7 +79,10 @@ const PAGES = [
 ]
 
 makedocs(;
-    modules = [QuantumToolbox],
+    modules = [
+        QuantumToolbox, 
+        Base.get_extension(QuantumToolbox, :QuantumToolboxCairoMakieExt),
+        ],
     authors = "Alberto Mercurio and Yi-Te Huang",
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",

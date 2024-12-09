@@ -6,7 +6,7 @@ using CairoMakie
 @doc raw"""
     plot_wigner(
         library::Val{:CairoMakie},
-        state::QuantumObject{<:AbstractArray{T},OpType};
+        state::QuantumObject{DT,OpType};
         xvec::Union{Nothing,AbstractVector} = nothing,
         yvec::Union{Nothing,AbstractVector} = nothing,
         g::Real = √2,
@@ -15,7 +15,7 @@ using CairoMakie
         location::Union{GridPosition,Nothing} = nothing,
         colorbar::Bool = false,
         kwargs...
-    )
+    ) where {DT,OpType}
 
 Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) of `state` using the [CairoMakie](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) plotting library.
 
@@ -43,7 +43,7 @@ Note that CairoMakie must first be imported before using this function.
 """
 function QuantumToolbox.plot_wigner(
     library::Val{:CairoMakie},
-    state::QuantumObject{<:AbstractArray{T},OpType};
+    state::QuantumObject{DT,OpType};
     xvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
     yvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
     g::Real = √2,
@@ -52,7 +52,7 @@ function QuantumToolbox.plot_wigner(
     location::Union{GridPosition,Nothing} = nothing,
     colorbar::Bool = false,
     kwargs...,
-) where {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {DT,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     QuantumToolbox.getVal(projection) == :two_dim ||
         QuantumToolbox.getVal(projection) == :three_dim ||
         throw(ArgumentError("Unsupported projection: $projection"))
@@ -73,7 +73,7 @@ end
 
 function _plot_wigner(
     ::Val{:CairoMakie},
-    state::QuantumObject{<:AbstractArray{T},OpType},
+    state::QuantumObject{DT,OpType},
     xvec::AbstractVector,
     yvec::AbstractVector,
     projection::Val{:two_dim},
@@ -82,7 +82,7 @@ function _plot_wigner(
     location::Union{GridPosition,Nothing},
     colorbar::Bool;
     kwargs...,
-) where {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {DT,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     fig, location = _getFigAndLocation(location)
 
     lyt = GridLayout(location)
@@ -106,7 +106,7 @@ end
 
 function _plot_wigner(
     ::Val{:CairoMakie},
-    state::QuantumObject{<:AbstractArray{T},OpType},
+    state::QuantumObject{DT,OpType},
     xvec::AbstractVector,
     yvec::AbstractVector,
     projection::Val{:three_dim},
@@ -115,7 +115,7 @@ function _plot_wigner(
     location::Union{GridPosition,Nothing},
     colorbar::Bool;
     kwargs...,
-) where {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {DT,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     fig, location = _getFigAndLocation(location)
 
     lyt = GridLayout(location)
@@ -138,7 +138,7 @@ function _plot_wigner(
     return fig, ax, surf
 end
 
-@doc raw"""
+raw"""
     _getFigAndLocation(location::Nothing)
     
     Create a new figure and return it, together with the GridPosition object pointing to the first cell.
@@ -155,7 +155,7 @@ function _getFigAndLocation(location::Nothing)
     return fig, fig[1, 1]
 end
 
-@doc raw"""
+raw"""
     _getFigAndLocation(location::GridPosition)
     
     Compute which figure does the location belong to and return it, together with the location itself.
@@ -172,7 +172,7 @@ function _getFigAndLocation(location::GridPosition)
     return fig, location
 end
 
-@doc raw"""
+raw"""
     _figFromChildren(children::GridLayout)
 
     Recursively find the figure object from the children layout.
@@ -185,7 +185,7 @@ end
 """
 _figFromChildren(children) = _figFromChildren(children.parent)
 
-@doc raw"""
+raw"""
     _figFromChildren(fig::Figure)
 
     Return the figure object
@@ -198,7 +198,7 @@ _figFromChildren(children) = _figFromChildren(children.parent)
 """
 _figFromChildren(fig::Figure) = fig
 
-@doc raw"""
+raw"""
     _figFromChildren(::Nothing)
 
     Throw an error if no figure has been found.
