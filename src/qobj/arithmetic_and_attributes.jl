@@ -8,6 +8,8 @@ export proj, ptrace, purity, permute
 export tidyup, tidyup!
 export get_data, get_coherence, remove_coherence, mean_occupation
 
+import Base: _ind2sub
+
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
 for op in (:(+), :(-), :(*), :(/), :(^))
@@ -775,17 +777,13 @@ function mean_occupation(ψ::QuantumObject{T,KetQuantumObject}) where {T}
     if length(ψ.dims) == 1
         return mapreduce(k -> abs2(ψ[k]) * (k - 1), +, 1:ρ.dims[1])
     else
-        R = CartesianIndices((ψ.dims...,))
-        off = circshift(ψ.dims, 1)
-        off[end] = 1
+        t = Tuple(ψ.dims)
 
-        x = sum(R) do j
-            j_tuple = Tuple(j) .- 1
-            J = dot(j_tuple, off) + 1
-            return abs2(ψ[J]) * prod(j_tuple)
+        x = 0.0
+        for J in eachindex(ψ.data)
+            x += abs2(ψ[J]) * prod(Base._ind2sub(t, J) .- 1)
         end
-
-        return x
+        return real(x)
     end
 end
 
@@ -793,14 +791,11 @@ function mean_occupation(ρ::QuantumObject{T,OperatorQuantumObject}) where {T}
     if length(ρ.dims) == 1
         return real(mapreduce(k -> ρ[k, k] * (k - 1), +, 1:ρ.dims[1]))
     else
-        R = CartesianIndices((ρ.dims...,))
-        off = circshift(ψ.dims, 1)
-        off[end] = 1
+        t = Tuple(ρ.dims)
 
-        x = sum(R) do j
-            j_tuple = Tuple(j) .- 1
-            J = dot(j_tuple, off) + 1
-            return ρ[J, J] * prod(j_tuple)
+        x = 0.0im
+        for J in eachindex(ρ.data[:, 1])
+            x += ρ[J, J] * prod(Base._ind2sub(t, J) .- 1)
         end
 
         return real(x)
