@@ -26,6 +26,8 @@ core_tests = [
     "wigner.jl",
 ]
 
+ext_tests = [joinpath("cairomakie", "cairomakie_ext.jl")]
+
 if (GROUP == "All") || (GROUP == "Code-Quality")
     using QuantumToolbox
     using Aqua, JET
@@ -43,6 +45,10 @@ if (GROUP == "All") || (GROUP == "Core")
 
     for test in core_tests
         include(joinpath(testdir, "core-test", test))
+    end
+
+    for test in ext_tests
+        include(joinpath(testdir, "ext-test", test))
     end
 end
 
