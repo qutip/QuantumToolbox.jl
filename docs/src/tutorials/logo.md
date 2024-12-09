@@ -67,25 +67,16 @@ Next, we construct the triangular cat state as a normalized superposition of thr
 normalize!(ψ)
 ```
 
-### Defining the Grid and calculating the Wigner function
+### Defining the Grid and plotting the Wigner function
 
-We define the grid for the Wigner function and calculate it using the [`wigner`](@ref) function. We shift the grid in the imaginary direction to ensure that the Wigner function is centered around the origin of the figure. The [`wigner`](@ref) function also supports the `g` scaling factor, which we put here equal to ``2``.
+We define the grid for the Wigner function and plot it using the [`plot_wigner`](@ref) function. This, internally calls the [`wigner`](@ref) function for the computation. We shift the grid in the imaginary direction to ensure that the Wigner function is centered around the origin of the figure. The [`wigner`](@ref) function also supports the `g` scaling factor, which we put here equal to ``2``.
 
 ```@example logo
 xvec = range(-ρ, ρ, 500) .* 1.5
 yvec = xvec .+ (abs(imag(α1)) - abs(imag(α2))) / 2
 
-wig = wigner(ψ, xvec, yvec, g = 2)
-```
-
-### Plotting the Wigner function
-
-Finally, we plot the Wigner function using the `heatmap` function from the `CairoMakie` package.
-
-```@example logo
 fig = Figure(size = (250, 250), figure_padding = 0)
-ax = Axis(fig[1, 1])
-heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 1)
+fig, ax, hm = plot_wigner(ψ, library = Val(:CairoMakie), xvec = xvec, yvec = yvec, g = 2, location = fig[1,1])
 hidespines!(ax)
 hidexdecorations!(ax)
 hideydecorations!(ax)
@@ -118,12 +109,8 @@ nothing # hide
 And the Wigner function becomes more uniform:
 
 ```@example logo
-wig = wigner(sol.states[end], xvec, yvec, g = 2)
-
 fig = Figure(size = (250, 250), figure_padding = 0)
-ax = Axis(fig[1, 1])
-
-img_wig = heatmap!(ax, xvec, yvec, wig', colormap = :RdBu, interpolate = true, rasterize = 1)
+fig, ax, hm = plot_wigner(sol.states[end], library = Val(:CairoMakie), xvec = xvec, yvec = yvec, g = 2, location = fig[1,1])
 hidespines!(ax)
 hidexdecorations!(ax)
 hideydecorations!(ax)
@@ -135,7 +122,7 @@ At this stage, we have finished to use the `QuantumToolbox` package. From now on
 
 ### Custom Colormap
 
-We define a custom colormap that changes depending on the Wigner function and spatial coordinates. Indeed, we want the three different colormaps, in the regions corresponding to the three coherent states, to match the colors of the Julia logo. We also want the colormap change to be smooth, so we use a Gaussian function to blend the colors. We introduce also a Wigner function dependent transparency to make the logo more appealing.
+We define a custom colormap that changes depending on the Wigner function and spatial coordinates. Indeed, we want the three different colormaps, in the regions corresponding to the three coherent states, to match the colors of the Julia logo. We also want the colormap change to be smooth, so we use a Gaussian function to blend the colors. We introduce also a Wigner function dependent transparency to make the logo more appealing. In order to do so, we are going to need the value of the wigner function at each point of the grid, rather than its plot. We will thus call the [`wigner`](@ref) function directly.
 
 ```@example logo
 function set_color_julia(x, y, wig::T, α1, α2, α3, cmap1, cmap2, cmap3, δ) where {T}
@@ -156,6 +143,7 @@ function set_color_julia(x, y, wig::T, α1, α2, α3, cmap1, cmap2, cmap3, δ) w
     return RGBAf(c_tot.r, c_tot.g, c_tot.b, alpha)
 end
 
+wig = wigner(sol.states[end], xvec, yvec, g = 2)
 X, Y = meshgrid(xvec, yvec)
 δ = 1.25 # Smoothing parameter for the Gaussian functions
 ```
