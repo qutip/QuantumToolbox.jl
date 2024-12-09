@@ -24,8 +24,8 @@ Note that CairoMakie must first be imported before using this function.
 # Arguments
 - `library::Val{:CairoMakie}`: The plotting library to use.
 - `state::QuantumObject`: The quantum state for which the Wigner function is calculated. It can be either a [`KetQuantumObject`](@ref), [`BraQuantumObject`](@ref), or [`OperatorQuantumObject`](@ref).
-- `xvec::AbstractVector`: The x-coordinates of the phase space grid. Default is # TODO
-- `yvec::AbstractVector`: The y-coordinates of the phase space grid. Default is # TODO
+- `xvec::AbstractVector`: The x-coordinates of the phase space grid. Defaults to a linear range from -7.5 to 7.5 with 200 points.
+- `yvec::AbstractVector`: The y-coordinates of the phase space grid. Defaults to a linear range from -7.5 to 7.5 with 200 points.
 - `g::Real`: The scaling factor related to the value of ``\hbar`` in the commutation relation ``[x, y] = i \hbar`` via ``\hbar=2/g^2``.
 - `method::WignerSolver`: The method used to calculate the Wigner function. It can be either `WignerLaguerre()` or `WignerClenshaw()`, with `WignerClenshaw()` as default. The `WignerLaguerre` method has the optional `parallel` and `tol` parameters, with default values `true` and `1e-14`, respectively.
 - `projection::Union{Val,Symbol}`: Wheather to plot the Wigner function in 2D or 3D. It can be either `Val(:two_dim)` or `Val(:three_dim)`, with `Val(:two_dim)` as default.
@@ -44,8 +44,8 @@ Note that CairoMakie must first be imported before using this function.
 function QuantumToolbox.plot_wigner(
     library::Val{:CairoMakie},
     state::QuantumObject{<:AbstractArray{T},OpType};
-    xvec::Union{Nothing,AbstractVector} = nothing,
-    yvec::Union{Nothing,AbstractVector} = nothing,
+    xvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
+    yvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
     g::Real = √2,
     method::WignerSolver = WignerClenshaw(),
     projection::Union{Val,Symbol} = Val(:two_dim),
@@ -138,17 +138,77 @@ function _plot_wigner(
     return fig, ax, surf
 end
 
+@doc raw"""
+    _getFigAndLocation(location::Nothing)
+    
+    Create a new figure and return it, together with the GridPosition object pointing to the first cell.
+
+    # Arguments
+    - `location::Nothing`
+
+    # Returns
+    - `fig`: The figure object.
+    - `location`: The GridPosition object pointing to the first cell.
+"""
 function _getFigAndLocation(location::Nothing)
     fig = Figure()
     return fig, fig[1, 1]
 end
+
+@doc raw"""
+    _getFigAndLocation(location::GridPosition)
+    
+    Compute which figure does the location belong to and return it, together with the location itself.
+
+    # Arguments
+    - `location::GridPosition`
+
+    # Returns
+    - `fig`: The figure object.
+    - `location`: The GridPosition object.
+"""
 function _getFigAndLocation(location::GridPosition)
     fig = _figFromChildren(location.layout)
     return fig, location
 end
 
+@doc raw"""
+    _figFromChildren(children::GridLayout)
+
+    Recursively find the figure object from the children layout.
+
+    # Arguments
+    - `children::GridLayout`
+
+    # Returns
+    - Union{Nothing, Figure, GridLayout}: The children's parent object.
+"""
 _figFromChildren(children) = _figFromChildren(children.parent)
+
+@doc raw"""
+    _figFromChildren(fig::Figure)
+
+    Return the figure object
+
+    # Arguments
+    - `fig::Figure`
+
+    # Returns
+    - `fig`: The figure object.
+"""
 _figFromChildren(fig::Figure) = fig
+
+@doc raw"""
+    _figFromChildren(::Nothing)
+
+    Throw an error if no figure has been found.
+
+    # Arguments
+    - `::Nothing`
+
+    # Throws
+    - `ArgumentError`: If no figure has been found.
+"""
 _figFromChildren(::Nothing) = throw(ArgumentError("No Figure has been found at the top of the layout hierarchy."))
 
 end
