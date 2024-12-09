@@ -25,3 +25,13 @@ plot_wigner(
     kwargs...,
 ) where {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}} =
     plot_wigner(makeVal(library), state; kwargs...)
+
+plot_wigner(
+    ::Val{T},
+    state::QuantumObject{<:AbstractArray{T1},OpType};
+    kwargs...,
+) where {T,T1,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}} = throw(
+    ArgumentError(
+        "The specified plotting library $T is not available. Try running `using $T` first.",
+    ),
+)
