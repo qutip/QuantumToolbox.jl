@@ -119,15 +119,23 @@
               "Quantum Object Evo.:   type=SuperOperator   dims=$L_dims   size=$L_size   ishermitian=$L_isherm   isconstant=$L_isconst\n$datastring"
     end
 
-    @testset "Type Inference (QuantumObject)" begin
+    @testset "Type Inference (QobjEvo)" begin
+        N = 4
         for T in [ComplexF32, ComplexF64]
-            N = 4
             a = MatrixOperator(rand(T, N, N))
             @inferred QobjEvo(a)
             for type in [Operator, SuperOperator]
                 @inferred QobjEvo(a, type = type)
             end
         end
+
+        a = destroy(N)
+        coef1(p, t) = exp(-t)
+        coef2(p::Vector, t) = sin(p[1] * t)
+        coef3(p::NamedTuple, t) = cos(p.ω * t)
+        @inferred QobjEvo(a, coef1)
+        @inferred QobjEvo((a', coef2))
+        @inferred QobjEvo((a' * a, (a, coef1), (a', coef2), (a + a', coef3)))
 
         @testset "Math Operation" begin
             a = QobjEvo(destroy(20))
@@ -182,6 +190,7 @@
         @test isconstant(H_td) == false
         @test isconstant(QobjEvo(a)) == true
         @test isoper(H_td) == true
+        @test QobjEvo(a, coef1) == QobjEvo((a, coef1))
 
         # SuperOperator
         X = a * a'
@@ -205,7 +214,11 @@
         @test isconstant(L_td) == false
         @test issuper(L_td) == true
 
+        coef_wrong1(t) = nothing
+        coef_wrong2(p, t::ComplexF64) = nothing
         @test_logs (:warn,) (:warn,) liouvillian(H_td * H_td) # warnings from lazy tensor
+        @test_throws ArgumentError QobjEvo(a, coef_wrong1)
+        @test_throws ArgumentError QobjEvo(a, coef_wrong2)
         @test_throws MethodError QobjEvo([[a, coef1], a' * a, [a', coef2]])
         @test_throws ArgumentError H_td(ρvec, p, t)
         @test_throws ArgumentError cache_operator(H_td, ρvec)
