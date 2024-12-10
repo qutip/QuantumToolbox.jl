@@ -17,13 +17,11 @@ using CairoMakie
         kwargs...
     ) where {DT,OpType}
 
-Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) of `state` using the [CairoMakie](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) plotting library.
-
-Note that CairoMakie must first be imported before using this function.
+Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) of `state` using the [`CairoMakie`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) plotting library.
 
 # Arguments
 - `library::Val{:CairoMakie}`: The plotting library to use.
-- `state::QuantumObject`: The quantum state for which the Wigner function is calculated. It can be either a [`KetQuantumObject`](@ref), [`BraQuantumObject`](@ref), or [`OperatorQuantumObject`](@ref).
+- `state::QuantumObject`: The quantum state for which the Wigner function is calculated. It can be either a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
 - `xvec::AbstractVector`: The x-coordinates of the phase space grid. Defaults to a linear range from -7.5 to 7.5 with 200 points.
 - `yvec::AbstractVector`: The y-coordinates of the phase space grid. Defaults to a linear range from -7.5 to 7.5 with 200 points.
 - `g::Real`: The scaling factor related to the value of ``\hbar`` in the commutation relation ``[x, y] = i \hbar`` via ``\hbar=2/g^2``.
@@ -37,6 +35,9 @@ Note that CairoMakie must first be imported before using this function.
 - `fig`: The figure object.
 - `ax`: The axis object.
 - `hm`: Either the heatmap or surface object, depending on the projection.
+
+!!! note "Import library first"
+    [`CairoMakie`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) must first be imported before using this function.
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `Val(:two_dim)` and `Val(:three_dim)` instead of `:two_dim` and `:three_dim`, respectively. Also, specify the library as `Val(:CairoMakie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
