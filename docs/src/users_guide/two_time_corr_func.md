@@ -9,7 +9,7 @@ With the `QuantumToolbox.jl` time-evolution function [`mesolve`](@ref), a state 
 ```
 where ``\mathcal{G}(t, t_0)\{\cdot\}`` is the propagator defined by the equation of motion. The resulting density matrix can then be used to evaluate the expectation values of arbitrary combinations of same-time operators.
 
-To calculate two-time correlation functions on the form ``\left\langle \hat{A}(t+\tau) \hat{B}(t) \right\rangle``, we can use the quantum regression theorem (see, e.g., [Gardiner-Zoller2004](@citet)) to write
+To calculate two-time correlation functions on the form ``\left\langle \hat{A}(t+\tau) \hat{B}(t) \right\rangle``, we can use the quantum regression theorem [see, e.g., [Gardiner-Zoller2004](@citet)] to write
 
 ```math
 \left\langle \hat{A}(t+\tau) \hat{B}(t) \right\rangle = \textrm{Tr} \left[\hat{A} \mathcal{G}(t+\tau, t)\{\hat{B}\hat{\rho}(t)\} \right] = \textrm{Tr} \left[\hat{A} \mathcal{G}(t+\tau, t)\{\hat{B} \mathcal{G}(t, 0)\{\hat{\rho}(0)\}\} \right],
