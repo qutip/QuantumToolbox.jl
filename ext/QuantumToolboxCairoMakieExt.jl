@@ -1,7 +1,7 @@
 module QuantumToolboxCairoMakieExt
 
 using QuantumToolbox
-using CairoMakie
+using CairoMakie: Axis, Axis3, Colorbar, Figure, GridLayout, heatmap!, surface!, GridPosition, @L_str, Reverse
 
 @doc raw"""
     plot_wigner(
@@ -100,8 +100,8 @@ function _plot_wigner(
         Colorbar(lyt[1, 2], hm)
     end
 
-    ax.xlabel = L"\Re(\alpha)"
-    ax.ylabel = L"\Im(\alpha)"
+    ax.xlabel = L"\textrm{Re}(\alpha)"
+    ax.ylabel = L"\textrm{Im}(\alpha)"
     return fig, ax, hm
 end
 
@@ -133,8 +133,8 @@ function _plot_wigner(
         Colorbar(lyt[1, 2], surf)
     end
 
-    ax.xlabel = L"\Re(\alpha)"
-    ax.ylabel = L"\Im(\alpha)"
+    ax.xlabel = L"\textrm{Re}(\alpha)"
+    ax.ylabel = L"\textrm{Im}(\alpha)"
     ax.zlabel = "Wigner function"
     return fig, ax, surf
 end
