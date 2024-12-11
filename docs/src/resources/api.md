@@ -52,6 +52,8 @@ SciMLOperators.isconstant
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
 
 ```@docs
+Base.zero
+Base.one
 Base.conj
 LinearAlgebra.transpose
 LinearAlgebra.adjoint

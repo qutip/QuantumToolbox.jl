@@ -157,6 +157,25 @@ function LinearAlgebra.dot(
 end
 
 @doc raw"""
+    zero(A::AbstractQuantumObject)
+
+Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same as `A`, but `data` is a zero-array.
+"""
+Base.zero(A::AbstractQuantumObject) = get_typename_wrapper(A)(zero(A.data), A.type, A.dims)
+
+@doc raw"""
+    one(A::AbstractQuantumObject)
+
+Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same as `A`, but `data` is an identity matrix.
+
+Note that `A` must be [`Operator`](@ref) or [`SuperOperator`](@ref).
+"""
+Base.one(
+    A::AbstractQuantumObject{DT,OpType},
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    get_typename_wrapper(A)(one(A.data), A.type, A.dims)
+
+@doc raw"""
     conj(A::AbstractQuantumObject)
 
 Return the element-wise complex conjugation of the [`AbstractQuantumObject`](@ref).
