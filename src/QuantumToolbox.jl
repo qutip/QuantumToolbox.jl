@@ -114,6 +114,7 @@ include("arnoldi.jl")
 include("metrics.jl")
 include("negativity.jl")
 include("steadystate.jl")
+include("visualization.jl")
 
 # deprecated functions
 include("deprecated.jl")
