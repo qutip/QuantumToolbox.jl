@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Introduce `plot_wigner` function for easy plotting of Wigner functions. ([#86], [#292])
-
+- Improve the construction of `QobjEvo`. ([#338], [#339])
+- Support `Base.zero` and `Base.one` for `AbstractQuantumObject`. ([#342], [#346])
+- Introduce visualization and function `plot_wigner` for easy plotting of Wigner functions. ([#86], [#292], [#347])
 
 ## [v0.23.1]
 Release date: 2024-12-06
@@ -56,3 +57,7 @@ Release date: 2024-11-13
 [#324]: https://github.com/qutip/QuantumToolbox.jl/issues/324
 [#330]: https://github.com/qutip/QuantumToolbox.jl/issues/330
 [#335]: https://github.com/qutip/QuantumToolbox.jl/issues/335
+[#338]: https://github.com/qutip/QuantumToolbox.jl/issues/338
+[#339]: https://github.com/qutip/QuantumToolbox.jl/issues/339
+[#342]: https://github.com/qutip/QuantumToolbox.jl/issues/342
+[#346]: https://github.com/qutip/QuantumToolbox.jl/issues/346

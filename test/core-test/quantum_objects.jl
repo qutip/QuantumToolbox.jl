@@ -166,6 +166,14 @@
         @test (a2 + 2).data == a2.data + 2 * I
         @test a2 * 2 == 2 * a2
 
+        zero_like = zero(a2)
+        iden_like = one(a3)
+        zero_array = spzeros(ComplexF64, 100, 100)
+        iden_array = sparse(1:100, 1:100, ones(ComplexF64, 100))
+        @test zero_like == Qobj(zero_array, type = a2.type, dims = a2.dims)
+        @test typeof(zero_like.data) == typeof(zero_array)
+        @test iden_like == Qobj(iden_array, type = a3.type, dims = a3.dims)
+        @test typeof(iden_like.data) == typeof(iden_array)
         @test trans(trans(a2)) == a2
         @test trans(a2).data == transpose(a2.data)
         @test adjoint(a2) ≈ trans(conj(a2))

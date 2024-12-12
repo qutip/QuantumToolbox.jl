@@ -39,7 +39,7 @@ if (GROUP == "All") || (GROUP == "Core")
     using QuantumToolbox
     import QuantumToolbox: position, momentum
     import Random: MersenneTwister
-    import SciMLOperators: MatrixOperator
+    import SciMLOperators: MatrixOperator, NullOperator, IdentityOperator
 
     QuantumToolbox.about()
 
