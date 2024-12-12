@@ -10,6 +10,7 @@ on:
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
+      - 'test/ext-test/cairomakie_ext.jl'
       - 'Project.toml'
   pull_request:
     branches:
@@ -20,6 +21,7 @@ on:
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
+      - 'test/ext-test/cairomakie_ext.jl'
       - 'Project.toml'
     types:
       - opened
@@ -52,13 +54,20 @@ jobs:
         group:
           - 'Core'
 
-        # include:
+        include:
           # for core tests (intermediate versions)
           # - version: '1.x'
           #   node:
           #     os: 'ubuntu-latest'
           #     arch: 'x64'
           #   group: 'Core'
+
+          # for extension tests
+          - version: '1'
+            node:
+              os: 'ubuntu-latest'
+              arch: 'x64'
+            group: 'CairoMakie_Ext'
 
     steps:
       - uses: actions/checkout@v4

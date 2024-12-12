@@ -26,15 +26,6 @@ core_tests = [
     "wigner.jl",
 ]
 
-ext_tests = [joinpath("cairomakie", "cairomakie_ext.jl")]
-
-if (GROUP == "All") || (GROUP == "Code-Quality")
-    using QuantumToolbox
-    using Aqua, JET
-
-    include(joinpath(testdir, "core-test", "code_quality.jl"))
-end
-
 if (GROUP == "All") || (GROUP == "Core")
     using QuantumToolbox
     import QuantumToolbox: position, momentum
@@ -50,6 +41,15 @@ if (GROUP == "All") || (GROUP == "Core")
     for test in ext_tests
         include(joinpath(testdir, "ext-test", test))
     end
+end
+
+if (GROUP == "All") || (GROUP == "CairoMakie_Ext")
+    using QuantumToolbox
+
+    (GROUP == "CairoMakie_Ext") && QuantumToolbox.about()
+
+    # CarioMakie is imported in the following script
+    include(joinpath(testdir, "ext-test", "cairomakie_ext.jl"))
 end
 
 if (GROUP == "CUDA_Ext")# || (GROUP == "All")
