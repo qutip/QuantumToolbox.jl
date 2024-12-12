@@ -94,7 +94,7 @@ function _plot_wigner(
     wlim = maximum(abs, wig)
 
     kwargs = merge(Dict(:colormap => Reverse(:RdBu), :colorrange => (-wlim, wlim)), kwargs)
-    hm = heatmap!(ax, xvec, yvec, wig'; kwargs...)
+    hm = heatmap!(ax, xvec, yvec, transpose(wig); kwargs...)
 
     if colorbar
         Colorbar(lyt[1, 2], hm)
@@ -127,7 +127,7 @@ function _plot_wigner(
     wlim = maximum(abs, wig)
 
     kwargs = merge(Dict(:colormap => :RdBu, :colorrange => (-wlim, wlim)), kwargs)
-    surf = surface!(ax, xvec, yvec, wig'; kwargs...)
+    surf = surface!(ax, xvec, yvec, transpose(wig); kwargs...)
 
     if colorbar
         Colorbar(lyt[1, 2], surf)

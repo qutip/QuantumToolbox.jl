@@ -1,7 +1,7 @@
 @testset "CairoMakie Extension" verbose = true begin
     ψ = normalize(coherent(50, 5.0) + coherent(50, -5.0))
     xvec = yvec = -15.0:0.1:15.0
-    wig = wigner(ψ, xvec, yvec)'
+    wig = transpose(wigner(ψ, xvec, yvec))
 
     @test_throws ArgumentError plot_wigner(ψ; library = :CairoMakie, xvec = xvec, yvec = yvec)
 
