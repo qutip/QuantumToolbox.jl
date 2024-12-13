@@ -18,4 +18,4 @@ To plot with [`CairoMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/
 
 | **Plotting Function** | **Description** |
 |:----------------------|:----------------|
-| [`plot_wigner`](@ref) | Wigner function |
+| [`plot_wigner`](@ref) | [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) |
