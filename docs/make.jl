@@ -59,6 +59,7 @@ const PAGES = [
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
         "Extensions" => [
             "users_guide/extensions/cuda.md",
+            "users_guide/extensions/cairomakie.md",
         ],
     ],
     "Tutorials" => [
@@ -82,7 +83,7 @@ makedocs(;
     modules = [
         QuantumToolbox, 
         Base.get_extension(QuantumToolbox, :QuantumToolboxCairoMakieExt),
-        ],
+    ],
     authors = "Alberto Mercurio and Yi-Te Huang",
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
     sitename = "QuantumToolbox.jl",
