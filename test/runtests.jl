@@ -44,10 +44,6 @@ if (GROUP == "All") || (GROUP == "Core")
     for test in core_tests
         include(joinpath(testdir, "core-test", test))
     end
-
-    for test in ext_tests
-        include(joinpath(testdir, "ext-test", test))
-    end
 end
 
 if (GROUP == "All") || (GROUP == "CairoMakie_Ext")
