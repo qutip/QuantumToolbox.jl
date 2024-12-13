@@ -283,3 +283,9 @@ convert_unit
 row_major_reshape
 meshgrid
 ```
+
+## [Visualization](@id doc-API:Visualization)
+
+```@docs
+plot_wigner
+```

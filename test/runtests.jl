@@ -46,6 +46,15 @@ if (GROUP == "All") || (GROUP == "Core")
     end
 end
 
+if (GROUP == "All") || (GROUP == "CairoMakie_Ext")
+    using QuantumToolbox
+
+    (GROUP == "CairoMakie_Ext") && QuantumToolbox.about()
+
+    # CarioMakie is imported in the following script
+    include(joinpath(testdir, "ext-test", "cairomakie_ext.jl"))
+end
+
 if (GROUP == "CUDA_Ext")# || (GROUP == "All")
     Pkg.activate("ext-test/gpu")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
