@@ -7,6 +7,7 @@ const testdir = dirname(@__FILE__)
 
 # Put core tests in alphabetical order
 core_tests = [
+    "block_diagonal_form.jl",
     "correlations_and_spectrum.jl",
     "dynamical_fock_dimension_mesolve.jl",
     "dynamical-shifted-fock.jl",
@@ -15,7 +16,6 @@ core_tests = [
     "generalized_master_equation.jl",
     "low_rank_dynamics.jl",
     "negativity_and_partial_transpose.jl",
-    "permutation.jl",
     "progress_bar.jl",
     "quantum_objects.jl",
     "quantum_objects_evo.jl",

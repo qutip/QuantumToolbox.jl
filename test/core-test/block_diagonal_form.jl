@@ -1,4 +1,4 @@
-@testset "Permutation" begin
+@testset "Block Diagonal Form" begin
     # Block Diagonal Form
     N = 20
     Δ = 0
@@ -16,15 +16,17 @@
     c_ops = [√(κ2) * a^2, √(κϕ) * ad * a]
     L = liouvillian(H, c_ops)
 
-    P, L_bd, block_sizes = bdf(L)
-    blocks_list, block_indices = get_bdf_blocks(L_bd, block_sizes)
+    bdf = block_diagonal_form(L)
+    L_bd = bdf.B
+    block_sizes = bdf.block_sizes
+    blocks = bdf.blocks
+
     @test size(L_bd) == size(L)
     @test length(block_sizes) == 4
-    @test length(blocks_list) == 4
-    @test length(block_indices) == 4
+    @test length(blocks) == 4
     @test sum(block_sizes .== 100) == 4
 
-    @testset "Type Inference (bdf)" begin
-        @inferred bdf(L)
+    @testset "Type Inference (block_diagonal_form)" begin
+        @inferred block_diagonal_form(L)
     end
 end
