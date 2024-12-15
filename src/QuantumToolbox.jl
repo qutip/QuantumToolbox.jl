@@ -90,6 +90,7 @@ include("qobj/states.jl")
 include("qobj/operators.jl")
 include("qobj/superoperators.jl")
 include("qobj/synonyms.jl")
+include("qobj/block_diagonal_form.jl")
 
 # time evolution
 include("time_evolution/time_evolution.jl")
@@ -105,7 +106,6 @@ include("time_evolution/ssesolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 
 # Others
-include("permutation.jl")
 include("correlations.jl")
 include("spectrum.jl")
 include("wigner.jl")

@@ -258,6 +258,13 @@ MultiSiteOperator
 DissipativeIsing
 ```
 
+## [Symmetries and Block Diagonalization](@id doc-API:Symmetries-and-Block-Diagonalization)
+
+```@docs
+block_diagonal_form
+BlockDiagonalForm
+```
+
 ## [Miscellaneous](@id doc-API:Miscellaneous)
 
 ```@docs
