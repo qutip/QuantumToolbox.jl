@@ -631,10 +631,12 @@ function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
     topermute = reverse(2 * n_d + 1 .- qtrace_sel)
     ρmat = permutedims(ρmat, topermute) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
     ρmat = reshape(ρmat, prod(dkeep), prod(dkeep), prod(dtrace), prod(dtrace))
-    res = map(tr, eachslice(ρmat, dims = (1, 2)))
+    res = _map_trace(ρmat)
 
     return res, dkeep
 end
+
+_map_trace(A::AbstractArray{T,4}) where {T} = map(tr, eachslice(A, dims = (1, 2)))
 
 @doc raw"""
     purity(ρ::QuantumObject)

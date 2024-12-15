@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Change the structure of block diagonalization functions, using `BlockDiagonalForm` struct and changing the function name from `bdf` to `block_diagonal_form`. ([#349])
-
+- Add **GPUArrays** compatibility for `ptrace` function, by using **KernelAbstractions.jl**. ([#350])
 
 ## [v0.24.0]
 Release date: 2024-12-13
@@ -70,3 +70,4 @@ Release date: 2024-11-13
 [#346]: https://github.com/qutip/QuantumToolbox.jl/issues/346
 [#347]: https://github.com/qutip/QuantumToolbox.jl/issues/347
 [#349]: https://github.com/qutip/QuantumToolbox.jl/issues/349
+[#350]: https://github.com/qutip/QuantumToolbox.jl/issues/350

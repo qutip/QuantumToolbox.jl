@@ -29,10 +29,13 @@ StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 [weakdeps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+GPUArrays = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
+KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 
 [extensions]
 QuantumToolboxCUDAExt = "CUDA"
 QuantumToolboxCairoMakieExt = "CairoMakie"
+QuantumToolboxGPUArraysExt = ["GPUArrays", "KernelAbstractions"]
 
 [compat]
 Aqua = "0.8"
@@ -44,9 +47,11 @@ DiffEqCallbacks = "4.2.1 - 4"
 DiffEqNoiseProcess = "5"
 Distributed = "1"
 FFTW = "1.5"
+GPUArrays = "10"
 Graphs = "1.7"
 IncompleteLU = "0.2"
 JET = "0.9"
+KernelAbstractions = "0.9.2"
 LinearAlgebra = "1"
 LinearSolve = "2"
 OrdinaryDiffEqCore = "1"
