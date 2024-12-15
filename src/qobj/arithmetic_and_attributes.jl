@@ -705,21 +705,13 @@ function get_coherence(ψ::QuantumObject{<:AbstractArray,KetQuantumObject})
     if length(ψ.dims) == 1
         return mapreduce(n -> sqrt(n - 1) * ψ.data[n] * conj(ψ.data[n-1]), +, 2:ψ.dims[1])
     else
-        R = CartesianIndices((ψ.dims...,))
-        off = circshift(ψ.dims, 1)
-        off[end] = 1
+        off = sum(cumprod(reverse(ψ.dims[2:end]))) + 1
+        t = Tuple(reverse(ψ.dims))
 
-        x = sum(R) do j
-            j_tuple = Tuple(j) .- 1
-            if 0 in j_tuple
-                return 0
-            end
-
-            J = dot(j_tuple, off) + 1
-            J2 = dot(j_tuple .- 1, off) + 1
-            return prod(sqrt.(j_tuple)) * ψ[J] * conj(ψ[J2])
+        x = 0.0im
+        for J in off+2:length(ψ.data)
+            x += ψ[J] * conj(ψ[J-off]) * prod(sqrt.(_ind2sub(t, J) .- 1))
         end
-
         return x
     end
 end
@@ -728,23 +720,24 @@ function get_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject})
     if length(ρ.dims) == 1
         return mapreduce(n -> sqrt(n - 1) * ρ.data[n, n-1], +, 2:ρ.dims[1])
     else
-        R = CartesianIndices((ρ.dims...,))
-        off = circshift(ρ.dims, 1)
-        off[end] = 1
+        off = sum(cumprod(reverse(ρ.dims[2:end]))) + 1
+        t = Tuple(reverse(ρ.dims))
 
-        x = sum(R) do j
-            j_tuple = Tuple(j) .- 1
-            if 0 in j_tuple
-                return 0
-            end
-
-            J = dot(j_tuple, off) + 1
-            J2 = dot(j_tuple .- 1, off) + 1
-            return prod(sqrt.(j_tuple)) * ρ[J, J2]
+        x = 0.0im
+        for J in off+2:length(ρ.data[1, :])
+            x += ρ[J, J-off] * prod(sqrt.(_ind2sub(t, J) .- 1))
         end
-
         return x
     end
+end
+
+function get_coherence(v::QuantumObject{T,OperatorKetQuantumObject}) where {T}
+    if length(v.dims) > 1
+        throw(ArgumentError("Mean photon number not implemented for composite OPeratorKetQuantumObject"))
+    end
+
+    d = v.dims[1]
+    return mapreduce(n -> sqrt(n - 1) * v.data[(n-1)*d+n-1], +, 2:d)
 end
 
 @doc raw"""
@@ -773,42 +766,45 @@ Get the mean occupation number ``n`` by measuring the expectation value of the n
 
 It returns the expectation value of the number operator.
 """
-function mean_occupation(ψ::QuantumObject{T,KetQuantumObject}) where {T}
-    if length(ψ.dims) == 1
-        return mapreduce(k -> abs2(ψ[k]) * (k - 1), +, 1:ρ.dims[1])
-    else
-        t = Tuple(ψ.dims)
+function mean_occupation(ψ::QuantumObject{T,KetQuantumObject}; idx::Union{Int,Nothing} = nothing) where {T}
+    t = Tuple(reverse(ψ.dims))
+    mean_occ = zeros(length(ψ.dims))
 
-        x = 0.0
-        for J in eachindex(ψ.data)
-            x += abs2(ψ[J]) * prod(Base._ind2sub(t, J) .- 1)
-        end
-        return real(x)
+    for J in eachindex(ψ.data)
+        sub_indices = _ind2sub(t, J) .- 1
+        mean_occ .+= abs2(ψ[J]) .* sub_indices
     end
+    reverse!(mean_occ)
+
+    return isnothing(idx) ? mean_occ : mean_occ[idx]
 end
 
-function mean_occupation(ρ::QuantumObject{T,OperatorQuantumObject}) where {T}
-    if length(ρ.dims) == 1
-        return real(mapreduce(k -> ρ[k, k] * (k - 1), +, 1:ρ.dims[1]))
-    else
-        t = Tuple(ρ.dims)
+mean_occupation(ψ::QuantumObject{T,KetQuantumObject,1}) where {T} = mapreduce(k -> abs2(ψ[k]) * (k - 1), +, 1:ψ.dims[1])
 
-        x = 0.0im
-        for J in eachindex(ρ.data[:, 1])
-            x += ρ[J, J] * prod(Base._ind2sub(t, J) .- 1)
-        end
+function mean_occupation(ρ::QuantumObject{T,OperatorQuantumObject}; idx::Union{Int,Nothing} = nothing) where {T}
+    t = Tuple(reverse(ρ.dims))
+    mean_occ = zeros(eltype(ρ.data), length(ρ.dims))
 
-        return real(x)
+    x = 0.0im
+    for J in eachindex(ρ.data[:, 1])
+        sub_indices = _ind2sub(t, J) .- 1
+        mean_occ .+= ρ[J, J] .* sub_indices
     end
+    reverse!(mean_occ)
+
+    return isnothing(idx) ? real.(mean_occ) : real(mean_occ[idx])
 end
 
-function mean_occupation(ρ::QuantumObject{T,OperatorKetQuantumObject}) where {T}
-    if length(ρ.dims) > 1
+mean_occupation(ρ::QuantumObject{T,OperatorQuantumObject,1}) where {T} =
+    mapreduce(k -> ρ[k, k] * (k - 1), +, 1:ρ.dims[1])
+
+function mean_occupation(v::QuantumObject{T,OperatorKetQuantumObject}) where {T}
+    if length(v.dims) > 1
         throw(ArgumentError("Mean photon number not implemented for composite OPeratorKetQuantumObject"))
     end
 
-    d = ρ.dims[1]
-    return real(mapreduce(k -> ρ[(k-1)*r+k] * (k - 1), +, 1:d))
+    d = v.dims[1]
+    return real(mapreduce(k -> v[(k-1)*d+k] * (k - 1), +, 1:d))
 end
 
 @doc raw"""

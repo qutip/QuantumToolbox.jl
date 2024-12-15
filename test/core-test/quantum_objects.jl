@@ -476,13 +476,17 @@
         ρ1 = ket2dm(ψ1)
         v1 = mat2vec(ρ1)
 
-        @test mean_occupation(ψ) ≈ N1
-        @test mean_occupation(ρ) ≈ N1
-        @test mean_occupation(v) ≈ N1
+        @test mean_occupation(ψ1) ≈ N1
+        @test mean_occupation(ρ1) ≈ N1
+        @test mean_occupation(v1) ≈ N1
 
         N2 = 4.0
         Nc = N1 * N2
+        Ns = [N1, N2]
         ψ2 = coherent(30, 2.0)
+        ρ2 = ket2dm(ψ2)
+        v2 = mat2vec(ρ2)
+
         ψc = ψ1 ⊗ ψ2
         ρc = ket2dm(ψc)
         vc = mat2vec(ρc)
@@ -491,13 +495,19 @@
         @test mean_occupation(ρ2) ≈ N2
         @test mean_occupation(v2) ≈ N2
 
-        @test mean_occupation(ψc) ≈ Nc
-        @test mean_occupation(ρc) ≈ Nc
+        @test mean_occupation(ψc) ≈ Ns
+        @test mean_occupation(ρc) ≈ Ns
+        @test prod(mean_occupation(ψc)) ≈ Nc
+        @test prod(mean_occupation(ρc)) ≈ Nc
+        @test mean_occupation(ψc, idx = 1) ≈ N1
+        @test mean_occupation(ρc, idx = 1) ≈ N1
+        @test mean_occupation(ψc, idx = 2) ≈ N2
+        @test mean_occupation(ρc, idx = 2) ≈ N2
 
         @testset "Type Inference (mean_occupation)" begin
-            @inferred mean_occupation(ψ)
-            @inferred mean_occupation(ρ)
-            @inferred mean_occupation(v)
+            @inferred mean_occupation(ψ1)
+            @inferred mean_occupation(ρ1)
+            @inferred mean_occupation(v1)
         end
     end
 
