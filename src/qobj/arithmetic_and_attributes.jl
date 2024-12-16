@@ -6,7 +6,9 @@ Arithmetic and Attributes for QuantumObject
 
 export proj, ptrace, purity, permute
 export tidyup, tidyup!
-export get_data, get_coherence
+export get_data, get_coherence, remove_coherence, mean_occupation
+
+import Base: _ind2sub
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
@@ -684,24 +686,112 @@ get_data(A::AbstractQuantumObject) = A.data
 @doc raw"""
     get_coherence(ψ::QuantumObject)
 
-Get the coherence value ``\alpha`` by measuring the expectation value of the destruction operator ``\hat{a}`` on a state ``\ket{\psi}`` or a density matrix ``\hat{\rho}``.
-
-It returns both ``\alpha`` and the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
+Returns the coherence value ``\alpha`` by measuring the expectation value of the destruction operator ``\hat{a}`` on a state ``\ket{\psi}`` or a density matrix ``\hat{\rho}``.
 """
 function get_coherence(ψ::QuantumObject{<:AbstractArray,KetQuantumObject})
-    a = destroy(prod(ψ.dims))
-    α = expect(a, ψ)
-    D = exp(α * a' - conj(α) * a)
+    if length(ψ.dims) == 1
+        return mapreduce(n -> sqrt(n - 1) * ψ.data[n] * conj(ψ.data[n-1]), +, 2:ψ.dims[1])
+    else
+        off = sum(cumprod(reverse(ψ.dims[2:end]))) + 1
+        t = Tuple(reverse(ψ.dims))
 
-    return α, D' * ψ
+        x = 0.0im
+        for J in off+2:length(ψ.data)
+            x += ψ[J] * conj(ψ[J-off]) * prod(sqrt.(_ind2sub(t, J) .- 1))
+        end
+        return x
+    end
 end
 
 function get_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject})
-    a = destroy(prod(ρ.dims))
-    α = expect(a, ρ)
-    D = exp(α * a' - conj(α) * a)
+    if length(ρ.dims) == 1
+        return mapreduce(n -> sqrt(n - 1) * ρ.data[n, n-1], +, 2:ρ.dims[1])
+    else
+        off = sum(cumprod(reverse(ρ.dims[2:end]))) + 1
+        t = Tuple(reverse(ρ.dims))
 
-    return α, D' * ρ * D
+        x = 0.0im
+        for J in off+2:length(ρ.data[1, :])
+            x += ρ[J, J-off] * prod(sqrt.(_ind2sub(t, J) .- 1))
+        end
+        return x
+    end
+end
+
+function get_coherence(v::QuantumObject{T,OperatorKetQuantumObject}) where {T}
+    if length(v.dims) > 1
+        throw(ArgumentError("Mean photon number not implemented for composite OPeratorKetQuantumObject"))
+    end
+
+    d = v.dims[1]
+    return mapreduce(n -> sqrt(n - 1) * v.data[(n-1)*d+n-1], +, 2:d)
+end
+
+@doc raw"""
+    remove_coherence(ψ::QuantumObject)
+
+Returns the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
+"""
+function remove_coherence(ψ::QuantumObject{<:AbstractArray,KetQuantumObject,1})
+    α = get_coherence(ψ)
+    D = displace(ψ.dims[1], α)
+
+    return D' * ψ
+end
+
+function remove_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject,1})
+    α = get_coherence(ρ)
+    D = displace(ρ.dims[1], α)
+
+    return D' * ρ * D
+end
+
+@doc raw"""
+    mean_occupation(ψ::QuantumObject)
+
+Get the mean occupation number ``n`` by measuring the expectation value of the number operator ``\hat{n}`` on a state ``\ket{\psi}``, a density matrix ``\hat{\rho}`` or a vectorized density matrix ``\ket{\hat{\rho}}``.
+
+It returns the expectation value of the number operator.
+"""
+function mean_occupation(ψ::QuantumObject{T,KetQuantumObject}; idx::Union{Int,Nothing} = nothing) where {T}
+    t = Tuple(reverse(ψ.dims))
+    mean_occ = zeros(length(ψ.dims))
+
+    for J in eachindex(ψ.data)
+        sub_indices = _ind2sub(t, J) .- 1
+        mean_occ .+= abs2(ψ[J]) .* sub_indices
+    end
+    reverse!(mean_occ)
+
+    return isnothing(idx) ? mean_occ : mean_occ[idx]
+end
+
+mean_occupation(ψ::QuantumObject{T,KetQuantumObject,1}) where {T} = mapreduce(k -> abs2(ψ[k]) * (k - 1), +, 1:ψ.dims[1])
+
+function mean_occupation(ρ::QuantumObject{T,OperatorQuantumObject}; idx::Union{Int,Nothing} = nothing) where {T}
+    t = Tuple(reverse(ρ.dims))
+    mean_occ = zeros(eltype(ρ.data), length(ρ.dims))
+
+    x = 0.0im
+    for J in eachindex(ρ.data[:, 1])
+        sub_indices = _ind2sub(t, J) .- 1
+        mean_occ .+= ρ[J, J] .* sub_indices
+    end
+    reverse!(mean_occ)
+
+    return isnothing(idx) ? real.(mean_occ) : real(mean_occ[idx])
+end
+
+mean_occupation(ρ::QuantumObject{T,OperatorQuantumObject,1}) where {T} =
+    mapreduce(k -> ρ[k, k] * (k - 1), +, 1:ρ.dims[1])
+
+function mean_occupation(v::QuantumObject{T,OperatorKetQuantumObject}) where {T}
+    if length(v.dims) > 1
+        throw(ArgumentError("Mean photon number not implemented for composite OPeratorKetQuantumObject"))
+    end
+
+    d = v.dims[1]
+    return real(mapreduce(k -> v[(k-1)*d+k] * (k - 1), +, 1:d))
 end
 
 @doc raw"""
