@@ -13,8 +13,8 @@ using CairoMakie
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
 
 # some options for `makedocs`
-const DRAFT = true  # set `true`  to disable cell evaluation
-const DOCTEST = false # set `false` to skip doc tests
+const DRAFT = false  # set `true`  to disable cell evaluation
+const DOCTEST = true # set `false` to skip doc tests
 
 # generate bibliography
 bib = CitationBibliography(
