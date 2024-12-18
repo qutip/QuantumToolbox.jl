@@ -170,14 +170,14 @@ trans
 dag
 matrix_element
 unit
+tensor
+⊗
+qeye
 sqrtm
 logm
 expm
 sinm
 cosm
-tensor
-⊗
-qeye
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)
