@@ -50,7 +50,8 @@ struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: Abstract
     end
 end
 
-QuantumObject(A::AbstractArray, type::ObjType, dims::Integer) where {ObjType<:QuantumObjectType} = QuantumObject(A, type, SVector{1,Int}(dims))
+QuantumObject(A::AbstractArray, type::ObjType, dims::Integer) where {ObjType<:QuantumObjectType} =
+    QuantumObject(A, type, SVector{1,Int}(dims))
 
 @doc raw"""
     Qobj(A::AbstractArray; type = nothing, dims = nothing)
