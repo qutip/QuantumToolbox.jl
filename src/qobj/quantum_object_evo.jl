@@ -1,3 +1,7 @@
+#=
+This file defines the QuantumObjectEvolution (QobjEvo) structure.
+=#
+
 export QuantumObjectEvolution
 
 @doc raw"""
