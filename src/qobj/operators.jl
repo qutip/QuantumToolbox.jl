@@ -416,12 +416,15 @@ sigmaz() = rmul!(jmat(0.5, Val(:z)), 2)
 
 @doc raw"""
     eye(N::Int; type=Operator, dims=nothing)
+    qeye(N::Int; type=Operator, dims=nothing)
 
 Identity operator ``\hat{\mathbb{1}}`` with size `N`.
 
 It is also possible to specify the list of Hilbert dimensions `dims` if different subsystems are present.
 
-Note that `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref)
+Note that 
+- `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref)
+- `qeye` is a synonym of `eye`
 """
 eye(
     N::Int;

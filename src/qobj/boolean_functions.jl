@@ -61,8 +61,11 @@ issuper(A) = false # default case
 
 @doc raw"""
     ishermitian(A::AbstractQuantumObject)
+    isherm(A::AbstractQuantumObject)
 
 Test whether the [`AbstractQuantumObject`](@ref) is Hermitian.
+
+Note that `isherm` is a synonym of `ishermitian`.
 """
 LinearAlgebra.ishermitian(A::AbstractQuantumObject) = ishermitian(A.data)
 

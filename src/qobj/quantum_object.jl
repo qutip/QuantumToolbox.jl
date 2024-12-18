@@ -50,10 +50,16 @@ struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: Abstract
     end
 end
 
-function QuantumObject(A::AbstractArray, type::ObjType, dims::Integer) where {ObjType<:QuantumObjectType}
-    return QuantumObject(A, type, SVector{1,Int}(dims))
-end
+QuantumObject(A::AbstractArray, type::ObjType, dims::Integer) where {ObjType<:QuantumObjectType} = QuantumObject(A, type, SVector{1,Int}(dims))
 
+@doc raw"""
+    Qobj(A::AbstractArray; type = nothing, dims = nothing)
+    QuantumObject(A::AbstractArray; type = nothing, dims = nothing)
+
+Generate [`QuantumObject`](@ref) with a given `A::AbstractArray` and specified `type::QuantumObjectType` and `dims`.
+
+Note that `Qobj` is a synonym of `QuantumObject`.
+"""
 function QuantumObject(
     A::AbstractMatrix{T};
     type::ObjType = nothing,
