@@ -154,7 +154,8 @@ end
 
 Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B} \otimes \cdots``.
 
-Note that `tensor` and `⊗` are synonyms of `kron`.
+!!! note
+    `tensor` and `⊗` (where `⊗` can be typed by tab-completing `\otimes` in the REPL) are synonyms of `kron`.
 
 # Examples
 

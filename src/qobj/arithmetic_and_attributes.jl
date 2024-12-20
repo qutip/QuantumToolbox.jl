@@ -112,13 +112,15 @@ LinearAlgebra.:(/)(A::AbstractQuantumObject{DT}, n::T) where {DT,T<:Number} =
     get_typename_wrapper(A)(A.data / n, A.type, A.dims)
 
 @doc raw"""
+    A ⋅ B
     dot(A::QuantumObject, B::QuantumObject)
 
 Compute the dot product between two [`QuantumObject`](@ref): ``\langle A | B \rangle``
 
 Note that `A` and `B` should be [`Ket`](@ref) or [`OperatorKet`](@ref)
 
-`A ⋅ B` (where `⋅` can be typed by tab-completing `\cdot` in the REPL) is a synonym for `dot(A, B)`
+!!! note
+    `A ⋅ B` (where `⋅` can be typed by tab-completing `\cdot` in the REPL) is a synonym of `dot(A, B)`.
 """
 function LinearAlgebra.dot(
     A::QuantumObject{DT1,OpType},
@@ -138,7 +140,8 @@ Supports the following inputs:
 - `A` is in the type of [`Operator`](@ref), with `i` and `j` are both [`Ket`](@ref).
 - `A` is in the type of [`SuperOperator`](@ref), with `i` and `j` are both [`OperatorKet`](@ref)
 
-Note that `matrix_element(i, A, j)` is a synonym of `dot(i, A, j)`.
+!!! note
+    `matrix_element(i, A, j)` is a synonym of `dot(i, A, j)`.
 """
 function LinearAlgebra.dot(
     i::QuantumObject{DT1,KetQuantumObject},
@@ -202,7 +205,8 @@ LinearAlgebra.transpose(
 
 Lazy adjoint (conjugate transposition) of the [`AbstractQuantumObject`](@ref)
 
-Note that `A'` and `dag(A)` are synonyms of `adjoint(A)`.
+!!! note
+    `A'` and `dag(A)` are synonyms of `adjoint(A)`.
 """
 LinearAlgebra.adjoint(
     A::AbstractQuantumObject{DT,OpType},
@@ -322,7 +326,8 @@ Support for the following types of [`QuantumObject`](@ref):
 - If `A` is [`Ket`](@ref) or [`Bra`](@ref), default `p = 2`
 - If `A` is [`Operator`](@ref), default `p = 1`
 
-Note that `unit` is a synonym of `normalize`.
+!!! note
+    `unit` is a synonym of `normalize`.
 
 Also, see [`norm`](@ref) about its definition for different types of [`QuantumObject`](@ref).
 """
@@ -382,7 +387,8 @@ LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.dat
 
 Matrix square root of [`QuantumObject`](@ref)
 
-Note that `√(A)` is a synonym for `sqrt(A)`
+!!! note
+    `√(A)` (where `√` can be typed by tab-completing `\sqrt` in the REPL) is a synonym of `sqrt(A)`.
 """
 LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} =
     QuantumObject(sqrt(sparse_to_dense(A.data)), A.type, A.dims)

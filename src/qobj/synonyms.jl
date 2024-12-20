@@ -11,14 +11,16 @@ export sqrtm, logm, expm, sinm, cosm
 @doc raw"""
     Qobj(A; kwargs...)
 
-`Qobj` is a synonym for generating [`QuantumObject`](@ref). See the docstring of [`QuantumObject`](@ref) for more details.
+!!! note
+    `Qobj` is a synonym for generating [`QuantumObject`](@ref). See the docstring of [`QuantumObject`](@ref) for more details.
 """
 const Qobj = QuantumObject # we need the docstring here, otherwise the docstring won't be found because QuantumObject is not a public symbol
 
 @doc raw"""
     QobjEvo(args...; kwargs...)
 
-`QobjEvo` is a synonym for generating [`QuantumObjectEvolution`](@ref). See the docstrings of [`QuantumObjectEvolution`](@ref) for more details.
+!!! note
+    `QobjEvo` is a synonym for generating [`QuantumObjectEvolution`](@ref). See the docstrings of [`QuantumObjectEvolution`](@ref) for more details.
 """
 const QobjEvo = QuantumObjectEvolution # we need the docstring here, otherwise the docstring won't be found because QuantumObjectEvolution is not a public symbol
 

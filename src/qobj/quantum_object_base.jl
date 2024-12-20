@@ -128,7 +128,8 @@ Returns a tuple containing each dimensions of the array in the [`AbstractQuantum
 
 Optionally, you can specify an index (`idx`) to just get the corresponding dimension of the array.
 
-Note that `shape` is a synonym of `size`.
+!!! note
+    `shape` is a synonym of `size`.
 """
 Base.size(A::AbstractQuantumObject) = size(A.data)
 Base.size(A::AbstractQuantumObject, idx::Int) = size(A.data, idx)

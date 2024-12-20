@@ -181,9 +181,10 @@ Generate [`QuantumObjectEvolution`](@ref).
 !!! warning "Beware of type-stability!"
     Please note that, unlike QuTiP, this function doesn't support `op_func_list` as `Vector` type. This is related to the type-stability issue. See the Section [The Importance of Type-Stability](@ref doc:Type-Stability) for more details.
 
-# Notes
-- If `α` is provided, all the operators in `op_func_list` will be pre-multiplied by `α`. The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`. The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators.
-- `QobjEvo` is a synonym of `QuantumObjectEvolution`
+Note that if `α` is provided, all the operators in `op_func_list` will be pre-multiplied by `α`. The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`. The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators.
+
+!!! note
+    `QobjEvo` is a synonym of `QuantumObjectEvolution`.
 
 # Examples
 This operator can be initialized in the same way as the QuTiP `QobjEvo` object. For example

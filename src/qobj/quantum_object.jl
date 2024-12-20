@@ -59,7 +59,8 @@ QuantumObject(A::AbstractArray, type::ObjType, dims::Integer) where {ObjType<:Qu
 
 Generate [`QuantumObject`](@ref) with a given `A::AbstractArray` and specified `type::QuantumObjectType` and `dims`.
 
-Note that `Qobj` is a synonym of `QuantumObject`.
+!!! note
+    `Qobj` is a synonym of `QuantumObject`.
 """
 function QuantumObject(
     A::AbstractMatrix{T};

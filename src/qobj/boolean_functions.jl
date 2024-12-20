@@ -65,7 +65,8 @@ issuper(A) = false # default case
 
 Test whether the [`AbstractQuantumObject`](@ref) is Hermitian.
 
-Note that `isherm` is a synonym of `ishermitian`.
+!!! note
+    `isherm` is a synonym of `ishermitian`.
 """
 LinearAlgebra.ishermitian(A::AbstractQuantumObject) = ishermitian(A.data)
 
