@@ -148,8 +148,14 @@ end
 
 @doc raw"""
     kron(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
+    tensor(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
+    ⊗(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
+    A ⊗ B
 
 Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B} \otimes \cdots``.
+
+!!! note
+    `tensor` and `⊗` (where `⊗` can be typed by tab-completing `\otimes` in the REPL) are synonyms of `kron`.
 
 # Examples
 
