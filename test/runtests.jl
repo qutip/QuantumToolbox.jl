@@ -26,11 +26,14 @@ core_tests = [
     "wigner.jl",
 ]
 
+# Include helper functions to avoid repetition
+include("helpers.jl")
+
 if (GROUP == "All") || (GROUP == "Code-Quality")
     using QuantumToolbox
     using Aqua, JET
 
-    include(joinpath(testdir, "core-test", "code_quality.jl"))
+    include(joinpath(testdir, "code-quality", "code_quality.jl"))
 end
 
 if (GROUP == "All") || (GROUP == "Core")

@@ -57,12 +57,12 @@ function correlation_3op_2t(
     kwargs2 = merge((saveat = collect(tlist),), (; kwargs...))
     ρt_list = mesolve(L, ψ0, tlist; kwargs2...).states
 
-    corr = map((t, ρt) -> mesolve(L, C * ρt * A, τlist .+ t, e_ops = [B]; kwargs...).expect[1, :], tlist, ρt_list)
+    corr = Matrix{eltype(ψ0)}(undef, length(tlist), length(τlist))
+    foreach(enumerate(tlist)) do (j, t)
+        return corr[j, :] .= mesolve(L, C * ρt_list[j] * A, τlist .+ t, e_ops = [B]; kwargs...).expect[1, :]
+    end
 
-    # make the output correlation Matrix align with QuTiP
-    # 1st dimension corresponds to tlist
-    # 2nd dimension corresponds to τlist
-    return reduce(vcat, transpose.(corr))
+    return corr
 end
 
 @doc raw"""

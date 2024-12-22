@@ -127,39 +127,39 @@ function _spectrum(
     _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(_CType(L), D)) # same as vec(system_identity_matrix)
     _tr_A = transpose(_tr) * spre(A).data
 
-    cache = nothing
     I_cache = I(D^2)
+
+    ω = popfirst!(ωList)
+    cache = init(LinearProblem(L.data - 1im * ω * I_cache, b), solver.alg, kwargs...)
+    sol = solve!(cache)
+    spec[1] = -2 * real(dot(_tr_A, sol.u))
+
     for (idx, ω) in enumerate(ωList)
-        if idx == 1
-            cache = init(LinearProblem(L.data - 1im * ω * I_cache, b), solver.alg, kwargs...)
-            sol = solve!(cache)
-        else
-            cache.A = L.data - 1im * ω * I_cache
-            sol = solve!(cache)
-        end
+        cache.A = L.data - 1im * ω * I_cache
+        sol = solve!(cache)
 
         # trace over the Hilbert space of system (expectation value)
-        spec[idx] = -2 * real(dot(_tr_A, sol.u))
+        spec[idx+1] = -2 * real(dot(_tr_A, sol.u))
     end
 
     return spec
 end
 
 @doc raw"""
-    spectrum_correlation_fft(tlist, corr; inverse=false)
+    spectrum_correlation_fft(tlist, corr; inverse=Val(false))
 
 Calculate the power spectrum corresponding to a two-time correlation function using fast Fourier transform (FFT).
 
 # Parameters
 - `tlist::AbstractVector`: List of times at which the two-time correlation function is given.
 - `corr::AbstractVector`: List of two-time correlations corresponding to the given time point in `tlist`.
-- `inverse::Bool`: Whether to use the inverse Fourier transform or not. Default to `false`.
+- `inverse::Union{Val,Bool}`: Whether to use the inverse Fourier transform or not. Default to `Val(false)`.
 
 # Returns
 - `ωlist`: the list of angular frequencies ``\omega``.
 - `Slist`: the list of the power spectrum corresponding to the angular frequencies in `ωlist`.
 """
-function spectrum_correlation_fft(tlist::AbstractVector, corr::AbstractVector; inverse::Bool = false)
+function spectrum_correlation_fft(tlist::AbstractVector, corr::AbstractVector; inverse::Union{Val,Bool} = Val(false))
     N = length(tlist)
     dt_list = diff(tlist)
     dt = dt_list[1]
@@ -167,7 +167,7 @@ function spectrum_correlation_fft(tlist::AbstractVector, corr::AbstractVector; i
     all(≈(dt), dt_list) || throw(ArgumentError("tlist must be equally spaced for FFT."))
 
     # power spectrum list
-    F = inverse ? N * ifft(corr) : fft(corr)
+    F = getVal(inverse) ? N * ifft(corr) : fft(corr)
     Slist = 2 * dt * real(fftshift(F))
 
     # angular frequency list
