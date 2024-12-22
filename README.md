@@ -176,3 +176,18 @@ Here we provide a brief performance comparison between `QuantumToolbox.jl` and o
 You are most welcome to contribute to `QuantumToolbox.jl` development by forking this repository and sending pull requests (PRs), or filing bug reports at the issues page. You can also help out with users' questions, or discuss proposed changes in the [QuTiP discussion group](https://groups.google.com/g/qutip).
 
 For more information about contribution, including technical advice, please see the [Contributing to QuantumToolbox.jl](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing) section of the documentation.
+
+## Acknowledgements
+
+`QuantumToolbox.jl` is supported by the [Unitary Fund](https://unitary.fund), a grant program for quantum technology projects. We are also grateful to the [Zulip](https://zulip.com) team for providing a free chat service for open-source projects.
+
+<!-- Acknowledgement Logos -->
+<div align="center">
+  <a href="https://unitary.fund">
+    <img src="https://raw.githubusercontent.com/unitaryfund/unitary.fund/refs/heads/main/src/assets/svg/logo.svg" alt="Unitary Fund logo" width="200">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://zulip.com">
+    <img src="https://zulip.com/static/images/logo/zulip-org-logo.svg" alt="Zulip logo" width="200">
+  </a>
+</div>
