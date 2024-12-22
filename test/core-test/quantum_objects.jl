@@ -451,20 +451,93 @@
     end
 
     @testset "get and remove coherence" begin
-        ψ = coherent(30, 3)
-        α = get_coherence(ψ)
-        @test isapprox(abs(α), 3, atol = 1e-5)
+        α1 = 3.0 + 1.5im
+        ψ1 = coherent(30, α1)
+        β1 = get_coherence(ψ1)
+        @test isapprox(α1, β1, atol = 1e-4)
+
+        ρ1 = ket2dm(ψ1)
+        β1 = get_coherence(ρ1)
+        @test isapprox(α1, β1, atol = 1e-4)
+
+        v1 = mat2vec(ρ1)
+        β1 = get_coherence(v1)
+        @test isapprox(α1, β1, atol = 1e-4)
+
+        α2 = 1.2 + 0.3im
+        ψ2 = coherent(15, α2)
+        β2 = get_coherence(ψ2)
+        @test isapprox(α2, β2, atol = 1e-4)
+
+        ρ2 = ket2dm(ψ2)
+        β2 = get_coherence(ρ2)
+        @test isapprox(α2, β2, atol = 1e-4)
+
+        v2 = mat2vec(ρ2)
+        β2 = get_coherence(v2)
+        @test isapprox(α2, β2, atol = 1e-4)
+
+        ψ = ψ1 ⊗ ψ2
+        βs = get_coherence(ψ)
+        @test length(βs) == 2
+        @test isapprox(βs[1], α1, atol = 1e-4)
+        @test isapprox(βs[2], α2, atol = 1e-4)
+
+        ρ = ρ1 ⊗ ρ2
+        βs = get_coherence(ρ)
+        @test length(βs) == 2
+        @test isapprox(βs[1], α1, atol = 1e-4)
+        @test isapprox(βs[2], α2, atol = 1e-4)
+
+        v = mat2vec(ρ)
+        βs = get_coherence(v)
+        @test length(βs) == 2
+        @test isapprox(βs[1], α1, atol = 1e-4)
+        @test isapprox(βs[2], α2, atol = 1e-4)
+
+        αs = [α1, α2]
+        for idx in 1:2
+            β = get_coherence(ψ, idx = idx)
+            @test isapprox(β, αs[idx], atol = 1e-4)
+            β = get_coherence(ρ, idx = idx)
+            @test isapprox(β, αs[idx], atol = 1e-4)
+            β = get_coherence(v, idx = idx)
+            @test isapprox(β, αs[idx], atol = 1e-4)
+        end
+
+        @testset "Type Inference (get_coherence)" begin
+            @inferred get_coherence(ψ1)
+            @inferred get_coherence(ρ1)
+            @inferred get_coherence(v1)
+            @inferred get_coherence(ψ)
+            @inferred get_coherence(ρ)
+            @inferred get_coherence(v)
+        end
+    end
+
+    @testset "remove coherence" begin
+        α1 = 3.0 + 1.5im
+        ψ1 = coherent(30, α1)
+        ψ2 = coherent(15, 1.2 + 0.3im)
+
+        δψ1 = remove_coherence(ψ1)
+        @test abs2(δψ1[1]) > 0.999
+
+        ρ1 = ket2dm(ψ1)
+        δρ1 = remove_coherence(ρ1)
+        @test abs2(δρ1[1, 1]) > 0.999
+
+        ψ = ψ1 ⊗ ψ2
         δψ = remove_coherence(ψ)
         @test abs2(δψ[1]) > 0.999
+
         ρ = ket2dm(ψ)
-        α = get_coherence(ρ)
-        @test isapprox(abs(α), 3, atol = 1e-5)
         δρ = remove_coherence(ρ)
         @test abs2(δρ[1, 1]) > 0.999
 
-        @testset "Type Inference (get_coherence)" begin
-            @inferred get_coherence(ψ)
-            @inferred get_coherence(ρ)
+        @testset "Type Inference (remove_coherence)" begin
+            @inferred remove_coherence(ψ1)
+            @inferred remove_coherence(ρ1)
             @inferred remove_coherence(ψ)
             @inferred remove_coherence(ρ)
         end
@@ -497,17 +570,24 @@
 
         @test mean_occupation(ψc) ≈ Ns
         @test mean_occupation(ρc) ≈ Ns
+        @test mean_occupation(vc) ≈ Ns
         @test prod(mean_occupation(ψc)) ≈ Nc
         @test prod(mean_occupation(ρc)) ≈ Nc
+        @test prod(mean_occupation(vc)) ≈ Nc
         @test mean_occupation(ψc, idx = 1) ≈ N1
         @test mean_occupation(ρc, idx = 1) ≈ N1
         @test mean_occupation(ψc, idx = 2) ≈ N2
         @test mean_occupation(ρc, idx = 2) ≈ N2
+        @test mean_occupation(vc, idx = 1) ≈ N1
+        @test mean_occupation(vc, idx = 2) ≈ N2
 
         @testset "Type Inference (mean_occupation)" begin
             @inferred mean_occupation(ψ1)
             @inferred mean_occupation(ρ1)
             @inferred mean_occupation(v1)
+            @inferred mean_occupation(ψc)
+            @inferred mean_occupation(ρc)
+            @inferred mean_occupation(vc)
         end
     end
 
