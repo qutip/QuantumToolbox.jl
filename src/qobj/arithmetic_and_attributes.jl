@@ -196,7 +196,7 @@ Lazy matrix transpose of the [`AbstractQuantumObject`](@ref).
 LinearAlgebra.transpose(
     A::AbstractQuantumObject{DT,OpType},
 ) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    get_typename_wrapper(A)(transpose(A.data), A.type, A.dims)
+    get_typename_wrapper(A)(transpose(A.data), A.type, transpose(A.dims))
 
 @doc raw"""
     A'
@@ -211,13 +211,13 @@ Lazy adjoint (conjugate transposition) of the [`AbstractQuantumObject`](@ref)
 LinearAlgebra.adjoint(
     A::AbstractQuantumObject{DT,OpType},
 ) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    get_typename_wrapper(A)(adjoint(A.data), A.type, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{DT,KetQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Bra, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{DT,BraQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Ket, A.dims)
+    get_typename_wrapper(A)(adjoint(A.data), A.type, transpose(A.dims))
+LinearAlgebra.adjoint(A::QuantumObject{DT,KetQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Bra, transpose(A.dims))
+LinearAlgebra.adjoint(A::QuantumObject{DT,BraQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Ket, transpose(A.dims))
 LinearAlgebra.adjoint(A::QuantumObject{DT,OperatorKetQuantumObject}) where {DT} =
-    QuantumObject(adjoint(A.data), OperatorBra, A.dims)
+    QuantumObject(adjoint(A.data), OperatorBra, transpose(A.dims))
 LinearAlgebra.adjoint(A::QuantumObject{DT,OperatorBraQuantumObject}) where {DT} =
-    QuantumObject(adjoint(A.data), OperatorKet, A.dims)
+    QuantumObject(adjoint(A.data), OperatorKet, transpose(A.dims))
 
 @doc raw"""
     inv(A::AbstractQuantumObject)

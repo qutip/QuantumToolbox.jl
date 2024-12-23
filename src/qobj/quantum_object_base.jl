@@ -24,7 +24,7 @@ julia> sigmax() isa AbstractQuantumObject
 true
 ```
 """
-abstract type AbstractQuantumObject{DataType,ObjType,N} end
+abstract type AbstractQuantumObject{DataType,ObjType,DimType} end
 
 abstract type QuantumObjectType end
 
@@ -162,17 +162,6 @@ function check_dims(A::AbstractQuantumObject, B::AbstractQuantumObject)
     A.dims != B.dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
     return nothing
 end
-
-function _check_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N}
-    _non_static_array_warning("dims", dims)
-    return (all(>(0), dims) && length(dims) > 0) ||
-           throw(DomainError(dims, "The argument dims must be of non-zero length and contain only positive integers."))
-end
-_check_dims(dims::Any) = throw(
-    ArgumentError(
-        "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
-    ),
-)
 
 function _check_QuantumObject(type::KetQuantumObject, dims, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))

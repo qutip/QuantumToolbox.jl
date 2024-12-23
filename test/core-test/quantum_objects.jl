@@ -117,12 +117,12 @@
         @test isoperket(ρ_bra) == false
         @test isoperbra(ρ_bra) == true
         @test isunitary(ρ_bra) == false
-        @test ρ_bra.dims == [2]
-        @test ρ_ket.dims == [2]
+        @test ρ_bra.dims == Dimensions((2,))
+        @test ρ_ket.dims == Dimensions((2,))
         @test H * ρ ≈ spre(H) * ρ
         @test ρ * H ≈ spost(H) * ρ
         @test H * ρ * H ≈ sprepost(H, H) * ρ
-        @test (L * ρ_ket).dims == [2]
+        @test (L * ρ_ket).dims == Dimensions((2,))
         @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
         @test (ρ_bra * L')' == L * ρ_ket
         @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
@@ -316,7 +316,7 @@
             end
 
             UnionType =
-                Union{QuantumObject{Matrix{T},BraQuantumObject,1},QuantumObject{Matrix{T},OperatorQuantumObject,1}}
+                Union{QuantumObject{Matrix{T},BraQuantumObject,Dimensions{1}},QuantumObject{Matrix{T},OperatorQuantumObject,Dimensions{1}}}
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
             for type in [Bra, OperatorBra]

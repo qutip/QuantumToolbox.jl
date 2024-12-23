@@ -9,10 +9,10 @@ It also implements the fundamental functions in Julia standard library:
 export QuantumObject
 
 @doc raw"""
-    struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N}
+    struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,DimType<:AbstractDimensions}
         data::MT
         type::ObjType
-        dims::SVector{N, Int}
+        dims::DimType
     end
 
 Julia struct representing any quantum objects.
@@ -33,25 +33,20 @@ julia> a isa QuantumObject
 true
 ```
 """
-struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: AbstractQuantumObject{MT,ObjType,N}
+struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <: AbstractQuantumObject{MT,ObjType,DimType}
     data::MT
     type::ObjType
-    dims::SVector{N,Int}
+    dims::DimType
 
     function QuantumObject(data::MT, type::ObjType, dims) where {MT<:AbstractArray,ObjType<:QuantumObjectType}
-        _check_dims(dims)
+        _dims = _gen_dims(dims)
 
         _size = _get_size(data)
-        _check_QuantumObject(type, dims, _size[1], _size[2])
+        _check_QuantumObject(type, _dims, _size[1], _size[2])
 
-        N = length(dims)
-
-        return new{MT,ObjType,N}(data, type, SVector{N,Int}(dims))
+        return new{MT,ObjType,typeof(_dims)}(data, type, _dims)
     end
 end
-
-QuantumObject(A::AbstractArray, type::ObjType, dims::Integer) where {ObjType<:QuantumObjectType} =
-    QuantumObject(A, type, SVector{1,Int}(dims))
 
 @doc raw"""
     Qobj(A::AbstractArray; type = nothing, dims = nothing)
@@ -81,9 +76,9 @@ function QuantumObject(
 
     if dims isa Nothing
         if type isa OperatorQuantumObject || type isa BraQuantumObject
-            dims = SVector{1,Int}(_size[2])
+            dims = _size[2]
         elseif type isa SuperOperatorQuantumObject || type isa OperatorBraQuantumObject
-            dims = SVector{1,Int}(isqrt(_size[2]))
+            dims = isqrt(_size[2])
         end
     end
 
@@ -104,9 +99,9 @@ function QuantumObject(
     if dims isa Nothing
         _size = _get_size(A)
         if type isa KetQuantumObject
-            dims = SVector{1,Int}(_size[1])
+            dims = _gen_dims(_size[1])
         elseif type isa OperatorKetQuantumObject
-            dims = SVector{1,Int}(isqrt(_size[1]))
+            dims = _gen_dims(isqrt(_size[1]))
         end
     end
 
@@ -127,8 +122,9 @@ function QuantumObject(
     dims = A.dims,
 ) where {T,N,ObjType<:QuantumObjectType}
     _size = N == 1 ? (length(A), 1) : size(A)
-    _check_QuantumObject(type, dims, _size[1], _size[2])
-    return QuantumObject(copy(A.data), type, dims)
+    _dims = _gen_dims(dims)
+    _check_QuantumObject(type, _dims, _size[1], _size[2])
+    return QuantumObject(copy(A.data), type, _dims)
 end
 
 function Base.show(
