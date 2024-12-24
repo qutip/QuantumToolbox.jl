@@ -24,7 +24,7 @@ julia> sigmax() isa AbstractQuantumObject
 true
 ```
 """
-abstract type AbstractQuantumObject{DataType,ObjType,DimType} end
+abstract type AbstractQuantumObject{DataType,ObjType,N} end
 
 abstract type QuantumObjectType end
 

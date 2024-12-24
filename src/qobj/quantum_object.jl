@@ -9,10 +9,10 @@ It also implements the fundamental functions in Julia standard library:
 export QuantumObject
 
 @doc raw"""
-    struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,DimType<:AbstractDimensions}
+    struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: AbstractQuantumObject{MT,ObjType,N}
         data::MT
         type::ObjType
-        dims::DimType
+        dims::AbstractDimensions{N}
     end
 
 Julia struct representing any quantum objects.
@@ -33,18 +33,19 @@ julia> a isa QuantumObject
 true
 ```
 """
-struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <: AbstractQuantumObject{MT,ObjType,DimType}
+struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: AbstractQuantumObject{MT,ObjType,N}
     data::MT
     type::ObjType
-    dims::DimType
+    dims::AbstractDimensions{N}
 
     function QuantumObject(data::MT, type::ObjType, dims) where {MT<:AbstractArray,ObjType<:QuantumObjectType}
         _dims = _gen_dims(dims)
+        N = length(_dims)
 
         _size = _get_size(data)
         _check_QuantumObject(type, _dims, _size[1], _size[2])
 
-        return new{MT,ObjType,typeof(_dims)}(data, type, _dims)
+        return new{MT,ObjType,N}(data, type, _dims)
     end
 end
 

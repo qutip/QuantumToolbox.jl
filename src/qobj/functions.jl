@@ -179,11 +179,22 @@ julia> a.dims, O.dims
 ```
 """
 function LinearAlgebra.kron(
-    A::AbstractQuantumObject{DT1,OpType},
-    B::AbstractQuantumObject{DT2,OpType},
-) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
+    A::AbstractQuantumObject{DT1,AOpType},
+    B::AbstractQuantumObject{DT2,BOpType},
+) where {DT1,DT2,AOpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject},BOpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
     QType = promote_op_type(A, B)
-    return QType(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
+    kron_type = (AOpType == BOpType) ? A.type : Operator
+
+    # deal with dims; # TODO: uncomment the following if-else block when CompoundDimensions is supported
+    # if (A.dims isa Dimensions) && (B.dims isa Dimensions)
+        _Adims = A.dims
+        _Bdims = B.dims
+    # else
+    #     # transfer to CompoundDimensions
+    #     _Adims = CompoundDimensions(A.type, A.dims)
+    #     _Bdims = CompoundDimensions(B.type, B.dims) =#
+    # end
+    return QType(kron(A.data, B.data), kron_type, kron(_Adims, _Bdims))
 end
 LinearAlgebra.kron(A::AbstractQuantumObject) = A
 function LinearAlgebra.kron(A::Vector{<:AbstractQuantumObject})

@@ -69,7 +69,7 @@ function LinearAlgebra.:(*)(
     B::QuantumObject{DT2,BraQuantumObject},
 ) where {DT1,DT2}
     check_dims(A, B)
-    return QuantumObject(A.data * B.data, Operator, A.dims)
+    return QuantumObject(A.data * B.data, Operator, A.dims) # to align with QuTiP, don't use kron(A, B) to do it.
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{DT1,BraQuantumObject},
@@ -212,8 +212,10 @@ LinearAlgebra.adjoint(
     A::AbstractQuantumObject{DT,OpType},
 ) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     get_typename_wrapper(A)(adjoint(A.data), A.type, transpose(A.dims))
-LinearAlgebra.adjoint(A::QuantumObject{DT,KetQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Bra, transpose(A.dims))
-LinearAlgebra.adjoint(A::QuantumObject{DT,BraQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Ket, transpose(A.dims))
+LinearAlgebra.adjoint(A::QuantumObject{DT,KetQuantumObject}) where {DT} =
+    QuantumObject(adjoint(A.data), Bra, transpose(A.dims))
+LinearAlgebra.adjoint(A::QuantumObject{DT,BraQuantumObject}) where {DT} =
+    QuantumObject(adjoint(A.data), Ket, transpose(A.dims))
 LinearAlgebra.adjoint(A::QuantumObject{DT,OperatorKetQuantumObject}) where {DT} =
     QuantumObject(adjoint(A.data), OperatorBra, transpose(A.dims))
 LinearAlgebra.adjoint(A::QuantumObject{DT,OperatorBraQuantumObject}) where {DT} =
