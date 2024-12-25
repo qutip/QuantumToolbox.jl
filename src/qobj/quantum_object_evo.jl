@@ -5,10 +5,10 @@ This file defines the QuantumObjectEvolution (QobjEvo) structure.
 export QuantumObjectEvolution
 
 @doc raw"""
-    struct QuantumObjectEvolution{DT<:AbstractSciMLOperator,ObjType<:QuantumObjectType,N} <: AbstractQuantumObject{DT,ObjType,N}
-        data::DT
+    struct QuantumObjectEvolution{DataType<:AbstractSciMLOperator,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <: AbstractQuantumObject{DataType,ObjType,DimType}
+        data::DataType
         type::ObjType
-        dims::AbstractDimensions{N}
+        dims::DimType
     end
 
 Julia struct representing any time-dependent quantum object. The `data` field is a `AbstractSciMLOperator` object that represents the time-dependent quantum object. It can be seen as
@@ -97,13 +97,13 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ```
 """
 struct QuantumObjectEvolution{
-    DT<:AbstractSciMLOperator,
+    DataType<:AbstractSciMLOperator,
     ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    N,
-} <: AbstractQuantumObject{DT,ObjType,N}
-    data::DT
+    DimType<:AbstractDimensions,
+} <: AbstractQuantumObject{DataType,ObjType,DimType}
+    data::DataType
     type::ObjType
-    dims::AbstractDimensions{N}
+    dims::DimType
 
     function QuantumObjectEvolution(
         data::DT,
@@ -114,12 +114,11 @@ struct QuantumObjectEvolution{
             throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
 
         _dims = _gen_dims(dims)
-        N = length(_dims)
 
         _size = _get_size(data)
         _check_QuantumObject(type, _dims, _size[1], _size[2])
 
-        return new{DT,ObjType,N}(data, type, _dims)
+        return new{DT,ObjType,typeof(_dims)}(data, type, _dims)
     end
 end
 

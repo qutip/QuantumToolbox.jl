@@ -14,7 +14,7 @@ export QuantumObjectType,
 export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 
 @doc raw"""
-    abstract type AbstractQuantumObject{DataType,ObjType,N}
+    abstract type AbstractQuantumObject{DataType,ObjType,DimType}
 
 Abstract type for all quantum objects like [`QuantumObject`](@ref) and [`QuantumObjectEvolution`](@ref).
 
@@ -24,7 +24,7 @@ julia> sigmax() isa AbstractQuantumObject
 true
 ```
 """
-abstract type AbstractQuantumObject{DataType,ObjType,N} end
+abstract type AbstractQuantumObject{DataType,ObjType,DimType} end
 
 abstract type QuantumObjectType end
 
