@@ -140,7 +140,7 @@
         @test H * ρ ≈ spre(H) * ρ
         @test ρ * H ≈ spost(H) * ρ
         @test H * ρ * H ≈ sprepost(H, H) * ρ
-        @test (L * ρ_ket).dims == Dimensions((2,))
+        @test (L * ρ_ket).dims == [2]
         @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
         @test (ρ_bra * L')' == L * ρ_ket
         @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
