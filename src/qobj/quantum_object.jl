@@ -33,7 +33,8 @@ julia> a isa QuantumObject
 true
 ```
 """
-struct QuantumObject{DataType<:AbstractArray,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <: AbstractQuantumObject{DataType,ObjType,DimType}
+struct QuantumObject{DataType<:AbstractArray,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <:
+       AbstractQuantumObject{DataType,ObjType,DimType}
     data::DataType
     type::ObjType
     dims::DimType
@@ -75,10 +76,12 @@ function QuantumObject(
     end
 
     if dims isa Nothing
-        if type isa OperatorQuantumObject || type isa BraQuantumObject
-            dims = _size[2]
+        if type isa BraQuantumObject
+            dims = Dimensions(_size[2])
+        elseif type isa OperatorQuantumObject
+            dims = (_size[1] == _size[2]) ? Dimensions(_size[1]) : CompoundDimensions(_size[1], _size[2])
         elseif type isa SuperOperatorQuantumObject || type isa OperatorBraQuantumObject
-            dims = isqrt(_size[2])
+            dims = Dimensions(isqrt(_size[2]))
         end
     end
 
@@ -99,9 +102,9 @@ function QuantumObject(
     if dims isa Nothing
         _size = _get_size(A)
         if type isa KetQuantumObject
-            dims = _gen_dims(_size[1])
+            dims = Dimensions(_size[1])
         elseif type isa OperatorKetQuantumObject
-            dims = _gen_dims(isqrt(_size[1]))
+            dims = Dimensions(isqrt(_size[1]))
         end
     end
 

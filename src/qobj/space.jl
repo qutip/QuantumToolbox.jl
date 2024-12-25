@@ -2,9 +2,6 @@ export AbstractSpace, Space
 
 abstract type AbstractSpace end
 
-# this show function is for printing AbstractDimensions
-Base.show(io::IO, svec::SVector{N,<:AbstractSpace}) where {N} = print(io, "[", join(svec, ", "), "]")
-
 struct Space <: AbstractSpace
     size::Int
 
@@ -13,7 +10,7 @@ struct Space <: AbstractSpace
         return new(size)
     end
 end
-Base.show(io::IO, s::Space) = print(io, s.size)
+Base.string(s::Space) = string(s.size) # this is only used when printing AbstractDimensions
 
 # for `prod(::Dimensions)`
 Base.:(*)(i::Int, s::Space) = i * s.size

@@ -185,12 +185,6 @@ function LinearAlgebra.kron( # for same OpType. Note that `<:DimType` means same
     QType = promote_op_type(A, B)
     return QType(kron(A.data, B.data), A.type, kron(A.dims, B.dims))
 end
-LinearAlgebra.kron(A::AbstractQuantumObject) = A
-for DimType in (:Dimensions, :CompoundDimensions)
-    @eval begin
-        
-    end
-end
 function LinearAlgebra.kron( # if A and B are both Operator but different Dimensions type
     A::AbstractQuantumObject{DT1,OperatorQuantumObject,<:Dimensions},
     B::AbstractQuantumObject{DT2,OperatorQuantumObject,<:CompoundDimensions},
@@ -214,7 +208,7 @@ for AOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
                     B::AbstractQuantumObject{DT2,$BOpType},
                 ) where {DT1,DT2}
                     QType = promote_op_type(A, B)
-                
+
                     # transfer to CompoundDimensions
                     _Adims = CompoundDimensions(A.type, A.dims)
                     _Bdims = CompoundDimensions(B.type, B.dims)
@@ -225,6 +219,7 @@ for AOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
         end
     end
 end
+LinearAlgebra.kron(A::AbstractQuantumObject) = A
 function LinearAlgebra.kron(A::Vector{<:AbstractQuantumObject})
     @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."
     return kron(A...)

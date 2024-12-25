@@ -7,11 +7,11 @@ export eigenenergies, eigenstates, eigsolve
 export eigsolve_al
 
 @doc raw"""
-    struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},N}
+    struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},DimType<:AbstractDimensions}
         values::T1
         vectors::T2
         type::ObjType
-        dims::SVector{N,Int}
+        dims::DimType
         iter::Int
         numops::Int
         converged::Bool
@@ -23,7 +23,7 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 - `values::AbstractVector`: the eigenvalues
 - `vectors::AbstractMatrix`: the transformation matrix (eigenvectors)
 - `type::Union{Nothing,QuantumObjectType}`: the type of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
-- `dims::SVector`: the `dims` of [`QuantumObject`](@ref)
+- `dims::AbstractDimensions`: the `dims` of [`QuantumObject`](@ref)
 - `iter::Int`: the number of iteration during the solving process
 - `numops::Int` : number of times the linear map was applied in krylov methods
 - `converged::Bool`: Whether the result is converged
@@ -70,12 +70,12 @@ struct EigsolveResult{
     T1<:Vector{<:Number},
     T2<:AbstractMatrix{<:Number},
     ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},
-    N,
+    DimType<:AbstractDimensions,
 }
     values::T1
     vectors::T2
     type::ObjType
-    dims::SVector{N,Int}
+    dims::DimType
     iter::Int
     numops::Int
     converged::Bool

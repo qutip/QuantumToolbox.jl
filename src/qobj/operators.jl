@@ -427,12 +427,16 @@ Note that `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref
 !!! note
     `qeye` is a synonym of `eye`.
 """
-eye(
+function eye(
     N::Int;
     type::ObjType = Operator,
     dims = nothing,
-) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    if dims isa Nothing
+        dims = isa(type, OperatorQuantumObject) ? N : isqrt(N)
+    end
     QuantumObject(Diagonal(ones(ComplexF64, N)); type = type, dims = dims)
+end
 
 @doc raw"""
     fdestroy(N::Union{Int,Val}, j::Int)
@@ -493,7 +497,7 @@ end
 
 Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N`.
 """
-projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator)
+projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator, dims = N)
 
 @doc raw"""
     tunneling(N::Int, m::Int=1; sparse::Union{Bool,Val{<:Bool}}=Val(false))

@@ -152,10 +152,10 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObject
     _size = _get_size(data)
 
     if dims isa Nothing
-        if type == Operator
-            dims = _gen_dims(_size[2])
-        elseif type == SuperOperator
-            dims = _gen_dims(isqrt(_size[2]))
+        if type isa OperatorQuantumObject
+            dims = (_size[1] == _size[2]) ? Dimensions(_size[1]) : CompoundDimensions(_size[1], _size[2])
+        elseif type isa SuperOperatorQuantumObject
+            dims = Dimensions(isqrt(_size[2]))
         end
     end
 

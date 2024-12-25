@@ -559,14 +559,19 @@ function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{
         (n_d == 1) && return ket2dm(QO) # ptrace should always return Operator
     end
 
+    dimsvec = dimsvec_to_list(QO.dims.to)
     _sort_sel = sort(SVector{length(sel),Int}(sel))
-    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, _sort_sel)
-    return QuantumObject(ρtr, type = Operator, dims = dkeep)
+    ρtr, dkeep = _ptrace_ket(QO.data, dimsvec, _sort_sel)
+    return QuantumObject(ρtr, type = Operator, dims = Dimensions(dkeep))
 end
 
 ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
 
 function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
+    isa(QO.dims, CompoundDimensions) &&
+        (QO.dims.to != QO.dims.from) &&
+        throw(ArgumentError("Invalid partial trace for dims = $(QO.dims)"))
+
     _non_static_array_warning("sel", sel)
 
     n_s = length(sel)
@@ -582,9 +587,10 @@ function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::U
         (n_d == 1) && return QO
     end
 
+    dimsvec = dimsvec_to_list(QO.dims.to)
     _sort_sel = sort(SVector{length(sel),Int}(sel))
-    ρtr, dkeep = _ptrace_oper(QO.data, QO.dims, _sort_sel)
-    return QuantumObject(ρtr, type = Operator, dims = dkeep)
+    ρtr, dkeep = _ptrace_oper(QO.data, dimsvec, _sort_sel)
+    return QuantumObject(ρtr, type = Operator, dims = Dimensions(dkeep))
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
@@ -750,6 +756,10 @@ function permute(
     A::QuantumObject{<:AbstractArray{T},ObjType},
     order::Union{AbstractVector{Int},Tuple},
 ) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
+    isa(A.dims, CompoundDimensions) &&
+        (A.dims.to != A.dims.from) &&
+        throw(ArgumentError("Invalid permutation for dims = $(A.dims)"))
+
     (length(order) != length(A.dims)) &&
         throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
 
@@ -760,12 +770,13 @@ function permute(
     order_svector = SVector{length(order),Int}(order) # convert it to SVector for performance
 
     # obtain the arguments: dims for reshape; perm for PermutedDimsArray
-    dims, perm = _dims_and_perm(A.type, A.dims, order_svector, length(order_svector))
+    dimsvec = dimsvec_to_list(A.dims.to)
+    dims, perm = _dims_and_perm(A.type, dimsvec, order_svector, length(order_svector))
 
     return QuantumObject(
         reshape(permutedims(reshape(A.data, dims...), Tuple(perm)), size(A)),
         A.type,
-        A.dims[order_svector],
+        Dimensions(A.dims.to[order_svector]),
     )
 end
 
