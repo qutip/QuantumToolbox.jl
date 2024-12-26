@@ -68,7 +68,8 @@ for ADimType in (:Dimensions, :CompoundDimensions)
                     B::AbstractQuantumObject{DT2,OperatorQuantumObject,$BDimType{NB}},
                 ) where {DT1,DT2,NA,NB}
                     check_dims(A, B)
-                    return QuantumObject(A.data * B.data, Operator, A.dims)
+                    QType = promote_op_type(A, B)
+                    return QType(A.data * B.data, Operator, A.dims)
                 end
             end
         else
@@ -78,7 +79,8 @@ for ADimType in (:Dimensions, :CompoundDimensions)
                     B::AbstractQuantumObject{DT2,OperatorQuantumObject,$BDimType{NB}},
                 ) where {DT1,DT2,NA,NB}
                     check_mul_dims(A.from, B.to)
-                    return QuantumObject(A.data * B.data, Operator, CompoundDimensions(A.to, B.from))
+                    QType = promote_op_type(A, B)
+                    return QType(A.data * B.data, Operator, CompoundDimensions(A.to, B.from))
                 end
             end
         end

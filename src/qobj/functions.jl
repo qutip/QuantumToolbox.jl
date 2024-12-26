@@ -207,7 +207,7 @@ for ADimType in (:Dimensions, :CompoundDimensions)
     end
 end
 
-# if A and B are differet type (must return Operator with CompoundDimensions)
+# if A and B are different type (must return Operator with CompoundDimensions)
 for AOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
     for BOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
         if (AOpType != BOpType)
