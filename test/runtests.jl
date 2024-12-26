@@ -8,9 +8,9 @@ const testdir = dirname(@__FILE__)
 # Put core tests in alphabetical order
 core_tests = [
     "block_diagonal_form.jl",
-    "correlations_and_spectrum.jl", # TODO: fix tests
+    "correlations_and_spectrum.jl",
     "dynamical_fock_dimension_mesolve.jl", # TODO: fix tests
-    "dynamical-shifted-fock.jl", # TODO: fix tests
+    "dynamical-shifted-fock.jl",
     "eigenvalues_and_operators.jl",
     "entanglement.jl",
     "generalized_master_equation.jl",
@@ -20,7 +20,7 @@ core_tests = [
     "quantum_objects.jl",
     "quantum_objects_evo.jl",
     "states_and_operators.jl",
-    "steady_state.jl", # TODO: fix tests
+    "steady_state.jl",
     "time_evolution.jl",
     "utilities.jl",
     "wigner.jl",
