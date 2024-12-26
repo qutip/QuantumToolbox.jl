@@ -87,7 +87,7 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObj
     #   2 - the subsystem need be transposed
 
     nsys = length(mask2)
-    dimslist = dims_to_list(ρ.dims.to) # need `dims.to` here if QO is CompoundDimensions
+    dimslist = dims_to_list(ρ.to) # need `ρ.to` here if ρ is CompoundDimensions
     pt_dims = reshape(Vector(1:(2*nsys)), (nsys, 2))
     pt_idx = [
         [pt_dims[n, mask2[n]] for n in 1:nsys] # origin   value in mask2
