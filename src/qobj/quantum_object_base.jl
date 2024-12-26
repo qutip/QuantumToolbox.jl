@@ -210,17 +210,17 @@ function _check_QuantumObject(type::OperatorBraQuantumObject, dims::Dimensions, 
 end
 
 CompoundDimensions(::KetQuantumObject, dims::Dimensions{N}) where {N} =
-    CompoundDimensions{N}(dims.to, oneDimensions(length(dims)).to)
+    CompoundDimensions{N}(dims.to, Field_list(N))
 CompoundDimensions(::BraQuantumObject, dims::Dimensions{N}) where {N} =
-    CompoundDimensions{N}(oneDimensions(length(dims)).to, dims.to)
+    CompoundDimensions{N}(Field_list(N), dims.to)
 CompoundDimensions(::OperatorQuantumObject, dims::Dimensions{N}) where {N} = CompoundDimensions{N}(dims.to, dims.to)
 CompoundDimensions(::OperatorQuantumObject, dims::CompoundDimensions) = dims
 
 # support Qobj.to and Qobj.from (but maybe this is not a good idea)
 # Base.getproperty(A::AbstractQuantumObject, key::Symbol) = getproperty(A, Val{key}())
 # Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions}, ::Val{:to}) where {DT} = A.dims.to
-# Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = oneDimensions(length(A.dims))
-# Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions}, ::Val{:to}) where {DT} = oneDimensions(length(A.dims))
+# Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = Dimensions(Field_list(length(A.dims))
+# Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions}, ::Val{:to}) where {DT} = Dimensions(Field_list(length(A.dims))
 # Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to
 # Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject}, ::Val{:to}) where {DT} = A.dims.to
 # Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to

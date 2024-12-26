@@ -17,7 +17,7 @@ function Dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Intege
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
 
-    return Dimensions{L}(SVector{L,Space}(Space.(dims)))
+    return Dimensions{L}(SVector{L,AbstractSpace}(Space.(dims)))
 end
 Dimensions(dims::Int) = Dimensions(SVector{1,Int}(dims))
 Dimensions(dims::Any) = throw(
@@ -27,9 +27,6 @@ Dimensions(dims::Any) = throw(
 )
 
 Base.show(io::IO, D::Dimensions) = print(io, D.to)
-
-# this creates a list of Space(1), it's used to generate `from` for Ket, and `to` for Bra)
-oneDimensions(N::Int) = Dimensions(SVector{N,AbstractSpace}(ntuple(i -> Space(1), Val(N))))
 
 struct CompoundDimensions{N} <: AbstractDimensions{N}
     # note that the number `N` should be the same for both `to` and `from`
@@ -52,7 +49,7 @@ function CompoundDimensions(
         ),
     )
 
-    return CompoundDimensions{L1}(SVector{L1,Space}(Space.(to)), SVector{L1,Space}(Space.(from)))
+    return CompoundDimensions{L1}(SVector{L1,AbstractSpace}(Space.(to)), SVector{L1,AbstractSpace}(Space.(from)))
 end
 CompoundDimensions(to::Int, from::Int) = CompoundDimensions(SVector{1,Int}(to), SVector{1,Int}(from))
 
@@ -61,16 +58,17 @@ Base.show(io::IO, D::CompoundDimensions) = print(io, "[", D.to, ", ", D.from, "]
 _gen_dims(dims::AbstractDimensions) = dims
 _gen_dims(dims::Any) = Dimensions(dims)
 
-dimsvec_to_list(dimsvec::SVector{N,AbstractSpace}) where {N} = SVector{N,Int}(ntuple(i -> dimsvec[i].size, Val(N)))
+# obtain dims in the type of SVector with integers
+dims_to_list(dimsvec::SVector{N,AbstractSpace}) where {N} = SVector{N,Int}(ntuple(i -> dimsvec[i].size, Val(N)))
+dims_to_list(dims::Dimensions) = dims_to_list(dims.to)
+dims_to_list(dims::CompoundDimensions) = SVector{2}(dims_to_list(dims.to), dims_to_list(dims.from))
 
-Base.:(==)(vect::AbstractVector{T}, dims::Dimensions) where {T} = vect == dimsvec_to_list(dims.to)
-Base.:(==)(vect::AbstractVector{T}, dims::CompoundDimensions) where {T} = vect == [dimsvec_to_list(dims.to), dimsvec_to_list(dims.from)]
+Base.:(==)(vect::AbstractVector{T}, dims::AbstractDimensions) where {T} = vect == dims_to_list(dims)
 Base.:(==)(dims::AbstractDimensions, vect::AbstractVector{T}) where {T} = vect == dims
 
 Base.length(::AbstractDimensions{N}) where {N} = N
 
 Base.prod(dims::Dimensions) = prod(dims.to)
-Base.prod(spaces::SVector{1,<:AbstractSpace}) = spaces[1].size # for `Dimensions.to` has only a single Space
 
 LinearAlgebra.transpose(dims::Dimensions) = dims
 LinearAlgebra.transpose(dims::CompoundDimensions) = CompoundDimensions(dims.from, dims.to) # switch `to` and `from`

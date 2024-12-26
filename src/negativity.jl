@@ -87,14 +87,14 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObj
     #   2 - the subsystem need be transposed
 
     nsys = length(mask2)
-    dimsvec = dimsvec_to_list(ρ.dims.to)
+    dimslist = dims_to_list(ρ.dims)
     pt_dims = reshape(Vector(1:(2*nsys)), (nsys, 2))
     pt_idx = [
         [pt_dims[n, mask2[n]] for n in 1:nsys] # origin   value in mask2
         [pt_dims[n, 3-mask2[n]] for n in 1:nsys]  # opposite value in mask2 (1 -> 2, and 2 -> 1)
     ]
     return QuantumObject(
-        reshape(permutedims(reshape(ρ.data, (dimsvec..., dimsvec...)), pt_idx), size(ρ)),
+        reshape(permutedims(reshape(ρ.data, (dimslist..., dimslist...)), pt_idx), size(ρ)),
         Operator,
         Dimensions(ρ.dims.to),
     )
@@ -102,8 +102,12 @@ end
 
 # for sparse matrices
 function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray,OperatorQuantumObject}, mask::Vector{Bool})
+    isa(ρ.dims, CompoundDimensions) &&
+        (ρ.dims.to != ρ.dims.from) &&
+        throw(ArgumentError("Invalid partial transpose for dims = $(ρ.dims)"))
+
     M, N = size(ρ)
-    dimsTuple = Tuple(dimsvec_to_list(ρ.dims.to))
+    dimsTuple = Tuple(dims_to_list(ρ.dims))
     colptr = ρ.data.colptr
     rowval = ρ.data.rowval
     nzval = ρ.data.nzval

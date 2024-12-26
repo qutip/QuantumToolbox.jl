@@ -559,9 +559,9 @@ function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{
         (n_d == 1) && return ket2dm(QO) # ptrace should always return Operator
     end
 
-    dimsvec = dimsvec_to_list(QO.dims.to)
+    dimslist = dims_to_list(QO.dims)
     _sort_sel = sort(SVector{length(sel),Int}(sel))
-    ρtr, dkeep = _ptrace_ket(QO.data, dimsvec, _sort_sel)
+    ρtr, dkeep = _ptrace_ket(QO.data, dimslist, _sort_sel)
     return QuantumObject(ρtr, type = Operator, dims = Dimensions(dkeep))
 end
 
@@ -587,9 +587,9 @@ function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::U
         (n_d == 1) && return QO
     end
 
-    dimsvec = dimsvec_to_list(QO.dims.to)
+    dimslist = dims_to_list(QO.dims)
     _sort_sel = sort(SVector{length(sel),Int}(sel))
-    ρtr, dkeep = _ptrace_oper(QO.data, dimsvec, _sort_sel)
+    ρtr, dkeep = _ptrace_oper(QO.data, dimslist, _sort_sel)
     return QuantumObject(ρtr, type = Operator, dims = Dimensions(dkeep))
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
@@ -770,8 +770,8 @@ function permute(
     order_svector = SVector{length(order),Int}(order) # convert it to SVector for performance
 
     # obtain the arguments: dims for reshape; perm for PermutedDimsArray
-    dimsvec = dimsvec_to_list(A.dims.to)
-    dims, perm = _dims_and_perm(A.type, dimsvec, order_svector, length(order_svector))
+    dimslist = dims_to_list(A.dims)
+    dims, perm = _dims_and_perm(A.type, dimslist, order_svector, length(order_svector))
 
     return QuantumObject(
         reshape(permutedims(reshape(A.data, dims...), Tuple(perm)), size(A)),

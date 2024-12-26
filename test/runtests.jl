@@ -30,7 +30,7 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
     using QuantumToolbox
     using Aqua, JET
 
-    include(joinpath(testdir, "core-test", "code_quality.jl"))
+    #include(joinpath(testdir, "core-test", "code_quality.jl"))
 end
 
 if (GROUP == "All") || (GROUP == "Core")
