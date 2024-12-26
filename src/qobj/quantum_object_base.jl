@@ -209,23 +209,26 @@ function _check_QuantumObject(type::OperatorBraQuantumObject, dims::Dimensions, 
     return nothing
 end
 
-CompoundDimensions(::KetQuantumObject, dims::Dimensions{N}) where {N} =
-    CompoundDimensions{N}(dims.to, Field_list(N))
-CompoundDimensions(::BraQuantumObject, dims::Dimensions{N}) where {N} =
-    CompoundDimensions{N}(Field_list(N), dims.to)
-CompoundDimensions(::OperatorQuantumObject, dims::Dimensions{N}) where {N} = CompoundDimensions{N}(dims.to, dims.to)
-CompoundDimensions(::OperatorQuantumObject, dims::CompoundDimensions) = dims
+Base.getproperty(A::AbstractQuantumObject, key::Symbol) = getproperty(A, Val{key}())
+Base.getproperty(A::AbstractQuantumObject, ::Val{K}) where {K} = getfield(A, K)
 
-# support Qobj.to and Qobj.from (but maybe this is not a good idea)
-# Base.getproperty(A::AbstractQuantumObject, key::Symbol) = getproperty(A, Val{key}())
-# Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions}, ::Val{:to}) where {DT} = A.dims.to
-# Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = Dimensions(Field_list(length(A.dims))
-# Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions}, ::Val{:to}) where {DT} = Dimensions(Field_list(length(A.dims))
-# Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to
-# Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject}, ::Val{:to}) where {DT} = A.dims.to
-# Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to
-# Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:CompoundDimensions}, ::Val{:from}) where {DT} = A.dims.from
-# Base.getproperty(A::AbstractQuantumObject{DT,ObjType}, ::Val{T}) where {DT,ObjType<:QuantumObjectType,T} = throw(ArgumentError("Invalid property `$(T)` for $(A.type)"))
+# support `AbstractQuantumObject.to` and `AbstractQuantumObject.from`
+Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions}, ::Val{:to}) where {DT} = A.dims.to
+Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,Dimensions{N}}, ::Val{:from}) where {DT,N} = Field_list(N)
+Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,Dimensions{N}}, ::Val{:to}) where {DT,N} = Field_list(N)
+Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject}, ::Val{:to}) where {DT} = A.dims.to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:CompoundDimensions}, ::Val{:from}) where {DT} =
+    A.dims.from
+Base.getproperty(
+    A::AbstractQuantumObject{DT,ObjType,<:Dimensions},
+    ::KeyType,
+) where {
+    DT,
+    ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},
+    KeyType<:Union{Val{:to},Val{:from}},
+} = A.dims.to
 
 # functions for getting Float or Complex element type
 _FType(A::AbstractQuantumObject) = _FType(eltype(A))

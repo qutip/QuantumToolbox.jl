@@ -435,7 +435,7 @@ function eye(
     if dims isa Nothing
         dims = isa(type, OperatorQuantumObject) ? N : isqrt(N)
     end
-    QuantumObject(Diagonal(ones(ComplexF64, N)); type = type, dims = dims)
+    return QuantumObject(Diagonal(ones(ComplexF64, N)); type = type, dims = dims)
 end
 
 @doc raw"""
@@ -497,7 +497,8 @@ end
 
 Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N`.
 """
-projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator, dims = N)
+projection(N::Int, i::Int, j::Int) =
+    QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator, dims = N)
 
 @doc raw"""
     tunneling(N::Int, m::Int=1; sparse::Union{Bool,Val{<:Bool}}=Val(false))

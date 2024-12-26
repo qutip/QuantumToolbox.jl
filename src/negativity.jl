@@ -78,7 +78,7 @@ end
 # for dense matrices
 function _partial_transpose(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject}, mask::Vector{Bool})
     isa(ρ.dims, CompoundDimensions) &&
-        (ρ.dims.to != ρ.dims.from) &&
+        (ρ.to != ρ.from) &&
         throw(ArgumentError("Invalid partial transpose for dims = $(ρ.dims)"))
 
     mask2 = [1 + Int(i) for i in mask]
@@ -87,7 +87,7 @@ function _partial_transpose(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObj
     #   2 - the subsystem need be transposed
 
     nsys = length(mask2)
-    dimslist = dims_to_list(ρ.dims)
+    dimslist = dims_to_list(ρ.dims.to) # need `dims.to` here if QO is CompoundDimensions
     pt_dims = reshape(Vector(1:(2*nsys)), (nsys, 2))
     pt_idx = [
         [pt_dims[n, mask2[n]] for n in 1:nsys] # origin   value in mask2
@@ -103,11 +103,11 @@ end
 # for sparse matrices
 function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray,OperatorQuantumObject}, mask::Vector{Bool})
     isa(ρ.dims, CompoundDimensions) &&
-        (ρ.dims.to != ρ.dims.from) &&
+        (ρ.to != ρ.from) &&
         throw(ArgumentError("Invalid partial transpose for dims = $(ρ.dims)"))
 
     M, N = size(ρ)
-    dimsTuple = Tuple(dims_to_list(ρ.dims))
+    dimsTuple = Tuple(dims_to_list(ρ.dims.to)) # need `dims.to` here if QO is CompoundDimensions
     colptr = ρ.data.colptr
     rowval = ρ.data.rowval
     nzval = ρ.data.nzval

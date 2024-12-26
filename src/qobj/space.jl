@@ -14,7 +14,7 @@ Field_list(N::Int) = SVector{N,AbstractSpace}(ntuple(i -> Field(), Val(N)))
 struct Space <: AbstractSpace
     size::Int
 
-    function Space(size::Int)
+    Space(size::Int) =
         if size == 1
             return Field()
         elseif size > 1
@@ -22,7 +22,6 @@ struct Space <: AbstractSpace
         else
             throw(DomainError(size, "The size of Space must be positive integer (≥ 1)."))
         end
-    end
 end
 Base.string(s::Space) = string(s.size) # this is only used when printing AbstractDimensions
 

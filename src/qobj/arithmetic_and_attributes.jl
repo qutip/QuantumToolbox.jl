@@ -50,19 +50,54 @@ for op in (:(+), :(-), :(*))
     end
 end
 
+function check_mul_dims(from::SVector{NA,AbstractSpace}, to::SVector{NB,AbstractSpace}) where {NA,NB}
+    (from != to) && throw(
+        DimensionMismatch(
+            "The quantum object with dims = $from can not multiply a quantum object with dims = $to on the right-hand side.",
+        ),
+    )
+    return nothing
+end
+
+for ADimType in (:Dimensions, :CompoundDimensions)
+    for BDimType in (:Dimensions, :CompoundDimensions)
+        if ADimType == BDimType == :Dimensions
+            @eval begin
+                function LinearAlgebra.:(*)(
+                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,$ADimType{NA}},
+                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,$BDimType{NB}},
+                ) where {DT1,DT2,NA,NB}
+                    check_dims(A, B)
+                    return QuantumObject(A.data * B.data, Operator, A.dims)
+                end
+            end
+        else
+            @eval begin
+                function LinearAlgebra.:(*)(
+                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,$ADimType{NA}},
+                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,$BDimType{NB}},
+                ) where {DT1,DT2,NA,NB}
+                    check_mul_dims(A.from, B.to)
+                    return QuantumObject(A.data * B.data, Operator, CompoundDimensions(A.to, B.from))
+                end
+            end
+        end
+    end
+end
+
 function LinearAlgebra.:(*)(
     A::AbstractQuantumObject{DT1,OperatorQuantumObject},
     B::QuantumObject{DT2,KetQuantumObject},
 ) where {DT1,DT2}
-    check_dims(A, B)
-    return QuantumObject(A.data * B.data, Ket, A.dims)
+    check_mul_dims(A.from, B.to)
+    return QuantumObject(A.data * B.data, Ket, Dimensions(A.to))
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{DT1,BraQuantumObject},
     B::AbstractQuantumObject{DT2,OperatorQuantumObject},
 ) where {DT1,DT2}
-    check_dims(A, B)
-    return QuantumObject(A.data * B.data, Bra, A.dims)
+    check_mul_dims(A.from, B.to)
+    return QuantumObject(A.data * B.data, Bra, Dimensions(B.from))
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{DT1,KetQuantumObject},
@@ -569,7 +604,7 @@ ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractV
 
 function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     isa(QO.dims, CompoundDimensions) &&
-        (QO.dims.to != QO.dims.from) &&
+        (QO.to != QO.from) &&
         throw(ArgumentError("Invalid partial trace for dims = $(QO.dims)"))
 
     _non_static_array_warning("sel", sel)
@@ -587,7 +622,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::U
         (n_d == 1) && return QO
     end
 
-    dimslist = dims_to_list(QO.dims)
+    dimslist = dims_to_list(QO.dims.to) # need `dims.to` here if QO is CompoundDimensions
     _sort_sel = sort(SVector{length(sel),Int}(sel))
     ρtr, dkeep = _ptrace_oper(QO.data, dimslist, _sort_sel)
     return QuantumObject(ρtr, type = Operator, dims = Dimensions(dkeep))
@@ -757,7 +792,7 @@ function permute(
     order::Union{AbstractVector{Int},Tuple},
 ) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
     isa(A.dims, CompoundDimensions) &&
-        (A.dims.to != A.dims.from) &&
+        (A.to != A.from) &&
         throw(ArgumentError("Invalid permutation for dims = $(A.dims)"))
 
     (length(order) != length(A.dims)) &&
@@ -770,7 +805,7 @@ function permute(
     order_svector = SVector{length(order),Int}(order) # convert it to SVector for performance
 
     # obtain the arguments: dims for reshape; perm for PermutedDimsArray
-    dimslist = dims_to_list(A.dims)
+    dimslist = dims_to_list(A.dims.to) # need `dims.to` here if QO is CompoundDimensions
     dims, perm = _dims_and_perm(A.type, dimslist, order_svector, length(order_svector))
 
     return QuantumObject(
