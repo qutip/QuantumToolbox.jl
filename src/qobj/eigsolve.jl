@@ -159,7 +159,7 @@ function _eigsolve(
     A,
     b::AbstractVector{T},
     type::ObjType,
-    dims::SVector,
+    dims::AbstractDimensions,
     k::Int = 1,
     m::Int = max(20, 2 * k + 1);
     tol::Real = 1e-8,
@@ -296,7 +296,7 @@ function eigsolve(
     A;
     v0::Union{Nothing,AbstractVector} = nothing,
     type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject} = nothing,
-    dims = SVector{0,Int}(),
+    dims = Dimensions{0}(SVector{0,AbstractSpace}()),
     sigma::Union{Nothing,Real} = nothing,
     k::Int = 1,
     krylovdim::Int = max(20, 2 * k + 1),
@@ -308,8 +308,6 @@ function eigsolve(
     T = eltype(A)
     isH = ishermitian(A)
     v0 === nothing && (v0 = normalize!(rand(T, size(A, 1))))
-
-    dims = SVector(dims)
 
     if sigma === nothing
         res = _eigsolve(A, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)

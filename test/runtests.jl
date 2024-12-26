@@ -11,26 +11,26 @@ core_tests = [
     # "correlations_and_spectrum.jl",
     # "dynamical_fock_dimension_mesolve.jl",
     # "dynamical-shifted-fock.jl",
-    # "eigenvalues_and_operators.jl",
+    "eigenvalues_and_operators.jl",
     "entanglement.jl",
     # "generalized_master_equation.jl",
-    # "low_rank_dynamics.jl",
+    "low_rank_dynamics.jl",
     "negativity_and_partial_transpose.jl",
     "progress_bar.jl",
     "quantum_objects.jl",
     "quantum_objects_evo.jl",
     "states_and_operators.jl",
     # "steady_state.jl",
-    # "time_evolution.jl",
+    "time_evolution.jl",
     "utilities.jl",
-    # "wigner.jl",
+    "wigner.jl",
 ]
 
 if (GROUP == "All") || (GROUP == "Code-Quality")
     using QuantumToolbox
     using Aqua, JET
 
-    #include(joinpath(testdir, "core-test", "code_quality.jl"))
+    include(joinpath(testdir, "core-test", "code_quality.jl"))
 end
 
 if (GROUP == "All") || (GROUP == "Core")
