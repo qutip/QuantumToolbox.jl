@@ -624,7 +624,7 @@ function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::U
         (n_d == 1) && return QO
     end
 
-    dimslist = dims_to_list(QO.dims.to) # need `QO.dims.to` here if QO is CompoundDimensions
+    dimslist = dims_to_list(QO.to)
     _sort_sel = sort(SVector{length(sel),Int}(sel))
     ρtr, dkeep = _ptrace_oper(QO.data, dimslist, _sort_sel)
     return QuantumObject(ρtr, type = Operator, dims = Dimensions(dkeep))
@@ -793,10 +793,6 @@ function permute(
     A::QuantumObject{<:AbstractArray{T},ObjType},
     order::Union{AbstractVector{Int},Tuple},
 ) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
-    isa(A.dims, CompoundDimensions) &&
-        (A.to != A.from) &&
-        throw(ArgumentError("Invalid permutation for dims = $(A.dims)"))
-
     (length(order) != length(A.dims)) &&
         throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
 
@@ -807,7 +803,7 @@ function permute(
     order_svector = SVector{length(order),Int}(order) # convert it to SVector for performance
 
     # obtain the arguments: dims for reshape; perm for PermutedDimsArray
-    dimslist = dims_to_list(A.dims.to) # need `A.dims.to` here if A is CompoundDimensions
+    dimslist = dims_to_list(A.dims)
     dims, perm = _dims_and_perm(A.type, dimslist, order_svector, length(order_svector))
 
     return QuantumObject(
@@ -817,15 +813,17 @@ function permute(
     )
 end
 
-function _dims_and_perm(
+_dims_and_perm(
     ::ObjType,
-    dims::SVector{N,Int},
+    dimslist::SVector{N,Int},
     order::AbstractVector{Int},
     L::Int,
-) where {ObjType<:Union{KetQuantumObject,BraQuantumObject},N}
-    return reverse(dims), reverse((L + 1) .- order)
-end
+) where {ObjType<:Union{KetQuantumObject,BraQuantumObject},N} = reverse(dimslist), reverse((L + 1) .- order)
 
-function _dims_and_perm(::OperatorQuantumObject, dims::SVector{N,Int}, order::AbstractVector{Int}, L::Int) where {N}
-    return reverse(vcat(dims, dims)), reverse((2 * L + 1) .- vcat(order, order .+ L))
-end
+# if dims originates from Dimensions
+_dims_and_perm(::OperatorQuantumObject, dimslist::SVector{N,Int}, order::AbstractVector{Int}, L::Int) where {N} =
+    reverse(vcat(dimslist, dimslist)), reverse((2 * L + 1) .- vcat(order, order .+ L))
+
+# if dims originates from CompoundDimensions
+_dims_and_perm(::OperatorQuantumObject, dimslist::SVector{2, SVector{N, Int}}, order::AbstractVector{Int}, L::Int) where {N} =
+    reverse(vcat(dimslist[1], dimslist[2])), reverse((2 * L + 1) .- vcat(order, order .+ L))

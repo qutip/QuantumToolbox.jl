@@ -72,8 +72,3 @@ Base.prod(dims::Dimensions) = prod(dims.to)
 
 LinearAlgebra.transpose(dims::Dimensions) = dims
 LinearAlgebra.transpose(dims::CompoundDimensions) = CompoundDimensions(dims.from, dims.to) # switch `to` and `from`
-
-LinearAlgebra.kron(Adims::Dimensions{NA}, Bdims::Dimensions{NB}) where {NA,NB} =
-    Dimensions{NA + NB}(vcat(Adims.to, Bdims.to))
-LinearAlgebra.kron(Adims::CompoundDimensions{NA}, Bdims::CompoundDimensions{NB}) where {NA,NB} =
-    CompoundDimensions{NA + NB}(vcat(Adims.to, Bdims.to), vcat(Adims.from, Bdims.from))
