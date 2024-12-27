@@ -825,5 +825,9 @@ _dims_and_perm(::OperatorQuantumObject, dimslist::SVector{N,Int}, order::Abstrac
     reverse(vcat(dimslist, dimslist)), reverse((2 * L + 1) .- vcat(order, order .+ L))
 
 # if dims originates from CompoundDimensions
-_dims_and_perm(::OperatorQuantumObject, dimslist::SVector{2, SVector{N, Int}}, order::AbstractVector{Int}, L::Int) where {N} =
-    reverse(vcat(dimslist[1], dimslist[2])), reverse((2 * L + 1) .- vcat(order, order .+ L))
+_dims_and_perm(
+    ::OperatorQuantumObject,
+    dimslist::SVector{2,SVector{N,Int}},
+    order::AbstractVector{Int},
+    L::Int,
+) where {N} = reverse(vcat(dimslist[1], dimslist[2])), reverse((2 * L + 1) .- vcat(order, order .+ L))
