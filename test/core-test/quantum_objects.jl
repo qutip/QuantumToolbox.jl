@@ -109,8 +109,8 @@
         @test isunitary(a4) == false
         @test a4.dims == [[100], [10]]
         @test_throws DimensionMismatch Qobj(a, dims = 2)
-        @test_throws DimensionMismatch Qobj(a4.data, dims = Dimensions(2))
-        @test_throws DimensionMismatch Qobj(a4.data, dims = CompoundDimensions(100, 2))
+        @test_throws DimensionMismatch Qobj(a4.data, dims = 2)
+        @test_throws DimensionMismatch Qobj(a4.data, dims = ((100,), (2,)))
     end
 
     @testset "OperatorKet and OperatorBra" begin
@@ -654,12 +654,12 @@
         ρ2_ptr = ptrace(ρ, 2)
 
         # use CompoundDimensions to do partial trace
-        ρ1_compound = Qobj(zeros(ComplexF64, 2, 2), dims = CompoundDimensions((2, 1), (2, 1)))
+        ρ1_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((2, 1), (2, 1)))
         basis2 = [tensor(eye(2), basis(2, i)) for i in 0:1]
         for b in basis2
             ρ1_compound += b' * ρ * b
         end
-        ρ2_compound = Qobj(zeros(ComplexF64, 2, 2), dims = CompoundDimensions((1, 2), (1, 2)))
+        ρ2_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((1, 2), (1, 2)))
         basis1 = [tensor(basis(2, i), eye(2)) for i in 0:1]
         for b in basis1
             ρ2_compound += b' * ρ * b

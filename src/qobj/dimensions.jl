@@ -33,29 +33,33 @@ struct CompoundDimensions{N} <: AbstractDimensions{N}
     to::SVector{N,AbstractSpace}   # space acting on the left
     from::SVector{N,AbstractSpace} # space acting on the right
 end
-function CompoundDimensions(
-    to::Union{AbstractVector{T},NTuple{N1,T}},
-    from::Union{AbstractVector{T},NTuple{N2,T}},
-) where {T<:Integer,N1,N2}
-    _non_static_array_warning("dims", to)
-    _non_static_array_warning("dims", from)
+function CompoundDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N}
+    (length(dims) != 2) && throw(ArgumentError("Invalid dims = $dims"))
 
-    L1 = length(to)
-    L2 = length(from)
+    _non_static_array_warning("dims[1]", dims[1])
+    _non_static_array_warning("dims[2]", dims[2])
+
+    L1 = length(dims[1])
+    L2 = length(dims[2])
     ((L1 > 0) && (L1 == L2)) || throw(
         DomainError(
             (L1, L2),
-            "The length of the arguments `to` and `from` must be in the same length and have at least one element.",
+            "The length of the arguments `dims[1]` and `dims[2]` must be in the same length and have at least one element.",
         ),
     )
 
-    return CompoundDimensions{L1}(SVector{L1,AbstractSpace}(Space.(to)), SVector{L1,AbstractSpace}(Space.(from)))
+    return CompoundDimensions{L1}(
+        SVector{L1,AbstractSpace}(Space.(dims[1])),
+        SVector{L1,AbstractSpace}(Space.(dims[2])),
+    )
 end
-CompoundDimensions(to::Int, from::Int) = CompoundDimensions(SVector{1,Int}(to), SVector{1,Int}(from))
 
 Base.show(io::IO, D::CompoundDimensions) = print(io, "[", D.to, ", ", D.from, "]")
 
 _gen_dims(dims::AbstractDimensions) = dims
+_gen_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N} = Dimensions(dims)
+_gen_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N} =
+    CompoundDimensions(dims)
 _gen_dims(dims::Any) = Dimensions(dims)
 
 # obtain dims in the type of SVector with integers
