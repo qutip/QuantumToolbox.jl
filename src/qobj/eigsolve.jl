@@ -75,19 +75,23 @@ struct EigsolveResult{
     values::T1
     vectors::T2
     type::ObjType
-    dims::DimType
+    _dims::DimType
     iter::Int
     numops::Int
     converged::Bool
 end
 
+Base.getproperty(res::EigsolveResult, key::Symbol) = getproperty(res, makeVal(key))
+Base.getproperty(res::EigsolveResult, ::Val{:dims}) = dims_to_list(getfield(res, :_dims))
+Base.getproperty(res::EigsolveResult, ::Val{K}) where {K} = getfield(res, K)
+
 Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1,T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1,T2,OperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], Ket, res.dims) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], Ket, res._dims) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1,T2,SuperOperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], OperatorKet, res.dims) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], OperatorKet, res._dims) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
@@ -281,7 +285,7 @@ function eigsolve(
         A.data;
         v0 = v0,
         type = A.type,
-        dims = A.dims,
+        dims = A._dims,
         sigma = sigma,
         k = k,
         krylovdim = krylovdim,
@@ -332,7 +336,7 @@ function eigsolve(
         vals = @. (1 + sigma * res.values) / res.values
     end
 
-    return EigsolveResult(vals, res.vectors, res.type, res.dims, res.iter, res.numops, res.converged)
+    return EigsolveResult(vals, res.vectors, res.type, res._dims, res.iter, res.numops, res.converged)
 end
 
 @doc raw"""
@@ -392,7 +396,7 @@ function eigsolve_al(
     prob =
         mesolveProblem(
             L_evo,
-            QuantumObject(ρ0, type = Operator, dims = H.dims),
+            QuantumObject(ρ0, type = Operator, dims = H._dims),
             [zero(T), T];
             params = params,
             progress_bar = Val(false),
@@ -404,7 +408,7 @@ function eigsolve_al(
 
     Lmap = ArnoldiLindbladIntegratorMap(eltype(DT1), size(L_evo), integrator)
 
-    res = _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo.dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
+    res = _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo._dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
     # finish!(prog)
 
     vals = similar(res.values)
@@ -416,7 +420,7 @@ function eigsolve_al(
         @. vecs[:, i] = vec * exp(-1im * angle(vec[1]))
     end
 
-    return EigsolveResult(vals, vecs, res.type, res.dims, res.iter, res.numops, res.converged)
+    return EigsolveResult(vals, vecs, res.type, res._dims, res.iter, res.numops, res.converged)
 end
 
 @doc raw"""
@@ -460,7 +464,7 @@ function LinearAlgebra.eigen(
     E::mat2vec(sparse_to_dense(MT)) = F.values
     U::sparse_to_dense(MT) = F.vectors
 
-    return EigsolveResult(E, U, A.type, A.dims, 0, 0, true)
+    return EigsolveResult(E, U, A.type, A._dims, 0, 0, true)
 end
 
 @doc raw"""

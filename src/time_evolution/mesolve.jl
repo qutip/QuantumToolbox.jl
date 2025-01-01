@@ -89,7 +89,7 @@ function mesolveProblem(
     tspan = (tlist[1], tlist[end])
     prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
 
-    return TimeEvolutionProblem(prob, tlist, L_evo.dims)
+    return TimeEvolutionProblem(prob, tlist, L_evo._dims)
 end
 
 @doc raw"""

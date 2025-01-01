@@ -54,7 +54,7 @@ function block_diagonal_form(
     A::QuantumObject{DT,OpType},
 ) where {DT<:AbstractSparseMatrix,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     bdf = block_diagonal_form(A.data)
-    B = QuantumObject(bdf.B, type = A.type, dims = A.dims)
-    P = QuantumObject(bdf.P, type = A.type, dims = A.dims)
+    B = QuantumObject(bdf.B, type = A.type, dims = A._dims)
+    P = QuantumObject(bdf.P, type = A.type, dims = A._dims)
     return BlockDiagonalForm(B, P, bdf.blocks, bdf.block_sizes)
 end

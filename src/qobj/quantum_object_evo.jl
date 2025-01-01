@@ -103,7 +103,7 @@ struct QuantumObjectEvolution{
 } <: AbstractQuantumObject{DataType,ObjType,DimType}
     data::DataType
     type::ObjType
-    dims::DimType
+    _dims::DimType
 
     function QuantumObjectEvolution(
         data::DT,
@@ -257,7 +257,7 @@ function QuantumObjectEvolution(
     type::Union{Nothing,QuantumObjectType} = nothing,
 )
     op, data = _QobjEvo_generate_data(op_func_list, α)
-    dims = op.dims
+    dims = op._dims
     if type isa Nothing
         type = op.type
     end
@@ -320,7 +320,7 @@ function QuantumObjectEvolution(
     if type isa Nothing
         type = op.type
     end
-    return QuantumObjectEvolution(_make_SciMLOperator(op, α), type, op.dims)
+    return QuantumObjectEvolution(_make_SciMLOperator(op, α), type, op._dims)
 end
 
 function QuantumObjectEvolution(
@@ -338,9 +338,9 @@ function QuantumObjectEvolution(
         )
     end
     if α isa Nothing
-        return QuantumObjectEvolution(op.data, type, op.dims)
+        return QuantumObjectEvolution(op.data, type, op._dims)
     end
-    return QuantumObjectEvolution(α * op.data, type, op.dims)
+    return QuantumObjectEvolution(α * op.data, type, op._dims)
 end
 
 #=
@@ -378,7 +378,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
 
             op = :(op_func_list[$i][1])
             data_type = op_type.parameters[1]
-            dims_expr = (dims_expr..., :($op.dims))
+            dims_expr = (dims_expr..., :($op._dims))
             func_methods_expr = (func_methods_expr..., :(methods(op_func_list[$i][2], [Any, Real]))) # [Any, Real] means each func must accept 2 arguments
             if i == 1
                 first_op = :($op)
@@ -390,7 +390,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
                 throw(ArgumentError("The element must be a Operator or SuperOperator."))
 
             data_type = op_type.parameters[1]
-            dims_expr = (dims_expr..., :(op_func_list[$i].dims))
+            dims_expr = (dims_expr..., :(op_func_list[$i]._dims))
             if i == 1
                 first_op = :(op_func_list[$i])
             end
@@ -514,7 +514,7 @@ function (A::QuantumObjectEvolution)(
     p,
     t,
 ) where {DT,QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
-    ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dims)
+    ψout = QuantumObject(similar(ψ.data), ψ.type, ψ._dims)
     return A(ψout, ψ, p, t)
 end
 
@@ -533,7 +533,7 @@ Calculate the time-dependent [`QuantumObjectEvolution`](@ref) object `A` at time
 function (A::QuantumObjectEvolution)(p, t)
     # We put 0 in the place of `u` because the time-dependence doesn't depend on the state
     update_coefficients!(A.data, 0, p, t)
-    return QuantumObject(concretize(A.data), A.type, A.dims)
+    return QuantumObject(concretize(A.data), A.type, A._dims)
 end
 
 (A::QuantumObjectEvolution)(t) = A(nothing, t)

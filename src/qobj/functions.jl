@@ -105,7 +105,7 @@ variance(O::QuantumObject{DT1,OperatorQuantumObject}, ψ::Vector{<:QuantumObject
 
 Converts a sparse QuantumObject to a dense QuantumObject.
 """
-sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) = QuantumObject(sparse_to_dense(A.data), A.type, A.dims)
+sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) = QuantumObject(sparse_to_dense(A.data), A.type, A._dims)
 sparse_to_dense(A::MT) where {MT<:AbstractSparseArray} = Array(A)
 for op in (:Transpose, :Adjoint)
     @eval sparse_to_dense(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
@@ -132,7 +132,7 @@ sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
 Converts a dense QuantumObject to a sparse QuantumObject.
 """
 dense_to_sparse(A::QuantumObject{<:AbstractVecOrMat}, tol::Real = 1e-10) =
-    QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dims)
+    QuantumObject(dense_to_sparse(A.data, tol), A.type, A._dims)
 function dense_to_sparse(A::MT, tol::Real = 1e-10) where {MT<:AbstractMatrix}
     idxs = findall(@. abs(A) > tol)
     row_indices = getindex.(idxs, 1)
@@ -183,7 +183,7 @@ function LinearAlgebra.kron(
     B::AbstractQuantumObject{DT2,OpType,Dimensions{NB}},
 ) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject},NA,NB}
     QType = promote_op_type(A, B)
-    return QType(kron(A.data, B.data), A.type, Dimensions{NA + NB}(vcat(A.dims.to, B.dims.to)))
+    return QType(kron(A.data, B.data), A.type, Dimensions{NA + NB}(vcat(A._dims.to, B._dims.to)))
 end
 
 # if A and B are both Operator but either one of them has CompoundDimensions
@@ -199,7 +199,7 @@ for ADimType in (:Dimensions, :CompoundDimensions)
                     return QType(
                         kron(A.data, B.data),
                         Operator,
-                        CompoundDimensions{NA + NB}(vcat(A.to, B.to), vcat(A.from, B.from)),
+                        CompoundDimensions{NA + NB}(vcat(A._to, B._to), vcat(A._from, B._from)),
                     )
                 end
             end
@@ -220,7 +220,7 @@ for AOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
                     return QType(
                         kron(A.data, B.data),
                         Operator,
-                        CompoundDimensions(vcat(A.to, B.to), vcat(A.from, B.from)),
+                        CompoundDimensions(vcat(A._to, B._to), vcat(A._from, B._from)),
                     )
                 end
             end
@@ -250,7 +250,7 @@ end
 Convert a quantum object from vector ([`OperatorKetQuantumObject`](@ref)-type) to matrix ([`OperatorQuantumObject`](@ref)-type)
 """
 vec2mat(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} =
-    QuantumObject(vec2mat(A.data), Operator, A.dims)
+    QuantumObject(vec2mat(A.data), Operator, A._dims)
 
 @doc raw"""
     mat2vec(A::QuantumObject)
@@ -258,7 +258,7 @@ vec2mat(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T}
 Convert a quantum object from matrix ([`OperatorQuantumObject`](@ref)-type) to vector ([`OperatorKetQuantumObject`](@ref)-type)
 """
 mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} =
-    QuantumObject(mat2vec(A.data), OperatorKet, A.dims)
+    QuantumObject(mat2vec(A.data), OperatorKet, A._dims)
 
 @doc raw"""
     mat2vec(A::AbstractMatrix)
