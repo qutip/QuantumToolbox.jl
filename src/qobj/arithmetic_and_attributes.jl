@@ -736,7 +736,7 @@ tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} =
 
 Returns the data of a [`AbstractQuantumObject`](@ref).
 """
-get_data(A::AbstractQuantumObject) = A.data
+get_data(A::AbstractQuantumObject) = getfield(A, :data)
 
 @doc raw"""
     get_coherence(ψ::QuantumObject)
