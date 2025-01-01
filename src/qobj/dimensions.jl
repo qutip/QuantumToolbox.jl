@@ -12,7 +12,8 @@ function Dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Intege
 
     return Dimensions{L}(SVector{L,AbstractSpace}(Space.(dims)))
 end
-Dimensions(dims::Int) = Dimensions(SVector{1,Int}(dims))
+Dimensions(dims::Int) = Dimensions(Space(dims))
+Dimensions(dims::DimType) where {DimType<:Union{Field,Space}} = Dimensions(SVector{1,AbstractSpace}(dims))
 Dimensions(dims::Any) = throw(
     ArgumentError(
         "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
