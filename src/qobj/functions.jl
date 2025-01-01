@@ -179,12 +179,55 @@ julia> a.dims, O.dims
 ```
 """
 function LinearAlgebra.kron(
-    A::AbstractQuantumObject{DT1,OpType},
-    B::AbstractQuantumObject{DT2,OpType},
-) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
+    A::AbstractQuantumObject{DT1,OpType,Dimensions{NA}},
+    B::AbstractQuantumObject{DT2,OpType,Dimensions{NB}},
+) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject},NA,NB}
     QType = promote_op_type(A, B)
-    return QType(kron(A.data, B.data), A.type, vcat(A.dims, B.dims))
+    return QType(kron(A.data, B.data), A.type, Dimensions{NA + NB}(vcat(A.dims.to, B.dims.to)))
 end
+
+# if A and B are both Operator but either one of them has CompoundDimensions
+for ADimType in (:Dimensions, :CompoundDimensions)
+    for BDimType in (:Dimensions, :CompoundDimensions)
+        if !(ADimType == BDimType == :Dimensions) # not for this case because it's already implemented
+            @eval begin
+                function LinearAlgebra.kron(
+                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,$ADimType{NA}},
+                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,$BDimType{NB}},
+                ) where {DT1,DT2,NA,NB}
+                    QType = promote_op_type(A, B)
+                    return QType(
+                        kron(A.data, B.data),
+                        Operator,
+                        CompoundDimensions{NA + NB}(vcat(A.to, B.to), vcat(A.from, B.from)),
+                    )
+                end
+            end
+        end
+    end
+end
+
+# if A and B are different type (must return Operator with CompoundDimensions)
+for AOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
+    for BOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
+        if (AOpType != BOpType)
+            @eval begin
+                function LinearAlgebra.kron(
+                    A::AbstractQuantumObject{DT1,$AOpType},
+                    B::AbstractQuantumObject{DT2,$BOpType},
+                ) where {DT1,DT2}
+                    QType = promote_op_type(A, B)
+                    return QType(
+                        kron(A.data, B.data),
+                        Operator,
+                        CompoundDimensions(vcat(A.to, B.to), vcat(A.from, B.from)),
+                    )
+                end
+            end
+        end
+    end
+end
+
 LinearAlgebra.kron(A::AbstractQuantumObject) = A
 function LinearAlgebra.kron(A::Vector{<:AbstractQuantumObject})
     @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."

@@ -14,7 +14,7 @@ export QuantumObjectType,
 export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 
 @doc raw"""
-    abstract type AbstractQuantumObject{DataType,ObjType,N}
+    abstract type AbstractQuantumObject{DataType,ObjType,DimType}
 
 Abstract type for all quantum objects like [`QuantumObject`](@ref) and [`QuantumObjectEvolution`](@ref).
 
@@ -24,7 +24,7 @@ julia> sigmax() isa AbstractQuantumObject
 true
 ```
 """
-abstract type AbstractQuantumObject{DataType,ObjType,N} end
+abstract type AbstractQuantumObject{DataType,ObjType,DimType} end
 
 abstract type QuantumObjectType end
 
@@ -163,56 +163,72 @@ function check_dims(A::AbstractQuantumObject, B::AbstractQuantumObject)
     return nothing
 end
 
-function _check_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N}
-    _non_static_array_warning("dims", dims)
-    return (all(>(0), dims) && length(dims) > 0) ||
-           throw(DomainError(dims, "The argument dims must be of non-zero length and contain only positive integers."))
-end
-_check_dims(dims::Any) = throw(
-    ArgumentError(
-        "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
-    ),
-)
-
-function _check_QuantumObject(type::KetQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::KetQuantumObject, dims::Dimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
     (prod(dims) != m) && throw(DimensionMismatch("Ket with dims = $(dims) does not fit the array size = $((m, n))."))
     return nothing
 end
 
-function _check_QuantumObject(type::BraQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::BraQuantumObject, dims::Dimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Bra"))
     (prod(dims) != n) && throw(DimensionMismatch("Bra with dims = $(dims) does not fit the array size = $((m, n))."))
     return nothing
 end
 
-function _check_QuantumObject(type::OperatorQuantumObject, dims, m::Int, n::Int)
-    (m != n) && throw(DomainError((m, n), "The size of the array is not compatible with Operator"))
-    (prod(dims) != m) &&
+function _check_QuantumObject(type::OperatorQuantumObject, dims::Dimensions, m::Int, n::Int)
+    L = prod(dims.to)
+    (L == m == n) || throw(DimensionMismatch("Operator with dims = $(dims) does not fit the array size = $((m, n))."))
+    return nothing
+end
+
+function _check_QuantumObject(type::OperatorQuantumObject, dims::CompoundDimensions, m::Int, n::Int)
+    ((m == 1) || (n == 1)) && throw(DomainError((m, n), "The size of the array is not compatible with Operator"))
+    ((prod(dims.to) != m) || (prod(dims.from) != n)) &&
         throw(DimensionMismatch("Operator with dims = $(dims) does not fit the array size = $((m, n))."))
     return nothing
 end
 
-function _check_QuantumObject(type::SuperOperatorQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::SuperOperatorQuantumObject, dims::Dimensions, m::Int, n::Int)
     (m != n) && throw(DomainError((m, n), "The size of the array is not compatible with SuperOperator"))
     (prod(dims) != sqrt(m)) &&
         throw(DimensionMismatch("SuperOperator with dims = $(dims) does not fit the array size = $((m, n))."))
     return nothing
 end
 
-function _check_QuantumObject(type::OperatorKetQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::OperatorKetQuantumObject, dims::Dimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorKet"))
     (prod(dims) != sqrt(m)) &&
         throw(DimensionMismatch("OperatorKet with dims = $(dims) does not fit the array size = $((m, n))."))
     return nothing
 end
 
-function _check_QuantumObject(type::OperatorBraQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::OperatorBraQuantumObject, dims::Dimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorBra"))
     (prod(dims) != sqrt(n)) &&
         throw(DimensionMismatch("OperatorBra with dims = $(dims) does not fit the array size = $((m, n))."))
     return nothing
 end
+
+Base.getproperty(A::AbstractQuantumObject, key::Symbol) = getproperty(A, Val{key}())
+Base.getproperty(A::AbstractQuantumObject, ::Val{K}) where {K} = getfield(A, K)
+
+# support `AbstractQuantumObject.to` and `AbstractQuantumObject.from`
+Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions}, ::Val{:to}) where {DT} = A.dims.to
+Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,Dimensions{N}}, ::Val{:from}) where {DT,N} = Field_list(N)
+Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,Dimensions{N}}, ::Val{:to}) where {DT,N} = Field_list(N)
+Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject}, ::Val{:to}) where {DT} = A.dims.to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:CompoundDimensions}, ::Val{:from}) where {DT} =
+    A.dims.from
+Base.getproperty(
+    A::AbstractQuantumObject{DT,ObjType,<:Dimensions},
+    ::KeyType,
+) where {
+    DT,
+    ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},
+    KeyType<:Union{Val{:to},Val{:from}},
+} = A.dims.to
 
 # functions for getting Float or Complex element type
 _FType(A::AbstractQuantumObject) = _FType(eltype(A))

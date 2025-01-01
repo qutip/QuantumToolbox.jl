@@ -15,10 +15,10 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
 - `times::Abstractvector`: The time list of the evolution.
-- `dims::Abstractvector`: The dimensions of the Hilbert space.
+- `dims::AbstractDimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
 """
-struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractVector,KWT}
+struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractDimensions,KWT}
     prob::PT
     times::TT
     dims::DT

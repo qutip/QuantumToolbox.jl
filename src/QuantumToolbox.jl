@@ -79,6 +79,8 @@ include("progress_bar.jl")
 include("linear_maps.jl")
 
 # Quantum Object
+include("qobj/space.jl")
+include("qobj/dimensions.jl")
 include("qobj/quantum_object_base.jl")
 include("qobj/quantum_object.jl")
 include("qobj/quantum_object_evo.jl")

@@ -13,7 +13,7 @@
     # DomainError: incompatible between size of array and type
     @testset "DomainError" begin
         a = rand(ComplexF64, 3, 2)
-        for t in [nothing, Operator, SuperOperator, Bra, OperatorBra]
+        for t in [SuperOperator, Bra, OperatorBra]
             @test_throws DomainError Qobj(a, type = t)
         end
         a = rand(ComplexF64, 2, 2, 2)
@@ -23,6 +23,9 @@
         a = rand(ComplexF64, 1, 2)
         @test_throws DomainError Qobj(a, type = Operator)
         @test_throws DomainError Qobj(a, type = SuperOperator)
+
+        a = rand(ComplexF64, 2, 1)
+        @test_throws DomainError Qobj(a, type = Operator)
     end
 
     # unsupported type of dims
@@ -74,6 +77,7 @@
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator)
+        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # CompoundDimensions
         @test isket(a2) == false
         @test isbra(a2) == false
         @test isoper(a2) == true
@@ -83,6 +87,7 @@
         @test iscached(a2) == true
         @test isconstant(a2) == true
         @test isunitary(a2) == false
+        @test a2.dims == [100]
         @test isket(a3) == false
         @test isbra(a3) == false
         @test isoper(a3) == false
@@ -92,7 +97,20 @@
         @test iscached(a3) == true
         @test isconstant(a3) == true
         @test isunitary(a3) == false
+        @test a3.dims == [10]
+        @test isket(a4) == false
+        @test isbra(a4) == false
+        @test isoper(a4) == true
+        @test issuper(a4) == false
+        @test isoperket(a4) == false
+        @test isoperbra(a4) == false
+        @test iscached(a4) == true
+        @test isconstant(a4) == true
+        @test isunitary(a4) == false
+        @test a4.dims == [[100], [10]]
         @test_throws DimensionMismatch Qobj(a, dims = 2)
+        @test_throws DimensionMismatch Qobj(a4.data, dims = 2)
+        @test_throws DimensionMismatch Qobj(a4.data, dims = ((100,), (2,)))
     end
 
     @testset "OperatorKet and OperatorBra" begin
@@ -310,24 +328,29 @@
         for T in [ComplexF32, ComplexF64]
             N = 4
             a = rand(T, N)
-            @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
+            @inferred QuantumObject{typeof(a),KetQuantumObject,Dimensions{1}} Qobj(a)
             for type in [Ket, OperatorKet]
                 @inferred Qobj(a, type = type)
             end
 
-            UnionType =
-                Union{QuantumObject{Matrix{T},BraQuantumObject,1},QuantumObject{Matrix{T},OperatorQuantumObject,1}}
+            UnionType = Union{
+                QuantumObject{Matrix{T},BraQuantumObject,Dimensions{1}},
+                QuantumObject{Matrix{T},OperatorQuantumObject,Dimensions{1}},
+            }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
             for type in [Bra, OperatorBra]
                 @inferred Qobj(a, type = type)
             end
 
+            UnionType2 = Union{
+                QuantumObject{Matrix{T},OperatorQuantumObject,CompoundDimensions{1}},
+                QuantumObject{Matrix{T},OperatorQuantumObject,Dimensions{1}},
+            }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)
-            for type in [Operator, SuperOperator]
-                @inferred Qobj(a, type = type)
-            end
+            @inferred UnionType2 Qobj(a, type = Operator)
+            @inferred Qobj(a, type = SuperOperator)
         end
 
         @testset "Math Operation" begin
@@ -629,8 +652,26 @@
         ρ = kron(ρ1, ρ2)
         ρ1_ptr = ptrace(ρ, 1)
         ρ2_ptr = ptrace(ρ, 2)
-        @test ρ1.data ≈ ρ1_ptr.data atol = 1e-10
-        @test ρ2.data ≈ ρ2_ptr.data atol = 1e-10
+
+        # use CompoundDimensions to do partial trace
+        ρ1_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((2, 1), (2, 1)))
+        basis2 = [tensor(eye(2), basis(2, i)) for i in 0:1]
+        for b in basis2
+            ρ1_compound += b' * ρ * b
+        end
+        ρ2_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((1, 2), (1, 2)))
+        basis1 = [tensor(basis(2, i), eye(2)) for i in 0:1]
+        for b in basis1
+            ρ2_compound += b' * ρ * b
+        end
+        @test ρ1.data ≈ ρ1_ptr.data ≈ ρ1_compound.data
+        @test ρ2.data ≈ ρ2_ptr.data ≈ ρ2_compound.data
+        @test ρ1.dims != ρ1_compound.dims
+        @test ρ2.dims != ρ2_compound.dims
+        ρ1_compound = ptrace(ρ1_compound, 1)
+        ρ2_compound = ptrace(ρ2_compound, 2)
+        @test ρ1.dims == ρ1_compound.dims
+        @test ρ2.dims == ρ2_compound.dims
 
         ψlist = [rand_ket(2), rand_ket(3), rand_ket(4), rand_ket(5)]
         ρlist = [rand_dm(2), rand_dm(3), rand_dm(4), rand_dm(5)]
