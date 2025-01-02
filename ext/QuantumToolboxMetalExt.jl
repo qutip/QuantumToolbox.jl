@@ -36,19 +36,20 @@ mtl(A::QuantumObject{<:AbstractArray{T}}) where {T<:ComplexF64} =
 import LinearAlgebra: Transpose, Adjoint
 import QuantumToolbox: _spre, _spost, _sprepost
 _spre(A::MtlArray, Id::AbstractMatrix) = kron(Id, A)
-_spre(A::Tranpose{T,<:MtlArray}, Id::AbstractMatrix) where {T<:Number} = kron(Id, A)
+_spre(A::Transpose{T,<:MtlArray}, Id::AbstractMatrix) where {T<:Number} = kron(Id, A)
 _spre(A::Adjoint{T,<:MtlArray}, Id::AbstractMatrix) where {T<:Number} = kron(Id, A)
 _spost(B::MtlArray, Id::AbstractMatrix) = kron(transpose(B), Id)
-_spost(B::Tranpose{T,<:MtlArray}, Id::AbstractMatrix) where {T<:Number} = kron(transpose(B), Id)
+_spost(B::Transpose{T,<:MtlArray}, Id::AbstractMatrix) where {T<:Number} = kron(transpose(B), Id)
 _spost(B::Adjoint{T,<:MtlArray}, Id::AbstractMatrix) where {T<:Number} = kron(transpose(B), Id)
 _sprepost(A::MtlArray, B::MtlArray) = kron(transpose(B), A)
-_sprepost(A::MtlArray, B::Tranpose{T,<:MtlArray}) where {T<:Number} = kron(transpose(B), A)
+_sprepost(A::MtlArray, B::Transpose{T,<:MtlArray}) where {T<:Number} = kron(transpose(B), A)
 _sprepost(A::MtlArray, B::Adjoint{T,<:MtlArray}) where {T<:Number} = kron(transpose(B), A)
-_sprepost(A::Tranpose{T,<:MtlArray}, B::MtlArray) where {T<:Number} = kron(transpose(B), A)
-_sprepost(A::Tranpose{T1,<:MtlArray}, B::Tranpose{T2,<:MtlArray}) where {T1<:Number,T2<:Number} = kron(transpose(B), A)
-_sprepost(A::Tranpose{T1,<:MtlArray}, B::Adjoint{T2,<:MtlArray}) where {T1<:Number,T2<:Number} = kron(transpose(B), A)
+_sprepost(A::Transpose{T,<:MtlArray}, B::MtlArray) where {T<:Number} = kron(transpose(B), A)
+_sprepost(A::Transpose{T1,<:MtlArray}, B::Transpose{T2,<:MtlArray}) where {T1<:Number,T2<:Number} =
+    kron(transpose(B), A)
+_sprepost(A::Transpose{T1,<:MtlArray}, B::Adjoint{T2,<:MtlArray}) where {T1<:Number,T2<:Number} = kron(transpose(B), A)
 _sprepost(A::Adjoint{T,<:MtlArray}, B::MtlArray) where {T<:Number} = kron(transpose(B), A)
-_sprepost(A::Adjoint{T1,<:MtlArray}, B::Tranpose{T2,<:MtlArray}) where {T1<:Number,T2<:Number} = kron(transpose(B), A)
+_sprepost(A::Adjoint{T1,<:MtlArray}, B::Transpose{T2,<:MtlArray}) where {T1<:Number,T2<:Number} = kron(transpose(B), A)
 _sprepost(A::Adjoint{T1,<:MtlArray}, B::Adjoint{T2,<:MtlArray}) where {T1<:Number,T2<:Number} = kron(transpose(B), A)
 
 end
