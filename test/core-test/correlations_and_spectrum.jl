@@ -28,8 +28,7 @@
     @test all(spec2 .≈ spec3)
 
     @testset "Type Inference spectrum" begin
-        # TODO: fix this type inference issue (originally from `steadystate`)
-        # @inferred correlation_2op_1t(H, nothing, t_l, c_ops, a', a; progress_bar = Val(false))
+        @inferred correlation_2op_1t(H, nothing, t_l, c_ops, a', a; progress_bar = Val(false))
         @inferred spectrum_correlation_fft(t_l, corr1)
         @inferred spectrum(H, ω_l2, c_ops, a', a)
         @inferred spectrum(H, ω_l2, c_ops, a', a; solver = PseudoInverse())

@@ -26,8 +26,3 @@ struct Space <: AbstractSpace
     end
 end
 Base.string(s::Space) = string(s.size) # this is only used when printing AbstractDimensions
-
-# for `prod(::Dimensions)`
-Base.:(*)(i::Int, s::AbstractSpace) = i * s.size
-Base.:(*)(s1::AbstractSpace, s2::AbstractSpace) = s1.size * s2.size
-Base.prod(spaces::SVector{1,AbstractSpace}) = spaces[1].size # for `Dimensions.to` has only a single Space
