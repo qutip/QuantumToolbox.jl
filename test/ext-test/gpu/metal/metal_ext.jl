@@ -1,8 +1,3 @@
-using Metal
-
-QuantumToolbox.about()
-Metal.versioninfo()
-
 @testset "Metal Extension" verbose = true begin
     ψdi = Qobj(Int64[1, 0])
     ψdf = Qobj(Float64[1, 0])

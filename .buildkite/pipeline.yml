@@ -9,7 +9,7 @@ steps:
             - "src/**"
             - "ext/QuantumToolboxCUDAExt.jl"
             - "test/runtests.jl"
-            - "test/ext-test/gpu/**"
+            - "test/ext-test/gpu/cuda/**"
             - "Project.toml"
           target: ".buildkite/CUDA_Ext.yml"
       - staticfloat/forerunner: # Metal.jl tests
@@ -19,7 +19,7 @@ steps:
             - "src/**"
             - "ext/QuantumToolboxMetalExt.jl"
             - "test/runtests.jl"
-            - "test/ext-test/metal_ext.jl"
+            - "test/ext-test/gpu/metal/**"
             - "Project.toml"
           target: ".buildkite/Metal_Ext.yml"
     agents:

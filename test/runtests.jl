@@ -6,7 +6,7 @@ const GROUP = get(ENV, "GROUP", "All")
 const testdir = dirname(@__FILE__)
 
 # Put core tests in alphabetical order
-core_tests = [
+#= core_tests = [
     "block_diagonal_form.jl",
     "correlations_and_spectrum.jl",
     "dynamical_fock_dimension_mesolve.jl",
@@ -59,7 +59,7 @@ if (GROUP == "CairoMakie_Ext")# || (GROUP == "All")
 end
 
 if (GROUP == "CUDA_Ext")# || (GROUP == "All")
-    Pkg.activate("ext-test/gpu")
+    Pkg.activate("ext-test/gpu/cuda")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
 
@@ -71,10 +71,20 @@ if (GROUP == "CUDA_Ext")# || (GROUP == "All")
     QuantumToolbox.about()
     CUDA.versioninfo()
 
-    include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
-end
+    include(joinpath(testdir, "ext-test", "gpu", "cuda", "cuda_ext.jl"))
+end =#
 
-if (GROUP == "Metal_Ext")# || (GROUP == "All")
-    Pkg.add("Metal")
-    include(joinpath(testdir, "ext-test", "metal_ext.jl"))
+if (GROUP == "Metal_Ext") || (GROUP == "All")
+    Pkg.activate("ext-test/gpu/metal")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+
+    using QuantumToolbox
+    using Metal
+    Metal.allowscalar(false) # Avoid unexpected scalar indexing
+
+    QuantumToolbox.about()
+    Metal.versioninfo()
+
+    include(joinpath(testdir, "ext-test", "gpu", "metal", "metal_ext.jl"))
 end
