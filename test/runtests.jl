@@ -47,7 +47,6 @@ if (GROUP == "All") || (GROUP == "Core")
 end
 
 if (GROUP == "CairoMakie_Ext")# || (GROUP == "All")
-
     Pkg.activate("ext-test/cairomakie")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
