@@ -48,7 +48,7 @@ function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:haar}
     # Because inv(Λ) ⋅ R has real and strictly positive elements, Q · Λ is therefore Haar distributed.
     Λ = diag(R) # take the diagonal elements of R
     Λ ./= abs.(Λ) # rescaling the elements
-    return QuantumObject(dense_to_sparse(Q * Diagonal(Λ)); type = Operator, dims = dimensions)
+    return QuantumObject(sparse_to_dense(Q * Diagonal(Λ)); type = Operator, dims = dimensions)
 end
 function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:exp})
     N = prod(dimensions)
@@ -59,7 +59,7 @@ function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:exp})
     # generate Hermitian matrix
     H = QuantumObject((Z + Z') / 2; type = Operator, dims = dimensions)
 
-    return exp(-1.0im * H)
+    return sparse_to_dense(exp(-1.0im * H))
 end
 rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{T}) where {T} =
     throw(ArgumentError("Invalid distribution: $(T)"))
@@ -88,7 +88,7 @@ This operator acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
 
 # Examples
 
-```
+```jldoctest
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
@@ -113,7 +113,7 @@ This operator acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ke
 
 # Examples
 
-```
+```jldoctest
 julia> a_d = create(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
@@ -242,14 +242,14 @@ The parameter `which` specifies which of the following operator to return.
 Note that if the parameter `which` is not specified, returns a set of Spin-`j` operators: ``(\hat{S}_x, \hat{S}_y, \hat{S}_z)``
 
 # Examples
-```
+```jldoctest
 julia> jmat(0.5, :x)
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 SparseMatrixCSC{ComplexF64, Int64} with 2 stored entries:
      ⋅      0.5+0.0im
  0.5+0.0im      ⋅
 
-julia> jmat(0.5, :-)
+julia> jmat(0.5, Val(:-))
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
 2×2 SparseMatrixCSC{ComplexF64, Int64} with 1 stored entry:
      ⋅          ⋅    
@@ -408,7 +408,7 @@ sigmay() = rmul!(jmat(0.5, Val(:y)), 2)
 @doc raw"""
     sigmaz()
 
-Pauli operator ``\hat{\sigma}_z = \comm{\hat{\sigma}_+}{\hat{\sigma}_-}``.
+Pauli operator ``\hat{\sigma}_z = \left[ \hat{\sigma}_+ , \hat{\sigma}_- \right]``.
 
 See also [`jmat`](@ref).
 """
@@ -416,12 +416,16 @@ sigmaz() = rmul!(jmat(0.5, Val(:z)), 2)
 
 @doc raw"""
     eye(N::Int; type=Operator, dims=nothing)
+    qeye(N::Int; type=Operator, dims=nothing)
 
 Identity operator ``\hat{\mathbb{1}}`` with size `N`.
 
 It is also possible to specify the list of Hilbert dimensions `dims` if different subsystems are present.
 
 Note that `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref)
+
+!!! note
+    `qeye` is a synonym of `eye`.
 """
 eye(
     N::Int;
@@ -487,7 +491,7 @@ end
 @doc raw"""
     projection(N::Int, i::Int, j::Int)
 
-Generates the projection operator ``\hat{O} = \dyad{i}{j}`` with Hilbert space dimension `N`.
+Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N`.
 """
 projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator)
 
@@ -511,7 +515,7 @@ function tunneling(N::Int, m::Int = 1; sparse::Union{Bool,Val} = Val(false))
     (m < 1) && throw(ArgumentError("The number of excitations (m) cannot be less than 1"))
 
     data = ones(ComplexF64, N - m)
-    if getVal(makeVal(sparse))
+    if getVal(sparse)
         return QuantumObject(spdiagm(m => data, -m => data); type = Operator, dims = N)
     else
         return QuantumObject(diagm(m => data, -m => data); type = Operator, dims = N)

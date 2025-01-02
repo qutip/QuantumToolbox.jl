@@ -20,21 +20,22 @@ function versioninfo(io::IO = stdout)
         "≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡\n",
         "Copyright © QuTiP team 2022 and later.\n",
         "Current admin team:\n",
-        "    Alberto Mercurio, Luca Gravina, Yi-Te Huang\n",
+        "    Alberto Mercurio and Yi-Te Huang\n",
     )
 
-    # print package informations
+    # print package information
     println(
         io,
         "Package information:\n",
         "====================================\n",
         "Julia              Ver. $(VERSION)\n",
         "QuantumToolbox     Ver. $(_get_pkg_version("QuantumToolbox"))\n",
+        "SciMLOperators     Ver. $(_get_pkg_version("SciMLOperators"))\n",
         "LinearSolve        Ver. $(_get_pkg_version("LinearSolve"))\n",
         "OrdinaryDiffEqCore Ver. $(_get_pkg_version("OrdinaryDiffEqCore"))\n",
     )
 
-    # print System informations
+    # print System information
     println(io, "System information:")
     println(io, "====================================")
     println(io, """OS       : $(OS_name) ($(Sys.MACHINE))""")

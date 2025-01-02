@@ -5,10 +5,10 @@
     xvec = LinRange(-3, 3, 300)
     yvec = LinRange(-3, 3, 300)
 
-    wig = wigner(ψ, xvec, yvec, solver = WignerLaguerre(tol = 1e-6))
-    wig2 = wigner(ρ, xvec, yvec, solver = WignerLaguerre(parallel = false))
-    wig3 = wigner(ρ, xvec, yvec, solver = WignerLaguerre(parallel = true))
-    wig4 = wigner(ψ, xvec, yvec, solver = WignerClenshaw())
+    wig = wigner(ψ, xvec, yvec, method = WignerLaguerre(tol = 1e-6))
+    wig2 = wigner(ρ, xvec, yvec, method = WignerLaguerre(parallel = false))
+    wig3 = wigner(ρ, xvec, yvec, method = WignerLaguerre(parallel = true))
+    wig4 = wigner(ψ, xvec, yvec, method = WignerClenshaw())
 
     @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 1e-3
     @test sqrt(sum(abs.(wig3 .- wig)) / length(wig)) < 1e-3
@@ -22,9 +22,9 @@
     @test sqrt(sum(abs.(wig2 .- wig)) / length(wig)) < 0.1
 
     @testset "Type Inference (wigner)" begin
-        @inferred wigner(ψ, xvec, yvec, solver = WignerLaguerre(tol = 1e-6))
-        @inferred wigner(ρ, xvec, yvec, solver = WignerLaguerre(parallel = false))
-        @inferred wigner(ρ, xvec, yvec, solver = WignerLaguerre(parallel = true))
-        @inferred wigner(ψ, xvec, yvec, solver = WignerClenshaw())
+        @inferred wigner(ψ, xvec, yvec, method = WignerLaguerre(tol = 1e-6))
+        @inferred wigner(ρ, xvec, yvec, method = WignerLaguerre(parallel = false))
+        @inferred wigner(ρ, xvec, yvec, method = WignerLaguerre(parallel = true))
+        @inferred wigner(ψ, xvec, yvec, method = WignerClenshaw())
     end
 end

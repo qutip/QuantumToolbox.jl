@@ -174,6 +174,7 @@ println(isoper(a)) # operator
 println(isoperket(a)) # operator-ket
 println(isoperbra(a)) # operator-bra
 println(issuper(a)) # super operator
+println(isconstant(a)) # time-independent or not
 println(ishermitian(a)) # Hermitian
 println(isherm(a)) # synonym of ishermitian(a)
 println(issymmetric(a)) # symmetric

@@ -9,10 +9,10 @@ function benchmark_eigenvalues!(SUITE)
     ωb = 1
     g = 0.2
     κ = 0.01
-    n_thermal = 0.1
+    n_th = 0.1
 
     H = ωc * a_d * a + ωb * b_d * b + g * (a + a_d) * (b + b_d)
-    c_ops = [√((1 + n_thermal) * κ) * a, √κ * b, √(n_thermal * κ) * a_d]
+    c_ops = [√((1 + n_th) * κ) * a, √κ * b, √(n_th * κ) * a_d]
     L = liouvillian(H, c_ops)
 
     SUITE["Eigenvalues"]["eigenstates"]["dense"] = @benchmarkable eigenstates($L)

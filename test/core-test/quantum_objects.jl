@@ -65,22 +65,32 @@
     end
 
     @testset "Operator and SuperOperator" begin
+        N = 10
+        A = Qobj(rand(ComplexF64, N, N))
+        B = Qobj(rand(ComplexF64, N, N))
+        ρ = rand_dm(N) # random density matrix
+        @test mat2vec(A * ρ * B) ≈ spre(A) * spost(B) * mat2vec(ρ) ≈ sprepost(A, B) * mat2vec(ρ) # we must make sure this equality holds !
+
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator)
-
         @test isket(a2) == false
         @test isbra(a2) == false
         @test isoper(a2) == true
         @test issuper(a2) == false
         @test isoperket(a2) == false
         @test isoperbra(a2) == false
+        @test iscached(a2) == true
+        @test isconstant(a2) == true
+        @test isunitary(a2) == false
         @test isket(a3) == false
         @test isbra(a3) == false
         @test isoper(a3) == false
         @test issuper(a3) == true
         @test isoperket(a3) == false
         @test isoperbra(a3) == false
+        @test iscached(a3) == true
+        @test isconstant(a3) == true
         @test isunitary(a3) == false
         @test_throws DimensionMismatch Qobj(a, dims = 2)
     end
@@ -120,6 +130,24 @@
         @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = 4)
     end
 
+    @testset "Checks on non-QuantumObjects" begin
+        x = 1
+        @test isket(x) == false
+        @test isbra(x) == false
+        @test isoper(x) == false
+        @test issuper(x) == false
+        @test isoperket(x) == false
+        @test isoperbra(x) == false
+
+        x = rand(ComplexF64, 2)
+        @test isket(x) == false
+        @test isbra(x) == false
+        @test isoper(x) == false
+        @test issuper(x) == false
+        @test isoperket(x) == false
+        @test isoperbra(x) == false
+    end
+
     @testset "arithmetic" begin
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
@@ -138,6 +166,14 @@
         @test (a2 + 2).data == a2.data + 2 * I
         @test a2 * 2 == 2 * a2
 
+        zero_like = zero(a2)
+        iden_like = one(a3)
+        zero_array = spzeros(ComplexF64, 100, 100)
+        iden_array = sparse(1:100, 1:100, ones(ComplexF64, 100))
+        @test zero_like == Qobj(zero_array, type = a2.type, dims = a2.dims)
+        @test typeof(zero_like.data) == typeof(zero_array)
+        @test iden_like == Qobj(iden_array, type = a3.type, dims = a3.dims)
+        @test typeof(iden_like.data) == typeof(iden_array)
         @test trans(trans(a2)) == a2
         @test trans(a2).data == transpose(a2.data)
         @test adjoint(a2) ≈ trans(conj(a2))

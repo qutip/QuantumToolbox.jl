@@ -36,182 +36,203 @@ end
 
 for op in (:(+), :(-), :(*))
     @eval begin
-        function LinearAlgebra.$op(
-            A::QuantumObject{<:AbstractArray{T1},OpType},
-            B::QuantumObject{<:AbstractArray{T2},OpType},
-        ) where {T1,T2,OpType<:QuantumObjectType}
-            A.dims != B.dims &&
-                throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
-            return QuantumObject($(op)(A.data, B.data), A.type, A.dims)
+        function LinearAlgebra.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
+            check_dims(A, B)
+            QType = promote_op_type(A, B)
+            return QType($(op)(A.data, B.data), A.type, A.dims)
         end
-        LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject($(op)(A.data), A.type, A.dims)
+        LinearAlgebra.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dims)
 
-        LinearAlgebra.$op(n::T1, A::QuantumObject{<:AbstractArray{T2}}) where {T1<:Number,T2} =
-            QuantumObject($(op)(n * I, A.data), A.type, A.dims)
-        LinearAlgebra.$op(A::QuantumObject{<:AbstractArray{T1}}, n::T2) where {T1,T2<:Number} =
-            QuantumObject($(op)(A.data, n * I), A.type, A.dims)
+        LinearAlgebra.$op(n::T, A::AbstractQuantumObject) where {T<:Number} =
+            get_typename_wrapper(A)($(op)(n * I, A.data), A.type, A.dims)
+        LinearAlgebra.$op(A::AbstractQuantumObject, n::T) where {T<:Number} =
+            get_typename_wrapper(A)($(op)(A.data, n * I), A.type, A.dims)
     end
 end
 
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::AbstractQuantumObject{DT1,OperatorQuantumObject},
+    B::QuantumObject{DT2,KetQuantumObject},
+) where {DT1,DT2}
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, Ket, A.dims)
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},BraQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::QuantumObject{DT1,BraQuantumObject},
+    B::AbstractQuantumObject{DT2,OperatorQuantumObject},
+) where {DT1,DT2}
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, Bra, A.dims)
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},BraQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::QuantumObject{DT1,KetQuantumObject},
+    B::QuantumObject{DT2,BraQuantumObject},
+) where {DT1,DT2}
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, Operator, A.dims)
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},BraQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::QuantumObject{DT1,BraQuantumObject},
+    B::QuantumObject{DT2,KetQuantumObject},
+) where {DT1,DT2}
+    check_dims(A, B)
     return A.data * B.data
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::AbstractQuantumObject{DT1,SuperOperatorQuantumObject},
+    B::QuantumObject{DT2,OperatorQuantumObject},
+) where {DT1,DT2}
+    check_dims(A, B)
     return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator, A.dims)
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::QuantumObject{DT1,OperatorBraQuantumObject},
+    B::QuantumObject{DT2,OperatorKetQuantumObject},
+) where {DT1,DT2}
+    check_dims(A, B)
     return A.data * B.data
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorKetQuantumObject},
-) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    A::AbstractQuantumObject{DT1,SuperOperatorQuantumObject},
+    B::QuantumObject{DT2,OperatorKetQuantumObject},
+) where {DT1,DT2}
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, OperatorKet, A.dims)
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{<:AbstractArray{T1},OperatorBraQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
+    B::AbstractQuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
 ) where {T1,T2}
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects are not of the same Hilbert dimension."))
+    check_dims(A, B)
     return QuantumObject(A.data * B.data, OperatorBra, A.dims)
 end
 
-LinearAlgebra.:(^)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Number} =
-    QuantumObject(^(A.data, n), A.type, A.dims)
-LinearAlgebra.:(/)(A::QuantumObject{<:AbstractArray{T}}, n::T1) where {T,T1<:Number} =
-    QuantumObject(/(A.data, n), A.type, A.dims)
+LinearAlgebra.:(^)(A::QuantumObject{DT}, n::T) where {DT,T<:Number} = QuantumObject(^(A.data, n), A.type, A.dims)
+LinearAlgebra.:(/)(A::AbstractQuantumObject{DT}, n::T) where {DT,T<:Number} =
+    get_typename_wrapper(A)(A.data / n, A.type, A.dims)
 
 @doc raw"""
+    A ⋅ B
     dot(A::QuantumObject, B::QuantumObject)
 
 Compute the dot product between two [`QuantumObject`](@ref): ``\langle A | B \rangle``
 
 Note that `A` and `B` should be [`Ket`](@ref) or [`OperatorKet`](@ref)
 
-`A ⋅ B` (where `⋅` can be typed by tab-completing `\cdot` in the REPL) is a synonym for `dot(A, B)`
+!!! note
+    `A ⋅ B` (where `⋅` can be typed by tab-completing `\cdot` in the REPL) is a synonym of `dot(A, B)`.
 """
 function LinearAlgebra.dot(
-    A::QuantumObject{<:AbstractArray{T1},OpType},
-    B::QuantumObject{<:AbstractArray{T2},OpType},
-) where {T1<:Number,T2<:Number,OpType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+    A::QuantumObject{DT1,OpType},
+    B::QuantumObject{DT2,OpType},
+) where {DT1,DT2,OpType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
     A.dims != B.dims && throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(A.data, B.data)
 end
 
 @doc raw"""
-    dot(i::QuantumObject, A::QuantumObject j::QuantumObject)
+    dot(i::QuantumObject, A::AbstractQuantumObject j::QuantumObject)
+    matrix_element(i::QuantumObject, A::AbstractQuantumObject j::QuantumObject)
 
-Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | \hat{A} | j \rangle``
+Compute the generalized dot product `dot(i, A*j)` between a [`AbstractQuantumObject`](@ref) and two [`QuantumObject`](@ref) (`i` and `j`), namely ``\langle i | \hat{A} | j \rangle``.
 
 Supports the following inputs:
 - `A` is in the type of [`Operator`](@ref), with `i` and `j` are both [`Ket`](@ref).
 - `A` is in the type of [`SuperOperator`](@ref), with `i` and `j` are both [`OperatorKet`](@ref)
+
+!!! note
+    `matrix_element(i, A, j)` is a synonym of `dot(i, A, j)`.
 """
 function LinearAlgebra.dot(
-    i::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},KetQuantumObject},
-) where {T1<:Number,T2<:Number,T3<:Number}
+    i::QuantumObject{DT1,KetQuantumObject},
+    A::AbstractQuantumObject{DT2,OperatorQuantumObject},
+    j::QuantumObject{DT3,KetQuantumObject},
+) where {DT1,DT2,DT3}
     ((i.dims != A.dims) || (A.dims != j.dims)) &&
         throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 function LinearAlgebra.dot(
-    i::QuantumObject{<:AbstractArray{T1},OperatorKetQuantumObject},
-    A::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
-    j::QuantumObject{<:AbstractArray{T3},OperatorKetQuantumObject},
-) where {T1<:Number,T2<:Number,T3<:Number}
+    i::QuantumObject{DT1,OperatorKetQuantumObject},
+    A::AbstractQuantumObject{DT2,SuperOperatorQuantumObject},
+    j::QuantumObject{DT3,OperatorKetQuantumObject},
+) where {DT1,DT2,DT3}
     ((i.dims != A.dims) || (A.dims != j.dims)) &&
         throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 
 @doc raw"""
-    conj(A::QuantumObject)
+    zero(A::AbstractQuantumObject)
 
-Return the element-wise complex conjugation of the [`QuantumObject`](@ref).
+Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same as `A`, but `data` is a zero-array.
 """
-Base.conj(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(conj(A.data), A.type, A.dims)
+Base.zero(A::AbstractQuantumObject) = get_typename_wrapper(A)(zero(A.data), A.type, A.dims)
 
 @doc raw"""
-    transpose(A::QuantumObject)
+    one(A::AbstractQuantumObject)
 
-Lazy matrix transpose of the [`QuantumObject`](@ref).
+Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same as `A`, but `data` is an identity matrix.
+
+Note that `A` must be [`Operator`](@ref) or [`SuperOperator`](@ref).
+"""
+Base.one(
+    A::AbstractQuantumObject{DT,OpType},
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    get_typename_wrapper(A)(one(A.data), A.type, A.dims)
+
+@doc raw"""
+    conj(A::AbstractQuantumObject)
+
+Return the element-wise complex conjugation of the [`AbstractQuantumObject`](@ref).
+"""
+Base.conj(A::AbstractQuantumObject) = get_typename_wrapper(A)(conj(A.data), A.type, A.dims)
+
+@doc raw"""
+    transpose(A::AbstractQuantumObject)
+
+Lazy matrix transpose of the [`AbstractQuantumObject`](@ref).
 """
 LinearAlgebra.transpose(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(transpose(A.data), A.type, A.dims)
+    A::AbstractQuantumObject{DT,OpType},
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    get_typename_wrapper(A)(transpose(A.data), A.type, A.dims)
 
 @doc raw"""
     A'
-    adjoint(A::QuantumObject)
+    adjoint(A::AbstractQuantumObject)
+    dag(A::AbstractQuantumObject)
 
-Lazy adjoint (conjugate transposition) of the [`QuantumObject`](@ref)
+Lazy adjoint (conjugate transposition) of the [`AbstractQuantumObject`](@ref)
 
-Note that `A'` is a synonym for `adjoint(A)`
+!!! note
+    `A'` and `dag(A)` are synonyms of `adjoint(A)`.
 """
 LinearAlgebra.adjoint(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(adjoint(A.data), A.type, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} =
-    QuantumObject(adjoint(A.data), Bra, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} =
-    QuantumObject(adjoint(A.data), Ket, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} =
+    A::AbstractQuantumObject{DT,OpType},
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    get_typename_wrapper(A)(adjoint(A.data), A.type, A.dims)
+LinearAlgebra.adjoint(A::QuantumObject{DT,KetQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Bra, A.dims)
+LinearAlgebra.adjoint(A::QuantumObject{DT,BraQuantumObject}) where {DT} = QuantumObject(adjoint(A.data), Ket, A.dims)
+LinearAlgebra.adjoint(A::QuantumObject{DT,OperatorKetQuantumObject}) where {DT} =
     QuantumObject(adjoint(A.data), OperatorBra, A.dims)
-LinearAlgebra.adjoint(A::QuantumObject{<:AbstractArray{T},OperatorBraQuantumObject}) where {T} =
+LinearAlgebra.adjoint(A::QuantumObject{DT,OperatorBraQuantumObject}) where {DT} =
     QuantumObject(adjoint(A.data), OperatorKet, A.dims)
 
 @doc raw"""
-    inv(A::QuantumObject)
+    inv(A::AbstractQuantumObject)
 
-Matrix inverse of the [`QuantumObject`](@ref)
+Matrix inverse of the [`AbstractQuantumObject`](@ref). If `A` is a [`QuantumObjectEvolution`](@ref), the inverse is computed at the last computed time.
 """
 LinearAlgebra.inv(
-    A::QuantumObject{<:AbstractArray{T},OpType},
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+    A::AbstractQuantumObject{DT,OpType},
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(sparse(inv(Matrix(A.data))), A.type, A.dims)
 
 LinearAlgebra.Hermitian(
-    A::QuantumObject{<:AbstractArray{T},OpType},
+    A::QuantumObject{DT,OpType},
     uplo::Symbol = :U,
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(Hermitian(A.data, uplo), A.type, A.dims)
 
 @doc raw"""
@@ -223,15 +244,15 @@ Note that this function only supports for [`Operator`](@ref) and [`SuperOperator
 
 # Examples
 
-```
+```jldoctest
 julia> a = destroy(20)
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
-⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢
+⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
+⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠈⠢⡀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠈⠢⡀⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢⎦
 
 julia> tr(a' * a)
 190.0 + 0.0im
@@ -263,7 +284,7 @@ Return the standard vector `p`-norm or [Schatten](https://en.wikipedia.org/wiki/
 
 # Examples
 
-```
+```jldoctest
 julia> ψ = fock(10, 2)
 Quantum Object:   type=Ket   dims=[10]   size=(10,)
 10-element Vector{ComplexF64}:
@@ -297,12 +318,16 @@ end
 
 @doc raw"""
     normalize(A::QuantumObject, p::Real)
+    unit(A::QuantumObject, p::Real)
 
 Return normalized [`QuantumObject`](@ref) so that its `p`-norm equals to unity, i.e. `norm(A, p) == 1`.
 
 Support for the following types of [`QuantumObject`](@ref):
 - If `A` is [`Ket`](@ref) or [`Bra`](@ref), default `p = 2`
 - If `A` is [`Operator`](@ref), default `p = 1`
+
+!!! note
+    `unit` is a synonym of `normalize`.
 
 Also, see [`norm`](@ref) about its definition for different types of [`QuantumObject`](@ref).
 """
@@ -362,7 +387,8 @@ LinearAlgebra.rmul!(B::QuantumObject{<:AbstractArray}, a::Number) = (rmul!(B.dat
 
 Matrix square root of [`QuantumObject`](@ref)
 
-Note that `√(A)` is a synonym for `sqrt(A)`
+!!! note
+    `√(A)` (where `√` can be typed by tab-completing `\sqrt` in the REPL) is a synonym of `sqrt(A)`.
 """
 LinearAlgebra.sqrt(A::QuantumObject{<:AbstractArray{T}}) where {T} =
     QuantumObject(sqrt(sparse_to_dense(A.data)), A.type, A.dims)
@@ -436,8 +462,8 @@ Matrix sine of [`QuantumObject`](@ref), defined as
 Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
 LinearAlgebra.sin(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) - exp(-1im * A)) / 2im
+    A::QuantumObject{DT,ObjType},
+) where {DT,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) - exp(-1im * A)) / 2im
 
 @doc raw"""
     cos(A::QuantumObject)
@@ -449,8 +475,8 @@ Matrix cosine of [`QuantumObject`](@ref), defined as
 Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
 LinearAlgebra.cos(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) + exp(-1im * A)) / 2
+    A::QuantumObject{DT,ObjType},
+) where {DT,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (exp(1im * A) + exp(-1im * A)) / 2
 
 @doc raw"""
     diag(A::QuantumObject, k::Int=0)
@@ -480,8 +506,9 @@ proj(ψ::QuantumObject{<:AbstractArray{T},BraQuantumObject}) where {T} = ψ' * �
 Note that this function will always return [`Operator`](@ref). No matter the input [`QuantumObject`](@ref) is a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
 
 # Examples
+
 Two qubits in the state ``\ket{\psi} = \ket{e,g}``:
-```
+```jldoctest
 julia> ψ = kron(fock(2,0), fock(2,1))
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
@@ -498,7 +525,7 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 ```
 
 or in an entangled state ``\ket{\psi} = \frac{1}{\sqrt{2}} \left( \ket{e,e} + \ket{g,g} \right)``:
-```
+```jldoctest
 julia> ψ = 1 / √2 * (kron(fock(2,0), fock(2,0)) + kron(fock(2,1), fock(2,1)))
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
@@ -517,17 +544,17 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 function ptrace(QO::QuantumObject{<:AbstractArray,KetQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     _non_static_array_warning("sel", sel)
 
-    ns = length(sel)
-    if ns == 0 # return full trace for empty sel
+    n_s = length(sel)
+    if n_s == 0 # return full trace for empty sel
         return tr(ket2dm(QO))
     else
-        nd = length(QO.dims)
+        n_d = length(QO.dims)
 
-        (any(>(nd), sel) || any(<(1), sel)) && throw(
-            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(nd) sub-systems"),
+        (any(>(n_d), sel) || any(<(1), sel)) && throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(n_d) sub-systems"),
         )
-        (ns != length(unique(sel))) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
-        (nd == 1) && return ket2dm(QO) # ptrace should always return Operator
+        (n_s != length(unique(sel))) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
+        (n_d == 1) && return ket2dm(QO) # ptrace should always return Operator
     end
 
     _sort_sel = sort(SVector{length(sel),Int}(sel))
@@ -540,17 +567,17 @@ ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractV
 function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     _non_static_array_warning("sel", sel)
 
-    ns = length(sel)
-    if ns == 0 # return full trace for empty sel
+    n_s = length(sel)
+    if n_s == 0 # return full trace for empty sel
         return tr(QO)
     else
-        nd = length(QO.dims)
+        n_d = length(QO.dims)
 
-        (any(>(nd), sel) || any(<(1), sel)) && throw(
-            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(nd) sub-systems"),
+        (any(>(n_d), sel) || any(<(1), sel)) && throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(n_d) sub-systems"),
         )
-        (ns != length(unique(sel))) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
-        (nd == 1) && return QO
+        (n_s != length(unique(sel))) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
+        (n_d == 1) && return QO
     end
 
     _sort_sel = sort(SVector{length(sel),Int}(sel))
@@ -560,27 +587,27 @@ end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
 function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
-    nd = length(dims)
+    n_d = length(dims)
 
-    nd == 1 && return QO, dims
+    n_d == 1 && return QO, dims
 
-    qtrace = filter(i -> i ∉ sel, 1:nd)
+    qtrace = filter(i -> i ∉ sel, 1:n_d)
     dkeep = dims[sel]
     dtrace = dims[qtrace]
-    nt = length(dtrace)
+    n_t = length(dtrace)
 
     # Concatenate qtrace and sel without losing the length information
     # Tuple(qtrace..., sel...)
-    qtrace_sel = ntuple(Val(nd)) do i
-        if i <= nt
+    qtrace_sel = ntuple(Val(n_d)) do i
+        if i <= n_t
             @inbounds qtrace[i]
         else
-            @inbounds sel[i-nt]
+            @inbounds sel[i-n_t]
         end
     end
 
     vmat = reshape(QO, reverse(dims)...)
-    topermute = reverse(nd + 1 .- qtrace_sel)
+    topermute = reverse(n_d + 1 .- qtrace_sel)
     vmat = permutedims(vmat, topermute) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
     vmat = reshape(vmat, prod(dkeep), prod(dtrace))
 
@@ -588,39 +615,41 @@ function _ptrace_ket(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
 end
 
 function _ptrace_oper(QO::AbstractArray, dims::Union{SVector,MVector}, sel)
-    nd = length(dims)
+    n_d = length(dims)
 
-    nd == 1 && return QO, dims
+    n_d == 1 && return QO, dims
 
-    qtrace = filter(i -> i ∉ sel, 1:nd)
+    qtrace = filter(i -> i ∉ sel, 1:n_d)
     dkeep = dims[sel]
     dtrace = dims[qtrace]
-    nk = length(dkeep)
-    nt = length(dtrace)
-    _2_nt = 2 * nt
+    n_k = length(dkeep)
+    n_t = length(dtrace)
+    _2_n_t = 2 * n_t
 
     # Concatenate qtrace and sel without losing the length information
     # Tuple(qtrace..., sel...)
-    qtrace_sel = ntuple(Val(2 * nd)) do i
-        if i <= nt
+    qtrace_sel = ntuple(Val(2 * n_d)) do i
+        if i <= n_t
             @inbounds qtrace[i]
-        elseif i <= _2_nt
-            @inbounds qtrace[i-nt] + nd
-        elseif i <= _2_nt + nk
-            @inbounds sel[i-_2_nt]
+        elseif i <= _2_n_t
+            @inbounds qtrace[i-n_t] + n_d
+        elseif i <= _2_n_t + n_k
+            @inbounds sel[i-_2_n_t]
         else
-            @inbounds sel[i-_2_nt-nk] + nd
+            @inbounds sel[i-_2_n_t-n_k] + n_d
         end
     end
 
     ρmat = reshape(QO, reverse(vcat(dims, dims))...)
-    topermute = reverse(2 * nd + 1 .- qtrace_sel)
+    topermute = reverse(2 * n_d + 1 .- qtrace_sel)
     ρmat = permutedims(ρmat, topermute) # TODO: use PermutedDimsArray when Julia v1.11.0 is released
     ρmat = reshape(ρmat, prod(dkeep), prod(dkeep), prod(dtrace), prod(dtrace))
-    res = map(tr, eachslice(ρmat, dims = (1, 2)))
+    res = _map_trace(ρmat)
 
     return res, dkeep
 end
+
+_map_trace(A::AbstractArray{T,4}) where {T} = map(tr, eachslice(A, dims = (1, 2)))
 
 @doc raw"""
     purity(ρ::QuantumObject)
@@ -659,11 +688,11 @@ tidyup!(A::AbstractArray{T}, tol::T2 = 1e-14) where {T,T2<:Real} =
     @. A = T(abs(real(A)) > tol) * real(A) + 1im * T(abs(imag(A)) > tol) * imag(A)
 
 @doc raw"""
-    get_data(A::QuantumObject)
+    get_data(A::AbstractQuantumObject)
 
-Returns the data of a QuantumObject.
+Returns the data of a [`AbstractQuantumObject`](@ref).
 """
-get_data(A::QuantumObject) = A.data
+get_data(A::AbstractQuantumObject) = A.data
 
 @doc raw"""
     get_coherence(ψ::QuantumObject)
@@ -699,12 +728,16 @@ Note that this method currently works for [`Ket`](@ref), [`Bra`](@ref), and [`Op
 
 If `order = [2, 1, 3]`, the Hilbert space structure will be re-arranged: ``\mathcal{H}_1 \otimes \mathcal{H}_2 \otimes \mathcal{H}_3 \rightarrow \mathcal{H}_2 \otimes \mathcal{H}_1 \otimes \mathcal{H}_3``.
 
-```
-julia> ψ1 = fock(2, 0)
-julia> ψ2 = fock(3, 1)
-julia> ψ3 = fock(4, 2)
-julia> ψ_123 = tensor(ψ1, ψ2, ψ3)
-julia> permute(ψ_123, [2, 1, 3]) ≈ tensor(ψ2, ψ1, ψ3)
+```jldoctest
+julia> ψ1 = fock(2, 0);
+
+julia> ψ2 = fock(3, 1);
+
+julia> ψ3 = fock(4, 2);
+
+julia> ψ_123 = tensor(ψ1, ψ2, ψ3);
+
+julia> permute(ψ_123, (2, 1, 3)) ≈ tensor(ψ2, ψ1, ψ3)
 true
 ```
 

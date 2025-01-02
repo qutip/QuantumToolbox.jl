@@ -10,6 +10,7 @@ on:
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
+      - 'test/ext-test/cairomakie/**'
       - 'Project.toml'
   pull_request:
     branches:
@@ -20,6 +21,7 @@ on:
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
+      - 'test/ext-test/cairomakie/**'
       - 'Project.toml'
     types:
       - opened
@@ -29,8 +31,8 @@ on:
 
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} ( ${{ matrix.group }} )
-    runs-on: ${{ matrix.os }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.node.os }} - ${{ matrix.node.arch }} ( ${{ matrix.group }} )
+    runs-on: ${{ matrix.node.os }}
     permissions: # needed to allow julia-actions/cache to delete old caches that it has created
       actions: write
       contents: read
@@ -41,53 +43,48 @@ jobs:
         # for core tests (latest and oldest supported versions)
         version:
           - '1.10' # oldest
-        #  - '1'    # latest
-        os:
-          - ubuntu-latest
-          - windows-latest
-        arch:
-          - x64
+          - '1'    # latest
+        node:
+          - os: 'ubuntu-latest'
+            arch: 'x64'
+          - os: 'windows-latest'
+            arch: 'x64'
+          - os: 'macOS-latest'
+            arch: 'arm64'
         group:
-          - Core
+          - 'Core'
 
         include:
-          # for core tests on macOS (M-series chip)
-          - version: '1.10'    # oldest
-            os: 'macOS-latest'
-            arch: 'x64'
-            group: 'Core'
-          # - version: '1'       # latest
-          #   os: 'macOS-latest'
-          #   arch: 'arm64'
-          #   group: 'Core'
-
           # for core tests (intermediate versions)
           # - version: '1.x'
-          #   os: 'ubuntu-latest'
-          #   arch: 'x64'
+          #   node:
+          #     os: 'ubuntu-latest'
+          #     arch: 'x64'
           #   group: 'Core'
 
-          # for code quality tests
+          # for extension tests
           - version: '1'
-            os: 'ubuntu-latest'
-            arch: 'x64'
-            group: 'Code-Quality'
+            node:
+              os: 'ubuntu-latest'
+              arch: 'x64'
+            group: 'CairoMakie_Ext'
 
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
+          arch: ${{ matrix.node.arch }}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         env:
           GROUP: ${{ matrix.group }}
+          JULIA_NUM_THREADS: auto
       - uses: julia-actions/julia-processcoverage@v1
         with:
           directories: src,ext
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:

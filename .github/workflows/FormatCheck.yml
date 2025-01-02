@@ -45,6 +45,6 @@ jobs:
                 write(stdout, output)
                 write(stdout, "-----\n")
                 write(stdout, "Please format them by running the following command:\n")
-                write(stdout, "julia -e \"using JuliaFormatter; format(\\\".\\\")\"")
+                write(stdout, "make format")
                 exit(1)
             end'

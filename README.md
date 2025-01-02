@@ -1,19 +1,19 @@
 <!-- Logo -->
 <div align="center">
-  <img src="./docs/src/assets/logo.png" alt="QuantumToolbox.jl logo" width="150">
+  <img src="./docs/src/public/logo.png" alt="QuantumToolbox.jl logo" width="150">
 </div>
 
 # QuantumToolbox.jl
 
 <!-- Current admin team (in chronological order) -->
-[A. Mercurio](https://github.com/albertomercurio),
-[L. Gravina](https://github.com/lgravina1997),
+[A. Mercurio](https://github.com/albertomercurio)
 and [Y.-T. Huang](https://github.com/ytdHuang).
 
 <!-- Table of Badges -->
 | **Release**       | [![Release][release-img]][release-url] [![License][license-img]][license-url] [![DOI][doi-img]][doi-url] [![Downloads][download-img]][download-url] |
 |:-----------------:|:-------------|
-| **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] |
+| **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] |
+| **Code Quality**  | [![Code Quality][code-quality-img]][code-quality-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] |
 | **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] |
 | **Benchmark** | [![Benchmarks][benchmark-img]][benchmark-url] |
 | **Support** | [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund) |
@@ -36,6 +36,9 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [codecov-img]: https://codecov.io/gh/qutip/QuantumToolbox.jl/branch/main/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/qutip/QuantumToolbox.jl
 
+[code-quality-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/Code-Quality.yml/badge.svg 
+[code-quality-url]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/Code-Quality.yml
+
 [aqua-img]: https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg
 [aqua-url]: https://github.com/JuliaTesting/Aqua.jl
 
@@ -52,30 +55,31 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 
 ## Introduction
 
-[QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) is a cutting-edge Julia package designed for quantum physics simulations, closely emulating the popular Python [QuTiP](https://github.com/qutip/qutip) package. It uniquely combines the simplicity and power of Julia with advanced features like GPU acceleration and distributed computing, making simulation of quantum systems more accessible and efficient.
+[QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) is a cutting-edge [`Julia`](https://julialang.org/) package designed for quantum physics simulations, closely emulating the popular Python [`QuTiP`](https://github.com/qutip/qutip) package. It uniquely combines the simplicity and power of [`Julia`](https://julialang.org/) with advanced features like GPU acceleration and distributed computing, making simulation of quantum systems more accessible and efficient.
 
 *With this package, moving from Python to Julia for quantum physics simulations has never been easier*, due to the similar syntax and functionalities.
 
 ## Features
 
-QuantumToolbox.jl is equipped with a robust set of features:
+`QuantumToolbox.jl` is equipped with a robust set of features:
 
-- **Quantum State and Operator Manipulation:** Easily handle quantum states and operators with a rich set of tools, with the same functionalities as QuTiP.
-- **Dynamical Evolution:** Advanced solvers for time evolution of quantum systems, thanks to the powerful [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl) package.
-- **GPU Computing:** Leverage GPU resources for high-performance computing. For example, you run the master equation direclty on the GPU with the same syntax as the CPU case.
-- **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
-- **Easy Extension:** Easily extend the package, taking advantage of the Julia language features, like multiple dispatch and metaprogramming.
+- **Quantum State and Operator Manipulation:** Easily handle quantum states and operators with a rich set of tools, with the same functionalities as `QuTiP`.
+- **Dynamical Evolution:** Advanced solvers for time evolution of quantum systems, thanks to the powerful [`DifferentialEquations.jl`](https://github.com/SciML/DifferentialEquations.jl) package.
+- **GPU Computing:** Leverage GPU resources for high-performance computing. Simulate quantum dynamics directly on the GPU with the same syntax as the CPU case.
+- **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case. See [this tutorial](https://qutip.org/QuantumToolbox.jl/stable/tutorials/cluster) for more information.
+- **Easy Extension:** Easily extend the package, taking advantage of the `Julia` language features, like multiple dispatch and metaprogramming.
 
 ## Installation
     
-> **_NOTE:_**  `QuantumToolbox.jl` requires `Julia 1.10+`.
+> [!NOTE]
+> `QuantumToolbox.jl` requires `Julia 1.10+`.
 
 To install `QuantumToolbox.jl`, run the following commands inside Julia's interactive session (also known as REPL):
 ```julia
 using Pkg
 Pkg.add("QuantumToolbox")
 ```
-Alternatively, this can also be done in Julia's [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
+Alternatively, this can also be done in `Julia`'s [Pkg REPL](https://julialang.github.io/Pkg.jl/v1/getting-started/) by pressing the key `]` in the REPL to use the package mode, and then type the following command:
 ```julia-repl
 (1.10) pkg> add QuantumToolbox
 ```
@@ -90,7 +94,7 @@ QuantumToolbox.about()
 
 ## Brief Example
 
-We now provide a brief example to demonstrate the similarity between [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) and [QuTiP](https://github.com/qutip/qutip).
+We now provide a brief example to demonstrate the similarity between [`QuantumToolbox.jl`](https://github.com/qutip/QuantumToolbox.jl) and [`QuTiP`](https://github.com/qutip/qutip).
 
 Let's consider a quantum harmonic oscillator with a Hamiltonian given by:
 
@@ -160,3 +164,15 @@ e_ops = [a_gpu' * a_gpu]
 
 sol = mesolve(H_gpu, ψ0_gpu, tlist, c_ops, e_ops = e_ops)
 ```
+
+## Performance comparison with other packages
+
+Here we provide a brief performance comparison between `QuantumToolbox.jl` and other popular quantum physics simulation packages, such as [`QuTiP`](https://github.com/qutip/qutip) (Python), [`dynamiqs`](https://github.com/dynamiqs/dynamiqs) (Python - JAX) and [`QuantumOptics.jl`](https://github.com/qojulia/QuantumOptics.jl) (Julia). We clearly show that `QuantumToolbox.jl` is the fastest package among the four. A detailed code is available [here](https://albertomercurio.github.io/Lectures/QuantumToolbox.jl/package_comparison.html).
+
+![](https://albertomercurio.github.io/Lectures/QuantumToolbox.jl/package_comparison_files/figure-html/cell-12-output-1.svg)
+
+## Contributing to QuantumToolbox.jl
+
+You are most welcome to contribute to `QuantumToolbox.jl` development by forking this repository and sending pull requests (PRs), or filing bug reports at the issues page. You can also help out with users' questions, or discuss proposed changes in the [QuTiP discussion group](https://groups.google.com/g/qutip).
+
+For more information about contribution, including technical advice, please see the [Contributing to QuantumToolbox.jl](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing) section of the documentation.

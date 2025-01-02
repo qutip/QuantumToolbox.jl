@@ -1,6 +1,6 @@
 export ProgressBar, next!
 
-struct ProgressBar{CT,T1<:Integer,T2<:Real,T3,T4<:Real,LT}
+mutable struct ProgressBar{CT,T1<:Integer,T2<:Real,T3,T4<:Real,LT}
     counter::CT
     max_counts::T1
     enable::Bool

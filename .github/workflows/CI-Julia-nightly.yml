@@ -1,0 +1,60 @@
+name: Runtests (Julia nightly)
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '.github/workflows/CI-Julia-nightly.yml'
+      - 'src/**'
+      - 'ext/**'
+      - 'test/runtests.jl'
+      - 'test/core-test/**'
+      - 'Project.toml'
+  pull_request:
+    branches:
+      - 'main'
+    paths:
+      - '.github/workflows/CI-Julia-nightly.yml'
+      - 'src/**'
+      - 'ext/**'
+      - 'test/runtests.jl'
+      - 'test/core-test/**'
+      - 'Project.toml'
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  test:
+    name: ${{ matrix.os }} - ${{ matrix.arch }} ( ${{ matrix.group }} )
+    runs-on: ${{ matrix.os }}
+    permissions: # needed to allow julia-actions/cache to delete old caches that it has created
+      actions: write
+      contents: read
+    if: ${{ !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - 'nightly'
+        os:
+          - 'ubuntu-latest'
+        arch:
+          - 'x64'
+        group:
+          - 'Core'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+        env:
+          GROUP: ${{ matrix.group }}

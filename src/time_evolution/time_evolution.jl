@@ -1,9 +1,31 @@
-export TimeDependentOperatorSum
-export TimeEvolutionSol, TimeEvolutionMCSol
+export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionSSESol
 
-export liouvillian, liouvillian_floquet, liouvillian_generalized
+export liouvillian_floquet, liouvillian_generalized
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
+const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
+const JUMP_TIMES_WHICH_INIT_SIZE = 200
+
+@doc raw"""
+    struct TimeEvolutionProblem
+
+A Julia constructor for handling the `ODEProblem` of the time evolution of quantum systems.
+
+# Fields (Attributes)
+
+- `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
+- `times::Abstractvector`: The time list of the evolution.
+- `dims::Abstractvector`: The dimensions of the Hilbert space.
+- `kwargs::KWT`: Generic keyword arguments.
+"""
+struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractVector,KWT}
+    prob::PT
+    times::TT
+    dims::DT
+    kwargs::KWT
+end
+
+TimeEvolutionProblem(prob, times, dims) = TimeEvolutionProblem(prob, times, dims, nothing)
 
 @doc raw"""
     struct TimeEvolutionSol
@@ -14,20 +36,28 @@ A structure storing the results and some information from solving time evolution
 
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{QuantumObject}`: The list of result states.
-- `expect::Matrix`: The expectation values corresponding to each time point in `times`.
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each time point in `times`.
 - `retcode`: The return code from the solver.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
-struct TimeEvolutionSol{TT<:Vector{<:Real},TS<:AbstractVector,TE<:Matrix{ComplexF64}}
+struct TimeEvolutionSol{
+    TT<:AbstractVector{<:Real},
+    TS<:AbstractVector,
+    TE<:Union{AbstractMatrix,Nothing},
+    RETT<:Enum,
+    AlgT<:OrdinaryDiffEqAlgorithm,
+    AT<:Real,
+    RT<:Real,
+}
     times::TT
     states::TS
     expect::TE
-    retcode::Enum
-    alg::OrdinaryDiffEqAlgorithm
-    abstol::Real
-    reltol::Real
+    retcode::RETT
+    alg::AlgT
+    abstol::AT
+    reltol::RT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionSol)
@@ -35,7 +65,11 @@ function Base.show(io::IO, sol::TimeEvolutionSol)
     print(io, "(return code: $(sol.retcode))\n")
     print(io, "--------------------------\n")
     print(io, "num_states = $(length(sol.states))\n")
-    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    if sol.expect isa Nothing
+        print(io, "num_expect = 0\n")
+    else
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
+    end
     print(io, "ODE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
     print(io, "reltol = $(sol.reltol)\n")
@@ -49,11 +83,11 @@ A structure storing the results and some information from solving quantum trajec
 
 # Fields (Attributes)
 
-- `n_traj::Int`: Number of trajectories
-- `times::AbstractVector`: The time list of the evolution in each trajectory.
+- `ntraj::Int`: Number of trajectories
+- `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
-- `expect::Matrix`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `expect_all::Array`: The expectation values corresponding to each trajectory and each time point in `times`
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `expect_all::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
 - `jump_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
 - `jump_which::Vector{Vector{Int}}`: The indices of the jump operators in `c_ops` that describe the corresponding quantum jumps occurred in each trajectory.
 - `converged::Bool`: Whether the solution is converged or not.
@@ -62,14 +96,17 @@ A structure storing the results and some information from solving quantum trajec
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionMCSol{
-    TT<:Vector{<:Vector{<:Real}},
+    TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
-    TE<:Matrix{ComplexF64},
-    TEA<:Array{ComplexF64,3},
+    TE<:Union{AbstractMatrix,Nothing},
+    TEA<:Union{AbstractArray,Nothing},
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
+    AlgT<:OrdinaryDiffEqAlgorithm,
+    AT<:Real,
+    RT<:Real,
 }
-    n_traj::Int
+    ntraj::Int
     times::TT
     states::TS
     expect::TE
@@ -77,19 +114,77 @@ struct TimeEvolutionMCSol{
     jump_times::TJT
     jump_which::TJW
     converged::Bool
-    alg::OrdinaryDiffEqAlgorithm
-    abstol::Real
-    reltol::Real
+    alg::AlgT
+    abstol::AT
+    reltol::RT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionMCSol)
     print(io, "Solution of quantum trajectories\n")
     print(io, "(converged: $(sol.converged))\n")
     print(io, "--------------------------------\n")
-    print(io, "num_trajectories = $(sol.n_traj)\n")
+    print(io, "num_trajectories = $(sol.ntraj)\n")
     print(io, "num_states = $(length(sol.states[1]))\n")
-    print(io, "num_expect = $(size(sol.expect, 1))\n")
+    if sol.expect isa Nothing
+        print(io, "num_expect = 0\n")
+    else
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
+    end
     print(io, "ODE alg.: $(sol.alg)\n")
+    print(io, "abstol = $(sol.abstol)\n")
+    print(io, "reltol = $(sol.reltol)\n")
+    return nothing
+end
+
+@doc raw"""
+    struct TimeEvolutionSSESol
+
+A structure storing the results and some information from solving trajectories of the Stochastic Shrodinger equation time evolution.
+
+# Fields (Attributes)
+
+- `ntraj::Int`: Number of trajectories
+- `times::AbstractVector`: The time list of the evolution.
+- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `expect_all::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `converged::Bool`: Whether the solution is converged or not.
+- `alg`: The algorithm which is used during the solving process.
+- `abstol::Real`: The absolute tolerance which is used during the solving process.
+- `reltol::Real`: The relative tolerance which is used during the solving process.
+"""
+struct TimeEvolutionSSESol{
+    TT<:AbstractVector{<:Real},
+    TS<:AbstractVector,
+    TE<:Union{AbstractMatrix,Nothing},
+    TEA<:Union{AbstractArray,Nothing},
+    AlgT<:StochasticDiffEqAlgorithm,
+    AT<:Real,
+    RT<:Real,
+}
+    ntraj::Int
+    times::TT
+    states::TS
+    expect::TE
+    expect_all::TEA
+    converged::Bool
+    alg::AlgT
+    abstol::AT
+    reltol::RT
+end
+
+function Base.show(io::IO, sol::TimeEvolutionSSESol)
+    print(io, "Solution of quantum trajectories\n")
+    print(io, "(converged: $(sol.converged))\n")
+    print(io, "--------------------------------\n")
+    print(io, "num_trajectories = $(sol.ntraj)\n")
+    print(io, "num_states = $(length(sol.states[1]))\n")
+    if sol.expect isa Nothing
+        print(io, "num_expect = 0\n")
+    else
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
+    end
+    print(io, "SDE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
     print(io, "reltol = $(sol.reltol)\n")
     return nothing
@@ -105,81 +200,7 @@ struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType end
 
 ContinuousLindbladJumpCallback(; interp_points::Int = 10) = ContinuousLindbladJumpCallback(interp_points)
 
-## Time-dependent sum of operators
-
-struct TimeDependentOperatorSum{CFT,OST<:OperatorSum}
-    coefficient_functions::CFT
-    operator_sum::OST
-end
-
-function TimeDependentOperatorSum(
-    coefficient_functions,
-    operators::Vector{<:QuantumObject};
-    params = nothing,
-    init_time = 0.0,
-)
-    # promote the type of the coefficients and the operators. Remember that the coefficient_functions si a vector of functions and the operators is a vector of QuantumObjects
-    coefficients = [f(init_time, params) for f in coefficient_functions]
-    operator_sum = OperatorSum(coefficients, operators)
-    return TimeDependentOperatorSum(coefficient_functions, operator_sum)
-end
-
-Base.size(A::TimeDependentOperatorSum) = size(A.operator_sum)
-Base.size(A::TimeDependentOperatorSum, inds...) = size(A.operator_sum, inds...)
-Base.length(A::TimeDependentOperatorSum) = length(A.operator_sum)
-
-function update_coefficients!(A::TimeDependentOperatorSum, t, params)
-    @inbounds @simd for i in 1:length(A.coefficient_functions)
-        A.operator_sum.coefficients[i] = A.coefficient_functions[i](t, params)
-    end
-end
-
-(A::TimeDependentOperatorSum)(t, params) = (update_coefficients!(A, t, params); A)
-
-@inline function LinearAlgebra.mul!(y::AbstractVector, A::TimeDependentOperatorSum, x::AbstractVector, α, β)
-    return mul!(y, A.operator_sum, x, α, β)
-end
-
 #######################################
-
-### LIOUVILLIAN ###
-@doc raw"""
-    liouvillian(H::QuantumObject, c_ops::Union{AbstractVector,Nothing}=nothing, Id_cache=I(prod(H.dims)))
-
-Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
-
-```math
-\mathcal{L} [\cdot] = -i[\hat{H}, \cdot] + \sum_n \mathcal{D}(\hat{C}_n) [\cdot]
-```
-
-where 
-
-```math
-\mathcal{D}(\hat{C}_n) [\cdot] = \hat{C}_n [\cdot] \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n [\cdot] - \frac{1}{2} [\cdot] \hat{C}_n^\dagger \hat{C}_n
-```
-
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
-
-See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
-"""
-function liouvillian(
-    H::QuantumObject{MT1,OpType1},
-    c_ops::Union{AbstractVector,Nothing} = nothing,
-    Id_cache = I(prod(H.dims)),
-) where {MT1<:AbstractMatrix,OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
-    L = liouvillian(H, Id_cache)
-    if !(c_ops isa Nothing)
-        for c_op in c_ops
-            L += lindblad_dissipator(c_op, Id_cache)
-        end
-    end
-    return L
-end
-
-liouvillian(H::QuantumObject{<:AbstractMatrix,OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dims))) =
-    -1im * (spre(H, Id_cache) - spost(H, Id_cache))
-
-liouvillian(H::QuantumObject{<:AbstractMatrix,SuperOperatorQuantumObject}, Id_cache::Diagonal) = H
 
 function liouvillian_floquet(
     L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
@@ -200,7 +221,7 @@ function liouvillian_floquet(
     Hₚ::QuantumObject{<:AbstractArray{T2},OpType2},
     Hₘ::QuantumObject{<:AbstractArray{T3},OpType3},
     ω::Real,
-    c_ops::Union{AbstractVector,Nothing} = nothing;
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     n_max::Int = 3,
     tol::Real = 1e-15,
 ) where {
@@ -268,7 +289,7 @@ function liouvillian_generalized(
         end
 
         # Ohmic reservoir
-        N_th = n_th.(Ωp, T_list[i])
+        N_th = n_thermal.(Ωp, T_list[i])
         Sp₀ = QuantumObject(triu(X_op, 1), type = Operator, dims = dims)
         Sp₁ = QuantumObject(droptol!((@. Ωp * N_th * Sp₀.data), tol), type = Operator, dims = dims)
         Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), type = Operator, dims = dims)

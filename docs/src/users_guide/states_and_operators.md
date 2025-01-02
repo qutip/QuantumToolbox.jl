@@ -20,7 +20,7 @@ and then create a lowering operator ``\hat{a}`` corresponding to `5` number stat
 a = destroy(5)
 ```
 
-Now lets apply the lowering operator `\hat{a}` to our vacuum state `vac`:
+Now lets apply the lowering operator ``\hat{a}`` to our vacuum state `vac`:
 
 ```@example states_and_operators
 a * vac
@@ -99,7 +99,7 @@ We can also create superpositions of states:
 ket = normalize(basis(5, 0) + basis(5, 1))
 ```
 
-where we have used the `normalize` function again to normalize the state. Apply the number opeartor again:
+where we have used the `normalize` function again to normalize the state. Apply the number operator again:
 
 ```@example states_and_operators
 n * ket
@@ -172,7 +172,7 @@ z = thermal_dm(5, 0.125)
 
 fidelity(x, y)
 ```
-Note that the definition of [`fidelity`](@ref) here is from **Nielsen & Chuang, "Quantum Computation and Quantum Information"**. It is the square root of the fidelity defined in **R. Jozsa, Journal of Modern Optics, 41:12, 2315 (1994)**. We also know that for two pure states, the trace distance (``T``) and the fidelity (``F``) are related by ``T = \sqrt{1-F^2}``:
+Note that the definition of [`fidelity`](@ref) here is from [Nielsen-Chuang2011](@citet). It is the square root of the fidelity defined in [Jozsa1994](@citet). We also know that for two pure states, the trace distance (``T``) and the fidelity (``F``) are related by ``T = \sqrt{1-F^2}``:
 
 ```@example states_and_operators
 tracedist(x, y) ≈ sqrt(1 - (fidelity(x, y))^2)
@@ -404,4 +404,4 @@ t = 0.8
 exp(L * t)
 ```
 
-See the section [Time Evolution and Quantum System Dynamics](@ref doc:Time-Evolution-and-Quantum-System-Dynamics) for more details.
+See the section [Lindblad Master Equation Solver](@ref doc-TE:Lindblad-Master-Equation-Solver) for more details.

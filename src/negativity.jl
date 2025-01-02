@@ -17,7 +17,7 @@ and ``\Vert \hat{X} \Vert_1=\textrm{Tr}\sqrt{\hat{X}^\dagger \hat{X}}`` is the t
 
 # Examples
 
-```
+```jldoctest
 julia> Ψ = bell_state(0, 0)
 Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
@@ -34,8 +34,8 @@ Quantum Object:   type=Operator   dims=[2, 2]   size=(4, 4)   ishermitian=true
  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
  0.5+0.0im  0.0+0.0im  0.0+0.0im  0.5+0.0im
 
-julia> negativity(ρ, 2)
-0.4999999999999998
+julia> round(negativity(ρ, 2), digits=2)
+0.5
 ```
 """
 function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool = false)

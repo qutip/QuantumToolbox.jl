@@ -4,15 +4,14 @@ CurrentModule = QuantumToolbox
 
 # [API](@id doc-API)
 
-## Contents
+**Table of contents**
 
-```@contents
-Pages = ["api.md"]
-```
+[[toc]] <!-- the level setting is in ".vitepress/config.mts" -->
 
 ## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 
 ```@docs
+AbstractQuantumObject
 BraQuantumObject
 Bra
 KetQuantumObject
@@ -26,10 +25,16 @@ OperatorKet
 SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
-OperatorSum
-size
-eltype
-length
+QuantumObjectEvolution
+Base.size
+Base.eltype
+Base.length
+SciMLOperators.cache_operator
+```
+
+## [Qobj boolean functions](@id doc-API:Qobj-boolean-functions)
+
+```@docs
 isbra
 isket
 isoper
@@ -40,11 +45,15 @@ LinearAlgebra.ishermitian
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
 isunitary
+SciMLOperators.iscached
+SciMLOperators.isconstant
 ```
 
 ## [Qobj arithmetic and attributes](@id doc-API:Qobj-arithmetic-and-attributes)
 
 ```@docs
+Base.zero
+Base.one
 Base.conj
 LinearAlgebra.transpose
 LinearAlgebra.adjoint
@@ -154,53 +163,82 @@ lindblad_dissipator
 ## [Synonyms of functions for Qobj](@id doc-API:Synonyms-of-functions-for-Qobj)
 ```@docs
 Qobj
+QobjEvo
 shape
 isherm
 trans
 dag
 matrix_element
 unit
+tensor
+⊗
+qeye
 sqrtm
 logm
 expm
 sinm
 cosm
-tensor
-⊗
-qeye
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)
 
 ```@docs
+TimeEvolutionProblem
 TimeEvolutionSol
 TimeEvolutionMCSol
+TimeEvolutionSSESol
 sesolveProblem
 mesolveProblem
-lr_mesolveProblem
 mcsolveProblem
 mcsolveEnsembleProblem
+ssesolveProblem
+ssesolveEnsembleProblem
 sesolve
 mesolve
-lr_mesolve
 mcsolve
+ssesolve
 dfd_mesolve
-dsf_mesolve
-dsf_mcsolve
 liouvillian
 liouvillian_generalized
+```
+
+### [Steady State Solvers](@id doc-API:Steady-State-Solvers)
+
+```@docs
 steadystate
 steadystate_floquet
+SteadyStateDirectSolver
+SteadyStateEigenSolver
+SteadyStateLinearSolver
 SteadyStateODESolver
+```
+
+### [Dynamical Shifted Fock method](@id doc-API:Dynamical-Shifted-Fock-method)
+
+```@docs
+dsf_mesolve
+dsf_mcsolve
+```
+
+### [Low-rank time evolution](@id doc-API:Low-rank-time-evolution)
+
+```@docs
+TimeEvolutionLRSol
+lr_mesolveProblem
+lr_mesolve
 ```
 
 ## [Correlations and Spectrum](@id doc-API:Correlations-and-Spectrum)
 
 ```@docs
 correlation_3op_2t
+correlation_3op_1t
 correlation_2op_2t
 correlation_2op_1t
+spectrum_correlation_fft
 spectrum
+ExponentialSeries
+PseudoInverse
 ```
 
 ## [Metrics](@id doc-API:Metrics)
@@ -210,6 +248,21 @@ entropy_vn
 entanglement
 tracedist
 fidelity
+```
+
+## [Spin Lattice](@id doc-API:Spin-Lattice)
+
+```@docs
+Lattice
+MultiSiteOperator
+DissipativeIsing
+```
+
+## [Symmetries and Block Diagonalization](@id doc-API:Symmetries-and-Block-Diagonalization)
+
+```@docs
+block_diagonal_form
+BlockDiagonalForm
 ```
 
 ## [Miscellaneous](@id doc-API:Miscellaneous)
@@ -231,13 +284,15 @@ AbstractLinearMap
 QuantumToolbox.versioninfo
 QuantumToolbox.about
 gaussian
-n_th
+n_thermal
+PhysicalConstants
+convert_unit
 row_major_reshape
 meshgrid
-_calculate_expectation!
-_adjM_condition_variational
-_adjM_affect!
-_adjM_condition_ratio
-_pinv!
-dBdz!
+```
+
+## [Visualization](@id doc-API:Visualization)
+
+```@docs
+plot_wigner
 ```

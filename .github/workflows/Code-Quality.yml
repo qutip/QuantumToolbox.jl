@@ -1,0 +1,60 @@
+name: Code Quality
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '.github/workflows/Code-Quality.yml'
+      - 'src/**'
+      - 'ext/**'
+      - 'test/runtests.jl'
+      - 'test/core-test/**'
+      - 'Project.toml'
+  pull_request:
+    branches:
+      - 'main'
+    paths:
+      - '.github/workflows/Code-Quality.yml'
+      - 'src/**'
+      - 'ext/**'
+      - 'test/runtests.jl'
+      - 'test/core-test/**'
+      - 'Project.toml'
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    permissions: # needed to allow julia-actions/cache to delete old caches that it has created
+      actions: write
+      contents: read
+    if: ${{ !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - 'lts'
+        os:
+          - 'ubuntu-latest'
+        arch:
+          - 'x64'
+        group:
+          - 'Code-Quality'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+        env:
+          GROUP: ${{ matrix.group }}
