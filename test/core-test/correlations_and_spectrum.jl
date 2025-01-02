@@ -1,9 +1,7 @@
 @testset "Correlations and Spectrum" begin
     N = 10
+    H, c_ops, a = driven_dissipative_harmonic_oscillator(nth = 0.01, N = N)
     Id = qeye(N)
-    a = destroy(N)
-    H = a' * a
-    c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
 
     t_l = range(0, 333 * π, length = 1000)
     corr1 = correlation_2op_1t(H, nothing, t_l, c_ops, a', a; progress_bar = Val(false))

@@ -18,22 +18,7 @@
 
     N = 5
     a = destroy(N)
-    function H_dsf(op_list, p)
-        Δ = p.Δ
-        F = p.F
-        U = p.U
-        a = op_list[1]
-        return Δ * a' * a + F * (a + a') + U * a'^2 * a^2
-    end
-    function c_ops_dsf(op_list, p)
-        κ = p.κ
-        a = op_list[1]
-        return [√κ * a]
-    end
-    function e_ops_dsf(op_list, p)
-        a = op_list[1]
-        return [a' * a, a]
-    end
+
     op_list = [a]
     ψ0 = fock(N, 0)
     α0_l = [α0]
@@ -92,28 +77,7 @@
     N = 5
     a1 = kron(destroy(N), qeye(N))
     a2 = kron(qeye(N), destroy(N))
-    function H_dsf2(op_list, p)
-        Δ = p.Δ
-        F = p.F
-        U = p.U
-        J = p.J
-        a1, a2 = op_list
-        return Δ * a1' * a1 +
-               Δ * a2' * a2 +
-               U * a1'^2 * a1^2 +
-               U * a2'^2 * a2^2 +
-               F * (a1 + a1') +
-               J * (a1' * a2 + a1 * a2')
-    end
-    function c_ops_dsf2(op_list, p)
-        κ = p.κ
-        a1, a2 = op_list
-        return [√κ * a1, √κ * a2]
-    end
-    function e_ops_dsf2(op_list, p)
-        a1, a2 = op_list
-        return [a1' * a1, a2' * a2]
-    end
+
     op_list = [a1, a2]
     ψ0 = kron(fock(N, 0), fock(N, 0))
     α0_l = [α0, α0]

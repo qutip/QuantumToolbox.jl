@@ -1,19 +1,5 @@
 @testset "Block Diagonal Form" begin
-    # Block Diagonal Form
-    N = 20
-    Δ = 0
-    G = 5
-    tg = 0
-    θ = atan(tg)
-    U = sin(θ)
-    κ2 = cos(θ)
-    κϕ = 1e-3
-    nth = 0.0
-
-    a = destroy(N)
-    ad = create(N)
-    H = -Δ * ad * a + G / 2 * (ad^2 + a^2) + U / 2 * (ad^2 * a^2)
-    c_ops = [√(κ2) * a^2, √(κϕ) * ad * a]
+    H, c_ops, a = driven_dissipative_kerr()
     L = liouvillian(H, c_ops)
 
     bdf = block_diagonal_form(L)
