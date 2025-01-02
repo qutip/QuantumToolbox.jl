@@ -25,11 +25,6 @@ struct Space <: AbstractSpace
     end
 end
 
-# for `prod(::Dimensions)`
-Base.:(*)(i::Int, s::AbstractSpace) = i * s.size
-Base.:(*)(s1::AbstractSpace, s2::AbstractSpace) = s1.size * s2.size
-Base.prod(spaces::SVector{1,AbstractSpace}) = spaces[1].size # for `Dimensions.to` has only a single Space
-
 dims_to_list(s::SType) where {SType<:Union{Field,Space}} = SVector{1,Int}(s.size)
 
 # TODO: introduce energy restricted space

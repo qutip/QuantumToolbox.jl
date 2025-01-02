@@ -61,7 +61,11 @@ dims_to_list(dims::CompoundDimensions) = SVector{2}(dims_to_list(dims.to), dims_
 
 Base.length(::AbstractDimensions{N}) where {N} = N
 
+# need to specify return type `Int` for `_get_space_size`
+# otherwise the type of `prod(::Dimensions)` will be unstable
+_get_space_size(s::AbstractSpace)::Int = s.size
 Base.prod(dims::Dimensions) = prod(dims.to)
+Base.prod(spaces::SVector{N,AbstractSpace}) where {N} = prod(_get_space_size, spaces)
 
 LinearAlgebra.transpose(dims::Dimensions) = dims
 LinearAlgebra.transpose(dims::CompoundDimensions) = CompoundDimensions(dims.from, dims.to) # switch `to` and `from`

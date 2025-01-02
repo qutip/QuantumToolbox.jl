@@ -176,7 +176,7 @@ function _check_QuantumObject(type::BraQuantumObject, dims::Dimensions, m::Int, 
 end
 
 function _check_QuantumObject(type::OperatorQuantumObject, dims::Dimensions, m::Int, n::Int)
-    L = prod(dims.to)
+    L = prod(dims)
     (L == m == n) || throw(DimensionMismatch("Operator with dims = $(dims) does not fit the array size = $((m, n))."))
     return nothing
 end
