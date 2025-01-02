@@ -2,9 +2,7 @@
     # DomainError: incompatible between size of array and type
     @testset "Thrown Errors" begin
         a = MatrixOperator(rand(ComplexF64, 3, 2))
-        for t in [Operator, SuperOperator]
-            @test_throws DomainError QobjEvo(a, type = t)
-        end
+        @test_throws DomainError QobjEvo(a, type = SuperOperator)
 
         a = MatrixOperator(rand(ComplexF64, 3, 2))
         for t in (Ket, Bra, OperatorKet, OperatorBra)
@@ -131,10 +129,13 @@
         N = 4
         for T in [ComplexF32, ComplexF64]
             a = MatrixOperator(rand(T, N, N))
-            @inferred QobjEvo(a)
-            for type in [Operator, SuperOperator]
-                @inferred QobjEvo(a, type = type)
-            end
+            UnionType = Union{
+                QuantumObjectEvolution{typeof(a),OperatorQuantumObject,CompoundDimensions{1}},
+                QuantumObjectEvolution{typeof(a),OperatorQuantumObject,Dimensions{1}},
+            }
+            @inferred UnionType QobjEvo(a)
+            @inferred UnionType QobjEvo(a, type = Operator)
+            @inferred QobjEvo(a, type = SuperOperator)
         end
 
         a = destroy(N)

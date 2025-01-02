@@ -19,7 +19,7 @@ Returns a random unitary [`QuantumObject`](@ref).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 The `distribution` specifies which of the method used to obtain the unitary matrix:
 - `:haar`: Haar random unitary matrix using the algorithm from reference 1
@@ -33,9 +33,9 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 """
 rand_unitary(dimensions::Int, distribution::Union{Symbol,Val} = Val(:haar)) =
     rand_unitary(SVector(dimensions), makeVal(distribution))
-rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, distribution::Union{Symbol,Val} = Val(:haar)) =
+rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, distribution::Union{Symbol,Val} = Val(:haar)) =
     rand_unitary(dimensions, makeVal(distribution))
-function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:haar})
+function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{:haar})
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -50,7 +50,7 @@ function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:haar}
     Λ ./= abs.(Λ) # rescaling the elements
     return QuantumObject(sparse_to_dense(Q * Diagonal(Λ)); type = Operator, dims = dimensions)
 end
-function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:exp})
+function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{:exp})
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -61,7 +61,7 @@ function rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{:exp})
 
     return sparse_to_dense(exp(-1.0im * H))
 end
-rand_unitary(dimensions::Union{AbstractVector{Int},Tuple}, ::Val{T}) where {T} =
+rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{T}) where {T} =
     throw(ArgumentError("Invalid distribution: $(T)"))
 
 @doc raw"""
@@ -427,12 +427,16 @@ Note that `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref
 !!! note
     `qeye` is a synonym of `eye`.
 """
-eye(
+function eye(
     N::Int;
     type::ObjType = Operator,
     dims = nothing,
-) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(Diagonal(ones(ComplexF64, N)); type = type, dims = dims)
+) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    if dims isa Nothing
+        dims = isa(type, OperatorQuantumObject) ? N : isqrt(N)
+    end
+    return QuantumObject(Diagonal(ones(ComplexF64, N)); type = type, dims = dims)
+end
 
 @doc raw"""
     fdestroy(N::Union{Int,Val}, j::Int)
@@ -493,7 +497,8 @@ end
 
 Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N`.
 """
-projection(N::Int, i::Int, j::Int) = QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator)
+projection(N::Int, i::Int, j::Int) =
+    QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator, dims = N)
 
 @doc raw"""
     tunneling(N::Int, m::Int=1; sparse::Union{Bool,Val{<:Bool}}=Val(false))
@@ -529,7 +534,7 @@ Generates a discrete Fourier transform matrix ``\hat{F}_N`` for [Quantum Fourier
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 ``N`` represents the total dimension, and therefore the matrix is defined as
 
@@ -550,7 +555,7 @@ where ``\omega = \exp(\frac{2 \pi i}{N})``.
     It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator, dimensions)
-qft(dimensions::Union{AbstractVector{T},Tuple}) where {T} =
+qft(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =
     QuantumObject(_qft_op(prod(dimensions)), Operator, dimensions)
 function _qft_op(N::Int)
     ω = exp(2.0im * π / N)

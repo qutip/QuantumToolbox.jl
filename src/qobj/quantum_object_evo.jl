@@ -5,10 +5,10 @@ This file defines the QuantumObjectEvolution (QobjEvo) structure.
 export QuantumObjectEvolution
 
 @doc raw"""
-    struct QuantumObjectEvolution{DT<:AbstractSciMLOperator,ObjType<:QuantumObjectType,N} <: AbstractQuantumObject
-        data::DT
+    struct QuantumObjectEvolution{DataType<:AbstractSciMLOperator,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <: AbstractQuantumObject{DataType,ObjType,DimType}
+        data::DataType
         type::ObjType
-        dims::SVector{N,Int}
+        dims::DimType
     end
 
 Julia struct representing any time-dependent quantum object. The `data` field is a `AbstractSciMLOperator` object that represents the time-dependent quantum object. It can be seen as
@@ -97,13 +97,13 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ```
 """
 struct QuantumObjectEvolution{
-    DT<:AbstractSciMLOperator,
+    DataType<:AbstractSciMLOperator,
     ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    N,
-} <: AbstractQuantumObject{DT,ObjType,N}
-    data::DT
+    DimType<:AbstractDimensions,
+} <: AbstractQuantumObject{DataType,ObjType,DimType}
+    data::DataType
     type::ObjType
-    dims::SVector{N,Int}
+    dims::DimType
 
     function QuantumObjectEvolution(
         data::DT,
@@ -113,14 +113,12 @@ struct QuantumObjectEvolution{
         (type == Operator || type == SuperOperator) ||
             throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
 
-        _check_dims(dims)
+        _dims = _gen_dims(dims)
 
         _size = _get_size(data)
-        _check_QuantumObject(type, dims, _size[1], _size[2])
+        _check_QuantumObject(type, _dims, _size[1], _size[2])
 
-        N = length(dims)
-
-        return new{DT,ObjType,N}(data, type, SVector{N,Int}(dims))
+        return new{DT,ObjType,typeof(_dims)}(data, type, _dims)
     end
 end
 
@@ -142,10 +140,6 @@ function Base.show(io::IO, QO::QuantumObjectEvolution)
     return show(io, MIME("text/plain"), op_data)
 end
 
-function QuantumObjectEvolution(data::AbstractSciMLOperator, type::QuantumObjectType, dims::Integer)
-    return QuantumObjectEvolution(data, type, SVector{1,Int}(dims))
-end
-
 @doc raw"""
     QobjEvo(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
     QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
@@ -158,10 +152,12 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObject
     _size = _get_size(data)
 
     if dims isa Nothing
-        if type == Operator
-            dims = SVector{1,Int}(_size[2])
-        elseif type == SuperOperator
-            dims = SVector{1,Int}(isqrt(_size[2]))
+        if type isa OperatorQuantumObject
+            dims =
+                (_size[1] == _size[2]) ? Dimensions(_size[1]) :
+                CompoundDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
+        elseif type isa SuperOperatorQuantumObject
+            dims = Dimensions(isqrt(_size[2]))
         end
     end
 
