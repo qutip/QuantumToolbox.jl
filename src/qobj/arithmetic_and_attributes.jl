@@ -53,7 +53,7 @@ end
 function check_mul_dims(from::SVector{NA,AbstractSpace}, to::SVector{NB,AbstractSpace}) where {NA,NB}
     (from != to) && throw(
         DimensionMismatch(
-            "The quantum object with dims = $from can not multiply a quantum object with dims = $to on the right-hand side.",
+            "The quantum object with (right) dims = $(dims_to_list(from)) can not multiply a quantum object with (left) dims = $(dims_to_list(to)) on the right-hand side.",
         ),
     )
     return nothing

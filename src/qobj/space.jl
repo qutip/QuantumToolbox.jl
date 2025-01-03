@@ -2,6 +2,13 @@ export AbstractSpace, Field, Space
 
 abstract type AbstractSpace end
 
+# for printing `AbstractDimensions` 
+function Base.show(io::IO, svec::SVector{N,AbstractSpace}) where {N}
+    print(io, "[")
+    join(io, svec, ", ")
+    print(io, "]")
+end
+
 # this replaces Space(1), so that we don't need to store the value `1`
 struct Field <: AbstractSpace end
 Base.getproperty(s::Field, key::Symbol) = getproperty(s, Val{key}())

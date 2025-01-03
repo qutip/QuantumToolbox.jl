@@ -46,7 +46,7 @@ function CompoundDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T
     )
 end
 
-Base.show(io::IO, D::CompoundDimensions) = print(io, "[", D.to, ", ", D.from, "]")
+#Base.show(io::IO, D::CompoundDimensions) = print(io, "[", D.to, ", ", D.from, "]")
 
 _gen_dims(dims::AbstractDimensions) = dims
 _gen_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N} = Dimensions(dims)
@@ -58,6 +58,13 @@ _gen_dims(dims::Any) = Dimensions(dims)
 dims_to_list(dimsvec::SVector{N,AbstractSpace}) where {N} = vcat(map(dims_to_list, dimsvec)...)
 dims_to_list(dims::Dimensions) = dims_to_list(dims.to)
 dims_to_list(dims::CompoundDimensions) = SVector{2}(dims_to_list(dims.to), dims_to_list(dims.from))
+
+# for printing `dims_to_list(CompoundDimensions)` 
+function Base.show(io::IO, svec::SVector{2,SVector{N,T}}) where {N,T<:Int}
+    print(io, "[")
+    join(io, svec, ", ")
+    print(io, "]")
+end
 
 Base.length(::AbstractDimensions{N}) where {N} = N
 
