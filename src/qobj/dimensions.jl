@@ -2,13 +2,6 @@ export AbstractDimensions, Dimensions, CompoundDimensions
 
 abstract type AbstractDimensions{N} end
 
-# this show function is for printing AbstractDimensions
-function Base.show(io::IO, svec::SVector{N,AbstractSpace}) where {N}
-    print(io, "[")
-    join(io, string.(svec), ", ")
-    return print(io, "]")
-end
-
 struct Dimensions{N} <: AbstractDimensions{N}
     to::SVector{N,AbstractSpace}
 end
@@ -19,14 +12,13 @@ function Dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Intege
 
     return Dimensions{L}(SVector{L,AbstractSpace}(Space.(dims)))
 end
-Dimensions(dims::Int) = Dimensions(SVector{1,Int}(dims))
+Dimensions(dims::Int) = Dimensions(Space(dims))
+Dimensions(dims::DimType) where {DimType<:Union{Field,Space}} = Dimensions(SVector{1,AbstractSpace}(dims))
 Dimensions(dims::Any) = throw(
     ArgumentError(
         "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
     ),
 )
-
-Base.show(io::IO, D::Dimensions) = print(io, D.to)
 
 struct CompoundDimensions{N} <: AbstractDimensions{N}
     # note that the number `N` should be the same for both `to` and `from`
@@ -54,7 +46,7 @@ function CompoundDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T
     )
 end
 
-Base.show(io::IO, D::CompoundDimensions) = print(io, "[", D.to, ", ", D.from, "]")
+#Base.show(io::IO, D::CompoundDimensions) = print(io, "[", D.to, ", ", D.from, "]")
 
 _gen_dims(dims::AbstractDimensions) = dims
 _gen_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N} = Dimensions(dims)
@@ -63,12 +55,16 @@ _gen_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVe
 _gen_dims(dims::Any) = Dimensions(dims)
 
 # obtain dims in the type of SVector with integers
-dims_to_list(dimsvec::SVector{N,AbstractSpace}) where {N} = SVector{N,Int}(ntuple(i -> dimsvec[i].size, Val(N)))
+dims_to_list(dimsvec::SVector{N,AbstractSpace}) where {N} = vcat(map(dims_to_list, dimsvec)...)
 dims_to_list(dims::Dimensions) = dims_to_list(dims.to)
 dims_to_list(dims::CompoundDimensions) = SVector{2}(dims_to_list(dims.to), dims_to_list(dims.from))
 
-Base.:(==)(vect::AbstractVector{T}, dims::AbstractDimensions) where {T} = vect == dims_to_list(dims)
-Base.:(==)(dims::AbstractDimensions, vect::AbstractVector{T}) where {T} = vect == dims
+# for printing `dims_to_list(CompoundDimensions)` 
+function Base.show(io::IO, svec::SVector{2,SVector{N,T}}) where {N,T<:Int}
+    print(io, "[")
+    join(io, svec, ", ")
+    print(io, "]")
+end
 
 Base.length(::AbstractDimensions{N}) where {N} = N
 

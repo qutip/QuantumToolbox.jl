@@ -167,7 +167,7 @@ function ssesolveProblem(
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
     check_dims(H_eff_evo, ψ0)
-    dims = H_eff_evo.dims
+    dims = H_eff_evo._dims
 
     ψ0 = sparse_to_dense(_CType(ψ0), get_data(ψ0))
 

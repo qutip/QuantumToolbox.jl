@@ -51,7 +51,7 @@ function correlation_3op_2t(
         ψ0 = steadystate(L)
     end
 
-    allequal((L.dims, ψ0.dims, A.dims, B.dims, C.dims)) ||
+    allequal((L._dims, ψ0._dims, A._dims, B._dims, C._dims)) ||
         throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
 
     kwargs2 = merge((saveat = collect(tlist),), (; kwargs...))
@@ -137,7 +137,7 @@ function correlation_2op_2t(
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
-    C = eye(prod(H.dims), dims = H.dims)
+    C = eye(prod(H._dims), dims = H._dims)
     if reverse
         corr = correlation_3op_2t(H, ψ0, tlist, τlist, c_ops, A, B, C; kwargs...)
     else

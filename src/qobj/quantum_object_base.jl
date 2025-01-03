@@ -152,14 +152,14 @@ Returns the length of the matrix or vector corresponding to the [`AbstractQuantu
 Base.length(A::AbstractQuantumObject) = length(A.data)
 
 Base.isequal(A::AbstractQuantumObject, B::AbstractQuantumObject) =
-    isequal(A.type, B.type) && isequal(A.dims, B.dims) && isequal(A.data, B.data)
+    isequal(A.type, B.type) && isequal(A._dims, B._dims) && isequal(A.data, B.data)
 Base.isapprox(A::AbstractQuantumObject, B::AbstractQuantumObject; kwargs...) =
-    isequal(A.type, B.type) && isequal(A.dims, B.dims) && isapprox(A.data, B.data; kwargs...)
+    isequal(A.type, B.type) && isequal(A._dims, B._dims) && isapprox(A.data, B.data; kwargs...)
 Base.:(==)(A::AbstractQuantumObject, B::AbstractQuantumObject) =
-    (A.type == B.type) && (A.dims == B.dims) && (A.data == B.data)
+    (A.type == B.type) && (A._dims == B._dims) && (A.data == B.data)
 
 function check_dims(A::AbstractQuantumObject, B::AbstractQuantumObject)
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
+    A._dims != B._dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
     return nothing
 end
 
@@ -209,26 +209,39 @@ function _check_QuantumObject(type::OperatorBraQuantumObject, dims::Dimensions, 
     return nothing
 end
 
-Base.getproperty(A::AbstractQuantumObject, key::Symbol) = getproperty(A, Val{key}())
-Base.getproperty(A::AbstractQuantumObject, ::Val{K}) where {K} = getfield(A, K)
+Base.getproperty(A::AbstractQuantumObject, key::Symbol) = getproperty(A, makeVal(key))
 
-# support `AbstractQuantumObject.to` and `AbstractQuantumObject.from`
-Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions}, ::Val{:to}) where {DT} = A.dims.to
-Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,Dimensions{N}}, ::Val{:from}) where {DT,N} = Field_list(N)
-Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,Dimensions{N}}, ::Val{:to}) where {DT,N} = Field_list(N)
-Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to
-Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject}, ::Val{:to}) where {DT} = A.dims.to
-Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:Dimensions}, ::Val{:from}) where {DT} = A.dims.to
-Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:CompoundDimensions}, ::Val{:from}) where {DT} =
-    A.dims.from
+# support `AbstractQuantumObject.dims`
+Base.getproperty(A::AbstractQuantumObject, ::Val{:dims}) = dims_to_list(getfield(A, :_dims))
+
+# support `AbstractQuantumObject._to`, and `AbstractQuantumObject._from`
+## note that we need to use getfield(A, :_dims) to do constant (:_dims) propagation and make it type stable
+Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,Dimensions{N}}, ::Val{:_to}) where {DT,N} =
+    getfield(A, :_dims).to
+Base.getproperty(A::AbstractQuantumObject{DT,KetQuantumObject,Dimensions{N}}, ::Val{:_from}) where {DT,N} =
+    Field_list(N)
+Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,Dimensions{N}}, ::Val{:_to}) where {DT,N} = Field_list(N)
+Base.getproperty(A::AbstractQuantumObject{DT,BraQuantumObject,Dimensions{N}}, ::Val{:_from}) where {DT,N} =
+    getfield(A, :_dims).to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,Dimensions{N}}, ::Val{:_to}) where {DT,N} =
+    getfield(A, :_dims).to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,CompoundDimensions{N}}, ::Val{:_to}) where {DT,N} =
+    getfield(A, :_dims).to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,Dimensions{N}}, ::Val{:_from}) where {DT,N} =
+    getfield(A, :_dims).to
+Base.getproperty(A::AbstractQuantumObject{DT,OperatorQuantumObject,CompoundDimensions{N}}, ::Val{:_from}) where {DT,N} =
+    getfield(A, :_dims).from
 Base.getproperty(
-    A::AbstractQuantumObject{DT,ObjType,<:Dimensions},
+    A::AbstractQuantumObject{DT,ObjType,Dimensions{N}},
     ::KeyType,
 ) where {
     DT,
     ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},
-    KeyType<:Union{Val{:to},Val{:from}},
-} = A.dims.to
+    KeyType<:Union{Val{:_to},Val{:_from}},
+    N,
+} = getfield(A, :_dims).to
+
+Base.getproperty(A::AbstractQuantumObject, ::Val{K}) where {K} = getfield(A, K)
 
 # functions for getting Float or Complex element type
 _FType(A::AbstractQuantumObject) = _FType(eltype(A))

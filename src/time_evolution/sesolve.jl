@@ -1,8 +1,8 @@
 export sesolveProblem, sesolve
 
 _sesolve_make_U_QobjEvo(H::QuantumObjectEvolution{<:MatrixOperator}) =
-    QobjEvo(MatrixOperator(-1im * H.data.A), dims = H.dims, type = Operator)
-_sesolve_make_U_QobjEvo(H::QuantumObject) = QobjEvo(MatrixOperator(-1im * H.data), dims = H.dims, type = Operator)
+    QobjEvo(MatrixOperator(-1im * H.data.A), dims = H._dims, type = Operator)
+_sesolve_make_U_QobjEvo(H::QuantumObject) = QobjEvo(MatrixOperator(-1im * H.data), dims = H._dims, type = Operator)
 _sesolve_make_U_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}) = QobjEvo(H, -1im)
 
 @doc raw"""
@@ -78,7 +78,7 @@ function sesolveProblem(
     tspan = (tlist[1], tlist[end])
     prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, params; kwargs3...)
 
-    return TimeEvolutionProblem(prob, tlist, H_evo.dims)
+    return TimeEvolutionProblem(prob, tlist, H_evo._dims)
 end
 
 @doc raw"""
@@ -152,7 +152,7 @@ end
 function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob.prob, alg)
 
-    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = prob.dims), sol.u)
+    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = prob._dims), sol.u)
 
     return TimeEvolutionSol(
         prob.times,

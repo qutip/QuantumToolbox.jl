@@ -89,7 +89,7 @@ function mesolveProblem(
     tspan = (tlist[1], tlist[end])
     prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
 
-    return TimeEvolutionProblem(prob, tlist, L_evo.dims)
+    return TimeEvolutionProblem(prob, tlist, L_evo._dims)
 end
 
 @doc raw"""
@@ -179,7 +179,7 @@ end
 function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob.prob, alg)
 
-    ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = prob.dims), sol.u)
+    ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = prob._dims), sol.u)
 
     return TimeEvolutionSol(
         prob.times,
