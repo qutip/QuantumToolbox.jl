@@ -179,7 +179,13 @@ For more information about contribution, including technical advice, please see 
 
 ## Acknowledgements
 
-`QuantumToolbox.jl` is supported by the [Unitary Fund](https://unitary.fund), a grant program for quantum technology projects. We are also grateful to the [Zulip](https://zulip.com) team for providing a free chat service for open-source projects.
+### Fundings
+
+`QuantumToolbox.jl` is supported by the [Unitary Fund](https://unitary.fund), a grant program for quantum technology projects.
+
+### Other Acknowledgements
+
+We are also grateful to the [Zulip](https://zulip.com) team for providing a free chat service for open-source projects.
 
 <!-- Acknowledgement Logos -->
 <div align="center">

@@ -76,6 +76,7 @@ const PAGES = [
         "Bibliography" => "resources/bibliography.md",
         "ChangeLog" => "resources/changelog.md",
         "Contributing to QuantumToolbox.jl" => "resources/contributing.md",
+        "Acknowledgements" => "resources/acknowledgements.md",
     ],
 ]
 
