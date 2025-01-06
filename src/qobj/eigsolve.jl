@@ -51,11 +51,13 @@ julia> λ
 
 julia> ψ
 2-element Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject, 1}}:
- Quantum Object:   type=Ket   dims=[2]   size=(2,)
+
+Quantum Object:   type=Ket   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
  -0.7071067811865475 + 0.0im
   0.7071067811865475 + 0.0im
- Quantum Object:   type=Ket   dims=[2]   size=(2,)
+
+Quantum Object:   type=Ket   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
