@@ -118,7 +118,8 @@ A constant representing the type of [`OperatorKetQuantumObject`](@ref): a ket st
 """
 const OperatorKet = OperatorKetQuantumObject()
 
-function Base.show(io::IO, Qobj_tuple::NTuple{N,ObjType}) where {N,ObjType<:AbstractQuantumObject}
+# this prints (Qobj/QobjEvo)-tuple better
+function Base.show(io::IO, Qobj_tuple::NTuple{N,AbstractQuantumObject}) where {N}
     print(io, "(")
     join(io, Qobj_tuple, ",\n")
     return print(io, ")")
