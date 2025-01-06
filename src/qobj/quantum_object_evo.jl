@@ -128,7 +128,7 @@ function Base.show(io::IO, QO::QuantumObjectEvolution)
     op_data = QO.data
     println(
         io,
-        "Quantum Object Evo.:   type=",
+        "\nQuantum Object Evo.:   type=",
         QO.type,
         "   dims=",
         QO.dims,
