@@ -118,6 +118,12 @@ A constant representing the type of [`OperatorKetQuantumObject`](@ref): a ket st
 """
 const OperatorKet = OperatorKetQuantumObject()
 
+function Base.show(io::IO, Qobj_tuple::NTuple{N,ObjType}) where {N,ObjType<:AbstractQuantumObject}
+    print(io, "(")
+    join(io, Qobj_tuple, ",\n")
+    return print(io, ")")
+end
+
 @doc raw"""
     size(A::AbstractQuantumObject)
     size(A::AbstractQuantumObject, idx::Int)
