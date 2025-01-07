@@ -23,10 +23,13 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 - `values::AbstractVector`: the eigenvalues
 - `vectors::AbstractMatrix`: the transformation matrix (eigenvectors)
 - `type::Union{Nothing,QuantumObjectType}`: the type of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
-- `dims::AbstractDimensions`: the `dims` of [`QuantumObject`](@ref)
+- `dimensions::AbstractDimensions`: the `dimensions` of [`QuantumObject`](@ref)
 - `iter::Int`: the number of iteration during the solving process
 - `numops::Int` : number of times the linear map was applied in krylov methods
 - `converged::Bool`: Whether the result is converged
+
+!!! note "`dims` property"
+    For a given `res::EigsolveResult`, `res.dims` or `getproperty(res, :dims)` returns its `dimensions` in the type of integer-vector.
 
 # Examples
 One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-type eigenvectors by:
@@ -50,7 +53,7 @@ julia> λ
   1.0 + 0.0im
 
 julia> ψ
-2-element Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject, 1}}:
+2-element Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject, Dimensions{1}}}:
  Quantum Object:   type=Ket   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
  -0.7071067811865475 + 0.0im
@@ -75,23 +78,23 @@ struct EigsolveResult{
     values::T1
     vectors::T2
     type::ObjType
-    _dims::DimType
+    dimensions::DimType
     iter::Int
     numops::Int
     converged::Bool
 end
 
 Base.getproperty(res::EigsolveResult, key::Symbol) = getproperty(res, makeVal(key))
-Base.getproperty(res::EigsolveResult, ::Val{:dims}) = dims_to_list(getfield(res, :_dims))
+Base.getproperty(res::EigsolveResult, ::Val{:dims}) = dimensions_to_dims(getfield(res, :dimensions))
 Base.getproperty(res::EigsolveResult, ::Val{K}) where {K} = getfield(res, K)
 
 Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1,T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1,T2,OperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], Ket, res._dims) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], Ket, res.dimensions) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1,T2,SuperOperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], OperatorKet, res._dims) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], OperatorKet, res.dimensions) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
@@ -285,7 +288,7 @@ function eigsolve(
         A.data;
         v0 = v0,
         type = A.type,
-        dims = A._dims,
+        dims = A.dimensions,
         sigma = sigma,
         k = k,
         krylovdim = krylovdim,
@@ -300,7 +303,7 @@ function eigsolve(
     A;
     v0::Union{Nothing,AbstractVector} = nothing,
     type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject} = nothing,
-    dims = Dimensions{0}(SVector{0,AbstractSpace}()),
+    dims = Dimensions{0}(NTuple{0,AbstractSpace}()),
     sigma::Union{Nothing,Real} = nothing,
     k::Int = 1,
     krylovdim::Int = max(20, 2 * k + 1),
@@ -336,7 +339,7 @@ function eigsolve(
         vals = @. (1 + sigma * res.values) / res.values
     end
 
-    return EigsolveResult(vals, res.vectors, res.type, res._dims, res.iter, res.numops, res.converged)
+    return EigsolveResult(vals, res.vectors, res.type, res.dimensions, res.iter, res.numops, res.converged)
 end
 
 @doc raw"""
@@ -396,7 +399,7 @@ function eigsolve_al(
     prob =
         mesolveProblem(
             L_evo,
-            QuantumObject(ρ0, type = Operator, dims = H._dims),
+            QuantumObject(ρ0, type = Operator, dims = H.dimensions),
             [zero(T), T];
             params = params,
             progress_bar = Val(false),
@@ -408,7 +411,7 @@ function eigsolve_al(
 
     Lmap = ArnoldiLindbladIntegratorMap(eltype(DT1), size(L_evo), integrator)
 
-    res = _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo._dims, k, krylovdim, maxiter = maxiter, tol = eigstol)
+    res = _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo.dimensions, k, krylovdim, maxiter = maxiter, tol = eigstol)
     # finish!(prog)
 
     vals = similar(res.values)
@@ -420,7 +423,7 @@ function eigsolve_al(
         @. vecs[:, i] = vec * exp(-1im * angle(vec[1]))
     end
 
-    return EigsolveResult(vals, vecs, res.type, res._dims, res.iter, res.numops, res.converged)
+    return EigsolveResult(vals, vecs, res.type, res.dimensions, res.iter, res.numops, res.converged)
 end
 
 @doc raw"""
@@ -464,7 +467,7 @@ function LinearAlgebra.eigen(
     E::mat2vec(sparse_to_dense(MT)) = F.values
     U::sparse_to_dense(MT) = F.vectors
 
-    return EigsolveResult(E, U, A.type, A._dims, 0, 0, true)
+    return EigsolveResult(E, U, A.type, A.dimensions, 0, 0, true)
 end
 
 @doc raw"""

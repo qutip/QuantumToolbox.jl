@@ -1,38 +1,31 @@
-export AbstractSpace, Field, Space
+#=
+This file defines the Hilbert space structure.
+=#
+
+export AbstractSpace, Space
 
 abstract type AbstractSpace end
 
-# for printing `AbstractDimensions` 
-function Base.show(io::IO, svec::SVector{N,AbstractSpace}) where {N}
-    print(io, "[")
-    join(io, svec, ", ")
-    print(io, "]")
-end
+@doc raw"""
+    struct Space <: AbstractSpace
+        size::Int
+    end
 
-# this replaces Space(1), so that we don't need to store the value `1`
-struct Field <: AbstractSpace end
-Base.getproperty(s::Field, key::Symbol) = getproperty(s, Val{key}())
-Base.getproperty(s::Field, ::Val{:size}) = 1
-
-# this creates a list of Field, it is used to generate `from` for Ket, and `to` for Bra)
-Field_list(N::Int) = SVector{N,AbstractSpace}(ntuple(i -> Field(), Val(N)))
-
+A structure that describes a single Hilbert space.
+"""
 struct Space <: AbstractSpace
     size::Int
 
     function Space(size::Int)
-        # (put this comment here to avoid bad JuliaFormatter syntax)
-        if size > 1
-            return new(size)
-        elseif size == 1
-            return Field()
-        else
-            throw(DomainError(size, "The size of Space must be positive integer (≥ 1)."))
-        end
+        (size < 1) && throw(DomainError(size, "The size of Space must be positive integer (≥ 1)."))
+        return new(size)
     end
 end
 
-dims_to_list(s::SType) where {SType<:Union{Field,Space}} = SVector{1,Int}(s.size)
+dimensions_to_dims(s::Space) = SVector{1,Int}(s.size)
+
+# this creates a list of Space(1), it is used to generate `from` for Ket, and `to` for Bra)
+space_one_list(N::Int) = ntuple(i -> Space(1), Val(N))
 
 # TODO: introduce energy restricted space
 #=
@@ -44,5 +37,5 @@ struct EnrSpace{N} <: AbstractSpace
     idx2state
 end
 
-dims_to_list(s::EnrSpace) = s.dims
+dimensions_to_dims(s::EnrSpace) = s.dims
 =#

@@ -11,6 +11,9 @@ CurrentModule = QuantumToolbox
 ## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 
 ```@docs
+Space
+Dimensions
+GeneralDimensions
 AbstractQuantumObject
 BraQuantumObject
 Bra

@@ -41,7 +41,7 @@ M = latt.N + 1       # Number of states in the LR basis
 Define lr states. Take as initial state all spins up. All other N states are taken as those with miniman Hamming distance to the initial state.
 
 ```@example lowrank
-ϕ = Vector{QuantumObject{Vector{ComplexF64},KetQuantumObject,M-1}}(undef, M)
+ϕ = Vector{QuantumObject{Vector{ComplexF64},KetQuantumObject,Dimensions{M-1}}}(undef, M)
 ϕ[1] = kron(fill(basis(2, 1), N_modes)...)
 
 i = 1

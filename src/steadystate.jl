@@ -96,7 +96,7 @@ function _steadystate(
     kwargs...,
 ) where {T}
     L_tmp = L.data
-    N = prod(L._dims)
+    N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
 
     v0 = _get_dense_similar(L_tmp, N^2)
@@ -126,7 +126,7 @@ function _steadystate(
 
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator, L._dims)
+    return QuantumObject(ρss, Operator, L.dimensions)
 end
 
 function _steadystate(
@@ -134,7 +134,7 @@ function _steadystate(
     solver::SteadyStateEigenSolver;
     kwargs...,
 ) where {T}
-    N = prod(L._dims)
+    N = prod(L.dimensions)
 
     kwargs = merge((sigma = 1e-8, k = 1), (; kwargs...))
 
@@ -142,7 +142,7 @@ function _steadystate(
     ρss = reshape(ρss_vec, N, N)
     ρss /= tr(ρss)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator, L._dims)
+    return QuantumObject(ρss, Operator, L.dimensions)
 end
 
 function _steadystate(
@@ -150,7 +150,7 @@ function _steadystate(
     solver::SteadyStateDirectSolver,
 ) where {T}
     L_tmp = L.data
-    N = prod(L._dims)
+    N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
 
     v0 = _get_dense_similar(L_tmp, N^2)
@@ -170,7 +170,7 @@ function _steadystate(
     ρss_vec = L_tmp \ v0 # This is still not supported on GPU, yet
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator, L._dims)
+    return QuantumObject(ρss, Operator, L.dimensions)
 end
 
 _steadystate(
@@ -411,13 +411,13 @@ function _steadystate_floquet(
     ρ0 = reshape(ρtot[offset1+1:offset2], Ns, Ns)
     ρ0_tr = tr(ρ0)
     ρ0 = ρ0 / ρ0_tr
-    ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator, dims = L_0._dims)
+    ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator, dims = L_0.dimensions)
     ρtot = ρtot / ρ0_tr
 
     ρ_list = [ρ0]
     for i in 0:n_max-1
         ρi_m = reshape(ρtot[offset1-(i+1)*N+1:offset1-i*N], Ns, Ns)
-        ρi_m = QuantumObject(ρi_m, type = Operator, dims = L_0._dims)
+        ρi_m = QuantumObject(ρi_m, type = Operator, dims = L_0.dimensions)
         push!(ρ_list, ρi_m)
     end
 
@@ -434,8 +434,7 @@ function _steadystate_floquet(
     tol::R = 1e-8,
     kwargs...,
 ) where {R<:Real}
-    allequal((L_0._dims, L_p._dims, L_m._dims)) ||
-        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    check_dimensions(L_0, L_p, L_m)
 
     L_eff = liouvillian_floquet(L_0, L_p, L_m, ωd; n_max = n_max, tol = tol)
 

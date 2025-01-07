@@ -15,18 +15,21 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
 - `times::Abstractvector`: The time list of the evolution.
-- `dims::AbstractDimensions`: The dimensions of the Hilbert space.
+- `dimensions::AbstractDimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
+
+!!! note "`dims` property"
+    For a given `prob::TimeEvolutionProblem`, `prob.dims` or `getproperty(prob, :dims)` returns its `dimensions` in the type of integer-vector.
 """
 struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractDimensions,KWT}
     prob::PT
     times::TT
-    _dims::DT
+    dimensions::DT
     kwargs::KWT
 end
 
 Base.getproperty(prob::TimeEvolutionProblem, key::Symbol) = getproperty(prob, makeVal(key))
-Base.getproperty(prob::TimeEvolutionProblem, ::Val{:dims}) = dims_to_list(getfield(prob, :_dims))
+Base.getproperty(prob::TimeEvolutionProblem, ::Val{:dims}) = dimensions_to_dims(getfield(prob, :dimensions))
 Base.getproperty(prob::TimeEvolutionProblem, ::Val{K}) where {K} = getfield(prob, K)
 
 TimeEvolutionProblem(prob, times, dims) = TimeEvolutionProblem(prob, times, dims, nothing)
@@ -214,9 +217,7 @@ function liouvillian_floquet(
     n_max::Int = 3,
     tol::Real = 1e-15,
 ) where {T1,T2,T3}
-    allequal((L₀._dims, Lₚ._dims, Lₘ._dims)) ||
-        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
-
+    check_dimensions(L₀, Lₚ, Lₘ)
     return _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, n_max, tol)
 end
 
@@ -257,11 +258,11 @@ function liouvillian_generalized(
 ) where {MT<:AbstractMatrix}
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
-    dims = (N_trunc isa Nothing) ? H._dims : SVector(N_trunc)
+    dims = (N_trunc isa Nothing) ? H.dimensions : SVector(N_trunc)
     final_size = prod(dims)
     result = eigen(H)
     E = real.(result.values[1:final_size])
-    U = QuantumObject(result.vectors, result.type, result._dims)
+    U = QuantumObject(result.vectors, result.type, result.dimensions)
 
     H_d = QuantumObject(Diagonal(complex(E)), type = Operator, dims = dims)
 
@@ -332,6 +333,6 @@ function _liouvillian_floquet(
         T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m_dense
     end
 
-    tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator, L₀._dims)
-    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, tol), SuperOperator, L₀._dims)
+    tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator, L₀.dimensions)
+    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, tol), SuperOperator, L₀.dimensions)
 end

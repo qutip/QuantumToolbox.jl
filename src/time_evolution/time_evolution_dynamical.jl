@@ -149,7 +149,7 @@ function dfd_mesolveProblem(
     tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
     kwargs...,
 ) where {DT1,T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-    length(ψ0._dims) != length(maxdims) &&
+    length(ψ0.dimensions) != length(maxdims) &&
         throw(DimensionMismatch("'dim_list' and 'maxdims' do not have the same dimension."))
 
     dim_list = MVector(ψ0.dims)
@@ -362,7 +362,7 @@ function dsf_mesolveProblem(
     op_l_vec = map(op -> mat2vec(get_data(op)'), op_list)
     # Create the Krylov subspace with kron(H₀.data, H₀.data) just for initialize
     expv_cache = arnoldi(kron(H₀.data, H₀.data), mat2vec(ket2dm(ψ0).data), krylov_dim)
-    dsf_identity = I(prod(H₀._dims))
+    dsf_identity = I(prod(H₀.dimensions))
     dsf_displace_cache_left = sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(op.data, dsf_identity)), op_list)
     dsf_displace_cache_left_dag =
         sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(sparse(op.data'), dsf_identity)), op_list)

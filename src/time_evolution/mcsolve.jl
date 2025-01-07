@@ -299,7 +299,7 @@ function mcsolveEnsembleProblem(
     ensemble_prob = TimeEvolutionProblem(
         EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob_mc.times,
-        prob_mc._dims,
+        prob_mc.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
 
@@ -472,7 +472,7 @@ function mcsolve(
 )
     sol = _mcsolve_solve_ens(ens_prob_mc, alg, ensemble_method, ntraj)
 
-    dims = ens_prob_mc._dims
+    dims = ens_prob_mc.dimensions
     _sol_1 = sol[:, 1]
     _expvals_sol_1 = _mcsolve_get_expvals(_sol_1)
 

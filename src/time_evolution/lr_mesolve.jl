@@ -401,7 +401,7 @@ function lr_mesolveProblem(
     opt::NamedTuple = lr_mesolve_options_default,
     kwargs...,
 ) where {DT1,T2}
-    Hdims = H._dims
+    Hdims = H.dimensions
 
     # Formulation of problem
     H -= 0.5im * mapreduce(op -> op' * op, +, c_ops)
