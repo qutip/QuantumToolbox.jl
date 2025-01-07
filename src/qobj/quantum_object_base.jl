@@ -219,6 +219,7 @@ Base.getproperty(A::AbstractQuantumObject, key::Symbol) = getproperty(A, makeVal
 Base.getproperty(A::AbstractQuantumObject, ::Val{:dims}) = dimensions_to_dims(getfield(A, :dimensions))
 Base.getproperty(A::AbstractQuantumObject, ::Val{K}) where {K} = getfield(A, K)
 
+# this returns `to` in GeneralDimensions representation
 get_dimensions_to(A::AbstractQuantumObject{DT,KetQuantumObject,Dimensions{N}}) where {DT,N} = A.dimensions.to
 get_dimensions_to(A::AbstractQuantumObject{DT,BraQuantumObject,Dimensions{N}}) where {DT,N} = space_one_list(N)
 get_dimensions_to(A::AbstractQuantumObject{DT,OperatorQuantumObject,Dimensions{N}}) where {DT,N} = A.dimensions.to
@@ -229,6 +230,7 @@ get_dimensions_to(
 ) where {DT,ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},N} =
     A.dimensions.to
 
+# this returns `from` in GeneralDimensions representation
 get_dimensions_from(A::AbstractQuantumObject{DT,KetQuantumObject,Dimensions{N}}) where {DT,N} = space_one_list(N)
 get_dimensions_from(A::AbstractQuantumObject{DT,BraQuantumObject,Dimensions{N}}) where {DT,N} = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject{DT,OperatorQuantumObject,Dimensions{N}}) where {DT,N} = A.dimensions.to

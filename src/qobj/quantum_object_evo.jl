@@ -22,7 +22,7 @@ Julia struct representing any time-dependent quantum object. The `data` field is
 
 where ``c_i(p, t)`` is a function that depends on the parameters `p` and time `t`, and ``\hat{O}_i`` are the operators that form the quantum object. 
 
-For more information about `AbstractSciMLOperator`, see the [SciML](https://docs.sciml.ai/SciMLOperators/stable/) documentation.
+For time-independent cases, see [`QuantumObject`](@ref), and for more information about `AbstractSciMLOperator`, see the [SciML](https://docs.sciml.ai/SciMLOperators/stable/) documentation.
 
 # Examples
 This operator can be initialized in the same way as the QuTiP `QobjEvo` object. For example

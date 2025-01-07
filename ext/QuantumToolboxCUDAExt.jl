@@ -17,7 +17,8 @@ CuArray(A::QuantumObject{Tq}) where {Tq<:Union{Vector,Matrix}} = QuantumObject(C
 
 If `A.data` is a dense array, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA.CuArray` with element type `T` for gpu calculations.
 """
-CuArray{T}(A::QuantumObject{Tq}) where {T,Tq<:Union{Vector,Matrix}} = QuantumObject(CuArray{T}(A.data), A.type, A.dimensions)
+CuArray{T}(A::QuantumObject{Tq}) where {T,Tq<:Union{Vector,Matrix}} =
+    QuantumObject(CuArray{T}(A.data), A.type, A.dimensions)
 
 @doc raw"""
     CuSparseVector(A::QuantumObject)

@@ -606,9 +606,10 @@ end
 ptrace(QO::QuantumObject{<:AbstractArray,BraQuantumObject}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
 
 function ptrace(QO::QuantumObject{<:AbstractArray,OperatorQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
+    # TODO: support for special cases when some of the subsystems have same `to` and `from` space
     isa(QO.dimensions, GeneralDimensions) &&
         (get_dimensions_to(QO) != get_dimensions_from(QO)) &&
-        throw(ArgumentError("Invalid partial trace for dims = $(QO.dims)"))
+        throw(ArgumentError("Invalid partial trace for dims = $(_get_dims_string(QO.dimensions))"))
 
     _non_static_array_warning("sel", sel)
 

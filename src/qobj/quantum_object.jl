@@ -18,7 +18,7 @@ export QuantumObject
 !!! note "`dims` property"
     For a given `H::QuantumObject`, `H.dims` or `getproperty(H, :dims)` returns its `dimensions` in the type of integer-vector.
 
-Julia struct representing any quantum objects.
+Julia structure representing any time-independent quantum objects. For time-dependent cases, see [`QuantumObjectEvolution`](@ref).
 
 # Examples
 
@@ -149,7 +149,15 @@ function Base.show(
     },
 }
     op_data = QO.data
-    println(io, "Quantum Object:   type=", QO.type, "   dims=", _get_dims_string(QO.dimensions), "   size=", size(op_data))
+    println(
+        io,
+        "Quantum Object:   type=",
+        QO.type,
+        "   dims=",
+        _get_dims_string(QO.dimensions),
+        "   size=",
+        size(op_data),
+    )
     return show(io, MIME("text/plain"), op_data)
 end
 

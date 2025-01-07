@@ -6,7 +6,7 @@ export AbstractDimensions, Dimensions, GeneralDimensions
 
 abstract type AbstractDimensions{N} end
 
-@doc raw""""
+@doc raw"""
     struct Dimensions{N} <: AbstractDimensions{N}
         to::NTuple{N,AbstractSpace}
     end
@@ -31,7 +31,7 @@ Dimensions(dims::Any) = throw(
     ),
 )
 
-@doc raw""""
+@doc raw"""
     struct GeneralDimensions{N} <: AbstractDimensions{N}
         to::NTuple{N,AbstractSpace}
         from::NTuple{N,AbstractSpace}
@@ -71,7 +71,8 @@ _gen_dimensions(dims::Any) = Dimensions(dims)
 # obtain dims in the type of SVector with integers
 dimensions_to_dims(dimensions::NTuple{N,AbstractSpace}) where {N} = vcat(map(dimensions_to_dims, dimensions)...)
 dimensions_to_dims(dimensions::Dimensions) = dimensions_to_dims(dimensions.to)
-dimensions_to_dims(dimensions::GeneralDimensions) = SVector{2}(dimensions_to_dims(dimensions.to), dimensions_to_dims(dimensions.from))
+dimensions_to_dims(dimensions::GeneralDimensions) =
+    SVector{2}(dimensions_to_dims(dimensions.to), dimensions_to_dims(dimensions.from))
 
 Base.length(::AbstractDimensions{N}) where {N} = N
 
