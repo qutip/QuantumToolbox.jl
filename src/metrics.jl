@@ -21,12 +21,14 @@ matrix ``\hat{\rho}``.
 Pure state:
 ```jldoctest
 julia> ψ = fock(2,0)
+
 Quantum Object:   type=Ket   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
  1.0 + 0.0im
  0.0 + 0.0im
 
 julia> ρ = ket2dm(ψ)
+
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
  1.0+0.0im  0.0+0.0im
@@ -39,6 +41,7 @@ julia> entropy_vn(ρ, base=2)
 Mixed state:
 ```jldoctest
 julia> ρ = maximally_mixed_dm(2)
+
 Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 Diagonal{ComplexF64, Vector{ComplexF64}}:
  0.5-0.0im      ⋅    

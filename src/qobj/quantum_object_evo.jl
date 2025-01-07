@@ -23,6 +23,7 @@ where ``c_i(p, t)`` is a function that depends on the parameters `p` and time `t
 This operator can be initialized in the same way as the QuTiP `QobjEvo` object. For example
 ```jldoctest qobjevo
 julia> a = tensor(destroy(10), qeye(2))
+
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
 ⎡⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⎤
@@ -35,6 +36,7 @@ julia> coef1(p, t) = exp(-1im * t)
 coef1 (generic function with 1 method)
 
 julia> op = QobjEvo(a, coef1)
+
 Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
@@ -43,6 +45,7 @@ If there are more than 2 operators, we need to put each set of operator and coef
 
 ```jldoctest qobjevo
 julia> σm = tensor(qeye(10), sigmam())
+
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 10 stored entries:
 ⎡⠂⡀⠀⠀⠀⠀⠀⠀⠀⠀⎤
@@ -55,6 +58,7 @@ julia> coef2(p, t) = sin(t)
 coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
+
 Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 ```
@@ -62,6 +66,7 @@ Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitia
 We can also concretize the operator at a specific time `t`
 ```jldoctest qobjevo
 julia> op1(0.1)
+
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
 ⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
@@ -80,6 +85,7 @@ julia> coef2(p, t) = sin(p.ω2 * t)
 coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
+
 Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
@@ -87,6 +93,7 @@ julia> p = (ω1 = 1.0, ω2 = 0.5)
 (ω1 = 1.0, ω2 = 0.5)
 
 julia> op1(p, 0.1)
+
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
 ⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
@@ -128,7 +135,7 @@ function Base.show(io::IO, QO::QuantumObjectEvolution)
     op_data = QO.data
     println(
         io,
-        "Quantum Object Evo.:   type=",
+        "\nQuantum Object Evo.:   type=",
         QO.type,
         "   dims=",
         QO.dims,
@@ -190,6 +197,7 @@ Note that if `α` is provided, all the operators in `op_func_list` will be pre-m
 This operator can be initialized in the same way as the QuTiP `QobjEvo` object. For example
 ```jldoctest qobjevo
 julia> a = tensor(destroy(10), qeye(2))
+
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
 ⎡⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⎤
@@ -199,6 +207,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⎦
 
 julia> σm = tensor(qeye(10), sigmam())
+
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 10 stored entries:
 ⎡⠂⡀⠀⠀⠀⠀⠀⠀⠀⠀⎤
@@ -214,6 +223,7 @@ julia> coef2(p, t) = sin(t)
 coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
+
 Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 ```
@@ -221,6 +231,7 @@ Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitia
 We can also concretize the operator at a specific time `t`
 ```jldoctest qobjevo
 julia> op1(0.1)
+
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
 ⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
@@ -239,6 +250,7 @@ julia> coef2(p, t) = sin(p.ω2 * t)
 coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
+
 Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
@@ -246,6 +258,7 @@ julia> p = (ω1 = 1.0, ω2 = 0.5)
 (ω1 = 1.0, ω2 = 0.5)
 
 julia> op1(p, 0.1)
+
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
 ⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
@@ -293,6 +306,7 @@ Generate [`QuantumObjectEvolution`](@ref).
 # Examples
 ```jldoctest
 julia> a = tensor(destroy(10), qeye(2))
+
 Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
 ⎡⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⎤
@@ -305,6 +319,7 @@ julia> coef(p, t) = exp(-1im * t)
 coef (generic function with 1 method)
 
 julia> op = QobjEvo(a, coef)
+
 Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
@@ -458,6 +473,7 @@ Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the inpu
 # Examples
 ```jldoctest
 julia> a = destroy(20)
+
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
@@ -473,6 +489,7 @@ julia> coef2(p, t) = cos(t)
 coef2 (generic function with 1 method)
 
 julia> A = QobjEvo(((a, coef1), (a', coef2)))
+
 Quantum Object Evo.:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
