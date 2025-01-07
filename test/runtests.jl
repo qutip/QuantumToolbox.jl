@@ -46,13 +46,16 @@ if (GROUP == "All") || (GROUP == "Core")
     end
 end
 
-if (GROUP == "All") || (GROUP == "CairoMakie_Ext")
-    using QuantumToolbox
+if (GROUP == "CairoMakie_Ext")# || (GROUP == "All")
+    Pkg.activate("ext-test/cairomakie")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
 
-    (GROUP == "CairoMakie_Ext") && QuantumToolbox.about()
+    using QuantumToolbox
+    QuantumToolbox.about()
 
     # CarioMakie is imported in the following script
-    include(joinpath(testdir, "ext-test", "cairomakie_ext.jl"))
+    include(joinpath(testdir, "ext-test", "cairomakie", "cairomakie_ext.jl"))
 end
 
 if (GROUP == "CUDA_Ext")# || (GROUP == "All")

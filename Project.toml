@@ -70,9 +70,8 @@ julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "CairoMakie", "JET", "Test"]
+test = ["Aqua", "JET", "Test"]
