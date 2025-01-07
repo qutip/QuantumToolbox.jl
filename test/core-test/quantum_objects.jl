@@ -261,7 +261,7 @@
         Gop_size = size(Gop)
         Gop_isherm = isherm(Gop)
         @test opstring ==
-              "Quantum Object:   type=Operator   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
+              "\nQuantum Object:   type=Operator   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
 
         a = spre(a)
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
