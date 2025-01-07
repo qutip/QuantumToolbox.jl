@@ -24,6 +24,7 @@ Julia struct representing any quantum objects.
 
 ```jldoctest
 julia> a = destroy(20)
+
 Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
@@ -149,7 +150,7 @@ function Base.show(
     },
 }
     op_data = QO.data
-    println(io, "Quantum Object:   type=", QO.type, "   dims=", _get_dims_string(QO.dimensions), "   size=", size(op_data))
+    println(io, "\nQuantum Object:   type=", QO.type, "   dims=", _get_dims_string(QO.dimensions), "   size=", size(op_data))
     return show(io, MIME("text/plain"), op_data)
 end
 
@@ -157,7 +158,7 @@ function Base.show(io::IO, QO::QuantumObject)
     op_data = QO.data
     println(
         io,
-        "Quantum Object:   type=",
+        "\nQuantum Object:   type=",
         QO.type,
         "   dims=",
         _get_dims_string(QO.dimensions),
