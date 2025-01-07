@@ -77,7 +77,7 @@
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator)
-        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # CompoundDimensions
+        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # GeneralDimensions
         @test isket(a2) == false
         @test isbra(a2) == false
         @test isoper(a2) == true
@@ -344,7 +344,7 @@
             end
 
             UnionType2 = Union{
-                QuantumObject{Matrix{T},OperatorQuantumObject,CompoundDimensions{1}},
+                QuantumObject{Matrix{T},OperatorQuantumObject,GeneralDimensions{1}},
                 QuantumObject{Matrix{T},OperatorQuantumObject,Dimensions{1}},
             }
             a = rand(T, N, N)
@@ -653,7 +653,7 @@
         ρ1_ptr = ptrace(ρ, 1)
         ρ2_ptr = ptrace(ρ, 2)
 
-        # use CompoundDimensions to do partial trace
+        # use GeneralDimensions to do partial trace
         ρ1_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((2, 1), (2, 1)))
         basis2 = [tensor(eye(2), basis(2, i)) for i in 0:1]
         for b in basis2

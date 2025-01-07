@@ -8,8 +8,11 @@ export QuantumObjectEvolution
     struct QuantumObjectEvolution{DataType<:AbstractSciMLOperator,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <: AbstractQuantumObject{DataType,ObjType,DimType}
         data::DataType
         type::ObjType
-        dims::DimType
+        dimensions::DimType
     end
+
+!!! note "`dims` property"
+    For a given `H::QuantumObjectEvolution`, `H.dims` or `getproperty(H, :dims)` returns its `dimensions` in the type of integer-vector.
 
 Julia struct representing any time-dependent quantum object. The `data` field is a `AbstractSciMLOperator` object that represents the time-dependent quantum object. It can be seen as
 
@@ -17,7 +20,9 @@ Julia struct representing any time-dependent quantum object. The `data` field is
 \hat{O}(t) = \sum_{i} c_i(p, t) \hat{O}_i
 ```
 
-where ``c_i(p, t)`` is a function that depends on the parameters `p` and time `t`, and ``\hat{O}_i`` are the operators that form the quantum object. The `type` field is the type of the quantum object, and the `dims` field is the dimensions of the quantum object. For more information about `type` and `dims`, see [`QuantumObject`](@ref). For more information about `AbstractSciMLOperator`, see the [SciML](https://docs.sciml.ai/SciMLOperators/stable/) documentation.
+where ``c_i(p, t)`` is a function that depends on the parameters `p` and time `t`, and ``\hat{O}_i`` are the operators that form the quantum object. 
+
+For more information about `AbstractSciMLOperator`, see the [SciML](https://docs.sciml.ai/SciMLOperators/stable/) documentation.
 
 # Examples
 This operator can be initialized in the same way as the QuTiP `QobjEvo` object. For example
@@ -103,7 +108,7 @@ struct QuantumObjectEvolution{
 } <: AbstractQuantumObject{DataType,ObjType,DimType}
     data::DataType
     type::ObjType
-    dims::DimType
+    dimensions::DimType
 
     function QuantumObjectEvolution(
         data::DT,
@@ -113,12 +118,12 @@ struct QuantumObjectEvolution{
         (type == Operator || type == SuperOperator) ||
             throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
 
-        _dims = _gen_dims(dims)
+        dimensions = _gen_dimensions(dims)
 
         _size = _get_size(data)
-        _check_QuantumObject(type, _dims, _size[1], _size[2])
+        _check_QuantumObject(type, dimensions, _size[1], _size[2])
 
-        return new{DT,ObjType,typeof(_dims)}(data, type, _dims)
+        return new{DT,ObjType,typeof(dimensions)}(data, type, dimensions)
     end
 end
 
@@ -155,7 +160,7 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObject
         if type isa OperatorQuantumObject
             dims =
                 (_size[1] == _size[2]) ? Dimensions(_size[1]) :
-                CompoundDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
+                GeneralDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
         elseif type isa SuperOperatorQuantumObject
             dims = Dimensions(isqrt(_size[2]))
         end
@@ -257,7 +262,7 @@ function QuantumObjectEvolution(
     type::Union{Nothing,QuantumObjectType} = nothing,
 )
     op, data = _QobjEvo_generate_data(op_func_list, α)
-    dims = op.dims
+    dims = op.dimensions
     if type isa Nothing
         type = op.type
     end
@@ -320,7 +325,7 @@ function QuantumObjectEvolution(
     if type isa Nothing
         type = op.type
     end
-    return QuantumObjectEvolution(_make_SciMLOperator(op, α), type, op.dims)
+    return QuantumObjectEvolution(_make_SciMLOperator(op, α), type, op.dimensions)
 end
 
 function QuantumObjectEvolution(
@@ -338,9 +343,9 @@ function QuantumObjectEvolution(
         )
     end
     if α isa Nothing
-        return QuantumObjectEvolution(op.data, type, op.dims)
+        return QuantumObjectEvolution(op.data, type, op.dimensions)
     end
-    return QuantumObjectEvolution(α * op.data, type, op.dims)
+    return QuantumObjectEvolution(α * op.data, type, op.dimensions)
 end
 
 #=
@@ -378,7 +383,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
 
             op = :(op_func_list[$i][1])
             data_type = op_type.parameters[1]
-            dims_expr = (dims_expr..., :($op.dims))
+            dims_expr = (dims_expr..., :($op.dimensions))
             func_methods_expr = (func_methods_expr..., :(methods(op_func_list[$i][2], [Any, Real]))) # [Any, Real] means each func must accept 2 arguments
             if i == 1
                 first_op = :($op)
@@ -390,7 +395,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
                 throw(ArgumentError("The element must be a Operator or SuperOperator."))
 
             data_type = op_type.parameters[1]
-            dims_expr = (dims_expr..., :(op_func_list[$i].dims))
+            dims_expr = (dims_expr..., :(op_func_list[$i].dimensions))
             if i == 1
                 first_op = :(op_func_list[$i])
             end
@@ -486,8 +491,8 @@ function (A::QuantumObjectEvolution)(
     p,
     t,
 ) where {DT1,DT2,QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
-    check_dims(ψout, ψin)
-    check_dims(ψout, A)
+    check_dimensions(ψout, ψin)
+    check_dimensions(ψout, A)
 
     if isoper(A) && isoperket(ψin)
         throw(ArgumentError("The input state must be a Ket if the QuantumObjectEvolution object is an Operator."))
@@ -514,7 +519,7 @@ function (A::QuantumObjectEvolution)(
     p,
     t,
 ) where {DT,QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
-    ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dims)
+    ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dimensions)
     return A(ψout, ψ, p, t)
 end
 
@@ -533,7 +538,7 @@ Calculate the time-dependent [`QuantumObjectEvolution`](@ref) object `A` at time
 function (A::QuantumObjectEvolution)(p, t)
     # We put 0 in the place of `u` because the time-dependence doesn't depend on the state
     update_coefficients!(A.data, 0, p, t)
-    return QuantumObject(concretize(A.data), A.type, A.dims)
+    return QuantumObject(concretize(A.data), A.type, A.dimensions)
 end
 
 (A::QuantumObjectEvolution)(t) = A(nothing, t)

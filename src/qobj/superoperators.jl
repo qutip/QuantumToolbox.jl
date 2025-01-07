@@ -77,7 +77,7 @@ The optional argument `Id_cache` can be used to pass a precomputed identity matr
 See also [`spost`](@ref) and [`sprepost`](@ref).
 """
 spre(A::AbstractQuantumObject{DT,OperatorQuantumObject}, Id_cache = I(size(A, 1))) where {DT} =
-    get_typename_wrapper(A)(_spre(A.data, Id_cache), SuperOperator, A.dims)
+    get_typename_wrapper(A)(_spre(A.data, Id_cache), SuperOperator, A.dimensions)
 
 @doc raw"""
     spost(B::AbstractQuantumObject, Id_cache=I(size(B,1)))
@@ -96,7 +96,7 @@ The optional argument `Id_cache` can be used to pass a precomputed identity matr
 See also [`spre`](@ref) and [`sprepost`](@ref).
 """
 spost(B::AbstractQuantumObject{DT,OperatorQuantumObject}, Id_cache = I(size(B, 1))) where {DT} =
-    get_typename_wrapper(B)(_spost(B.data, Id_cache), SuperOperator, B.dims)
+    get_typename_wrapper(B)(_spost(B.data, Id_cache), SuperOperator, B.dimensions)
 
 @doc raw"""
     sprepost(A::AbstractQuantumObject, B::AbstractQuantumObject)
@@ -116,8 +116,8 @@ function sprepost(
     A::AbstractQuantumObject{DT1,OperatorQuantumObject},
     B::AbstractQuantumObject{DT2,OperatorQuantumObject},
 ) where {DT1,DT2}
-    check_dims(A, B)
-    return promote_op_type(A, B)(_sprepost(A.data, B.data), SuperOperator, A.dims)
+    check_dimensions(A, B)
+    return promote_op_type(A, B)(_sprepost(A.data, B.data), SuperOperator, A.dimensions)
 end
 
 @doc raw"""
@@ -135,7 +135,7 @@ The optional argument `Id_cache` can be used to pass a precomputed identity matr
 See also [`spre`](@ref), [`spost`](@ref), and [`sprepost`](@ref).
 """
 lindblad_dissipator(O::AbstractQuantumObject{DT,OperatorQuantumObject}, Id_cache = I(size(O, 1))) where {DT} =
-    get_typename_wrapper(O)(_lindblad_dissipator(O.data, Id_cache), SuperOperator, O.dims)
+    get_typename_wrapper(O)(_lindblad_dissipator(O.data, Id_cache), SuperOperator, O.dimensions)
 
 # It is already a SuperOperator
 lindblad_dissipator(O::AbstractQuantumObject{DT,SuperOperatorQuantumObject}, Id_cache = nothing) where {DT} = O
@@ -162,7 +162,7 @@ See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 function liouvillian(
     H::AbstractQuantumObject{DT,OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    Id_cache = I(prod(H.dims)),
+    Id_cache = I(prod(H.dimensions)),
 ) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
@@ -181,7 +181,7 @@ function liouvillian(
     return L
 end
 
-liouvillian(H::AbstractQuantumObject{DT,OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dims))) where {DT} =
-    get_typename_wrapper(H)(_liouvillian(H.data, Id_cache), SuperOperator, H.dims)
+liouvillian(H::AbstractQuantumObject{DT,OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dimensions))) where {DT} =
+    get_typename_wrapper(H)(_liouvillian(H.data, Id_cache), SuperOperator, H.dimensions)
 
 liouvillian(H::AbstractQuantumObject{DT,SuperOperatorQuantumObject}, Id_cache::Diagonal) where {DT} = H
