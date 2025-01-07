@@ -351,7 +351,7 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         params::NamedTuple = NamedTuple(),
-        ρ0::AbstractMatrix = rand_dm(prod(H.dims)).data,
+        ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
         k::Int = 1,
         krylovdim::Int = min(10, size(H, 1)),
         maxiter::Int = 200,
@@ -390,7 +390,7 @@ function eigsolve_al(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     params::NamedTuple = NamedTuple(),
-    ρ0::AbstractMatrix = rand_dm(prod(H.dims)).data,
+    ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
     k::Int = 1,
     krylovdim::Int = min(10, size(H, 1)),
     maxiter::Int = 200,

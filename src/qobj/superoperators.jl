@@ -141,7 +141,7 @@ lindblad_dissipator(O::AbstractQuantumObject{DT,OperatorQuantumObject}, Id_cache
 lindblad_dissipator(O::AbstractQuantumObject{DT,SuperOperatorQuantumObject}, Id_cache = nothing) where {DT} = O
 
 @doc raw"""
-    liouvillian(H::AbstractQuantumObject, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing, Id_cache=I(prod(H.dims)))
+    liouvillian(H::AbstractQuantumObject, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing, Id_cache=I(prod(H.dimensions)))
 
 Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
 

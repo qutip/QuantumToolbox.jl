@@ -81,7 +81,7 @@ end
 function _partial_transpose(ρ::QuantumObject{DT,OperatorQuantumObject}, mask::Vector{Bool}) where {DT<:AbstractArray}
     isa(ρ.dimensions, GeneralDimensions) &&
         (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
-        throw(ArgumentError("Invalid partial transpose for dims = $(ρ.dims)"))
+        throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
 
     mask2 = [1 + Int(i) for i in mask]
     # mask2 has elements with values equal to 1 or 2
@@ -106,7 +106,7 @@ end
 function _partial_transpose(ρ::QuantumObject{<:AbstractSparseArray,OperatorQuantumObject}, mask::Vector{Bool})
     isa(ρ.dimensions, GeneralDimensions) &&
         (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
-        throw(ArgumentError("Invalid partial transpose for dims = $(ρ.dims)"))
+        throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
 
     M, N = size(ρ)
     dimsTuple = Tuple(dimensions_to_dims(get_dimensions_to(ρ)))
