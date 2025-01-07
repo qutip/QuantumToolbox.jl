@@ -253,6 +253,16 @@
         @test opstring ==
               "Quantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
+        # GeneralDimensions
+        Gop = tensor(a, ψ)
+        opstring = sprint((t, s) -> show(t, "text/plain", s), Gop)
+        datastring = sprint((t, s) -> show(t, "text/plain", s), Gop.data)
+        Gop_dims = [[N, N], [N, 1]]
+        Gop_size = size(Gop)
+        Gop_isherm = isherm(Gop)
+        @test opstring ==
+              "Quantum Object:   type=Operator   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
+
         a = spre(a)
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
         datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
@@ -655,14 +665,14 @@
 
         # use GeneralDimensions to do partial trace
         ρ1_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((2, 1), (2, 1)))
-        basis2 = [tensor(eye(2), basis(2, i)) for i in 0:1]
-        for b in basis2
-            ρ1_compound += b' * ρ * b
+        II = qeye(2)
+        basis_list = [basis(2, i) for i in 0:1]
+        for b in basis_list
+            ρ1_compound += tensor(II, b') * ρ * tensor(II, b)
         end
         ρ2_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((1, 2), (1, 2)))
-        basis1 = [tensor(basis(2, i), eye(2)) for i in 0:1]
-        for b in basis1
-            ρ2_compound += b' * ρ * b
+        for b in basis_list
+            ρ2_compound += tensor(b', II) * ρ * tensor(b, II)
         end
         @test ρ1.data ≈ ρ1_ptr.data ≈ ρ1_compound.data
         @test ρ2.data ≈ ρ2_ptr.data ≈ ρ2_compound.data
@@ -724,6 +734,7 @@
         @test_throws ArgumentError ptrace(ρtotal, (0, 2))
         @test_throws ArgumentError ptrace(ρtotal, (2, 5))
         @test_throws ArgumentError ptrace(ρtotal, (2, 2, 3))
+        @test_throws ArgumentError ptrace(Qobj(zeros(ComplexF64, 3, 2)), 1) # invalid GeneralDimensions
 
         @testset "Type Inference (ptrace)" begin
             @inferred ptrace(ρ, 1)
@@ -736,6 +747,7 @@
     end
 
     @testset "permute" begin
+        # standard Dimensions
         ket_a = Qobj(rand(ComplexF64, 2))
         ket_b = Qobj(rand(ComplexF64, 3))
         ket_c = Qobj(rand(ComplexF64, 4))
@@ -769,6 +781,21 @@
         @test_throws ArgumentError permute(bra_bdca, wrong_order2)
         @test_throws ArgumentError permute(op_bdca, wrong_order1)
         @test_throws ArgumentError permute(op_bdca, wrong_order2)
+
+        # GeneralDimensions
+        # TODO: support for GeneralDimensions
+        #= 
+        Gop_d = Qobj(rand(ComplexF64, 5, 6))
+        compound_bdca = permute(tensor(ket_a, op_b, bra_c, Gop_d), (2, 4, 3, 1))
+        compound_dacb = permute(tensor(ket_a, op_b, bra_c, Gop_d), (4, 1, 3, 2))
+        @test compound_bdca ≈ tensor(op_b, Gop_d, bra_c, ket_a)
+        @test compound_dacb ≈ tensor(Gop_d, ket_a, bra_c, op_b)
+        @test compound_bdca.dims == [[3, 5, 1, 2], [3, 6, 4, 1]]
+        @test compound_dacb.dims == [[5, 2, 1, 3], [6, 1, 4, 3]]
+        @test isoper(compound_bdca)
+        @test isoper(compound_dacb)
+        =#
+        @test_throws ArgumentError permute(Qobj(zeros(ComplexF64, 3, 2)), (1,))
 
         @testset "Type Inference (permute)" begin
             @inferred permute(ket_bdca, (2, 4, 3, 1))

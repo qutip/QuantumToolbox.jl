@@ -795,6 +795,11 @@ function permute(
     A::QuantumObject{<:AbstractArray{T},ObjType},
     order::Union{AbstractVector{Int},Tuple},
 ) where {T,ObjType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
+    # TODO: fix this (should be able to permute arbitrary GeneralDimensions)
+    isa(A.dimensions, GeneralDimensions) &&
+        (get_dimensions_to(A) != get_dimensions_from(A)) &&
+        throw(ArgumentError("Invalid permute for dims = $(_get_dims_string(A.dimensions))"))
+
     (length(order) != length(A.dimensions)) &&
         throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
 
@@ -824,8 +829,9 @@ _dims_and_perm(::OperatorQuantumObject, dims::SVector{N,Int}, order::AbstractVec
     reverse(vcat(dims, dims)), reverse((2 * L + 1) .- vcat(order, order .+ L))
 
 # if dims originates from GeneralDimensions
-_dims_and_perm(::OperatorQuantumObject, dims::SVector{2,SVector{N,Int}}, order::AbstractVector{Int}, L::Int) where {N} =
-    reverse(vcat(dims[1], dims[2])), reverse((2 * L + 1) .- vcat(order, order .+ L))
+# TODO: fix this
+#= _dims_and_perm(::OperatorQuantumObject, dims::SVector{2,SVector{N,Int}}, order::AbstractVector{Int}, L::Int) where {N} =
+    reverse(vcat(dims[1], dims[2])), reverse((2 * L + 1) .- vcat(order, order .+ L)) =#
 
 _order_dimensions(dimensions::Dimensions{N}, order::AbstractVector{Int}) where {N} = Dimensions{N}(dimensions.to[order])
 _order_dimensions(dimensions::GeneralDimensions{N}, order::AbstractVector{Int}) where {N} =
