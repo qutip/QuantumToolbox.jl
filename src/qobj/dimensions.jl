@@ -71,8 +71,7 @@ _gen_dimensions(dims::Any) = Dimensions(dims)
 # obtain dims in the type of SVector with integers
 dimensions_to_dims(dimensions::NTuple{N,AbstractSpace}) where {N} = vcat(map(dimensions_to_dims, dimensions)...)
 dimensions_to_dims(dimensions::Dimensions) = dimensions_to_dims(dimensions.to)
-dimensions_to_dims(dimensions::GeneralDimensions) =
-    (dimensions_to_dims(dimensions.to), dimensions_to_dims(dimensions.from)) # tuple
+dimensions_to_dims(dimensions::GeneralDimensions) = SVector{2}(dimensions_to_dims(dimensions.to), dimensions_to_dims(dimensions.from))
 
 Base.length(::AbstractDimensions{N}) where {N} = N
 
@@ -85,3 +84,9 @@ Base.prod(spaces::NTuple{N,AbstractSpace}) where {N} = prod(_get_space_size, spa
 LinearAlgebra.transpose(dimensions::Dimensions) = dimensions
 LinearAlgebra.transpose(dimensions::GeneralDimensions) = GeneralDimensions(dimensions.from, dimensions.to) # switch `to` and `from`
 LinearAlgebra.adjoint(dimensions::AbstractDimensions) = transpose(dimensions)
+
+_get_dims_string(dimensions::Dimensions) = string(dimensions_to_dims(dimensions))
+function _get_dims_string(dimensions::GeneralDimensions)
+    dims = dimensions_to_dims(dimensions)
+    return "[$(string(dims[1])), $(string(dims[2]))]"
+end

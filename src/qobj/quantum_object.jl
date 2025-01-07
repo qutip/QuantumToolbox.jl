@@ -149,7 +149,7 @@ function Base.show(
     },
 }
     op_data = QO.data
-    println(io, "Quantum Object:   type=", QO.type, "   dims=", QO.dims, "   size=", size(op_data))
+    println(io, "Quantum Object:   type=", QO.type, "   dims=", _get_dims_string(QO.dimensions), "   size=", size(op_data))
     return show(io, MIME("text/plain"), op_data)
 end
 
@@ -160,7 +160,7 @@ function Base.show(io::IO, QO::QuantumObject)
         "Quantum Object:   type=",
         QO.type,
         "   dims=",
-        QO.dims,
+        _get_dims_string(QO.dimensions),
         "   size=",
         size(op_data),
         "   ishermitian=",

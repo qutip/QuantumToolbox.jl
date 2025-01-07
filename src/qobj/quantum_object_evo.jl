@@ -134,7 +134,7 @@ function Base.show(io::IO, QO::QuantumObjectEvolution)
         "Quantum Object Evo.:   type=",
         QO.type,
         "   dims=",
-        QO.dims,
+        _get_dims_string(QO.dimensions),
         "   size=",
         size(op_data),
         "   ishermitian=",

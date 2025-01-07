@@ -99,7 +99,7 @@ Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
 function Base.show(io::IO, res::EigsolveResult)
-    println(io, "EigsolveResult:   type=", res.type, "   dims=", res.dims)
+    println(io, "EigsolveResult:   type=", res.type, "   dims=", _get_dims_string(res.dimensions))
     println(io, "values:")
     show(io, MIME("text/plain"), res.values)
     print(io, "\n")
