@@ -169,47 +169,67 @@ check_dimensions(A::AbstractQuantumObject...) = check_dimensions(A)
 
 function _check_QuantumObject(type::KetQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
-    (prod(dimensions) != m) && throw(DimensionMismatch("Ket with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != m) && throw(
+        DimensionMismatch("Ket with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
+    )
     return nothing
 end
 
 function _check_QuantumObject(type::BraQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Bra"))
-    (prod(dimensions) != n) && throw(DimensionMismatch("Bra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != n) && throw(
+        DimensionMismatch("Bra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
+    )
     return nothing
 end
 
 function _check_QuantumObject(type::OperatorQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     L = prod(dimensions)
-    (L == m == n) || throw(DimensionMismatch("Operator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."))
+    (L == m == n) || throw(
+        DimensionMismatch(
+            "Operator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
     return nothing
 end
 
 function _check_QuantumObject(type::OperatorQuantumObject, dimensions::GeneralDimensions, m::Int, n::Int)
     ((m == 1) || (n == 1)) && throw(DomainError((m, n), "The size of the array is not compatible with Operator"))
-    ((prod(dimensions.to) != m) || (prod(dimensions.from) != n)) &&
-        throw(DimensionMismatch("Operator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."))
+    ((prod(dimensions.to) != m) || (prod(dimensions.from) != n)) && throw(
+        DimensionMismatch(
+            "Operator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
     return nothing
 end
 
 function _check_QuantumObject(type::SuperOperatorQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (m != n) && throw(DomainError((m, n), "The size of the array is not compatible with SuperOperator"))
-    (prod(dimensions) != sqrt(m)) &&
-        throw(DimensionMismatch("SuperOperator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != sqrt(m)) && throw(
+        DimensionMismatch(
+            "SuperOperator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
     return nothing
 end
 
 function _check_QuantumObject(type::OperatorKetQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorKet"))
-    (prod(dimensions) != sqrt(m)) &&
-        throw(DimensionMismatch("OperatorKet with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != sqrt(m)) && throw(
+        DimensionMismatch(
+            "OperatorKet with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
     return nothing
 end
 
 function _check_QuantumObject(type::OperatorBraQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorBra"))
-    (prod(dimensions) != sqrt(n)) &&
-        throw(DimensionMismatch("OperatorBra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != sqrt(n)) && throw(
+        DimensionMismatch(
+            "OperatorBra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
     return nothing
 end
 
