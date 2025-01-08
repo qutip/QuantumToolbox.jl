@@ -1,33 +1,16 @@
-# [Intensive parallelization on a Cluster](@id doc-tutor:Intensive-parallelization-on-a-Cluster)
+# [Intensive parallelization on a Cluster](@id doc:Intensive-parallelization-on-a-Cluster)
 
 ## Introduction
 
-In this tutorial, we will demonstrate how to seamlessly perform intensive parallelization on a cluster using the **QuantumToolbox.jl** package. Indeed, thanks to the [**Distributed.jl**](https://docs.julialang.org/en/v1/manual/distributed-computing/) and [**ClusterManagers.jl**](https://github.com/JuliaParallel/ClusterManagers.jl) packages, it is possible to parallelize on a cluster with minimal effort. The following examples are applied to a cluster with the [SLURM](https://slurm.schedmd.com/documentation.html) workload manager, but the same principles can be applied to other workload managers, as the [**ClusterManagers.jl**](https://github.com/JuliaParallel/ClusterManagers.jl) package is very versatile.
+In this example, we will demonstrate how to seamlessly perform intensive parallelization on a cluster using the **QuantumToolbox.jl** package. Indeed, thanks to the [**Distributed.jl**](https://docs.julialang.org/en/v1/manual/distributed-computing/) and [**ClusterManagers.jl**](https://github.com/JuliaParallel/ClusterManagers.jl) packages, it is possible to parallelize on a cluster with minimal effort. The following examples are applied to a cluster with the [SLURM](https://slurm.schedmd.com/documentation.html) workload manager, but the same principles can be applied to other workload managers, as the [**ClusterManagers.jl**](https://github.com/JuliaParallel/ClusterManagers.jl) package is very versatile.
 
-We will consider two examples:
+## SLURM batch script
 
-1. **Parallelization of a Monte Carlo quantum trajectories**
-2. **Parallelization of a Master Equation by sweeping over parameters**
-
-### Monte Carlo Quantum Trajectories
-
-Let's consider a 2-dimensional transverse field Ising model with 4x3 spins. The Hamiltonian is given by
-
-```math
-\hat{H} = \frac{J_z}{2} \sum_{\langle i,j \rangle} \hat{\sigma}_i^z \hat{\sigma}_j^z + h_x \sum_i \hat{\sigma}_i^x \, ,
-```
-
-where the sums are over nearest neighbors, and the collapse operators are given by 
-
-```math
-\hat{c}_i = \sqrt{\gamma} \hat{\sigma}_i^- \, .
-```
-
-We start by creating a file named `run.batch` with the following content:
+To submit a batch script to [SLURM](https://slurm.schedmd.com/documentation.html), we start by creating a file named `run.batch` with the following content:
 
 ```bash
 #!/bin/bash
-#SBATCH --job-name=tutorial
+#SBATCH --job-name=example
 #SBATCH --output=output.out
 #SBATCH --account=your_account
 #SBATCH --nodes=10
@@ -44,9 +27,34 @@ export PATH=/home/username/.juliaup/bin:$PATH
 julia --project script.jl
 ```
 
-where we have to replace `your_account` with the name of your account. This script will be used to submit the job to the cluster. Here, we are requesting 10 nodes with 72 threads each (720 parallel jobs). The `--time` flag specifies the maximum time that the job can run. To see all the available options, you can check the [SLURM documentation](https://slurm.schedmd.com/documentation.html). We also export the path to the custom Julia installation, which is necessary to run the script (replace `username` with your username). Finally, we run the script `script.jl` with the command `julia --project script.jl`.
+where we have to replace `your_account` with the name of your account. This script will be used to submit the job to the cluster by using the following command in terminal:
 
-The `script.jl` contains the following content:
+```shell
+sbatch run.batch
+```
+
+Here, we are requesting `10` nodes with `72` threads each (`720` parallel jobs). The `--time` flag specifies the maximum time that the job can run. To see all the available options, you can check the [SLURM documentation](https://slurm.schedmd.com/documentation.html). We also export the path to the custom Julia installation, which is necessary to run the script (replace `username` with your username). Finally, we run the script `script.jl` with the command `julia --project script.jl`.
+
+In the following, we will consider two examples:
+
+1. **Parallelization of a Monte Carlo quantum trajectories**
+2. **Parallelization of a Master Equation by sweeping over parameters**
+
+## Monte Carlo Quantum Trajectories
+
+Let's consider a `2`-dimensional transverse field Ising model with `4x3` spins. The Hamiltonian is given by
+
+```math
+\hat{H} = \frac{J_z}{2} \sum_{\langle i,j \rangle} \hat{\sigma}_i^z \hat{\sigma}_j^z + h_x \sum_i \hat{\sigma}_i^x \, ,
+```
+
+where the sums are over nearest neighbors, and the collapse operators are given by 
+
+```math
+\hat{c}_i = \sqrt{\gamma} \hat{\sigma}_i^- \, .
+```
+
+In this case, the `script.jl` contains the following content:
 
 ```julia
 using Distributed
@@ -121,7 +129,7 @@ With the
 println("Hello! You have $(nworkers()) workers with $(remotecall_fetch(Threads.nthreads, 2)) threads each.")
 ```
 
-command, we test that the distributed network is correctly initialized. The `remotecall_fetch(Threads.nthreads, 2)` command returns the number of threads of the worker with ID 2.
+command, we test that the distributed network is correctly initialized. The `remotecall_fetch(Threads.nthreads, 2)` command returns the number of threads of the worker with ID `2`.
 
 We then write the main part of the script, where we define the lattice through the [`Lattice`](@ref) function. We set the parameters and define the Hamiltonian and collapse operators with the [`DissipativeIsing`](@ref) function. We also define the expectation operators `e_ops` and the initial state `ψ0`. Finally, we perform the Monte Carlo quantum trajectories with the [`mcsolve`](@ref) function. The `ensemble_method=EnsembleSplitThreads()` argument is used to parallelize the Monte Carlo quantum trajectories, by splitting the ensemble of trajectories among the workers. For a more detailed explanation of the different ensemble methods, you can check the [official documentation](https://docs.sciml.ai/DiffEqDocs/stable/features/ensemble/) of the [**DifferentialEquations.jl**](https://github.com/SciML/DifferentialEquations.jl/) package. Finally, the `rmprocs(workers())` command is used to remove the workers after the computation is finished.
 
@@ -140,7 +148,7 @@ FINISH!
 
 where we can see that the computation **lasted only 21 seconds**.
 
-### Master Equation by Sweeping Over Parameters
+## Master Equation by Sweeping Over Parameters
 
 In this example, we will consider a driven Jaynes-Cummings model, describing a two-level atom interacting with a driven cavity mode. The Hamiltonian is given by
 
@@ -154,7 +162,7 @@ and the collapse operators are given by
 \hat{c}_1 = \sqrt{\gamma} \hat{a} \, , \quad \hat{c}_2 = \sqrt{\gamma} \hat{\sigma}_- \, .
 ```
 
-The SLURM file is the same as before, but the `script.jl` file now contains the following content:
+The SLURM batch script file is the same as before, but the `script.jl` file now contains the following content:
 
 ```julia
 using Distributed

@@ -36,6 +36,7 @@ const PAGES = [
         "Brief Example" => "getting_started/brief_example.md",
         "Key differences from QuTiP" => "getting_started/qutip_differences.md",
         "The Importance of Type-Stability" => "getting_started/type_stability.md",
+        "Example: Create QuantumToolbox.jl Logo" => "getting_started/logo.md",
         # "Cite QuantumToolbox.jl" => "getting_started/cite.md",
     ],
     "Users Guide" => [
@@ -54,21 +55,13 @@ const PAGES = [
             "Stochastic Solver" => "users_guide/time_evolution/stochastic.md",
             "Solving Problems with Time-dependent Hamiltonians" => "users_guide/time_evolution/time_dependent.md",
         ],
+        "Intensive parallelization on a Cluster" => "users_guide/cluster.md",
         "Hierarchical Equations of Motion" => "users_guide/HEOM.md",
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
         "Extensions" => [
             "users_guide/extensions/cuda.md",
             "users_guide/extensions/cairomakie.md",
-        ],
-    ],
-    "Tutorials" => [
-        "Time Evolution" => [
-            "Low Rank Master Equation" => "tutorials/lowrank.md",
-        ],
-        "Miscellaneous Tutorials" => [
-            "tutorials/logo.md",
-            "tutorials/cluster.md",
         ],
     ],
     "Resources" => [

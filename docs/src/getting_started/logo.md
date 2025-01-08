@@ -1,8 +1,8 @@
-# [Create QuantumToolbox.jl logo](@id doc-tutor:Create-QuantumToolbox.jl-logo)
+# [Example: Create QuantumToolbox.jl logo](@id doc:Create-QuantumToolbox.jl-logo)
 
 ## Introduction
 
-In this tutorial, we will demonstrate how to create the logo for the **QuantumToolbox.jl** package. The logo represents the Wigner function of the triangular cat state, which is a linear superposition of three coherent states. The resulting Wigner function has a triangular shape that resembles the Julia logo. We will also define a custom colormap that varies based on the value of the Wigner function and the spatial coordinates, such that the three blobs corresponding to the coherent states have different colors (matching the colors of the Julia logo).
+In this example, we will demonstrate how to create the logo for the **QuantumToolbox.jl** package. The logo represents the Wigner function of the triangular cat state, which is a linear superposition of three coherent states. The resulting Wigner function has a triangular shape that resembles the Julia logo. We will also define a custom colormap that varies based on the value of the Wigner function and the spatial coordinates, such that the three blobs corresponding to the coherent states have different colors (matching the colors of the Julia logo).
 
 ### Triangular Cat State
 
@@ -196,4 +196,4 @@ fig
 
 ## Conclusion
 
-This tutorial demonstrates how to generate the [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) logo using the package itself and [Makie.jl](https://github.com/MakieOrg/Makie.jl) for visualization. The logo is a visualization of the Wigner function of a triangular cat state, with a custom colormap that highlights the different coherent states with colors matching the Julia logo.
+This example demonstrates how to generate the [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl) logo using the package itself and [Makie.jl](https://github.com/MakieOrg/Makie.jl) for visualization. The logo is a visualization of the Wigner function of a triangular cat state, with a custom colormap that highlights the different coherent states with colors matching the Julia logo.

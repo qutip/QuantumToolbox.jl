@@ -13,6 +13,7 @@ const navTemp = {
 
 const nav = [
   ...navTemp.nav,
+  { text: 'Tutorials', link: 'https://qutip.org/qutip-julia-tutorials/' },
   { text: 'Benchmarks', link: 'https://qutip.org/QuantumToolbox.jl/benchmarks/' },
   {
     component: 'VersionPicker'

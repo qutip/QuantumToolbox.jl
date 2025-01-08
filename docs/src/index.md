@@ -17,11 +17,14 @@ hero:
       text: Users Guide
       link: /users_guide/QuantumObject/QuantumObject
     - theme: alt
-      text: View on Github
-      link: https://github.com/qutip/QuantumToolbox.jl
+      text: Tutorials
+      link: https://qutip.org/qutip-julia-tutorials/
     - theme: alt
       text: API
       link: /resources/api
+    - theme: alt
+      text: View on Github
+      link: https://github.com/qutip/QuantumToolbox.jl
     - theme: alt
       text: Visit QuTiP.org
       link: https://qutip.org/
@@ -39,7 +42,7 @@ features:
   - icon: <img width="64" height="64" src="https://img.icons8.com/?size=100&id=1W4Bkj363ov0&format=png&color=000000" />
     title: Distributed Computing
     details: Distribute the computation over multiple nodes (e.g., a cluster). Simulate hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
-    link: /tutorials/cluster
+    link: /users_guide/cluster
 ---
 ```
 
