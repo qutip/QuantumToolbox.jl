@@ -76,7 +76,7 @@ LinearAlgebra.diag
 proj
 ptrace
 purity
-permute
+SparseArrays.permute
 tidyup
 tidyup!
 get_data

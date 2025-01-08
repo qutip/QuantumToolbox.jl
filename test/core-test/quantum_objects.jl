@@ -783,8 +783,6 @@
         @test_throws ArgumentError permute(op_bdca, wrong_order2)
 
         # GeneralDimensions
-        # TODO: support for GeneralDimensions
-        #= 
         Gop_d = Qobj(rand(ComplexF64, 5, 6))
         compound_bdca = permute(tensor(ket_a, op_b, bra_c, Gop_d), (2, 4, 3, 1))
         compound_dacb = permute(tensor(ket_a, op_b, bra_c, Gop_d), (4, 1, 3, 2))
@@ -794,13 +792,12 @@
         @test compound_dacb.dims == [[5, 2, 1, 3], [6, 1, 4, 3]]
         @test isoper(compound_bdca)
         @test isoper(compound_dacb)
-        =#
-        @test_throws ArgumentError permute(Qobj(zeros(ComplexF64, 3, 2)), (1,))
 
         @testset "Type Inference (permute)" begin
             @inferred permute(ket_bdca, (2, 4, 3, 1))
             @inferred permute(bra_bdca, (2, 4, 3, 1))
             @inferred permute(op_bdca, (2, 4, 3, 1))
+            @inferred permute(compound_bdca, (2, 4, 3, 1))
         end
     end
 end
