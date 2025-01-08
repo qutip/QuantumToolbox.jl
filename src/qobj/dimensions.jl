@@ -86,6 +86,7 @@ LinearAlgebra.transpose(dimensions::Dimensions) = dimensions
 LinearAlgebra.transpose(dimensions::GeneralDimensions) = GeneralDimensions(dimensions.from, dimensions.to) # switch `to` and `from`
 LinearAlgebra.adjoint(dimensions::AbstractDimensions) = transpose(dimensions)
 
+# this is used to show `dims` for Qobj and QobjEvo
 _get_dims_string(dimensions::Dimensions) = string(dimensions_to_dims(dimensions))
 function _get_dims_string(dimensions::GeneralDimensions)
     dims = dimensions_to_dims(dimensions)

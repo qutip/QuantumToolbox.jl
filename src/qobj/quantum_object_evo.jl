@@ -508,8 +508,7 @@ function (A::QuantumObjectEvolution)(
     p,
     t,
 ) where {DT1,DT2,QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
-    check_dimensions(ψout, ψin)
-    check_dimensions(ψout, A)
+    check_dimensions(A, ψout, ψin)
 
     if isoper(A) && isoperket(ψin)
         throw(ArgumentError("The input state must be a Ket if the QuantumObjectEvolution object is an Operator."))
