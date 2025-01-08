@@ -167,6 +167,26 @@ check_dimensions(Qobj_tuple::NTuple{N,AbstractQuantumObject}) where {N} =
     check_dimensions(getfield.(Qobj_tuple, :dimensions))
 check_dimensions(A::AbstractQuantumObject...) = check_dimensions(A)
 
+_check_QuantumObject(
+    type::ObjType,
+    dimensions::GeneralDimensions,
+    m::Int,
+    n::Int,
+) where {
+    ObjType<:Union{
+        KetQuantumObject,
+        BraQuantumObject,
+        SuperOperatorQuantumObject,
+        OperatorBraQuantumObject,
+        OperatorKetQuantumObject,
+    },
+} = throw(
+    DomainError(
+        _get_dims_string(dimensions),
+        "The given `dims` is not compatible with type = $type, should be an `Operator`.",
+    ),
+)
+
 function _check_QuantumObject(type::KetQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
     (prod(dimensions) != m) && throw(

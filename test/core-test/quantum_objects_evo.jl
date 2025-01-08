@@ -14,6 +14,9 @@
 
         a = MatrixOperator(rand(ComplexF64, 5, 5))
         @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator)
+        
+        a = MatrixOperator(rand(ComplexF64, 4, 4))
+        @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator, dims = ((2,), (2,)))
 
         ψ = fock(10, 3)
         @test_throws TypeError QobjEvo(ψ)

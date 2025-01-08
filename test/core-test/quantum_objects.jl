@@ -16,16 +16,24 @@
         for t in [SuperOperator, Bra, OperatorBra]
             @test_throws DomainError Qobj(a, type = t)
         end
+
         a = rand(ComplexF64, 2, 2, 2)
         for t in [nothing, Ket, Bra, Operator, SuperOperator, OperatorBra, OperatorKet]
             @test_throws DomainError Qobj(a, type = t)
         end
+
         a = rand(ComplexF64, 1, 2)
         @test_throws DomainError Qobj(a, type = Operator)
         @test_throws DomainError Qobj(a, type = SuperOperator)
 
-        a = rand(ComplexF64, 2, 1)
-        @test_throws DomainError Qobj(a, type = Operator)
+        @test_throws DomainError Qobj(rand(ComplexF64, 2, 1), type = Operator) # should be type = Bra
+
+        # check that Ket, Bra, SuperOperator, OperatorKet, and OperatorBra don't support GeneralDimensions
+        @test_throws DomainError Qobj(rand(ComplexF64, 2), type = Ket, dims = ((2,), (1,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 1, 2), type = Bra, dims = ((1,), (2,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 4, 4), type = SuperOperator, dims = ((2,), (2,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 4), type = OperatorKet, dims = ((2,), (1,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 1, 4), type = OperatorBra, dims = ((1,), (2,)))
     end
 
     # unsupported type of dims
