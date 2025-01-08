@@ -183,7 +183,7 @@ _check_QuantumObject(
 } = throw(
     DomainError(
         _get_dims_string(dimensions),
-        "The given `dims` is not compatible with type = $type, should be an `Operator`.",
+        "The given `dims` is not compatible with type = $type, should be a single list of integers.",
     ),
 )
 

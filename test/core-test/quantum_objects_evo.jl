@@ -4,6 +4,9 @@
         a = MatrixOperator(rand(ComplexF64, 3, 2))
         @test_throws DomainError QobjEvo(a, type = SuperOperator)
 
+        a = MatrixOperator(rand(ComplexF64, 4, 4))
+        @test_throws DomainError QobjEvo(a, type = SuperOperator, dims = ((2,), (2,)))
+
         a = MatrixOperator(rand(ComplexF64, 3, 2))
         for t in (Ket, Bra, OperatorKet, OperatorBra)
             @test_throws ArgumentError QobjEvo(a, type = t)
@@ -14,9 +17,6 @@
 
         a = MatrixOperator(rand(ComplexF64, 5, 5))
         @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator)
-        
-        a = MatrixOperator(rand(ComplexF64, 4, 4))
-        @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator, dims = ((2,), (2,)))
 
         ψ = fock(10, 3)
         @test_throws TypeError QobjEvo(ψ)
