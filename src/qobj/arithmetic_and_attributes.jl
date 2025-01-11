@@ -6,7 +6,9 @@ Arithmetic and Attributes for QuantumObject
 
 export proj, ptrace, purity, permute
 export tidyup, tidyup!
-export get_data, get_coherence
+export get_data, get_coherence, remove_coherence, mean_occupation
+
+import Base: _ind2sub
 
 #    Broadcasting
 Base.broadcastable(x::QuantumObject) = x.data
@@ -701,26 +703,156 @@ Returns the data of a [`AbstractQuantumObject`](@ref).
 get_data(A::AbstractQuantumObject) = A.data
 
 @doc raw"""
-    get_coherence(ψ::QuantumObject)
+    get_coherence(ψ::QuantumObject; idx)
 
-Get the coherence value ``\alpha`` by measuring the expectation value of the destruction operator ``\hat{a}`` on a state ``\ket{\psi}`` or a density matrix ``\hat{\rho}``.
+Returns the coherence value ``\alpha`` by measuring the expectation value of the destruction operator ``\hat{a}`` on a state ``\ket{\psi}``, density matrix ``\hat{\rho}`` or vectorized state ``|\hat{\rho}\rangle\rangle``.
 
-It returns both ``\alpha`` and the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
+If the state is a composite state, the coherence values of each subsystems are returned as an array of complex numbers. It is possible to specify the index of the sybsystem to get the coherence value by fixing `idx`.
 """
-function get_coherence(ψ::QuantumObject{<:AbstractArray,KetQuantumObject})
-    a = destroy(prod(ψ.dims))
-    α = expect(a, ψ)
-    D = exp(α * a' - conj(α) * a)
+function get_coherence(ψ::QuantumObject{T,KetQuantumObject,N}; idx::Union{Nothing,Int} = nothing) where {T,N}
+    dims = reverse(Tuple(ψ.dims))
+    offsets = cumprod([1; dims[1:end-1]...])
 
-    return α, D' * ψ
+    expectation_values = zeros(ComplexF64, N)
+
+    for J in 2:length(ψ.data)
+        indices = Base._ind2sub(dims, J)
+        for n in 1:N
+            if indices[n] > 1
+                expectation_values[n] += conj(ψ.data[J-offsets[n]]) * sqrt(indices[n] - 1) * ψ.data[J]
+            end
+        end
+    end
+
+    reverse!(expectation_values)
+
+    return isnothing(idx) ? expectation_values : expectation_values[idx]
 end
 
-function get_coherence(ρ::QuantumObject{<:AbstractArray,OperatorQuantumObject})
-    a = destroy(prod(ρ.dims))
-    α = expect(a, ρ)
-    D = exp(α * a' - conj(α) * a)
+function get_coherence(ρ::QuantumObject{T,OperatorQuantumObject,N}; idx::Union{Int,Nothing} = nothing) where {T,N}
+    dims = reverse(Tuple(ρ.dims))
+    offsets = cumprod([1; dims[1:end-1]...])
 
-    return α, D' * ρ * D
+    expectation_values = zeros(ComplexF64, N)
+
+    @inbounds for J in 2:size(ρ.data, 1)
+        indices = Base._ind2sub(dims, J)
+        for n in 1:N
+            if indices[n] > 1
+                expectation_values[n] += sqrt(indices[n] - 1) * ρ.data[J, J-offsets[n]]
+            end
+        end
+    end
+
+    reverse!(expectation_values)
+
+    return isnothing(idx) ? expectation_values : expectation_values[idx]
+end
+
+function get_coherence(v::QuantumObject{T,OperatorKetQuantumObject,N}; idx::Union{Int,Nothing} = nothing) where {T,N}
+    dims = reverse(Tuple(v.dims))
+
+    offsets = cumprod([1; dims[1:end-1]...])
+    D = prod(dims)
+
+    expectation_values = zeros(ComplexF64, N)
+
+    @inbounds for J in 2:D
+        indices = Base._ind2sub(dims, J)
+        for n in 1:N
+            if indices[n] > 1
+                expectation_values[n] += sqrt(indices[n] - 1) * v.data[(J-offsets[n]-1)*D+J]
+            end
+        end
+    end
+
+    reverse!(expectation_values)
+
+    return isnothing(idx) ? expectation_values : expectation_values[idx]
+end
+
+get_coherence(ψ::QuantumObject{T,KetQuantumObject,1}) where {T} =
+    mapreduce(n -> sqrt(n - 1) * ψ.data[n] * conj(ψ.data[n-1]), +, 2:ψ.dims[1])
+get_coherence(ρ::QuantumObject{T,OperatorQuantumObject,1}) where {T} =
+    mapreduce(n -> sqrt(n - 1) * ρ.data[n, n-1], +, 2:ρ.dims[1])
+get_coherence(v::QuantumObject{T,OperatorKetQuantumObject,1}) where {T} =
+    mapreduce(n -> sqrt(n - 1) * v.data[(n-2)*v.dims[1]+n], +, 2:v.dims[1])
+
+@doc raw"""
+    remove_coherence(ψ::QuantumObject)
+
+Returns the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
+"""
+function remove_coherence(ψ::QuantumObject{T,KetQuantumObject}) where {T}
+    αs = get_coherence(ψ)
+    D = mapreduce(k -> displace(ψ.dims[k], αs[k]), ⊗, eachindex(ψ.dims))
+
+    return D' * ψ
+end
+
+function remove_coherence(ρ::QuantumObject{T,OperatorQuantumObject}) where {T}
+    αs = get_coherence(ρ)
+    D = mapreduce(k -> displace(ρ.dims[k], αs[k]), ⊗, eachindex(ρ.dims))
+
+    return D' * ρ * D
+end
+
+@doc raw"""
+    mean_occupation(ψ::QuantumObject)
+
+Get the mean occupation number ``n`` by measuring the expectation value of the number operator ``\hat{n}`` on a state ``\ket{\psi}``, a density matrix ``\hat{\rho}`` or a vectorized density matrix ``\ket{\hat{\rho}}``.
+
+If the state is a composite state, the mean occupation numbers of each subsystems are returned as an array of real numbers. It is possible to specify the index of the sybsystem to get the mean occupation number by fixing `idx`.
+"""
+function mean_occupation(ψ::QuantumObject{T,KetQuantumObject}; idx::Union{Int,Nothing} = nothing) where {T}
+    t = Tuple(reverse(ψ.dims))
+    mean_occ = zeros(length(ψ.dims))
+
+    for J in eachindex(ψ.data)
+        sub_indices = _ind2sub(t, J) .- 1
+        mean_occ .+= abs2(ψ[J]) .* sub_indices
+    end
+    reverse!(mean_occ)
+
+    return isnothing(idx) ? mean_occ : mean_occ[idx]
+end
+
+mean_occupation(ψ::QuantumObject{T,KetQuantumObject,1}) where {T} = mapreduce(k -> abs2(ψ[k]) * (k - 1), +, 1:ψ.dims[1])
+
+function mean_occupation(ρ::QuantumObject{T,OperatorQuantumObject}; idx::Union{Int,Nothing} = nothing) where {T}
+    t = Tuple(reverse(ρ.dims))
+    mean_occ = zeros(eltype(ρ.data), length(ρ.dims))
+
+    for J in eachindex(ρ.data[:, 1])
+        sub_indices = _ind2sub(t, J) .- 1
+        mean_occ .+= ρ[J, J] .* sub_indices
+    end
+    reverse!(mean_occ)
+
+    return isnothing(idx) ? real.(mean_occ) : real(mean_occ[idx])
+end
+
+mean_occupation(ρ::QuantumObject{T,OperatorQuantumObject,1}) where {T} =
+    mapreduce(k -> ρ[k, k] * (k - 1), +, 1:ρ.dims[1])
+
+function mean_occupation(v::QuantumObject{T,OperatorKetQuantumObject,1}) where {T}
+    d = v.dims[1]
+    return real(mapreduce(k -> v[(k-1)*d+k] * (k - 1), +, 1:d))
+end
+
+function mean_occupation(v::QuantumObject{T,OperatorKetQuantumObject}; idx::Union{Int,Nothing} = nothing) where {T}
+    dims = reverse(Tuple(v.dims))
+    mean_occ = zeros(eltype(v.data), length(v.dims))
+
+    offset = prod(dims)
+
+    for J in 1:offset
+        sub_indices = _ind2sub(dims, J) .- 1
+        mean_occ .+= v[(J-1)*offset+J] .* sub_indices
+    end
+    reverse!(mean_occ)
+
+    return isnothing(idx) ? real.(mean_occ) : real(mean_occ[idx])
 end
 
 @doc raw"""
