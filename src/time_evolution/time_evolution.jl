@@ -28,9 +28,14 @@ struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:Abst
     kwargs::KWT
 end
 
-Base.getproperty(prob::TimeEvolutionProblem, key::Symbol) = getproperty(prob, makeVal(key))
-Base.getproperty(prob::TimeEvolutionProblem, ::Val{:dims}) = dimensions_to_dims(getfield(prob, :dimensions))
-Base.getproperty(prob::TimeEvolutionProblem, ::Val{K}) where {K} = getfield(prob, K)
+function Base.getproperty(prob::TimeEvolutionProblem, key::Symbol)
+    # a comment here to avoid bad render by JuliaFormatter
+    if key === :dims
+        return dimensions_to_dims(getfield(prob, :dimensions))
+    else
+        return getfield(prob, key)
+    end
+end
 
 TimeEvolutionProblem(prob, times, dims) = TimeEvolutionProblem(prob, times, dims, nothing)
 

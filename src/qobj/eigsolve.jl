@@ -78,9 +78,14 @@ struct EigsolveResult{
     converged::Bool
 end
 
-Base.getproperty(res::EigsolveResult, key::Symbol) = getproperty(res, makeVal(key))
-Base.getproperty(res::EigsolveResult, ::Val{:dims}) = dimensions_to_dims(getfield(res, :dimensions))
-Base.getproperty(res::EigsolveResult, ::Val{K}) where {K} = getfield(res, K)
+function Base.getproperty(res::EigsolveResult, key::Symbol)
+    # a comment here to avoid bad render by JuliaFormatter
+    if key === :dims
+        return dimensions_to_dims(getfield(res, :dimensions))
+    else
+        return getfield(res, key)
+    end
+end
 
 Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1,T2} =

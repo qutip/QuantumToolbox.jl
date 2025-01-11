@@ -253,11 +253,14 @@ function _check_QuantumObject(type::OperatorBraQuantumObject, dimensions::Dimens
     return nothing
 end
 
-Base.getproperty(A::AbstractQuantumObject, key::Symbol) = getproperty(A, makeVal(key))
-
-# support `AbstractQuantumObject.dims`
-Base.getproperty(A::AbstractQuantumObject, ::Val{:dims}) = dimensions_to_dims(getfield(A, :dimensions))
-Base.getproperty(A::AbstractQuantumObject, ::Val{K}) where {K} = getfield(A, K)
+function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
+    # a comment here to avoid bad render by JuliaFormatter
+    if key === :dims
+        return dimensions_to_dims(getfield(A, :dimensions))
+    else
+        return getfield(A, key)
+    end
+end
 
 # this returns `to` in GeneralDimensions representation
 get_dimensions_to(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions{N}}) where {DT,N} = A.dimensions.to
