@@ -7,23 +7,15 @@ export eigenenergies, eigenstates, eigsolve
 export eigsolve_al
 
 @doc raw"""
-    struct EigsolveResult{T1<:Vector{<:Number}, T2<:AbstractMatrix{<:Number}, ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},DimType<:AbstractDimensions}
-        values::T1
-        vectors::T2
-        type::ObjType
-        dims::DimType
-        iter::Int
-        numops::Int
-        converged::Bool
-    end
+    struct EigsolveResult
 
 A struct containing the eigenvalues, the eigenvectors, and some information from the solver
 
-# Fields
+# Fields (Attributes)
 - `values::AbstractVector`: the eigenvalues
 - `vectors::AbstractMatrix`: the transformation matrix (eigenvectors)
 - `type::Union{Nothing,QuantumObjectType}`: the type of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
-- `dimensions::AbstractDimensions`: the `dimensions` of [`QuantumObject`](@ref)
+- `dimensions::Union{Nothing,AbstractDimensions}`: the `dimensions` of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
 - `iter::Int`: the number of iteration during the solving process
 - `numops::Int` : number of times the linear map was applied in krylov methods
 - `converged::Bool`: Whether the result is converged
@@ -75,7 +67,7 @@ struct EigsolveResult{
     T1<:Vector{<:Number},
     T2<:AbstractMatrix{<:Number},
     ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},
-    DimType<:AbstractDimensions,
+    DimType<:Union{Nothing,AbstractDimensions},
 }
     values::T1
     vectors::T2
@@ -168,7 +160,7 @@ function _eigsolve(
     A,
     b::AbstractVector{T},
     type::ObjType,
-    dims::AbstractDimensions,
+    dimensions::Union{Nothing,AbstractDimensions},
     k::Int = 1,
     m::Int = max(20, 2 * k + 1);
     tol::Real = 1e-8,
@@ -253,7 +245,7 @@ function _eigsolve(
     mul!(cache1, Vₘ, M(Uₘ * VR))
     vecs = cache1[:, 1:k]
 
-    return EigsolveResult(vals, vecs, type, dims, iter, numops, (iter < maxiter))
+    return EigsolveResult(vals, vecs, type, dimensions, iter, numops, (iter < maxiter))
 end
 
 @doc raw"""
@@ -290,7 +282,7 @@ function eigsolve(
         A.data;
         v0 = v0,
         type = A.type,
-        dims = A.dimensions,
+        dimensions = A.dimensions,
         sigma = sigma,
         k = k,
         krylovdim = krylovdim,
@@ -305,7 +297,7 @@ function eigsolve(
     A;
     v0::Union{Nothing,AbstractVector} = nothing,
     type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject} = nothing,
-    dims = Dimensions{0}(NTuple{0,AbstractSpace}()),
+    dimensions = nothing,
     sigma::Union{Nothing,Real} = nothing,
     k::Int = 1,
     krylovdim::Int = max(20, 2 * k + 1),
@@ -319,7 +311,7 @@ function eigsolve(
     v0 === nothing && (v0 = normalize!(rand(T, size(A, 1))))
 
     if sigma === nothing
-        res = _eigsolve(A, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
+        res = _eigsolve(A, v0, type, dimensions, k, krylovdim, tol = tol, maxiter = maxiter)
         vals = res.values
     else
         Aₛ = A - sigma * I
@@ -337,7 +329,7 @@ function eigsolve(
 
         Amap = EigsolveInverseMap(T, size(A), linsolve)
 
-        res = _eigsolve(Amap, v0, type, dims, k, krylovdim, tol = tol, maxiter = maxiter)
+        res = _eigsolve(Amap, v0, type, dimensions, k, krylovdim, tol = tol, maxiter = maxiter)
         vals = @. (1 + sigma * res.values) / res.values
     end
 

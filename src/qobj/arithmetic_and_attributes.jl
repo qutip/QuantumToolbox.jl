@@ -64,9 +64,9 @@ for ADimType in (:Dimensions, :GeneralDimensions)
         if ADimType == BDimType == :Dimensions
             @eval begin
                 function LinearAlgebra.:(*)(
-                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,$ADimType{NA}},
-                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,$BDimType{NB}},
-                ) where {DT1,DT2,NA,NB}
+                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,<:$ADimType},
+                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,<:$BDimType},
+                ) where {DT1,DT2}
                     check_dimensions(A, B)
                     QType = promote_op_type(A, B)
                     return QType(A.data * B.data, Operator, A.dimensions)
@@ -75,15 +75,15 @@ for ADimType in (:Dimensions, :GeneralDimensions)
         else
             @eval begin
                 function LinearAlgebra.:(*)(
-                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,$ADimType{NA}},
-                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,$BDimType{NB}},
-                ) where {DT1,DT2,NA,NB}
+                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,<:$ADimType},
+                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,<:$BDimType},
+                ) where {DT1,DT2}
                     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
                     QType = promote_op_type(A, B)
                     return QType(
                         A.data * B.data,
                         Operator,
-                        GeneralDimensions{NA}(get_dimensions_to(A), get_dimensions_from(B)),
+                        GeneralDimensions(get_dimensions_to(A), get_dimensions_from(B)),
                     )
                 end
             end
@@ -93,17 +93,17 @@ end
 
 function LinearAlgebra.:(*)(
     A::AbstractQuantumObject{DT1,OperatorQuantumObject},
-    B::QuantumObject{DT2,KetQuantumObject,Dimensions{N}},
-) where {DT1,DT2,N}
+    B::QuantumObject{DT2,KetQuantumObject,<:Dimensions},
+) where {DT1,DT2}
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-    return QuantumObject(A.data * B.data, Ket, Dimensions{N}(get_dimensions_to(A)))
+    return QuantumObject(A.data * B.data, Ket, Dimensions(get_dimensions_to(A)))
 end
 function LinearAlgebra.:(*)(
-    A::QuantumObject{DT1,BraQuantumObject,Dimensions{N}},
+    A::QuantumObject{DT1,BraQuantumObject,<:Dimensions},
     B::AbstractQuantumObject{DT2,OperatorQuantumObject},
-) where {DT1,DT2,N}
+) where {DT1,DT2}
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-    return QuantumObject(A.data * B.data, Bra, Dimensions{N}(get_dimensions_from(B)))
+    return QuantumObject(A.data * B.data, Bra, Dimensions(get_dimensions_from(B)))
 end
 function LinearAlgebra.:(*)(
     A::QuantumObject{DT1,KetQuantumObject},
@@ -833,6 +833,6 @@ _dims_and_perm(::OperatorQuantumObject, dims::SVector{N,Int}, order::AbstractVec
 _dims_and_perm(::OperatorQuantumObject, dims::SVector{2,SVector{N,Int}}, order::AbstractVector{Int}, L::Int) where {N} =
     reverse(vcat(dims[2], dims[1])), reverse((2 * L + 1) .- vcat(order, order .+ L))
 
-_order_dimensions(dimensions::Dimensions{N}, order::AbstractVector{Int}) where {N} = Dimensions{N}(dimensions.to[order])
-_order_dimensions(dimensions::GeneralDimensions{N}, order::AbstractVector{Int}) where {N} =
-    GeneralDimensions{N}(dimensions.to[order], dimensions.from[order])
+_order_dimensions(dimensions::Dimensions, order::AbstractVector{Int}) = Dimensions(dimensions.to[order])
+_order_dimensions(dimensions::GeneralDimensions, order::AbstractVector{Int}) =
+    GeneralDimensions(dimensions.to[order], dimensions.from[order])

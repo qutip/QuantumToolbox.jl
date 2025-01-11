@@ -180,11 +180,11 @@ julia> a.dims, O.dims
 ```
 """
 function LinearAlgebra.kron(
-    A::AbstractQuantumObject{DT1,OpType,Dimensions{NA}},
-    B::AbstractQuantumObject{DT2,OpType,Dimensions{NB}},
-) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject},NA,NB}
+    A::AbstractQuantumObject{DT1,OpType,<:Dimensions},
+    B::AbstractQuantumObject{DT2,OpType,<:Dimensions},
+) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
     QType = promote_op_type(A, B)
-    return QType(kron(A.data, B.data), A.type, Dimensions{NA + NB}((A.dimensions.to..., B.dimensions.to...)))
+    return QType(kron(A.data, B.data), A.type, Dimensions((A.dimensions.to..., B.dimensions.to...)))
 end
 
 # if A and B are both Operator but either one of them has GeneralDimensions
@@ -193,14 +193,14 @@ for ADimType in (:Dimensions, :GeneralDimensions)
         if !(ADimType == BDimType == :Dimensions) # not for this case because it's already implemented
             @eval begin
                 function LinearAlgebra.kron(
-                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,$ADimType{NA}},
-                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,$BDimType{NB}},
-                ) where {DT1,DT2,NA,NB}
+                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,<:$ADimType},
+                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,<:$BDimType},
+                ) where {DT1,DT2}
                     QType = promote_op_type(A, B)
                     return QType(
                         kron(A.data, B.data),
                         Operator,
-                        GeneralDimensions{NA + NB}(
+                        GeneralDimensions(
                             (get_dimensions_to(A)..., get_dimensions_to(B)...),
                             (get_dimensions_from(A)..., get_dimensions_from(B)...),
                         ),

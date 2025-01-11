@@ -9,7 +9,7 @@
     M = latt.N + 1       # Number of states in the LR basis
 
     # Define initial state
-    ϕ = Vector{QuantumObject{Vector{ComplexF64},KetQuantumObject,Dimensions{M - 1}}}(undef, M)
+    ϕ = Vector{QuantumObject{Vector{ComplexF64},KetQuantumObject,Dimensions{M - 1,NTuple{M - 1,Space}}}}(undef, M)
     ϕ[1] = kron(fill(basis(2, 1), N_modes)...)
 
     i = 1
