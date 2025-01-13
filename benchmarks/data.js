@@ -1,98 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736247672742,
+  "lastUpdate": 1736780991016,
   "repoUrl": "https://github.com/qutip/QuantumToolbox.jl",
   "entries": {
     "Benchmark Results": [
-      {
-        "commit": {
-          "author": {
-            "email": "61953577+albertomercurio@users.noreply.github.com",
-            "name": "Alberto Mercurio",
-            "username": "albertomercurio"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "b2255427cb36b41ae63af5331aa6b6c22db5728c",
-          "message": "Set version v0.11.3",
-          "timestamp": "2024-07-08T21:56:13+02:00",
-          "tree_id": "bbe116a8f19a07d8d91166c08c5654fdb9bee5ac",
-          "url": "https://github.com/qutip/QuantumToolbox.jl/commit/b2255427cb36b41ae63af5331aa6b6c22db5728c"
-        },
-        "date": 1720468955448,
-        "tool": "julia",
-        "benches": [
-          {
-            "name": "Steadystate/Direct",
-            "value": 7011066,
-            "unit": "ns",
-            "extra": "gctime=0\nmemory=10733272\nallocs=350\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          },
-          {
-            "name": "Eigenvalues/eigenstates/dense",
-            "value": 593899089,
-            "unit": "ns",
-            "extra": "gctime=0\nmemory=20092336\nallocs=25\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          },
-          {
-            "name": "Eigenvalues/eigenstates/sparse",
-            "value": 80009738,
-            "unit": "ns",
-            "extra": "gctime=0\nmemory=3667104\nallocs=213\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          },
-          {
-            "name": "Correlations and Spectrum/FFT Correlation",
-            "value": 13668202,
-            "unit": "ns",
-            "extra": "gctime=0\nmemory=1325272\nallocs=977\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          },
-          {
-            "name": "Correlations and Spectrum/Spectrum/Pseudo Inverse",
-            "value": 0,
-            "unit": "ns",
-            "extra": ""
-          },
-          {
-            "name": "Correlations and Spectrum/Spectrum/Exponential Series",
-            "value": 43203866,
-            "unit": "ns",
-            "extra": "gctime=0\nmemory=5165632\nallocs=8723\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          },
-          {
-            "name": "Time Evolution/Dynamical Fock Dimension",
-            "value": 1465826162,
-            "unit": "ns",
-            "extra": "gctime=27965148\nmemory=3203278496\nallocs=450962\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          },
-          {
-            "name": "Time Evolution/time-independent/sesolve",
-            "value": 4517387.5,
-            "unit": "ns",
-            "extra": "gctime=0\nmemory=102768\nallocs=128\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          },
-          {
-            "name": "Time Evolution/time-independent/mesolve",
-            "value": 26346348,
-            "unit": "ns",
-            "extra": "gctime=0\nmemory=3687792\nallocs=465\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          },
-          {
-            "name": "Time Evolution/time-independent/mcsolve/Serial",
-            "value": 235247104,
-            "unit": "ns",
-            "extra": "gctime=0\nmemory=3432160\nallocs=9546\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          },
-          {
-            "name": "Time Evolution/time-independent/mcsolve/Multithreaded",
-            "value": 120784395.5,
-            "unit": "ns",
-            "extra": "gctime=0\nmemory=3433344\nallocs=9557\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -9000,6 +8910,96 @@ window.BENCHMARK_DATA = {
             "value": 113007043.5,
             "unit": "ns",
             "extra": "gctime=0\nmemory=3564304\nallocs=12474\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44385685+ytdHuang@users.noreply.github.com",
+            "name": "Yi-Te Huang",
+            "username": "ytdHuang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4f81980df99e0f89edb7139aeb6c72fa71cee239",
+          "message": "Introduce `Space`, `Dimensions`, and `GeneralDimensions` (#360)",
+          "timestamp": "2025-01-13T10:30:16+01:00",
+          "tree_id": "69ca9ab0fafb160acb2319707ac8343f03bd6a32",
+          "url": "https://github.com/qutip/QuantumToolbox.jl/commit/4f81980df99e0f89edb7139aeb6c72fa71cee239"
+        },
+        "date": 1736780983345,
+        "tool": "julia",
+        "benches": [
+          {
+            "name": "Steadystate/Direct",
+            "value": 6817421,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=10284712\nallocs=469\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Eigenvalues/eigenstates/dense",
+            "value": 606599208,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=20091440\nallocs=37\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Eigenvalues/eigenstates/sparse",
+            "value": 67842324.5,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=3660592\nallocs=369\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Correlations and Spectrum/Spectrum/Pseudo Inverse",
+            "value": 31041822,
+            "unit": "ns",
+            "extra": "gctime=8311574\nmemory=121473128\nallocs=104744\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Correlations and Spectrum/Spectrum/Exponential Series",
+            "value": 44037111.5,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=4791888\nallocs=1023\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Correlations and Spectrum/FFT Correlation",
+            "value": 13898284,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=863496\nallocs=714\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Time Evolution/Dynamical Fock Dimension",
+            "value": 1787204018,
+            "unit": "ns",
+            "extra": "gctime=365657391\nmemory=3066309904\nallocs=303537\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Time Evolution/time-independent/sesolve",
+            "value": 4350116,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=106208\nallocs=105\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Time Evolution/time-independent/mesolve",
+            "value": 27514798,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=3104272\nallocs=606\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Time Evolution/time-independent/mcsolve/Serial",
+            "value": 222322539,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=3563792\nallocs=12483\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
+          },
+          {
+            "name": "Time Evolution/time-independent/mcsolve/Multithreaded",
+            "value": 112564014,
+            "unit": "ns",
+            "extra": "gctime=0\nmemory=3565088\nallocs=12495\nparams={\"gctrial\":true,\"time_tolerance\":0.05,\"evals_set\":false,\"samples\":10000,\"evals\":1,\"gcsample\":false,\"seconds\":5,\"overhead\":0,\"memory_tolerance\":0.01}"
           }
         ]
       }
