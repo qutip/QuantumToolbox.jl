@@ -84,8 +84,7 @@ function _spectrum(
     solver::ExponentialSeries;
     kwargs...,
 ) where {T1,T2,T3}
-    allequal((L.dims, A.dims, B.dims)) ||
-        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    check_dimensions(L, A, B)
 
     rates, vecs, ρss = _spectrum_get_rates_vecs_ss(L, solver)
 
@@ -111,8 +110,7 @@ function _spectrum(
     solver::PseudoInverse;
     kwargs...,
 ) where {T1,T2,T3}
-    allequal((L.dims, A.dims, B.dims)) ||
-        throw(DimensionMismatch("The quantum objects are not of the same Hilbert dimension."))
+    check_dimensions(L, A, B)
 
     ωList = convert(Vector{_FType(L)}, ωlist) # Convert it to support GPUs and avoid type instabilities
     Length = length(ωList)
@@ -123,7 +121,7 @@ function _spectrum(
     b = (spre(B) * ρss).data
 
     # multiply by operator A on the left (spre) and then perform trace operation
-    D = prod(L.dims)
+    D = prod(L.dimensions)
     _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(_CType(L), D)) # same as vec(system_identity_matrix)
     _tr_A = transpose(_tr) * spre(A).data
 

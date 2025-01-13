@@ -73,7 +73,7 @@ function mesolveProblem(
     tlist = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
-    check_dims(L_evo, ψ0)
+    check_dimensions(L_evo, ψ0)
 
     T = Base.promote_eltype(L_evo, ψ0)
     ρ0 = sparse_to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
@@ -89,7 +89,7 @@ function mesolveProblem(
     tspan = (tlist[1], tlist[end])
     prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
 
-    return TimeEvolutionProblem(prob, tlist, L_evo.dims)
+    return TimeEvolutionProblem(prob, tlist, L_evo.dimensions)
 end
 
 @doc raw"""
@@ -179,7 +179,7 @@ end
 function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob.prob, alg)
 
-    ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = prob.dims), sol.u)
+    ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = prob.dimensions), sol.u)
 
     return TimeEvolutionSol(
         prob.times,

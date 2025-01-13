@@ -10,35 +10,37 @@ import SparseArrays: SparseVector, SparseMatrixCSC
 
 If `A.data` is a dense array, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA.CuArray` for gpu calculations.
 """
-CuArray(A::QuantumObject{Tq}) where {Tq<:Union{Vector,Matrix}} = QuantumObject(CuArray(A.data), A.type, A.dims)
+CuArray(A::QuantumObject{Tq}) where {Tq<:Union{Vector,Matrix}} = QuantumObject(CuArray(A.data), A.type, A.dimensions)
 
 @doc raw"""
     CuArray{T}(A::QuantumObject)
 
 If `A.data` is a dense array, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA.CuArray` with element type `T` for gpu calculations.
 """
-CuArray{T}(A::QuantumObject{Tq}) where {T,Tq<:Union{Vector,Matrix}} = QuantumObject(CuArray{T}(A.data), A.type, A.dims)
+CuArray{T}(A::QuantumObject{Tq}) where {T,Tq<:Union{Vector,Matrix}} =
+    QuantumObject(CuArray{T}(A.data), A.type, A.dimensions)
 
 @doc raw"""
     CuSparseVector(A::QuantumObject)
 
 If `A.data` is a sparse vector, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA.CUSPARSE.CuSparseVector` for gpu calculations.
 """
-CuSparseVector(A::QuantumObject{<:SparseVector}) = QuantumObject(CuSparseVector(A.data), A.type, A.dims)
+CuSparseVector(A::QuantumObject{<:SparseVector}) = QuantumObject(CuSparseVector(A.data), A.type, A.dimensions)
 
 @doc raw"""
     CuSparseVector{T}(A::QuantumObject)
 
 If `A.data` is a sparse vector, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA.CUSPARSE.CuSparseVector` with element type `T` for gpu calculations.
 """
-CuSparseVector{T}(A::QuantumObject{<:SparseVector}) where {T} = QuantumObject(CuSparseVector{T}(A.data), A.type, A.dims)
+CuSparseVector{T}(A::QuantumObject{<:SparseVector}) where {T} =
+    QuantumObject(CuSparseVector{T}(A.data), A.type, A.dimensions)
 
 @doc raw"""
     CuSparseMatrixCSC(A::QuantumObject)
 
 If `A.data` is in the type of `SparseMatrixCSC`, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA.CUSPARSE.CuSparseMatrixCSC` for gpu calculations.
 """
-CuSparseMatrixCSC(A::QuantumObject{<:SparseMatrixCSC}) = QuantumObject(CuSparseMatrixCSC(A.data), A.type, A.dims)
+CuSparseMatrixCSC(A::QuantumObject{<:SparseMatrixCSC}) = QuantumObject(CuSparseMatrixCSC(A.data), A.type, A.dimensions)
 
 @doc raw"""
     CuSparseMatrixCSC{T}(A::QuantumObject)
@@ -46,14 +48,14 @@ CuSparseMatrixCSC(A::QuantumObject{<:SparseMatrixCSC}) = QuantumObject(CuSparseM
 If `A.data` is in the type of `SparseMatrixCSC`, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA.CUSPARSE.CuSparseMatrixCSC` with element type `T` for gpu calculations.
 """
 CuSparseMatrixCSC{T}(A::QuantumObject{<:SparseMatrixCSC}) where {T} =
-    QuantumObject(CuSparseMatrixCSC{T}(A.data), A.type, A.dims)
+    QuantumObject(CuSparseMatrixCSC{T}(A.data), A.type, A.dimensions)
 
 @doc raw"""
     CuSparseMatrixCSR(A::QuantumObject)
 
 If `A.data` is in the type of `SparseMatrixCSC`, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA.CUSPARSE.CuSparseMatrixCSR` for gpu calculations.
 """
-CuSparseMatrixCSR(A::QuantumObject{<:SparseMatrixCSC}) = QuantumObject(CuSparseMatrixCSR(A.data), A.type, A.dims)
+CuSparseMatrixCSR(A::QuantumObject{<:SparseMatrixCSC}) = QuantumObject(CuSparseMatrixCSR(A.data), A.type, A.dimensions)
 
 @doc raw"""
     CuSparseMatrixCSR(A::QuantumObject)
@@ -61,7 +63,7 @@ CuSparseMatrixCSR(A::QuantumObject{<:SparseMatrixCSC}) = QuantumObject(CuSparseM
 If `A.data` is in the type of `SparseMatrixCSC`, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA.CUSPARSE.CuSparseMatrixCSR` with element type `T` for gpu calculations.
 """
 CuSparseMatrixCSR{T}(A::QuantumObject{<:SparseMatrixCSC}) where {T} =
-    QuantumObject(CuSparseMatrixCSR{T}(A.data), A.type, A.dims)
+    QuantumObject(CuSparseMatrixCSR{T}(A.data), A.type, A.dimensions)
 
 @doc raw"""
     cu(A::QuantumObject; word_size::Int=64)

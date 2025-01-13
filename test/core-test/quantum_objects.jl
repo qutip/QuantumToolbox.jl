@@ -13,16 +13,27 @@
     # DomainError: incompatible between size of array and type
     @testset "DomainError" begin
         a = rand(ComplexF64, 3, 2)
-        for t in [nothing, Operator, SuperOperator, Bra, OperatorBra]
+        for t in [SuperOperator, Bra, OperatorBra]
             @test_throws DomainError Qobj(a, type = t)
         end
+
         a = rand(ComplexF64, 2, 2, 2)
         for t in [nothing, Ket, Bra, Operator, SuperOperator, OperatorBra, OperatorKet]
             @test_throws DomainError Qobj(a, type = t)
         end
+
         a = rand(ComplexF64, 1, 2)
         @test_throws DomainError Qobj(a, type = Operator)
         @test_throws DomainError Qobj(a, type = SuperOperator)
+
+        @test_throws DomainError Qobj(rand(ComplexF64, 2, 1), type = Operator) # should be type = Bra
+
+        # check that Ket, Bra, SuperOperator, OperatorKet, and OperatorBra don't support GeneralDimensions
+        @test_throws DomainError Qobj(rand(ComplexF64, 2), type = Ket, dims = ((2,), (1,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 1, 2), type = Bra, dims = ((1,), (2,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 4, 4), type = SuperOperator, dims = ((2,), (2,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 4), type = OperatorKet, dims = ((2,), (1,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 1, 4), type = OperatorBra, dims = ((1,), (2,)))
     end
 
     # unsupported type of dims
@@ -74,6 +85,7 @@
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator)
+        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # GeneralDimensions
         @test isket(a2) == false
         @test isbra(a2) == false
         @test isoper(a2) == true
@@ -83,6 +95,7 @@
         @test iscached(a2) == true
         @test isconstant(a2) == true
         @test isunitary(a2) == false
+        @test a2.dims == [100]
         @test isket(a3) == false
         @test isbra(a3) == false
         @test isoper(a3) == false
@@ -92,7 +105,20 @@
         @test iscached(a3) == true
         @test isconstant(a3) == true
         @test isunitary(a3) == false
+        @test a3.dims == [10]
+        @test isket(a4) == false
+        @test isbra(a4) == false
+        @test isoper(a4) == true
+        @test issuper(a4) == false
+        @test isoperket(a4) == false
+        @test isoperbra(a4) == false
+        @test iscached(a4) == true
+        @test isconstant(a4) == true
+        @test isunitary(a4) == false
+        @test a4.dims == [[100], [10]]
         @test_throws DimensionMismatch Qobj(a, dims = 2)
+        @test_throws DimensionMismatch Qobj(a4.data, dims = 2)
+        @test_throws DimensionMismatch Qobj(a4.data, dims = ((100,), (2,)))
     end
 
     @testset "OperatorKet and OperatorBra" begin
@@ -235,6 +261,16 @@
         @test opstring ==
               "\nQuantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
+        # GeneralDimensions
+        Gop = tensor(a, ψ)
+        opstring = sprint((t, s) -> show(t, "text/plain", s), Gop)
+        datastring = sprint((t, s) -> show(t, "text/plain", s), Gop.data)
+        Gop_dims = [[N, N], [N, 1]]
+        Gop_size = size(Gop)
+        Gop_isherm = isherm(Gop)
+        @test opstring ==
+              "\nQuantum Object:   type=Operator   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
+
         a = spre(a)
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
         datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
@@ -310,24 +346,29 @@
         for T in [ComplexF32, ComplexF64]
             N = 4
             a = rand(T, N)
-            @inferred QuantumObject{typeof(a),KetQuantumObject} Qobj(a)
+            @inferred QuantumObject{typeof(a),KetQuantumObject,Dimensions{1}} Qobj(a)
             for type in [Ket, OperatorKet]
                 @inferred Qobj(a, type = type)
             end
 
-            UnionType =
-                Union{QuantumObject{Matrix{T},BraQuantumObject,1},QuantumObject{Matrix{T},OperatorQuantumObject,1}}
+            UnionType = Union{
+                QuantumObject{Matrix{T},BraQuantumObject,Dimensions{1,Tuple{Space}}},
+                QuantumObject{Matrix{T},OperatorQuantumObject,Dimensions{1,Tuple{Space}}},
+            }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
             for type in [Bra, OperatorBra]
                 @inferred Qobj(a, type = type)
             end
 
+            UnionType2 = Union{
+                QuantumObject{Matrix{T},OperatorQuantumObject,GeneralDimensions{1,Tuple{Space},Tuple{Space}}},
+                QuantumObject{Matrix{T},OperatorQuantumObject,Dimensions{1,Tuple{Space}}},
+            }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)
-            for type in [Operator, SuperOperator]
-                @inferred Qobj(a, type = type)
-            end
+            @inferred UnionType2 Qobj(a, type = Operator)
+            @inferred Qobj(a, type = SuperOperator)
         end
 
         @testset "Math Operation" begin
@@ -629,8 +670,26 @@
         ρ = kron(ρ1, ρ2)
         ρ1_ptr = ptrace(ρ, 1)
         ρ2_ptr = ptrace(ρ, 2)
-        @test ρ1.data ≈ ρ1_ptr.data atol = 1e-10
-        @test ρ2.data ≈ ρ2_ptr.data atol = 1e-10
+
+        # use GeneralDimensions to do partial trace
+        ρ1_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((2, 1), (2, 1)))
+        II = qeye(2)
+        basis_list = [basis(2, i) for i in 0:1]
+        for b in basis_list
+            ρ1_compound += tensor(II, b') * ρ * tensor(II, b)
+        end
+        ρ2_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((1, 2), (1, 2)))
+        for b in basis_list
+            ρ2_compound += tensor(b', II) * ρ * tensor(b, II)
+        end
+        @test ρ1.data ≈ ρ1_ptr.data ≈ ρ1_compound.data
+        @test ρ2.data ≈ ρ2_ptr.data ≈ ρ2_compound.data
+        @test ρ1.dims != ρ1_compound.dims
+        @test ρ2.dims != ρ2_compound.dims
+        ρ1_compound = ptrace(ρ1_compound, 1)
+        ρ2_compound = ptrace(ρ2_compound, 2)
+        @test ρ1.dims == ρ1_compound.dims
+        @test ρ2.dims == ρ2_compound.dims
 
         ψlist = [rand_ket(2), rand_ket(3), rand_ket(4), rand_ket(5)]
         ρlist = [rand_dm(2), rand_dm(3), rand_dm(4), rand_dm(5)]
@@ -683,6 +742,7 @@
         @test_throws ArgumentError ptrace(ρtotal, (0, 2))
         @test_throws ArgumentError ptrace(ρtotal, (2, 5))
         @test_throws ArgumentError ptrace(ρtotal, (2, 2, 3))
+        @test_throws ArgumentError ptrace(Qobj(zeros(ComplexF64, 3, 2)), 1) # invalid GeneralDimensions
 
         @testset "Type Inference (ptrace)" begin
             @inferred ptrace(ρ, 1)
@@ -695,6 +755,7 @@
     end
 
     @testset "permute" begin
+        # standard Dimensions
         ket_a = Qobj(rand(ComplexF64, 2))
         ket_b = Qobj(rand(ComplexF64, 3))
         ket_c = Qobj(rand(ComplexF64, 4))
@@ -729,10 +790,22 @@
         @test_throws ArgumentError permute(op_bdca, wrong_order1)
         @test_throws ArgumentError permute(op_bdca, wrong_order2)
 
+        # GeneralDimensions
+        Gop_d = Qobj(rand(ComplexF64, 5, 6))
+        compound_bdca = permute(tensor(ket_a, op_b, bra_c, Gop_d), (2, 4, 3, 1))
+        compound_dacb = permute(tensor(ket_a, op_b, bra_c, Gop_d), (4, 1, 3, 2))
+        @test compound_bdca ≈ tensor(op_b, Gop_d, bra_c, ket_a)
+        @test compound_dacb ≈ tensor(Gop_d, ket_a, bra_c, op_b)
+        @test compound_bdca.dims == [[3, 5, 1, 2], [3, 6, 4, 1]]
+        @test compound_dacb.dims == [[5, 2, 1, 3], [6, 1, 4, 3]]
+        @test isoper(compound_bdca)
+        @test isoper(compound_dacb)
+
         @testset "Type Inference (permute)" begin
             @inferred permute(ket_bdca, (2, 4, 3, 1))
             @inferred permute(bra_bdca, (2, 4, 3, 1))
             @inferred permute(op_bdca, (2, 4, 3, 1))
+            @inferred permute(compound_bdca, (2, 4, 3, 1))
         end
     end
 end

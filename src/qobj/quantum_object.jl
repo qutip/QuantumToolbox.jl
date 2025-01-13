@@ -9,13 +9,16 @@ It also implements the fundamental functions in Julia standard library:
 export QuantumObject
 
 @doc raw"""
-    struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N}
-        data::MT
+    struct QuantumObject{DataType<:AbstractArray,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <: AbstractQuantumObject{DataType,ObjType,DimType}
+        data::DataType
         type::ObjType
-        dims::SVector{N, Int}
+        dimensions::DimType
     end
 
-Julia struct representing any quantum objects.
+Julia structure representing any time-independent quantum objects. For time-dependent cases, see [`QuantumObjectEvolution`](@ref).
+
+!!! note "`dims` property"
+    For a given `H::QuantumObject`, `H.dims` or `getproperty(H, :dims)` returns its `dimensions` in the type of integer-vector.
 
 # Examples
 
@@ -32,27 +35,30 @@ Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
 
 julia> a isa QuantumObject
 true
+
+julia> a.dims
+1-element SVector{1, Int64} with indices SOneTo(1):
+ 20
+
+julia> a.dimensions
+Dimensions{1, Tuple{Space}}((Space(20),))
 ```
 """
-struct QuantumObject{MT<:AbstractArray,ObjType<:QuantumObjectType,N} <: AbstractQuantumObject{MT,ObjType,N}
-    data::MT
+struct QuantumObject{DataType<:AbstractArray,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <:
+       AbstractQuantumObject{DataType,ObjType,DimType}
+    data::DataType
     type::ObjType
-    dims::SVector{N,Int}
+    dimensions::DimType
 
     function QuantumObject(data::MT, type::ObjType, dims) where {MT<:AbstractArray,ObjType<:QuantumObjectType}
-        _check_dims(dims)
+        dimensions = _gen_dimensions(dims)
 
         _size = _get_size(data)
-        _check_QuantumObject(type, dims, _size[1], _size[2])
+        _check_QuantumObject(type, dimensions, _size[1], _size[2])
 
-        N = length(dims)
-
-        return new{MT,ObjType,N}(data, type, SVector{N,Int}(dims))
+        return new{MT,ObjType,typeof(dimensions)}(data, type, dimensions)
     end
 end
-
-QuantumObject(A::AbstractArray, type::ObjType, dims::Integer) where {ObjType<:QuantumObjectType} =
-    QuantumObject(A, type, SVector{1,Int}(dims))
 
 @doc raw"""
     Qobj(A::AbstractArray; type = nothing, dims = nothing)
@@ -81,10 +87,14 @@ function QuantumObject(
     end
 
     if dims isa Nothing
-        if type isa OperatorQuantumObject || type isa BraQuantumObject
-            dims = SVector{1,Int}(_size[2])
+        if type isa BraQuantumObject
+            dims = Dimensions(_size[2])
+        elseif type isa OperatorQuantumObject
+            dims =
+                (_size[1] == _size[2]) ? Dimensions(_size[1]) :
+                GeneralDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
         elseif type isa SuperOperatorQuantumObject || type isa OperatorBraQuantumObject
-            dims = SVector{1,Int}(isqrt(_size[2]))
+            dims = Dimensions(isqrt(_size[2]))
         end
     end
 
@@ -105,9 +115,9 @@ function QuantumObject(
     if dims isa Nothing
         _size = _get_size(A)
         if type isa KetQuantumObject
-            dims = SVector{1,Int}(_size[1])
+            dims = Dimensions(_size[1])
         elseif type isa OperatorKetQuantumObject
-            dims = SVector{1,Int}(isqrt(_size[1]))
+            dims = Dimensions(isqrt(_size[1]))
         end
     end
 
@@ -125,11 +135,12 @@ end
 function QuantumObject(
     A::QuantumObject{<:AbstractArray{T,N}};
     type::ObjType = A.type,
-    dims = A.dims,
+    dims = A.dimensions,
 ) where {T,N,ObjType<:QuantumObjectType}
     _size = N == 1 ? (length(A), 1) : size(A)
-    _check_QuantumObject(type, dims, _size[1], _size[2])
-    return QuantumObject(copy(A.data), type, dims)
+    dimensions = _gen_dimensions(dims)
+    _check_QuantumObject(type, dimensions, _size[1], _size[2])
+    return QuantumObject(copy(A.data), type, dimensions)
 end
 
 function Base.show(
@@ -146,7 +157,15 @@ function Base.show(
     },
 }
     op_data = QO.data
-    println(io, "\nQuantum Object:   type=", QO.type, "   dims=", QO.dims, "   size=", size(op_data))
+    println(
+        io,
+        "\nQuantum Object:   type=",
+        QO.type,
+        "   dims=",
+        _get_dims_string(QO.dimensions),
+        "   size=",
+        size(op_data),
+    )
     return show(io, MIME("text/plain"), op_data)
 end
 
@@ -157,7 +176,7 @@ function Base.show(io::IO, QO::QuantumObject)
         "\nQuantum Object:   type=",
         QO.type,
         "   dims=",
-        QO.dims,
+        _get_dims_string(QO.dimensions),
         "   size=",
         size(op_data),
         "   ishermitian=",
@@ -166,15 +185,16 @@ function Base.show(io::IO, QO::QuantumObject)
     return show(io, MIME("text/plain"), op_data)
 end
 
-Base.real(x::QuantumObject) = QuantumObject(real(x.data), x.type, x.dims)
-Base.imag(x::QuantumObject) = QuantumObject(imag(x.data), x.type, x.dims)
+Base.real(x::QuantumObject) = QuantumObject(real(x.data), x.type, x.dimensions)
+Base.imag(x::QuantumObject) = QuantumObject(imag(x.data), x.type, x.dimensions)
 
-SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T}}) where {T} = QuantumObject(sparse(A.data), A.type, A.dims)
+SparseArrays.sparse(A::QuantumObject{<:AbstractArray{T}}) where {T} =
+    QuantumObject(sparse(A.data), A.type, A.dimensions)
 SparseArrays.nnz(A::QuantumObject{<:AbstractSparseArray}) = nnz(A.data)
 SparseArrays.nonzeros(A::QuantumObject{<:AbstractSparseArray}) = nonzeros(A.data)
 SparseArrays.rowvals(A::QuantumObject{<:AbstractSparseArray}) = rowvals(A.data)
 SparseArrays.droptol!(A::QuantumObject{<:AbstractSparseArray}, tol::Real) = (droptol!(A.data, tol); return A)
-SparseArrays.dropzeros(A::QuantumObject{<:AbstractSparseArray}) = QuantumObject(dropzeros(A.data), A.type, A.dims)
+SparseArrays.dropzeros(A::QuantumObject{<:AbstractSparseArray}) = QuantumObject(dropzeros(A.data), A.type, A.dimensions)
 SparseArrays.dropzeros!(A::QuantumObject{<:AbstractSparseArray}) = (dropzeros!(A.data); return A)
 
 @doc raw"""
@@ -191,7 +211,7 @@ SciMLOperators.cache_operator(
     L::AbstractQuantumObject{DT,OpType},
     u::AbstractVector,
 ) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    get_typename_wrapper(L)(cache_operator(L.data, sparse_to_dense(similar(u))), L.type, L.dims)
+    get_typename_wrapper(L)(cache_operator(L.data, sparse_to_dense(similar(u))), L.type, L.dimensions)
 
 function SciMLOperators.cache_operator(
     L::AbstractQuantumObject{DT1,OpType},
@@ -202,7 +222,7 @@ function SciMLOperators.cache_operator(
     OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     SType<:Union{KetQuantumObject,OperatorKetQuantumObject},
 }
-    check_dims(L, u)
+    check_dimensions(L, u)
 
     if isoper(L) && isoperket(u)
         throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))
@@ -213,14 +233,17 @@ function SciMLOperators.cache_operator(
 end
 
 # data type conversions
-Base.Vector(A::QuantumObject{<:AbstractVector}) = QuantumObject(Vector(A.data), A.type, A.dims)
-Base.Vector{T}(A::QuantumObject{<:AbstractVector}) where {T<:Number} = QuantumObject(Vector{T}(A.data), A.type, A.dims)
-Base.Matrix(A::QuantumObject{<:AbstractMatrix}) = QuantumObject(Matrix(A.data), A.type, A.dims)
-Base.Matrix{T}(A::QuantumObject{<:AbstractMatrix}) where {T<:Number} = QuantumObject(Matrix{T}(A.data), A.type, A.dims)
-SparseArrays.SparseVector(A::QuantumObject{<:AbstractVector}) = QuantumObject(SparseVector(A.data), A.type, A.dims)
+Base.Vector(A::QuantumObject{<:AbstractVector}) = QuantumObject(Vector(A.data), A.type, A.dimensions)
+Base.Vector{T}(A::QuantumObject{<:AbstractVector}) where {T<:Number} =
+    QuantumObject(Vector{T}(A.data), A.type, A.dimensions)
+Base.Matrix(A::QuantumObject{<:AbstractMatrix}) = QuantumObject(Matrix(A.data), A.type, A.dimensions)
+Base.Matrix{T}(A::QuantumObject{<:AbstractMatrix}) where {T<:Number} =
+    QuantumObject(Matrix{T}(A.data), A.type, A.dimensions)
+SparseArrays.SparseVector(A::QuantumObject{<:AbstractVector}) =
+    QuantumObject(SparseVector(A.data), A.type, A.dimensions)
 SparseArrays.SparseVector{T}(A::QuantumObject{<:SparseVector}) where {T<:Number} =
-    QuantumObject(SparseVector{T}(A.data), A.type, A.dims)
+    QuantumObject(SparseVector{T}(A.data), A.type, A.dimensions)
 SparseArrays.SparseMatrixCSC(A::QuantumObject{<:AbstractMatrix}) =
-    QuantumObject(SparseMatrixCSC(A.data), A.type, A.dims)
+    QuantumObject(SparseMatrixCSC(A.data), A.type, A.dimensions)
 SparseArrays.SparseMatrixCSC{T}(A::QuantumObject{<:SparseMatrixCSC}) where {T<:Number} =
-    QuantumObject(SparseMatrixCSC{T}(A.data), A.type, A.dims)
+    QuantumObject(SparseMatrixCSC{T}(A.data), A.type, A.dimensions)

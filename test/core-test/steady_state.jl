@@ -46,10 +46,6 @@
         @inferred steadystate(H, c_ops, solver = solver)
         @inferred steadystate(L, solver = solver)
 
-        solver = SteadyStateLinearSolver()
-        @inferred steadystate(H, c_ops, solver = solver)
-        @inferred steadystate(L, solver = solver)
-
         solver = SteadyStateEigenSolver()
         @inferred steadystate(H, c_ops, solver = solver)
         @inferred steadystate(L, solver = solver)

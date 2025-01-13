@@ -11,6 +11,9 @@ CurrentModule = QuantumToolbox
 ## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 
 ```@docs
+Space
+Dimensions
+GeneralDimensions
 AbstractQuantumObject
 BraQuantumObject
 Bra
@@ -73,7 +76,7 @@ LinearAlgebra.diag
 proj
 ptrace
 purity
-permute
+SparseArrays.permute
 tidyup
 tidyup!
 get_data

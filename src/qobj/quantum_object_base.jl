@@ -14,7 +14,7 @@ export QuantumObjectType,
 export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 
 @doc raw"""
-    abstract type AbstractQuantumObject{DataType,ObjType,N}
+    abstract type AbstractQuantumObject{DataType,ObjType,DimType}
 
 Abstract type for all quantum objects like [`QuantumObject`](@ref) and [`QuantumObjectEvolution`](@ref).
 
@@ -24,7 +24,7 @@ julia> sigmax() isa AbstractQuantumObject
 true
 ```
 """
-abstract type AbstractQuantumObject{DataType,ObjType,N} end
+abstract type AbstractQuantumObject{DataType,ObjType,DimType} end
 
 abstract type QuantumObjectType end
 
@@ -152,67 +152,137 @@ Returns the length of the matrix or vector corresponding to the [`AbstractQuantu
 Base.length(A::AbstractQuantumObject) = length(A.data)
 
 Base.isequal(A::AbstractQuantumObject, B::AbstractQuantumObject) =
-    isequal(A.type, B.type) && isequal(A.dims, B.dims) && isequal(A.data, B.data)
+    isequal(A.type, B.type) && isequal(A.dimensions, B.dimensions) && isequal(A.data, B.data)
 Base.isapprox(A::AbstractQuantumObject, B::AbstractQuantumObject; kwargs...) =
-    isequal(A.type, B.type) && isequal(A.dims, B.dims) && isapprox(A.data, B.data; kwargs...)
+    isequal(A.type, B.type) && isequal(A.dimensions, B.dimensions) && isapprox(A.data, B.data; kwargs...)
 Base.:(==)(A::AbstractQuantumObject, B::AbstractQuantumObject) =
-    (A.type == B.type) && (A.dims == B.dims) && (A.data == B.data)
+    (A.type == B.type) && (A.dimensions == B.dimensions) && (A.data == B.data)
 
-function check_dims(A::AbstractQuantumObject, B::AbstractQuantumObject)
-    A.dims != B.dims && throw(DimensionMismatch("The two quantum objects don't have the same Hilbert dimension."))
+function check_dimensions(dimensions_list::NTuple{N,AbstractDimensions}) where {N}
+    allequal(dimensions_list) ||
+        throw(DimensionMismatch("The quantum objects should have the same Hilbert `dimensions`."))
     return nothing
 end
+check_dimensions(Qobj_tuple::NTuple{N,AbstractQuantumObject}) where {N} =
+    check_dimensions(getfield.(Qobj_tuple, :dimensions))
+check_dimensions(A::AbstractQuantumObject...) = check_dimensions(A)
 
-function _check_dims(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N}
-    _non_static_array_warning("dims", dims)
-    return (all(>(0), dims) && length(dims) > 0) ||
-           throw(DomainError(dims, "The argument dims must be of non-zero length and contain only positive integers."))
-end
-_check_dims(dims::Any) = throw(
-    ArgumentError(
-        "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
+_check_QuantumObject(
+    type::ObjType,
+    dimensions::GeneralDimensions,
+    m::Int,
+    n::Int,
+) where {
+    ObjType<:Union{
+        KetQuantumObject,
+        BraQuantumObject,
+        SuperOperatorQuantumObject,
+        OperatorBraQuantumObject,
+        OperatorKetQuantumObject,
+    },
+} = throw(
+    DomainError(
+        _get_dims_string(dimensions),
+        "The given `dims` is not compatible with type = $type, should be a single list of integers.",
     ),
 )
 
-function _check_QuantumObject(type::KetQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::KetQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
-    (prod(dims) != m) && throw(DimensionMismatch("Ket with dims = $(dims) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != m) && throw(
+        DimensionMismatch("Ket with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
+    )
     return nothing
 end
 
-function _check_QuantumObject(type::BraQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::BraQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Bra"))
-    (prod(dims) != n) && throw(DimensionMismatch("Bra with dims = $(dims) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != n) && throw(
+        DimensionMismatch("Bra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
+    )
     return nothing
 end
 
-function _check_QuantumObject(type::OperatorQuantumObject, dims, m::Int, n::Int)
-    (m != n) && throw(DomainError((m, n), "The size of the array is not compatible with Operator"))
-    (prod(dims) != m) &&
-        throw(DimensionMismatch("Operator with dims = $(dims) does not fit the array size = $((m, n))."))
+function _check_QuantumObject(type::OperatorQuantumObject, dimensions::Dimensions, m::Int, n::Int)
+    L = prod(dimensions)
+    (L == m == n) || throw(
+        DimensionMismatch(
+            "Operator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
     return nothing
 end
 
-function _check_QuantumObject(type::SuperOperatorQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::OperatorQuantumObject, dimensions::GeneralDimensions, m::Int, n::Int)
+    ((m == 1) || (n == 1)) && throw(DomainError((m, n), "The size of the array is not compatible with Operator"))
+    ((prod(dimensions.to) != m) || (prod(dimensions.from) != n)) && throw(
+        DimensionMismatch(
+            "Operator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
+    return nothing
+end
+
+function _check_QuantumObject(type::SuperOperatorQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (m != n) && throw(DomainError((m, n), "The size of the array is not compatible with SuperOperator"))
-    (prod(dims) != sqrt(m)) &&
-        throw(DimensionMismatch("SuperOperator with dims = $(dims) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != sqrt(m)) && throw(
+        DimensionMismatch(
+            "SuperOperator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
     return nothing
 end
 
-function _check_QuantumObject(type::OperatorKetQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::OperatorKetQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorKet"))
-    (prod(dims) != sqrt(m)) &&
-        throw(DimensionMismatch("OperatorKet with dims = $(dims) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != sqrt(m)) && throw(
+        DimensionMismatch(
+            "OperatorKet with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
     return nothing
 end
 
-function _check_QuantumObject(type::OperatorBraQuantumObject, dims, m::Int, n::Int)
+function _check_QuantumObject(type::OperatorBraQuantumObject, dimensions::Dimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorBra"))
-    (prod(dims) != sqrt(n)) &&
-        throw(DimensionMismatch("OperatorBra with dims = $(dims) does not fit the array size = $((m, n))."))
+    (prod(dimensions) != sqrt(n)) && throw(
+        DimensionMismatch(
+            "OperatorBra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+        ),
+    )
     return nothing
 end
+
+function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
+    # a comment here to avoid bad render by JuliaFormatter
+    if key === :dims
+        return dimensions_to_dims(getfield(A, :dimensions))
+    else
+        return getfield(A, key)
+    end
+end
+
+# this returns `to` in GeneralDimensions representation
+get_dimensions_to(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions{N}}) where {DT,N} = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions{N}}) where {DT,N} = space_one_list(N)
+get_dimensions_to(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:Dimensions{N}}) where {DT,N} = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:GeneralDimensions{N}}) where {DT,N} =
+    A.dimensions.to
+get_dimensions_to(
+    A::AbstractQuantumObject{DT,ObjType,<:Dimensions{N}},
+) where {DT,ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},N} =
+    A.dimensions.to
+
+# this returns `from` in GeneralDimensions representation
+get_dimensions_from(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions{N}}) where {DT,N} = space_one_list(N)
+get_dimensions_from(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions{N}}) where {DT,N} = A.dimensions.to
+get_dimensions_from(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:Dimensions{N}}) where {DT,N} = A.dimensions.to
+get_dimensions_from(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:GeneralDimensions{N}}) where {DT,N} =
+    A.dimensions.from
+get_dimensions_from(
+    A::AbstractQuantumObject{DT,ObjType,<:Dimensions{N}},
+) where {DT,ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},N} =
+    A.dimensions.to
 
 # functions for getting Float or Complex element type
 _FType(A::AbstractQuantumObject) = _FType(eltype(A))
