@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change the structure of block diagonalization functions, using `BlockDiagonalForm` struct and changing the function name from `bdf` to `block_diagonal_form`. ([#349])
 - Add **GPUArrays** compatibility for `ptrace` function, by using **KernelAbstractions.jl**. ([#350])
 - Introduce `Space`, `Dimensions`, `GeneralDimensions` structures to support wider definitions and operations of `Qobj/QobjEvo`, and potential functionalities in the future. ([#271], [#353], [#360])
+- Improve lazy tensor warning for `SciMLOperators`. ([#370])
 
 ## [v0.24.0]
 Release date: 2024-12-13
@@ -75,3 +76,4 @@ Release date: 2024-11-13
 [#350]: https://github.com/qutip/QuantumToolbox.jl/issues/350
 [#353]: https://github.com/qutip/QuantumToolbox.jl/issues/353
 [#360]: https://github.com/qutip/QuantumToolbox.jl/issues/360
+[#370]: https://github.com/qutip/QuantumToolbox.jl/issues/370
