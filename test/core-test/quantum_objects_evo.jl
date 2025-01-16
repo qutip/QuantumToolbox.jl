@@ -160,25 +160,19 @@
             @inferred a * a
             @inferred a * a'
 
-            # TODO: kron is currently not supported
-            # @inferred kron(a)
-            # @inferred kron(a, σx)
-            # @inferred kron(a, eye(2))
+            @inferred kron(a)
+            @test_logs (:warn,) @inferred kron(a, σx)
+            @test_logs (:warn,) @inferred kron(a, eye(2))
+            @test_logs (:warn,) (:warn,) @inferred kron(a, eye(2), eye(2))
         end
     end
 
-    # TODO: tensor is currently not supported
-    # @testset "tensor" begin
-    #     σx = sigmax()
-    #     X3 = kron(σx, σx, σx)
-    #     @test tensor(σx) == kron(σx)
-    #     @test tensor(fill(σx, 3)...) == X3
-    #     X_warn = @test_logs (
-    #         :warn,
-    #         "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead.",
-    #     ) tensor(fill(σx, 3))
-    #     @test X_warn == X3
-    # end
+    @testset "tensor" begin
+        σx = QobjEvo(sigmax())
+        X3 = @test_logs (:warn,) (:warn,) tensor(σx, σx, σx)
+        X_warn = @test_logs (:warn,) (:warn,) (:warn,) tensor(fill(σx, 3))
+        @test X_warn(0) == X3(0) == tensor(sigmax(), sigmax(), sigmax())
+    end
 
     @testset "Time Dependent Operators and SuperOperators" begin
         N = 10

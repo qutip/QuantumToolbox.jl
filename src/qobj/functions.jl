@@ -184,6 +184,7 @@ function LinearAlgebra.kron(
     B::AbstractQuantumObject{DT2,OpType,<:Dimensions},
 ) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
     QType = promote_op_type(A, B)
+    _lazy_tensor_warning(A.data, B.data)
     return QType(kron(A.data, B.data), A.type, Dimensions((A.dimensions.to..., B.dimensions.to...)))
 end
 
@@ -197,6 +198,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
                     B::AbstractQuantumObject{DT2,OperatorQuantumObject,<:$BDimType},
                 ) where {DT1,DT2}
                     QType = promote_op_type(A, B)
+                    _lazy_tensor_warning(A.data, B.data)
                     return QType(
                         kron(A.data, B.data),
                         Operator,
@@ -221,6 +223,7 @@ for AOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
                     B::AbstractQuantumObject{DT2,$BOpType},
                 ) where {DT1,DT2}
                     QType = promote_op_type(A, B)
+                    _lazy_tensor_warning(A.data, B.data)
                     return QType(
                         kron(A.data, B.data),
                         Operator,
