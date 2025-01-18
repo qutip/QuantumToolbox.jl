@@ -153,8 +153,21 @@ _non_static_array_warning(argname, arg::AbstractVector{T}) where {T} =
           join(arg, ", ") *
           ")` instead of `$argname = $arg`." maxlog = 1
 
-_lazy_tensor_warning(func_name::String, data::AbstractSciMLOperator) =
-    @warn "The function `$func_name` uses lazy tensor (which can hurt performance) for data type: $(get_typename_wrapper(data))"
+# lazy tensor warning
+for AType in (:AbstractArray, :AbstractSciMLOperator)
+    for BType in (:AbstractArray, :AbstractSciMLOperator)
+        if AType == BType == :AbstractArray
+            @eval begin
+                _lazy_tensor_warning(::$AType, ::$BType) = nothing
+            end
+        else
+            @eval begin
+                _lazy_tensor_warning(A::$AType, B::$BType) =
+                    @warn "using lazy tensor (which can hurt performance) between data types: $(get_typename_wrapper(A)) and $(get_typename_wrapper(B))"
+            end
+        end
+    end
+end
 
 # functions for getting Float or Complex element type
 _FType(::AbstractArray{T}) where {T<:Number} = _FType(T)
