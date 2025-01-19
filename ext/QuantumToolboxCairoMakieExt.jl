@@ -6,7 +6,7 @@ using CairoMakie: Axis, Axis3, Colorbar, Figure, GridLayout, heatmap!, surface!,
 @doc raw"""
     plot_wigner(
         library::Val{:CairoMakie},
-        state::QuantumObject{DT,OpType};
+        state::QuantumObject{OpType};
         xvec::Union{Nothing,AbstractVector} = nothing,
         yvec::Union{Nothing,AbstractVector} = nothing,
         g::Real = √2,
@@ -15,7 +15,7 @@ using CairoMakie: Axis, Axis3, Colorbar, Figure, GridLayout, heatmap!, surface!,
         location::Union{GridPosition,Nothing} = nothing,
         colorbar::Bool = false,
         kwargs...
-    ) where {DT,OpType}
+    ) where {OpType}
 
 Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) of `state` using the [`CairoMakie`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) plotting library.
 
@@ -44,7 +44,7 @@ Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wi
 """
 function QuantumToolbox.plot_wigner(
     library::Val{:CairoMakie},
-    state::QuantumObject{DT,OpType};
+    state::QuantumObject{OpType};
     xvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
     yvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
     g::Real = √2,
@@ -53,7 +53,7 @@ function QuantumToolbox.plot_wigner(
     location::Union{GridPosition,Nothing} = nothing,
     colorbar::Bool = false,
     kwargs...,
-) where {DT,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     QuantumToolbox.getVal(projection) == :two_dim ||
         QuantumToolbox.getVal(projection) == :three_dim ||
         throw(ArgumentError("Unsupported projection: $projection"))
@@ -74,7 +74,7 @@ end
 
 function _plot_wigner(
     ::Val{:CairoMakie},
-    state::QuantumObject{DT,OpType},
+    state::QuantumObject{OpType},
     xvec::AbstractVector,
     yvec::AbstractVector,
     projection::Val{:two_dim},
@@ -107,7 +107,7 @@ end
 
 function _plot_wigner(
     ::Val{:CairoMakie},
-    state::QuantumObject{DT,OpType},
+    state::QuantumObject{OpType},
     xvec::AbstractVector,
     yvec::AbstractVector,
     projection::Val{:three_dim},

@@ -90,8 +90,8 @@ _ScalarOperator_e2_2(op, f = +) =
 
 @doc raw"""
     ssesolveProblem(
-        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{DT2,KetQuantumObject},
+        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{KetQuantumObject},
         tlist::AbstractVector,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -146,8 +146,8 @@ Above, `C_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener in
 - `prob`: The `SDEProblem` for the Stochastic Schrödinger time evolution of the system.
 """
 function ssesolveProblem(
-    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{DT2,KetQuantumObject},
+    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -155,7 +155,7 @@ function ssesolveProblem(
     rng::AbstractRNG = default_rng(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {DT1,DT2}
+)
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -204,8 +204,8 @@ end
 
 @doc raw"""
     ssesolveEnsembleProblem(
-        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{DT2,KetQuantumObject},
+        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{KetQuantumObject},
         tlist::AbstractVector,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -269,8 +269,8 @@ Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener i
 - `prob::EnsembleProblem with SDEProblem`: The Ensemble SDEProblem for the Stochastic Shrödinger time evolution.
 """
 function ssesolveEnsembleProblem(
-    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{DT2,KetQuantumObject},
+    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -282,7 +282,7 @@ function ssesolveEnsembleProblem(
     output_func::Function = _ssesolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {DT1,DT2}
+)
     progr = ProgressBar(ntraj, enable = getVal(progress_bar))
     if ensemble_method isa EnsembleDistributed
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
@@ -324,8 +324,8 @@ end
 
 @doc raw"""
     ssesolve(
-        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{DT2,KetQuantumObject},
+        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{KetQuantumObject},
         tlist::AbstractVector,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::StochasticDiffEqAlgorithm = SRA1(),
@@ -394,8 +394,8 @@ Above, `C_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener in
 - `sol::TimeEvolutionSSESol`: The solution of the time evolution. See also [`TimeEvolutionSSESol`](@ref).
 """
 function ssesolve(
-    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{DT2,KetQuantumObject},
+    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{KetQuantumObject},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
@@ -408,7 +408,7 @@ function ssesolve(
     output_func::Function = _ssesolve_dispatch_output_func(ensemble_method),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {DT1,DT2}
+)
     ens_prob = ssesolveEnsembleProblem(
         H,
         ψ0,

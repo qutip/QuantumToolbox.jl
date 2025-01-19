@@ -346,14 +346,14 @@
         for T in [ComplexF32, ComplexF64]
             N = 4
             a = rand(T, N)
-            @inferred QuantumObject{typeof(a),KetQuantumObject,Dimensions{1}} Qobj(a)
+            @inferred QuantumObject{KetQuantumObject,Dimensions{1},typeof(a)} Qobj(a)
             for type in [Ket, OperatorKet]
                 @inferred Qobj(a, type = type)
             end
 
             UnionType = Union{
-                QuantumObject{Matrix{T},BraQuantumObject,Dimensions{1,Tuple{Space}}},
-                QuantumObject{Matrix{T},OperatorQuantumObject,Dimensions{1,Tuple{Space}}},
+                QuantumObject{BraQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{OperatorQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
@@ -362,8 +362,8 @@
             end
 
             UnionType2 = Union{
-                QuantumObject{Matrix{T},OperatorQuantumObject,GeneralDimensions{1,Tuple{Space},Tuple{Space}}},
-                QuantumObject{Matrix{T},OperatorQuantumObject,Dimensions{1,Tuple{Space}}},
+                QuantumObject{OperatorQuantumObject,GeneralDimensions{1,Tuple{Space},Tuple{Space}},Matrix{T}},
+                QuantumObject{OperatorQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
             }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)

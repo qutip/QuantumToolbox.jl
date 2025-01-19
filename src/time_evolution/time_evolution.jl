@@ -215,29 +215,26 @@ ContinuousLindbladJumpCallback(; interp_points::Int = 10) = ContinuousLindbladJu
 #######################################
 
 function liouvillian_floquet(
-    L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
-    Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
+    L₀::QuantumObject{SuperOperatorQuantumObject},
+    Lₚ::QuantumObject{SuperOperatorQuantumObject},
+    Lₘ::QuantumObject{SuperOperatorQuantumObject},
     ω::Real;
     n_max::Int = 3,
     tol::Real = 1e-15,
-) where {T1,T2,T3}
+)
     check_dimensions(L₀, Lₚ, Lₘ)
     return _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, n_max, tol)
 end
 
 function liouvillian_floquet(
-    H::QuantumObject{<:AbstractArray{T1},OpType1},
-    Hₚ::QuantumObject{<:AbstractArray{T2},OpType2},
-    Hₘ::QuantumObject{<:AbstractArray{T3},OpType3},
+    H::QuantumObject{OpType1},
+    Hₚ::QuantumObject{OpType2},
+    Hₘ::QuantumObject{OpType3},
     ω::Real,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     n_max::Int = 3,
     tol::Real = 1e-15,
 ) where {
-    T1,
-    T2,
-    T3,
     OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
@@ -254,13 +251,13 @@ Constructs the generalized Liouvillian for a system coupled to a bath of harmoni
 See, e.g., Settineri, Alessio, et al. "Dissipation and thermal noise in hybrid quantum systems in the ultrastrong-coupling regime." Physical Review A 98.5 (2018): 053834.
 """
 function liouvillian_generalized(
-    H::QuantumObject{MT,OperatorQuantumObject},
+    H::QuantumObject{OperatorQuantumObject},
     fields::Vector,
     T_list::Vector{<:Real};
     N_trunc::Union{Int,Nothing} = nothing,
     tol::Real = 1e-12,
     σ_filter::Union{Nothing,Real} = nothing,
-) where {MT<:AbstractMatrix}
+)
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
     dims = (N_trunc isa Nothing) ? H.dimensions : SVector(N_trunc)
@@ -317,13 +314,13 @@ function liouvillian_generalized(
 end
 
 function _liouvillian_floquet(
-    L₀::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    Lₚ::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
-    Lₘ::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
+    L₀::QuantumObject{SuperOperatorQuantumObject},
+    Lₚ::QuantumObject{SuperOperatorQuantumObject},
+    Lₘ::QuantumObject{SuperOperatorQuantumObject},
     ω::Real,
     n_max::Int,
     tol::Real,
-) where {T1,T2,T3}
+)
     L_0 = L₀.data
     L_p = Lₚ.data
     L_m = Lₘ.data

@@ -11,7 +11,7 @@ export isunitary
 Checks if the [`QuantumObject`](@ref) `A` is a [`BraQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isbra(A::QuantumObject) = isbra(typeof(A))
-isbra(::Type{QuantumObject{DT,BraQuantumObject,N}}) where {DT,N} = true
+isbra(::Type{QuantumObject{BraQuantumObject,N}}) where {N} = true
 isbra(A) = false # default case
 
 @doc raw"""
@@ -20,7 +20,7 @@ isbra(A) = false # default case
 Checks if the [`QuantumObject`](@ref) `A` is a [`KetQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isket(A::QuantumObject) = isket(typeof(A))
-isket(::Type{QuantumObject{DT,KetQuantumObject,N}}) where {DT,N} = true
+isket(::Type{QuantumObject{KetQuantumObject,N}}) where {N} = true
 isket(A) = false # default case
 
 @doc raw"""
@@ -29,7 +29,7 @@ isket(A) = false # default case
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`OperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isoper(A::AbstractQuantumObject) = isoper(typeof(A))
-isoper(::Type{<:AbstractQuantumObject{DT,OperatorQuantumObject,N}}) where {DT,N} = true
+isoper(::Type{<:AbstractQuantumObject{OperatorQuantumObject,N}}) where {N} = true
 isoper(A) = false # default case
 
 @doc raw"""
@@ -38,7 +38,7 @@ isoper(A) = false # default case
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBraQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isoperbra(A::QuantumObject) = isoperbra(typeof(A))
-isoperbra(::Type{QuantumObject{DT,OperatorBraQuantumObject,N}}) where {DT,N} = true
+isoperbra(::Type{QuantumObject{OperatorBraQuantumObject,N}}) where {N} = true
 isoperbra(A) = false # default case
 
 @doc raw"""
@@ -47,7 +47,7 @@ isoperbra(A) = false # default case
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKetQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isoperket(A::QuantumObject) = isoperket(typeof(A))
-isoperket(::Type{QuantumObject{DT,OperatorKetQuantumObject,N}}) where {DT,N} = true
+isoperket(::Type{QuantumObject{OperatorKetQuantumObject,N}}) where {N} = true
 isoperket(A) = false # default case
 
 @doc raw"""
@@ -56,7 +56,7 @@ isoperket(A) = false # default case
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 issuper(A::AbstractQuantumObject) = issuper(typeof(A))
-issuper(::Type{<:AbstractQuantumObject{DT,SuperOperatorQuantumObject,N}}) where {DT,N} = true
+issuper(::Type{<:AbstractQuantumObject{SuperOperatorQuantumObject,N}}) where {N} = true
 issuper(A) = false # default case
 
 @doc raw"""
@@ -91,8 +91,7 @@ Test whether the [`QuantumObject`](@ref) ``U`` is unitary operator. This functio
 
 Note that all the keyword arguments will be passed to `Base.isapprox`.
 """
-isunitary(U::QuantumObject{<:AbstractArray{T}}; kwargs...) where {T} =
-    isoper(U) ? isapprox(U.data * U.data', I(size(U, 1)); kwargs...) : false
+isunitary(U::QuantumObject; kwargs...) = isoper(U) ? isapprox(U.data * U.data', I(size(U, 1)); kwargs...) : false
 
 @doc raw"""
     SciMLOperators.iscached(A::AbstractQuantumObject)

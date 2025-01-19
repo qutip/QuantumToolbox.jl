@@ -21,21 +21,16 @@ FFTCorrelation() = error(
 )
 
 correlation_3op_2t(
-    H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    H::QuantumObject{HOpType},
+    ψ0::QuantumObject{StateOpType},
     t_l::AbstractVector,
     τ_l::AbstractVector,
-    A::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T4},OperatorQuantumObject},
-    C::QuantumObject{<:AbstractArray{T5},OperatorQuantumObject},
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject},
+    C::QuantumObject{OperatorQuantumObject},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     kwargs...,
 ) where {
-    T1,
-    T2,
-    T3,
-    T4,
-    T5,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 } = error(
@@ -43,20 +38,15 @@ correlation_3op_2t(
 )
 
 correlation_3op_1t(
-    H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    H::QuantumObject{HOpType},
+    ψ0::QuantumObject{StateOpType},
     τ_l::AbstractVector,
-    A::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T4},OperatorQuantumObject},
-    C::QuantumObject{<:AbstractArray{T5},OperatorQuantumObject},
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject},
+    C::QuantumObject{OperatorQuantumObject},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     kwargs...,
 ) where {
-    T1,
-    T2,
-    T3,
-    T4,
-    T5,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 } = error(
@@ -64,20 +54,16 @@ correlation_3op_1t(
 )
 
 correlation_2op_2t(
-    H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    H::QuantumObject{HOpType},
+    ψ0::QuantumObject{StateOpType},
     t_l::AbstractVector,
     τ_l::AbstractVector,
-    A::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T4},OperatorQuantumObject},
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     reverse::Bool = false,
     kwargs...,
 ) where {
-    T1,
-    T2,
-    T3,
-    T4,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 } = error(
@@ -85,19 +71,15 @@ correlation_2op_2t(
 )
 
 correlation_2op_1t(
-    H::QuantumObject{<:AbstractArray{T1},HOpType},
-    ψ0::QuantumObject{<:AbstractArray{T2},StateOpType},
+    H::QuantumObject{HOpType},
+    ψ0::QuantumObject{StateOpType},
     τ_l::AbstractVector,
-    A::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T4},OperatorQuantumObject},
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     reverse::Bool = false,
     kwargs...,
 ) where {
-    T1,
-    T2,
-    T3,
-    T4,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 } = error(

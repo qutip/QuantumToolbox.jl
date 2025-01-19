@@ -59,7 +59,7 @@ Matrix square root of [`Operator`](@ref) type of [`QuantumObject`](@ref)
 
 Note that for other types of [`QuantumObject`](@ref) use `sprt(A)` instead.
 """
-sqrtm(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = sqrt(A)
+sqrtm(A::QuantumObject{OperatorQuantumObject}) = sqrt(A)
 
 @doc raw"""
     logm(A::QuantumObject)
@@ -68,9 +68,7 @@ Matrix logarithm of [`QuantumObject`](@ref)
 
 Note that this function is same as `log(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-logm(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = log(A)
+logm(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = log(A)
 
 @doc raw"""
     expm(A::QuantumObject)
@@ -79,9 +77,7 @@ Matrix exponential of [`QuantumObject`](@ref)
 
 Note that this function is same as `exp(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-expm(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = exp(A)
+expm(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = exp(A)
 
 @doc raw"""
     sinm(A::QuantumObject)
@@ -92,9 +88,7 @@ Matrix sine of [`QuantumObject`](@ref), defined as
 
 Note that this function is same as `sin(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-sinm(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = sin(A)
+sinm(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = sin(A)
 
 @doc raw"""
     cosm(A::QuantumObject)
@@ -105,6 +99,4 @@ Matrix cosine of [`QuantumObject`](@ref), defined as
 
 Note that this function is same as `cos(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-cosm(
-    A::QuantumObject{<:AbstractMatrix{T},ObjType},
-) where {T,ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = cos(A)
+cosm(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = cos(A)

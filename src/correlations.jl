@@ -24,21 +24,16 @@ Returns the two-times correlation function of three operators ``\hat{A}``, ``\ha
 If the initial state `ψ0` is given as `nothing`, then the [`steadystate`](@ref) will be used as the initial state. Note that this is only implemented if `H` is constant ([`QuantumObject`](@ref)).
 """
 function correlation_3op_2t(
-    H::AbstractQuantumObject{DataType,HOpType},
-    ψ0::Union{Nothing,QuantumObject{<:AbstractArray{T1},StateOpType}},
+    H::AbstractQuantumObject{HOpType},
+    ψ0::Union{Nothing,QuantumObject{StateOpType}},
     tlist::AbstractVector,
     τlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    C::QuantumObject{<:AbstractArray{T4},OperatorQuantumObject};
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject},
+    C::QuantumObject{OperatorQuantumObject};
     kwargs...,
 ) where {
-    DataType,
-    T1,
-    T2,
-    T3,
-    T4,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
@@ -79,20 +74,15 @@ Returns the one-time correlation function of three operators ``\hat{A}``, ``\hat
 If the initial state `ψ0` is given as `nothing`, then the [`steadystate`](@ref) will be used as the initial state. Note that this is only implemented if `H` is constant ([`QuantumObject`](@ref)).
 """
 function correlation_3op_1t(
-    H::AbstractQuantumObject{DataType,HOpType},
-    ψ0::Union{Nothing,QuantumObject{<:AbstractArray{T1},StateOpType}},
+    H::AbstractQuantumObject{HOpType},
+    ψ0::Union{Nothing,QuantumObject{StateOpType}},
     τlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
-    C::QuantumObject{<:AbstractArray{T4},OperatorQuantumObject};
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject},
+    C::QuantumObject{OperatorQuantumObject};
     kwargs...,
 ) where {
-    DataType,
-    T1,
-    T2,
-    T3,
-    T4,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
@@ -119,20 +109,16 @@ If the initial state `ψ0` is given as `nothing`, then the [`steadystate`](@ref)
 When `reverse=true`, the correlation function is calculated as ``\left\langle \hat{A}(t) \hat{B}(t + \tau) \right\rangle``.
 """
 function correlation_2op_2t(
-    H::AbstractQuantumObject{DataType,HOpType},
-    ψ0::Union{Nothing,QuantumObject{<:AbstractArray{T1},StateOpType}},
+    H::AbstractQuantumObject{HOpType},
+    ψ0::Union{Nothing,QuantumObject{StateOpType}},
     tlist::AbstractVector,
     τlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject};
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject};
     reverse::Bool = false,
     kwargs...,
 ) where {
-    DataType,
-    T1,
-    T2,
-    T3,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
@@ -163,19 +149,15 @@ If the initial state `ψ0` is given as `nothing`, then the [`steadystate`](@ref)
 When `reverse=true`, the correlation function is calculated as ``\left\langle \hat{A}(0) \hat{B}(\tau) \right\rangle``.
 """
 function correlation_2op_1t(
-    H::AbstractQuantumObject{DataType,HOpType},
-    ψ0::Union{Nothing,QuantumObject{<:AbstractArray{T1},StateOpType}},
+    H::AbstractQuantumObject{HOpType},
+    ψ0::Union{Nothing,QuantumObject{StateOpType}},
     τlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject};
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject};
     reverse::Bool = false,
     kwargs...,
 ) where {
-    DataType,
-    T1,
-    T2,
-    T3,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }

@@ -51,11 +51,8 @@ julia> entropy_vn(ρ, base=2)
 1.0
 ```
 """
-function entropy_vn(
-    ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject};
-    base::Int = 0,
-    tol::Real = 1e-15,
-) where {T}
+function entropy_vn(ρ::QuantumObject{OperatorQuantumObject}; base::Int = 0, tol::Real = 1e-15)
+    T = eltype(ρ)
     vals = eigenenergies(ρ)
     indexes = findall(x -> abs(x) > tol, vals)
     length(indexes) == 0 && return zero(real(T))
@@ -71,9 +68,9 @@ Calculates the entanglement by doing the partial trace of `QO`, selecting only t
 with the indices contained in the `sel` vector, and then using the Von Neumann entropy [`entropy_vn`](@ref).
 """
 function entanglement(
-    QO::QuantumObject{<:AbstractArray{T},OpType},
+    QO::QuantumObject{OpType},
     sel::Union{AbstractVector{Int},Tuple},
-) where {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     ψ = normalize(QO)
     ρ_tr = ptrace(ψ, sel)
     entropy = entropy_vn(ρ_tr)
@@ -90,11 +87,9 @@ Calculates the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) be
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
 tracedist(
-    ρ::QuantumObject{<:AbstractArray{T1},ObjType1},
-    σ::QuantumObject{<:AbstractArray{T2},ObjType2},
+    ρ::QuantumObject{ObjType1},
+    σ::QuantumObject{ObjType2},
 ) where {
-    T1,
-    T2,
     ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},
     ObjType2<:Union{KetQuantumObject,OperatorQuantumObject},
 } = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
@@ -109,23 +104,11 @@ Here, the definition is from Nielsen & Chuang, "Quantum Computation and Quantum 
 
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
-function fidelity(
-    ρ::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    σ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {T1,T2}
+function fidelity(ρ::QuantumObject{OperatorQuantumObject}, σ::QuantumObject{OperatorQuantumObject})
     sqrt_ρ = sqrt(ρ)
     eigval = abs.(eigvals(sqrt_ρ * σ * sqrt_ρ))
     return sum(sqrt, eigval)
 end
-fidelity(
-    ρ::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-) where {T1,T2} = sqrt(abs(expect(ρ, ψ)))
-fidelity(
-    ψ::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
-    σ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {T1,T2} = fidelity(σ, ψ)
-fidelity(
-    ψ::QuantumObject{<:AbstractArray{T1},KetQuantumObject},
-    ϕ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-) where {T1,T2} = abs(dot(ψ, ϕ))
+fidelity(ρ::QuantumObject{OperatorQuantumObject}, ψ::QuantumObject{KetQuantumObject}) = sqrt(abs(expect(ρ, ψ)))
+fidelity(ψ::QuantumObject{KetQuantumObject}, σ::QuantumObject{OperatorQuantumObject}) = fidelity(σ, ψ)
+fidelity(ψ::QuantumObject{KetQuantumObject}, ϕ::QuantumObject{KetQuantumObject}) = abs(dot(ψ, ϕ))

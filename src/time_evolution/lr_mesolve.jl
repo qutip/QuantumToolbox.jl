@@ -366,9 +366,9 @@ get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (
 
 @doc raw"""
     lr_mesolveProblem(
-        H::QuantumObject{DT1,OperatorQuantumObject},
-        z::AbstractArray{T2,2},
-        B::AbstractArray{T2,2},
+        H::QuantumObject{OperatorQuantumObject},
+        z::AbstractArray{T,2},
+        B::AbstractArray{T,2},
         tlist::AbstractVector,
         c_ops::Union{AbstractVector,Tuple}=();
         e_ops::Union{AbstractVector,Tuple}=(),
@@ -391,16 +391,16 @@ Formulates the ODEproblem for the low-rank time evolution of the system. The fun
 - `kwargs`: Additional keyword arguments.
 """
 function lr_mesolveProblem(
-    H::QuantumObject{DT1,OperatorQuantumObject},
-    z::AbstractArray{T2,2},
-    B::AbstractArray{T2,2},
+    H::QuantumObject{OperatorQuantumObject},
+    z::AbstractArray{T,2},
+    B::AbstractArray{T,2},
     tlist::AbstractVector,
     c_ops::Union{AbstractVector,Tuple} = ();
     e_ops::Union{AbstractVector,Tuple} = (),
     f_ops::Union{AbstractVector,Tuple} = (),
     opt::NamedTuple = lr_mesolve_options_default,
     kwargs...,
-) where {DT1,T2}
+) where {T}
     Hdims = H.dimensions
 
     # Formulation of problem
@@ -497,9 +497,9 @@ end
 
 @doc raw"""
     lr_mesolve(
-        H::QuantumObject{DT1,OperatorQuantumObject},
-        z::AbstractArray{T2,2},
-        B::AbstractArray{T2,2},
+        H::QuantumObject{OperatorQuantumObject},
+        z::AbstractArray{T,2},
+        B::AbstractArray{T,2},
         tlist::AbstractVector,
         c_ops::Union{AbstractVector,Tuple}=();
         e_ops::Union{AbstractVector,Tuple}=(),
@@ -522,7 +522,7 @@ Time evolution of an open quantum system using the low-rank master equation. For
 - `kwargs`: Additional keyword arguments.
 """
 function lr_mesolve(
-    H::QuantumObject{DT1,OperatorQuantumObject},
+    H::QuantumObject{OperatorQuantumObject},
     z::AbstractArray{T2,2},
     B::AbstractArray{T2,2},
     tlist::AbstractVector,
@@ -531,7 +531,7 @@ function lr_mesolve(
     f_ops::Union{AbstractVector,Tuple} = (),
     opt::NamedTuple = lr_mesolve_options_default,
     kwargs...,
-) where {DT1,T2}
+) where {T2}
     prob = lr_mesolveProblem(H, z, B, tlist, c_ops; e_ops = e_ops, f_ops = f_ops, opt = opt, kwargs...)
     return lr_mesolve(prob; kwargs...)
 end

@@ -45,7 +45,7 @@ julia> λ
   1.0 + 0.0im
 
 julia> ψ
-2-element Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject, Dimensions{1, Tuple{Space}}}}:
+2-element Vector{QuantumObject{KetQuantumObject, Dimensions{1, Tuple{Space}},Vector{ComplexF64}}}:
 
 Quantum Object:   type=Ket   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
@@ -273,7 +273,7 @@ Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi met
 - `EigsolveResult`: A struct containing the eigenvalues, the eigenvectors, and some information about the eigsolver
 """
 function eigsolve(
-    A::QuantumObject{<:AbstractMatrix};
+    A::QuantumObject;
     v0::Union{Nothing,AbstractVector} = nothing,
     sigma::Union{Nothing,Real} = nothing,
     k::Int = 1,
@@ -343,7 +343,7 @@ end
 
 @doc raw"""
     eigsolve_al(
-        H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
+        H::Union{AbstractQuantumObject{HOpType},Tuple},
         T::Real,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
@@ -382,7 +382,7 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - [1] Minganti, F., & Huybrechts, D. (2022). Arnoldi-Lindblad time evolution: Faster-than-the-clock algorithm for the spectrum of time-independent and Floquet open quantum systems. Quantum, 6, 649.
 """
 function eigsolve_al(
-    H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
+    H::Union{AbstractQuantumObject{HOpType},Tuple},
     T::Real,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
@@ -393,7 +393,7 @@ function eigsolve_al(
     maxiter::Int = 200,
     eigstol::Real = 1e-6,
     kwargs...,
-) where {DT1,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     prob =
         mesolveProblem(
@@ -408,7 +408,7 @@ function eigsolve_al(
 
     # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
 
-    Lmap = ArnoldiLindbladIntegratorMap(eltype(DT1), size(L_evo), integrator)
+    Lmap = ArnoldiLindbladIntegratorMap(eltype(H), size(L_evo), integrator)
 
     res = _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo.dimensions, k, krylovdim, maxiter = maxiter, tol = eigstol)
     # finish!(prog)
@@ -458,9 +458,10 @@ true
 ```
 """
 function LinearAlgebra.eigen(
-    A::QuantumObject{MT,OpType};
+    A::QuantumObject{OpType};
     kwargs...,
-) where {MT<:AbstractMatrix,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    MT = typeof(A.data)
     F = eigen(sparse_to_dense(A.data); kwargs...)
     # This fixes a type inference issue. But doesn't work for GPU arrays
     E::mat2vec(sparse_to_dense(MT)) = F.values
@@ -475,10 +476,9 @@ end
 Same as [`eigen(A::QuantumObject; kwargs...)`](@ref) but for only the eigenvalues.
 """
 LinearAlgebra.eigvals(
-    A::QuantumObject{<:AbstractArray{T},OpType};
+    A::QuantumObject{OpType};
     kwargs...,
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    eigvals(sparse_to_dense(A.data); kwargs...)
+) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigvals(sparse_to_dense(A.data); kwargs...)
 
 @doc raw"""
     eigenenergies(A::QuantumObject; sparse::Bool=false, kwargs...)
@@ -494,10 +494,10 @@ Calculate the eigenenergies
 - `::Vector{<:Number}`: a list of eigenvalues
 """
 function eigenenergies(
-    A::QuantumObject{<:AbstractArray{T},OpType};
+    A::QuantumObject{OpType};
     sparse::Bool = false,
     kwargs...,
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     if !sparse
         return eigvals(A; kwargs...)
     else
@@ -519,10 +519,10 @@ Calculate the eigenvalues and corresponding eigenvectors
 - `::EigsolveResult`: containing the eigenvalues, the eigenvectors, and some information from the solver. see also [`EigsolveResult`](@ref)
 """
 function eigenstates(
-    A::QuantumObject{<:AbstractArray{T},OpType};
+    A::QuantumObject{OpType};
     sparse::Bool = false,
     kwargs...,
-) where {T,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     if !sparse
         return eigen(A; kwargs...)
     else

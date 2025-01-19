@@ -73,11 +73,8 @@ Return the commutator (or `anti`-commutator) of the two [`QuantumObject`](@ref):
 
 Note that `A` and `B` must be [`Operator`](@ref)
 """
-commutator(
-    A::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject};
-    anti::Bool = false,
-) where {T1,T2} = A * B - (-1)^anti * B * A
+commutator(A::QuantumObject{OperatorQuantumObject}, B::QuantumObject{OperatorQuantumObject}; anti::Bool = false) =
+    A * B - (-1)^anti * B * A
 
 @doc raw"""
     destroy(N::Int)
@@ -481,10 +478,9 @@ Note that we put ``\hat{\sigma}_{-} = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatri
 """
 fcreate(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
 
-_Jordan_Wigner(N::Int, j::Int, op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} =
-    _Jordan_Wigner(Val(N), j, op)
+_Jordan_Wigner(N::Int, j::Int, op::QuantumObject{OperatorQuantumObject}) = _Jordan_Wigner(Val(N), j, op)
 
-function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {N,T}
+function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{OperatorQuantumObject}) where {N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
     ((j > N) || (j < 1)) && throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 

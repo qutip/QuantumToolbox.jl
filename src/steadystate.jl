@@ -65,7 +65,7 @@ end
 
 @doc raw"""
     steadystate(
-        H::QuantumObject{DT,OpType},
+        H::QuantumObject{OpType},
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         solver::SteadyStateSolver = SteadyStateDirectSolver(),
         kwargs...,
@@ -80,21 +80,17 @@ Solve the stationary state based on different solvers.
 - `kwargs`: The keyword arguments for the solver.
 """
 function steadystate(
-    H::QuantumObject{DT,OpType},
+    H::QuantumObject{OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
-) where {DT,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, c_ops)
 
     return _steadystate(L, solver; kwargs...)
 end
 
-function _steadystate(
-    L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
-    solver::SteadyStateLinearSolver;
-    kwargs...,
-) where {T}
+function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateLinearSolver; kwargs...)
     L_tmp = L.data
     N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
@@ -129,11 +125,7 @@ function _steadystate(
     return QuantumObject(ρss, Operator, L.dimensions)
 end
 
-function _steadystate(
-    L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
-    solver::SteadyStateEigenSolver;
-    kwargs...,
-) where {T}
+function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateEigenSolver; kwargs...)
     N = prod(L.dimensions)
 
     kwargs = merge((sigma = 1e-8, k = 1), (; kwargs...))
@@ -145,10 +137,7 @@ function _steadystate(
     return QuantumObject(ρss, Operator, L.dimensions)
 end
 
-function _steadystate(
-    L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
-    solver::SteadyStateDirectSolver,
-) where {T}
+function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateDirectSolver)
     L_tmp = L.data
     N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
@@ -173,11 +162,7 @@ function _steadystate(
     return QuantumObject(ρss, Operator, L.dimensions)
 end
 
-_steadystate(
-    L::QuantumObject{<:AbstractArray{T},SuperOperatorQuantumObject},
-    solver::SteadyStateODESolver;
-    kwargs...,
-) where {T} = throw(
+_steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateODESolver; kwargs...) = throw(
     ArgumentError(
         "The initial state ψ0 is required for SteadyStateODESolver, use the following call instead: `steadystate(H, ψ0, tmax, c_ops)`.",
     ),
@@ -185,8 +170,8 @@ _steadystate(
 
 @doc raw"""
     steadystate(
-        H::QuantumObject{DT1,HOpType},
-        ψ0::QuantumObject{DT2,StateOpType},
+        H::QuantumObject{HOpType},
+        ψ0::QuantumObject{StateOpType},
         tmax::Real = Inf,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         solver::SteadyStateODESolver = SteadyStateODESolver(),
@@ -220,8 +205,8 @@ or
 - `kwargs`: The keyword arguments for the ODEProblem.
 """
 function steadystate(
-    H::QuantumObject{DT1,HOpType},
-    ψ0::QuantumObject{DT2,StateOpType},
+    H::QuantumObject{HOpType},
+    ψ0::QuantumObject{StateOpType},
     tmax::Real = Inf,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::SteadyStateODESolver = SteadyStateODESolver(),
@@ -229,8 +214,6 @@ function steadystate(
     abstol::Real = 1.0e-10,
     kwargs...,
 ) where {
-    DT1,
-    DT2,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
@@ -265,9 +248,9 @@ end
 
 @doc raw"""
     steadystate_floquet(
-        H_0::QuantumObject{MT,OpType1},
-        H_p::QuantumObject{<:AbstractArray,OpType2},
-        H_m::QuantumObject{<:AbstractArray,OpType3},
+        H_0::QuantumObject{OpType1},
+        H_p::QuantumObject{OpType2},
+        H_m::QuantumObject{OpType3},
         ωd::Number,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         n_max::Integer = 2,
@@ -343,9 +326,9 @@ In the case of `SSFloquetEffectiveLiouvillian`, instead, the effective Liouvilli
 - `kwargs...`: Additional keyword arguments to be passed to the solver.
 """
 function steadystate_floquet(
-    H_0::QuantumObject{MT,OpType1},
-    H_p::QuantumObject{<:AbstractArray,OpType2},
-    H_m::QuantumObject{<:AbstractArray,OpType3},
+    H_0::QuantumObject{OpType1},
+    H_p::QuantumObject{OpType2},
+    H_m::QuantumObject{OpType3},
     ωd::Number,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     n_max::Integer = 2,
@@ -353,7 +336,6 @@ function steadystate_floquet(
     solver::FSolver = SSFloquetLinearSystem(),
     kwargs...,
 ) where {
-    MT<:AbstractArray,
     OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
@@ -367,15 +349,18 @@ function steadystate_floquet(
 end
 
 function _steadystate_floquet(
-    L_0::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
-    L_p::QuantumObject{<:AbstractArray{T2},SuperOperatorQuantumObject},
-    L_m::QuantumObject{<:AbstractArray{T3},SuperOperatorQuantumObject},
+    L_0::QuantumObject{SuperOperatorQuantumObject},
+    L_p::QuantumObject{SuperOperatorQuantumObject},
+    L_m::QuantumObject{SuperOperatorQuantumObject},
     ωd::Number,
     solver::SSFloquetLinearSystem;
     n_max::Integer = 1,
     tol::R = 1e-8,
     kwargs...,
-) where {T1,T2,T3,R<:Real}
+) where {R<:Real}
+    T1 = eltype(L_0)
+    T2 = eltype(L_p)
+    T3 = eltype(L_m)
     T = promote_type(T1, T2, T3)
 
     L_0_mat = get_data(L_0)
@@ -425,9 +410,9 @@ function _steadystate_floquet(
 end
 
 function _steadystate_floquet(
-    L_0::QuantumObject{<:AbstractArray,SuperOperatorQuantumObject},
-    L_p::QuantumObject{<:AbstractArray,SuperOperatorQuantumObject},
-    L_m::QuantumObject{<:AbstractArray,SuperOperatorQuantumObject},
+    L_0::QuantumObject{SuperOperatorQuantumObject},
+    L_p::QuantumObject{SuperOperatorQuantumObject},
+    L_m::QuantumObject{SuperOperatorQuantumObject},
     ωd::Number,
     solver::SSFloquetEffectiveLiouvillian;
     n_max::Integer = 1,
