@@ -1,6 +1,7 @@
 module QuantumToolboxCUDAExt
 
 using QuantumToolbox
+using QuantumToolbox: makeVal, getVal
 import CUDA: cu, CuArray
 import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR
 import SparseArrays: SparseVector, SparseMatrixCSC
@@ -70,19 +71,26 @@ Return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA` arr
 - `A::QuantumObject`: The [`QuantumObject`](@ref)
 - `word_size::Int`: The word size of the element type of `A`, can be either `32` or `64`. Default to `64`.
 """
-cu(A::QuantumObject; word_size::Int = 64) =
-    ((word_size == 64) || (word_size == 32)) ? cu(A, Val(word_size)) :
-    throw(DomainError(word_size, "The word size should be 32 or 64."))
-cu(A::QuantumObject, word_size::TW) where {TW<:Union{Val{32},Val{64}}} =
-    CuArray{_change_eltype(eltype(A), word_size)}(A)
-cu(
+function cu(A::QuantumObject; word_size::Union{Val,Int} = Val(64))
+    _word_size = getVal(makeVal(word_size))
+
+    ((_word_size == 64) || (_word_size == 32)) || throw(DomainError(_word_size, "The word size should be 32 or 64."))
+
+    return cu(A, makeVal(word_size))
+end
+cu(A::QuantumObject, word_size::Union{Val{32},Val{64}}) = CuArray{_change_eltype(eltype(A), word_size)}(A)
+function cu(
     A::QuantumObject{ObjType,DimsType,<:SparseVector},
-    word_size::TW,
-) where {ObjType,DimsType,TW<:Union{Val{32},Val{64}}} = CuSparseVector{_change_eltype(eltype(A), word_size)}(A)
-cu(
+    word_size::Union{Val{32},Val{64}},
+) where {ObjType<:QuantumObjectType,DimsType<:AbstractDimensions}
+    return CuSparseVector{_change_eltype(eltype(A), word_size)}(A)
+end
+function cu(
     A::QuantumObject{ObjType,DimsType,<:SparseMatrixCSC},
-    word_size::TW,
-) where {ObjType,DimsType,TW<:Union{Val{32},Val{64}}} = CuSparseMatrixCSC{_change_eltype(eltype(A), word_size)}(A)
+    word_size::Union{Val{32},Val{64}},
+) where {ObjType<:QuantumObjectType,DimsType<:AbstractDimensions}
+    return CuSparseMatrixCSC{_change_eltype(eltype(A), word_size)}(A)
+end
 
 _change_eltype(::Type{T}, ::Val{64}) where {T<:Int} = Int64
 _change_eltype(::Type{T}, ::Val{32}) where {T<:Int} = Int32

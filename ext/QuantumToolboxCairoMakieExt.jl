@@ -83,7 +83,7 @@ function _plot_wigner(
     location::Union{GridPosition,Nothing},
     colorbar::Bool;
     kwargs...,
-) where {DT,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     fig, location = _getFigAndLocation(location)
 
     lyt = GridLayout(location)
@@ -116,7 +116,7 @@ function _plot_wigner(
     location::Union{GridPosition,Nothing},
     colorbar::Bool;
     kwargs...,
-) where {DT,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     fig, location = _getFigAndLocation(location)
 
     lyt = GridLayout(location)
