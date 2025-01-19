@@ -11,7 +11,7 @@ export isunitary
 Checks if the [`QuantumObject`](@ref) `A` is a [`BraQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isbra(A::QuantumObject) = isbra(typeof(A))
-isbra(::Type{QuantumObject{BraQuantumObject,N}}) where {N} = true
+isbra(::Type{<:QuantumObject{BraQuantumObject,N}}) where {N} = true
 isbra(A) = false # default case
 
 @doc raw"""
@@ -20,7 +20,7 @@ isbra(A) = false # default case
 Checks if the [`QuantumObject`](@ref) `A` is a [`KetQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isket(A::QuantumObject) = isket(typeof(A))
-isket(::Type{QuantumObject{KetQuantumObject,N}}) where {N} = true
+isket(::Type{<:QuantumObject{KetQuantumObject,N}}) where {N} = true
 isket(A) = false # default case
 
 @doc raw"""
@@ -38,7 +38,7 @@ isoper(A) = false # default case
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBraQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isoperbra(A::QuantumObject) = isoperbra(typeof(A))
-isoperbra(::Type{QuantumObject{OperatorBraQuantumObject,N}}) where {N} = true
+isoperbra(::Type{<:QuantumObject{OperatorBraQuantumObject,N}}) where {N} = true
 isoperbra(A) = false # default case
 
 @doc raw"""
@@ -47,7 +47,7 @@ isoperbra(A) = false # default case
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKetQuantumObject`](@ref). Default case returns `false` for any other inputs.
 """
 isoperket(A::QuantumObject) = isoperket(typeof(A))
-isoperket(::Type{QuantumObject{OperatorKetQuantumObject,N}}) where {N} = true
+isoperket(::Type{<:QuantumObject{OperatorKetQuantumObject,N}}) where {N} = true
 isoperket(A) = false # default case
 
 @doc raw"""

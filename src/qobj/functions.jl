@@ -51,19 +51,19 @@ expect(O::QuantumObject{OperatorQuantumObject}, ρ::QuantumObject{OperatorQuantu
 function expect(
     O::QuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
     ψ::QuantumObject{KetQuantumObject},
-) where {DimsType,TF<:Number,TR<:Real}
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
     return real(dot(ψ.data, O.data, ψ.data))
 end
 function expect(
     O::QuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
     ψ::QuantumObject{BraQuantumObject},
-) where {DimsType,TF<:Number,TR<:Real}
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
     return real(expect(O, ψ'))
 end
 function expect(
     O::QuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
     ρ::QuantumObject{OperatorQuantumObject},
-) where {DimsType,TF<:Number,TR<:Real}
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
     return real(tr(O * ρ))
 end
 function expect(O::QuantumObject{OperatorQuantumObject}, ρ::Vector{<:QuantumObject})

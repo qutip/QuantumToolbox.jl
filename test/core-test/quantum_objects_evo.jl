@@ -133,8 +133,8 @@
         for T in [ComplexF32, ComplexF64]
             a = MatrixOperator(rand(T, N, N))
             UnionType = Union{
-                QuantumObjectEvolution{typeof(a),OperatorQuantumObject,GeneralDimensions{1,Tuple{Space},Tuple{Space}}},
-                QuantumObjectEvolution{typeof(a),OperatorQuantumObject,Dimensions{1,Tuple{Space}}},
+                QuantumObjectEvolution{OperatorQuantumObject,GeneralDimensions{1,Tuple{Space},Tuple{Space}},typeof(a)},
+                QuantumObjectEvolution{OperatorQuantumObject,Dimensions{1,Tuple{Space}},typeof(a)},
             }
             @inferred UnionType QobjEvo(a)
             @inferred UnionType QobjEvo(a, type = Operator)

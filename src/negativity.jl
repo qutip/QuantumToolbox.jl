@@ -106,7 +106,7 @@ end
 function _partial_transpose(
     ρ::QuantumObject{OperatorQuantumObject,DimsType,<:AbstractSparseArray},
     mask::Vector{Bool},
-) where {DimsType}
+) where {DimsType<:AbstractDimensions}
     isa(ρ.dimensions, GeneralDimensions) &&
         (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
         throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
