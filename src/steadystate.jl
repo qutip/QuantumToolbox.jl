@@ -156,7 +156,8 @@ function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::Stea
     Tn = sparse(rows, cols, vals, N^2, N^2)
     L_tmp = L_tmp + Tn
 
-    ρss_vec = L_tmp \ v0 # This is still not supported on GPU, yet
+    fac = lu(L_tmp)
+    ρss_vec = fac \ v0 # This is still not supported on GPU, yet
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
     return QuantumObject(ρss, Operator, L.dimensions)
