@@ -298,10 +298,7 @@ LinearAlgebra.tr(
 
 Return the singular values of a [`QuantumObject`](@ref) in descending order
 """
-LinearAlgebra.svdvals(A::QuantumObject{OpType,DimsType,<:AbstractVector}) where {OpType,DimsType} = svdvals(A.data)
-LinearAlgebra.svdvals(A::QuantumObject{OpType,DimsType,<:AbstractMatrix}) where {OpType,DimsType} = svdvals(A.data)
-LinearAlgebra.svdvals(A::QuantumObject{OpType,DimsType,<:AbstractSparseMatrix}) where {OpType,DimsType} =
-    svdvals(sparse_to_dense(A.data))
+LinearAlgebra.svdvals(A::QuantumObject) = svdvals(sparse_to_dense(A.data))
 
 @doc raw"""
     norm(A::QuantumObject, p::Real)
