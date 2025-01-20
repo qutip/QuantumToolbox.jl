@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add **GPUArrays** compatibility for `ptrace` function, by using **KernelAbstractions.jl**. ([#350])
 - Introduce `Space`, `Dimensions`, `GeneralDimensions` structures to support wider definitions and operations of `Qobj/QobjEvo`, and potential functionalities in the future. ([#271], [#353], [#360])
 - Improve lazy tensor warning for `SciMLOperators`. ([#370])
+- Change order of `AbstractQuantumObject` data type. For example, from `QuantumObject{DataType,ObjType,DimsType}` to `QuantumObject{ObjType,DimsType,DataType}`. ([#371])
 
 ## [v0.24.0]
 Release date: 2024-12-13
@@ -77,3 +78,4 @@ Release date: 2024-11-13
 [#353]: https://github.com/qutip/QuantumToolbox.jl/issues/353
 [#360]: https://github.com/qutip/QuantumToolbox.jl/issues/360
 [#370]: https://github.com/qutip/QuantumToolbox.jl/issues/370
+[#371]: https://github.com/qutip/QuantumToolbox.jl/issues/371

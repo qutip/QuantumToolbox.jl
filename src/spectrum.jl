@@ -30,8 +30,8 @@ PseudoInverse(; alg::SciMLLinearSolveAlgorithm = KrylovJL_GMRES()) = PseudoInver
     spectrum(H::QuantumObject,
         ωlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple},
-        A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-        B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject};
+        A::QuantumObject{OperatorQuantumObject},
+        B::QuantumObject{OperatorQuantumObject};
         solver::SpectrumSolver=ExponentialSeries(),
         kwargs...)
 
@@ -46,14 +46,14 @@ See also the following list for `SpectrumSolver` docstrings:
 - [`PseudoInverse`](@ref)
 """
 function spectrum(
-    H::QuantumObject{MT1,HOpType},
+    H::QuantumObject{HOpType},
     ωlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject};
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject};
     solver::SpectrumSolver = ExponentialSeries(),
     kwargs...,
-) where {MT1<:AbstractMatrix,T2,T3,HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     return _spectrum(liouvillian(H, c_ops), ωlist, A, B, solver; kwargs...)
 end
 
@@ -77,13 +77,13 @@ function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T,false}) wher
 end
 
 function _spectrum(
-    L::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    L::QuantumObject{SuperOperatorQuantumObject},
     ωlist::AbstractVector,
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject},
     solver::ExponentialSeries;
     kwargs...,
-) where {T1,T2,T3}
+)
     check_dimensions(L, A, B)
 
     rates, vecs, ρss = _spectrum_get_rates_vecs_ss(L, solver)
@@ -103,13 +103,13 @@ function _spectrum(
 end
 
 function _spectrum(
-    L::QuantumObject{<:AbstractArray{T1},SuperOperatorQuantumObject},
+    L::QuantumObject{SuperOperatorQuantumObject},
     ωlist::AbstractVector,
-    A::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-    B::QuantumObject{<:AbstractArray{T3},OperatorQuantumObject},
+    A::QuantumObject{OperatorQuantumObject},
+    B::QuantumObject{OperatorQuantumObject},
     solver::PseudoInverse;
     kwargs...,
-) where {T1,T2,T3}
+)
     check_dimensions(L, A, B)
 
     ωList = convert(Vector{_FType(L)}, ωlist) # Convert it to support GPUs and avoid type instabilities

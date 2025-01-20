@@ -5,8 +5,8 @@ _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvil
 
 @doc raw"""
     mesolveProblem(
-        H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
-        ψ0::QuantumObject{DT2,StateOpType},
+        H::Union{AbstractQuantumObject{HOpType},Tuple},
+        ψ0::QuantumObject{StateOpType},
         tlist,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -52,8 +52,8 @@ where
 - `prob::ODEProblem`: The ODEProblem for the master equation time evolution.
 """
 function mesolveProblem(
-    H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
-    ψ0::QuantumObject{DT2,StateOpType},
+    H::Union{AbstractQuantumObject{HOpType},Tuple},
+    ψ0::QuantumObject{StateOpType},
     tlist,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -62,8 +62,6 @@ function mesolveProblem(
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {
-    DT1,
-    DT2,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }
@@ -94,8 +92,8 @@ end
 
 @doc raw"""
     mesolve(
-        H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
-        ψ0::QuantumObject{DT2,StateOpType},
+        H::Union{AbstractQuantumObject{HOpType},Tuple},
+        ψ0::QuantumObject{StateOpType},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
@@ -144,8 +142,8 @@ where
 - `sol::TimeEvolutionSol`: The solution of the time evolution. See also [`TimeEvolutionSol`](@ref)
 """
 function mesolve(
-    H::Union{AbstractQuantumObject{DT1,HOpType},Tuple},
-    ψ0::QuantumObject{DT2,StateOpType},
+    H::Union{AbstractQuantumObject{HOpType},Tuple},
+    ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
@@ -155,8 +153,6 @@ function mesolve(
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {
-    DT1,
-    DT2,
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
 }

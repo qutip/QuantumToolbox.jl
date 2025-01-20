@@ -5,7 +5,7 @@ This file defines the QuantumObjectEvolution (QobjEvo) structure.
 export QuantumObjectEvolution
 
 @doc raw"""
-    struct QuantumObjectEvolution{DataType<:AbstractSciMLOperator,ObjType<:QuantumObjectType,DimType<:AbstractDimensions} <: AbstractQuantumObject{DataType,ObjType,DimType}
+    struct QuantumObjectEvolution{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,DataType<:AbstractSciMLOperator} <: AbstractQuantumObject{ObjType,DimType,DataType}
         data::DataType
         type::ObjType
         dimensions::DimType
@@ -109,10 +109,10 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ```
 """
 struct QuantumObjectEvolution{
-    DataType<:AbstractSciMLOperator,
     ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     DimType<:AbstractDimensions,
-} <: AbstractQuantumObject{DataType,ObjType,DimType}
+    DataType<:AbstractSciMLOperator,
+} <: AbstractQuantumObject{ObjType,DimType,DataType}
     data::DataType
     type::ObjType
     dimensions::DimType
@@ -130,7 +130,7 @@ struct QuantumObjectEvolution{
         _size = _get_size(data)
         _check_QuantumObject(type, dimensions, _size[1], _size[2])
 
-        return new{DT,ObjType,typeof(dimensions)}(data, type, dimensions)
+        return new{ObjType,typeof(dimensions),DT}(data, type, dimensions)
     end
 end
 
@@ -503,11 +503,11 @@ true
 ```
 """
 function (A::QuantumObjectEvolution)(
-    ψout::QuantumObject{DT1,QobjType},
-    ψin::QuantumObject{DT2,QobjType},
+    ψout::QuantumObject{QobjType},
+    ψin::QuantumObject{QobjType},
     p,
     t,
-) where {DT1,DT2,QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+) where {QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
     check_dimensions(A, ψout, ψin)
 
     if isoper(A) && isoperket(ψin)
@@ -531,10 +531,10 @@ end
 Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the input state `ψ` at time `t` with parameters `p`. Out-of-place version of [`(A::QuantumObjectEvolution)(ψout, ψin, p, t)`](@ref). The output state is stored in a new [`QuantumObject`](@ref) object. This function mimics the behavior of a `AbstractSciMLOperator` object.
 """
 function (A::QuantumObjectEvolution)(
-    ψ::QuantumObject{DT,QobjType},
+    ψ::QuantumObject{QobjType},
     p,
     t,
-) where {DT,QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+) where {QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
     ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dimensions)
     return A(ψout, ψ, p, t)
 end

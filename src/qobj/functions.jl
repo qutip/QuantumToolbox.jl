@@ -12,9 +12,9 @@ export vec2mat, mat2vec
 
 Transform the ket state ``\ket{\psi}`` into a pure density matrix ``\hat{\rho} = |\psi\rangle\langle\psi|``.
 """
-ket2dm(ψ::QuantumObject{<:AbstractArray{T},KetQuantumObject}) where {T} = ψ * ψ'
+ket2dm(ψ::QuantumObject{KetQuantumObject}) = ψ * ψ'
 
-ket2dm(ρ::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} = ρ
+ket2dm(ρ::QuantumObject{OperatorQuantumObject}) = ρ
 
 @doc raw"""
     expect(O::AbstractQuantumObject, ψ::Union{QuantumObject,Vector{QuantumObject}})
@@ -43,43 +43,30 @@ julia> expect(Hermitian(a' * a), ψ) |> round
 3.0
 ```
 """
-function expect(
-    O::AbstractQuantumObject{DT1,OperatorQuantumObject},
-    ψ::QuantumObject{DT2,KetQuantumObject},
-) where {DT1,DT2}
+function expect(O::AbstractQuantumObject{OperatorQuantumObject}, ψ::QuantumObject{KetQuantumObject})
     return dot(ψ.data, O.data, ψ.data)
 end
+expect(O::AbstractQuantumObject{OperatorQuantumObject}, ψ::QuantumObject{BraQuantumObject}) = expect(O, ψ')
+expect(O::QuantumObject{OperatorQuantumObject}, ρ::QuantumObject{OperatorQuantumObject}) = tr(O * ρ)
 function expect(
-    O::AbstractQuantumObject{DT1,OperatorQuantumObject},
-    ψ::QuantumObject{DT2,BraQuantumObject},
-) where {DT1,DT2}
-    return expect(O, ψ')
-end
-function expect(
-    O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject},
-    ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {T1,T2}
-    return tr(O * ρ)
-end
-function expect(
-    O::QuantumObject{<:Union{<:Hermitian{TF},<:Symmetric{TR}},OperatorQuantumObject},
-    ψ::QuantumObject{<:AbstractArray{T2},KetQuantumObject},
-) where {TF<:Number,TR<:Real,T2}
+    O::QuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
+    ψ::QuantumObject{KetQuantumObject},
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
     return real(dot(ψ.data, O.data, ψ.data))
 end
 function expect(
-    O::QuantumObject{<:Union{<:Hermitian{TF},<:Symmetric{TR}},OperatorQuantumObject},
-    ψ::QuantumObject{<:AbstractArray{T2},BraQuantumObject},
-) where {TF<:Number,TR<:Real,T2}
+    O::QuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
+    ψ::QuantumObject{BraQuantumObject},
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
     return real(expect(O, ψ'))
 end
 function expect(
-    O::QuantumObject{<:Union{<:Hermitian{TF},<:Symmetric{TR}},OperatorQuantumObject},
-    ρ::QuantumObject{<:AbstractArray{T2},OperatorQuantumObject},
-) where {TF<:Number,TR<:Real,T2}
+    O::QuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
+    ρ::QuantumObject{OperatorQuantumObject},
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
     return real(tr(O * ρ))
 end
-function expect(O::QuantumObject{<:AbstractArray{T1},OperatorQuantumObject}, ρ::Vector{<:QuantumObject}) where {T1}
+function expect(O::QuantumObject{OperatorQuantumObject}, ρ::Vector{<:QuantumObject})
     _expect = _ρ -> expect(O, _ρ)
     return _expect.(ρ)
 end
@@ -95,17 +82,15 @@ The function returns a real number if `O` is hermitian, and returns a complex nu
 
 Note that `ψ` can also be given as a list of [`QuantumObject`](@ref), it returns a list of expectation values.
 """
-variance(O::QuantumObject{DT1,OperatorQuantumObject}, ψ::QuantumObject{DT2}) where {DT1,DT2} =
-    expect(O^2, ψ) - expect(O, ψ)^2
-variance(O::QuantumObject{DT1,OperatorQuantumObject}, ψ::Vector{<:QuantumObject}) where {DT1} =
-    expect(O^2, ψ) .- expect(O, ψ) .^ 2
+variance(O::QuantumObject{OperatorQuantumObject}, ψ::QuantumObject) = expect(O^2, ψ) - expect(O, ψ)^2
+variance(O::QuantumObject{OperatorQuantumObject}, ψ::Vector{<:QuantumObject}) = expect(O^2, ψ) .- expect(O, ψ) .^ 2
 
 @doc raw"""
     sparse_to_dense(A::QuantumObject)
 
 Converts a sparse QuantumObject to a dense QuantumObject.
 """
-sparse_to_dense(A::QuantumObject{<:AbstractVecOrMat}) = QuantumObject(sparse_to_dense(A.data), A.type, A.dimensions)
+sparse_to_dense(A::QuantumObject) = QuantumObject(sparse_to_dense(A.data), A.type, A.dimensions)
 sparse_to_dense(A::MT) where {MT<:AbstractSparseArray} = Array(A)
 for op in (:Transpose, :Adjoint)
     @eval sparse_to_dense(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
@@ -131,8 +116,7 @@ sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
 
 Converts a dense QuantumObject to a sparse QuantumObject.
 """
-dense_to_sparse(A::QuantumObject{<:AbstractVecOrMat}, tol::Real = 1e-10) =
-    QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dimensions)
+dense_to_sparse(A::QuantumObject, tol::Real = 1e-10) = QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dimensions)
 function dense_to_sparse(A::MT, tol::Real = 1e-10) where {MT<:AbstractMatrix}
     idxs = findall(@. abs(A) > tol)
     row_indices = getindex.(idxs, 1)
@@ -180,9 +164,9 @@ julia> a.dims, O.dims
 ```
 """
 function LinearAlgebra.kron(
-    A::AbstractQuantumObject{DT1,OpType,<:Dimensions},
-    B::AbstractQuantumObject{DT2,OpType,<:Dimensions},
-) where {DT1,DT2,OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
+    A::AbstractQuantumObject{OpType,<:Dimensions},
+    B::AbstractQuantumObject{OpType,<:Dimensions},
+) where {OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
     QType = promote_op_type(A, B)
     _lazy_tensor_warning(A.data, B.data)
     return QType(kron(A.data, B.data), A.type, Dimensions((A.dimensions.to..., B.dimensions.to...)))
@@ -194,9 +178,9 @@ for ADimType in (:Dimensions, :GeneralDimensions)
         if !(ADimType == BDimType == :Dimensions) # not for this case because it's already implemented
             @eval begin
                 function LinearAlgebra.kron(
-                    A::AbstractQuantumObject{DT1,OperatorQuantumObject,<:$ADimType},
-                    B::AbstractQuantumObject{DT2,OperatorQuantumObject,<:$BDimType},
-                ) where {DT1,DT2}
+                    A::AbstractQuantumObject{OperatorQuantumObject,<:$ADimType},
+                    B::AbstractQuantumObject{OperatorQuantumObject,<:$BDimType},
+                )
                     QType = promote_op_type(A, B)
                     _lazy_tensor_warning(A.data, B.data)
                     return QType(
@@ -218,10 +202,7 @@ for AOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
     for BOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
         if (AOpType != BOpType)
             @eval begin
-                function LinearAlgebra.kron(
-                    A::AbstractQuantumObject{DT1,$AOpType},
-                    B::AbstractQuantumObject{DT2,$BOpType},
-                ) where {DT1,DT2}
+                function LinearAlgebra.kron(A::AbstractQuantumObject{$AOpType}, B::AbstractQuantumObject{$BOpType})
                     QType = promote_op_type(A, B)
                     _lazy_tensor_warning(A.data, B.data)
                     return QType(
@@ -259,16 +240,14 @@ end
 
 Convert a quantum object from vector ([`OperatorKetQuantumObject`](@ref)-type) to matrix ([`OperatorQuantumObject`](@ref)-type)
 """
-vec2mat(A::QuantumObject{<:AbstractArray{T},OperatorKetQuantumObject}) where {T} =
-    QuantumObject(vec2mat(A.data), Operator, A.dimensions)
+vec2mat(A::QuantumObject{OperatorKetQuantumObject}) = QuantumObject(vec2mat(A.data), Operator, A.dimensions)
 
 @doc raw"""
     mat2vec(A::QuantumObject)
 
 Convert a quantum object from matrix ([`OperatorQuantumObject`](@ref)-type) to vector ([`OperatorKetQuantumObject`](@ref)-type)
 """
-mat2vec(A::QuantumObject{<:AbstractArray{T},OperatorQuantumObject}) where {T} =
-    QuantumObject(mat2vec(A.data), OperatorKet, A.dimensions)
+mat2vec(A::QuantumObject{OperatorQuantumObject}) = QuantumObject(mat2vec(A.data), OperatorKet, A.dimensions)
 
 @doc raw"""
     mat2vec(A::AbstractMatrix)

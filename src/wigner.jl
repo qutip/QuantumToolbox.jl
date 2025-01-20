@@ -13,7 +13,7 @@ WignerLaguerre(; parallel = false, tol = 1e-14) = WignerLaguerre(parallel, tol)
 
 @doc raw"""
     wigner(
-        state::QuantumObject{DT,OpType},
+        state::QuantumObject{OpType},
         xvec::AbstractVector,
         yvec::AbstractVector;
         g::Real = √2,
@@ -67,12 +67,12 @@ julia> wig = wigner(ρ, xvec, xvec, method=WignerLaguerre(parallel=true));
 ```
 """
 function wigner(
-    state::QuantumObject{DT,OpType},
+    state::QuantumObject{OpType},
     xvec::AbstractVector,
     yvec::AbstractVector;
     g::Real = √2,
     method::WignerSolver = WignerClenshaw(),
-) where {DT,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     ρ = ket2dm(state).data
 
     return _wigner(ρ, xvec, yvec, g, method)

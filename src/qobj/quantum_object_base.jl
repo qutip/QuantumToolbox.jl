@@ -14,7 +14,7 @@ export QuantumObjectType,
 export Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 
 @doc raw"""
-    abstract type AbstractQuantumObject{DataType,ObjType,DimType}
+    abstract type AbstractQuantumObject{ObjType,DimType,DataType}
 
 Abstract type for all quantum objects like [`QuantumObject`](@ref) and [`QuantumObjectEvolution`](@ref).
 
@@ -24,7 +24,7 @@ julia> sigmax() isa AbstractQuantumObject
 true
 ```
 """
-abstract type AbstractQuantumObject{DataType,ObjType,DimType} end
+abstract type AbstractQuantumObject{ObjType,DimType,DataType} end
 
 abstract type QuantumObjectType end
 
@@ -263,25 +263,24 @@ function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
 end
 
 # this returns `to` in GeneralDimensions representation
-get_dimensions_to(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions{N}}) where {DT,N} = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions{N}}) where {DT,N} = space_one_list(N)
-get_dimensions_to(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:Dimensions{N}}) where {DT,N} = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:GeneralDimensions{N}}) where {DT,N} =
-    A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{KetQuantumObject,<:Dimensions{N}}) where {N} = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{BraQuantumObject,<:Dimensions{N}}) where {N} = space_one_list(N)
+get_dimensions_to(A::AbstractQuantumObject{OperatorQuantumObject,<:Dimensions{N}}) where {N} = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{OperatorQuantumObject,<:GeneralDimensions{N}}) where {N} = A.dimensions.to
 get_dimensions_to(
-    A::AbstractQuantumObject{DT,ObjType,<:Dimensions{N}},
-) where {DT,ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},N} =
+    A::AbstractQuantumObject{ObjType,<:Dimensions{N}},
+) where {ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},N} =
     A.dimensions.to
 
 # this returns `from` in GeneralDimensions representation
-get_dimensions_from(A::AbstractQuantumObject{DT,KetQuantumObject,<:Dimensions{N}}) where {DT,N} = space_one_list(N)
-get_dimensions_from(A::AbstractQuantumObject{DT,BraQuantumObject,<:Dimensions{N}}) where {DT,N} = A.dimensions.to
-get_dimensions_from(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:Dimensions{N}}) where {DT,N} = A.dimensions.to
-get_dimensions_from(A::AbstractQuantumObject{DT,OperatorQuantumObject,<:GeneralDimensions{N}}) where {DT,N} =
+get_dimensions_from(A::AbstractQuantumObject{KetQuantumObject,<:Dimensions{N}}) where {N} = space_one_list(N)
+get_dimensions_from(A::AbstractQuantumObject{BraQuantumObject,<:Dimensions{N}}) where {N} = A.dimensions.to
+get_dimensions_from(A::AbstractQuantumObject{OperatorQuantumObject,<:Dimensions{N}}) where {N} = A.dimensions.to
+get_dimensions_from(A::AbstractQuantumObject{OperatorQuantumObject,<:GeneralDimensions{N}}) where {N} =
     A.dimensions.from
 get_dimensions_from(
-    A::AbstractQuantumObject{DT,ObjType,<:Dimensions{N}},
-) where {DT,ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},N} =
+    A::AbstractQuantumObject{ObjType,<:Dimensions{N}},
+) where {ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},N} =
     A.dimensions.to
 
 # functions for getting Float or Complex element type

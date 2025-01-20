@@ -82,8 +82,8 @@ end
 
 @doc raw"""
     mcsolveProblem(
-        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{DT2,KetQuantumObject},
+        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{KetQuantumObject},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -151,8 +151,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the `ODEProblem` for the Monte Carlo wave function time evolution.
 """
 function mcsolveProblem(
-    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{DT2,KetQuantumObject},
+    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -160,7 +160,7 @@ function mcsolveProblem(
     rng::AbstractRNG = default_rng(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
-) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
+) where {TJC<:LindbladJumpCallbackType}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -186,8 +186,8 @@ end
 
 @doc raw"""
     mcsolveEnsembleProblem(
-        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{DT2,KetQuantumObject},
+        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{KetQuantumObject},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -265,8 +265,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the Ensemble `ODEProblem` for the Monte Carlo wave function time evolution.
 """
 function mcsolveEnsembleProblem(
-    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{DT2,KetQuantumObject},
+    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -279,7 +279,7 @@ function mcsolveEnsembleProblem(
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
-) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
+) where {TJC<:LindbladJumpCallbackType}
     _prob_func = prob_func isa Nothing ? _mcsolve_dispatch_prob_func(rng, ntraj, tlist) : prob_func
     _output_func =
         output_func isa Nothing ? _mcsolve_dispatch_output_func(ensemble_method, progress_bar, ntraj) : output_func
@@ -308,8 +308,8 @@ end
 
 @doc raw"""
     mcsolve(
-        H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{DT2,KetQuantumObject},
+        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+        ψ0::QuantumObject{KetQuantumObject},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
@@ -393,8 +393,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - `sol::TimeEvolutionMCSol`: The solution of the time evolution. See also [`TimeEvolutionMCSol`](@ref).
 """
 function mcsolve(
-    H::Union{AbstractQuantumObject{DT1,OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{DT2,KetQuantumObject},
+    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+    ψ0::QuantumObject{KetQuantumObject},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
@@ -409,7 +409,7 @@ function mcsolve(
     output_func::Union{Tuple,Nothing} = nothing,
     normalize_states::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {DT1,DT2,TJC<:LindbladJumpCallbackType}
+) where {TJC<:LindbladJumpCallbackType}
     ens_prob_mc = mcsolveEnsembleProblem(
         H,
         ψ0,
