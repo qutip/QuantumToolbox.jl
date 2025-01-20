@@ -133,7 +133,7 @@ function QuantumObject(
 end
 
 function QuantumObject(A::QuantumObject; type::ObjType = A.type, dims = A.dimensions) where {ObjType<:QuantumObjectType}
-    _size = isa(A.data, AbstractVector) ? (length(A), 1) : size(A)
+    _size = _get_size(A.data)
     dimensions = _gen_dimensions(dims)
     _check_QuantumObject(type, dimensions, _size[1], _size[2])
     return QuantumObject(copy(A.data), type, dimensions)
