@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Fix Dynamical Fock Dimension states saving due to wrong saving of dimensions. ([#375])
+
 ## [v0.25.0]
 Release date: 2025-01-20
 
@@ -83,3 +85,4 @@ Release date: 2024-11-13
 [#360]: https://github.com/qutip/QuantumToolbox.jl/issues/360
 [#370]: https://github.com/qutip/QuantumToolbox.jl/issues/370
 [#371]: https://github.com/qutip/QuantumToolbox.jl/issues/371
+[#375]: https://github.com/qutip/QuantumToolbox.jl/issues/375
