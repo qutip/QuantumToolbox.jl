@@ -59,14 +59,14 @@ end
 _dfd_set_pillow(dim)::Int = min(max(round(Int, 0.02 * dim), 1), 20)
 
 function _DFDIncreaseReduceCondition(u, t, integrator)
-    internal_params = integrator.p
-    dim_list = internal_params.dim_list
-    maxdims = internal_params.maxdims
-    tol_list = internal_params.tol_list
-    increase_list = internal_params.increase_list
-    reduce_list = internal_params.reduce_list
-    pillow_list = internal_params.pillow_list
-    dfd_ρt_cache = internal_params.dfd_ρt_cache
+    params = integrator.p
+    dim_list = params.dim_list
+    maxdims = params.maxdims
+    tol_list = params.tol_list
+    increase_list = params.increase_list
+    reduce_list = params.reduce_list
+    pillow_list = params.pillow_list
+    dfd_ρt_cache = params.dfd_ρt_cache
 
     # I need this cache because I can't reshape directly the integrator.u
     copyto!(dfd_ρt_cache, u)
@@ -89,18 +89,18 @@ function _DFDIncreaseReduceCondition(u, t, integrator)
 end
 
 function _DFDIncreaseReduceAffect!(integrator)
-    internal_params = integrator.p
-    H = internal_params.H_fun
-    c_ops = internal_params.c_ops_fun
-    e_ops = internal_params.e_ops_fun
-    dim_list = internal_params.dim_list
-    increase_list = internal_params.increase_list
-    reduce_list = internal_params.reduce_list
-    pillow_list = internal_params.pillow_list
-    dim_list_evo_times = internal_params.dim_list_evo_times
-    dim_list_evo = internal_params.dim_list_evo
-    dfd_ρt_cache = internal_params.dfd_ρt_cache
-    dfd_params = internal_params.dfd_params
+    params = integrator.p
+    H = params.H_fun
+    c_ops = params.c_ops_fun
+    e_ops = params.e_ops_fun
+    dim_list = params.dim_list
+    increase_list = params.increase_list
+    reduce_list = params.reduce_list
+    pillow_list = params.pillow_list
+    dim_list_evo_times = params.dim_list_evo_times
+    dim_list_evo = params.dim_list_evo
+    dfd_ρt_cache = params.dfd_ρt_cache
+    dfd_params = params.dfd_params
 
     ρt = vec2mat(dfd_ρt_cache)
 
@@ -122,7 +122,7 @@ function _DFDIncreaseReduceAffect!(integrator)
     fill!(increase_list, false)
     fill!(reduce_list, false)
     push!(dim_list_evo_times, integrator.t)
-    push!(dim_list_evo, dim_list)
+    push!(dim_list_evo, copy(dim_list))
 
     e_ops2 = map(op -> mat2vec(get_data(op)'), e_ops(dim_list, dfd_params))
     L = liouvillian(H(dim_list, dfd_params), c_ops(dim_list, dfd_params)).data
@@ -131,7 +131,7 @@ function _DFDIncreaseReduceAffect!(integrator)
     copyto!(integrator.u, mat2vec(ρt))
     # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
     integrator.f = ODEFunction{true,FullSpecialize}(MatrixOperator(L))
-    integrator.p = merge(internal_params, (dfd_ρt_cache = similar(integrator.u),))
+    integrator.p = merge(params, (dfd_ρt_cache = similar(integrator.u),))
     _mesolve_callbacks_new_e_ops!(integrator, e_ops2)
 
     return nothing
@@ -150,7 +150,7 @@ function dfd_mesolveProblem(
     kwargs...,
 ) where {T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     length(ψ0.dimensions) != length(maxdims) &&
-        throw(DimensionMismatch("'dim_list' and 'maxdims' do not have the same dimension."))
+        throw(DimensionMismatch("`dim_list` and `maxdims` do not have the same dimension."))
 
     dim_list = MVector(ψ0.dims)
     H₀ = H(dim_list, dfd_params)
@@ -158,7 +158,7 @@ function dfd_mesolveProblem(
     e_ops₀ = e_ops(dim_list, dfd_params)
 
     dim_list_evo_times = [0.0]
-    dim_list_evo = [dim_list]
+    dim_list_evo = [copy(dim_list)]
     reduce_list = MVector(ntuple(i -> false, Val(length(dim_list))))
     increase_list = MVector(ntuple(i -> false, Val(length(dim_list))))
     pillow_list = _dfd_set_pillow.(dim_list)
@@ -235,14 +235,12 @@ function dfd_mesolve(
 
     sol = solve(dfd_prob.prob, alg)
 
-    ρt = map(
-        i -> QuantumObject(
-            vec2mat(sol.u[i]),
-            type = Operator,
-            dims = sol.prob.p.dim_list_evo[searchsortedlast(sol.prob.p.dim_list_evo_times, sol.t[i])],
-        ),
-        eachindex(sol.t),
-    )
+    ρt = map(eachindex(sol.t)) do i
+        idx = findfirst(>=(sol.t[i]), sol.prob.p.dim_list_evo_times)
+        idx2 = isnothing(idx) ? length(sol.prob.p.dim_list_evo) : (idx == 1 ? 1 : idx - 1)
+
+        return QuantumObject(vec2mat(sol.u[i]), type = Operator, dims = sol.prob.p.dim_list_evo[idx2])
+    end
 
     return TimeEvolutionSol(
         dfd_prob.times,
