@@ -479,6 +479,18 @@
         ψlist = [normalize!(basis(N, 4) + x * basis(N, 3)) for x in xlist]
         @test all(expect(a', ψlist) .≈ xlist)
 
+        # when input is a vector of observables
+        ρlist = Hermitian.(ket2dm.(ψlist)) # an alternative way to calculate expectation values for a list of density matrices
+        Olist1 = [a' * a, a' + a, a]
+        Olist2 = [Hermitian(a' * a), Hermitian(a' + a)]
+        exp_val_1 = expect(Olist1, ψlist)
+        exp_val_2 = expect(Olist2, ψlist)
+        @test size(exp_val_1) == (3, 4)
+        @test size(exp_val_2) == (2, 4)
+        @test all(exp_val_1[1, :] .≈ exp_val_2[1, :] .≈ expect(ρlist, a' * a))
+        @test all(exp_val_1[2, :] .≈ exp_val_2[2, :] .≈ expect(ρlist, a' + a))
+        @test all(exp_val_1[3, :] .≈ expect(a, ρlist))
+
         @testset "Type Inference (expect)" begin
             @inferred expect(a, ψ)
             @inferred expect(a, ψ')
@@ -488,6 +500,12 @@
             @inferred variance(a, ρ)
             @inferred expect(a, ψlist)
             @inferred variance(a, ψlist)
+            @inferred expect(ρlist, a)
+            @inferred expect(Olist1, ψ)
+            @inferred expect(Olist1, ψ')
+            @inferred expect(Olist1, ρ)
+            @inferred expect(Olist1, ψlist)
+            @inferred expect(Olist2, ψlist)
         end
     end
 
