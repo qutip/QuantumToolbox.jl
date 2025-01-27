@@ -77,10 +77,7 @@ function expect(O::AbstractVector{<:AbstractQuantumObject{OperatorQuantumObject}
     result .= expect.(O, Ref(ρ))
     return result
 end
-function expect(O::AbstractQuantumObject{OperatorQuantumObject}, ρ::AbstractVector{<:QuantumObject})
-    _expect = _ρ -> expect(O, _ρ)
-    return _expect.(ρ)
-end
+expect(O::AbstractQuantumObject{OperatorQuantumObject}, ρ::AbstractVector{<:QuantumObject}) = expect.(Ref(O), ρ)
 function expect(
     O::AbstractVector{<:AbstractQuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}}},
     ρ::AbstractVector{<:QuantumObject},
