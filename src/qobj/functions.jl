@@ -47,7 +47,7 @@ julia> expect(Hermitian(a' * a), ψ1) |> round
 
 julia> round.(expect([a' * a, a' + a, a], [ψ1, ψ2]), digits = 1)
 3×2 Matrix{ComplexF64}:
- 3.0+0.0im  1.0-0.0im
+ 3.0+0.0im  1.0+0.0im
  0.0+0.0im  1.2-0.0im
  0.0+0.0im  0.6+0.8im
 ```
