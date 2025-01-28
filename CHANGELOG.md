@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix Dynamical Fock Dimension states saving due to wrong saving of dimensions. ([#375])
 - Support a list of observables for `expect`. ([#374], [#376])
+- Add checks for `tlist` in time evolution solvers. The checks are to ensure that `tlist` is not empty, the elements are in increasing order, and the elements are unique. ([#378])
 
 ## [v0.25.0]
 Release date: 2025-01-20
@@ -89,3 +90,4 @@ Release date: 2024-11-13
 [#374]: https://github.com/qutip/QuantumToolbox.jl/issues/374
 [#375]: https://github.com/qutip/QuantumToolbox.jl/issues/375
 [#376]: https://github.com/qutip/QuantumToolbox.jl/issues/376
+[#378]: https://github.com/qutip/QuantumToolbox.jl/issues/378

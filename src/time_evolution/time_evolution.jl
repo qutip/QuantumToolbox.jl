@@ -213,7 +213,6 @@ struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType end
 ContinuousLindbladJumpCallback(; interp_points::Int = 10) = ContinuousLindbladJumpCallback(interp_points)
 
 function _check_tlist(tlist, T::Type)
-    
     tlist = convert(Vector{T}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     # Check if the list of times is not empty
