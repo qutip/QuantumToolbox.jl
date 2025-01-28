@@ -167,7 +167,7 @@ function mcsolveProblem(
     c_ops isa Nothing &&
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
-    tlist = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    tlist = _check_tlist(tlist, _FType(ψ0))
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
 

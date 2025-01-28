@@ -162,7 +162,7 @@ function ssesolveProblem(
     sc_ops isa Nothing &&
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
-    tlist = convert(Vector{Float64}, tlist) # Convert it into Float64 to avoid type instabilities for StochasticDiffEq.jl
+    tlist = _check_tlist(tlist, _FType(ψ0))
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
