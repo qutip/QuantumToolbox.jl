@@ -17,7 +17,7 @@ ket2dm(ψ::QuantumObject{KetQuantumObject}) = ψ * ψ'
 ket2dm(ρ::QuantumObject{OperatorQuantumObject}) = ρ
 
 @doc raw"""
-    expect(O::AbstractQuantumObject, ψ::Union{QuantumObject,Vector{QuantumObject}})
+    expect(O::Union{AbstractQuantumObject,Vector{AbstractQuantumObject}}, ψ::Union{QuantumObject,Vector{QuantumObject}})
 
 Expectation value of the [`Operator`](@ref) `O` with the state `ψ`. The state can be a [`Ket`](@ref), [`Bra`](@ref) or [`Operator`](@ref).
 
@@ -27,48 +27,75 @@ If `ψ` is a density matrix ([`Operator`](@ref)), the function calculates ``\tex
 
 The function returns a real number if `O` is of `Hermitian` type or `Symmetric` type, and returns a complex number otherwise. You can make an operator `O` hermitian by using `Hermitian(O)`.
 
-Note that `ψ` can also be given as a list of [`QuantumObject`](@ref), it returns a list of expectation values.
+!!! note "List of observables and states"
+    The observable `O` and state `ψ` can be given as a list of [`QuantumObject`](@ref), it returns a list of expectation values. If both of them are given as a list, it returns a `Matrix` of expectation values.
 
 # Examples
 
 ```jldoctest
-julia> ψ = 1 / √2 * (fock(10,2) + fock(10,4));
+julia> ψ1 = 1 / √2 * (fock(10,2) + fock(10,4));
+
+julia> ψ2 = coherent(10, 0.6 + 0.8im);
 
 julia> a = destroy(10);
 
-julia> expect(a' * a, ψ) |> round
+julia> expect(a' * a, ψ1) |> round
 3.0 + 0.0im
 
-julia> expect(Hermitian(a' * a), ψ) |> round
+julia> expect(Hermitian(a' * a), ψ1) |> round
 3.0
+
+julia> round.(expect([a' * a, a' + a, a], [ψ1, ψ2]), digits = 1)
+3×2 Matrix{ComplexF64}:
+ 3.0+0.0im  1.0+0.0im
+ 0.0+0.0im  1.2-0.0im
+ 0.0+0.0im  0.6+0.8im
 ```
 """
-function expect(O::AbstractQuantumObject{OperatorQuantumObject}, ψ::QuantumObject{KetQuantumObject})
-    return dot(ψ.data, O.data, ψ.data)
-end
+expect(O::AbstractQuantumObject{OperatorQuantumObject}, ψ::QuantumObject{KetQuantumObject}) =
+    dot(ψ.data, O.data, ψ.data)
 expect(O::AbstractQuantumObject{OperatorQuantumObject}, ψ::QuantumObject{BraQuantumObject}) = expect(O, ψ')
 expect(O::QuantumObject{OperatorQuantumObject}, ρ::QuantumObject{OperatorQuantumObject}) = tr(O * ρ)
-function expect(
+expect(
     O::QuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
     ψ::QuantumObject{KetQuantumObject},
-) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
-    return real(dot(ψ.data, O.data, ψ.data))
-end
-function expect(
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real} = real(dot(ψ.data, O.data, ψ.data))
+expect(
     O::QuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
     ψ::QuantumObject{BraQuantumObject},
-) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
-    return real(expect(O, ψ'))
-end
-function expect(
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real} = real(expect(O, ψ'))
+expect(
     O::QuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
     ρ::QuantumObject{OperatorQuantumObject},
-) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
-    return real(tr(O * ρ))
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real} = real(tr(O * ρ))
+expect(
+    O::AbstractVector{<:AbstractQuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}}},
+    ρ::QuantumObject,
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real} = expect.(O, Ref(ρ))
+function expect(O::AbstractVector{<:AbstractQuantumObject{OperatorQuantumObject}}, ρ::QuantumObject)
+    result = Vector{ComplexF64}(undef, length(O))
+    result .= expect.(O, Ref(ρ))
+    return result
 end
-function expect(O::QuantumObject{OperatorQuantumObject}, ρ::Vector{<:QuantumObject})
-    _expect = _ρ -> expect(O, _ρ)
-    return _expect.(ρ)
+expect(O::AbstractQuantumObject{OperatorQuantumObject}, ρ::AbstractVector{<:QuantumObject}) = expect.(Ref(O), ρ)
+function expect(
+    O::AbstractVector{<:AbstractQuantumObject{OperatorQuantumObject,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}}},
+    ρ::AbstractVector{<:QuantumObject},
+) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
+    N_ops = length(O)
+    result = Matrix{Float64}(undef, N_ops, length(ρ))
+    for i in 1:N_ops
+        result[i, :] .= expect.(Ref(O[i]), ρ)
+    end
+    return result
+end
+function expect(O::AbstractVector{<:AbstractQuantumObject{OperatorQuantumObject}}, ρ::AbstractVector{<:QuantumObject})
+    N_ops = length(O)
+    result = Matrix{ComplexF64}(undef, N_ops, length(ρ))
+    for i in 1:N_ops
+        result[i, :] .= expect.(Ref(O[i]), ρ)
+    end
+    return result
 end
 
 @doc raw"""
