@@ -216,11 +216,11 @@ function _check_tlist(tlist, T::Type)
     tlist2 = convert(Vector{T}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
 
     # Check if the list of times is not empty
-    isempty(tlist2) && throw(ArgumentError("The list of times must not be empty."))
+    isempty(tlist2) && throw(ArgumentError("The time list must not be empty."))
     # Check if the list of times is sorted
-    !issorted(tlist2) && throw(ArgumentError("The list of times must be sorted."))
+    issorted(tlist2) || throw(ArgumentError("The time list must be sorted."))
     # Check if the list of times is unique
-    length(tlist2) != length(unique(tlist2)) && throw(ArgumentError("The list of times must be unique."))
+    allunique(tlist2) || throw(ArgumentError("The time list must be unique."))
 
     return tlist2
 end

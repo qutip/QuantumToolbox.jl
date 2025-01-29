@@ -77,7 +77,7 @@
 
             allocs_tot = @allocations sesolve(H, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false)) # Warm-up
             allocs_tot = @allocations sesolve(H, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false))
-            @test allocs_tot < 112
+            @test allocs_tot < 100
         end
 
         @testset "Type Inference sesolve" begin
@@ -288,21 +288,21 @@
 
             allocs_tot = @allocations mesolve(L, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false)) # Warm-up
             allocs_tot = @allocations mesolve(L, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
-            @test allocs_tot < 219
+            @test allocs_tot < 210
 
             allocs_tot = @allocations mesolve(L, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false)) # Warm-up
             allocs_tot = @allocations mesolve(L, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false))
-            @test allocs_tot < 133
+            @test allocs_tot < 120
 
             allocs_tot = @allocations mesolve(L_td, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p) # Warm-up
             allocs_tot = @allocations mesolve(L_td, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
-            @test allocs_tot < 219
+            @test allocs_tot < 210
 
             allocs_tot =
                 @allocations mesolve(L_td, ψ0, tlist, progress_bar = Val(false), saveat = [tlist[end]], params = p) # Warm-up
             allocs_tot =
                 @allocations mesolve(L_td, ψ0, tlist, progress_bar = Val(false), saveat = [tlist[end]], params = p)
-            @test allocs_tot < 133
+            @test allocs_tot < 120
         end
 
         @testset "Memory Allocations (mcsolve)" begin
