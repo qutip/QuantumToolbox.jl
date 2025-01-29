@@ -63,6 +63,13 @@
               "abstol = $(sol2.abstol)\n" *
               "reltol = $(sol2.reltol)\n"
 
+        tlist1 = Float64[]
+        tlist2 = [0, 0.2, 0.1]
+        tlist3 = [0, 0.1, 0.1, 0.2]
+        @test_throws ArgumentError sesolve(H, ψ0, tlist1, progress_bar = Val(false))
+        @test_throws ArgumentError sesolve(H, ψ0, tlist2, progress_bar = Val(false))
+        @test_throws ArgumentError sesolve(H, ψ0, tlist3, progress_bar = Val(false))
+
         @testset "Memory Allocations" begin
             allocs_tot = @allocations sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false)) # Warm-up
             allocs_tot = @allocations sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
@@ -189,6 +196,19 @@
               "SDE alg.: $(sol_sse.alg)\n" *
               "abstol = $(sol_sse.abstol)\n" *
               "reltol = $(sol_sse.reltol)\n"
+
+        tlist1 = Float64[]
+        tlist2 = [0, 0.2, 0.1]
+        tlist3 = [0, 0.1, 0.1, 0.2]
+        @test_throws ArgumentError mesolve(H, ψ0, tlist1, c_ops, progress_bar = Val(false))
+        @test_throws ArgumentError mesolve(H, ψ0, tlist2, c_ops, progress_bar = Val(false))
+        @test_throws ArgumentError mesolve(H, ψ0, tlist3, c_ops, progress_bar = Val(false))
+        @test_throws ArgumentError mcsolve(H, ψ0, tlist1, c_ops, progress_bar = Val(false))
+        @test_throws ArgumentError mcsolve(H, ψ0, tlist2, c_ops, progress_bar = Val(false))
+        @test_throws ArgumentError mcsolve(H, ψ0, tlist3, c_ops, progress_bar = Val(false))
+        @test_throws ArgumentError ssesolve(H, ψ0, tlist1, c_ops, progress_bar = Val(false))
+        @test_throws ArgumentError ssesolve(H, ψ0, tlist2, c_ops, progress_bar = Val(false))
+        @test_throws ArgumentError ssesolve(H, ψ0, tlist3, c_ops, progress_bar = Val(false))
 
         # Time-Dependent Hamiltonian
         # ssesolve is slow to be run on CI. It is not removed from the test because it may be useful for testing in more powerful machines.

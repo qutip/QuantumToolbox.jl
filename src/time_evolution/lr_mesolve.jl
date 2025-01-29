@@ -409,7 +409,7 @@ function lr_mesolveProblem(
     c_ops = get_data.(c_ops)
     e_ops = get_data.(e_ops)
 
-    t_l = convert(Vector{_FType(H)}, tlist)
+    t_l = _check_tlist(tlist, _FType(H))
 
     # Initialization of Arrays
     expvals = Array{ComplexF64}(undef, length(e_ops), length(t_l))

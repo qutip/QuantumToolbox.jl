@@ -212,6 +212,19 @@ struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType end
 
 ContinuousLindbladJumpCallback(; interp_points::Int = 10) = ContinuousLindbladJumpCallback(interp_points)
 
+function _check_tlist(tlist, T::Type)
+    tlist2 = convert(Vector{T}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+
+    # Check if the list of times is not empty
+    isempty(tlist2) && throw(ArgumentError("The time list must not be empty."))
+    # Check if the list of times is sorted
+    issorted(tlist2) || throw(ArgumentError("The time list must be sorted."))
+    # Check if the list of times is unique
+    allunique(tlist2) || throw(ArgumentError("The time list must be unique."))
+
+    return tlist2
+end
+
 #######################################
 
 function liouvillian_floquet(

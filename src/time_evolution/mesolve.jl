@@ -68,7 +68,7 @@ function mesolveProblem(
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    tlist = convert(Vector{_FType(ψ0)}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
+    tlist = _check_tlist(tlist, _FType(ψ0))
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     check_dimensions(L_evo, ψ0)
