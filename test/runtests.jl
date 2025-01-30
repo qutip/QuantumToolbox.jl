@@ -26,13 +26,6 @@ core_tests = [
     "wigner.jl",
 ]
 
-if (GROUP == "All") || (GROUP == "Code-Quality")
-    using QuantumToolbox
-    using Aqua, JET
-
-    include(joinpath(testdir, "core-test", "code_quality.jl"))
-end
-
 if (GROUP == "All") || (GROUP == "Core")
     using QuantumToolbox
     import QuantumToolbox: position, momentum
@@ -44,6 +37,17 @@ if (GROUP == "All") || (GROUP == "Core")
     for test in core_tests
         include(joinpath(testdir, "core-test", test))
     end
+end
+
+if (GROUP == "All") || (GROUP == "Code-Quality")
+    Pkg.activate("core-test/code-quality")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+
+    using QuantumToolbox
+    using Aqua, JET
+
+    include(joinpath(testdir, "core-test", "code-quality", "code_quality.jl"))
 end
 
 if (GROUP == "CairoMakie_Ext")# || (GROUP == "All")
