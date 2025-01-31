@@ -1,4 +1,4 @@
-# [Contributing to QuantumToolbox.jl](@id doc-Contribute)
+# [Contributing to Quantum Toolbox in Julia](@id doc-Contribute)
 
 ## [Quick Start](@id doc-Contribute:Quick-Start)
 
@@ -31,6 +31,12 @@ make test
 ```
 
 This command will automatically rebuild `Julia` and run the script located in `test/runtests.jl` (should cover both the original tests and the new test(s) you add).
+
+The tests are divided into several test groups, where the group names are defined in the file `test/runtests.jl` with a variable `GROUP`. One can also run the test scripts just for a certain test group by adding an argument `GROUP=<test-group-name>` to the `make test` command. For example, to run the tests for group `Core`, one can use the following command:
+
+```shell
+make GROUP=Core test
+```
 
 ## [Julia Code Format](@id doc-Contribute:Julia-Code-Format)
 
