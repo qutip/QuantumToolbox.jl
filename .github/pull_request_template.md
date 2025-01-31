@@ -1,7 +1,7 @@
 ## Checklist
 Thank you for contributing to `QuantumToolbox.jl`! Please make sure you have finished the following tasks before opening the PR.
 
-- [ ] Please read [Contributing to QuantumToolbox.jl](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing).
+- [ ] Please read [Contributing to Quantum Toolbox in Julia](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing).
 - [ ] Any code changes were done in a way that does not break public API.
 - [ ] Appropriate tests were added and tested locally by running: `make test`.
 - [ ] Any code changes should be `julia` formatted by running: `make format`.
