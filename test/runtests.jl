@@ -63,7 +63,7 @@ if (GROUP == "CairoMakie_Ext")# || (GROUP == "All")
 end
 
 if (GROUP == "CUDA_Ext")# || (GROUP == "All")
-    Pkg.activate("ext-test/gpu")
+    Pkg.activate("ext-test/cuda")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
 
@@ -75,5 +75,20 @@ if (GROUP == "CUDA_Ext")# || (GROUP == "All")
     QuantumToolbox.about()
     CUDA.versioninfo()
 
-    include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
+    include(joinpath(testdir, "ext-test", "cuda", "cuda_ext.jl"))
+end
+
+if (GROUP == "Metal_Ext")# || (GROUP == "All")
+    Pkg.activate("ext-test/metal")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+
+    using QuantumToolbox
+    using Metal
+    Metal.allowscalar(false) # Avoid unexpected scalar indexing
+
+    QuantumToolbox.about()
+    Metal.versioninfo()
+
+    include(joinpath(testdir, "ext-test", "metal", "metal_ext.jl"))
 end
