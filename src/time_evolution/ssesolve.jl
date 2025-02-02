@@ -35,13 +35,14 @@ end
         Base.@nexprs $N i -> begin
             mul!(@view(v[:, i]), L.ops[i], u)
         end
-        v
+        return v
     end
 end
 
 # TODO: Implement the three-argument dot function for SciMLOperators.jl
 # Currently, we are assuming a time-independent MatrixOperator
 function _ssesolve_update_coeff(u, p, t, op)
+    normalize!(u)
     return real(dot(u, op.A, u)) #this is en/2: <Sn + Sn'>/2 = Re<Sn>
 end
 
@@ -104,23 +105,23 @@ _ScalarOperator_e2_2(op, f = +) =
 Generate the SDEProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
     
 ```math
-d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
+d|\psi(t)\rangle = -i \hat{K} |\psi(t)\rangle dt + \sum_n \hat{M}_n |\psi(t)\rangle dW_n(t)
 ```
 
 where 
     
 ```math
-K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
+\hat{K} = \hat{H} + i \sum_n \left(\frac{e_n}{2} \hat{C}_n - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n - \frac{e_n^2}{8}\right),
 ```
 ```math
-M_n = C_n - \frac{e_n}{2},
+\hat{M}_n = \hat{C}_n - \frac{e_n}{2},
 ```
 and
 ```math
-e_n = \langle C_n + C_n^\dagger \rangle.
+e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
 ```
 
-Above, `C_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `C_n`.
+Above, `\hat{C}_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`.
 
 # Arguments
 
@@ -193,13 +194,14 @@ function ssesolveProblem(
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
     default_values = (DEFAULT_SDE_SOLVER_OPTIONS..., saveat = saveat)
     kwargs2 = merge(default_values, kwargs)
-    kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncSESolve)
+    kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncSSESolve)
+    kwargs4 = _ssesolve_add_normalize_cb(kwargs3)
 
     tspan = (tlist[1], tlist[end])
     noise =
         RealWienerProcess!(tlist[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false, rng = rng)
     noise_rate_prototype = similar(ψ0, length(ψ0), length(sc_ops))
-    return SDEProblem{true}(K, D, ψ0, tspan, p; noise_rate_prototype = noise_rate_prototype, noise = noise, kwargs3...)
+    return SDEProblem{true}(K, D, ψ0, tspan, p; noise_rate_prototype = noise_rate_prototype, noise = noise, kwargs4...)
 end
 
 @doc raw"""
@@ -222,23 +224,23 @@ end
 Generate the SDE EnsembleProblem for the Stochastic Schrödinger time evolution of a quantum system. This is defined by the following stochastic differential equation:
     
 ```math
-d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
+d|\psi(t)\rangle = -i \hat{K} |\psi(t)\rangle dt + \sum_n \hat{M}_n |\psi(t)\rangle dW_n(t)
 ```
 
 where 
     
 ```math
-K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
+\hat{K} = \hat{H} + i \sum_n \left(\frac{e_n}{2} \hat{C}_n - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n - \frac{e_n^2}{8}\right),
 ```
 ```math
-M_n = C_n - \frac{e_n}{2},
+\hat{M}_n = \hat{C}_n - \frac{e_n}{2},
 ```
 and
 ```math
-e_n = \langle C_n + C_n^\dagger \rangle.
+e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
 ```
 
-Above, `C_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `C_n`.
+Above, `\hat{C}_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`.
 
 # Arguments
 
@@ -345,23 +347,23 @@ Stochastic Schrödinger equation evolution of a quantum system given the system 
 The stochastic evolution of the state ``|\psi(t)\rangle`` is defined by:
     
 ```math
-d|\psi(t)\rangle = -i K |\psi(t)\rangle dt + \sum_n M_n |\psi(t)\rangle dW_n(t)
+d|\psi(t)\rangle = -i \hat{K} |\psi(t)\rangle dt + \sum_n \hat{M}_n |\psi(t)\rangle dW_n(t)
 ```
 
 where 
     
 ```math
-K = \hat{H} + i \sum_n \left(\frac{e_j} C_n - \frac{1}{2} \sum_{j} C_n^\dagger C_n - \frac{e_j^2}{8}\right),
+\hat{K} = \hat{H} + i \sum_n \left(\frac{e_n}{2} \hat{C}_n - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n - \frac{e_n^2}{8}\right),
 ```
 ```math
-M_n = C_n - \frac{e_n}{2},
+\hat{M}_n = \hat{C}_n - \frac{e_n}{2},
 ```
 and
 ```math
-e_n = \langle C_n + C_n^\dagger \rangle.
+e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
 ```
 
-Above, `C_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `C_n`.
+Above, `\hat{C}_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`.
 
 
 # Arguments

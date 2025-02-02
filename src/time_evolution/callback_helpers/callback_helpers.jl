@@ -32,8 +32,25 @@ end
 
 _get_e_ops_data(e_ops, ::Type{SaveFuncSESolve}) = get_data.(e_ops)
 _get_e_ops_data(e_ops, ::Type{SaveFuncMESolve}) = [_generate_mesolve_e_op(op) for op in e_ops] # Broadcasting generates type instabilities on Julia v1.10
+_get_e_ops_data(e_ops, ::Type{SaveFuncSSESolve}) = get_data.(e_ops)
 
 _generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
+
+#=
+This function add the normalization callback to the kwargs. It is needed to stabilize the integration when using the ssesolve method.
+=#
+function _ssesolve_add_normalize_cb(kwargs)
+    _condition = (u, t, integrator) -> true
+    _affect! = (integrator) -> normalize!(integrator.u)
+    cb = DiscreteCallback(_condition, _affect!; save_positions = (false, false))
+    # return merge(kwargs, (callback = CallbackSet(kwargs[:callback], cb),))
+
+    cb_set = haskey(kwargs, :callback) ? CallbackSet(kwargs[:callback], cb) : cb
+
+    kwargs2 = merge(kwargs, (callback = cb_set,))
+
+    return kwargs2
+end
 
 ##
 
@@ -80,10 +97,10 @@ function _se_me_sse_get_save_callback(cb::CallbackSet)
         return nothing
     end
 end
-_se_me_sse_get_save_callback(cb::DiscreteCallback) =
-    if (cb.affect! isa SaveFuncSESolve) || (cb.affect! isa SaveFuncMESolve)
+function _se_me_sse_get_save_callback(cb::DiscreteCallback)
+    if typeof(cb.affect!) <: Union{SaveFuncSESolve,SaveFuncMESolve,SaveFuncSSESolve}
         return cb
-    else
-        return nothing
     end
+    return nothing
+end
 _se_me_sse_get_save_callback(cb::ContinuousCallback) = nothing

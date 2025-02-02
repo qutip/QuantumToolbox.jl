@@ -18,6 +18,8 @@
     e_ops = [a' * a, σz]
     c_ops = [sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σm']
 
+    ψ0_int = Qobj(round.(Int, ψ0.data), dims = ψ0.dims) # Used for testing the type inference
+
     @testset "sesolve" begin
         tlist = range(0, 20 * 2π / g, 1000)
 
@@ -83,7 +85,7 @@
         @testset "Type Inference sesolve" begin
             @inferred sesolveProblem(H, ψ0, tlist, progress_bar = Val(false))
             @inferred sesolveProblem(H, ψ0, [0, 10], progress_bar = Val(false))
-            @inferred sesolveProblem(H, Qobj(zeros(Int64, N * 2); dims = (N, 2)), tlist, progress_bar = Val(false))
+            @inferred sesolveProblem(H, ψ0_int, tlist, progress_bar = Val(false))
             @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
             @inferred sesolve(H, ψ0, tlist, progress_bar = Val(false))
             @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
@@ -367,14 +369,7 @@
             ad_t = QobjEvo(a', coef)
             @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mesolveProblem(
-                H,
-                tensor(Qobj(zeros(Int64, N)), Qobj([0, 1])),
-                tlist,
-                c_ops,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-            )
+            @inferred mesolveProblem(H, ψ0_int, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
             @inferred mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
             @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
@@ -398,15 +393,7 @@
             @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
             @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng)
             @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
-            @inferred mcsolve(
-                H,
-                tensor(Qobj(zeros(Int64, N)), Qobj([0, 1])),
-                tlist,
-                c_ops,
-                ntraj = 5,
-                progress_bar = Val(false),
-                rng = rng,
-            )
+            @inferred mcsolve(H, ψ0_int, tlist, c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
             @inferred mcsolve(
                 H,
                 ψ0,
@@ -454,15 +441,7 @@
             )
             @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng)
             @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
-            @inferred ssesolve(
-                H,
-                tensor(Qobj(zeros(Int64, N)), Qobj([0, 1])),
-                tlist,
-                c_ops_tuple,
-                ntraj = 5,
-                progress_bar = Val(false),
-                rng = rng,
-            )
+            @inferred ssesolve(H, ψ0_int, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
             @inferred ssesolve(
                 H,
                 ψ0,
