@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Move code quality dependencies to separate environment. ([#380])
+- Add additional normalization of the state during time evolution of `ssesolve`. This improves the numerical stability of the solver. ([#383])
 
 ## [v0.25.1]
 Release date: 2025-01-29
@@ -98,3 +99,4 @@ Release date: 2024-11-13
 [#376]: https://github.com/qutip/QuantumToolbox.jl/issues/376
 [#378]: https://github.com/qutip/QuantumToolbox.jl/issues/378
 [#380]: https://github.com/qutip/QuantumToolbox.jl/issues/380
+[#383]: https://github.com/qutip/QuantumToolbox.jl/issues/383
