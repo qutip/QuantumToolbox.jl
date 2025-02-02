@@ -18,7 +18,7 @@
     e_ops = [a' * a, σz]
     c_ops = [sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σm']
 
-    ψ0_int = Qobj(round.(Int, ψ0.data), dims = ψ0.dims) # Used for testing the type inference
+    ψ0_int = Qobj(round.(Int, real.(ψ0.data)), dims = ψ0.dims) # Used for testing the type inference
 
     @testset "sesolve" begin
         tlist = range(0, 20 * 2π / g, 1000)

@@ -121,7 +121,7 @@ and
 e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
 ```
 
-Above, `\hat{C}_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`.
+Above, `\hat{C}_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`. See [Wiseman2009Quantum](@cite) for more details.
 
 # Arguments
 
@@ -240,7 +240,7 @@ and
 e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
 ```
 
-Above, `\hat{C}_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`.
+Above, `\hat{C}_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`. See [Wiseman2009Quantum](@cite) for more details.
 
 # Arguments
 
@@ -363,7 +363,7 @@ and
 e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
 ```
 
-Above, `\hat{C}_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`.
+Above, `\hat{C}_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`. See [Wiseman2009Quantum](@cite) for more details.
 
 
 # Arguments
