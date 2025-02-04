@@ -81,7 +81,6 @@
     # @test sparse_to_dense(Float64, cu(Xsf; word_size = 32)).data isa CuMatrix{Float64} # TODO: Fix this in CUDA.jl
     # @test sparse_to_dense(ComplexF64, cu(Xsf; word_size = 32)).data isa CuMatrix{ComplexF64} # TODO: Fix this in CUDA.jl
 
-
     # brief example in README and documentation
     N = 20
     ω64 = 1.0    # Float64
