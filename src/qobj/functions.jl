@@ -119,9 +119,6 @@ Converts a sparse QuantumObject to a dense QuantumObject.
 """
 sparse_to_dense(A::QuantumObject) = QuantumObject(sparse_to_dense(A.data), A.type, A.dimensions)
 sparse_to_dense(A::MT) where {MT<:AbstractSparseArray} = Array(A)
-for op in (:Transpose, :Adjoint)
-    @eval sparse_to_dense(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = Array(A)
-end
 sparse_to_dense(A::MT) where {MT<:AbstractArray} = A
 
 sparse_to_dense(::Type{T}, A::AbstractSparseArray) where {T<:Number} = Array{T}(A)
