@@ -1,4 +1,7 @@
 @testset "CUDA Extension" verbose = true begin
+    # Test that scalar indexing is disallowed
+    @test_throws ErrorException CUDA.rand(1)[1]
+
     ψdi = Qobj(Int64[1, 0])
     ψdf = Qobj(Float64[1, 0])
     ψdc = Qobj(ComplexF64[1, 0])
@@ -62,6 +65,22 @@
     @test typeof(CuSparseMatrixCSR{Float32}(Xsf).data) == CuSparseMatrixCSR{Float32,Int32}
     @test typeof(CuSparseMatrixCSR(Xsc).data) == CuSparseMatrixCSR{ComplexF64,Int32}
     @test typeof(CuSparseMatrixCSR{ComplexF32}(Xsc).data) == CuSparseMatrixCSR{ComplexF32,Int32}
+
+    # Sparse To Dense
+    # @test sparse_to_dense(cu(ψsi; word_size = 64)).data isa CuVector{Int64} # TODO: Fix this in CUDA.jl
+    @test sparse_to_dense(cu(ψsf; word_size = 64)).data isa CuVector{Float64}
+    @test sparse_to_dense(cu(ψsc; word_size = 64)).data isa CuVector{ComplexF64}
+    # @test sparse_to_dense(cu(Xsi; word_size = 64)).data isa CuMatrix{Int64} # TODO: Fix this in CUDA.jl
+    @test sparse_to_dense(cu(Xsf; word_size = 64)).data isa CuMatrix{Float64}
+    @test sparse_to_dense(cu(Xsc; word_size = 64)).data isa CuMatrix{ComplexF64}
+
+    # @test sparse_to_dense(Int32, cu(ψsf; word_size = 64)).data isa CuVector{Int32} # TODO: Fix this in CUDA.jl
+    # @test sparse_to_dense(Float32, cu(ψsf; word_size = 64)).data isa CuVector{Float32} # TODO: Fix this in CUDA.jl
+    # @test sparse_to_dense(ComplexF32, cu(ψsf; word_size = 64)).data isa CuVector{ComplexF32} # TODO: Fix this in CUDA.jl
+    # @test sparse_to_dense(Int64, cu(Xsf; word_size = 32)).data isa CuMatrix{Int64} # TODO: Fix this in CUDA.jl
+    # @test sparse_to_dense(Float64, cu(Xsf; word_size = 32)).data isa CuMatrix{Float64} # TODO: Fix this in CUDA.jl
+    # @test sparse_to_dense(ComplexF64, cu(Xsf; word_size = 32)).data isa CuMatrix{ComplexF64} # TODO: Fix this in CUDA.jl
+
 
     # brief example in README and documentation
     N = 20
