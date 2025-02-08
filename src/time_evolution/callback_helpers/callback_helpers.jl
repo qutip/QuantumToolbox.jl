@@ -34,7 +34,7 @@ _get_e_ops_data(e_ops, ::Type{SaveFuncSESolve}) = get_data.(e_ops)
 _get_e_ops_data(e_ops, ::Type{SaveFuncMESolve}) = [_generate_mesolve_e_op(op) for op in e_ops] # Broadcasting generates type instabilities on Julia v1.10
 _get_e_ops_data(e_ops, ::Type{SaveFuncSSESolve}) = get_data.(e_ops)
 
-_generate_mesolve_e_op(op) = mat2vec(get_data(op))
+_generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
 
 #=
 This function add the normalization callback to the kwargs. It is needed to stabilize the integration when using the ssesolve method.

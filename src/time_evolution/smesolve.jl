@@ -103,7 +103,7 @@ function smesolveProblem(
     D_l = map(sc_ops_evo_data) do op
         # TODO: Implement the three-argument dot function for SciMLOperators.jl
         # Currently, we are assuming a time-independent MatrixOperator
-        op_vec = mat2vec(op.A)
+        op_vec = mat2vec(adjoint(op.A))
         return _spre(op, Id) + _spost(op', Id) + _smesolve_ScalarOperator(op_vec) * IdentityOperator(prod(dims)^2)
     end
     D = DiffusionOperator(D_l)
