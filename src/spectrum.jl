@@ -127,7 +127,7 @@ function _spectrum(
 
     cache = nothing
     Id = I(D^2)
-    
+
     # DO the idx = 1 case
     ω = ωList[1]
     cache = init(LinearProblem(L.data - 1im * ω * Id, b), solver.alg, kwargs...)

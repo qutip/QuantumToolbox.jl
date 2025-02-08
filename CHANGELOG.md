@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Improve pseudo inverse spectrum solver. ([#388])
+
 ## [v0.25.2]
 Release date: 2025-02-02
 
@@ -104,3 +106,4 @@ Release date: 2024-11-13
 [#378]: https://github.com/qutip/QuantumToolbox.jl/issues/378
 [#380]: https://github.com/qutip/QuantumToolbox.jl/issues/380
 [#383]: https://github.com/qutip/QuantumToolbox.jl/issues/383
+[#388]: https://github.com/qutip/QuantumToolbox.jl/issues/388
