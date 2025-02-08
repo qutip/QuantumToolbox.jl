@@ -126,18 +126,20 @@ function _spectrum(
     _tr_A = transpose(_tr) * spre(A).data
 
     cache = nothing
-    I_cache = I(D^2)
+    Id = I(D^2)
+    
+    # DO the idx = 1 case
+    ω = ωList[1]
+    cache = init(LinearProblem(L.data - 1im * ω * Id, b), solver.alg, kwargs...)
+    sol = solve!(cache)
+    spec[1] = -2 * real(dot(_tr_A, sol.u))
+    popfirst!(ωList)
     for (idx, ω) in enumerate(ωList)
-        if idx == 1
-            cache = init(LinearProblem(L.data - 1im * ω * I_cache, b), solver.alg, kwargs...)
-            sol = solve!(cache)
-        else
-            cache.A = L.data - 1im * ω * I_cache
-            sol = solve!(cache)
-        end
+        cache.A = L.data - 1im * ω * Id
+        sol = solve!(cache)
 
         # trace over the Hilbert space of system (expectation value)
-        spec[idx] = -2 * real(dot(_tr_A, sol.u))
+        spec[idx+1] = -2 * real(dot(_tr_A, sol.u))
     end
 
     return spec
