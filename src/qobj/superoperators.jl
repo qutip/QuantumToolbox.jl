@@ -164,13 +164,13 @@ function liouvillian(
 ) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
-        L += _sum_linblad_dissipators(c_ops, Id_cache)
+        L += _sum_lindblad_dissipators(c_ops, Id_cache)
     end
     return L
 end
 
 liouvillian(H::Nothing, c_ops::Union{AbstractVector,Tuple}, Id_cache::Diagonal = I(prod(c_ops[1].dims))) =
-    _sum_linblad_dissipators(c_ops, Id_cache)
+    _sum_lindblad_dissipators(c_ops, Id_cache)
 
 liouvillian(H::Nothing, c_ops::Nothing) = 0
 
@@ -179,7 +179,7 @@ liouvillian(H::AbstractQuantumObject{OperatorQuantumObject}, Id_cache::Diagonal 
 
 liouvillian(H::AbstractQuantumObject{SuperOperatorQuantumObject}, Id_cache::Diagonal) = H
 
-function _sum_linblad_dissipators(c_ops, Id_cache::Diagonal)
+function _sum_lindblad_dissipators(c_ops, Id_cache::Diagonal)
     D = 0
     # sum all the (time-independent) c_ops first
     c_ops_ti = filter(op -> isa(op, QuantumObject), c_ops)

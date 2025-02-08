@@ -203,9 +203,9 @@ function Base.show(io::IO, sol::TimeEvolutionSSESol)
 end
 
 @doc raw"""
-    struct TimeEvolutionSSESol
+    struct TimeEvolutionSMESol
 
-A structure storing the results and some information from solving trajectories of the Stochastic Shrodinger equation time evolution.
+A structure storing the results and some information from solving trajectories of the Stochastic Master Equation time evolution.
 
 # Fields (Attributes)
 
