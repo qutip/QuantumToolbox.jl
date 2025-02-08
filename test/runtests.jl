@@ -70,7 +70,7 @@ if (GROUP == "CUDA_Ext")# || (GROUP == "All")
     using QuantumToolbox
     using CUDA
     using CUDA.CUSPARSE
-    CUDA.allowscalar(false) # Avoid unexpected scalar indexing
+    # CUDA.allowscalar(false) # This is already set in the extension script
 
     QuantumToolbox.about()
     CUDA.versioninfo()
