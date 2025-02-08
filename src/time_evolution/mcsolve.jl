@@ -25,43 +25,6 @@ function _mcsolve_output_func(sol, i)
     return (sol, false)
 end
 
-# Output function with progress bar update
-function _mcsolve_output_func_progress(sol, i, progr)
-    next!(progr)
-    return _mcsolve_output_func(sol, i)
-end
-
-# Output function with distributed channel update for progress bar
-function _mcsolve_output_func_distributed(sol, i, channel)
-    put!(channel, true)
-    return _mcsolve_output_func(sol, i)
-end
-
-function _mcsolve_dispatch_output_func(::ET, progress_bar, ntraj) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
-    if getVal(progress_bar)
-        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
-        f = (sol, i) -> _mcsolve_output_func_progress(sol, i, progr)
-        return (f, progr, nothing)
-    else
-        return (_mcsolve_output_func, nothing, nothing)
-    end
-end
-function _mcsolve_dispatch_output_func(
-    ::ET,
-    progress_bar,
-    ntraj,
-) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
-    if getVal(progress_bar)
-        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
-        progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
-
-        f = (sol, i) -> _mcsolve_output_func_distributed(sol, i, progr_channel)
-        return (f, progr, progr_channel)
-    else
-        return (_mcsolve_output_func, nothing, nothing)
-    end
-end
-
 function _normalize_state!(u, dims, normalize_states)
     getVal(normalize_states) && normalize!(u)
     return QuantumObject(u, type = Ket, dims = dims)
@@ -282,7 +245,8 @@ function mcsolveEnsembleProblem(
 ) where {TJC<:LindbladJumpCallbackType}
     _prob_func = prob_func isa Nothing ? _mcsolve_dispatch_prob_func(rng, ntraj, tlist) : prob_func
     _output_func =
-        output_func isa Nothing ? _mcsolve_dispatch_output_func(ensemble_method, progress_bar, ntraj) : output_func
+        output_func isa Nothing ?
+        _ensemble_dispatch_output_func(ensemble_method, progress_bar, ntraj, _mcsolve_output_func) : output_func
 
     prob_mc = mcsolveProblem(
         H,

@@ -226,6 +226,55 @@ function _check_tlist(tlist, T::Type)
 end
 
 #######################################
+#=
+Helpers for handling output of ensemble problems.
+This is very useful especially for dispatching which method to use to update the progress bar.
+=#
+
+# Output function with progress bar update
+function _ensemble_output_func_progress(sol, i, progr, output_func)
+    next!(progr)
+    return output_func(sol, i)
+end
+
+# Output function with distributed channel update for progress bar
+function _ensemble_output_func_distributed(sol, i, channel, output_func)
+    put!(channel, true)
+    return output_func(sol, i)
+end
+
+function _ensemble_dispatch_output_func(
+    ::ET,
+    progress_bar,
+    ntraj,
+    output_func,
+) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
+    if getVal(progress_bar)
+        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        f = (sol, i) -> _ensemble_output_func_progress(sol, i, progr, output_func)
+        return (f, progr, nothing)
+    else
+        return (_mcsolve_output_func, nothing, nothing)
+    end
+end
+function _ensemble_dispatch_output_func(
+    ::ET,
+    progress_bar,
+    ntraj,
+    output_func,
+) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
+    if getVal(progress_bar)
+        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
+
+        f = (sol, i) -> _ensemble_output_func_distributed(sol, i, progr_channel, output_func)
+        return (f, progr, progr_channel)
+    else
+        return (_mcsolve_output_func, nothing, nothing)
+    end
+end
+
+#######################################
 
 function liouvillian_floquet(
     L₀::QuantumObject{SuperOperatorQuantumObject},
