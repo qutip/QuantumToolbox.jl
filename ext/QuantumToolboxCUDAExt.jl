@@ -2,9 +2,11 @@ module QuantumToolboxCUDAExt
 
 using QuantumToolbox
 using QuantumToolbox: makeVal, getVal
-import CUDA: cu, CuArray
-import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR
+import CUDA: cu, CuArray, allowscalar
+import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR, AbstractCuSparseArray
 import SparseArrays: SparseVector, SparseMatrixCSC
+
+allowscalar(false)
 
 @doc raw"""
     CuArray(A::QuantumObject)
@@ -99,10 +101,9 @@ _change_eltype(::Type{T}, ::Val{32}) where {T<:AbstractFloat} = Float32
 _change_eltype(::Type{Complex{T}}, ::Val{64}) where {T<:Union{Int,AbstractFloat}} = ComplexF64
 _change_eltype(::Type{Complex{T}}, ::Val{32}) where {T<:Union{Int,AbstractFloat}} = ComplexF32
 
-sparse_to_dense(::Type{T}, A::CuArray{T}) where {T<:Number} = A
-sparse_to_dense(::Type{T1}, A::CuArray{T2}) where {T1<:Number,T2<:Number} = CuArray{T1}(A)
-sparse_to_dense(::Type{T}, A::CuSparseVector) where {T<:Number} = CuArray{T}(A)
-sparse_to_dense(::Type{T}, A::CuSparseMatrixCSC) where {T<:Number} = CuArray{T}(A)
-sparse_to_dense(::Type{T}, A::CuSparseMatrixCSR) where {T<:Number} = CuArray{T}(A)
+QuantumToolbox.sparse_to_dense(A::MT) where {MT<:AbstractCuSparseArray} = CuArray(A)
+
+QuantumToolbox.sparse_to_dense(::Type{T1}, A::CuArray{T2}) where {T1<:Number,T2<:Number} = CuArray{T1}(A)
+QuantumToolbox.sparse_to_dense(::Type{T}, A::AbstractCuSparseArray) where {T<:Number} = CuArray{T}(A)
 
 end
