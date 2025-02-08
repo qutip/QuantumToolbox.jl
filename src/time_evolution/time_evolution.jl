@@ -202,6 +202,65 @@ function Base.show(io::IO, sol::TimeEvolutionSSESol)
     return nothing
 end
 
+@doc raw"""
+    struct TimeEvolutionSSESol
+
+A structure storing the results and some information from solving trajectories of the Stochastic Shrodinger equation time evolution.
+
+# Fields (Attributes)
+
+- `ntraj::Int`: Number of trajectories
+- `times::AbstractVector`: The time list of the evolution.
+- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `expect_all::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `converged::Bool`: Whether the solution is converged or not.
+- `alg`: The algorithm which is used during the solving process.
+- `abstol::Real`: The absolute tolerance which is used during the solving process.
+- `reltol::Real`: The relative tolerance which is used during the solving process.
+"""
+struct TimeEvolutionSMESol{
+    TT<:AbstractVector{<:Real},
+    TS<:AbstractVector,
+    TE<:Union{AbstractMatrix,Nothing},
+    TEA<:Union{AbstractArray,Nothing},
+    AlgT<:StochasticDiffEqAlgorithm,
+    AT<:Real,
+    RT<:Real,
+}
+    ntraj::Int
+    times::TT
+    states::TS
+    expect::TE
+    expect_all::TEA
+    converged::Bool
+    alg::AlgT
+    abstol::AT
+    reltol::RT
+end
+
+function Base.show(io::IO, sol::TimeEvolutionSMESol)
+    print(io, "Solution of quantum trajectories\n")
+    print(io, "(converged: $(sol.converged))\n")
+    print(io, "--------------------------------\n")
+    print(io, "num_trajectories = $(sol.ntraj)\n")
+    print(io, "num_states = $(length(sol.states[1]))\n")
+    if sol.expect isa Nothing
+        print(io, "num_expect = 0\n")
+    else
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
+    end
+    print(io, "SDE alg.: $(sol.alg)\n")
+    print(io, "abstol = $(sol.abstol)\n")
+    print(io, "reltol = $(sol.reltol)\n")
+    return nothing
+end
+
+#######################################
+#=
+    Callbacks for Monte Carlo quantum trajectories
+=#
+
 abstract type LindbladJumpCallbackType end
 
 struct ContinuousLindbladJumpCallback <: LindbladJumpCallbackType
@@ -270,9 +329,70 @@ function _ensemble_dispatch_output_func(
         f = (sol, i) -> _ensemble_output_func_distributed(sol, i, progr_channel, output_func)
         return (f, progr, progr_channel)
     else
-        return (_mcsolve_output_func, nothing, nothing)
+        return (output_func, nothing, nothing)
     end
 end
+
+function _enseble_dispatch_prob_func(rng, ntraj, tlist, prob_func)
+    seeds = map(i -> rand(rng, UInt64), 1:ntraj)
+    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist)
+end
+
+function _ensemble_dispatch_solve(
+    ens_prob_mc::TimeEvolutionProblem,
+    alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
+    ensemble_method::ET,
+    ntraj::Int,
+) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
+    sol = nothing
+
+    @sync begin
+        @async while take!(ens_prob_mc.kwargs.channel)
+            next!(ens_prob_mc.kwargs.progr)
+        end
+
+        @async begin
+            sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+            put!(ens_prob_mc.kwargs.channel, false)
+        end
+    end
+
+    return sol
+end
+function _ensemble_dispatch_solve(
+    ens_prob_mc::TimeEvolutionProblem,
+    alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
+    ensemble_method,
+    ntraj::Int,
+)
+    sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+    return sol
+end
+
+#######################################
+#=
+ Stochastic funcs
+=#
+function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist)
+    params = prob.prob.p
+
+    seed = seeds[i]
+    traj_rng = typeof(rng)()
+    seed!(traj_rng, seed)
+
+    noise = RealWienerProcess!(
+        prob.prob.tspan[1],
+        zeros(params.n_sc_ops),
+        zeros(params.n_sc_ops),
+        save_everystep = false,
+        rng = traj_rng,
+    )
+
+    return remake(prob.prob, noise = noise, seed = seed)
+end
+
+# Standard output function
+_stochastic_output_func(sol, i) = (sol, false)
 
 #######################################
 
