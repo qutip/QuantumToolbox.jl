@@ -208,7 +208,7 @@ function smesolveEnsembleProblem(
     kwargs...,
 )
     _prob_func =
-        isnothing(prob_func) ? _enseble_dispatch_prob_func(rng, ntraj, tlist, _stochastic_prob_func) : prob_func
+        isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _stochastic_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
         _ensemble_dispatch_output_func(ensemble_method, progress_bar, ntraj, _stochastic_output_func) : output_func

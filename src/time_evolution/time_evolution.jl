@@ -333,7 +333,7 @@ function _ensemble_dispatch_output_func(
     end
 end
 
-function _enseble_dispatch_prob_func(rng, ntraj, tlist, prob_func)
+function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func)
     seeds = map(i -> rand(rng, UInt64), 1:ntraj)
     return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist)
 end

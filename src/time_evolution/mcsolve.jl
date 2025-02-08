@@ -238,7 +238,7 @@ function mcsolveEnsembleProblem(
     output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
 ) where {TJC<:LindbladJumpCallbackType}
-    _prob_func = isnothing(prob_func) ? _enseble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
+    _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
         _ensemble_dispatch_output_func(ensemble_method, progress_bar, ntraj, _mcsolve_output_func) : output_func
