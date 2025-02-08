@@ -78,7 +78,6 @@ function _ssesolve_output_func_distributed(sol, i)
     return _stochastic_output_func(sol, i)
 end
 
-_ssesolve_dispatch_output_func() = _ssesolve_output_func
 _ssesolve_dispatch_output_func(::ET) where {ET<:Union{EnsembleSerial,EnsembleThreads}} = _ssesolve_output_func_progress
 _ssesolve_dispatch_output_func(::EnsembleDistributed) = _ssesolve_output_func_distributed
 

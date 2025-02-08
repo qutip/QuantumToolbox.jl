@@ -2,6 +2,8 @@ export mesolveProblem, mesolve
 
 _mesolve_make_L_QobjEvo(H::Union{QuantumObject,Nothing}, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator)
 _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
+_mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both H and
+c_ops are Nothing. You are probably running the wrong function."))
 
 @doc raw"""
     mesolveProblem(

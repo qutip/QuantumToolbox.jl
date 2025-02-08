@@ -1,5 +1,7 @@
 export smesolveProblem, smesolveEnsembleProblem, smesolve
 
+_smesolve_generate_state(u, dims) = QuantumObject(vec2mat(u), type = Operator, dims = dims)
+
 function _smesolve_update_coeff(u, p, t, op_vec)
     return real(dot(u, op_vec)) / 2 #this is Tr[Sn * ρ + ρ * Sn']
 end
@@ -353,7 +355,7 @@ function smesolve(
     dims = ens_prob.dimensions
     _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _se_me_sse_get_expvals(sol[:, i]), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all)
-    states = map(i -> QuantumObject.(vec2mat.(sol[:, i].u), type = Operator, dims = dims), eachindex(sol))
+    states = map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims)), eachindex(sol))
 
     expvals =
         _se_me_sse_get_expvals(_sol_1) isa Nothing ? nothing :

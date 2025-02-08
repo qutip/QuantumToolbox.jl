@@ -196,10 +196,13 @@ mcsolveProblem
 mcsolveEnsembleProblem
 ssesolveProblem
 ssesolveEnsembleProblem
+smesolveProblem
+smesolveEnsembleProblem
 sesolve
 mesolve
 mcsolve
 ssesolve
+smesolve
 dfd_mesolve
 liouvillian
 liouvillian_generalized

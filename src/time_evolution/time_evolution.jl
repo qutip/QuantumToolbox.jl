@@ -313,7 +313,7 @@ function _ensemble_dispatch_output_func(
         f = (sol, i) -> _ensemble_output_func_progress(sol, i, progr, output_func)
         return (f, progr, nothing)
     else
-        return (_mcsolve_output_func, nothing, nothing)
+        return (output_func, nothing, nothing)
     end
 end
 function _ensemble_dispatch_output_func(
