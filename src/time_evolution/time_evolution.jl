@@ -151,7 +151,7 @@ end
 @doc raw"""
     struct TimeEvolutionStochasticSol
 
-A structure storing the results and some information from solving trajectories of the Stochastic Master Equation time evolution.
+A structure storing the results and some information from solving trajectories of the Stochastic time evolution.
 
 # Fields (Attributes)
 
