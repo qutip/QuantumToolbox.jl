@@ -36,7 +36,8 @@ The following table lists the solvers provided by `QuantumToolbox` for dynamic q
 | Unitary evolution, Schrödinger equation | [`sesolve`](@ref) | [`sesolveProblem`](@ref) | [`TimeEvolutionSol`](@ref) |
 | Lindblad master eqn. or Von Neuman eqn.| [`mesolve`](@ref) | [`mesolveProblem`](@ref) | [`TimeEvolutionSol`](@ref) |
 | Monte Carlo evolution | [`mcsolve`](@ref) | [`mcsolveProblem`](@ref) [`mcsolveEnsembleProblem`](@ref) | [`TimeEvolutionMCSol`](@ref) |
-| Stochastic Schrödinger equation | [`ssesolve`](@ref) | [`ssesolveProblem`](@ref) [`ssesolveEnsembleProblem`](@ref) | [`TimeEvolutionSSESol`](@ref) |
+| Stochastic Schrödinger equation | [`ssesolve`](@ref) | [`ssesolveProblem`](@ref) [`ssesolveEnsembleProblem`](@ref) | [`TimeEvolutionStochasticSol`](@ref) |
+| Stochastic master equation | [`smesolve`](@ref) | [`smesolveProblem`](@ref) [`smesolveEnsembleProblem`](@ref) | [`TimeEvolutionStochasticSol`](@ref) |
 
 !!! note "Solving dynamics with pre-defined problems"
     `QuantumToolbox` provides two different methods to solve the dynamics. One can use the function calls listed above by either taking all the operators (like Hamiltonian and collapse operators, etc.) as inputs directly, or generating the `prob`lems by yourself and take it as an input of the function call, e.g., `sesolve(prob)`.

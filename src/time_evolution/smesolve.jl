@@ -301,7 +301,7 @@ Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while 
 
 # Returns
 
-- `sol::TimeEvolutionSMESol`: The solution of the time evolution. See also [`TimeEvolutionSMESol`](@ref).
+- `sol::TimeEvolutionStochasticSol`: The solution of the time evolution. See [`TimeEvolutionStochasticSol`](@ref).
 """
 function smesolve(
     H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
@@ -361,7 +361,7 @@ function smesolve(
         _se_me_sse_get_expvals(_sol_1) isa Nothing ? nothing :
         dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
 
-    return TimeEvolutionSMESol(
+    return TimeEvolutionStochasticSol(
         ntraj,
         ens_prob.times,
         states,

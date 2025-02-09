@@ -390,7 +390,7 @@ Above, ``\hat{C}_n`` is the `n`-th collapse operator and ``dW_n(t)`` is the real
 
 # Returns
 
-- `sol::TimeEvolutionSSESol`: The solution of the time evolution. See also [`TimeEvolutionSSESol`](@ref).
+- `sol::TimeEvolutionStochasticSol`: The solution of the time evolution. See [`TimeEvolutionStochasticSol`](@ref).
 """
 function ssesolve(
     H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
@@ -455,7 +455,7 @@ function ssesolve(
             _se_me_sse_get_expvals(_sol_1) isa Nothing ? nothing :
             dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
 
-        return TimeEvolutionSSESol(
+        return TimeEvolutionStochasticSol(
             ntraj,
             _sol_1.prob.p.times,
             states,

@@ -1,4 +1,4 @@
-export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionSSESol
+export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
 
 export liouvillian_floquet, liouvillian_generalized
 
@@ -149,61 +149,7 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
 end
 
 @doc raw"""
-    struct TimeEvolutionSSESol
-
-A structure storing the results and some information from solving trajectories of the Stochastic Shrodinger equation time evolution.
-
-# Fields (Attributes)
-
-- `ntraj::Int`: Number of trajectories
-- `times::AbstractVector`: The time list of the evolution.
-- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
-- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `expect_all::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
-- `converged::Bool`: Whether the solution is converged or not.
-- `alg`: The algorithm which is used during the solving process.
-- `abstol::Real`: The absolute tolerance which is used during the solving process.
-- `reltol::Real`: The relative tolerance which is used during the solving process.
-"""
-struct TimeEvolutionSSESol{
-    TT<:AbstractVector{<:Real},
-    TS<:AbstractVector,
-    TE<:Union{AbstractMatrix,Nothing},
-    TEA<:Union{AbstractArray,Nothing},
-    AlgT<:StochasticDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
-}
-    ntraj::Int
-    times::TT
-    states::TS
-    expect::TE
-    expect_all::TEA
-    converged::Bool
-    alg::AlgT
-    abstol::AT
-    reltol::RT
-end
-
-function Base.show(io::IO, sol::TimeEvolutionSSESol)
-    print(io, "Solution of quantum trajectories\n")
-    print(io, "(converged: $(sol.converged))\n")
-    print(io, "--------------------------------\n")
-    print(io, "num_trajectories = $(sol.ntraj)\n")
-    print(io, "num_states = $(length(sol.states[1]))\n")
-    if sol.expect isa Nothing
-        print(io, "num_expect = 0\n")
-    else
-        print(io, "num_expect = $(size(sol.expect, 1))\n")
-    end
-    print(io, "SDE alg.: $(sol.alg)\n")
-    print(io, "abstol = $(sol.abstol)\n")
-    print(io, "reltol = $(sol.reltol)\n")
-    return nothing
-end
-
-@doc raw"""
-    struct TimeEvolutionSMESol
+    struct TimeEvolutionStochasticSol
 
 A structure storing the results and some information from solving trajectories of the Stochastic Master Equation time evolution.
 
@@ -219,7 +165,7 @@ A structure storing the results and some information from solving trajectories o
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
-struct TimeEvolutionSMESol{
+struct TimeEvolutionStochasticSol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Union{AbstractMatrix,Nothing},
@@ -239,8 +185,8 @@ struct TimeEvolutionSMESol{
     reltol::RT
 end
 
-function Base.show(io::IO, sol::TimeEvolutionSMESol)
-    print(io, "Solution of quantum trajectories\n")
+function Base.show(io::IO, sol::TimeEvolutionStochasticSol)
+    print(io, "Solution of stochastic quantum trajectories\n")
     print(io, "(converged: $(sol.converged))\n")
     print(io, "--------------------------------\n")
     print(io, "num_trajectories = $(sol.ntraj)\n")

@@ -189,8 +189,7 @@ cosm
 TimeEvolutionProblem
 TimeEvolutionSol
 TimeEvolutionMCSol
-TimeEvolutionSSESol
-TimeEvolutionSMESol
+TimeEvolutionStochasticSol
 sesolveProblem
 mesolveProblem
 mcsolveProblem

@@ -198,7 +198,7 @@
               "abstol = $(sol_mc_states.abstol)\n" *
               "reltol = $(sol_mc_states.reltol)\n"
         @test sol_sse_string ==
-              "Solution of quantum trajectories\n" *
+              "Solution of stochastic quantum trajectories\n" *
               "(converged: $(sol_sse.converged))\n" *
               "--------------------------------\n" *
               "num_trajectories = $(sol_sse.ntraj)\n" *
@@ -208,7 +208,7 @@
               "abstol = $(sol_sse.abstol)\n" *
               "reltol = $(sol_sse.reltol)\n"
         @test sol_sme_string ==
-              "Solution of quantum trajectories\n" *
+              "Solution of stochastic quantum trajectories\n" *
               "(converged: $(sol_sme.converged))\n" *
               "--------------------------------\n" *
               "num_trajectories = $(sol_sme.ntraj)\n" *
