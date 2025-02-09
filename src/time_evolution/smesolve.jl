@@ -45,7 +45,7 @@ Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while 
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`KetQuantumObject`](@ref) or a [`OperatorQuantumObject`](@ref) for mixed states.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `sc_ops`: List of measurement collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
@@ -166,7 +166,7 @@ Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while 
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`KetQuantumObject`](@ref) or a [`OperatorQuantumObject`](@ref) for mixed states.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `sc_ops`: List of measurement collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
@@ -277,7 +277,7 @@ Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while 
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`KetQuantumObject`](@ref) or a [`OperatorQuantumObject`](@ref) for mixed states.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `sc_ops`: List of measurement collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
