@@ -14,23 +14,23 @@ A cat state, often referred to as a Schrödinger cat state, is a quantum state t
 
 where ``| \alpha \rangle`` is a coherent state with amplitude ``\alpha``.
 
-The triangular cat state is a generalization of the standard cat state. It is a superposition of three coherent states with phases ``\theta_0, \theta_1, \theta_2`` separated by ``120^\circ``(or ``2\pi/3``radians):
+The triangular cat state is a generalization of the standard cat state. It is a superposition of three coherent states with phases ``\theta_0, \theta_1, \theta_2`` separated by ``120^\circ`` (or ``2\pi/3``radians):
 
 ```math
 | \psi_{\text{tri-cat}} \rangle = \frac{1}{\sqrt{3}} \left( | \alpha_0 \rangle + | \alpha_1 \rangle + | \alpha_2 \rangle \right)
 ```
 
-where ``\alpha_j = \rho e^{i\theta_j}``with ``\theta_j = \frac{\pi}{2} + \frac{2\pi j}{3}``and ``j = 0, 1, 2``.
+where ``\alpha_j = \rho e^{i\theta_j}`` with ``\theta_j = \frac{\pi}{2} + \frac{2\pi j}{3}`` and ``j = 0, 1, 2``.
 
 ### Wigner Function
 
-The Wigner function ``W(x, p)``is a quasi-probability distribution used in quantum mechanics to represent quantum states in phase space. It is defined as:
+The Wigner function ``W(x, p)`` is a quasi-probability distribution used in quantum mechanics to represent quantum states in phase space. It is defined as:
 
 ```math
 W(x, p) = \frac{1}{\pi \hbar} \int_{-\infty}^{\infty} \psi^*(x + y) \psi(x - y) e^{2ipy / \hbar} \, dy
 ```
 
-where ``\psi(x)``is the wave function of the quantum state, ``x``is the position, ``p``is the momentum, and ``\hbar``is the reduced Planck constant. Unlike classical probability distributions, the Wigner function can take negative values, which indicates non-classical behavior.
+where ``\psi(x)`` is the wave function of the quantum state, ``x`` is the position, ``p`` is the momentum, and ``\hbar`` is the reduced Planck constant. Unlike classical probability distributions, the Wigner function can take negative values, which indicates non-classical behavior.
 
 ## Generating the Logo
 
@@ -91,7 +91,7 @@ The figure obtained above coulb be already a potential logo for the package. How
 \frac{d \hat{\rho}}{dt} = -i [\hat{H}, \hat{\rho}] + \gamma \left( 2 \hat{a} \hat{\rho} \hat{a}^\dagger - \hat{a}^\dagger \hat{a} \hat{\rho} - \hat{\rho} \hat{a}^\dagger \hat{a} \right)
 ```
 
-where ``\hat{\rho}`` is the density matrix, ``\hat{H} = \omega \hat{a}^\dagger \hat{a}``is the Hamiltonian of the harmonic oscillator (``\hbar = 1``), ``\hat{a}``and ``\hat{a}^\dagger``are the annihilation and creation operators, and ``\gamma``is the damping rate. Thus, we initialize the system in the triangular cat state and evolve it under the Lindblad master equation, using the [`mesolve`](@ref) function.
+where ``\hat{\rho}`` is the density matrix, ``\hat{H} = \omega \hat{a}^\dagger \hat{a}`` is the Hamiltonian of the harmonic oscillator (``\hbar = 1``), ``\hat{a}`` and ``\hat{a}^\dagger`` are the annihilation and creation operators, and ``\gamma`` is the damping rate. Thus, we initialize the system in the triangular cat state and evolve it under the [Lindblad master equation](@ref doc-TE:Lindblad-Master-Equation-Solver), using the [`mesolve`](@ref) function.
 
 ```@example logo
 γ = 0.012
@@ -166,7 +166,7 @@ cmap3 = cgrad(vcat(fill(julia_blue, n_repeats), fill(julia_purple, n_repeats)))
 
 ### Normalizing the Wigner function and applying the custom colormap
 
-The colormaps require the input to be in the range ``[0, 1]``. We normalize the Wigner function such that the maximum value is ``1``and the zeros are set to ``0.5``.
+The colormaps require the input to be in the range ``[0, 1]``. We normalize the Wigner function such that the maximum value is ``1`` and the zeros are set to ``0.5``.
 
 ```@example logo
 vmax = maximum(wig)
