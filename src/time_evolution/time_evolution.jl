@@ -1,4 +1,4 @@
-export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionSSESol
+export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
 
 export liouvillian_floquet, liouvillian_generalized
 
@@ -149,9 +149,9 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
 end
 
 @doc raw"""
-    struct TimeEvolutionSSESol
+    struct TimeEvolutionStochasticSol
 
-A structure storing the results and some information from solving trajectories of the Stochastic Shrodinger equation time evolution.
+A structure storing the results and some information from solving trajectories of the Stochastic time evolution.
 
 # Fields (Attributes)
 
@@ -165,7 +165,7 @@ A structure storing the results and some information from solving trajectories o
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
-struct TimeEvolutionSSESol{
+struct TimeEvolutionStochasticSol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Union{AbstractMatrix,Nothing},
@@ -185,8 +185,8 @@ struct TimeEvolutionSSESol{
     reltol::RT
 end
 
-function Base.show(io::IO, sol::TimeEvolutionSSESol)
-    print(io, "Solution of quantum trajectories\n")
+function Base.show(io::IO, sol::TimeEvolutionStochasticSol)
+    print(io, "Solution of stochastic quantum trajectories\n")
     print(io, "(converged: $(sol.converged))\n")
     print(io, "--------------------------------\n")
     print(io, "num_trajectories = $(sol.ntraj)\n")
@@ -201,6 +201,11 @@ function Base.show(io::IO, sol::TimeEvolutionSSESol)
     print(io, "reltol = $(sol.reltol)\n")
     return nothing
 end
+
+#######################################
+#=
+    Callbacks for Monte Carlo quantum trajectories
+=#
 
 abstract type LindbladJumpCallbackType end
 
@@ -224,6 +229,116 @@ function _check_tlist(tlist, T::Type)
 
     return tlist2
 end
+
+#######################################
+#=
+Helpers for handling output of ensemble problems.
+This is very useful especially for dispatching which method to use to update the progress bar.
+=#
+
+# Output function with progress bar update
+function _ensemble_output_func_progress(sol, i, progr, output_func)
+    next!(progr)
+    return output_func(sol, i)
+end
+
+# Output function with distributed channel update for progress bar
+function _ensemble_output_func_distributed(sol, i, channel, output_func)
+    put!(channel, true)
+    return output_func(sol, i)
+end
+
+function _ensemble_dispatch_output_func(
+    ::ET,
+    progress_bar,
+    ntraj,
+    output_func,
+) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
+    if getVal(progress_bar)
+        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        f = (sol, i) -> _ensemble_output_func_progress(sol, i, progr, output_func)
+        return (f, progr, nothing)
+    else
+        return (output_func, nothing, nothing)
+    end
+end
+function _ensemble_dispatch_output_func(
+    ::ET,
+    progress_bar,
+    ntraj,
+    output_func,
+) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
+    if getVal(progress_bar)
+        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
+
+        f = (sol, i) -> _ensemble_output_func_distributed(sol, i, progr_channel, output_func)
+        return (f, progr, progr_channel)
+    else
+        return (output_func, nothing, nothing)
+    end
+end
+
+function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func)
+    seeds = map(i -> rand(rng, UInt64), 1:ntraj)
+    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist)
+end
+
+function _ensemble_dispatch_solve(
+    ens_prob_mc::TimeEvolutionProblem,
+    alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
+    ensemble_method::ET,
+    ntraj::Int,
+) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
+    sol = nothing
+
+    @sync begin
+        @async while take!(ens_prob_mc.kwargs.channel)
+            next!(ens_prob_mc.kwargs.progr)
+        end
+
+        @async begin
+            sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+            put!(ens_prob_mc.kwargs.channel, false)
+        end
+    end
+
+    return sol
+end
+function _ensemble_dispatch_solve(
+    ens_prob_mc::TimeEvolutionProblem,
+    alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
+    ensemble_method,
+    ntraj::Int,
+)
+    sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+    return sol
+end
+
+#######################################
+#=
+ Stochastic funcs
+=#
+function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist)
+    params = prob.prob.p
+
+    seed = seeds[i]
+    traj_rng = typeof(rng)()
+    seed!(traj_rng, seed)
+
+    noise = RealWienerProcess!(
+        prob.prob.tspan[1],
+        zeros(params.n_sc_ops),
+        zeros(params.n_sc_ops),
+        save_everystep = false,
+        rng = traj_rng,
+    )
+
+    return remake(prob.prob, noise = noise, seed = seed)
+end
+
+# Standard output function
+_stochastic_output_func(sol, i) = (sol, false)
 
 #######################################
 

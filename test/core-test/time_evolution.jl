@@ -18,6 +18,10 @@
     e_ops = [a' * a, σz]
     c_ops = [sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σm']
 
+    sme_η = 0.7 # Efficiency of the homodyne detector for smesolve
+    c_ops_sme = [sqrt(1 - sme_η) * op for op in c_ops]
+    sc_ops_sme = [sqrt(sme_η) * op for op in c_ops]
+
     ψ0_int = Qobj(round.(Int, real.(ψ0.data)), dims = ψ0.dims) # Used for testing the type inference
 
     @testset "sesolve" begin
@@ -93,7 +97,7 @@
         end
     end
 
-    @testset "mesolve, mcsolve, and ssesolve" begin
+    @testset "mesolve, mcsolve, ssesolve and smesolve" begin
         tlist = range(0, 10 / γ, 100)
 
         prob_me = mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
@@ -124,6 +128,7 @@
             jump_callback = DiscreteLindbladJumpCallback(),
         )
         sol_sse = ssesolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+        sol_sme = smesolve(H, ψ0, tlist, c_ops_sme, sc_ops_sme, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
 
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
@@ -137,13 +142,15 @@
         sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
         sol_mc_string_states = sprint((t, s) -> show(t, "text/plain", s), sol_mc_states)
         sol_sse_string = sprint((t, s) -> show(t, "text/plain", s), sol_sse)
+        sol_sme_string = sprint((t, s) -> show(t, "text/plain", s), sol_sme)
         @test prob_me.prob.f.f isa MatrixOperator
         @test prob_mc.prob.f.f isa MatrixOperator
-        @test sum(abs.(sol_mc.expect .- sol_me.expect)) / length(tlist) < 0.1
-        @test sum(abs.(sol_mc2.expect .- sol_me.expect)) / length(tlist) < 0.1
-        @test sum(abs.(vec(expect_mc_states_mean) .- vec(sol_me.expect[1, :]))) / length(tlist) < 0.1
-        @test sum(abs.(vec(expect_mc_states_mean2) .- vec(sol_me.expect[1, :]))) / length(tlist) < 0.1
-        @test sum(abs.(sol_sse.expect .- sol_me.expect)) / length(tlist) < 0.1
+        @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
+        @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
+        @test sum(abs, vec(expect_mc_states_mean) .- vec(sol_me.expect[1, :])) / length(tlist) < 0.1
+        @test sum(abs, vec(expect_mc_states_mean2) .- vec(sol_me.expect[1, :])) / length(tlist) < 0.1
+        @test sum(abs, sol_sse.expect .- sol_me.expect) / length(tlist) < 0.1
+        @test sum(abs, sol_sme.expect .- sol_me.expect) / length(tlist) < 0.1
         @test length(sol_me.times) == length(tlist)
         @test length(sol_me.states) == 1
         @test size(sol_me.expect) == (length(e_ops), length(tlist))
@@ -159,6 +166,8 @@
         @test sol_mc_states.expect === nothing
         @test length(sol_sse.times) == length(tlist)
         @test size(sol_sse.expect) == (length(e_ops), length(tlist))
+        @test length(sol_sme.times) == length(tlist)
+        @test size(sol_sme.expect) == (length(e_ops), length(tlist))
         @test sol_me_string ==
               "Solution of time evolution\n" *
               "(return code: $(sol_me.retcode))\n" *
@@ -189,7 +198,7 @@
               "abstol = $(sol_mc_states.abstol)\n" *
               "reltol = $(sol_mc_states.reltol)\n"
         @test sol_sse_string ==
-              "Solution of quantum trajectories\n" *
+              "Solution of stochastic quantum trajectories\n" *
               "(converged: $(sol_sse.converged))\n" *
               "--------------------------------\n" *
               "num_trajectories = $(sol_sse.ntraj)\n" *
@@ -198,6 +207,16 @@
               "SDE alg.: $(sol_sse.alg)\n" *
               "abstol = $(sol_sse.abstol)\n" *
               "reltol = $(sol_sse.reltol)\n"
+        @test sol_sme_string ==
+              "Solution of stochastic quantum trajectories\n" *
+              "(converged: $(sol_sme.converged))\n" *
+              "--------------------------------\n" *
+              "num_trajectories = $(sol_sme.ntraj)\n" *
+              "num_states = $(length(sol_sme.states[1]))\n" *
+              "num_expect = $(size(sol_sme.expect, 1))\n" *
+              "SDE alg.: $(sol_sme.alg)\n" *
+              "abstol = $(sol_sme.abstol)\n" *
+              "reltol = $(sol_sme.reltol)\n"
 
         tlist1 = Float64[]
         tlist2 = [0, 0.2, 0.1]
@@ -211,6 +230,9 @@
         @test_throws ArgumentError ssesolve(H, ψ0, tlist1, c_ops, progress_bar = Val(false))
         @test_throws ArgumentError ssesolve(H, ψ0, tlist2, c_ops, progress_bar = Val(false))
         @test_throws ArgumentError ssesolve(H, ψ0, tlist3, c_ops, progress_bar = Val(false))
+        @test_throws ArgumentError smesolve(H, ψ0, tlist1, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
+        @test_throws ArgumentError smesolve(H, ψ0, tlist2, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
+        @test_throws ArgumentError smesolve(H, ψ0, tlist3, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
 
         # Time-Dependent Hamiltonian
         # ssesolve is slow to be run on CI. It is not removed from the test because it may be useful for testing in more powerful machines.
@@ -364,6 +386,52 @@
             @test allocs_tot < 570000 # TODO: Fix this high number of allocations
         end
 
+        @testset "Memory Allocations (smesolve)" begin
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                e_ops = e_ops,
+                ntraj = 100,
+                progress_bar = Val(false),
+            ) # Warm-up
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                e_ops = e_ops,
+                ntraj = 100,
+                progress_bar = Val(false),
+            )
+            @test allocs_tot < 2710000 # TODO: Fix this high number of allocations
+
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                ntraj = 100,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+            ) # Warm-up
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                ntraj = 100,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+            )
+            @test allocs_tot < 570000 # TODO: Fix this high number of allocations
+        end
+
         @testset "Type Inference mesolve" begin
             coef(p, t) = exp(-t)
             ad_t = QobjEvo(a', coef)
@@ -465,17 +533,125 @@
             )
         end
 
-        @testset "mcsolve and ssesolve reproducibility" begin
+        @testset "Type Inference smesolve" begin
+            c_ops_sme_tuple = Tuple(c_ops_sme) # To avoid type instability, we must have a Tuple instead of a Vector
+            sc_ops_sme_tuple = Tuple(sc_ops_sme) # To avoid type instability, we must have a Tuple instead of a Vector
+            @inferred smesolveEnsembleProblem(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme_tuple,
+                sc_ops_sme_tuple,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme_tuple,
+                sc_ops_sme_tuple,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme_tuple,
+                sc_ops_sme_tuple,
+                ntraj = 5,
+                progress_bar = Val(true),
+                rng = rng,
+            )
+            @inferred smesolve(
+                H,
+                ψ0,
+                [0, 10],
+                c_ops_sme_tuple,
+                sc_ops_sme_tuple,
+                ntraj = 5,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred smesolve(
+                H,
+                ψ0_int,
+                tlist,
+                c_ops_sme_tuple,
+                sc_ops_sme_tuple,
+                ntraj = 5,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme_tuple,
+                sc_ops_sme_tuple,
+                ntraj = 5,
+                e_ops = (a' * a, a'),
+                progress_bar = Val(false),
+                rng = rng,
+            ) # We test the type inference for Tuple of different types
+        end
+
+        @testset "mcsolve, ssesolve and smesolve reproducibility" begin
             rng = MersenneTwister(1234)
             sol_mc1 = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            rng = MersenneTwister(1234)
             sol_sse1 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            rng = MersenneTwister(1234)
+            sol_sme1 = smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                ntraj = 50,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
 
             rng = MersenneTwister(1234)
             sol_mc2 = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            rng = MersenneTwister(1234)
             sol_sse2 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            rng = MersenneTwister(1234)
+            sol_sme2 = smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                ntraj = 50,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
 
             rng = MersenneTwister(1234)
             sol_mc3 = mcsolve(H, ψ0, tlist, c_ops, ntraj = 510, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            rng = MersenneTwister(1234)
+            sol_sse3 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 60, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            rng = MersenneTwister(1234)
+            sol_sme3 = smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                ntraj = 60,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
 
             @test sol_mc1.expect ≈ sol_mc2.expect atol = 1e-10
             @test sol_mc1.expect_all ≈ sol_mc2.expect_all atol = 1e-10
@@ -486,6 +662,13 @@
 
             @test sol_sse1.expect ≈ sol_sse2.expect atol = 1e-10
             @test sol_sse1.expect_all ≈ sol_sse2.expect_all atol = 1e-10
+
+            @test sol_sse1.expect_all ≈ sol_sse3.expect_all[:, :, 1:50] atol = 1e-10
+
+            @test sol_sme1.expect ≈ sol_sme2.expect atol = 1e-10
+            @test sol_sme1.expect_all ≈ sol_sme2.expect_all atol = 1e-10
+
+            @test sol_sme1.expect_all ≈ sol_sme3.expect_all[:, :, 1:50] atol = 1e-10
         end
     end
 

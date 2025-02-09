@@ -12,54 +12,12 @@ function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds, tlist)
     return remake(prob, f = f, callback = cb)
 end
 
-function _mcsolve_dispatch_prob_func(rng, ntraj, tlist)
-    seeds = map(i -> rand(rng, UInt64), 1:ntraj)
-    return (prob, i, repeat) -> _mcsolve_prob_func(prob, i, repeat, rng, seeds, tlist)
-end
-
 # Standard output function
 function _mcsolve_output_func(sol, i)
     idx = _mc_get_jump_callback(sol).affect!.jump_times_which_idx[]
     resize!(_mc_get_jump_callback(sol).affect!.jump_times, idx - 1)
     resize!(_mc_get_jump_callback(sol).affect!.jump_which, idx - 1)
     return (sol, false)
-end
-
-# Output function with progress bar update
-function _mcsolve_output_func_progress(sol, i, progr)
-    next!(progr)
-    return _mcsolve_output_func(sol, i)
-end
-
-# Output function with distributed channel update for progress bar
-function _mcsolve_output_func_distributed(sol, i, channel)
-    put!(channel, true)
-    return _mcsolve_output_func(sol, i)
-end
-
-function _mcsolve_dispatch_output_func(::ET, progress_bar, ntraj) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
-    if getVal(progress_bar)
-        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
-        f = (sol, i) -> _mcsolve_output_func_progress(sol, i, progr)
-        return (f, progr, nothing)
-    else
-        return (_mcsolve_output_func, nothing, nothing)
-    end
-end
-function _mcsolve_dispatch_output_func(
-    ::ET,
-    progress_bar,
-    ntraj,
-) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
-    if getVal(progress_bar)
-        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
-        progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
-
-        f = (sol, i) -> _mcsolve_output_func_distributed(sol, i, progr_channel)
-        return (f, progr, progr_channel)
-    else
-        return (_mcsolve_output_func, nothing, nothing)
-    end
 end
 
 function _normalize_state!(u, dims, normalize_states)
@@ -280,9 +238,10 @@ function mcsolveEnsembleProblem(
     output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
 ) where {TJC<:LindbladJumpCallbackType}
-    _prob_func = prob_func isa Nothing ? _mcsolve_dispatch_prob_func(rng, ntraj, tlist) : prob_func
+    _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
-        output_func isa Nothing ? _mcsolve_dispatch_output_func(ensemble_method, progress_bar, ntraj) : output_func
+        output_func isa Nothing ?
+        _ensemble_dispatch_output_func(ensemble_method, progress_bar, ntraj, _mcsolve_output_func) : output_func
 
     prob_mc = mcsolveProblem(
         H,
@@ -431,38 +390,6 @@ function mcsolve(
     return mcsolve(ens_prob_mc, alg, ntraj, ensemble_method, normalize_states)
 end
 
-function _mcsolve_solve_ens(
-    ens_prob_mc::TimeEvolutionProblem,
-    alg::OrdinaryDiffEqAlgorithm,
-    ensemble_method::ET,
-    ntraj::Int,
-) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
-    sol = nothing
-
-    @sync begin
-        @async while take!(ens_prob_mc.kwargs.channel)
-            next!(ens_prob_mc.kwargs.progr)
-        end
-
-        @async begin
-            sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
-            put!(ens_prob_mc.kwargs.channel, false)
-        end
-    end
-
-    return sol
-end
-
-function _mcsolve_solve_ens(
-    ens_prob_mc::TimeEvolutionProblem,
-    alg::OrdinaryDiffEqAlgorithm,
-    ensemble_method,
-    ntraj::Int,
-)
-    sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
-    return sol
-end
-
 function mcsolve(
     ens_prob_mc::TimeEvolutionProblem,
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
@@ -470,7 +397,7 @@ function mcsolve(
     ensemble_method = EnsembleThreads(),
     normalize_states = Val(true),
 )
-    sol = _mcsolve_solve_ens(ens_prob_mc, alg, ensemble_method, ntraj)
+    sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemble_method, ntraj)
 
     dims = ens_prob_mc.dimensions
     _sol_1 = sol[:, 1]

@@ -1,5 +1,25 @@
 export ssesolveProblem, ssesolveEnsembleProblem, ssesolve
 
+# TODO: Merge this with _stochastic_prob_func
+function _ssesolve_prob_func(prob, i, repeat)
+    internal_params = prob.p
+
+    global_rng = internal_params.global_rng
+    seed = internal_params.seeds[i]
+    traj_rng = typeof(global_rng)()
+    seed!(traj_rng, seed)
+
+    noise = RealWienerProcess!(
+        prob.tspan[1],
+        zeros(internal_params.n_sc_ops),
+        zeros(internal_params.n_sc_ops),
+        save_everystep = false,
+        rng = traj_rng,
+    )
+
+    return remake(prob, noise = noise, seed = seed)
+end
+
 #=
     struct DiffusionOperator
 
@@ -46,41 +66,18 @@ function _ssesolve_update_coeff(u, p, t, op)
     return real(dot(u, op.A, u)) #this is en/2: <Sn + Sn'>/2 = Re<Sn>
 end
 
-function _ssesolve_prob_func(prob, i, repeat)
-    internal_params = prob.p
-
-    global_rng = internal_params.global_rng
-    seed = internal_params.seeds[i]
-    traj_rng = typeof(global_rng)()
-    seed!(traj_rng, seed)
-
-    noise = RealWienerProcess!(
-        prob.tspan[1],
-        zeros(internal_params.n_sc_ops),
-        zeros(internal_params.n_sc_ops),
-        save_everystep = false,
-        rng = traj_rng,
-    )
-
-    return remake(prob, noise = noise, seed = seed)
-end
-
-# Standard output function
-_ssesolve_output_func(sol, i) = (sol, false)
-
 # Output function with progress bar update
 function _ssesolve_output_func_progress(sol, i)
     next!(sol.prob.p.progr)
-    return _ssesolve_output_func(sol, i)
+    return _stochastic_output_func(sol, i)
 end
 
 # Output function with distributed channel update for progress bar
 function _ssesolve_output_func_distributed(sol, i)
     put!(sol.prob.p.progr_channel, true)
-    return _ssesolve_output_func(sol, i)
+    return _stochastic_output_func(sol, i)
 end
 
-_ssesolve_dispatch_output_func() = _ssesolve_output_func
 _ssesolve_dispatch_output_func(::ET) where {ET<:Union{EnsembleSerial,EnsembleThreads}} = _ssesolve_output_func_progress
 _ssesolve_dispatch_output_func(::EnsembleDistributed) = _ssesolve_output_func_distributed
 
@@ -121,7 +118,7 @@ and
 e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
 ```
 
-Above, `\hat{C}_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`. See [Wiseman2009Quantum](@cite) for more details.
+Above, ``\hat{C}_n`` is the `n`-th collapse operator and ``dW_n(t)`` is the real Wiener increment associated to ``\hat{C}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
 # Arguments
 
@@ -240,7 +237,7 @@ and
 e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
 ```
 
-Above, `\hat{C}_n` is the `n`-th collapse operator and  `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`. See [Wiseman2009Quantum](@cite) for more details.
+Above, ``\hat{C}_n`` is the `n`-th collapse operator and  ``dW_n(t)`` is the real Wiener increment associated to ``\hat{C}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
 # Arguments
 
@@ -363,7 +360,7 @@ and
 e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
 ```
 
-Above, `\hat{C}_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wiener increment associated to `\hat{C}_n`. See [Wiseman2009Quantum](@cite) for more details.
+Above, ``\hat{C}_n`` is the `n`-th collapse operator and ``dW_n(t)`` is the real Wiener increment associated to ``\hat{C}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
 
 # Arguments
@@ -393,7 +390,7 @@ Above, `\hat{C}_n` is the `n`-th collapse operator and `dW_j(t)` is the real Wie
 
 # Returns
 
-- `sol::TimeEvolutionSSESol`: The solution of the time evolution. See also [`TimeEvolutionSSESol`](@ref).
+- `sol::TimeEvolutionStochasticSol`: The solution of the time evolution. See [`TimeEvolutionStochasticSol`](@ref).
 """
 function ssesolve(
     H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
@@ -458,7 +455,7 @@ function ssesolve(
             _se_me_sse_get_expvals(_sol_1) isa Nothing ? nothing :
             dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
 
-        return TimeEvolutionSSESol(
+        return TimeEvolutionStochasticSol(
             ntraj,
             _sol_1.prob.p.times,
             states,

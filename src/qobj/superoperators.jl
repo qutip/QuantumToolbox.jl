@@ -164,22 +164,34 @@ function liouvillian(
 ) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
-        # sum all the (time-independent) c_ops first
-        c_ops_ti = filter(op -> isa(op, QuantumObject), c_ops)
-        if !isempty(c_ops_ti)
-            L += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_ti)
-        end
-
-        # sum rest of the QobjEvo together
-        c_ops_td = filter(op -> isa(op, QuantumObjectEvolution), c_ops)
-        if !isempty(c_ops_td)
-            L += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_td)
-        end
+        L += _sum_lindblad_dissipators(c_ops, Id_cache)
     end
     return L
 end
+
+liouvillian(H::Nothing, c_ops::Union{AbstractVector,Tuple}, Id_cache::Diagonal = I(prod(c_ops[1].dims))) =
+    _sum_lindblad_dissipators(c_ops, Id_cache)
+
+liouvillian(H::Nothing, c_ops::Nothing) = 0
 
 liouvillian(H::AbstractQuantumObject{OperatorQuantumObject}, Id_cache::Diagonal = I(prod(H.dimensions))) =
     get_typename_wrapper(H)(_liouvillian(H.data, Id_cache), SuperOperator, H.dimensions)
 
 liouvillian(H::AbstractQuantumObject{SuperOperatorQuantumObject}, Id_cache::Diagonal) = H
+
+function _sum_lindblad_dissipators(c_ops, Id_cache::Diagonal)
+    D = 0
+    # sum all the (time-independent) c_ops first
+    c_ops_ti = filter(op -> isa(op, QuantumObject), c_ops)
+    if !isempty(c_ops_ti)
+        D += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_ti)
+    end
+
+    # sum rest of the QobjEvo together
+    c_ops_td = filter(op -> isa(op, QuantumObjectEvolution), c_ops)
+    if !isempty(c_ops_td)
+        D += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_td)
+    end
+
+    return D
+end
