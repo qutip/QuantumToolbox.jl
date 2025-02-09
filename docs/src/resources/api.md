@@ -190,6 +190,7 @@ TimeEvolutionProblem
 TimeEvolutionSol
 TimeEvolutionMCSol
 TimeEvolutionSSESol
+TimeEvolutionSMESol
 sesolveProblem
 mesolveProblem
 mcsolveProblem
