@@ -341,7 +341,7 @@
     @testset "superoperators" begin
         # spre, spost, and sprepost
         Xs = sigmax()
-        Xd = sparse_to_dense(Xs)
+        Xd = to_dense(Xs)
         A_wrong1 = Qobj(rand(4, 4), dims = 4)
         A_wrong2 = Qobj(rand(4, 4), dims = (2, 2))
         A_wrong3 = Qobj(rand(3, 3))

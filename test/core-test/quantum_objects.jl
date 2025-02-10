@@ -323,9 +323,9 @@
 
     @testset "element type conversion" begin
         vd = Qobj(Int64[0, 0])
-        vs = Qobj(dense_to_sparse(vd))
+        vs = Qobj(to_sparse(vd))
         Md = Qobj(Int64[0 0; 0 0])
-        Ms = Qobj(dense_to_sparse(Md))
+        Ms = Qobj(to_sparse(Md))
         @test typeof(Vector(vd).data) == Vector{Int64}
         @test typeof(Vector(vs).data) == Vector{Int64}
         @test typeof(Vector{ComplexF64}(vd).data) == Vector{ComplexF64}
@@ -340,6 +340,11 @@
         @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64,Int64}
         @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64,Int64}
         @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
+
+        @testset "Deprecated Errors" begin
+            @test_throws ErrorException sparse_to_dense(vs)
+            @test_throws ErrorException dense_to_sparse(vd)
+        end
     end
 
     @testset "Type Inference (QuantumObject)" begin
@@ -564,8 +569,8 @@
     @testset "trace distance" begin
         ψz0 = basis(2, 0)
         ψz1 = basis(2, 1)
-        ρz0 = dense_to_sparse(ket2dm(ψz0))
-        ρz1 = dense_to_sparse(ket2dm(ψz1))
+        ρz0 = to_sparse(ket2dm(ψz0))
+        ρz1 = to_sparse(ket2dm(ψz1))
         ψx0 = sqrt(0.5) * (basis(2, 0) + basis(2, 1))
         @test tracedist(ψz0, ψx0) ≈ sqrt(0.5)
         @test tracedist(ρz0, ψz1) ≈ 1.0
@@ -586,7 +591,7 @@
         ψ1 = Qobj(rand(ComplexF64, 5))
         ψ2 = Qobj(rand(ComplexF64, 5))
         M1 = ψ1 * ψ1'
-        @test sqrtm(M0) ≈ sqrtm(sparse_to_dense(M0))
+        @test sqrtm(M0) ≈ sqrtm(to_dense(M0))
         @test isapprox(fidelity(M0, M1), fidelity(ψ1, M0); atol = 1e-6)
         @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1e-6)
 
@@ -601,7 +606,7 @@
     @testset "log, exp, sinm, cosm" begin
         M0 = rand(ComplexF64, 4, 4)
         Md = Qobj(M0 * M0')
-        Ms = dense_to_sparse(Md)
+        Ms = to_sparse(Md)
         e_p = expm(1im * Md)
         e_m = expm(-1im * Md)
         @test logm(expm(Ms)) ≈ expm(logm(Md))
@@ -625,28 +630,28 @@
         tol = 0.5
         ## Vector{Float64} with in-place tidyup
         ψ1 = Qobj(rand(Float64, N))
-        ψ2 = dense_to_sparse(ψ1)
+        ψ2 = to_sparse(ψ1)
         @test tidyup!(ψ2, tol) == ψ2 != ψ1
-        @test dense_to_sparse(tidyup!(ψ1, tol)) == ψ2
+        @test to_sparse(tidyup!(ψ1, tol)) == ψ2
 
         ## Vector{Float64} with normal tidyup
         ψ1 = Qobj(rand(Float64, N))
-        ψ2 = dense_to_sparse(ψ1)
+        ψ2 = to_sparse(ψ1)
         @test tidyup(ψ2, tol) != ψ2
-        @test dense_to_sparse(tidyup(ψ1, tol)) == tidyup(ψ2, tol)
+        @test to_sparse(tidyup(ψ1, tol)) == tidyup(ψ2, tol)
 
         ## Matrix{ComplexF64} with in-place tidyup
         tol = 0.1
         ρ1 = rand_dm(N)
-        ρ2 = dense_to_sparse(ρ1)
+        ρ2 = to_sparse(ρ1)
         @test tidyup!(ρ2, tol) == ρ2 != ρ1
-        @test dense_to_sparse(tidyup!(ρ1, tol)) == ρ2
+        @test to_sparse(tidyup!(ρ1, tol)) == ρ2
 
         ## Matrix{ComplexF64} with normal tidyup
         ρ1 = rand_dm(N)
-        ρ2 = dense_to_sparse(ρ1)
+        ρ2 = to_sparse(ρ1)
         @test tidyup(ρ2, tol) != ρ2
-        @test dense_to_sparse(tidyup(ρ1, tol)) == tidyup(ρ2, tol)
+        @test to_sparse(tidyup(ρ1, tol)) == tidyup(ρ2, tol)
 
         @testset "Type Inference (tidyup)" begin
             @inferred tidyup(ψ1, tol)

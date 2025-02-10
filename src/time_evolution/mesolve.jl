@@ -76,7 +76,7 @@ function mesolveProblem(
     check_dimensions(L_evo, ψ0)
 
     T = Base.promote_eltype(L_evo, ψ0)
-    ρ0 = sparse_to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
+    ρ0 = to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
     L = L_evo.data
 
     is_empty_e_ops = (e_ops isa Nothing) ? true : isempty(e_ops)

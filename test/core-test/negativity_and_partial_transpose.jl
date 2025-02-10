@@ -24,7 +24,7 @@
     @testset "partial_transpose" begin
         # A (24 * 24)-matrix which contains number 1 ~ 576
         A_dense = Qobj(reshape(1:(24^2), (24, 24)), dims = (2, 3, 4))
-        A_sparse = dense_to_sparse(A_dense)
+        A_sparse = to_sparse(A_dense)
         PT = (true, false)
         for s1 in PT
             for s2 in PT

@@ -15,12 +15,12 @@
     Tlist = [0, 0.0]
 
     E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
-    Ω = dense_to_sparse((E'.-E)[1:N_trunc, 1:N_trunc], tol)
+    Ω = to_sparse((E'.-E)[1:N_trunc, 1:N_trunc], tol)
 
-    H_d = Qobj(dense_to_sparse((U'*H*U)[1:N_trunc, 1:N_trunc], tol))
-    Xp = Qobj(Ω .* dense_to_sparse(triu((U'*(a+a')*U).data[1:N_trunc, 1:N_trunc], 1), tol))
-    a2 = Qobj(dense_to_sparse((U'*a*U).data[1:N_trunc, 1:N_trunc], tol))
-    sm2 = Qobj(dense_to_sparse((U'*sm*U).data[1:N_trunc, 1:N_trunc], tol))
+    H_d = Qobj(to_sparse((U'*H*U)[1:N_trunc, 1:N_trunc], tol))
+    Xp = Qobj(Ω .* to_sparse(triu((U'*(a+a')*U).data[1:N_trunc, 1:N_trunc], 1), tol))
+    a2 = Qobj(to_sparse((U'*a*U).data[1:N_trunc, 1:N_trunc], tol))
+    sm2 = Qobj(to_sparse((U'*sm*U).data[1:N_trunc, 1:N_trunc], tol))
 
     # Standard liouvillian case
     c_ops = [sqrt(0.01) * a2, sqrt(0.01) * sm2]
@@ -33,12 +33,12 @@
     Tlist = [0.2, 0.0]
 
     E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
-    Ω = dense_to_sparse((E'.-E)[1:N_trunc, 1:N_trunc], tol)
+    Ω = to_sparse((E'.-E)[1:N_trunc, 1:N_trunc], tol)
 
-    H_d = Qobj(dense_to_sparse((U'*H*U)[1:N_trunc, 1:N_trunc], tol))
-    Xp = Qobj(Ω .* dense_to_sparse(triu((U'*(a+a')*U).data[1:N_trunc, 1:N_trunc], 1), tol))
-    a2 = Qobj(dense_to_sparse((U'*a*U).data[1:N_trunc, 1:N_trunc], tol))
-    sm2 = Qobj(dense_to_sparse((U'*sm*U).data[1:N_trunc, 1:N_trunc], tol))
+    H_d = Qobj(to_sparse((U'*H*U)[1:N_trunc, 1:N_trunc], tol))
+    Xp = Qobj(Ω .* to_sparse(triu((U'*(a+a')*U).data[1:N_trunc, 1:N_trunc], 1), tol))
+    a2 = Qobj(to_sparse((U'*a*U).data[1:N_trunc, 1:N_trunc], tol))
+    sm2 = Qobj(to_sparse((U'*sm*U).data[1:N_trunc, 1:N_trunc], tol))
 
     @test abs(expect(Xp' * Xp, steadystate(L1)) - n_thermal(1, Tlist[1])) / n_thermal(1, Tlist[1]) < 1e-4
 

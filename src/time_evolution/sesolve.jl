@@ -66,7 +66,7 @@ function sesolveProblem(
     check_dimensions(H_evo, ψ0)
 
     T = Base.promote_eltype(H_evo, ψ0)
-    ψ0 = sparse_to_dense(_CType(T), get_data(ψ0)) # Convert it to dense vector with complex element type
+    ψ0 = to_dense(_CType(T), get_data(ψ0)) # Convert it to dense vector with complex element type
     U = H_evo.data
 
     is_empty_e_ops = (e_ops isa Nothing) ? true : isempty(e_ops)

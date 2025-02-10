@@ -91,7 +91,7 @@ function smesolveProblem(
     dims = L_evo.dimensions
 
     T = Base.promote_eltype(L_evo, ψ0)
-    ρ0 = sparse_to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
+    ρ0 = to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 

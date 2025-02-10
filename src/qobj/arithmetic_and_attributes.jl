@@ -298,7 +298,7 @@ LinearAlgebra.tr(
 
 Return the singular values of a [`QuantumObject`](@ref) in descending order
 """
-LinearAlgebra.svdvals(A::QuantumObject) = svdvals(sparse_to_dense(A.data))
+LinearAlgebra.svdvals(A::QuantumObject) = svdvals(to_dense(A.data))
 
 @doc raw"""
     norm(A::QuantumObject, p::Real)
@@ -415,7 +415,7 @@ Matrix square root of [`QuantumObject`](@ref)
 !!! note
     `√(A)` (where `√` can be typed by tab-completing `\sqrt` in the REPL) is a synonym of `sqrt(A)`.
 """
-LinearAlgebra.sqrt(A::QuantumObject) = QuantumObject(sqrt(sparse_to_dense(A.data)), A.type, A.dimensions)
+LinearAlgebra.sqrt(A::QuantumObject) = QuantumObject(sqrt(to_dense(A.data)), A.type, A.dimensions)
 
 @doc raw"""
     log(A::QuantumObject)
@@ -425,7 +425,7 @@ Matrix logarithm of [`QuantumObject`](@ref)
 Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
 LinearAlgebra.log(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    QuantumObject(log(sparse_to_dense(A.data)), A.type, A.dimensions)
+    QuantumObject(log(to_dense(A.data)), A.type, A.dimensions)
 
 @doc raw"""
     exp(A::QuantumObject)
@@ -437,7 +437,7 @@ Note that this function only supports for [`Operator`](@ref) and [`SuperOperator
 LinearAlgebra.exp(
     A::QuantumObject{ObjType,DimsType,<:AbstractMatrix},
 ) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},DimsType} =
-    QuantumObject(dense_to_sparse(exp(A.data)), A.type, A.dimensions)
+    QuantumObject(to_sparse(exp(A.data)), A.type, A.dimensions)
 LinearAlgebra.exp(
     A::QuantumObject{ObjType,DimsType,<:AbstractSparseMatrix},
 ) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},DimsType} =

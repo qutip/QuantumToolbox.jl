@@ -15,9 +15,17 @@ end
 =#
 
 export FFTCorrelation
+export sparse_to_dense, dense_to_sparse
 
 FFTCorrelation() = error(
     "`FFTCorrelation` has been deprecated and will be removed in next major release, please use `spectrum_correlation_fft` to calculate the spectrum with FFT method instead.",
+)
+
+sparse_to_dense(args...) = error(
+    "`sparse_to_dense` has been deprecated and will be removed in next major release, please use `to_dense` instead.",
+)
+dense_to_sparse(args...) = error(
+    "`dense_to_sparse` has been deprecated and will be removed in next major release, please use `to_sparse` instead.",
 )
 
 correlation_3op_2t(

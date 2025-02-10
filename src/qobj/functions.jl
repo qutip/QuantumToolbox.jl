@@ -4,7 +4,7 @@ Functions which manipulates QuantumObject
 
 export ket2dm
 export expect, variance
-export sparse_to_dense, dense_to_sparse
+export to_dense, to_sparse
 export vec2mat, mat2vec
 
 @doc raw"""
@@ -113,19 +113,19 @@ variance(O::QuantumObject{OperatorQuantumObject}, ψ::QuantumObject) = expect(O^
 variance(O::QuantumObject{OperatorQuantumObject}, ψ::Vector{<:QuantumObject}) = expect(O^2, ψ) .- expect(O, ψ) .^ 2
 
 @doc raw"""
-    sparse_to_dense(A::QuantumObject)
+    to_dense(A::QuantumObject)
 
 Converts a sparse QuantumObject to a dense QuantumObject.
 """
-sparse_to_dense(A::QuantumObject) = QuantumObject(sparse_to_dense(A.data), A.type, A.dimensions)
-sparse_to_dense(A::MT) where {MT<:AbstractSparseArray} = Array(A)
-sparse_to_dense(A::MT) where {MT<:AbstractArray} = A
+to_dense(A::QuantumObject) = QuantumObject(to_dense(A.data), A.type, A.dimensions)
+to_dense(A::MT) where {MT<:AbstractSparseArray} = Array(A)
+to_dense(A::MT) where {MT<:AbstractArray} = A
 
-sparse_to_dense(::Type{T}, A::AbstractSparseArray) where {T<:Number} = Array{T}(A)
-sparse_to_dense(::Type{T1}, A::AbstractArray{T2}) where {T1<:Number,T2<:Number} = Array{T1}(A)
-sparse_to_dense(::Type{T}, A::AbstractArray{T}) where {T<:Number} = A
+to_dense(::Type{T}, A::AbstractSparseArray) where {T<:Number} = Array{T}(A)
+to_dense(::Type{T1}, A::AbstractArray{T2}) where {T1<:Number,T2<:Number} = Array{T1}(A)
+to_dense(::Type{T}, A::AbstractArray{T}) where {T<:Number} = A
 
-function sparse_to_dense(::Type{M}) where {M<:SparseMatrixCSC}
+function to_dense(::Type{M}) where {M<:SparseMatrixCSC}
     T = M
     par = T.parameters
     npar = length(par)
@@ -133,22 +133,22 @@ function sparse_to_dense(::Type{M}) where {M<:SparseMatrixCSC}
     return Matrix{par[1]}
 end
 
-sparse_to_dense(::Type{M}) where {M<:AbstractMatrix} = M
+to_dense(::Type{M}) where {M<:AbstractMatrix} = M
 
 @doc raw"""
-    dense_to_sparse(A::QuantumObject)
+    to_sparse(A::QuantumObject)
 
 Converts a dense QuantumObject to a sparse QuantumObject.
 """
-dense_to_sparse(A::QuantumObject, tol::Real = 1e-10) = QuantumObject(dense_to_sparse(A.data, tol), A.type, A.dimensions)
-function dense_to_sparse(A::MT, tol::Real = 1e-10) where {MT<:AbstractMatrix}
+to_sparse(A::QuantumObject, tol::Real = 1e-10) = QuantumObject(to_sparse(A.data, tol), A.type, A.dimensions)
+function to_sparse(A::MT, tol::Real = 1e-10) where {MT<:AbstractMatrix}
     idxs = findall(@. abs(A) > tol)
     row_indices = getindex.(idxs, 1)
     col_indices = getindex.(idxs, 2)
     vals = getindex(A, idxs)
     return sparse(row_indices, col_indices, vals, size(A)...)
 end
-function dense_to_sparse(A::VT, tol::Real = 1e-10) where {VT<:AbstractVector}
+function to_sparse(A::VT, tol::Real = 1e-10) where {VT<:AbstractVector}
     idxs = findall(@. abs(A) > tol)
     vals = getindex(A, idxs)
     return sparsevec(idxs, vals, length(A))
