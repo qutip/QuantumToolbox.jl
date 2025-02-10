@@ -3,7 +3,7 @@ export smesolveProblem, smesolveEnsembleProblem, smesolve
 _smesolve_generate_state(u, dims) = QuantumObject(vec2mat(u), type = Operator, dims = dims)
 
 function _smesolve_update_coeff(u, p, t, op_vec)
-    return dot(op_vec, u) #this is Tr[Sn * ρ]
+    return 2 * real(dot(op_vec, u)) #this is Tr[Sn * ρ + ρ * Sn']
 end
 
 _smesolve_ScalarOperator(op_vec) =
@@ -106,11 +106,9 @@ function smesolveProblem(
         # TODO: # Currently, we are assuming a time-independent MatrixOperator
         # Also, the u state may become non-hermitian, so Tr[Sn * ρ + ρ * Sn'] != real(Tr[Sn * ρ]) / 2
         op_vec = mat2vec(adjoint(op.A))
-        op_vec_dag = mat2vec(op.A)
         return _spre(op, Id) +
                _spost(op', Id) +
-               _smesolve_ScalarOperator(op_vec) * Id_op +
-               _smesolve_ScalarOperator(op_vec_dag) * Id_op
+               _smesolve_ScalarOperator(op_vec) * Id_op
     end
     D = DiffusionOperator(D_l)
 
