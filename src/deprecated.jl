@@ -93,3 +93,7 @@ correlation_2op_1t(
 } = error(
     "The parameter order of `correlation_2op_1t` has been changed, please use `?correlation_2op_1t` to check the updated docstring.",
 )
+
+MultiSiteOperator(dims::Union{AbstractVector,Tuple}, pairs::Pair{<:Integer,<:QuantumObject}...) = error(
+    "`MultiSiteOperator` has been deprecated and will be removed in next major release, please use `multisite_operator` instead.",
+)

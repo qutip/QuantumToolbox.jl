@@ -99,9 +99,9 @@ hy = 0.0
 hz = 0.0
 γ = 1
 
-Sx = mapreduce(i -> MultiSiteOperator(latt, i=>sigmax()), +, 1:latt.N)
-Sy = mapreduce(i -> MultiSiteOperator(latt, i=>sigmay()), +, 1:latt.N)
-Sz = mapreduce(i -> MultiSiteOperator(latt, i=>sigmaz()), +, 1:latt.N)
+Sx = mapreduce(i -> multisite_operator(latt, i=>sigmax()), +, 1:latt.N)
+Sy = mapreduce(i -> multisite_operator(latt, i=>sigmay()), +, 1:latt.N)
+Sz = mapreduce(i -> multisite_operator(latt, i=>sigmaz()), +, 1:latt.N)
 
 H, c_ops = DissipativeIsing(Jx, Jy, Jz, hx, hy, hz, γ, latt; boundary_condition = Val(:periodic_bc), order = 1)
 e_ops = [Sx, Sy, Sz]

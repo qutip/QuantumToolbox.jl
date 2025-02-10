@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Rename `sparse_to_dense` as `to_dense` and `dense_to_sparse` as `to_sparse`. ([#392])
+- Change name of `MultiSiteOperator` to `multisite_operator`. ([#394])
 
 ## [v0.26.0]
 Release date: 2025-02-09
@@ -53,7 +54,7 @@ Release date: 2024-12-06
 ## [v0.23.0]
 Release date: 2024-12-04
 
-- Change `SingleSiteOperator` with the more general `MultiSiteOperator`. ([#324])
+- Change `SingleSiteOperator` with the more general `multisite_operator`. ([#324])
 - Make `spectrum` and `correlation` functions align with `Python QuTiP`, introduce spectrum solver `PseudoInverse`, remove spectrum solver `FFTCorrelation`, and introduce `spectrum_correlation_fft`. ([#330])
 
 ## [v0.22.0]
@@ -118,3 +119,4 @@ Release date: 2024-11-13
 [#388]: https://github.com/qutip/QuantumToolbox.jl/issues/388
 [#389]: https://github.com/qutip/QuantumToolbox.jl/issues/389
 [#392]: https://github.com/qutip/QuantumToolbox.jl/issues/392
+[#394]: https://github.com/qutip/QuantumToolbox.jl/issues/394

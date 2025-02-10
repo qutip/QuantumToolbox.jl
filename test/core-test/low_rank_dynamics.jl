@@ -15,12 +15,12 @@
     i = 1
     for j in 1:N_modes
         i += 1
-        i <= M && (ϕ[i] = MultiSiteOperator(latt, j => sigmap()) * ϕ[1])
+        i <= M && (ϕ[i] = multisite_operator(latt, j => sigmap()) * ϕ[1])
     end
     for k in 1:N_modes-1
         for l in k+1:N_modes
             i += 1
-            i <= M && (ϕ[i] = MultiSiteOperator(latt, k => sigmap(), l => sigmap()) * ϕ[1])
+            i <= M && (ϕ[i] = multisite_operator(latt, k => sigmap(), l => sigmap()) * ϕ[1])
         end
     end
     for i in i+1:M
@@ -43,11 +43,11 @@
     hz = 0.0
     γ = 1
 
-    Sx = mapreduce(i -> MultiSiteOperator(latt, i => sigmax()), +, 1:latt.N)
-    Sy = mapreduce(i -> MultiSiteOperator(latt, i => sigmay()), +, 1:latt.N)
-    Sz = mapreduce(i -> MultiSiteOperator(latt, i => sigmaz()), +, 1:latt.N)
+    Sx = mapreduce(i -> multisite_operator(latt, i => sigmax()), +, 1:latt.N)
+    Sy = mapreduce(i -> multisite_operator(latt, i => sigmay()), +, 1:latt.N)
+    Sz = mapreduce(i -> multisite_operator(latt, i => sigmaz()), +, 1:latt.N)
     SFxx = mapreduce(
-        x -> MultiSiteOperator(latt, x[1] => sigmax(), x[2] => sigmax()),
+        x -> multisite_operator(latt, x[1] => sigmax(), x[2] => sigmax()),
         +,
         Iterators.product(1:latt.N, 1:latt.N),
     )
