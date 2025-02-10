@@ -107,7 +107,10 @@ function smesolveProblem(
         # Also, the u state may become non-hermitian, so Tr[Sn * ρ + ρ * Sn'] != real(Tr[Sn * ρ]) / 2
         op_vec = mat2vec(adjoint(op.A))
         op_vec_dag = mat2vec(op.A)
-        return _spre(op, Id) + _spost(op', Id) + _smesolve_ScalarOperator(op_vec) * Id_op + _smesolve_ScalarOperator(op_vec_dag) * Id_op
+        return _spre(op, Id) +
+               _spost(op', Id) +
+               _smesolve_ScalarOperator(op_vec) * Id_op +
+               _smesolve_ScalarOperator(op_vec_dag) * Id_op
     end
     D = DiffusionOperator(D_l)
 
