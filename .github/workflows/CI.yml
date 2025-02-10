@@ -76,9 +76,6 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.node.arch }}
       - uses: julia-actions/cache@v2
-      - name: Resolve dependencies
-        run: |
-          julia -e 'import Pkg; Pkg.resolve()'
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         env:
