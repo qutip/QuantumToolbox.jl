@@ -397,12 +397,12 @@ function liouvillian_generalized(
     H_d = QuantumObject(Diagonal(complex(E)), type = Operator, dims = dims)
 
     Ω = E' .- E
-    Ωp = triu(dense_to_sparse(Ω, tol), 1)
+    Ωp = triu(to_sparse(Ω, tol), 1)
 
     # Filter in the Hilbert space
     σ = isnothing(σ_filter) ? 500 * maximum([norm(field) / length(field) for field in fields]) : σ_filter
     F1 = QuantumObject(gaussian.(Ω, 0, σ), type = Operator, dims = dims)
-    F1 = dense_to_sparse(F1, tol)
+    F1 = to_sparse(F1, tol)
 
     # Filter in the Liouville space
     # M1 = ones(final_size, final_size)
@@ -412,13 +412,13 @@ function liouvillian_generalized(
     Ω2 = kron(M1, Ω)
     Ωdiff = Ω1 .- Ω2
     F2 = QuantumObject(gaussian.(Ωdiff, 0, σ), SuperOperator, dims)
-    F2 = dense_to_sparse(F2, tol)
+    F2 = to_sparse(F2, tol)
 
     L = liouvillian(H_d)
 
     for i in eachindex(fields)
         # The operator that couples the system to the bath in the eigenbasis
-        X_op = dense_to_sparse((U'*fields[i]*U).data[1:final_size, 1:final_size], tol)
+        X_op = to_sparse((U'*fields[i]*U).data[1:final_size, 1:final_size], tol)
         if ishermitian(fields[i])
             X_op = (X_op + X_op') / 2 # Make sure it's hermitian
         end
@@ -452,8 +452,8 @@ function _liouvillian_floquet(
     L_0 = L₀.data
     L_p = Lₚ.data
     L_m = Lₘ.data
-    L_p_dense = sparse_to_dense(Lₚ.data)
-    L_m_dense = sparse_to_dense(Lₘ.data)
+    L_p_dense = to_dense(Lₚ.data)
+    L_m_dense = to_dense(Lₘ.data)
 
     S = -(L_0 - 1im * n_max * ω * I) \ L_p_dense
     T = -(L_0 + 1im * n_max * ω * I) \ L_m_dense
@@ -464,5 +464,5 @@ function _liouvillian_floquet(
     end
 
     tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator, L₀.dimensions)
-    return QuantumObject(dense_to_sparse(L_0 + L_m * S + L_p * T, tol), SuperOperator, L₀.dimensions)
+    return QuantumObject(to_sparse(L_0 + L_m * S + L_p * T, tol), SuperOperator, L₀.dimensions)
 end

@@ -462,10 +462,10 @@ function LinearAlgebra.eigen(
     kwargs...,
 ) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     MT = typeof(A.data)
-    F = eigen(sparse_to_dense(A.data); kwargs...)
+    F = eigen(to_dense(A.data); kwargs...)
     # This fixes a type inference issue. But doesn't work for GPU arrays
-    E::mat2vec(sparse_to_dense(MT)) = F.values
-    U::sparse_to_dense(MT) = F.vectors
+    E::mat2vec(to_dense(MT)) = F.values
+    U::to_dense(MT) = F.vectors
 
     return EigsolveResult(E, U, A.type, A.dimensions, 0, 0, true)
 end
@@ -478,7 +478,7 @@ Same as [`eigen(A::QuantumObject; kwargs...)`](@ref) but for only the eigenvalue
 LinearAlgebra.eigvals(
     A::QuantumObject{OpType};
     kwargs...,
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigvals(sparse_to_dense(A.data); kwargs...)
+) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigvals(to_dense(A.data); kwargs...)
 
 @doc raw"""
     eigenenergies(A::QuantumObject; sparse::Bool=false, kwargs...)

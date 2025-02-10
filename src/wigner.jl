@@ -60,7 +60,7 @@ julia> wig = wigner(ψ, xvec, xvec);
 or taking advantage of the parallel computation of the `WignerLaguerre` method
 
 ```jldoctest wigner
-julia> ρ = ket2dm(ψ) |> dense_to_sparse;
+julia> ρ = ket2dm(ψ) |> to_sparse;
 
 julia> wig = wigner(ρ, xvec, xvec, method=WignerLaguerre(parallel=true));
 

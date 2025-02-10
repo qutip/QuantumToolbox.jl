@@ -214,14 +214,14 @@ SparseMatrixCSC{Int64}(x_s)
 Matrix{Float64}(x_s)
 ```
 
-To convert between dense and sparse arrays, one can also use [`dense_to_sparse`](@ref) and [`sparse_to_dense`](@ref):
+To convert between dense and sparse arrays, one can also use [`to_sparse`](@ref) and [`to_dense`](@ref):
 
 ```@example Qobj
-x_d = sparse_to_dense(x_s)
+x_d = to_dense(x_s)
 ```
 
 ```@example Qobj
-dense_to_sparse(x_d)
+to_sparse(x_d)
 ```
 
 !!! note "Convert to GPU arrays"

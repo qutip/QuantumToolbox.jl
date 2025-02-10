@@ -205,7 +205,7 @@ SciMLOperators.cache_operator(
     L::AbstractQuantumObject{OpType},
     u::AbstractVector,
 ) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
-    get_typename_wrapper(L)(cache_operator(L.data, sparse_to_dense(similar(u))), L.type, L.dimensions)
+    get_typename_wrapper(L)(cache_operator(L.data, to_dense(similar(u))), L.type, L.dimensions)
 
 function SciMLOperators.cache_operator(
     L::AbstractQuantumObject{OpType},

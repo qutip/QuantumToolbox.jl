@@ -281,7 +281,7 @@ function QuantumObjectEvolution(
     end
 
     # Preallocate the SciMLOperator cache using a dense vector as a reference
-    v0 = sparse_to_dense(similar(op.data, size(op, 1)))
+    v0 = to_dense(similar(op.data, size(op, 1)))
     data = cache_operator(data, v0)
 
     return QuantumObjectEvolution(data, type, dims)

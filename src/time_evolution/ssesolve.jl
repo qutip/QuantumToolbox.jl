@@ -167,7 +167,7 @@ function ssesolveProblem(
     check_dimensions(H_eff_evo, ψ0)
     dims = H_eff_evo.dimensions
 
-    ψ0 = sparse_to_dense(_CType(ψ0), get_data(ψ0))
+    ψ0 = to_dense(_CType(ψ0), get_data(ψ0))
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 

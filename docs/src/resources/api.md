@@ -103,8 +103,8 @@ ket2dm
 expect
 variance
 LinearAlgebra.kron
-sparse_to_dense
-dense_to_sparse
+to_dense
+to_sparse
 vec2mat
 mat2vec
 ```
