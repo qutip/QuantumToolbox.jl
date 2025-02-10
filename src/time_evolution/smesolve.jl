@@ -39,6 +39,7 @@ is the Lindblad superoperator, and
 
 ```math
 \mathcal{H}[\hat{O}] \rho = \hat{O} \rho + \rho \hat{O}^\dagger - \mathrm{Tr}[\hat{O} \rho + \rho \hat{O}^\dagger] \rho,
+```
 
 Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while ``\hat{S}_n`` are the measurement operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
@@ -162,6 +163,7 @@ is the Lindblad superoperator, and
 
 ```math
 \mathcal{H}[\hat{O}] \rho = \hat{O} \rho + \rho \hat{O}^\dagger - \mathrm{Tr}[\hat{O} \rho + \rho \hat{O}^\dagger] \rho,
+```
 
 Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while ``\hat{S}_n`` are the measurement operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
@@ -273,6 +275,7 @@ is the Lindblad superoperator, and
 
 ```math
 \mathcal{H}[\hat{O}] \rho = \hat{O} \rho + \rho \hat{O}^\dagger - \mathrm{Tr}[\hat{O} \rho + \rho \hat{O}^\dagger] \rho,
+```
 
 Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while ``\hat{S}_n`` are the measurement operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
