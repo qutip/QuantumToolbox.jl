@@ -1,4 +1,4 @@
-export Lattice, MultiSiteOperator, DissipativeIsing
+export Lattice, multisite_operator, DissipativeIsing
 
 @doc raw"""
     Lattice
@@ -15,7 +15,7 @@ end
 
 #Definition of many-body operators
 @doc raw"""
-    MultiSiteOperator(dims::Union{AbstractVector, Tuple}, pairs::Pair{<:Integer,<:QuantumObject}...)
+    multisite_operator(dims::Union{AbstractVector, Tuple}, pairs::Pair{<:Integer,<:QuantumObject}...)
 
 A Julia function for generating a multi-site operator ``\\hat{O} = \\hat{O}_i \\hat{O}_j \\cdots \\hat{O}_k``. The function takes a vector of dimensions `dims` and a list of pairs `pairs` where the first element of the pair is the site index and the second element is the operator acting on that site.
 
@@ -28,7 +28,7 @@ A Julia function for generating a multi-site operator ``\\hat{O} = \\hat{O}_i \\
 
 # Example
 ```jldoctest
-julia> op = MultiSiteOperator(Val(8), 5=>sigmax(), 7=>sigmaz());
+julia> op = multisite_operator(Val(8), 5=>sigmax(), 7=>sigmaz());
 
 julia> op.dims
 8-element SVector{8, Int64} with indices SOneTo(8):
@@ -42,7 +42,7 @@ julia> op.dims
  2
 ```
 """
-function MultiSiteOperator(dims::Union{AbstractVector,Tuple}, pairs::Pair{<:Integer,<:QuantumObject}...)
+function multisite_operator(dims::Union{AbstractVector,Tuple}, pairs::Pair{<:Integer,<:QuantumObject}...)
     sites_unsorted = collect(first.(pairs))
     idxs = sortperm(sites_unsorted)
     _sites = sites_unsorted[idxs]
@@ -61,13 +61,13 @@ function MultiSiteOperator(dims::Union{AbstractVector,Tuple}, pairs::Pair{<:Inte
 
     return QuantumObject(data; type = Operator, dims = dims)
 end
-function MultiSiteOperator(N::Union{Integer,Val}, pairs::Pair{<:Integer,<:QuantumObject}...)
+function multisite_operator(N::Union{Integer,Val}, pairs::Pair{<:Integer,<:QuantumObject}...)
     dims = ntuple(j -> 2, makeVal(N))
 
-    return MultiSiteOperator(dims, pairs...)
+    return multisite_operator(dims, pairs...)
 end
-function MultiSiteOperator(latt::Lattice, pairs::Pair{<:Integer,<:QuantumObject}...)
-    return MultiSiteOperator(makeVal(latt.N), pairs...)
+function multisite_operator(latt::Lattice, pairs::Pair{<:Integer,<:QuantumObject}...)
+    return multisite_operator(makeVal(latt.N), pairs...)
 end
 
 #Definition of nearest-neighbour sites on lattice
@@ -127,7 +127,7 @@ function DissipativeIsing(
     boundary_condition::Union{Symbol,Val} = Val(:periodic_bc),
     order::Integer = 1,
 )
-    S = [MultiSiteOperator(latt, i => sigmam()) for i in 1:latt.N]
+    S = [multisite_operator(latt, i => sigmam()) for i in 1:latt.N]
     c_ops = sqrt(γ) .* S
 
     op_sum(S, i::CartesianIndex) =
@@ -135,17 +135,17 @@ function DissipativeIsing(
 
     H = 0
     if (Jx != 0 || hx != 0)
-        S = [MultiSiteOperator(latt, i => sigmax()) for i in 1:latt.N]
+        S = [multisite_operator(latt, i => sigmax()) for i in 1:latt.N]
         H += Jx / 2 * mapreduce(i -> op_sum(S, i), +, latt.car_idx) #/2 because we are double counting
         H += hx * sum(S)
     end
     if (Jy != 0 || hy != 0)
-        S = [MultiSiteOperator(latt, i => sigmay()) for i in 1:latt.N]
+        S = [multisite_operator(latt, i => sigmay()) for i in 1:latt.N]
         H += Jy / 2 * mapreduce(i -> op_sum(S, i), +, latt.car_idx)
         H += hy * sum(S)
     end
     if (Jz != 0 || hz != 0)
-        S = [MultiSiteOperator(latt, i => sigmaz()) for i in 1:latt.N]
+        S = [multisite_operator(latt, i => sigmaz()) for i in 1:latt.N]
         H += Jz / 2 * mapreduce(i -> op_sum(S, i), +, latt.car_idx)
         H += hz * sum(S)
     end

@@ -53,7 +53,7 @@ Release date: 2024-12-06
 ## [v0.23.0]
 Release date: 2024-12-04
 
-- Change `SingleSiteOperator` with the more general `MultiSiteOperator`. ([#324])
+- Change `SingleSiteOperator` with the more general `multisite_operator`. ([#324])
 - Make `spectrum` and `correlation` functions align with `Python QuTiP`, introduce spectrum solver `PseudoInverse`, remove spectrum solver `FFTCorrelation`, and introduce `spectrum_correlation_fft`. ([#330])
 
 ## [v0.22.0]
