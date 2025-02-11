@@ -14,7 +14,7 @@ DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recu
 
 # some options for `makedocs`
 const DRAFT = false  # set `true`  to disable cell evaluation
-const DOCTEST = false # set `false` to skip doc tests
+const DOCTEST = true # set `false` to skip doc tests
 
 # generate bibliography
 bib = CitationBibliography(
