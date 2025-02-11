@@ -12,7 +12,7 @@ _smesolve_ScalarOperator(op_vec) =
 @doc raw"""
     smesolveProblem(
         H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
@@ -26,7 +26,7 @@ _smesolve_ScalarOperator(op_vec) =
 Generate the SDEProblem for the Stochastic Master Equation time evolution of an open quantum system. This is defined by the following stochastic differential equation:
     
 ```math
-d| \rho (t) = -i [\hat{H}, \rho(t)] dt + \sum_n \mathcal{D}[\hat{C}_n] \rho(t) dt + \sum_n \mathcal{D}[\hat{S}_n] \rho(t) dt + \sum_n \mathcal{H}[\hat{S}_n] \rho(t) dW_n(t),
+d \rho (t) = -i [\hat{H}, \rho(t)] dt + \sum_i \mathcal{D}[\hat{C}_i] \rho(t) dt + \sum_n \mathcal{D}[\hat{S}_n] \rho(t) dt + \sum_n \mathcal{H}[\hat{S}_n] \rho(t) dW_n(t),
 ```
 
 where
@@ -41,15 +41,15 @@ is the Lindblad superoperator, and
 \mathcal{H}[\hat{O}] \rho = \hat{O} \rho + \rho \hat{O}^\dagger - \mathrm{Tr}[\hat{O} \rho + \rho \hat{O}^\dagger] \rho,
 ```
 
-Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while ``\hat{S}_n`` are the measurement operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
+Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipation, while ``\hat{S}_n`` are the stochastic collapse operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
-- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
-- `sc_ops`: List of measurement collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NamedTuple` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -69,7 +69,7 @@ Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while 
 """
 function smesolveProblem(
     H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
@@ -78,12 +78,12 @@ function smesolveProblem(
     rng::AbstractRNG = default_rng(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-)
+) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     isnothing(sc_ops) &&
-        throw(ArgumentError("The list of measurement collapse operators must be provided. Use mesolveProblem instead."))
+        throw(ArgumentError("The list of stochastic collapse operators must be provided. Use mesolveProblem instead."))
 
     tlist = _check_tlist(tlist, _FType(ψ0))
 
@@ -131,7 +131,7 @@ end
 @doc raw"""
     smesolveEnsembleProblem(
         H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
@@ -149,7 +149,7 @@ end
 Generate the SDEProblem for the Stochastic Master Equation time evolution of an open quantum system. This is defined by the following stochastic differential equation:
     
 ```math
-d| \rho (t) = -i [\hat{H}, \rho(t)] dt + \sum_n \mathcal{D}[\hat{C}_n] \rho(t) dt + \sum_n \mathcal{D}[\hat{S}_n] \rho(t) dt + \sum_n \mathcal{H}[\hat{S}_n] \rho(t) dW_n(t),
+d \rho (t) = -i [\hat{H}, \rho(t)] dt + \sum_i \mathcal{D}[\hat{C}_i] \rho(t) dt + \sum_n \mathcal{D}[\hat{S}_n] \rho(t) dt + \sum_n \mathcal{H}[\hat{S}_n] \rho(t) dW_n(t),
 ```
 
 where
@@ -164,15 +164,15 @@ is the Lindblad superoperator, and
 \mathcal{H}[\hat{O}] \rho = \hat{O} \rho + \rho \hat{O}^\dagger - \mathrm{Tr}[\hat{O} \rho + \rho \hat{O}^\dagger] \rho,
 ```
 
-Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while ``\hat{S}_n`` are the measurement operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
+Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipation, while ``\hat{S}_n`` are the stochastic collapse operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
-- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
-- `sc_ops`: List of measurement collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NamedTuple` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -196,7 +196,7 @@ Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while 
 """
 function smesolveEnsembleProblem(
     H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
@@ -209,7 +209,7 @@ function smesolveEnsembleProblem(
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-)
+) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     _prob_func =
         isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _stochastic_prob_func) : prob_func
     _output_func =
@@ -242,7 +242,7 @@ end
 @doc raw"""
     smesolve(
         H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
@@ -261,7 +261,7 @@ end
 Stochastic Master Equation time evolution of an open quantum system. This is defined by the following stochastic differential equation:
     
 ```math
-d| \rho (t) = -i [\hat{H}, \rho(t)] dt + \sum_n \mathcal{D}[\hat{C}_n] \rho(t) dt + \sum_n \mathcal{D}[\hat{S}_n] \rho(t) dt + \sum_n \mathcal{H}[\hat{S}_n] \rho(t) dW_n(t),
+d \rho (t) = -i [\hat{H}, \rho(t)] dt + \sum_i \mathcal{D}[\hat{C}_i] \rho(t) dt + \sum_n \mathcal{D}[\hat{S}_n] \rho(t) dt + \sum_n \mathcal{H}[\hat{S}_n] \rho(t) dW_n(t),
 ```
 
 where
@@ -276,15 +276,15 @@ is the Lindblad superoperator, and
 \mathcal{H}[\hat{O}] \rho = \hat{O} \rho + \rho \hat{O}^\dagger - \mathrm{Tr}[\hat{O} \rho + \rho \hat{O}^\dagger] \rho,
 ```
 
-Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while ``\hat{S}_n`` are the measurement operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
+Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipation, while ``\hat{S}_n`` are the stochastic co operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
-- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
-- `sc_ops`: List of measurement collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm to use for the stochastic differential equation. Default is `SRA1()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NamedTuple` of parameters to pass to the solver.
@@ -309,7 +309,7 @@ Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while 
 """
 function smesolve(
     H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
@@ -323,7 +323,7 @@ function smesolve(
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-)
+) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     ensemble_prob = smesolveEnsembleProblem(
         H,
         ψ0,

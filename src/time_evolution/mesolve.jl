@@ -7,8 +7,8 @@ c_ops are Nothing. You are probably running the wrong function."))
 
 @doc raw"""
     mesolveProblem(
-        H::Union{AbstractQuantumObject{HOpType},Tuple},
-        ψ0::QuantumObject{StateOpType},
+        H::Union{AbstractQuantumObject,Tuple},
+        ψ0::QuantumObject,
         tlist,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -94,8 +94,8 @@ end
 
 @doc raw"""
     mesolve(
-        H::Union{AbstractQuantumObject{HOpType},Tuple},
-        ψ0::QuantumObject{StateOpType},
+        H::Union{AbstractQuantumObject,Tuple},
+        ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
