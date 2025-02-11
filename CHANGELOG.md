@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix erroneous definition of the stochastic term in `smesolve`. ([#393])
 - Change name of `MultiSiteOperator` to `multisite_operator`. ([#394])
 - Fix `smesolve` for specifying initial state as density matrix. ([#395])
+- Add more generic solver for `steadystate_floquet`, allowing for more linear solvers. ([#396])
 
 ## [v0.26.0]
 Release date: 2025-02-09
@@ -124,3 +125,4 @@ Release date: 2024-11-13
 [#393]: https://github.com/qutip/QuantumToolbox.jl/issues/393
 [#394]: https://github.com/qutip/QuantumToolbox.jl/issues/394
 [#395]: https://github.com/qutip/QuantumToolbox.jl/issues/395
+[#396]: https://github.com/qutip/QuantumToolbox.jl/issues/396
