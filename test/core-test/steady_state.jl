@@ -65,7 +65,7 @@
     H_td = (H, (H_t, coeff))
 
     sol_me = mesolve(H_td, psi0, t_l, c_ops, e_ops = e_ops, progress_bar = Val(false))
-    ρ_ss1 = steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetLinearSystem())[1]
+    ρ_ss1 = steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetLinearSolve())[1]
     ρ_ss2 =
         steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetEffectiveLiouvillian())
 
@@ -73,7 +73,7 @@
     @test abs(sum(sol_me.expect[1, end-100:end]) / 101 - expect(e_ops[1], ρ_ss2)) < 1e-3
 
     @testset "Type Inference (steadystate_floquet)" begin
-        @inferred steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetLinearSystem())
+        @inferred steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetLinearSolve())
         @inferred steadystate_floquet(
             H,
             -1im * 0.5 * H_t,

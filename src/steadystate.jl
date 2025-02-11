@@ -5,7 +5,7 @@ export SteadyStateSolver,
     SteadyStateLinearSolver,
     SteadyStateODESolver,
     SteadyStateFloquetSolver,
-    SSFloquetLinearSystem,
+    SSFloquetLinearSolve,
     SSFloquetEffectiveLiouvillian
 
 abstract type SteadyStateSolver end
@@ -58,7 +58,15 @@ Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm} <: SteadySt
     alg::MT = Tsit5()
 end
 
-struct SSFloquetLinearSystem <: SteadyStateFloquetSolver end
+Base.@kwdef struct SSFloquetLinearSolve{
+    MT<:Union{SciMLLinearSolveAlgorithm,Nothing},
+    PlT<:Union{Function,Nothing},
+    PrT<:Union{Function,Nothing},
+} <: SteadyStateFloquetSolver
+    alg::MT = KrylovJL_GMRES()
+    Pl::PlT = nothing
+    Pr::PrT = nothing
+end
 Base.@kwdef struct SSFloquetEffectiveLiouvillian{SSST<:SteadyStateSolver} <: SteadyStateFloquetSolver
     steadystate_solver::SSST = SteadyStateDirectSolver()
 end
@@ -255,7 +263,7 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         n_max::Integer = 2,
         tol::R = 1e-8,
-        solver::FSolver = SSFloquetLinearSystem,
+        solver::FSolver = SSFloquetLinearSolve,
         kwargs...,
     )
 
@@ -265,11 +273,11 @@ Considering a monochromatic drive at frequency ``\omega_d``, we divide it into t
 `H_p` and `H_m`, where `H_p` oscillates
 as ``e^{i \omega t}`` and `H_m` oscillates as ``e^{-i \omega t}``.
 There are two solvers available for this function:
-- `SSFloquetLinearSystem`: Solves the linear system of equations.
+- `SSFloquetLinearSolve`: Solves the linear system of equations.
 - `SSFloquetEffectiveLiouvillian`: Solves the effective Liouvillian.
 For both cases, `n_max` is the number of Fourier components to consider, and `tol` is the tolerance for the solver.
 
-In the case of `SSFloquetLinearSystem`, the full linear system is solved at once:
+In the case of `SSFloquetLinearSolve`, the full linear system is solved at once:
 
 ```math
 ( \mathcal{L}_0 - i n \omega_d ) \hat{\rho}_n + \mathcal{L}_1 \hat{\rho}_{n-1} + \mathcal{L}_{-1} \hat{\rho}_{n+1} = 0
@@ -312,7 +320,7 @@ This will allow to simultaneously obtain all the ``\hat{\rho}_n``.
 In the case of `SSFloquetEffectiveLiouvillian`, instead, the effective Liouvillian is calculated using the matrix continued fraction method.
 
 !!! note "different return"
-    The two solvers returns different objects. The `SSFloquetLinearSystem` returns a list of [`QuantumObject`](@ref), containing the density matrices for each Fourier component (``\hat{\rho}_{-n}``, with ``n`` from ``0`` to ``n_\textrm{max}``), while the `SSFloquetEffectiveLiouvillian` returns only ``\hat{\rho}_0``. 
+    The two solvers returns different objects. The `SSFloquetLinearSolve` returns a list of [`QuantumObject`](@ref), containing the density matrices for each Fourier component (``\hat{\rho}_{-n}``, with ``n`` from ``0`` to ``n_\textrm{max}``), while the `SSFloquetEffectiveLiouvillian` returns only ``\hat{\rho}_0``. 
 
 ## Arguments
 - `H_0::QuantumObject`: The Hamiltonian or the Liouvillian of the undriven system.
@@ -322,7 +330,7 @@ In the case of `SSFloquetEffectiveLiouvillian`, instead, the effective Liouvilli
 - `c_ops::Union{Nothing,AbstractVector} = nothing`: The optional collapse operators.
 - `n_max::Integer = 2`: The number of Fourier components to consider.
 - `tol::R = 1e-8`: The tolerance for the solver.
-- `solver::FSolver = SSFloquetLinearSystem`: The solver to use.
+- `solver::FSolver = SSFloquetLinearSolve`: The solver to use.
 - `kwargs...`: Additional keyword arguments to be passed to the solver.
 """
 function steadystate_floquet(
@@ -333,7 +341,7 @@ function steadystate_floquet(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     n_max::Integer = 2,
     tol::R = 1e-8,
-    solver::FSolver = SSFloquetLinearSystem(),
+    solver::FSolver = SSFloquetLinearSolve(),
     kwargs...,
 ) where {
     OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
@@ -353,7 +361,7 @@ function _steadystate_floquet(
     L_p::QuantumObject{SuperOperatorQuantumObject},
     L_m::QuantumObject{SuperOperatorQuantumObject},
     ωd::Number,
-    solver::SSFloquetLinearSystem;
+    solver::SSFloquetLinearSolve;
     n_max::Integer = 1,
     tol::R = 1e-8,
     kwargs...,
@@ -387,9 +395,18 @@ function _steadystate_floquet(
     v0 = zeros(T, n_fourier * N)
     v0[n_max*N+1] = weight
 
-    Pl = ilu(M, τ = 0.01)
+    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
+    if !isnothing(solver.Pl)
+        kwargs = merge((; kwargs...), (Pl = solver.Pl(M),))
+    elseif isa(M, SparseMatrixCSC)
+        kwargs = merge((; kwargs...), (Pl = ilu(M, τ = 0.01),))
+    end
+    !isnothing(solver.Pr) && (kwargs = merge((; kwargs...), (Pr = solver.Pr(M),)))
+    !haskey(kwargs, :abstol) && (kwargs = merge((; kwargs...), (abstol = tol,)))
+    !haskey(kwargs, :reltol) && (kwargs = merge((; kwargs...), (reltol = tol,)))
+
     prob = LinearProblem(M, v0)
-    ρtot = solve(prob, KrylovJL_GMRES(), Pl = Pl, abstol = tol, reltol = tol).u
+    ρtot = solve(prob, solver.alg; kwargs...).u
 
     offset1 = n_max * N
     offset2 = (n_max + 1) * N
