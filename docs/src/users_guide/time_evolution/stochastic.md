@@ -29,7 +29,7 @@ The solver [`ssesolve`](@ref) will construct the operators ``\hat{K}`` and ``\ha
 
 ## [Stochastic master equation](@id doc-TE:Stochastic-master-equation)
 
-When the initial state of the system is a density matrix ``\rho(0)``, the stochastic master equation solver [`smesolve`](@ref) must be used. The stochastic master equation is given by [Wiseman2009Quantum; section 4.4](@cite):
+When the initial state of the system is a density matrix ``\rho(0)``, or when additional loss channels are included, the stochastic master equation solver [`smesolve`](@ref) must be used. The stochastic master equation is given by [Wiseman2009Quantum; section 4.4](@cite):
 
 ```math
 d \rho (t) = -i [\hat{H}, \rho(t)] dt + \sum_i \mathcal{D}[\hat{C}_i] \rho(t) dt + \sum_n \mathcal{D}[\hat{S}_n] \rho(t) dt + \sum_n \mathcal{H}[\hat{S}_n] \rho(t) dW_n(t),
@@ -52,7 +52,7 @@ The above implementation takes into account 2 types of collapse operators. ``\ha
 
 ## [Example: Homodyne detection](@id doc-TE:Example:Homodyne-detection)
 
-Below, we solve the dynamics for an optical cavity at absolute zero (``0K``) whose output is monitored using homodyne detection. The cavity decay rate is given by ``\kappa`` and the ``\Delta`` is the cavity detuning with respect to the driving field. The homodyne current ``J_x`` is calculated using
+First, we solve the dynamics for an optical cavity at absolute zero (``0K``) whose output is monitored using homodyne detection. The cavity decay rate is given by ``\kappa`` and the ``\Delta`` is the cavity detuning with respect to the driving field. The homodyne current ``J_x`` is calculated using
 
 ```math
 J_x = \langle \hat{x} \rangle + dW/dt,
@@ -64,14 +64,14 @@ where ``\hat{x}`` is the operator build from the `sc_ops` as
 \hat{x} = \hat{S} + \hat{S}^\dagger
 ```
 
-```@setup smesolve
+```@setup stochastic-solve
 using QuantumToolbox
 
 using CairoMakie
 CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 ```
 
-```@example smesolve
+```@example stochastic-solve
 # parameters
 N = 20         # Fock space dimension
 Δ = 5 * 2 * π  # cavity detuning
@@ -79,19 +79,56 @@ N = 20         # Fock space dimension
 α = 4          # intensity of initial state
 ntraj = 500    # number of trajectories
 
+tlist = 0:0.0025:1
+
 # operators
 a = destroy(N)
 x = a + a'
 H = Δ * a' * a
-c_ops  = nothing
-sc_ops = [√(κ) * a]
 
-ρ0 = coherent_dm(N, √α)
-tlist = 0:0.0025:1
+# initial state
+ψ0 = coherent(N, √α)
 
-stoc_sol = smesolve(
+# temperature with average of 0 excitations (absolute zero)
+n_th = 0
+# c_ops  = [√(κ * n_th) * a'] -> nothing
+sc_ops = [√(κ * (n_th + 1)) * a]
+```
+
+In this case, there is no additional dissipation (`c_ops = nothing`), and thus, we can use the [`ssesolve`](@ref):
+
+```@example stochastic-solve
+sse_sol = ssesolve(
     H,
-    ρ0,
+    ψ0,
+    tlist,
+    sc_ops,
+    e_ops = [x],
+    ntraj = ntraj,
+)
+
+# plot by CairoMakie.jl
+fig = Figure(size = (500, 350))
+ax = Axis(fig[1, 1], xlabel = "Time")
+#lines!(ax, tlist, real(sse_sol.xxxxxx), label = L"J_x", color = :red, linestyle = :solid) TODO: add this in the future
+lines!(ax, tlist, real(sse_sol.expect[1,:]),  label = L"\langle x \rangle", color = :black, linestyle = :solid)
+
+axislegend(ax, position = :rt)
+
+fig
+```
+
+Next, we consider the same model but at a finite temperature to demonstrate [`smesolve`](@ref):
+
+```@example stochastic-solve
+# temperature with average of 1 excitations
+n_th = 1
+c_ops  = [√(κ * n_th) * a']
+sc_ops = [√(κ * (n_th + 1)) * a]
+
+sme_sol = smesolve(
+    H,
+    ψ0,
     tlist,
     c_ops,
     sc_ops,
@@ -102,8 +139,8 @@ stoc_sol = smesolve(
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = "Time")
-#lines!(ax, tlist, real(stoc_sol.xxxxxx), label = L"J_x", color = :red, linestyle = :solid) TODO: add this in the future
-lines!(ax, tlist, real(stoc_sol.expect[1,:]),  label = L"\langle x \rangle", color = :black, linestyle = :solid)
+#lines!(ax, tlist, real(sme_sol.xxxxxx), label = L"J_x", color = :red, linestyle = :solid) TODO: add this in the future
+lines!(ax, tlist, real(sme_sol.expect[1,:]),  label = L"\langle x \rangle", color = :black, linestyle = :solid)
 
 axislegend(ax, position = :rt)
 
