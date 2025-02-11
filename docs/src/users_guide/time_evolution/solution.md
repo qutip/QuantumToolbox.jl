@@ -89,4 +89,7 @@ Some other solvers can have other output.
 
 ## [Multiple trajectories solution](@id doc-TE:Multiple-trajectories-solution)
 
-This part is still under construction, please visit [API](@ref doc-API) first.
+This part is still under construction, please read the docstrings for the following functions first:
+
+- [`TimeEvolutionMCSol`](@ref)
+- [`TimeEvolutionStochasticSol`](@ref)

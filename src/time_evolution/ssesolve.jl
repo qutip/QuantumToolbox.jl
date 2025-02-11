@@ -108,24 +108,24 @@ d|\psi(t)\rangle = -i \hat{K} |\psi(t)\rangle dt + \sum_n \hat{M}_n |\psi(t)\ran
 where 
     
 ```math
-\hat{K} = \hat{H} + i \sum_n \left(\frac{e_n}{2} \hat{C}_n - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n - \frac{e_n^2}{8}\right),
+\hat{K} = \hat{H} + i \sum_n \left(\frac{e_n}{2} \hat{S}_n - \frac{1}{2} \hat{S}_n^\dagger \hat{S}_n - \frac{e_n^2}{8}\right),
 ```
 ```math
-\hat{M}_n = \hat{C}_n - \frac{e_n}{2},
+\hat{M}_n = \hat{S}_n - \frac{e_n}{2},
 ```
 and
 ```math
-e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
+e_n = \langle \hat{S}_n + \hat{S}_n^\dagger \rangle.
 ```
 
-Above, ``\hat{C}_n`` is the `n`-th collapse operator and ``dW_n(t)`` is the real Wiener increment associated to ``\hat{C}_n``. See [Wiseman2009Quantum](@cite) for more details.
+Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
-- `sc_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NamedTuple` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -158,7 +158,7 @@ function ssesolveProblem(
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     sc_ops isa Nothing &&
-        throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
+        throw(ArgumentError("The list of stochastic collapse operators must be provided. Use sesolveProblem instead."))
 
     tlist = _check_tlist(tlist, _FType(ψ0))
 
@@ -227,24 +227,24 @@ d|\psi(t)\rangle = -i \hat{K} |\psi(t)\rangle dt + \sum_n \hat{M}_n |\psi(t)\ran
 where 
     
 ```math
-\hat{K} = \hat{H} + i \sum_n \left(\frac{e_n}{2} \hat{C}_n - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n - \frac{e_n^2}{8}\right),
+\hat{K} = \hat{H} + i \sum_n \left(\frac{e_n}{2} \hat{S}_n - \frac{1}{2} \hat{S}_n^\dagger \hat{S}_n - \frac{e_n^2}{8}\right),
 ```
 ```math
-\hat{M}_n = \hat{C}_n - \frac{e_n}{2},
+\hat{M}_n = \hat{S}_n - \frac{e_n}{2},
 ```
 and
 ```math
-e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
+e_n = \langle \hat{S}_n + \hat{S}_n^\dagger \rangle.
 ```
 
-Above, ``\hat{C}_n`` is the `n`-th collapse operator and  ``dW_n(t)`` is the real Wiener increment associated to ``\hat{C}_n``. See [Wiseman2009Quantum](@cite) for more details.
+Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
-- `sc_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NamedTuple` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -340,7 +340,7 @@ end
     )
 
 
-Stochastic Schrödinger equation evolution of a quantum system given the system Hamiltonian ``\hat{H}`` and a list of stochadtic collapse (jump) operators ``\{\hat{C}_n\}_n``.
+Stochastic Schrödinger equation evolution of a quantum system given the system Hamiltonian ``\hat{H}`` and a list of stochastic collapse (jump) operators ``\{\hat{S}_n\}_n``.
 The stochastic evolution of the state ``|\psi(t)\rangle`` is defined by:
     
 ```math
@@ -350,17 +350,17 @@ d|\psi(t)\rangle = -i \hat{K} |\psi(t)\rangle dt + \sum_n \hat{M}_n |\psi(t)\ran
 where 
     
 ```math
-\hat{K} = \hat{H} + i \sum_n \left(\frac{e_n}{2} \hat{C}_n - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n - \frac{e_n^2}{8}\right),
+\hat{K} = \hat{H} + i \sum_n \left(\frac{e_n}{2} \hat{S}_n - \frac{1}{2} \hat{S}_n^\dagger \hat{S}_n - \frac{e_n^2}{8}\right),
 ```
 ```math
-\hat{M}_n = \hat{C}_n - \frac{e_n}{2},
+\hat{M}_n = \hat{S}_n - \frac{e_n}{2},
 ```
 and
 ```math
-e_n = \langle \hat{C}_n + \hat{C}_n^\dagger \rangle.
+e_n = \langle \hat{S}_n + \hat{S}_n^\dagger \rangle.
 ```
 
-Above, ``\hat{C}_n`` is the `n`-th collapse operator and ``dW_n(t)`` is the real Wiener increment associated to ``\hat{C}_n``. See [Wiseman2009Quantum](@cite) for more details.
+Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
 
 # Arguments
@@ -368,7 +368,7 @@ Above, ``\hat{C}_n`` is the `n`-th collapse operator and ``dW_n(t)`` is the real
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
-- `sc_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm to use for the stochastic differential equation. Default is `SRA1()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NamedTuple` of parameters to pass to the solver.
