@@ -3,7 +3,7 @@ export smesolveProblem, smesolveEnsembleProblem, smesolve
 _smesolve_generate_state(u, dims) = QuantumObject(vec2mat(u), type = Operator, dims = dims)
 
 function _smesolve_update_coeff(u, p, t, op_vec)
-    return real(dot(u, op_vec)) / 2 #this is Tr[Sn * ρ + ρ * Sn']
+    return 2 * real(dot(op_vec, u)) #this is Tr[Sn * ρ + ρ * Sn']
 end
 
 _smesolve_ScalarOperator(op_vec) =
@@ -39,6 +39,7 @@ is the Lindblad superoperator, and
 
 ```math
 \mathcal{H}[\hat{O}] \rho = \hat{O} \rho + \rho \hat{O}^\dagger - \mathrm{Tr}[\hat{O} \rho + \rho \hat{O}^\dagger] \rho,
+```
 
 Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while ``\hat{S}_n`` are the measurement operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
@@ -100,11 +101,12 @@ function smesolveProblem(
     K = get_data(L_evo)
 
     Id = I(prod(dims))
+    Id_op = IdentityOperator(prod(dims)^2)
     D_l = map(sc_ops_evo_data) do op
-        # TODO: Implement the three-argument dot function for SciMLOperators.jl
-        # Currently, we are assuming a time-independent MatrixOperator
+        # TODO: # Currently, we are assuming a time-independent MatrixOperator
+        # Also, the u state may become non-hermitian, so Tr[Sn * ρ + ρ * Sn'] != real(Tr[Sn * ρ]) / 2
         op_vec = mat2vec(adjoint(op.A))
-        return _spre(op, Id) + _spost(op', Id) + _smesolve_ScalarOperator(op_vec) * IdentityOperator(prod(dims)^2)
+        return _spre(op, Id) + _spost(op', Id) + _smesolve_ScalarOperator(op_vec) * Id_op
     end
     D = DiffusionOperator(D_l)
 
@@ -160,6 +162,7 @@ is the Lindblad superoperator, and
 
 ```math
 \mathcal{H}[\hat{O}] \rho = \hat{O} \rho + \rho \hat{O}^\dagger - \mathrm{Tr}[\hat{O} \rho + \rho \hat{O}^\dagger] \rho,
+```
 
 Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while ``\hat{S}_n`` are the measurement operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 
@@ -271,6 +274,7 @@ is the Lindblad superoperator, and
 
 ```math
 \mathcal{H}[\hat{O}] \rho = \hat{O} \rho + \rho \hat{O}^\dagger - \mathrm{Tr}[\hat{O} \rho + \rho \hat{O}^\dagger] \rho,
+```
 
 Above, ``\hat{C}_n`` represent the operators related to pure dissipation, while ``\hat{S}_n`` are the measurement operators. The ``dW_n(t)`` term is the real Wiener increment associated to ``\hat{S}_n``. See [Wiseman2009Quantum](@cite) for more details.
 

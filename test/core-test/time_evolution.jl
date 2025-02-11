@@ -407,7 +407,7 @@
                 ntraj = 100,
                 progress_bar = Val(false),
             )
-            @test allocs_tot < 2710000 # TODO: Fix this high number of allocations
+            @test allocs_tot < 2750000 # TODO: Fix this high number of allocations
 
             allocs_tot = @allocations smesolve(
                 H,

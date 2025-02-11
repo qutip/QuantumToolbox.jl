@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Rename `sparse_to_dense` as `to_dense` and `dense_to_sparse` as `to_sparse`. ([#392])
+- Fix erroneous definition of the stochastic term in `smesolve`. ([#393])
 - Change name of `MultiSiteOperator` to `multisite_operator`. ([#394])
 
 ## [v0.26.0]
@@ -119,4 +120,5 @@ Release date: 2024-11-13
 [#388]: https://github.com/qutip/QuantumToolbox.jl/issues/388
 [#389]: https://github.com/qutip/QuantumToolbox.jl/issues/389
 [#392]: https://github.com/qutip/QuantumToolbox.jl/issues/392
+[#393]: https://github.com/qutip/QuantumToolbox.jl/issues/393
 [#394]: https://github.com/qutip/QuantumToolbox.jl/issues/394
