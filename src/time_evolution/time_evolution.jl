@@ -2,8 +2,8 @@ export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
 
 export liouvillian_floquet, liouvillian_generalized
 
-const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
-const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
+const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false)
+const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false)
 const JUMP_TIMES_WHICH_INIT_SIZE = 200
 
 @doc raw"""
@@ -228,6 +228,17 @@ function _check_tlist(tlist, T::Type)
     allunique(tlist2) || throw(ArgumentError("The time list must be unique."))
 
     return tlist2
+end
+
+#######################################
+
+function _merge_saveat(tlist, e_ops, default_options; kwargs...)
+    is_empty_e_ops = isnothing(e_ops) ? true : isempty(e_ops)
+    saveat = is_empty_e_ops ? tlist : [tlist[end]]
+    default_values = (default_options..., saveat = saveat)
+    kwargs2 = merge(default_values, kwargs)
+    save_end = tlist[end] in kwargs2.saveat # DifferentialEquations.jl has this weird setting
+    return merge(kwargs2, (save_end = save_end,))
 end
 
 #######################################
