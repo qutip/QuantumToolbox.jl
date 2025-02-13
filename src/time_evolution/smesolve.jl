@@ -361,18 +361,19 @@ function smesolve(
 
     dims = ens_prob.dimensions
     _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _se_me_sse_get_expvals(sol[:, i]), eachindex(sol))
-    expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all)
+    expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
     states = map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims)), eachindex(sol))
 
     expvals =
         _se_me_sse_get_expvals(_sol_1) isa Nothing ? nothing :
-        dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
+        dropdims(sum(expvals_all, dims = 2), dims = 2) ./ length(sol)
 
     return TimeEvolutionStochasticSol(
         ntraj,
         ens_prob.times,
         states,
         expvals,
+        expvals, # This is average_expect
         expvals_all,
         sol.converged,
         _sol_1.alg,
