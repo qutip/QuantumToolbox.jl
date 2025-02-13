@@ -26,11 +26,13 @@
 
     @testset "sesolve" begin
         tlist = range(0, 20 * 2π / g, 1000)
+        saveat_idxs = 500:900
+        saveat = tlist[saveat_idxs]
 
         prob = sesolveProblem(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
         sol = sesolve(prob)
         sol2 = sesolve(H, ψ0, tlist, progress_bar = Val(false))
-        sol3 = sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
+        sol3 = sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
         sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
         sol_string2 = sprint((t, s) -> show(t, "text/plain", s), sol2)
 
@@ -48,8 +50,9 @@
         @test length(sol2.states) == length(tlist)
         @test sol2.expect === nothing
         @test length(sol3.times) == length(tlist)
-        @test length(sol3.states) == length(tlist)
+        @test length(sol3.states) == length(saveat)
         @test size(sol3.expect) == (length(e_ops), length(tlist))
+        @test sol.expect[1, saveat_idxs] ≈ expect(e_ops[1], sol3.states) atol = 1e-6
         @test sol_string ==
               "Solution of time evolution\n" *
               "(return code: $(sol.retcode))\n" *
@@ -92,18 +95,20 @@
             @inferred sesolveProblem(H, ψ0_int, tlist, progress_bar = Val(false))
             @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
             @inferred sesolve(H, ψ0, tlist, progress_bar = Val(false))
-            @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
+            @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
             @inferred sesolve(H, ψ0, tlist, e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple of different types
         end
     end
 
     @testset "mesolve, mcsolve, ssesolve and smesolve" begin
         tlist = range(0, 10 / γ, 100)
+        saveat_idxs = 50:90
+        saveat = tlist[saveat_idxs]
 
         prob_me = mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
         sol_me = mesolve(prob_me)
         sol_me2 = mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
-        sol_me3 = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
+        sol_me3 = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
         prob_mc = mcsolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
         sol_mc = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
         sol_mc2 = mcsolve(
@@ -116,14 +121,14 @@
             progress_bar = Val(false),
             jump_callback = DiscreteLindbladJumpCallback(),
         )
-        sol_mc_states = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, saveat = tlist, progress_bar = Val(false))
+        sol_mc_states = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, saveat = saveat, progress_bar = Val(false))
         sol_mc_states2 = mcsolve(
             H,
             ψ0,
             tlist,
             c_ops,
             ntraj = 500,
-            saveat = tlist,
+            saveat = saveat,
             progress_bar = Val(false),
             jump_callback = DiscreteLindbladJumpCallback(),
         )
@@ -147,8 +152,8 @@
         @test prob_mc.prob.f.f isa MatrixOperator
         @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
         @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
-        @test sum(abs, vec(expect_mc_states_mean) .- vec(sol_me.expect[1, :])) / length(tlist) < 0.1
-        @test sum(abs, vec(expect_mc_states_mean2) .- vec(sol_me.expect[1, :])) / length(tlist) < 0.1
+        @test sum(abs, vec(expect_mc_states_mean) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
+        @test sum(abs, vec(expect_mc_states_mean2) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
         @test sum(abs, sol_sse.expect .- sol_me.expect) / length(tlist) < 0.1
         @test sum(abs, sol_sme.expect .- sol_me.expect) / length(tlist) < 0.1
         @test length(sol_me.times) == length(tlist)
@@ -158,8 +163,9 @@
         @test length(sol_me2.states) == length(tlist)
         @test sol_me2.expect === nothing
         @test length(sol_me3.times) == length(tlist)
-        @test length(sol_me3.states) == length(tlist)
+        @test length(sol_me3.states) == length(saveat)
         @test size(sol_me3.expect) == (length(e_ops), length(tlist))
+        @test sol_me3.expect[1, saveat_idxs] ≈ expect(e_ops[1], sol_me3.states) atol = 1e-6
         @test length(sol_mc.times) == length(tlist)
         @test size(sol_mc.expect) == (length(e_ops), length(tlist))
         @test length(sol_mc_states.times) == length(tlist)
