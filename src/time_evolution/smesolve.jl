@@ -17,7 +17,7 @@ _smesolve_ScalarOperator(op_vec) =
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NullParameters = NullParameters(),
+        params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         progress_bar::Union{Val,Bool} = Val(true),
         kwargs...,
@@ -74,7 +74,7 @@ function smesolveProblem(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NullParameters = NullParameters(),
+    params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
@@ -139,7 +139,7 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NullParameters = NullParameters(),
+        params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
         ensemble_method = EnsembleThreads(),
@@ -181,7 +181,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
-- `prob_func`: Function to use for generating the ODEProblem.
+- `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -204,7 +204,7 @@ function smesolveEnsembleProblem(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NullParameters = NullParameters(),
+    params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
@@ -252,7 +252,7 @@ end
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::StochasticDiffEqAlgorithm = SRA1(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NullParameters = NullParameters(),
+        params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
         ensemble_method = EnsembleThreads(),
@@ -295,7 +295,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
-- `prob_func`: Function to use for generating the ODEProblem.
+- `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -319,7 +319,7 @@ function smesolve(
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NullParameters = NullParameters(),
+    params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
@@ -359,7 +359,6 @@ function smesolve(
     _sol_1 = sol[:, 1]
     _expvals_sol_1 = _se_me_sse_get_expvals(_sol_1)
 
-    normalize_states = Val(false)
     dims = ens_prob.dimensions
     _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _se_me_sse_get_expvals(sol[:, i]), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all)
