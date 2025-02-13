@@ -186,11 +186,7 @@ function ssesolveProblem(
 
     p = (progr = progr, times = tlist, Hdims = dims, n_sc_ops = length(sc_ops), params...)
 
-    is_empty_e_ops = (e_ops isa Nothing) ? true : isempty(e_ops)
-
-    saveat = is_empty_e_ops ? tlist : [tlist[end]]
-    default_values = (DEFAULT_SDE_SOLVER_OPTIONS..., saveat = saveat)
-    kwargs2 = merge(default_values, kwargs)
+    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncSSESolve)
     kwargs4 = _ssesolve_add_normalize_cb(kwargs3)
 

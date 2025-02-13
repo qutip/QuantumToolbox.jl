@@ -231,6 +231,23 @@ function _check_tlist(tlist, T::Type)
 end
 
 #######################################
+
+function _merge_saveat(tlist, e_ops, default_options; kwargs...)
+    is_empty_e_ops = isnothing(e_ops) ? true : isempty(e_ops)
+    saveat = is_empty_e_ops ? tlist : [tlist[end]]
+    default_values = (default_options..., saveat = saveat)
+    kwargs2 = merge(default_values, kwargs)
+
+    # DifferentialEquations.jl has this weird save_end setting
+    # So we need to do this to make sure it's consistent
+    haskey(kwargs, :save_end) && return kwargs2
+    isempty(kwargs2.saveat) && return kwargs2
+
+    save_end = tlist[end] in kwargs2.saveat
+    return merge(kwargs2, (save_end = save_end,))
+end
+
+#######################################
 #=
 Helpers for handling output of ensemble problems.
 This is very useful especially for dispatching which method to use to update the progress bar.
