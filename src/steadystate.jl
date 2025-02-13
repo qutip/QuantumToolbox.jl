@@ -1,15 +1,12 @@
-export steadystate, steadystate_floquet
+export steadystate, steadystate_fourier, steadystate_floquet
 export SteadyStateSolver,
     SteadyStateDirectSolver,
     SteadyStateEigenSolver,
     SteadyStateLinearSolver,
     SteadyStateODESolver,
-    SteadyStateFloquetSolver,
-    SSFloquetLinearSolve,
     SSFloquetEffectiveLiouvillian
 
 abstract type SteadyStateSolver end
-abstract type SteadyStateFloquetSolver end
 
 @doc raw"""
     SteadyStateDirectSolver()
@@ -58,16 +55,18 @@ Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm} <: SteadySt
     alg::MT = Tsit5()
 end
 
-Base.@kwdef struct SSFloquetLinearSolve{
-    MT<:Union{SciMLLinearSolveAlgorithm,Nothing},
-    PlT<:Union{Function,Nothing},
-    PrT<:Union{Function,Nothing},
-} <: SteadyStateFloquetSolver
-    alg::MT = KrylovJL_GMRES()
-    Pl::PlT = nothing
-    Pr::PrT = nothing
-end
-Base.@kwdef struct SSFloquetEffectiveLiouvillian{SSST<:SteadyStateSolver} <: SteadyStateFloquetSolver
+@doc raw"""
+    SSFloquetEffectiveLiouvillian(steadystate_solver = SteadyStateDirectSolver())
+
+A solver which solves [`steadystate_fourier`](@ref) by first extracting an effective time-independent Liouvillian and then using the `steadystate_solver` to extract the steadystate..
+
+# Parameters
+- `steadystate_solver::SteadyStateSolver=SteadyStateDirectSolver()`: The solver to use for the effective Liouvillian.
+
+!!! note
+    This solver is only available for [`steadystate_fourier`](@ref).
+"""
+Base.@kwdef struct SSFloquetEffectiveLiouvillian{SSST<:SteadyStateSolver} <: SteadyStateSolver
     steadystate_solver::SSST = SteadyStateDirectSolver()
 end
 
@@ -93,6 +92,12 @@ function steadystate(
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
 ) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    solver isa SSFloquetEffectiveLiouvillian && throw(
+        ArgumentError(
+            "The solver `SSFloquetEffectiveLiouvillian` is only available for the `steadystate_fourier` function.",
+        ),
+    )
+
     L = liouvillian(H, c_ops)
 
     return _steadystate(L, solver; kwargs...)
@@ -255,15 +260,15 @@ function _steadystate_ode_condition(integrator, abstol, reltol, min_t)
 end
 
 @doc raw"""
-    steadystate_floquet(
-        H_0::QuantumObject{OpType1},
-        H_p::QuantumObject{OpType2},
-        H_m::QuantumObject{OpType3},
+    steadystate_fourier(
+        H_0::QuantumObject,
+        H_p::QuantumObject,
+        H_m::QuantumObject,
         ωd::Number,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         n_max::Integer = 2,
         tol::R = 1e-8,
-        solver::FSolver = SSFloquetLinearSolve,
+        solver::FSolver = SteadyStateLinearSolver(),
         kwargs...,
     )
 
@@ -273,11 +278,11 @@ Considering a monochromatic drive at frequency ``\omega_d``, we divide it into t
 `H_p` and `H_m`, where `H_p` oscillates
 as ``e^{i \omega t}`` and `H_m` oscillates as ``e^{-i \omega t}``.
 There are two solvers available for this function:
-- `SSFloquetLinearSolve`: Solves the linear system of equations.
+- `SteadyStateLinearSolver`: Solves the linear system of equations.
 - `SSFloquetEffectiveLiouvillian`: Solves the effective Liouvillian.
 For both cases, `n_max` is the number of Fourier components to consider, and `tol` is the tolerance for the solver.
 
-In the case of `SSFloquetLinearSolve`, the full linear system is solved at once:
+In the case of `SteadyStateLinearSolver`, the full linear system is solved at once:
 
 ```math
 ( \mathcal{L}_0 - i n \omega_d ) \hat{\rho}_n + \mathcal{L}_1 \hat{\rho}_{n-1} + \mathcal{L}_{-1} \hat{\rho}_{n+1} = 0
@@ -320,7 +325,10 @@ This will allow to simultaneously obtain all the ``\hat{\rho}_n``.
 In the case of `SSFloquetEffectiveLiouvillian`, instead, the effective Liouvillian is calculated using the matrix continued fraction method.
 
 !!! note "different return"
-    The two solvers returns different objects. The `SSFloquetLinearSolve` returns a list of [`QuantumObject`](@ref), containing the density matrices for each Fourier component (``\hat{\rho}_{-n}``, with ``n`` from ``0`` to ``n_\textrm{max}``), while the `SSFloquetEffectiveLiouvillian` returns only ``\hat{\rho}_0``. 
+    The two solvers returns different objects. The `SteadyStateLinearSolver` returns a list of [`QuantumObject`](@ref), containing the density matrices for each Fourier component (``\hat{\rho}_{-n}``, with ``n`` from ``0`` to ``n_\textrm{max}``), while the `SSFloquetEffectiveLiouvillian` returns only ``\hat{\rho}_0``. 
+
+!!! note
+    `steadystate_floquet` is a synonym of `steadystate_fourier`.
 
 ## Arguments
 - `H_0::QuantumObject`: The Hamiltonian or the Liouvillian of the undriven system.
@@ -330,10 +338,10 @@ In the case of `SSFloquetEffectiveLiouvillian`, instead, the effective Liouvilli
 - `c_ops::Union{Nothing,AbstractVector} = nothing`: The optional collapse operators.
 - `n_max::Integer = 2`: The number of Fourier components to consider.
 - `tol::R = 1e-8`: The tolerance for the solver.
-- `solver::FSolver = SSFloquetLinearSolve`: The solver to use.
+- `solver::FSolver = SteadyStateLinearSolver`: The solver to use.
 - `kwargs...`: Additional keyword arguments to be passed to the solver.
 """
-function steadystate_floquet(
+function steadystate_fourier(
     H_0::QuantumObject{OpType1},
     H_p::QuantumObject{OpType2},
     H_m::QuantumObject{OpType3},
@@ -341,27 +349,27 @@ function steadystate_floquet(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     n_max::Integer = 2,
     tol::R = 1e-8,
-    solver::FSolver = SSFloquetLinearSolve(),
+    solver::FSolver = SteadyStateLinearSolver(),
     kwargs...,
 ) where {
     OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     R<:Real,
-    FSolver<:SteadyStateFloquetSolver,
+    FSolver<:SteadyStateSolver,
 }
     L_0 = liouvillian(H_0, c_ops)
     L_p = liouvillian(H_p)
     L_m = liouvillian(H_m)
-    return _steadystate_floquet(L_0, L_p, L_m, ωd, solver; n_max = n_max, tol = tol, kwargs...)
+    return _steadystate_fourier(L_0, L_p, L_m, ωd, solver; n_max = n_max, tol = tol, kwargs...)
 end
 
-function _steadystate_floquet(
+function _steadystate_fourier(
     L_0::QuantumObject{SuperOperatorQuantumObject},
     L_p::QuantumObject{SuperOperatorQuantumObject},
     L_m::QuantumObject{SuperOperatorQuantumObject},
     ωd::Number,
-    solver::SSFloquetLinearSolve;
+    solver::SteadyStateLinearSolver;
     n_max::Integer = 1,
     tol::R = 1e-8,
     kwargs...,
@@ -426,7 +434,7 @@ function _steadystate_floquet(
     return ρ_list
 end
 
-function _steadystate_floquet(
+function _steadystate_fourier(
     L_0::QuantumObject{SuperOperatorQuantumObject},
     L_p::QuantumObject{SuperOperatorQuantumObject},
     L_m::QuantumObject{SuperOperatorQuantumObject},
@@ -442,3 +450,6 @@ function _steadystate_floquet(
 
     return steadystate(L_eff; solver = solver.steadystate_solver, kwargs...)
 end
+
+# TODO: Synonym to align with QuTiP. Track https://github.com/qutip/qutip/issues/2632 when this can be removed.
+const steadystate_floquet = steadystate_fourier
