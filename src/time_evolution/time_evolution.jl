@@ -296,9 +296,9 @@ function _ensemble_dispatch_output_func(
     end
 end
 
-function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func)
+function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
     seeds = map(i -> rand(rng, UInt64), 1:ntraj)
-    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist)
+    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
@@ -336,17 +336,15 @@ end
 #=
  Stochastic funcs
 =#
-function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist)
-    params = prob.prob.p
-
+function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
     seed = seeds[i]
     traj_rng = typeof(rng)()
     seed!(traj_rng, seed)
 
     noise = RealWienerProcess!(
         prob.prob.tspan[1],
-        zeros(params.n_sc_ops),
-        zeros(params.n_sc_ops),
+        zeros(kwargs[:n_sc_ops]),
+        zeros(kwargs[:n_sc_ops]),
         save_everystep = false,
         rng = traj_rng,
     )
@@ -356,6 +354,45 @@ end
 
 # Standard output function
 _stochastic_output_func(sol, i) = (sol, false)
+
+#=
+    struct DiffusionOperator
+
+A struct to represent the diffusion operator. This is used to perform the diffusion process on N different Wiener processes.
+=#
+struct DiffusionOperator{T,OpType<:Tuple{Vararg{AbstractSciMLOperator}}} <: AbstractSciMLOperator{T}
+    ops::OpType
+    function DiffusionOperator(ops::OpType) where {OpType}
+        T = mapreduce(eltype, promote_type, ops)
+        return new{T,OpType}(ops)
+    end
+end
+
+@generated function update_coefficients!(L::DiffusionOperator, u, p, t)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        Base.@nexprs $N i -> begin
+            update_coefficients!(L.ops[i], u, p, t)
+        end
+
+        nothing
+    end
+end
+
+@generated function LinearAlgebra.mul!(v::AbstractVecOrMat, L::DiffusionOperator, u::AbstractVecOrMat)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        M = length(u)
+        S = size(v)
+        (S[1] == M && S[2] == $N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
+        Base.@nexprs $N i -> begin
+            mul!(@view(v[:, i]), L.ops[i], u)
+        end
+        return v
+    end
+end
 
 #######################################
 
