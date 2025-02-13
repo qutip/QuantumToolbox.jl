@@ -121,4 +121,4 @@ fig
 
 ## Calculate steady state for periodically driven systems
 
-See the docstring of [`steadystate_floquet`](@ref) for more details.
+See the docstring of [`steadystate_fourier`](@ref) for more details.
