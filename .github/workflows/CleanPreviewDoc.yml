@@ -23,4 +23,5 @@ jobs:
               git push --force origin gh-pages-new:gh-pages
             fi
         env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             PRNUM: ${{ github.event.number }}
