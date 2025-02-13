@@ -32,8 +32,6 @@ function _generate_save_callback(e_ops, tlist, progress_bar, method)
     return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
 end
 
-_generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
-
 ##
 
 # When e_ops is Nothing. Common for all solvers

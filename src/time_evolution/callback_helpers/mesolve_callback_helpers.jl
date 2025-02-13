@@ -39,3 +39,5 @@ function _mesolve_callbacks_new_e_ops!(integrator::AbstractODEIntegrator, e_ops)
         return nothing
     end
 end
+
+_generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
