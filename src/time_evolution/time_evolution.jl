@@ -99,7 +99,8 @@ A structure storing the results and some information from solving quantum trajec
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
 - `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `expect_all::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
 - `col_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
 - `col_which::Vector{Vector{Int}}`: The indices of which collapse operator was responsible for each quantum jump in `col_times`.
 - `converged::Bool`: Whether the solution is converged or not.
@@ -122,7 +123,8 @@ struct TimeEvolutionMCSol{
     times::TT
     states::TS
     expect::TE
-    expect_all::TEA
+    average_expect::TE # Currently just a synonym for `expect`
+    runs_expect::TEA
     col_times::TJT
     col_which::TJW
     converged::Bool
@@ -140,7 +142,7 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
     if sol.expect isa Nothing
         print(io, "num_expect = 0\n")
     else
-        print(io, "num_expect = $(size(sol.expect, 1))\n")
+        print(io, "num_expect = $(size(sol.average_expect, 1))\n")
     end
     print(io, "ODE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
@@ -159,7 +161,8 @@ A structure storing the results and some information from solving trajectories o
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
 - `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `expect_all::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -178,7 +181,8 @@ struct TimeEvolutionStochasticSol{
     times::TT
     states::TS
     expect::TE
-    expect_all::TEA
+    average_expect::TE # Currently just a synonym for `expect`
+    runs_expect::TEA
     converged::Bool
     alg::AlgT
     abstol::AT
@@ -194,7 +198,7 @@ function Base.show(io::IO, sol::TimeEvolutionStochasticSol)
     if sol.expect isa Nothing
         print(io, "num_expect = 0\n")
     else
-        print(io, "num_expect = $(size(sol.expect, 1))\n")
+        print(io, "num_expect = $(size(sol.average_expect, 1))\n")
     end
     print(io, "SDE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")

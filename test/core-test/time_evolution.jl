@@ -660,21 +660,21 @@
             )
 
             @test sol_mc1.expect ≈ sol_mc2.expect atol = 1e-10
-            @test sol_mc1.expect_all ≈ sol_mc2.expect_all atol = 1e-10
+            @test sol_mc1.runs_expect ≈ sol_mc2.runs_expect atol = 1e-10
             @test sol_mc1.col_times ≈ sol_mc2.col_times atol = 1e-10
             @test sol_mc1.col_which ≈ sol_mc2.col_which atol = 1e-10
 
-            @test sol_mc1.expect_all ≈ sol_mc3.expect_all[:, 1:500, :] atol = 1e-10
+            @test sol_mc1.runs_expect ≈ sol_mc3.runs_expect[:, 1:500, :] atol = 1e-10
 
             @test sol_sse1.expect ≈ sol_sse2.expect atol = 1e-10
-            @test sol_sse1.expect_all ≈ sol_sse2.expect_all atol = 1e-10
+            @test sol_sse1.runs_expect ≈ sol_sse2.runs_expect atol = 1e-10
 
-            @test sol_sse1.expect_all ≈ sol_sse3.expect_all[:, 1:50, :] atol = 1e-10
+            @test sol_sse1.runs_expect ≈ sol_sse3.runs_expect[:, 1:50, :] atol = 1e-10
 
             @test sol_sme1.expect ≈ sol_sme2.expect atol = 1e-10
-            @test sol_sme1.expect_all ≈ sol_sme2.expect_all atol = 1e-10
+            @test sol_sme1.runs_expect ≈ sol_sme2.runs_expect atol = 1e-10
 
-            @test sol_sme1.expect_all ≈ sol_sme3.expect_all[:, 1:50, :] atol = 1e-10
+            @test sol_sme1.runs_expect ≈ sol_sme3.runs_expect[:, 1:50, :] atol = 1e-10
         end
     end
 

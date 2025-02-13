@@ -413,6 +413,7 @@ function mcsolve(
         ens_prob_mc.times,
         states,
         expvals,
+        expvals, # This is average_expect
         expvals_all,
         col_times,
         col_which,

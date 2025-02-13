@@ -374,6 +374,7 @@ function ssesolve(
         ens_prob.times,
         states,
         expvals,
+        expvals, # This is average_expect
         expvals_all,
         sol.converged,
         _sol_1.alg,
