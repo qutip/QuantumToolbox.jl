@@ -22,6 +22,7 @@ _ScalarOperator_e2_2(op, f = +) =
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         progress_bar::Union{Val,Bool} = Val(true),
+        store_measurement::Union{Val, Bool} = Val(false),
         kwargs...,
     )
 
@@ -56,6 +57,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `store_measurement`: Whether to store the measurement results. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -78,6 +80,7 @@ function ssesolveProblem(
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     progress_bar::Union{Val,Bool} = Val(true),
+    store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 )
     haskey(kwargs, :save_idxs) &&
@@ -115,8 +118,13 @@ function ssesolveProblem(
     kwargs4 = _ssesolve_add_normalize_cb(kwargs3)
 
     tspan = (tlist[1], tlist[end])
-    noise =
-        RealWienerProcess!(tlist[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false, rng = rng)
+    noise = RealWienerProcess!(
+        tlist[1],
+        zeros(length(sc_ops)),
+        zeros(length(sc_ops)),
+        save_everystep = getVal(store_measurement),
+        rng = rng,
+    )
     noise_rate_prototype = similar(ψ0, length(ψ0), length(sc_ops))
     prob = SDEProblem{true}(
         K,
@@ -357,16 +365,17 @@ function ssesolve(
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemble_method, ntraj)
 
     _sol_1 = sol[:, 1]
-    _expvals_sol_1 = _se_me_sse_get_expvals(_sol_1)
+    _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncSSESolve)
 
     normalize_states = Val(false)
     dims = ens_prob.dimensions
-    _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _se_me_sse_get_expvals(sol[:, i]), eachindex(sol))
+    _expvals_all =
+        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
     states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
 
     expvals =
-        _se_me_sse_get_expvals(_sol_1) isa Nothing ? nothing :
+        _get_expvals(_sol_1, SaveFuncSSESolve) isa Nothing ? nothing :
         dropdims(sum(expvals_all, dims = 2), dims = 2) ./ length(sol)
 
     return TimeEvolutionStochasticSol(

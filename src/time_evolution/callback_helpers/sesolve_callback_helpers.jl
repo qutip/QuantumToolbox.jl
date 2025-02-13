@@ -2,7 +2,7 @@
 Helper functions for the sesolve callbacks.
 =#
 
-struct SaveFuncSESolve{TE,PT<:Union{Nothing,ProgressBar},IT,TEXPV<:Union{Nothing,AbstractMatrix}}
+struct SaveFuncSESolve{TE,PT<:Union{Nothing,ProgressBar},IT,TEXPV<:Union{Nothing,AbstractMatrix}} <: AbstractSaveFunc
     e_ops::TE
     progr::PT
     iter::IT
@@ -11,6 +11,8 @@ end
 
 (f::SaveFuncSESolve)(integrator) = _save_func_sesolve(integrator, f.e_ops, f.progr, f.iter, f.expvals)
 (f::SaveFuncSESolve{Nothing})(integrator) = _save_func(integrator, f.progr) # Common for both mesolve and sesolve
+
+_get_e_ops_data(e_ops, ::Type{SaveFuncSESolve}) = get_data.(e_ops)
 
 ##
 

@@ -2,7 +2,7 @@
 Helper functions for the mcsolve callbacks.
 =#
 
-struct SaveFuncMCSolve{TE,IT,TEXPV}
+struct SaveFuncMCSolve{TE,IT,TEXPV} <: AbstractSaveFunc
     e_ops::TE
     iter::IT
     expvals::TEXPV
@@ -10,6 +10,7 @@ end
 
 (f::SaveFuncMCSolve)(integrator) = _save_func_mcsolve(integrator, f.e_ops, f.iter, f.expvals)
 
+##
 struct LindbladJump{
     T1,
     T2,

@@ -97,11 +97,11 @@ include("qobj/block_diagonal_form.jl")
 
 # time evolution
 include("time_evolution/time_evolution.jl")
+include("time_evolution/callback_helpers/callback_helpers.jl")
 include("time_evolution/callback_helpers/sesolve_callback_helpers.jl")
 include("time_evolution/callback_helpers/mesolve_callback_helpers.jl")
 include("time_evolution/callback_helpers/mcsolve_callback_helpers.jl")
 include("time_evolution/callback_helpers/ssesolve_callback_helpers.jl")
-include("time_evolution/callback_helpers/callback_helpers.jl")
 include("time_evolution/mesolve.jl")
 include("time_evolution/lr_mesolve.jl")
 include("time_evolution/sesolve.jl")

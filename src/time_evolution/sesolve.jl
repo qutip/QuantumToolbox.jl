@@ -154,7 +154,7 @@ function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
     return TimeEvolutionSol(
         prob.times,
         ψt,
-        _se_me_sse_get_expvals(sol),
+        _get_expvals(sol, SaveFuncSESolve),
         sol.retcode,
         sol.alg,
         NamedTuple(sol.prob.kwargs).abstol,

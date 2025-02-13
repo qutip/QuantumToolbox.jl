@@ -4,6 +4,8 @@ This file contains helper functions for callbacks. The affect! function are defi
 
 ##
 
+abstract type AbstractSaveFunc end
+
 # Multiple dispatch depending on the progress_bar and e_ops types
 function _generate_se_me_kwargs(e_ops, progress_bar, tlist, kwargs, method)
     cb = _generate_save_callback(e_ops, tlist, progress_bar, method)
@@ -30,38 +32,18 @@ function _generate_save_callback(e_ops, tlist, progress_bar, method)
     return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
 end
 
-_get_e_ops_data(e_ops, ::Type{SaveFuncSESolve}) = get_data.(e_ops)
-_get_e_ops_data(e_ops, ::Type{SaveFuncMESolve}) = [_generate_mesolve_e_op(op) for op in e_ops] # Broadcasting generates type instabilities on Julia v1.10
-_get_e_ops_data(e_ops, ::Type{SaveFuncSSESolve}) = get_data.(e_ops)
-
 _generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
-
-#=
-This function add the normalization callback to the kwargs. It is needed to stabilize the integration when using the ssesolve method.
-=#
-function _ssesolve_add_normalize_cb(kwargs)
-    _condition = (u, t, integrator) -> true
-    _affect! = (integrator) -> normalize!(integrator.u)
-    cb = DiscreteCallback(_condition, _affect!; save_positions = (false, false))
-    # return merge(kwargs, (callback = CallbackSet(kwargs[:callback], cb),))
-
-    cb_set = haskey(kwargs, :callback) ? CallbackSet(kwargs[:callback], cb) : cb
-
-    kwargs2 = merge(kwargs, (callback = cb_set,))
-
-    return kwargs2
-end
 
 ##
 
-# When e_ops is Nothing. Common for both mesolve and sesolve
+# When e_ops is Nothing. Common for all solvers
 function _save_func(integrator, progr)
     next!(progr)
     u_modified!(integrator, false)
     return nothing
 end
 
-# When progr is Nothing. Common for both mesolve and sesolve
+# When progr is Nothing. Common for all solvers
 function _save_func(integrator, progr::Nothing)
     u_modified!(integrator, false)
     return nothing
@@ -70,8 +52,8 @@ end
 ##
 
 # Get the e_ops from a given AbstractODESolution. Valid for `sesolve`, `mesolve` and `ssesolve`.
-function _se_me_sse_get_expvals(sol::AbstractODESolution)
-    cb = _se_me_sse_get_save_callback(sol)
+function _get_expvals(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
+    cb = _get_save_callback(sol, method)
     if cb isa Nothing
         return nothing
     else
@@ -79,28 +61,32 @@ function _se_me_sse_get_expvals(sol::AbstractODESolution)
     end
 end
 
-function _se_me_sse_get_save_callback(sol::AbstractODESolution)
+function _get_save_callback(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
     if hasproperty(kwargs, :callback)
-        return _se_me_sse_get_save_callback(kwargs.callback)
+        return _get_save_callback(kwargs.callback, method)
     else
         return nothing
     end
 end
-_se_me_sse_get_save_callback(integrator::AbstractODEIntegrator) = _se_me_sse_get_save_callback(integrator.opts.callback)
-function _se_me_sse_get_save_callback(cb::CallbackSet)
+_get_save_callback(integrator::AbstractODEIntegrator, method::Type{SF}) where {SF<:AbstractSaveFunc} =
+    _get_save_callback(integrator.opts.callback, method)
+function _get_save_callback(cb::CallbackSet, method::Type{SF}) where {SF<:AbstractSaveFunc}
     cbs_discrete = cb.discrete_callbacks
     if length(cbs_discrete) > 0
-        _cb = cb.discrete_callbacks[1]
-        return _se_me_sse_get_save_callback(_cb)
+        idx = _get_save_callback_idx(method)
+        _cb = cb.discrete_callbacks[idx]
+        return _get_save_callback(_cb, method)
     else
         return nothing
     end
 end
-function _se_me_sse_get_save_callback(cb::DiscreteCallback)
-    if typeof(cb.affect!) <: Union{SaveFuncSESolve,SaveFuncMESolve,SaveFuncSSESolve}
+function _get_save_callback(cb::DiscreteCallback, method::Type{SF}) where {SF<:AbstractSaveFunc}
+    if typeof(cb.affect!) <: SF
         return cb
     end
     return nothing
 end
-_se_me_sse_get_save_callback(cb::ContinuousCallback) = nothing
+_get_save_callback(cb::ContinuousCallback, method::Type{SF}) where {SF<:AbstractSaveFunc} = nothing
+
+_get_save_callback_idx(method) = 1

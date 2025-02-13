@@ -2,7 +2,7 @@
 Helper functions for the mesolve callbacks.
 =#
 
-struct SaveFuncMESolve{TE,PT<:Union{Nothing,ProgressBar},IT,TEXPV<:Union{Nothing,AbstractMatrix}}
+struct SaveFuncMESolve{TE,PT<:Union{Nothing,ProgressBar},IT,TEXPV<:Union{Nothing,AbstractMatrix}} <: AbstractSaveFunc
     e_ops::TE
     progr::PT
     iter::IT
@@ -11,6 +11,8 @@ end
 
 (f::SaveFuncMESolve)(integrator) = _save_func_mesolve(integrator, f.e_ops, f.progr, f.iter, f.expvals)
 (f::SaveFuncMESolve{Nothing})(integrator) = _save_func(integrator, f.progr)
+
+_get_e_ops_data(e_ops, ::Type{SaveFuncMESolve}) = [_generate_mesolve_e_op(op) for op in e_ops] # Broadcasting generates type instabilities on Julia v1.10
 
 ##
 
@@ -29,7 +31,7 @@ function _save_func_mesolve(integrator, e_ops, progr, iter, expvals)
 end
 
 function _mesolve_callbacks_new_e_ops!(integrator::AbstractODEIntegrator, e_ops)
-    cb = _se_me_sse_get_save_callback(integrator)
+    cb = _get_save_callback(integrator, SaveFuncMESolve)
     if cb isa Nothing
         return nothing
     else
