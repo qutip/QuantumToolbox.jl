@@ -51,6 +51,19 @@ end
 
 ##
 
+#=
+    With this function we extract the e_ops from the SaveFuncMCSolve `affect!` function of the callback of the integrator.
+    This callback can only be a PresetTimeCallback (DiscreteCallback).
+=#
+function _get_e_ops(integrator::AbstractODEIntegrator, method::Type{SF}) where {SF<:AbstractSaveFunc}
+    cb = _get_save_callback(integrator, method)
+    if cb isa Nothing
+        return nothing
+    else
+        return cb.affect!.e_ops
+    end
+end
+
 # Get the e_ops from a given AbstractODESolution. Valid for `sesolve`, `mesolve` and `ssesolve`.
 function _get_expvals(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
     cb = _get_save_callback(sol, method)
@@ -61,6 +74,11 @@ function _get_expvals(sol::AbstractODESolution, method::Type{SF}) where {SF<:Abs
     end
 end
 
+#=
+    _get_save_callback
+
+Return the Callback that is responsible for saving the expectation values of the system.
+=#
 function _get_save_callback(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
     if hasproperty(kwargs, :callback)
@@ -74,19 +92,19 @@ _get_save_callback(integrator::AbstractODEIntegrator, method::Type{SF}) where {S
 function _get_save_callback(cb::CallbackSet, method::Type{SF}) where {SF<:AbstractSaveFunc}
     cbs_discrete = cb.discrete_callbacks
     if length(cbs_discrete) > 0
-        idx = _get_save_callback_idx(method)
+        idx = _get_save_callback_idx(cb, method)
         _cb = cb.discrete_callbacks[idx]
         return _get_save_callback(_cb, method)
     else
         return nothing
     end
 end
-function _get_save_callback(cb::DiscreteCallback, method::Type{SF}) where {SF<:AbstractSaveFunc}
-    if typeof(cb.affect!) <: SF
+function _get_save_callback(cb::DiscreteCallback, ::Type{SF}) where {SF<:AbstractSaveFunc}
+    if typeof(cb.affect!) <: AbstractSaveFunc
         return cb
     end
     return nothing
 end
-_get_save_callback(cb::ContinuousCallback, method::Type{SF}) where {SF<:AbstractSaveFunc} = nothing
+_get_save_callback(cb::ContinuousCallback, ::Type{SF}) where {SF<:AbstractSaveFunc} = nothing
 
-_get_save_callback_idx(method) = 1
+_get_save_callback_idx(cb, method) = 1

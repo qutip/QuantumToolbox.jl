@@ -14,7 +14,7 @@ end
 
 _get_e_ops_data(e_ops, ::Type{SaveFuncSSESolve}) = get_data.(e_ops)
 
-_get_save_callback_idx(method::SaveFuncSSESolve) = 2 # The first one is the normalization callback
+_get_save_callback_idx(cb, ::Type{SaveFuncSSESolve}) = 1 # The first one is the normalization callback
 
 ##
 

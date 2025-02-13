@@ -522,7 +522,7 @@ function _DSF_mcsolve_Affect!(integrator)
     # e_ops0 = params.e_ops
     # c_ops0 = params.c_ops
 
-    e_ops0 = _mcsolve_get_e_ops(integrator)
+    e_ops0 = _get_e_ops(integrator, SaveFuncMCSEsolve)
     c_ops0, c_ops0_herm = _mcsolve_get_c_ops(integrator)
 
     copyto!(ψt, integrator.u)
