@@ -28,9 +28,9 @@ struct LindbladJump{
     cache_mc::CT
     weights_mc::WT
     cumsum_weights_mc::WT
-    jump_times::JTT
-    jump_which::JWT
-    jump_times_which_idx::JTWIT
+    col_times::JTT
+    col_which::JWT
+    col_times_which_idx::JTWIT
 end
 
 (f::LindbladJump)(integrator) = _lindblad_jump_affect!(
@@ -42,9 +42,9 @@ end
     f.cache_mc,
     f.weights_mc,
     f.cumsum_weights_mc,
-    f.jump_times,
-    f.jump_which,
-    f.jump_times_which_idx,
+    f.col_times,
+    f.col_which,
+    f.col_times_which_idx,
 )
 
 ##
@@ -71,9 +71,9 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rn
     weights_mc = Vector{Float64}(undef, length(c_ops))
     cumsum_weights_mc = similar(weights_mc)
 
-    jump_times = Vector{Float64}(undef, JUMP_TIMES_WHICH_INIT_SIZE)
-    jump_which = Vector{Int}(undef, JUMP_TIMES_WHICH_INIT_SIZE)
-    jump_times_which_idx = Ref(1)
+    col_times = Vector{Float64}(undef, COL_TIMES_WHICH_INIT_SIZE)
+    col_which = Vector{Int}(undef, COL_TIMES_WHICH_INIT_SIZE)
+    col_times_which_idx = Ref(1)
 
     random_n = Ref(rand(rng))
 
@@ -85,9 +85,9 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rn
         cache_mc,
         weights_mc,
         cumsum_weights_mc,
-        jump_times,
-        jump_which,
-        jump_times_which_idx,
+        col_times,
+        col_which,
+        col_times_which_idx,
     )
 
     if jump_callback isa DiscreteLindbladJumpCallback
@@ -129,9 +129,9 @@ function _lindblad_jump_affect!(
     cache_mc,
     weights_mc,
     cumsum_weights_mc,
-    jump_times,
-    jump_which,
-    jump_times_which_idx,
+    col_times,
+    col_which,
+    col_times_which_idx,
 )
     ψ = integrator.u
 
@@ -147,13 +147,13 @@ function _lindblad_jump_affect!(
 
     random_n[] = rand(traj_rng)
 
-    idx = jump_times_which_idx[]
-    @inbounds jump_times[idx] = integrator.t
-    @inbounds jump_which[idx] = collapse_idx
-    jump_times_which_idx[] += 1
-    if jump_times_which_idx[] > length(jump_times)
-        resize!(jump_times, length(jump_times) + JUMP_TIMES_WHICH_INIT_SIZE)
-        resize!(jump_which, length(jump_which) + JUMP_TIMES_WHICH_INIT_SIZE)
+    idx = col_times_which_idx[]
+    @inbounds col_times[idx] = integrator.t
+    @inbounds col_which[idx] = collapse_idx
+    col_times_which_idx[] += 1
+    if col_times_which_idx[] > length(col_times)
+        resize!(col_times, length(col_times) + COL_TIMES_WHICH_INIT_SIZE)
+        resize!(col_which, length(col_which) + COL_TIMES_WHICH_INIT_SIZE)
     end
     u_modified!(integrator, true)
     return nothing
@@ -309,9 +309,9 @@ function _similar_affect!(affect::LindbladJump, traj_rng)
     cache_mc = similar(affect.cache_mc)
     weights_mc = similar(affect.weights_mc)
     cumsum_weights_mc = similar(affect.cumsum_weights_mc)
-    jump_times = similar(affect.jump_times)
-    jump_which = similar(affect.jump_which)
-    jump_times_which_idx = Ref(1)
+    col_times = similar(affect.col_times)
+    col_which = similar(affect.col_which)
+    col_times_which_idx = Ref(1)
 
     return LindbladJump(
         affect.c_ops,
@@ -321,9 +321,9 @@ function _similar_affect!(affect::LindbladJump, traj_rng)
         cache_mc,
         weights_mc,
         cumsum_weights_mc,
-        jump_times,
-        jump_which,
-        jump_times_which_idx,
+        col_times,
+        col_which,
+        col_times_which_idx,
     )
 end
 

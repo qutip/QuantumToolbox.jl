@@ -14,9 +14,9 @@ end
 
 # Standard output function
 function _mcsolve_output_func(sol, i)
-    idx = _mc_get_jump_callback(sol).affect!.jump_times_which_idx[]
-    resize!(_mc_get_jump_callback(sol).affect!.jump_times, idx - 1)
-    resize!(_mc_get_jump_callback(sol).affect!.jump_which, idx - 1)
+    idx = _mc_get_jump_callback(sol).affect!.col_times_which_idx[]
+    resize!(_mc_get_jump_callback(sol).affect!.col_times, idx - 1)
+    resize!(_mc_get_jump_callback(sol).affect!.col_which, idx - 1)
     return (sol, false)
 end
 
@@ -403,8 +403,8 @@ function mcsolve(
     _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _mcsolve_get_expvals(sol[:, i]), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all)
     states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
-    jump_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.jump_times, eachindex(sol))
-    jump_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.jump_which, eachindex(sol))
+    col_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_times, eachindex(sol))
+    col_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_which, eachindex(sol))
 
     expvals = _expvals_sol_1 isa Nothing ? nothing : dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
 
@@ -414,8 +414,8 @@ function mcsolve(
         states,
         expvals,
         expvals_all,
-        jump_times,
-        jump_which,
+        col_times,
+        col_which,
         sol.converged,
         _sol_1.alg,
         NamedTuple(_sol_1.prob.kwargs).abstol,

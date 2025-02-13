@@ -4,7 +4,7 @@ export liouvillian_floquet, liouvillian_generalized
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
 const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
-const JUMP_TIMES_WHICH_INIT_SIZE = 200
+const COL_TIMES_WHICH_INIT_SIZE = 200
 
 @doc raw"""
     struct TimeEvolutionProblem
@@ -100,8 +100,8 @@ A structure storing the results and some information from solving quantum trajec
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
 - `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
 - `expect_all::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
-- `jump_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
-- `jump_which::Vector{Vector{Int}}`: The indices of the jump operators in `c_ops` that describe the corresponding quantum jumps occurred in each trajectory.
+- `col_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
+- `col_which::Vector{Vector{Int}}`: The indices of which collapse operator was responsible for each quantum jump in `col_times`.
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -123,8 +123,8 @@ struct TimeEvolutionMCSol{
     states::TS
     expect::TE
     expect_all::TEA
-    jump_times::TJT
-    jump_which::TJW
+    col_times::TJT
+    col_which::TJW
     converged::Bool
     alg::AlgT
     abstol::AT
