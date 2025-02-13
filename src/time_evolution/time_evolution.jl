@@ -296,9 +296,9 @@ function _ensemble_dispatch_output_func(
     end
 end
 
-function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func)
+function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
     seeds = map(i -> rand(rng, UInt64), 1:ntraj)
-    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist)
+    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
@@ -336,17 +336,15 @@ end
 #=
  Stochastic funcs
 =#
-function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist)
-    params = prob.prob.p
-
+function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
     seed = seeds[i]
     traj_rng = typeof(rng)()
     seed!(traj_rng, seed)
 
     noise = RealWienerProcess!(
         prob.prob.tspan[1],
-        zeros(params.n_sc_ops),
-        zeros(params.n_sc_ops),
+        zeros(kwargs[:n_sc_ops]),
+        zeros(kwargs[:n_sc_ops]),
         save_everystep = false,
         rng = traj_rng,
     )

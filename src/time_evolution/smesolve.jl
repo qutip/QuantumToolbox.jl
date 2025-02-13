@@ -17,7 +17,7 @@ _smesolve_ScalarOperator(op_vec) =
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params::NullParameters = NullParameters(),
         rng::AbstractRNG = default_rng(),
         progress_bar::Union{Val,Bool} = Val(true),
         kwargs...,
@@ -51,7 +51,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -74,7 +74,7 @@ function smesolveProblem(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params::NullParameters = NullParameters(),
     rng::AbstractRNG = default_rng(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
@@ -110,8 +110,6 @@ function smesolveProblem(
     end
     D = DiffusionOperator(D_l)
 
-    p = (progr = progr, times = tlist, Hdims = dims, n_sc_ops = length(sc_ops), params...)
-
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncMESolve)
 
@@ -119,7 +117,16 @@ function smesolveProblem(
     noise =
         RealWienerProcess!(tlist[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false, rng = rng)
     noise_rate_prototype = similar(ρ0, length(ρ0), length(sc_ops))
-    prob = SDEProblem{true}(K, D, ρ0, tspan, p; noise_rate_prototype = noise_rate_prototype, noise = noise, kwargs3...)
+    prob = SDEProblem{true}(
+        K,
+        D,
+        ρ0,
+        tspan,
+        params;
+        noise_rate_prototype = noise_rate_prototype,
+        noise = noise,
+        kwargs3...,
+    )
 
     return TimeEvolutionProblem(prob, tlist, dims)
 end
@@ -132,7 +139,7 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params::NullParameters = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
         ensemble_method = EnsembleThreads(),
@@ -170,7 +177,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
@@ -197,7 +204,7 @@ function smesolveEnsembleProblem(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params::NullParameters = NullParameters(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
@@ -207,7 +214,8 @@ function smesolveEnsembleProblem(
     kwargs...,
 ) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     _prob_func =
-        isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _stochastic_prob_func) : prob_func
+        isnothing(prob_func) ?
+        _ensemble_dispatch_prob_func(rng, ntraj, tlist, _stochastic_prob_func; n_sc_ops = length(sc_ops)) : prob_func
     _output_func =
         output_func isa Nothing ?
         _ensemble_dispatch_output_func(ensemble_method, progress_bar, ntraj, _stochastic_output_func) : output_func
@@ -244,7 +252,7 @@ end
         sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::StochasticDiffEqAlgorithm = SRA1(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params::NullParameters = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 1,
         ensemble_method = EnsembleThreads(),
@@ -283,7 +291,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm to use for the stochastic differential equation. Default is `SRA1()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
@@ -311,7 +319,7 @@ function smesolve(
     sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::StochasticDiffEqAlgorithm = SRA1(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params::NullParameters = NullParameters(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 1,
     ensemble_method = EnsembleThreads(),
