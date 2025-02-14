@@ -112,7 +112,7 @@ e_ops = [Sx, Sy, Sz]
 
 tlist = range(0, 10, 100)
 
-sol_mc = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ntraj=5000, ensemble_method=EnsembleSplitThreads())
+sol_mc = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ntraj=5000, ensemblealg=EnsembleSplitThreads())
 
 ##
 
@@ -131,7 +131,7 @@ println("Hello! You have $(nworkers()) workers with $(remotecall_fetch(Threads.n
 
 command, we test that the distributed network is correctly initialized. The `remotecall_fetch(Threads.nthreads, 2)` command returns the number of threads of the worker with ID `2`.
 
-We then write the main part of the script, where we define the lattice through the [`Lattice`](@ref) function. We set the parameters and define the Hamiltonian and collapse operators with the [`DissipativeIsing`](@ref) function. We also define the expectation operators `e_ops` and the initial state `ψ0`. Finally, we perform the Monte Carlo quantum trajectories with the [`mcsolve`](@ref) function. The `ensemble_method=EnsembleSplitThreads()` argument is used to parallelize the Monte Carlo quantum trajectories, by splitting the ensemble of trajectories among the workers. For a more detailed explanation of the different ensemble methods, you can check the [official documentation](https://docs.sciml.ai/DiffEqDocs/stable/features/ensemble/) of the [**DifferentialEquations.jl**](https://github.com/SciML/DifferentialEquations.jl/) package. Finally, the `rmprocs(workers())` command is used to remove the workers after the computation is finished.
+We then write the main part of the script, where we define the lattice through the [`Lattice`](@ref) function. We set the parameters and define the Hamiltonian and collapse operators with the [`DissipativeIsing`](@ref) function. We also define the expectation operators `e_ops` and the initial state `ψ0`. Finally, we perform the Monte Carlo quantum trajectories with the [`mcsolve`](@ref) function. The `ensemblealg=EnsembleSplitThreads()` argument is used to parallelize the Monte Carlo quantum trajectories, by splitting the ensemble of trajectories among the workers. For a more detailed explanation of the different ensemble methods, you can check the [official documentation](https://docs.sciml.ai/DiffEqDocs/stable/features/ensemble/) of the [**DifferentialEquations.jl**](https://github.com/SciML/DifferentialEquations.jl/) package. Finally, the `rmprocs(workers())` command is used to remove the workers after the computation is finished.
 
 The output of the script will be printed in the `output.out` file, which contains an output similar to the following:
 
