@@ -5,7 +5,7 @@ Helper functions for the smesolve callbacks. Almost equal to the mesolve case, b
 struct SaveFuncSMESolve{
     SM,
     TE,
-    TME,
+    TE2,
     PT<:Union{Nothing,ProgressBar},
     IT,
     TEXPV<:Union{Nothing,AbstractMatrix},
@@ -13,7 +13,7 @@ struct SaveFuncSMESolve{
 } <: AbstractSaveFunc
     store_measurement::Val{SM}
     e_ops::TE
-    m_ops::TME
+    m_ops::TE2
     progr::PT
     iter::IT
     expvals::TEXPV
