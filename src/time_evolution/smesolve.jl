@@ -157,7 +157,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        ntraj::Int = 1,
+        ntraj::Int = 500,
         ensemble_method = EnsembleThreads(),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
@@ -196,7 +196,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
-- `ntraj`: Number of trajectories to use.
+- `ntraj`: Number of trajectories to use. Default is `500`.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
@@ -224,7 +224,7 @@ function smesolveEnsembleProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
-    ntraj::Int = 1,
+    ntraj::Int = 500,
     ensemble_method = EnsembleThreads(),
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
@@ -281,7 +281,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        ntraj::Int = 1,
+        ntraj::Int = 500,
         ensemble_method = EnsembleThreads(),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
@@ -321,7 +321,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
-- `ntraj`: Number of trajectories to use.
+- `ntraj`: Number of trajectories to use. Default is `500`.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
@@ -350,7 +350,7 @@ function smesolve(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
-    ntraj::Int = 1,
+    ntraj::Int = 500,
     ensemble_method = EnsembleThreads(),
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
@@ -382,7 +382,7 @@ end
 function smesolve(
     ens_prob::TimeEvolutionProblem,
     alg::StochasticDiffEqAlgorithm = SRA1(),
-    ntraj::Int = 1,
+    ntraj::Int = 500,
     ensemble_method = EnsembleThreads(),
 )
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemble_method, ntraj)

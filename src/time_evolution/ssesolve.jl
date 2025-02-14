@@ -156,7 +156,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        ntraj::Int = 1,
+        ntraj::Int = 500,
         ensemble_method = EnsembleThreads(),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
@@ -195,7 +195,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
-- `ntraj`: Number of trajectories to use.
+- `ntraj`: Number of trajectories to use. Default is `500`.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `prob_func`: Function to use for generating the SDEProblem.
@@ -223,7 +223,7 @@ function ssesolveEnsembleProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
-    ntraj::Int = 1,
+    ntraj::Int = 500,
     ensemble_method = EnsembleThreads(),
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
@@ -278,7 +278,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        ntraj::Int = 1,
+        ntraj::Int = 500,
         ensemble_method = EnsembleThreads(),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
@@ -321,7 +321,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
-- `ntraj`: Number of trajectories to use.
+- `ntraj`: Number of trajectories to use. Default is `500`.
 - `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
@@ -350,7 +350,7 @@ function ssesolve(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
-    ntraj::Int = 1,
+    ntraj::Int = 500,
     ensemble_method = EnsembleThreads(),
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
@@ -381,7 +381,7 @@ end
 function ssesolve(
     ens_prob::TimeEvolutionProblem,
     alg::StochasticDiffEqAlgorithm = SRA1(),
-    ntraj::Int = 1,
+    ntraj::Int = 500,
     ensemble_method = EnsembleThreads(),
 )
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemble_method, ntraj)

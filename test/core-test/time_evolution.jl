@@ -130,8 +130,8 @@
             progress_bar = Val(false),
             jump_callback = DiscreteLindbladJumpCallback(),
         )
-        sol_sse = ssesolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
-        sol_sme = smesolve(H, ψ0, tlist, c_ops_sme, sc_ops_sme, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+        sol_sse = ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        sol_sme = smesolve(H, ψ0, tlist, c_ops_sme, sc_ops_sme, e_ops = e_ops, progress_bar = Val(false))
 
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
