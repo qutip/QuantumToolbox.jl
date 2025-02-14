@@ -308,7 +308,7 @@ end
 function _ensemble_dispatch_solve(
     ens_prob_mc::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
-    ensemble_method::ET,
+    ensemblealg::ET,
     ntraj::Int,
 ) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
     sol = nothing
@@ -319,7 +319,7 @@ function _ensemble_dispatch_solve(
         end
 
         @async begin
-            sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+            sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
             put!(ens_prob_mc.kwargs.channel, false)
         end
     end
@@ -329,10 +329,10 @@ end
 function _ensemble_dispatch_solve(
     ens_prob_mc::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
-    ensemble_method,
+    ensemblealg,
     ntraj::Int,
 )
-    sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+    sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
     return sol
 end
 
