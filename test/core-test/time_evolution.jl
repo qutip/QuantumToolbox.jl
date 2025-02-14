@@ -255,7 +255,7 @@
         sol_se = sesolve(H_dr_fr, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
         sol_me = mesolve(H_dr_fr, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
         sol_mc = mcsolve(H_dr_fr, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng)
-        # sol_sse = ssesolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+        # sol_sse = ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng)
 
         # Time Evolution in the lab frame
 
@@ -268,7 +268,7 @@
         sol_se_td = sesolve(H_td, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
         sol_me_td = mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
         sol_mc_td = mcsolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
-        # sol_sse_td = ssesolve(H_td, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
+        # sol_sse_td = ssesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
 
         @test sol_se.expect ≈ sol_se_td.expect atol = 1e-6 * length(tlist)
         @test sol_me.expect ≈ sol_me_td.expect atol = 1e-6 * length(tlist)
@@ -282,7 +282,7 @@
         sol_me_td2 = mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
         sol_mc_td2 = mcsolve(H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
         # sol_sse_td2 =
-        # ssesolve(H_td2, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
+        # ssesolve(H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
 
         @test sol_se.expect ≈ sol_se_td2.expect atol = 1e-6 * length(tlist)
         @test sol_me.expect ≈ sol_me_td2.expect atol = 1e-6 * length(tlist)
