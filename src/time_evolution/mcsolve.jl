@@ -398,9 +398,10 @@ function mcsolve(
 
     dims = ens_prob_mc.dimensions
     _sol_1 = sol[:, 1]
-    _expvals_sol_1 = _mcsolve_get_expvals(_sol_1)
+    _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMCSolve)
 
-    _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _mcsolve_get_expvals(sol[:, i]), eachindex(sol))
+    _expvals_all =
+        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMCSolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
     states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
     col_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_times, eachindex(sol))

@@ -4,12 +4,42 @@ This file contains helper functions for callbacks. The affect! function are defi
 
 ##
 
+abstract type AbstractSaveFunc end
+
 # Multiple dispatch depending on the progress_bar and e_ops types
 function _generate_se_me_kwargs(e_ops, progress_bar, tlist, kwargs, method)
     cb = _generate_save_callback(e_ops, tlist, progress_bar, method)
     return _merge_kwargs_with_callback(kwargs, cb)
 end
 _generate_se_me_kwargs(e_ops::Nothing, progress_bar::Val{false}, tlist, kwargs, method) = kwargs
+
+function _generate_stochastic_kwargs(
+    e_ops,
+    sc_ops,
+    progress_bar,
+    tlist,
+    store_measurement,
+    kwargs,
+    method::Type{SF},
+) where {SF<:AbstractSaveFunc}
+    cb_save = _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
+
+    if SF === SaveFuncSSESolve
+        cb_normalize = _ssesolve_generate_normalize_cb()
+        return _merge_kwargs_with_callback(kwargs, CallbackSet(cb_normalize, cb_save))
+    end
+
+    return _merge_kwargs_with_callback(kwargs, cb_save)
+end
+_generate_stochastic_kwargs(
+    e_ops::Nothing,
+    sc_ops,
+    progress_bar::Val{false},
+    tlist,
+    store_measurement::Val{false},
+    kwargs,
+    method::Type{SF},
+) where {SF<:AbstractSaveFunc} = kwargs
 
 function _merge_kwargs_with_callback(kwargs, cb)
     kwargs2 =
@@ -30,38 +60,29 @@ function _generate_save_callback(e_ops, tlist, progress_bar, method)
     return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
 end
 
-_get_e_ops_data(e_ops, ::Type{SaveFuncSESolve}) = get_data.(e_ops)
-_get_e_ops_data(e_ops, ::Type{SaveFuncMESolve}) = [_generate_mesolve_e_op(op) for op in e_ops] # Broadcasting generates type instabilities on Julia v1.10
-_get_e_ops_data(e_ops, ::Type{SaveFuncSSESolve}) = get_data.(e_ops)
+function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
+    e_ops_data = e_ops isa Nothing ? nothing : _get_e_ops_data(e_ops, method)
+    m_ops_data = _get_m_ops_data(sc_ops, method)
 
-_generate_mesolve_e_op(op) = mat2vec(adjoint(get_data(op)))
+    progr = getVal(progress_bar) ? ProgressBar(length(tlist), enable = getVal(progress_bar)) : nothing
 
-#=
-This function add the normalization callback to the kwargs. It is needed to stabilize the integration when using the ssesolve method.
-=#
-function _ssesolve_add_normalize_cb(kwargs)
-    _condition = (u, t, integrator) -> true
-    _affect! = (integrator) -> normalize!(integrator.u)
-    cb = DiscreteCallback(_condition, _affect!; save_positions = (false, false))
-    # return merge(kwargs, (callback = CallbackSet(kwargs[:callback], cb),))
+    expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
+    m_expvals = getVal(store_measurement) ? Array{Float64}(undef, length(sc_ops), length(tlist) - 1) : nothing
 
-    cb_set = haskey(kwargs, :callback) ? CallbackSet(kwargs[:callback], cb) : cb
-
-    kwargs2 = merge(kwargs, (callback = cb_set,))
-
-    return kwargs2
+    _save_affect! = method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals)
+    return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
 end
 
 ##
 
-# When e_ops is Nothing. Common for both mesolve and sesolve
+# When e_ops is Nothing. Common for all solvers
 function _save_func(integrator, progr)
     next!(progr)
     u_modified!(integrator, false)
     return nothing
 end
 
-# When progr is Nothing. Common for both mesolve and sesolve
+# When progr is Nothing. Common for all solvers
 function _save_func(integrator, progr::Nothing)
     u_modified!(integrator, false)
     return nothing
@@ -69,9 +90,34 @@ end
 
 ##
 
+#=
+    To extract the measurement outcomes of a stochastic solver
+=#
+function _get_m_expvals(integrator::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
+    cb = _get_save_callback(integrator, method)
+    if cb isa Nothing
+        return nothing
+    else
+        return cb.affect!.m_expvals
+    end
+end
+
+#=
+    With this function we extract the e_ops from the SaveFuncMCSolve `affect!` function of the callback of the integrator.
+    This callback can only be a PresetTimeCallback (DiscreteCallback).
+=#
+function _get_e_ops(integrator::AbstractODEIntegrator, method::Type{SF}) where {SF<:AbstractSaveFunc}
+    cb = _get_save_callback(integrator, method)
+    if cb isa Nothing
+        return nothing
+    else
+        return cb.affect!.e_ops
+    end
+end
+
 # Get the e_ops from a given AbstractODESolution. Valid for `sesolve`, `mesolve` and `ssesolve`.
-function _se_me_sse_get_expvals(sol::AbstractODESolution)
-    cb = _se_me_sse_get_save_callback(sol)
+function _get_expvals(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
+    cb = _get_save_callback(sol, method)
     if cb isa Nothing
         return nothing
     else
@@ -79,28 +125,46 @@ function _se_me_sse_get_expvals(sol::AbstractODESolution)
     end
 end
 
-function _se_me_sse_get_save_callback(sol::AbstractODESolution)
+#=
+    _get_save_callback
+
+Return the Callback that is responsible for saving the expectation values of the system.
+=#
+function _get_save_callback(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
     if hasproperty(kwargs, :callback)
-        return _se_me_sse_get_save_callback(kwargs.callback)
+        return _get_save_callback(kwargs.callback, method)
     else
         return nothing
     end
 end
-_se_me_sse_get_save_callback(integrator::AbstractODEIntegrator) = _se_me_sse_get_save_callback(integrator.opts.callback)
-function _se_me_sse_get_save_callback(cb::CallbackSet)
+_get_save_callback(integrator::AbstractODEIntegrator, method::Type{SF}) where {SF<:AbstractSaveFunc} =
+    _get_save_callback(integrator.opts.callback, method)
+function _get_save_callback(cb::CallbackSet, method::Type{SF}) where {SF<:AbstractSaveFunc}
     cbs_discrete = cb.discrete_callbacks
     if length(cbs_discrete) > 0
-        _cb = cb.discrete_callbacks[1]
-        return _se_me_sse_get_save_callback(_cb)
+        idx = _get_save_callback_idx(cb, method)
+        _cb = cb.discrete_callbacks[idx]
+        return _get_save_callback(_cb, method)
     else
         return nothing
     end
 end
-function _se_me_sse_get_save_callback(cb::DiscreteCallback)
-    if typeof(cb.affect!) <: Union{SaveFuncSESolve,SaveFuncMESolve,SaveFuncSSESolve}
+function _get_save_callback(cb::DiscreteCallback, ::Type{SF}) where {SF<:AbstractSaveFunc}
+    if typeof(cb.affect!) <: AbstractSaveFunc
         return cb
     end
     return nothing
 end
-_se_me_sse_get_save_callback(cb::ContinuousCallback) = nothing
+_get_save_callback(cb::ContinuousCallback, ::Type{SF}) where {SF<:AbstractSaveFunc} = nothing
+
+_get_save_callback_idx(cb, method) = 1
+
+# %% ------------ Noise Measurement Helpers ------------ %%
+
+# TODO: Add some cache mechanism to avoid memory allocations
+function _homodyne_dWdt(integrator)
+    @inbounds _dWdt = (integrator.W.u[end] .- integrator.W.u[end-1]) ./ (integrator.W.t[end] - integrator.W.t[end-1])
+
+    return _dWdt
+end

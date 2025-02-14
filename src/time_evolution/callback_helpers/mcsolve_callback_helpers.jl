@@ -2,7 +2,7 @@
 Helper functions for the mcsolve callbacks.
 =#
 
-struct SaveFuncMCSolve{TE,IT,TEXPV}
+struct SaveFuncMCSolve{TE,IT,TEXPV} <: AbstractSaveFunc
     e_ops::TE
     iter::IT
     expvals::TEXPV
@@ -10,6 +10,9 @@ end
 
 (f::SaveFuncMCSolve)(integrator) = _save_func_mcsolve(integrator, f.e_ops, f.iter, f.expvals)
 
+_get_save_callback_idx(cb, ::Type{SaveFuncMCSolve}) = _mcsolve_has_continuous_jump(cb) ? 1 : 2
+
+##
 struct LindbladJump{
     T1,
     T2,
@@ -167,37 +170,6 @@ _mcsolve_discrete_condition(u, t, integrator) =
 
 ##
 
-#=
-    _mc_get_save_callback
-
-Return the Callback that is responsible for saving the expectation values of the system.
-=#
-function _mc_get_save_callback(sol::AbstractODESolution)
-    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
-    return _mc_get_save_callback(kwargs.callback) # There is always the Jump callback
-end
-_mc_get_save_callback(integrator::AbstractODEIntegrator) = _mc_get_save_callback(integrator.opts.callback)
-function _mc_get_save_callback(cb::CallbackSet)
-    cbs_discrete = cb.discrete_callbacks
-
-    if length(cbs_discrete) > 0
-        idx = _mcsolve_has_continuous_jump(cb) ? 1 : 2
-        _cb = cb.discrete_callbacks[idx]
-        return _mc_get_save_callback(_cb)
-    else
-        return nothing
-    end
-end
-_mc_get_save_callback(cb::DiscreteCallback) =
-    if cb.affect! isa SaveFuncMCSolve
-        return cb
-    else
-        return nothing
-    end
-_mc_get_save_callback(cb::ContinuousCallback) = nothing
-
-##
-
 function _mc_get_jump_callback(sol::AbstractODESolution)
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
     return _mc_get_jump_callback(kwargs.callback) # There is always the Jump callback
@@ -215,8 +187,8 @@ _mc_get_jump_callback(cb::DiscreteCallback) = cb
 ##
 
 #=
-With this function we extract the c_ops and c_ops_herm from the LindbladJump `affect!` function of the callback of the integrator.
-This callback can be a DiscreteLindbladJumpCallback or a ContinuousLindbladJumpCallback.
+    With this function we extract the c_ops and c_ops_herm from the LindbladJump `affect!` function of the callback of the integrator.
+    This callback can be a DiscreteLindbladJumpCallback or a ContinuousLindbladJumpCallback.
 =#
 function _mcsolve_get_c_ops(integrator::AbstractODEIntegrator)
     cb = _mc_get_jump_callback(integrator)
@@ -224,28 +196,6 @@ function _mcsolve_get_c_ops(integrator::AbstractODEIntegrator)
         return nothing
     else
         return cb.affect!.c_ops, cb.affect!.c_ops_herm
-    end
-end
-
-#=
-With this function we extract the e_ops from the SaveFuncMCSolve `affect!` function of the callback of the integrator.
-This callback can only be a PresetTimeCallback (DiscreteCallback).
-=#
-function _mcsolve_get_e_ops(integrator::AbstractODEIntegrator)
-    cb = _mc_get_save_callback(integrator)
-    if cb isa Nothing
-        return nothing
-    else
-        return cb.affect!.e_ops
-    end
-end
-
-function _mcsolve_get_expvals(sol::AbstractODESolution)
-    cb = _mc_get_save_callback(sol)
-    if cb isa Nothing
-        return nothing
-    else
-        return cb.affect!.expvals
     end
 end
 
