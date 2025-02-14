@@ -13,6 +13,34 @@ function _generate_se_me_kwargs(e_ops, progress_bar, tlist, kwargs, method)
 end
 _generate_se_me_kwargs(e_ops::Nothing, progress_bar::Val{false}, tlist, kwargs, method) = kwargs
 
+function _generate_stochastic_kwargs(
+    e_ops,
+    sc_ops,
+    progress_bar,
+    tlist,
+    store_measurement,
+    kwargs,
+    method::Type{SF},
+) where {SF<:AbstractSaveFunc}
+    cb_save = _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
+
+    if SF === SaveFuncSSESolve
+        cb_normalize = _ssesolve_generate_normalize_cb()
+        return _merge_kwargs_with_callback(kwargs, CallbackSet(cb_normalize, cb_save))
+    end
+
+    return _merge_kwargs_with_callback(kwargs, cb_save)
+end
+_generate_stochastic_kwargs(
+    e_ops::Nothing,
+    sc_ops,
+    progress_bar::Val{false},
+    tlist,
+    store_measurement::Val{false},
+    kwargs,
+    method::Type{SF},
+) where {SF<:AbstractSaveFunc} = kwargs
+
 function _merge_kwargs_with_callback(kwargs, cb)
     kwargs2 =
         haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb, kwargs.callback),)) :
@@ -32,6 +60,19 @@ function _generate_save_callback(e_ops, tlist, progress_bar, method)
     return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
 end
 
+function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
+    e_ops_data = e_ops isa Nothing ? nothing : _get_e_ops_data(e_ops, method)
+    m_ops_data = _get_m_ops_data(sc_ops, method)
+
+    progr = getVal(progress_bar) ? ProgressBar(length(tlist), enable = getVal(progress_bar)) : nothing
+
+    expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
+    m_expvals = getVal(store_measurement) ? Array{Float64}(undef, length(sc_ops), length(tlist) - 1) : nothing
+
+    _save_affect! = method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals)
+    return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+end
+
 ##
 
 # When e_ops is Nothing. Common for all solvers
@@ -48,6 +89,18 @@ function _save_func(integrator, progr::Nothing)
 end
 
 ##
+
+#=
+    To extract the measurement outcomes of a stochastic solver
+=#
+function _get_m_expvals(integrator::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
+    cb = _get_save_callback(integrator, method)
+    if cb isa Nothing
+        return nothing
+    else
+        return cb.affect!.m_expvals
+    end
+end
 
 #=
     With this function we extract the e_ops from the SaveFuncMCSolve `affect!` function of the callback of the integrator.

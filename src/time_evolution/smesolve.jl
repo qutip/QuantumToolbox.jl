@@ -376,6 +376,7 @@ function smesolve(
         expvals,
         expvals, # This is average_expect
         expvals_all,
+        nothing, # Measurement expectation values
         sol.converged,
         _sol_1.alg,
         _sol_1.prob.kwargs[:abstol],
