@@ -158,7 +158,7 @@ end
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
-        ensemble_method = EnsembleThreads(),
+        ensemblealg = EnsembleThreads(),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
         progress_bar::Union{Val,Bool} = Val(true),
@@ -197,7 +197,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use. Default is `500`.
-- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -225,7 +225,7 @@ function smesolveEnsembleProblem(
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 500,
-    ensemble_method = EnsembleThreads(),
+    ensemblealg = EnsembleThreads(),
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
@@ -244,7 +244,7 @@ function smesolveEnsembleProblem(
         ) : prob_func
     _output_func =
         output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemble_method, progress_bar, ntraj, _stochastic_output_func) : output_func
+        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _stochastic_output_func) : output_func
 
     prob_sme = smesolveProblem(
         H,
@@ -282,7 +282,7 @@ end
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
-        ensemble_method = EnsembleThreads(),
+        ensemblealg = EnsembleThreads(),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
         progress_bar::Union{Val,Bool} = Val(true),
@@ -322,7 +322,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use. Default is `500`.
-- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -351,7 +351,7 @@ function smesolve(
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     ntraj::Int = 500,
-    ensemble_method = EnsembleThreads(),
+    ensemblealg = EnsembleThreads(),
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
@@ -368,7 +368,7 @@ function smesolve(
         params = params,
         rng = rng,
         ntraj = ntraj,
-        ensemble_method = ensemble_method,
+        ensemblealg = ensemblealg,
         prob_func = prob_func,
         output_func = output_func,
         progress_bar = progress_bar,
@@ -376,16 +376,16 @@ function smesolve(
         kwargs...,
     )
 
-    return smesolve(ensemble_prob, alg, ntraj, ensemble_method)
+    return smesolve(ensemble_prob, alg, ntraj, ensemblealg)
 end
 
 function smesolve(
     ens_prob::TimeEvolutionProblem,
     alg::StochasticDiffEqAlgorithm = SRA1(),
     ntraj::Int = 500,
-    ensemble_method = EnsembleThreads(),
+    ensemblealg = EnsembleThreads(),
 )
-    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemble_method, ntraj)
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     _sol_1 = sol[:, 1]
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMESolve)
