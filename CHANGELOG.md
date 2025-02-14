@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `smesolve` for specifying initial state as density matrix. ([#395])
 - Add more generic solver for `steadystate_floquet` to allow more linear solvers. ([#396])
 - Fix time evolution output when using `saveat` keyword argument. ([#398])
+- Align some attributes of `mcsolve`, `ssesolve` and `smesolve` results with `QuTiP`. ([#402])
 - Improve ensemble generation of `ssesolve` and change parameters handling on stochastic processes. ([#403])
 
 ## [v0.26.0]
@@ -34,7 +35,6 @@ Release date: 2025-01-29
 - Fix Dynamical Fock Dimension states saving due to wrong saving of dimensions. ([#375])
 - Support a list of observables for `expect`. ([#374], [#376])
 - Add checks for `tlist` in time evolution solvers. The checks are to ensure that `tlist` is not empty, the elements are in increasing order, and the elements are unique. ([#378])
-- Change the definition of jump_times and jump_which into col_times and col_which, respectively. ([#402])
 
 ## [v0.25.0]
 Release date: 2025-01-20
