@@ -148,8 +148,8 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        ntraj::Int = 1,
-        ensemble_method = EnsembleThreads(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         jump_callback::TJC = ContinuousLindbladJumpCallback(),
         progress_bar::Union{Val,Bool} = Val(true),
         prob_func::Union{Function, Nothing} = nothing,
@@ -201,7 +201,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
-- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `ensemblealg`: Ensemble algorithm to use. Default to `EnsembleThreads()`.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
@@ -227,8 +227,8 @@ function mcsolveEnsembleProblem(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
-    ntraj::Int = 1,
-    ensemble_method = EnsembleThreads(),
+    ntraj::Int = 500,
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     progress_bar::Union{Val,Bool} = Val(true),
     prob_func::Union{Function,Nothing} = nothing,
@@ -238,7 +238,7 @@ function mcsolveEnsembleProblem(
     _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemble_method, progress_bar, ntraj, _mcsolve_output_func) : output_func
+        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _mcsolve_output_func) : output_func
 
     prob_mc = mcsolveProblem(
         H,
@@ -272,8 +272,8 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        ntraj::Int = 1,
-        ensemble_method = EnsembleThreads(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         jump_callback::TJC = ContinuousLindbladJumpCallback(),
         progress_bar::Union{Val,Bool} = Val(true),
         prob_func::Union{Function, Nothing} = nothing,
@@ -327,7 +327,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
-- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `ensemblealg`: Ensemble algorithm to use. Default to `EnsembleThreads()`.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
@@ -337,7 +337,7 @@ If the environmental measurements register a quantum jump, the wave function und
 
 # Notes
 
-- `ensemble_method` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`
+- `ensemblealg` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
@@ -357,8 +357,8 @@ function mcsolve(
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
-    ntraj::Int = 1,
-    ensemble_method = EnsembleThreads(),
+    ntraj::Int = 500,
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     progress_bar::Union{Val,Bool} = Val(true),
     prob_func::Union{Function,Nothing} = nothing,
@@ -376,7 +376,7 @@ function mcsolve(
         params = params,
         rng = rng,
         ntraj = ntraj,
-        ensemble_method = ensemble_method,
+        ensemblealg = ensemblealg,
         jump_callback = jump_callback,
         progress_bar = progress_bar,
         prob_func = prob_func,
@@ -384,17 +384,17 @@ function mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc, alg, ntraj, ensemble_method, normalize_states)
+    return mcsolve(ens_prob_mc, alg, ntraj, ensemblealg, normalize_states)
 end
 
 function mcsolve(
     ens_prob_mc::TimeEvolutionProblem,
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
-    ntraj::Int = 1,
-    ensemble_method = EnsembleThreads(),
+    ntraj::Int = 500,
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     normalize_states = Val(true),
 )
-    sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemble_method, ntraj)
+    sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj)
 
     dims = ens_prob_mc.dimensions
     _sol_1 = sol[:, 1]

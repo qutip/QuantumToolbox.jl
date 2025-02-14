@@ -110,24 +110,22 @@
         sol_me2 = mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
         sol_me3 = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
         prob_mc = mcsolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
-        sol_mc = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false))
+        sol_mc = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
         sol_mc2 = mcsolve(
             H,
             ψ0,
             tlist,
             c_ops,
-            ntraj = 500,
             e_ops = e_ops,
             progress_bar = Val(false),
             jump_callback = DiscreteLindbladJumpCallback(),
         )
-        sol_mc_states = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, saveat = saveat, progress_bar = Val(false))
+        sol_mc_states = mcsolve(H, ψ0, tlist, c_ops, saveat = saveat, progress_bar = Val(false))
         sol_mc_states2 = mcsolve(
             H,
             ψ0,
             tlist,
             c_ops,
-            ntraj = 500,
             saveat = saveat,
             progress_bar = Val(false),
             jump_callback = DiscreteLindbladJumpCallback(),
@@ -256,7 +254,7 @@
 
         sol_se = sesolve(H_dr_fr, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
         sol_me = mesolve(H_dr_fr, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
-        sol_mc = mcsolve(H_dr_fr, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+        sol_mc = mcsolve(H_dr_fr, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng)
         # sol_sse = ssesolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
 
         # Time Evolution in the lab frame
@@ -269,17 +267,7 @@
 
         sol_se_td = sesolve(H_td, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
         sol_me_td = mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
-        sol_mc_td = mcsolve(
-            H_td,
-            ψ0,
-            tlist,
-            c_ops,
-            ntraj = 500,
-            e_ops = e_ops,
-            progress_bar = Val(false),
-            params = p,
-            rng = rng,
-        )
+        sol_mc_td = mcsolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
         # sol_sse_td = ssesolve(H_td, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
 
         @test sol_se.expect ≈ sol_se_td.expect atol = 1e-6 * length(tlist)
@@ -292,17 +280,7 @@
 
         sol_se_td2 = sesolve(H_td2, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
         sol_me_td2 = mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
-        sol_mc_td2 = mcsolve(
-            H_td2,
-            ψ0,
-            tlist,
-            c_ops,
-            ntraj = 500,
-            e_ops = e_ops,
-            progress_bar = Val(false),
-            params = p,
-            rng = rng,
-        )
+        sol_mc_td2 = mcsolve(H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
         # sol_sse_td2 =
         # ssesolve(H_td2, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
 
@@ -609,7 +587,7 @@
 
         @testset "mcsolve, ssesolve and smesolve reproducibility" begin
             rng = MersenneTwister(1234)
-            sol_mc1 = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            sol_mc1 = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng)
             rng = MersenneTwister(1234)
             sol_sse1 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
             rng = MersenneTwister(1234)
@@ -626,7 +604,7 @@
             )
 
             rng = MersenneTwister(1234)
-            sol_mc2 = mcsolve(H, ψ0, tlist, c_ops, ntraj = 500, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            sol_mc2 = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng)
             rng = MersenneTwister(1234)
             sol_sse2 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
             rng = MersenneTwister(1234)
@@ -714,7 +692,7 @@
         psi0 = kron(psi0_1, psi0_2)
         t_l = LinRange(0, 20 / γ1, 1000)
         sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = false) # Here we don't put Val(false) because we want to test the support for Bool type
-        sol_mc = mcsolve(H, psi0, t_l, c_ops, ntraj = 500, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = Val(false))
+        sol_mc = mcsolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = Val(false))
         @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
         @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], 1))
     end

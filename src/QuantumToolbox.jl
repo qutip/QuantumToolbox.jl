@@ -28,6 +28,7 @@ import SciMLBase:
     ODEProblem,
     SDEProblem,
     EnsembleProblem,
+    EnsembleAlgorithm,
     EnsembleSerial,
     EnsembleThreads,
     EnsembleSplitThreads,

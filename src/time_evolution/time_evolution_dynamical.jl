@@ -607,8 +607,8 @@ function dsf_mcsolveEnsembleProblem(
     dsf_params::NamedTuple = NamedTuple();
     e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
-    ntraj::Int = 1,
-    ensemble_method = EnsembleThreads(),
+    ntraj::Int = 500,
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
@@ -660,7 +660,7 @@ function dsf_mcsolveEnsembleProblem(
         e_ops = e_ops₀,
         params = params2,
         ntraj = ntraj,
-        ensemble_method = ensemble_method,
+        ensemblealg = ensemblealg,
         jump_callback = jump_callback,
         prob_func = _dsf_mcsolve_prob_func,
         progress_bar = progress_bar,
@@ -679,8 +679,8 @@ end
         e_ops::Function=(op_list,p) -> Vector{TOl}([]),
         params::NamedTuple=NamedTuple(),
         δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
-        ntraj::Int=1,
-        ensemble_method=EnsembleThreads(),
+        ntraj::Int=500,
+        ensemblealg::EnsembleAlgorithm=EnsembleThreads(),
         jump_callback::LindbladJumpCallbackType=ContinuousLindbladJumpCallback(),
         krylov_dim::Int=max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
         progress_bar::Union{Bool,Val} = Val(true)
@@ -704,8 +704,8 @@ function dsf_mcsolve(
     e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    ntraj::Int = 1,
-    ensemble_method = EnsembleThreads(),
+    ntraj::Int = 500,
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
     progress_bar::Union{Bool,Val} = Val(true),
@@ -723,7 +723,7 @@ function dsf_mcsolve(
         e_ops = e_ops,
         params = params,
         ntraj = ntraj,
-        ensemble_method = ensemble_method,
+        ensemblealg = ensemblealg,
         δα_list = δα_list,
         jump_callback = jump_callback,
         krylov_dim = krylov_dim,
@@ -731,5 +731,5 @@ function dsf_mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc, alg, ntraj, ensemble_method)
+    return mcsolve(ens_prob_mc, alg, ntraj, ensemblealg)
 end

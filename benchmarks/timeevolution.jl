@@ -50,7 +50,7 @@ function benchmark_timeevolution!(SUITE)
         ntraj = 100,
         e_ops = $e_ops,
         progress_bar = Val(false),
-        ensemble_method = EnsembleSerial(),
+        ensemblealg = EnsembleSerial(),
     )
     SUITE["Time Evolution"]["time-independent"]["mcsolve"]["Multithreaded"] = @benchmarkable mcsolve(
         $H,
@@ -60,7 +60,7 @@ function benchmark_timeevolution!(SUITE)
         ntraj = 100,
         e_ops = $e_ops,
         progress_bar = Val(false),
-        ensemble_method = EnsembleThreads(),
+        ensemblealg = EnsembleThreads(),
     )
 
     return nothing
