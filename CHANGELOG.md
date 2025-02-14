@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix time evolution output when using `saveat` keyword argument. ([#398])
 - Align some attributes of `mcsolve`, `ssesolve` and `smesolve` results with `QuTiP`. ([#402])
 - Improve ensemble generation of `ssesolve` and change parameters handling on stochastic processes. ([#403])
+- Set default trajectories to 500 and rename the keyword argument `ensemble_method` to `ensemblealg`. ([#405])
 
 ## [v0.26.0]
 Release date: 2025-02-09
