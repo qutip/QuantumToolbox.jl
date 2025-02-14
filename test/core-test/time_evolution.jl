@@ -24,7 +24,7 @@
 
     ψ0_int = Qobj(round.(Int, real.(ψ0.data)), dims = ψ0.dims) # Used for testing the type inference
 
-    @testset "sesolve" begin
+    @testset "sesolve" verbose = true begin
         tlist = range(0, 20 * 2π / g, 1000)
         saveat_idxs = 500:900
         saveat = tlist[saveat_idxs]
@@ -100,7 +100,7 @@
         end
     end
 
-    @testset "mesolve, mcsolve, ssesolve and smesolve" begin
+    @testset "mesolve, mcsolve, ssesolve and smesolve" verbose = true begin
         tlist = range(0, 10 / γ, 100)
         saveat_idxs = 50:90
         saveat = tlist[saveat_idxs]
@@ -131,7 +131,28 @@
             jump_callback = DiscreteLindbladJumpCallback(),
         )
         sol_sse = ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        sol_sse2 = ssesolve(
+            H,
+            ψ0,
+            tlist,
+            c_ops,
+            e_ops = e_ops,
+            ntraj = 20,
+            progress_bar = Val(false),
+            store_measurement = Val(true),
+        )
         sol_sme = smesolve(H, ψ0, tlist, c_ops_sme, sc_ops_sme, e_ops = e_ops, progress_bar = Val(false))
+        sol_sme2 = smesolve(
+            H,
+            ψ0,
+            tlist,
+            c_ops_sme,
+            sc_ops_sme,
+            e_ops = e_ops,
+            ntraj = 20,
+            progress_bar = Val(false),
+            store_measurement = Val(true),
+        )
 
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
@@ -172,6 +193,11 @@
         @test size(sol_sse.expect) == (length(e_ops), length(tlist))
         @test length(sol_sme.times) == length(tlist)
         @test size(sol_sme.expect) == (length(e_ops), length(tlist))
+        @test isnothing(sol_sse.measurement)
+        @test isnothing(sol_sme.measurement)
+        @test size(sol_sse2.measurement) == (length(c_ops), 20, length(tlist) - 1)
+        @test size(sol_sme2.measurement) == (length(sc_ops_sme), 20, length(tlist) - 1)
+
         @test sol_me_string ==
               "Solution of time evolution\n" *
               "(return code: $(sol_me.retcode))\n" *
