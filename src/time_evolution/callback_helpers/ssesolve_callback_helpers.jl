@@ -1,5 +1,5 @@
 #=
-Helper functions for the ssesolve callbacks. Equal to the sesolve case, but with an additional normalization before saving the expectation values.
+Helper functions for the ssesolve callbacks. Almost equal to the sesolve case, but with an additional possibility to store the measurement operators expectation values. Also, this callback is not the first one, but the second one, due to the presence of the normalization callback.
 =#
 
 struct SaveFuncSSESolve{
@@ -49,13 +49,6 @@ function _save_func_ssesolve(integrator, e_ops, m_ops, progr, iter, expvals, m_e
     iter[] += 1
 
     return _save_func(integrator, progr)
-end
-
-# TODO: Add some cache mechanism to avoid memory allocations
-function _homodyne_dWdt(integrator)
-    @inbounds _dWdt = (integrator.W.u[end] .- integrator.W.u[end-1]) ./ (integrator.W.t[end] - integrator.W.t[end-1])
-
-    return _dWdt
 end
 
 ##

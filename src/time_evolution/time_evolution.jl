@@ -347,13 +347,11 @@ function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
     traj_rng = typeof(rng)()
     seed!(traj_rng, seed)
 
-    store_measurement = haskey(kwargs, :store_measurement) ? getVal(kwargs[:store_measurement]) : false
-
     noise = RealWienerProcess!(
         prob.prob.tspan[1],
         zeros(kwargs[:n_sc_ops]),
         zeros(kwargs[:n_sc_ops]),
-        save_everystep = store_measurement,
+        save_everystep = getVal(kwargs[:store_measurement]),
         rng = traj_rng,
     )
 

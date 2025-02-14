@@ -20,6 +20,7 @@ _smesolve_ScalarOperator(op_vec) =
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         progress_bar::Union{Val,Bool} = Val(true),
+        store_measurement::Union{Val, Bool} = Val(false),
         kwargs...,
     )
 
@@ -54,6 +55,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -77,6 +79,7 @@ function smesolveProblem(
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     progress_bar::Union{Val,Bool} = Val(true),
+    store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 ) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     haskey(kwargs, :save_idxs) &&
@@ -111,11 +114,24 @@ function smesolveProblem(
     D = DiffusionOperator(D_l)
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
-    kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncMESolve)
+    kwargs3 = _generate_stochastic_kwargs(
+        e_ops,
+        sc_ops,
+        makeVal(progress_bar),
+        tlist,
+        makeVal(store_measurement),
+        kwargs2,
+        SaveFuncSMESolve,
+    )
 
     tspan = (tlist[1], tlist[end])
-    noise =
-        RealWienerProcess!(tlist[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false, rng = rng)
+    noise = RealWienerProcess!(
+        tlist[1],
+        zeros(length(sc_ops)),
+        zeros(length(sc_ops)),
+        save_everystep = getVal(store_measurement),
+        rng = rng,
+    )
     noise_rate_prototype = similar(ρ0, length(ρ0), length(sc_ops))
     prob = SDEProblem{true}(
         K,
@@ -146,6 +162,7 @@ end
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
         progress_bar::Union{Val,Bool} = Val(true),
+        store_measurement::Union{Val,Bool} = Val(false),
         kwargs...,
     )
 
@@ -184,6 +201,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -211,11 +229,19 @@ function smesolveEnsembleProblem(
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
+    store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 ) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     _prob_func =
         isnothing(prob_func) ?
-        _ensemble_dispatch_prob_func(rng, ntraj, tlist, _stochastic_prob_func; n_sc_ops = length(sc_ops)) : prob_func
+        _ensemble_dispatch_prob_func(
+            rng,
+            ntraj,
+            tlist,
+            _stochastic_prob_func;
+            n_sc_ops = length(sc_ops),
+            store_measurement = makeVal(store_measurement),
+        ) : prob_func
     _output_func =
         output_func isa Nothing ?
         _ensemble_dispatch_output_func(ensemble_method, progress_bar, ntraj, _stochastic_output_func) : output_func
@@ -230,6 +256,7 @@ function smesolveEnsembleProblem(
         params = params,
         rng = rng,
         progress_bar = Val(false),
+        store_measurement = makeVal(store_measurement),
         kwargs...,
     )
 
@@ -259,6 +286,7 @@ end
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
         progress_bar::Union{Val,Bool} = Val(true),
+        store_measurement::Union{Val,Bool} = Val(false),
         kwargs...,
     )
 
@@ -298,6 +326,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -326,6 +355,7 @@ function smesolve(
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
+    store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 ) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     ensemble_prob = smesolveEnsembleProblem(
@@ -342,6 +372,7 @@ function smesolve(
         prob_func = prob_func,
         output_func = output_func,
         progress_bar = progress_bar,
+        store_measurement = makeVal(store_measurement),
         kwargs...,
     )
 
@@ -358,12 +389,17 @@ function smesolve(
 
     _sol_1 = sol[:, 1]
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMESolve)
+    _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSMESolve)
 
     dims = ens_prob.dimensions
     _expvals_all =
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMESolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
     states = map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims)), eachindex(sol))
+
+    _m_expvals =
+        _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSMESolve), eachindex(sol))
+    m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2)
 
     expvals =
         _get_expvals(_sol_1, SaveFuncMESolve) isa Nothing ? nothing :
@@ -376,7 +412,7 @@ function smesolve(
         expvals,
         expvals, # This is average_expect
         expvals_all,
-        nothing, # Measurement expectation values
+        m_expvals, # Measurement expectation values
         sol.converged,
         _sol_1.alg,
         _sol_1.prob.kwargs[:abstol],

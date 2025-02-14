@@ -159,3 +159,12 @@ end
 _get_save_callback(cb::ContinuousCallback, ::Type{SF}) where {SF<:AbstractSaveFunc} = nothing
 
 _get_save_callback_idx(cb, method) = 1
+
+# %% ------------ Noise Measurement Helpers ------------ %%
+
+# TODO: Add some cache mechanism to avoid memory allocations
+function _homodyne_dWdt(integrator)
+    @inbounds _dWdt = (integrator.W.u[end] .- integrator.W.u[end-1]) ./ (integrator.W.t[end] - integrator.W.t[end-1])
+
+    return _dWdt
+end
