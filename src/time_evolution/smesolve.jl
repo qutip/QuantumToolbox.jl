@@ -127,7 +127,7 @@ function smesolveProblem(
     )
 
     tspan = (tlist[1], tlist[end])
-    noise = _make_noise(tspan[1], sc_ops, store_measurement, rng)
+    noise = _make_noise(tspan[1], sc_ops, makeVal(store_measurement), rng)
     noise_rate_prototype = sc_ops_isa_Qobj ? nothing : similar(ρ0, length(ρ0), length(sc_ops_list))
     prob = SDEProblem{true}(
         K,

@@ -238,7 +238,7 @@ end
 
 #######################################
 
-_make_c_ops_list(c_ops::Union{AbstractVector,Tuple}) = c_ops
+_make_c_ops_list(c_ops) = c_ops
 _make_c_ops_list(c_ops::AbstractQuantumObject) = (c_ops,)
 
 function _merge_saveat(tlist, e_ops, default_options; kwargs...)
@@ -364,7 +364,7 @@ _stochastic_output_func(sol, i) = (sol, false)
     Define diagonal or non-diagonal noise depending on the type of `sc_ops`.
     If `sc_ops` is a `AbstractQuantumObject`, we avoid using the non-diagonal noise.
 =#
-function _make_noise(t0::Real, sc_ops::Union{AbstractVector,Tuple}, store_measurement::Val, rng)
+function _make_noise(t0, sc_ops, store_measurement::Val, rng)
     noise = RealWienerProcess!(
         t0,
         zeros(length(sc_ops)),
@@ -375,7 +375,7 @@ function _make_noise(t0::Real, sc_ops::Union{AbstractVector,Tuple}, store_measur
 
     return noise
 end
-function _make_noise(t0::Real, sc_ops::AbstractQuantumObject, store_measurement::Val, rng)
+function _make_noise(t0, sc_ops::AbstractQuantumObject, store_measurement::Val, rng)
     noise = RealWienerProcess(t0, 0.0, 0.0, save_everystep = getVal(store_measurement), rng = rng)
 
     return noise
