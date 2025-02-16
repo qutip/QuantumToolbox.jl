@@ -21,6 +21,9 @@
     sme_η = 0.7 # Efficiency of the homodyne detector for smesolve
     c_ops_sme = [sqrt(1 - sme_η) * op for op in c_ops]
     sc_ops_sme = [sqrt(sme_η) * op for op in c_ops]
+    # The following definition is to test the case of `sc_ops` as an `AbstractQuantumObject`
+    c_ops_sme2 = c_ops[2:end]
+    sc_ops_sme2 = c_ops[1]
 
     ψ0_int = Qobj(round.(Int, real.(ψ0.data)), dims = ψ0.dims) # Used for testing the type inference
 
@@ -153,6 +156,7 @@
             progress_bar = Val(false),
             store_measurement = Val(true),
         )
+        sol_sme3 = smesolve(H, ψ0, tlist, c_ops_sme2, sc_ops_sme2, e_ops = e_ops, progress_bar = Val(false))
 
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
@@ -175,6 +179,7 @@
         @test sum(abs, vec(expect_mc_states_mean2) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
         @test sum(abs, sol_sse.expect .- sol_me.expect) / length(tlist) < 0.1
         @test sum(abs, sol_sme.expect .- sol_me.expect) / length(tlist) < 0.1
+        @test sum(abs, sol_sme3.expect .- sol_me.expect) / length(tlist) < 0.1
         @test length(sol_me.times) == length(tlist)
         @test length(sol_me.states) == 1
         @test size(sol_me.expect) == (length(e_ops), length(tlist))
@@ -544,8 +549,11 @@
         end
 
         @testset "Type Inference smesolve" begin
-            c_ops_sme_tuple = Tuple(c_ops_sme) # To avoid type instability, we must have a Tuple instead of a Vector
-            sc_ops_sme_tuple = Tuple(sc_ops_sme) # To avoid type instability, we must have a Tuple instead of a Vector
+            # To avoid type instability, we must have a Tuple instead of a Vector
+            c_ops_sme_tuple = Tuple(c_ops_sme)
+            sc_ops_sme_tuple = Tuple(sc_ops_sme)
+            c_ops_sme2_tuple = Tuple(c_ops_sme2)
+            sc_ops_sme2_tuple = sc_ops_sme2 # This is an `AbstractQuantumObject`
             @inferred smesolveEnsembleProblem(
                 H,
                 ψ0,
@@ -563,6 +571,17 @@
                 tlist,
                 c_ops_sme_tuple,
                 sc_ops_sme_tuple,
+                ntraj = 5,
+                e_ops = e_ops,
+                progress_bar = Val(false),
+                rng = rng,
+            )
+            @inferred smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme2_tuple,
+                sc_ops_sme2_tuple,
                 ntraj = 5,
                 e_ops = e_ops,
                 progress_bar = Val(false),
