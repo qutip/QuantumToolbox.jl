@@ -40,7 +40,7 @@ import SciMLBase:
     AbstractSciMLProblem,
     AbstractODEIntegrator,
     AbstractODESolution
-import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1, SRIW1
+import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA2, SRIW1
 import SciMLOperators:
     SciMLOperators,
     AbstractSciMLOperator,

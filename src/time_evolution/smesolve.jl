@@ -313,7 +313,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
-- `alg`: The algorithm to use for the stochastic differential equation. Default is `SRIW1()` if `sc_ops` is an [`AbstractQuantumObject`](@ref) (diagonal noise), and `SRA1()` otherwise (non-diagonal noise).
+- `alg`: The algorithm to use for the stochastic differential equation. Default is `SRIW1()` if `sc_ops` is an [`AbstractQuantumObject`](@ref) (diagonal noise), and `SRA2()` otherwise (non-diagonal noise).
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -375,7 +375,7 @@ function smesolve(
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     if isnothing(alg)
-        alg = sc_ops_isa_Qobj ? SRIW1() : SRA1()
+        alg = sc_ops_isa_Qobj ? SRIW1() : SRA2()
     end
 
     return smesolve(ensemble_prob, alg, ntraj, ensemblealg)
@@ -383,7 +383,7 @@ end
 
 function smesolve(
     ens_prob::TimeEvolutionProblem,
-    alg::StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEqAlgorithm = SRA2(),
     ntraj::Int = 500,
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
 )
