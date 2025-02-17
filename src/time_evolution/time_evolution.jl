@@ -238,6 +238,9 @@ end
 
 #######################################
 
+_make_c_ops_list(c_ops) = c_ops
+_make_c_ops_list(c_ops::AbstractQuantumObject) = (c_ops,)
+
 function _merge_saveat(tlist, e_ops, default_options; kwargs...)
     is_empty_e_ops = isnothing(e_ops) ? true : isempty(e_ops)
     saveat = is_empty_e_ops ? tlist : [tlist[end]]
@@ -347,19 +350,36 @@ function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
     traj_rng = typeof(rng)()
     seed!(traj_rng, seed)
 
-    noise = RealWienerProcess!(
-        prob.prob.tspan[1],
-        zeros(kwargs[:n_sc_ops]),
-        zeros(kwargs[:n_sc_ops]),
-        save_everystep = getVal(kwargs[:store_measurement]),
-        rng = traj_rng,
-    )
+    sc_ops = kwargs[:sc_ops]
+    store_measurement = kwargs[:store_measurement]
+    noise = _make_noise(prob.prob.tspan[1], sc_ops, store_measurement, traj_rng)
 
     return remake(prob.prob, noise = noise, seed = seed)
 end
 
 # Standard output function
 _stochastic_output_func(sol, i) = (sol, false)
+
+#= 
+    Define diagonal or non-diagonal noise depending on the type of `sc_ops`.
+    If `sc_ops` is a `AbstractQuantumObject`, we avoid using the non-diagonal noise.
+=#
+function _make_noise(t0, sc_ops, store_measurement::Val, rng)
+    noise = RealWienerProcess!(
+        t0,
+        zeros(length(sc_ops)),
+        zeros(length(sc_ops)),
+        save_everystep = getVal(store_measurement),
+        rng = rng,
+    )
+
+    return noise
+end
+function _make_noise(t0, sc_ops::AbstractQuantumObject, store_measurement::Val, rng)
+    noise = RealWienerProcess(t0, 0.0, 0.0, save_everystep = getVal(store_measurement), rng = rng)
+
+    return noise
+end
 
 #=
     struct DiffusionOperator
@@ -391,7 +411,7 @@ end
     N = length(ops_types)
     quote
         M = length(u)
-        S = size(v)
+        S = (size(v, 1), size(v, 2)) # This supports also `v` as a `Vector`
         (S[1] == M && S[2] == $N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
         Base.@nexprs $N i -> begin
             mul!(@view(v[:, i]), L.ops[i], u)

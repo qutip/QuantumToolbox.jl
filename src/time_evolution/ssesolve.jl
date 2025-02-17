@@ -17,7 +17,7 @@ _ScalarOperator_e2_2(op, f = +) =
         H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
         ψ0::QuantumObject{KetQuantumObject},
         tlist::AbstractVector,
-        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
@@ -52,7 +52,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
-- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -67,6 +67,9 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
+
 # Returns
 
 - `prob`: The `SDEProblem` for the Stochastic Schrödinger time evolution of the system.
@@ -75,7 +78,7 @@ function ssesolveProblem(
     H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
     ψ0::QuantumObject{KetQuantumObject},
     tlist::AbstractVector,
-    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
@@ -88,10 +91,12 @@ function ssesolveProblem(
 
     sc_ops isa Nothing &&
         throw(ArgumentError("The list of stochastic collapse operators must be provided. Use sesolveProblem instead."))
+    sc_ops_list = _make_c_ops_list(sc_ops) # If it is an AbstractQuantumObject but we need to iterate
+    sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     tlist = _check_tlist(tlist, _FType(ψ0))
 
-    H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops)
+    H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
     check_dimensions(H_eff_evo, ψ0)
     dims = H_eff_evo.dimensions
@@ -100,7 +105,7 @@ function ssesolveProblem(
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 
-    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops))
+    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
     # Here the coefficients depend on the state, so this is a non-linear operator, which should be implemented with FunctionOperator instead. However, the nonlinearity is only on the coefficients, and it should be safe.
     K_l = sum(
@@ -116,7 +121,7 @@ function ssesolveProblem(
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_stochastic_kwargs(
         e_ops,
-        sc_ops,
+        sc_ops_list,
         makeVal(progress_bar),
         tlist,
         makeVal(store_measurement),
@@ -125,14 +130,8 @@ function ssesolveProblem(
     )
 
     tspan = (tlist[1], tlist[end])
-    noise = RealWienerProcess!(
-        tlist[1],
-        zeros(length(sc_ops)),
-        zeros(length(sc_ops)),
-        save_everystep = getVal(store_measurement),
-        rng = rng,
-    )
-    noise_rate_prototype = similar(ψ0, length(ψ0), length(sc_ops))
+    noise = _make_noise(tspan[1], sc_ops, makeVal(store_measurement), rng)
+    noise_rate_prototype = sc_ops_isa_Qobj ? nothing : similar(ψ0, length(ψ0), length(sc_ops_list))
     prob = SDEProblem{true}(
         K,
         D,
@@ -152,7 +151,7 @@ end
         H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
         ψ0::QuantumObject{KetQuantumObject},
         tlist::AbstractVector,
-        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
@@ -191,7 +190,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
-- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -211,6 +210,9 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
+
 # Returns
 
 - `prob::EnsembleProblem with SDEProblem`: The Ensemble SDEProblem for the Stochastic Shrödinger time evolution.
@@ -219,7 +221,7 @@ function ssesolveEnsembleProblem(
     H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
     ψ0::QuantumObject{KetQuantumObject},
     tlist::AbstractVector,
-    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
@@ -238,7 +240,7 @@ function ssesolveEnsembleProblem(
             ntraj,
             tlist,
             _stochastic_prob_func;
-            n_sc_ops = length(sc_ops),
+            sc_ops = sc_ops,
             store_measurement = makeVal(store_measurement),
         ) : prob_func
     _output_func =
@@ -273,8 +275,8 @@ end
         H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
         ψ0::QuantumObject{KetQuantumObject},
         tlist::AbstractVector,
-        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-        alg::StochasticDiffEqAlgorithm = SRA1(),
+        sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
+        alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
@@ -316,8 +318,8 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
-- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
-- `alg`: The algorithm to use for the stochastic differential equation. Default is `SRA1()`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
+- `alg`: The algorithm to use for the stochastic differential equation. Default is `SRIW1()` if `sc_ops` is an [`AbstractQuantumObject`](@ref) (diagonal noise), and `SRA2()` otherwise (non-diagonal noise).
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -337,6 +339,9 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - For more details about `alg` please refer to [`DifferentialEquations.jl` (SDE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/sde_solve/)
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
+
 # Returns
 
 - `sol::TimeEvolutionStochasticSol`: The solution of the time evolution. See [`TimeEvolutionStochasticSol`](@ref).
@@ -345,8 +350,8 @@ function ssesolve(
     H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
     ψ0::QuantumObject{KetQuantumObject},
     tlist::AbstractVector,
-    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::StochasticDiffEqAlgorithm = SRA1(),
+    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
+    alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
@@ -375,12 +380,18 @@ function ssesolve(
         kwargs...,
     )
 
+    sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
+
+    if isnothing(alg)
+        alg = sc_ops_isa_Qobj ? SRIW1() : SRA2()
+    end
+
     return ssesolve(ens_prob, alg, ntraj, ensemblealg)
 end
 
 function ssesolve(
     ens_prob::TimeEvolutionProblem,
-    alg::StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEqAlgorithm = SRA2(),
     ntraj::Int = 500,
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
 )

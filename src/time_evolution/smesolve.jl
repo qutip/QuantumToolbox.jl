@@ -15,7 +15,7 @@ _smesolve_ScalarOperator(op_vec) =
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
@@ -50,7 +50,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
-- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -65,6 +65,9 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
+
 # Returns
 
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the `SDEProblem` for the Stochastic Master Equation time evolution.
@@ -74,7 +77,7 @@ function smesolveProblem(
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
@@ -87,10 +90,12 @@ function smesolveProblem(
 
     isnothing(sc_ops) &&
         throw(ArgumentError("The list of stochastic collapse operators must be provided. Use mesolveProblem instead."))
+    sc_ops_list = _make_c_ops_list(sc_ops) # If it is an AbstractQuantumObject but we need to iterate
+    sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     tlist = _check_tlist(tlist, _FType(ψ0))
 
-    L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops)
+    L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
     check_dimensions(L_evo, ψ0)
     dims = L_evo.dimensions
 
@@ -99,7 +104,7 @@ function smesolveProblem(
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 
-    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops))
+    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
     K = get_data(L_evo)
 
@@ -116,7 +121,7 @@ function smesolveProblem(
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_stochastic_kwargs(
         e_ops,
-        sc_ops,
+        sc_ops_list,
         makeVal(progress_bar),
         tlist,
         makeVal(store_measurement),
@@ -125,14 +130,8 @@ function smesolveProblem(
     )
 
     tspan = (tlist[1], tlist[end])
-    noise = RealWienerProcess!(
-        tlist[1],
-        zeros(length(sc_ops)),
-        zeros(length(sc_ops)),
-        save_everystep = getVal(store_measurement),
-        rng = rng,
-    )
-    noise_rate_prototype = similar(ρ0, length(ρ0), length(sc_ops))
+    noise = _make_noise(tspan[1], sc_ops, makeVal(store_measurement), rng)
+    noise_rate_prototype = sc_ops_isa_Qobj ? nothing : similar(ρ0, length(ρ0), length(sc_ops_list))
     prob = SDEProblem{true}(
         K,
         D,
@@ -153,7 +152,7 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
@@ -192,7 +191,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
-- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -211,6 +210,9 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
+
 # Returns
 
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the Ensemble `SDEProblem` for the Stochastic Master Equation time evolution.
@@ -220,7 +222,7 @@ function smesolveEnsembleProblem(
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
@@ -239,7 +241,7 @@ function smesolveEnsembleProblem(
             ntraj,
             tlist,
             _stochastic_prob_func;
-            n_sc_ops = length(sc_ops),
+            sc_ops = sc_ops,
             store_measurement = makeVal(store_measurement),
         ) : prob_func
     _output_func =
@@ -276,8 +278,8 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-        alg::StochasticDiffEqAlgorithm = SRA1(),
+        sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
+        alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
@@ -316,8 +318,8 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
-- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
-- `alg`: The algorithm to use for the stochastic differential equation. Default is `SRA1()`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
+- `alg`: The algorithm to use for the stochastic differential equation. Default is `SRIW1()` if `sc_ops` is an [`AbstractQuantumObject`](@ref) (diagonal noise), and `SRA2()` otherwise (non-diagonal noise).
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
@@ -336,6 +338,9 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
+
 # Returns
 
 - `sol::TimeEvolutionStochasticSol`: The solution of the time evolution. See [`TimeEvolutionStochasticSol`](@ref).
@@ -345,8 +350,8 @@ function smesolve(
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::StochasticDiffEqAlgorithm = SRA1(),
+    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
+    alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
@@ -376,12 +381,18 @@ function smesolve(
         kwargs...,
     )
 
+    sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
+
+    if isnothing(alg)
+        alg = sc_ops_isa_Qobj ? SRIW1() : SRA2()
+    end
+
     return smesolve(ensemble_prob, alg, ntraj, ensemblealg)
 end
 
 function smesolve(
     ens_prob::TimeEvolutionProblem,
-    alg::StochasticDiffEqAlgorithm = SRA1(),
+    alg::StochasticDiffEqAlgorithm = SRA2(),
     ntraj::Int = 500,
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
 )

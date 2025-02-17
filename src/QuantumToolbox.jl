@@ -40,7 +40,7 @@ import SciMLBase:
     AbstractSciMLProblem,
     AbstractODEIntegrator,
     AbstractODESolution
-import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
+import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA2, SRIW1
 import SciMLOperators:
     SciMLOperators,
     AbstractSciMLOperator,
@@ -56,7 +56,7 @@ import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
-import DiffEqNoiseProcess: RealWienerProcess!
+import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
