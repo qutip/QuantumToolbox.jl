@@ -20,9 +20,9 @@ struct SaveFuncSMESolve{
     m_expvals::TMEXPV
 end
 
-(f::SaveFuncSMESolve)(integrator) =
-    _save_func_smesolve(integrator, f.e_ops, f.m_ops, f.progr, f.iter, f.expvals, f.m_expvals)
-(f::SaveFuncSMESolve{false,Nothing})(integrator) = _save_func(integrator, f.progr) # Common for both all solvers
+(f::SaveFuncSMESolve)(u, t, integrator) =
+    _save_func_smesolve(u, integrator, f.e_ops, f.m_ops, f.progr, f.iter, f.expvals, f.m_expvals)
+(f::SaveFuncSMESolve{false,Nothing})(u, t, integrator) = _save_func(integrator, f.progr) # Common for both all solvers
 
 _get_e_ops_data(e_ops, ::Type{SaveFuncSMESolve}) = _get_e_ops_data(e_ops, SaveFuncMESolve)
 _get_m_ops_data(sc_ops, ::Type{SaveFuncSMESolve}) =
@@ -31,12 +31,12 @@ _get_m_ops_data(sc_ops, ::Type{SaveFuncSMESolve}) =
 ##
 
 # When e_ops is a list of operators
-function _save_func_smesolve(integrator, e_ops, m_ops, progr, iter, expvals, m_expvals)
+function _save_func_smesolve(u, integrator, e_ops, m_ops, progr, iter, expvals, m_expvals)
     # This is equivalent to tr(op * ρ), when both are matrices.
     # The advantage of using this convention is that We don't need
     # to reshape u to make it a matrix, but we reshape the e_ops once.
 
-    ρ = integrator.u
+    ρ = u
 
     _expect = op -> dot(op, ρ)
 

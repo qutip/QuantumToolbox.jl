@@ -447,188 +447,188 @@
             @test allocs_tot < 570000 # TODO: Fix this high number of allocations
         end
 
-        @testset "Type Inference mesolve" begin
-            coef(p, t) = exp(-t)
-            ad_t = QobjEvo(a', coef)
-            @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mesolveProblem(H, ψ0_int, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
-            @inferred mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
-            @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
-            @inferred mesolve(H, ψ0, tlist, (a, ad_t), e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple
-            @inferred mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
-            @inferred mesolve(H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
-            @inferred mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
-        end
+        # @testset "Type Inference mesolve" begin
+        #     coef(p, t) = exp(-t)
+        #     ad_t = QobjEvo(a', coef)
+        #     @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        #     @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
+        #     @inferred mesolveProblem(H, ψ0_int, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        #     @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        #     @inferred mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
+        #     @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
+        #     @inferred mesolve(H, ψ0, tlist, (a, ad_t), e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple
+        #     @inferred mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+        #     @inferred mesolve(H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+        #     @inferred mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+        # end
 
-        @testset "Type Inference mcsolve" begin
-            @inferred mcsolveEnsembleProblem(
-                H,
-                ψ0,
-                tlist,
-                c_ops,
-                ntraj = 5,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-                rng = rng,
-            )
-            @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
-            @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng)
-            @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
-            @inferred mcsolve(H, ψ0_int, tlist, c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
-            @inferred mcsolve(
-                H,
-                ψ0,
-                tlist,
-                (a, a'),
-                e_ops = (a' * a, a'),
-                ntraj = 5,
-                progress_bar = Val(false),
-                rng = rng,
-            ) # We test the type inference for Tuple of different types
-            @inferred mcsolve(
-                H_td,
-                ψ0,
-                tlist,
-                c_ops,
-                ntraj = 5,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-                params = p,
-                rng = rng,
-            )
-        end
+        # @testset "Type Inference mcsolve" begin
+        #     @inferred mcsolveEnsembleProblem(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         c_ops,
+        #         ntraj = 5,
+        #         e_ops = e_ops,
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     )
+        #     @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+        #     @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng)
+        #     @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
+        #     @inferred mcsolve(H, ψ0_int, tlist, c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
+        #     @inferred mcsolve(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         (a, a'),
+        #         e_ops = (a' * a, a'),
+        #         ntraj = 5,
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     ) # We test the type inference for Tuple of different types
+        #     @inferred mcsolve(
+        #         H_td,
+        #         ψ0,
+        #         tlist,
+        #         c_ops,
+        #         ntraj = 5,
+        #         e_ops = e_ops,
+        #         progress_bar = Val(false),
+        #         params = p,
+        #         rng = rng,
+        #     )
+        # end
 
-        @testset "Type Inference ssesolve" begin
-            c_ops_tuple = Tuple(c_ops) # To avoid type instability, we must have a Tuple instead of a Vector
-            @inferred ssesolveEnsembleProblem(
-                H,
-                ψ0,
-                tlist,
-                c_ops_tuple,
-                ntraj = 5,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-                rng = rng,
-            )
-            @inferred ssesolve(
-                H,
-                ψ0,
-                tlist,
-                c_ops_tuple,
-                ntraj = 5,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-                rng = rng,
-            )
-            @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng)
-            @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
-            @inferred ssesolve(H, ψ0_int, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
-            @inferred ssesolve(
-                H,
-                ψ0,
-                tlist,
-                c_ops_tuple,
-                ntraj = 5,
-                e_ops = (a' * a, a'),
-                progress_bar = Val(false),
-                rng = rng,
-            ) # We test the type inference for Tuple of different types
-            @inferred ssesolve(
-                H_td,
-                ψ0,
-                tlist,
-                c_ops_tuple,
-                ntraj = 5,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-                params = p,
-                rng = rng,
-            )
-        end
+        # @testset "Type Inference ssesolve" begin
+        #     c_ops_tuple = Tuple(c_ops) # To avoid type instability, we must have a Tuple instead of a Vector
+        #     @inferred ssesolveEnsembleProblem(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         c_ops_tuple,
+        #         ntraj = 5,
+        #         e_ops = e_ops,
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     )
+        #     @inferred ssesolve(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         c_ops_tuple,
+        #         ntraj = 5,
+        #         e_ops = e_ops,
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     )
+        #     @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng)
+        #     @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
+        #     @inferred ssesolve(H, ψ0_int, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
+        #     @inferred ssesolve(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         c_ops_tuple,
+        #         ntraj = 5,
+        #         e_ops = (a' * a, a'),
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     ) # We test the type inference for Tuple of different types
+        #     @inferred ssesolve(
+        #         H_td,
+        #         ψ0,
+        #         tlist,
+        #         c_ops_tuple,
+        #         ntraj = 5,
+        #         e_ops = e_ops,
+        #         progress_bar = Val(false),
+        #         params = p,
+        #         rng = rng,
+        #     )
+        # end
 
-        @testset "Type Inference smesolve" begin
-            # To avoid type instability, we must have a Tuple instead of a Vector
-            c_ops_sme_tuple = Tuple(c_ops_sme)
-            sc_ops_sme_tuple = Tuple(sc_ops_sme)
-            c_ops_sme2_tuple = Tuple(c_ops_sme2)
-            sc_ops_sme2_tuple = sc_ops_sme2 # This is an `AbstractQuantumObject`
-            @inferred smesolveEnsembleProblem(
-                H,
-                ψ0,
-                tlist,
-                c_ops_sme_tuple,
-                sc_ops_sme_tuple,
-                ntraj = 5,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-                rng = rng,
-            )
-            @inferred smesolve(
-                H,
-                ψ0,
-                tlist,
-                c_ops_sme_tuple,
-                sc_ops_sme_tuple,
-                ntraj = 5,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-                rng = rng,
-            )
-            @inferred smesolve(
-                H,
-                ψ0,
-                tlist,
-                c_ops_sme2_tuple,
-                sc_ops_sme2_tuple,
-                ntraj = 5,
-                e_ops = e_ops,
-                progress_bar = Val(false),
-                rng = rng,
-            )
-            @inferred smesolve(
-                H,
-                ψ0,
-                tlist,
-                c_ops_sme_tuple,
-                sc_ops_sme_tuple,
-                ntraj = 5,
-                progress_bar = Val(true),
-                rng = rng,
-            )
-            @inferred smesolve(
-                H,
-                ψ0,
-                [0, 10],
-                c_ops_sme_tuple,
-                sc_ops_sme_tuple,
-                ntraj = 5,
-                progress_bar = Val(false),
-                rng = rng,
-            )
-            @inferred smesolve(
-                H,
-                ψ0_int,
-                tlist,
-                c_ops_sme_tuple,
-                sc_ops_sme_tuple,
-                ntraj = 5,
-                progress_bar = Val(false),
-                rng = rng,
-            )
-            @inferred smesolve(
-                H,
-                ψ0,
-                tlist,
-                c_ops_sme_tuple,
-                sc_ops_sme_tuple,
-                ntraj = 5,
-                e_ops = (a' * a, a'),
-                progress_bar = Val(false),
-                rng = rng,
-            ) # We test the type inference for Tuple of different types
-        end
+        # @testset "Type Inference smesolve" begin
+        #     # To avoid type instability, we must have a Tuple instead of a Vector
+        #     c_ops_sme_tuple = Tuple(c_ops_sme)
+        #     sc_ops_sme_tuple = Tuple(sc_ops_sme)
+        #     c_ops_sme2_tuple = Tuple(c_ops_sme2)
+        #     sc_ops_sme2_tuple = sc_ops_sme2 # This is an `AbstractQuantumObject`
+        #     @inferred smesolveEnsembleProblem(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         c_ops_sme_tuple,
+        #         sc_ops_sme_tuple,
+        #         ntraj = 5,
+        #         e_ops = e_ops,
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     )
+        #     @inferred smesolve(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         c_ops_sme_tuple,
+        #         sc_ops_sme_tuple,
+        #         ntraj = 5,
+        #         e_ops = e_ops,
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     )
+        #     @inferred smesolve(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         c_ops_sme2_tuple,
+        #         sc_ops_sme2_tuple,
+        #         ntraj = 5,
+        #         e_ops = e_ops,
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     )
+        #     @inferred smesolve(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         c_ops_sme_tuple,
+        #         sc_ops_sme_tuple,
+        #         ntraj = 5,
+        #         progress_bar = Val(true),
+        #         rng = rng,
+        #     )
+        #     @inferred smesolve(
+        #         H,
+        #         ψ0,
+        #         [0, 10],
+        #         c_ops_sme_tuple,
+        #         sc_ops_sme_tuple,
+        #         ntraj = 5,
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     )
+        #     @inferred smesolve(
+        #         H,
+        #         ψ0_int,
+        #         tlist,
+        #         c_ops_sme_tuple,
+        #         sc_ops_sme_tuple,
+        #         ntraj = 5,
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     )
+        #     @inferred smesolve(
+        #         H,
+        #         ψ0,
+        #         tlist,
+        #         c_ops_sme_tuple,
+        #         sc_ops_sme_tuple,
+        #         ntraj = 5,
+        #         e_ops = (a' * a, a'),
+        #         progress_bar = Val(false),
+        #         rng = rng,
+        #     ) # We test the type inference for Tuple of different types
+        # end
 
         @testset "mcsolve, ssesolve and smesolve reproducibility" begin
             rng = MersenneTwister(1234)

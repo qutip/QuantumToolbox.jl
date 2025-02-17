@@ -8,7 +8,7 @@ struct SaveFuncMCSolve{TE,IT,TEXPV} <: AbstractSaveFunc
     expvals::TEXPV
 end
 
-(f::SaveFuncMCSolve)(integrator) = _save_func_mcsolve(integrator, f.e_ops, f.iter, f.expvals)
+(f::SaveFuncMCSolve)(u, t, integrator) = _save_func_mcsolve(u, integrator, f.e_ops, f.iter, f.expvals)
 
 _get_save_callback_idx(cb, ::Type{SaveFuncMCSolve}) = _mcsolve_has_continuous_jump(cb) ? 1 : 2
 
@@ -52,10 +52,10 @@ end
 
 ##
 
-function _save_func_mcsolve(integrator, e_ops, iter, expvals)
+function _save_func_mcsolve(u, integrator, e_ops, iter, expvals)
     cache_mc = _mc_get_jump_callback(integrator).affect!.cache_mc
 
-    copyto!(cache_mc, integrator.u)
+    copyto!(cache_mc, u)
     normalize!(cache_mc)
     ψ = cache_mc
     _expect = op -> dot(ψ, op, ψ)
@@ -114,8 +114,8 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rn
     else
         expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
 
-        _save_affect! = SaveFuncMCSolve(get_data.(e_ops), Ref(1), expvals)
-        cb2 = PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+        _save_func = SaveFuncMCSolve(get_data.(e_ops), Ref(1), expvals)
+        cb2 = FunctionCallingCallback(_save_func, funcat=tlist)
         kwargs2 =
             haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, cb2, kwargs.callback),)) :
             merge(kwargs, (callback = CallbackSet(cb1, cb2),))
@@ -214,11 +214,11 @@ function _mcsolve_initialize_callbacks(cb::CallbackSet, tlist, traj_rng)
 
     if _mcsolve_has_continuous_jump(cb)
         idx = 1
-        if cb_discrete[idx].affect! isa SaveFuncMCSolve
-            e_ops = cb_discrete[idx].affect!.e_ops
-            expvals = similar(cb_discrete[idx].affect!.expvals)
-            _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
-            cb_save = (PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false)),)
+        if cb_discrete[idx].affect!.func isa SaveFuncMCSolve
+            e_ops = cb_discrete[idx].affect!.func.e_ops
+            expvals = similar(cb_discrete[idx].affect!.func.expvals)
+            _save_func = SaveFuncMCSolve(e_ops, Ref(1), expvals)
+            cb_save = (FunctionCallingCallback(_save_func, funcat=tlist),)
         else
             cb_save = ()
         end
@@ -229,11 +229,11 @@ function _mcsolve_initialize_callbacks(cb::CallbackSet, tlist, traj_rng)
         return CallbackSet((cb_jump, cb_continuous[2:end]...), (cb_save..., cb_discrete[2:end]...))
     else
         idx = 2
-        if cb_discrete[idx].affect! isa SaveFuncMCSolve
-            e_ops = cb_discrete[idx].affect!.e_ops
-            expvals = similar(cb_discrete[idx].affect!.expvals)
-            _save_affect! = SaveFuncMCSolve(e_ops, Ref(1), expvals)
-            cb_save = (PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false)),)
+        if cb_discrete[idx].affect!.func isa SaveFuncMCSolve
+            e_ops = cb_discrete[idx].affect!.func.e_ops
+            expvals = similar(cb_discrete[idx].affect!.func.expvals)
+            _save_func = SaveFuncMCSolve(e_ops, Ref(1), expvals)
+            cb_save = (FunctionCallingCallback(_save_func, funcat=tlist),)
         else
             cb_save = ()
         end

@@ -20,9 +20,9 @@ struct SaveFuncSSESolve{
     m_expvals::TMEXPV
 end
 
-(f::SaveFuncSSESolve)(integrator) =
-    _save_func_ssesolve(integrator, f.e_ops, f.m_ops, f.progr, f.iter, f.expvals, f.m_expvals)
-(f::SaveFuncSSESolve{false,Nothing})(integrator) = _save_func(integrator, f.progr) # Common for both all solvers
+(f::SaveFuncSSESolve)(u, t, integrator) =
+    _save_func_ssesolve(u, integrator, f.e_ops, f.m_ops, f.progr, f.iter, f.expvals, f.m_expvals)
+(f::SaveFuncSSESolve{false,Nothing})(u, t, integrator) = _save_func(integrator, f.progr) # Common for both all solvers
 
 _get_e_ops_data(e_ops, ::Type{SaveFuncSSESolve}) = get_data.(e_ops)
 _get_m_ops_data(sc_ops, ::Type{SaveFuncSSESolve}) = map(op -> Hermitian(get_data(op) + get_data(op)'), sc_ops)
@@ -32,8 +32,8 @@ _get_save_callback_idx(cb, ::Type{SaveFuncSSESolve}) = 2 # The first one is the 
 ##
 
 # When e_ops is a list of operators
-function _save_func_ssesolve(integrator, e_ops, m_ops, progr, iter, expvals, m_expvals)
-    ψ = integrator.u
+function _save_func_ssesolve(u, integrator, e_ops, m_ops, progr, iter, expvals, m_expvals)
+    ψ = u
 
     _expect = op -> dot(ψ, op, ψ)
 
