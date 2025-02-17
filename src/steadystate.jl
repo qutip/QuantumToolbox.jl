@@ -141,7 +141,7 @@ end
 function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateEigenSolver; kwargs...)
     N = prod(L.dimensions)
 
-    kwargs = merge((sigma = 1e-8, k = 1), (; kwargs...))
+    kwargs = merge((sigma = 1e-8, eigvals = 1), (; kwargs...))
 
     ρss_vec = eigsolve(L; kwargs...).vectors[:, 1]
     ρss = reshape(ρss_vec, N, N)
