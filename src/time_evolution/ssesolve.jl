@@ -68,7 +68,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 !!! tip "Performance Tip"
-    When `sc_ops` contains only one operator, it is highly recommended to put only the operator as the argument. This will ensure the stochastic noise to be diagonal, allowing for a faster simulation.
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
 
 # Returns
 
@@ -211,7 +211,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 !!! tip "Performance Tip"
-    When `sc_ops` contains only one operator, it is highly recommended to put only the operator as the argument. This will ensure the stochastic noise to be diagonal, allowing for a faster simulation.
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
 
 # Returns
 
@@ -340,7 +340,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 !!! tip "Performance Tip"
-    When `sc_ops` contains only one operator, it is highly recommended to put only the operator as the argument. This will ensure the stochastic noise to be diagonal, allowing for a faster simulation.
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
 
 # Returns
 
