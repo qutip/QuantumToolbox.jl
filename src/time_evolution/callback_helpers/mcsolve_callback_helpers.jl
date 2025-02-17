@@ -115,7 +115,7 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rn
         expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
 
         _save_func = SaveFuncMCSolve(get_data.(e_ops), Ref(1), expvals)
-        cb2 = FunctionCallingCallback(_save_func, funcat=tlist)
+        cb2 = FunctionCallingCallback(_save_func, funcat = tlist)
         kwargs2 =
             haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, cb2, kwargs.callback),)) :
             merge(kwargs, (callback = CallbackSet(cb1, cb2),))
@@ -218,7 +218,7 @@ function _mcsolve_initialize_callbacks(cb::CallbackSet, tlist, traj_rng)
             e_ops = cb_discrete[idx].affect!.func.e_ops
             expvals = similar(cb_discrete[idx].affect!.func.expvals)
             _save_func = SaveFuncMCSolve(e_ops, Ref(1), expvals)
-            cb_save = (FunctionCallingCallback(_save_func, funcat=tlist),)
+            cb_save = (FunctionCallingCallback(_save_func, funcat = tlist),)
         else
             cb_save = ()
         end
@@ -233,7 +233,7 @@ function _mcsolve_initialize_callbacks(cb::CallbackSet, tlist, traj_rng)
             e_ops = cb_discrete[idx].affect!.func.e_ops
             expvals = similar(cb_discrete[idx].affect!.func.expvals)
             _save_func = SaveFuncMCSolve(e_ops, Ref(1), expvals)
-            cb_save = (FunctionCallingCallback(_save_func, funcat=tlist),)
+            cb_save = (FunctionCallingCallback(_save_func, funcat = tlist),)
         else
             cb_save = ()
         end

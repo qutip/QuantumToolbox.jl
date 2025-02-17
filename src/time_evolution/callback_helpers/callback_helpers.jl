@@ -57,7 +57,7 @@ function _generate_save_callback(e_ops, tlist, progress_bar, method)
     expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
 
     _save_func = method(e_ops_data, progr, Ref(1), expvals)
-    return FunctionCallingCallback(_save_func, funcat=tlist)
+    return FunctionCallingCallback(_save_func, funcat = tlist)
 end
 
 function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
@@ -70,7 +70,7 @@ function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurem
     m_expvals = getVal(store_measurement) ? Array{Float64}(undef, length(sc_ops), length(tlist) - 1) : nothing
 
     _save_func = method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals)
-    return FunctionCallingCallback(_save_func, funcat=tlist)
+    return FunctionCallingCallback(_save_func, funcat = tlist)
 end
 
 ##
