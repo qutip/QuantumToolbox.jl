@@ -65,6 +65,9 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only one operator, it is highly recommended to put only the operator as the argument. This will ensure the stochastic noise to be diagonal, allowing for a faster simulation.
+
 # Returns
 
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the `SDEProblem` for the Stochastic Master Equation time evolution.
@@ -207,6 +210,9 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only one operator, it is highly recommended to put only the operator as the argument. This will ensure the stochastic noise to be diagonal, allowing for a faster simulation.
+
 # Returns
 
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the Ensemble `SDEProblem` for the Stochastic Master Equation time evolution.
@@ -331,6 +337,9 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
+
+!!! tip "Performance Tip"
+    When `sc_ops` contains only one operator, it is highly recommended to put only the operator as the argument. This will ensure the stochastic noise to be diagonal, allowing for a faster simulation.
 
 # Returns
 

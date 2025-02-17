@@ -67,6 +67,9 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only one operator, it is highly recommended to put only the operator as the argument. This will ensure the stochastic noise to be diagonal, allowing for a faster simulation.
+
 # Returns
 
 - `prob`: The `SDEProblem` for the Stochastic Schrödinger time evolution of the system.
@@ -207,6 +210,9 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
+!!! tip "Performance Tip"
+    When `sc_ops` contains only one operator, it is highly recommended to put only the operator as the argument. This will ensure the stochastic noise to be diagonal, allowing for a faster simulation.
+
 # Returns
 
 - `prob::EnsembleProblem with SDEProblem`: The Ensemble SDEProblem for the Stochastic Shrödinger time evolution.
@@ -332,6 +338,9 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `alg` please refer to [`DifferentialEquations.jl` (SDE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/sde_solve/)
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
+
+!!! tip "Performance Tip"
+    When `sc_ops` contains only one operator, it is highly recommended to put only the operator as the argument. This will ensure the stochastic noise to be diagonal, allowing for a faster simulation.
 
 # Returns
 
