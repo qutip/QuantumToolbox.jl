@@ -10,7 +10,7 @@ struct SaveFuncMESolve{TE,PT<:Union{Nothing,ProgressBar},IT,TEXPV<:Union{Nothing
 end
 
 (f::SaveFuncMESolve)(u, t, integrator) = _save_func_mesolve(u, integrator, f.e_ops, f.progr, f.iter, f.expvals)
-(f::SaveFuncMESolve{Nothing})(integrator) = _save_func(integrator, f.progr)
+(f::SaveFuncMESolve{Nothing})(u, t, integrator) = _save_func(integrator, f.progr)
 
 _get_e_ops_data(e_ops, ::Type{SaveFuncMESolve}) = [_generate_mesolve_e_op(op) for op in e_ops] # Broadcasting generates type instabilities on Julia v1.10
 
