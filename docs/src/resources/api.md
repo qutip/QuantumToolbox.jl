@@ -254,6 +254,7 @@ PseudoInverse
 entropy_vn
 entropy_linear
 entropy_mutual
+entropy_conditional
 entanglement
 tracedist
 fidelity

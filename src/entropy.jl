@@ -2,7 +2,7 @@
 Entropy related functions.
 =#
 
-export entropy_vn, entropy_linear, entropy_mutual
+export entropy_vn, entropy_linear, entropy_mutual, entropy_conditional
 export entanglement
 
 @doc raw"""
@@ -77,7 +77,7 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 
 # Notes
 
-- `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+- `ρAB` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
 - `selA` specifies the indices of the sub-system `A` in `ρAB.dimensions`. See also [`ptrace`](@ref).
 - `selB` specifies the indices of the sub-system `B` in `ρAB.dimensions`. See also [`ptrace`](@ref).
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
@@ -104,6 +104,29 @@ function entropy_mutual(
     ρB = ptrace(ρAB, selB)
     return entropy_vn(ρA; kwargs...) + entropy_vn(ρB; kwargs...) - entropy_vn(ρAB; kwargs...)
 end
+
+@doc raw"""
+    entropy_conditional(ρAB::QuantumObject, selB; kwargs...)
+
+Calculates the conditional entropy with respect to sub-system ``B``: ``S(A|B) = S(\hat{\rho}_{AB}) - S(\hat{\rho}_{B})``.
+
+Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neumann_entropy), ``\hat{\rho}_{AB}`` is the density matrix of the entire system, and ``\hat{\rho}_B = \textrm{Tr}_A \left[ \hat{\rho}_{AB} \right]``.
+
+# Notes
+
+- `ρAB` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+- `selB` specifies the indices of the sub-system `B` in `ρAB.dimensions`. See also [`ptrace`](@ref).
+- `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
+"""
+entropy_conditional(
+    ρAB::QuantumObject{ObjType,<:AbstractDimensions{N}},
+    selB::BType;
+    kwargs...,
+) where {
+    ObjType<:Union{KetQuantumObject,OperatorQuantumObject},
+    N,
+    BType<:Union{Int,AbstractVector{Int},Tuple},
+} = entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
 
 """
     entanglement(QO::QuantumObject, sel::Union{Int,AbstractVector{Int},Tuple})
