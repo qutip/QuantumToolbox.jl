@@ -122,11 +122,8 @@ entropy_conditional(
     ρAB::QuantumObject{ObjType,<:AbstractDimensions{N}},
     selB::BType;
     kwargs...,
-) where {
-    ObjType<:Union{KetQuantumObject,OperatorQuantumObject},
-    N,
-    BType<:Union{Int,AbstractVector{Int},Tuple},
-} = entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
+) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject},N,BType<:Union{Int,AbstractVector{Int},Tuple}} =
+    entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
 
 """
     entanglement(QO::QuantumObject, sel::Union{Int,AbstractVector{Int},Tuple})
