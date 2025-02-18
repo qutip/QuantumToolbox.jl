@@ -2,7 +2,7 @@
 Entropy related functions.
 =#
 
-export entropy_vn, entropy_linear
+export entropy_vn, entropy_linear, entropy_mutual
 export entanglement
 
 @doc raw"""
@@ -68,11 +68,47 @@ Note that `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
 entropy_linear(ρ::QuantumObject{ObjType}) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject}} =
     1.0 - purity(ρ) # use 1.0 to make sure it always return value in Float-type
 
+@doc raw"""
+    entropy_mutual(ρAB::QuantumObject, selA, selB; kwargs...)
+
+Calculates the mutual information ``I(A:B) = S(\hat{\rho}_A) + S(\hat{\rho}_B) - S(\hat{\rho}_{AB})`` between subsystems ``A`` and ``B``.
+
+Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neumann_entropy), ``\hat{\rho}_{AB}`` is the density matrix of the entire system, ``\hat{\rho}_A = \textrm{Tr}_B \left[ \hat{\rho}_{AB} \right]``, ``\hat{\rho}_B = \textrm{Tr}_A \left[ \hat{\rho}_{AB} \right]``.
+
+# Notes
+
+- `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+- `selA` specifies the indices of the sub-system `A` in `ρAB.dimensions`. See also [`ptrace`](@ref).
+- `selB` specifies the indices of the sub-system `B` in `ρAB.dimensions`. See also [`ptrace`](@ref).
+- `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
+"""
+function entropy_mutual(
+    ρAB::QuantumObject{ObjType,<:AbstractDimensions{N}},
+    selA::AType,
+    selB::BType;
+    kwargs...,
+) where {
+    ObjType<:Union{KetQuantumObject,OperatorQuantumObject},
+    N,
+    AType<:Union{Int,AbstractVector{Int},Tuple},
+    BType<:Union{Int,AbstractVector{Int},Tuple},
+}
+    # check if selA and selB matches the dimensions of ρAB
+    sel_A_B = vcat(selA, selB)
+    (length(sel_A_B) != N) && ArgumentError(
+        "The indices in `selA = $(selA)` and `selB = $(selB)` does not match the given QuantumObject which has $N sub-systems",
+    )
+    allunique(sel_A_B) || throw(ArgumentError("Duplicate selection indices in `selA = $(selA)` and `selB = $(selB)`"))
+
+    ρA = ptrace(ρAB, selA)
+    ρB = ptrace(ρAB, selB)
+    return entropy_vn(ρA; kwargs...) + entropy_vn(ρB; kwargs...) - entropy_vn(ρAB; kwargs...)
+end
+
 """
     entanglement(QO::QuantumObject, sel::Union{Int,AbstractVector{Int},Tuple})
 
-Calculates the entanglement by doing the partial trace of `QO`, selecting only the dimensions
-with the indices contained in the `sel` vector, and then using the Von Neumann entropy [`entropy_vn`](@ref).
+Calculates the entanglement by doing the partial trace of `QO`, selecting only the dimensions with the indices contained in the `sel` vector, and then using the Von Neumann entropy [`entropy_vn`](@ref).
 """
 function entanglement(
     QO::QuantumObject{OpType},

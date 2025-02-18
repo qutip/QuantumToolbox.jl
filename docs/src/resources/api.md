@@ -253,6 +253,7 @@ PseudoInverse
 ```@docs
 entropy_vn
 entropy_linear
+entropy_mutual
 entanglement
 tracedist
 fidelity
