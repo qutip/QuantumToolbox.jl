@@ -176,6 +176,8 @@ unit
 tensor
 ⊗
 qeye
+vector_to_operator
+operator_to_vector
 sqrtm
 logm
 expm

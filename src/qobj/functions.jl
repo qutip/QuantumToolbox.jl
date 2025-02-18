@@ -261,15 +261,23 @@ end
 
 @doc raw"""
     vec2mat(A::QuantumObject)
+    vector_to_operator(A::QuantumObject)
 
 Convert a quantum object from vector ([`OperatorKetQuantumObject`](@ref)-type) to matrix ([`OperatorQuantumObject`](@ref)-type)
+
+!!! note
+    `vector_to_operator` is a synonym of `vec2mat`.
 """
 vec2mat(A::QuantumObject{OperatorKetQuantumObject}) = QuantumObject(vec2mat(A.data), Operator, A.dimensions)
 
 @doc raw"""
     mat2vec(A::QuantumObject)
+    operator_to_vector(A::QuantumObject)
 
 Convert a quantum object from matrix ([`OperatorQuantumObject`](@ref)-type) to vector ([`OperatorKetQuantumObject`](@ref)-type)
+
+!!! note
+    `operator_to_vector` is a synonym of `mat2vec`.
 """
 mat2vec(A::QuantumObject{OperatorQuantumObject}) = QuantumObject(mat2vec(A.data), OperatorKet, A.dimensions)
 

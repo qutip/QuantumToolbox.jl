@@ -125,10 +125,10 @@
         H = 0.3 * sigmax() + 0.7 * sigmaz()
         L = liouvillian(H)
         ρ = Qobj(rand(ComplexF64, 2, 2))
-        ρ_ket = mat2vec(ρ)
+        ρ_ket = operator_to_vector(ρ)
         ρ_bra = ρ_ket'
-        @test ρ_bra == Qobj(mat2vec(ρ.data)', type = OperatorBra)
-        @test ρ == vec2mat(ρ_ket)
+        @test ρ_bra == Qobj(operator_to_vector(ρ.data)', type = OperatorBra)
+        @test ρ == vector_to_opeartor(ρ_ket)
         @test isket(ρ_ket) == false
         @test isbra(ρ_ket) == false
         @test isoper(ρ_ket) == false

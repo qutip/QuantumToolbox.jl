@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for single `AbstractQuantumObject` in `sc_ops` for faster specific method in `ssesolve` and `smesolve`. ([#408])
 - Change save callbacks from `PresetTimeCallback` to `FunctionCallingCallback`. ([#410])
 - Align `eigenstates` and `eigenenergies` to QuTiP. ([#411])
+- Introduce `vector_to_operator` and `operator_to_vector`. ([#413])
 
 ## [v0.27.0]
 Release date: 2025-02-14
