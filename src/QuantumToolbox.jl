@@ -28,6 +28,7 @@ import SciMLBase:
     ODEProblem,
     SDEProblem,
     EnsembleProblem,
+    EnsembleAlgorithm,
     EnsembleSerial,
     EnsembleThreads,
     EnsembleSplitThreads,
@@ -39,7 +40,7 @@ import SciMLBase:
     AbstractSciMLProblem,
     AbstractODEIntegrator,
     AbstractODESolution
-import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA1
+import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA2, SRIW1
 import SciMLOperators:
     SciMLOperators,
     AbstractSciMLOperator,
@@ -52,10 +53,10 @@ import SciMLOperators:
     concretize
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
-import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
+import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
-import DiffEqNoiseProcess: RealWienerProcess!
+import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
 
 # other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
@@ -96,11 +97,12 @@ include("qobj/block_diagonal_form.jl")
 
 # time evolution
 include("time_evolution/time_evolution.jl")
+include("time_evolution/callback_helpers/callback_helpers.jl")
 include("time_evolution/callback_helpers/sesolve_callback_helpers.jl")
 include("time_evolution/callback_helpers/mesolve_callback_helpers.jl")
 include("time_evolution/callback_helpers/mcsolve_callback_helpers.jl")
 include("time_evolution/callback_helpers/ssesolve_callback_helpers.jl")
-include("time_evolution/callback_helpers/callback_helpers.jl")
+include("time_evolution/callback_helpers/smesolve_callback_helpers.jl")
 include("time_evolution/mesolve.jl")
 include("time_evolution/lr_mesolve.jl")
 include("time_evolution/sesolve.jl")

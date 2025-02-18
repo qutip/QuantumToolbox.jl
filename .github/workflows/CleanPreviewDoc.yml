@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [closed]
 
+permissions:
+    contents: write
+    deployments: write
+
 jobs:
   cleanup-preview-doc:
     runs-on: ubuntu-latest
@@ -23,4 +27,5 @@ jobs:
               git push --force origin gh-pages-new:gh-pages
             fi
         env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             PRNUM: ${{ github.event.number }}

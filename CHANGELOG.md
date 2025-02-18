@@ -7,11 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Support for single `AbstractQuantumObject` in `sc_ops` for faster specific method in `ssesolve` and `smesolve`. ([#408])
+- Change save callbacks from `PresetTimeCallback` to `FunctionCallingCallback`. ([#410])
+- Align `eigenstates` and `eigenenergies` to QuTiP. ([#411])
+
+## [v0.27.0]
+Release date: 2025-02-14
+
 - Rename `sparse_to_dense` as `to_dense` and `dense_to_sparse` as `to_sparse`. ([#392])
 - Fix erroneous definition of the stochastic term in `smesolve`. ([#393])
 - Change name of `MultiSiteOperator` to `multisite_operator`. ([#394])
 - Fix `smesolve` for specifying initial state as density matrix. ([#395])
+- Add more generic solver for `steadystate_floquet` to allow more linear solvers. ([#396])
 - Fix time evolution output when using `saveat` keyword argument. ([#398])
+- Align some attributes of `mcsolve`, `ssesolve` and `smesolve` results with `QuTiP`. ([#402])
+- Improve ensemble generation of `ssesolve` and change parameters handling on stochastic processes. ([#403])
+- Set default trajectories to 500 and rename the keyword argument `ensemble_method` to `ensemblealg`. ([#405])
+- Introduce measurement on `ssesolve` and `smesolve`. ([#404])
 
 ## [v0.26.0]
 Release date: 2025-02-09
@@ -89,6 +101,7 @@ Release date: 2024-11-13
 [v0.25.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.25.1
 [v0.25.2]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.25.2
 [v0.26.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.26.0
+[v0.27.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.27.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -125,4 +138,12 @@ Release date: 2024-11-13
 [#393]: https://github.com/qutip/QuantumToolbox.jl/issues/393
 [#394]: https://github.com/qutip/QuantumToolbox.jl/issues/394
 [#395]: https://github.com/qutip/QuantumToolbox.jl/issues/395
+[#396]: https://github.com/qutip/QuantumToolbox.jl/issues/396
 [#398]: https://github.com/qutip/QuantumToolbox.jl/issues/398
+[#402]: https://github.com/qutip/QuantumToolbox.jl/issues/402
+[#403]: https://github.com/qutip/QuantumToolbox.jl/issues/403
+[#404]: https://github.com/qutip/QuantumToolbox.jl/issues/404
+[#405]: https://github.com/qutip/QuantumToolbox.jl/issues/405
+[#408]: https://github.com/qutip/QuantumToolbox.jl/issues/408
+[#410]: https://github.com/qutip/QuantumToolbox.jl/issues/410
+[#411]: https://github.com/qutip/QuantumToolbox.jl/issues/411

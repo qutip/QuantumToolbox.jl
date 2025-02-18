@@ -212,11 +212,12 @@ liouvillian_generalized
 
 ```@docs
 steadystate
-steadystate_floquet
+steadystate_fourier
 SteadyStateDirectSolver
 SteadyStateEigenSolver
 SteadyStateLinearSolver
 SteadyStateODESolver
+SSFloquetEffectiveLiouvillian
 ```
 
 ### [Dynamical Shifted Fock method](@id doc-API:Dynamical-Shifted-Fock-method)

@@ -443,7 +443,7 @@ LinearAlgebra.exp(
 ) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},DimsType} =
     QuantumObject(_spexp(A.data), A.type, A.dimensions)
 
-function _spexp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20) where {T,M}
+function _spexp(A::SparseMatrixCSC{T,M}; threshold = 1e-14, nonzero_tol = 1e-20) where {T<:Number,M<:Int}
     m = checksquare(A) # Throws exception if not square
 
     mat_norm = norm(A, Inf)

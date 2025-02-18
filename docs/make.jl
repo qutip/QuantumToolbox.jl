@@ -34,7 +34,7 @@ const PAGES = [
     "Home" => "index.md",
     "Getting Started" => [
         "Brief Example" => "getting_started/brief_example.md",
-        "Key differences from QuTiP" => "getting_started/qutip_differences.md",
+        # "Key differences from QuTiP" => "getting_started/qutip_differences.md",
         "The Importance of Type-Stability" => "getting_started/type_stability.md",
         "Example: Create QuantumToolbox.jl Logo" => "getting_started/logo.md",
         # "Cite QuantumToolbox.jl" => "getting_started/cite.md",
@@ -51,7 +51,7 @@ const PAGES = [
             "Time Evolution Solutions" => "users_guide/time_evolution/solution.md",
             "Schrödinger Equation Solver" => "users_guide/time_evolution/sesolve.md",
             "Lindblad Master Equation Solver" => "users_guide/time_evolution/mesolve.md",
-            "Monte-Carlo Solver" => "users_guide/time_evolution/mcsolve.md",
+            "Monte Carlo Solver" => "users_guide/time_evolution/mcsolve.md",
             "Stochastic Solver" => "users_guide/time_evolution/stochastic.md",
             "Solving Problems with Time-dependent Hamiltonians" => "users_guide/time_evolution/time_dependent.md",
         ],

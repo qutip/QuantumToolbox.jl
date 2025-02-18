@@ -105,12 +105,16 @@ sse_sol = ssesolve(
     sc_ops,
     e_ops = [x],
     ntraj = ntraj,
+    store_measurement = Val(true),
 )
+
+measurement_avg = sum(sse_sol.measurement, dims=2) / size(sse_sol.measurement, 2)
+measurement_avg = dropdims(measurement_avg, dims=2)
 
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = "Time")
-#lines!(ax, tlist, real(sse_sol.xxxxxx), label = L"J_x", color = :red, linestyle = :solid) TODO: add this in the future
+lines!(ax, tlist[1:end-1], real(measurement_avg[1,:]), label = L"J_x", color = :red, linestyle = :solid)
 lines!(ax, tlist, real(sse_sol.expect[1,:]),  label = L"\langle x \rangle", color = :black, linestyle = :solid)
 
 axislegend(ax, position = :rt)
@@ -134,12 +138,16 @@ sme_sol = smesolve(
     sc_ops,
     e_ops = [x],
     ntraj = ntraj,
+    store_measurement = Val(true),
 )
+
+measurement_avg = sum(sme_sol.measurement, dims=2) / size(sme_sol.measurement, 2)
+measurement_avg = dropdims(measurement_avg, dims=2)
 
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = "Time")
-#lines!(ax, tlist, real(sme_sol.xxxxxx), label = L"J_x", color = :red, linestyle = :solid) TODO: add this in the future
+lines!(ax, tlist[1:end-1], real(measurement_avg[1,:]), label = L"J_x", color = :red, linestyle = :solid)
 lines!(ax, tlist, real(sme_sol.expect[1,:]),  label = L"\langle x \rangle", color = :black, linestyle = :solid)
 
 axislegend(ax, position = :rt)

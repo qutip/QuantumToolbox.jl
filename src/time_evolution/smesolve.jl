@@ -15,11 +15,12 @@ _smesolve_ScalarOperator(op_vec) =
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         progress_bar::Union{Val,Bool} = Val(true),
+        store_measurement::Union{Val, Bool} = Val(false),
         kwargs...,
     )
 
@@ -49,11 +50,12 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
-- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -62,6 +64,9 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
+
+!!! tip "Performance Tip"
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
 
 # Returns
 
@@ -72,11 +77,12 @@ function smesolveProblem(
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params = NullParameters(),
     rng::AbstractRNG = default_rng(),
     progress_bar::Union{Val,Bool} = Val(true),
+    store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 ) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     haskey(kwargs, :save_idxs) &&
@@ -84,10 +90,12 @@ function smesolveProblem(
 
     isnothing(sc_ops) &&
         throw(ArgumentError("The list of stochastic collapse operators must be provided. Use mesolveProblem instead."))
+    sc_ops_list = _make_c_ops_list(sc_ops) # If it is an AbstractQuantumObject but we need to iterate
+    sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     tlist = _check_tlist(tlist, _FType(ψ0))
 
-    L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops)
+    L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
     check_dimensions(L_evo, ψ0)
     dims = L_evo.dimensions
 
@@ -96,7 +104,7 @@ function smesolveProblem(
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 
-    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops))
+    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
     K = get_data(L_evo)
 
@@ -110,16 +118,30 @@ function smesolveProblem(
     end
     D = DiffusionOperator(D_l)
 
-    p = (progr = progr, times = tlist, Hdims = dims, n_sc_ops = length(sc_ops), params...)
-
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
-    kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncMESolve)
+    kwargs3 = _generate_stochastic_kwargs(
+        e_ops,
+        sc_ops_list,
+        makeVal(progress_bar),
+        tlist,
+        makeVal(store_measurement),
+        kwargs2,
+        SaveFuncSMESolve,
+    )
 
     tspan = (tlist[1], tlist[end])
-    noise =
-        RealWienerProcess!(tlist[1], zeros(length(sc_ops)), zeros(length(sc_ops)), save_everystep = false, rng = rng)
-    noise_rate_prototype = similar(ρ0, length(ρ0), length(sc_ops))
-    prob = SDEProblem{true}(K, D, ρ0, tspan, p; noise_rate_prototype = noise_rate_prototype, noise = noise, kwargs3...)
+    noise = _make_noise(tspan[1], sc_ops, makeVal(store_measurement), rng)
+    noise_rate_prototype = sc_ops_isa_Qobj ? nothing : similar(ρ0, length(ρ0), length(sc_ops_list))
+    prob = SDEProblem{true}(
+        K,
+        D,
+        ρ0,
+        tspan,
+        params;
+        noise_rate_prototype = noise_rate_prototype,
+        noise = noise,
+        kwargs3...,
+    )
 
     return TimeEvolutionProblem(prob, tlist, dims)
 end
@@ -130,15 +152,16 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        ntraj::Int = 1,
-        ensemble_method = EnsembleThreads(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
         progress_bar::Union{Val,Bool} = Val(true),
+        store_measurement::Union{Val,Bool} = Val(false),
         kwargs...,
     )
 
@@ -168,15 +191,16 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
-- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
-- `ntraj`: Number of trajectories to use.
-- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
-- `prob_func`: Function to use for generating the ODEProblem.
+- `ntraj`: Number of trajectories to use. Default is `500`.
+- `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -185,6 +209,9 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
+
+!!! tip "Performance Tip"
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
 
 # Returns
 
@@ -195,22 +222,31 @@ function smesolveEnsembleProblem(
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params = NullParameters(),
     rng::AbstractRNG = default_rng(),
-    ntraj::Int = 1,
-    ensemble_method = EnsembleThreads(),
+    ntraj::Int = 500,
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
+    store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 ) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     _prob_func =
-        isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _stochastic_prob_func) : prob_func
+        isnothing(prob_func) ?
+        _ensemble_dispatch_prob_func(
+            rng,
+            ntraj,
+            tlist,
+            _stochastic_prob_func;
+            sc_ops = sc_ops,
+            store_measurement = makeVal(store_measurement),
+        ) : prob_func
     _output_func =
         output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemble_method, progress_bar, ntraj, _stochastic_output_func) : output_func
+        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _stochastic_output_func) : output_func
 
     prob_sme = smesolveProblem(
         H,
@@ -222,6 +258,7 @@ function smesolveEnsembleProblem(
         params = params,
         rng = rng,
         progress_bar = Val(false),
+        store_measurement = makeVal(store_measurement),
         kwargs...,
     )
 
@@ -241,16 +278,17 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-        alg::StochasticDiffEqAlgorithm = SRA1(),
+        sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
+        alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::NamedTuple = NamedTuple(),
+        params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        ntraj::Int = 1,
-        ensemble_method = EnsembleThreads(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
         progress_bar::Union{Val,Bool} = Val(true),
+        store_measurement::Union{Val,Bool} = Val(false),
         kwargs...,
     )
 
@@ -280,16 +318,17 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
-- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector` or a `Tuple`.
-- `alg`: The algorithm to use for the stochastic differential equation. Default is `SRA1()`.
+- `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
+- `alg`: The algorithm to use for the stochastic differential equation. Default is `SRIW1()` if `sc_ops` is an [`AbstractQuantumObject`](@ref) (diagonal noise), and `SRA2()` otherwise (non-diagonal noise).
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
-- `params`: `NamedTuple` of parameters to pass to the solver.
+- `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
-- `ntraj`: Number of trajectories to use.
-- `ensemble_method`: Ensemble method to use. Default to `EnsembleThreads()`.
-- `prob_func`: Function to use for generating the ODEProblem.
+- `ntraj`: Number of trajectories to use. Default is `500`.
+- `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
+- `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -298,6 +337,9 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
+
+!!! tip "Performance Tip"
+    When `sc_ops` contains only a single operator, it is recommended to pass only that operator as the argument. This ensures that the stochastic noise is diagonal, making the simulation faster.
 
 # Returns
 
@@ -308,16 +350,17 @@ function smesolve(
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    sc_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::StochasticDiffEqAlgorithm = SRA1(),
+    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
+    alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::NamedTuple = NamedTuple(),
+    params = NullParameters(),
     rng::AbstractRNG = default_rng(),
-    ntraj::Int = 1,
-    ensemble_method = EnsembleThreads(),
+    ntraj::Int = 500,
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
+    store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 ) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     ensemble_prob = smesolveEnsembleProblem(
@@ -330,43 +373,57 @@ function smesolve(
         params = params,
         rng = rng,
         ntraj = ntraj,
-        ensemble_method = ensemble_method,
+        ensemblealg = ensemblealg,
         prob_func = prob_func,
         output_func = output_func,
         progress_bar = progress_bar,
+        store_measurement = makeVal(store_measurement),
         kwargs...,
     )
 
-    return smesolve(ensemble_prob, alg, ntraj, ensemble_method)
+    sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
+
+    if isnothing(alg)
+        alg = sc_ops_isa_Qobj ? SRIW1() : SRA2()
+    end
+
+    return smesolve(ensemble_prob, alg, ntraj, ensemblealg)
 end
 
 function smesolve(
     ens_prob::TimeEvolutionProblem,
-    alg::StochasticDiffEqAlgorithm = SRA1(),
-    ntraj::Int = 1,
-    ensemble_method = EnsembleThreads(),
+    alg::StochasticDiffEqAlgorithm = SRA2(),
+    ntraj::Int = 500,
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
 )
-    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemble_method, ntraj)
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     _sol_1 = sol[:, 1]
-    _expvals_sol_1 = _se_me_sse_get_expvals(_sol_1)
+    _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMESolve)
+    _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSMESolve)
 
-    normalize_states = Val(false)
     dims = ens_prob.dimensions
-    _expvals_all = _expvals_sol_1 isa Nothing ? nothing : map(i -> _se_me_sse_get_expvals(sol[:, i]), eachindex(sol))
-    expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all)
+    _expvals_all =
+        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMESolve), eachindex(sol))
+    expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
     states = map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims)), eachindex(sol))
 
+    _m_expvals =
+        _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSMESolve), eachindex(sol))
+    m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2)
+
     expvals =
-        _se_me_sse_get_expvals(_sol_1) isa Nothing ? nothing :
-        dropdims(sum(expvals_all, dims = 3), dims = 3) ./ length(sol)
+        _get_expvals(_sol_1, SaveFuncMESolve) isa Nothing ? nothing :
+        dropdims(sum(expvals_all, dims = 2), dims = 2) ./ length(sol)
 
     return TimeEvolutionStochasticSol(
         ntraj,
         ens_prob.times,
         states,
         expvals,
+        expvals, # This is average_expect
         expvals_all,
+        m_expvals, # Measurement expectation values
         sol.converged,
         _sol_1.alg,
         _sol_1.prob.kwargs[:abstol],

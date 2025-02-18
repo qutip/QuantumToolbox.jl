@@ -4,7 +4,7 @@ export liouvillian_floquet, liouvillian_generalized
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
 const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
-const JUMP_TIMES_WHICH_INIT_SIZE = 200
+const COL_TIMES_WHICH_INIT_SIZE = 200
 
 @doc raw"""
     struct TimeEvolutionProblem
@@ -99,9 +99,10 @@ A structure storing the results and some information from solving quantum trajec
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
 - `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `expect_all::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
-- `jump_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
-- `jump_which::Vector{Vector{Int}}`: The indices of the jump operators in `c_ops` that describe the corresponding quantum jumps occurred in each trajectory.
+- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `col_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
+- `col_which::Vector{Vector{Int}}`: The indices of which collapse operator was responsible for each quantum jump in `col_times`.
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -122,9 +123,10 @@ struct TimeEvolutionMCSol{
     times::TT
     states::TS
     expect::TE
-    expect_all::TEA
-    jump_times::TJT
-    jump_which::TJW
+    average_expect::TE # Currently just a synonym for `expect`
+    runs_expect::TEA
+    col_times::TJT
+    col_which::TJW
     converged::Bool
     alg::AlgT
     abstol::AT
@@ -140,7 +142,7 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
     if sol.expect isa Nothing
         print(io, "num_expect = 0\n")
     else
-        print(io, "num_expect = $(size(sol.expect, 1))\n")
+        print(io, "num_expect = $(size(sol.average_expect, 1))\n")
     end
     print(io, "ODE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
@@ -159,7 +161,8 @@ A structure storing the results and some information from solving trajectories o
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
 - `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `expect_all::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
+- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -170,6 +173,7 @@ struct TimeEvolutionStochasticSol{
     TS<:AbstractVector,
     TE<:Union{AbstractMatrix,Nothing},
     TEA<:Union{AbstractArray,Nothing},
+    TEM<:Union{AbstractArray,Nothing},
     AlgT<:StochasticDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
@@ -178,7 +182,9 @@ struct TimeEvolutionStochasticSol{
     times::TT
     states::TS
     expect::TE
-    expect_all::TEA
+    average_expect::TE # Currently just a synonym for `expect`
+    runs_expect::TEA
+    measurement::TEM
     converged::Bool
     alg::AlgT
     abstol::AT
@@ -194,7 +200,7 @@ function Base.show(io::IO, sol::TimeEvolutionStochasticSol)
     if sol.expect isa Nothing
         print(io, "num_expect = 0\n")
     else
-        print(io, "num_expect = $(size(sol.expect, 1))\n")
+        print(io, "num_expect = $(size(sol.average_expect, 1))\n")
     end
     print(io, "SDE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
@@ -231,6 +237,9 @@ function _check_tlist(tlist, T::Type)
 end
 
 #######################################
+
+_make_c_ops_list(c_ops) = c_ops
+_make_c_ops_list(c_ops::AbstractQuantumObject) = (c_ops,)
 
 function _merge_saveat(tlist, e_ops, default_options; kwargs...)
     is_empty_e_ops = isnothing(e_ops) ? true : isempty(e_ops)
@@ -296,15 +305,15 @@ function _ensemble_dispatch_output_func(
     end
 end
 
-function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func)
+function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
     seeds = map(i -> rand(rng, UInt64), 1:ntraj)
-    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist)
+    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
     ens_prob_mc::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
-    ensemble_method::ET,
+    ensemblealg::ET,
     ntraj::Int,
 ) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
     sol = nothing
@@ -315,7 +324,7 @@ function _ensemble_dispatch_solve(
         end
 
         @async begin
-            sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+            sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
             put!(ens_prob_mc.kwargs.channel, false)
         end
     end
@@ -325,10 +334,10 @@ end
 function _ensemble_dispatch_solve(
     ens_prob_mc::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
-    ensemble_method,
+    ensemblealg,
     ntraj::Int,
 )
-    sol = solve(ens_prob_mc.prob, alg, ensemble_method, trajectories = ntraj)
+    sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
     return sol
 end
 
@@ -336,26 +345,80 @@ end
 #=
  Stochastic funcs
 =#
-function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist)
-    params = prob.prob.p
-
+function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
     seed = seeds[i]
     traj_rng = typeof(rng)()
     seed!(traj_rng, seed)
 
-    noise = RealWienerProcess!(
-        prob.prob.tspan[1],
-        zeros(params.n_sc_ops),
-        zeros(params.n_sc_ops),
-        save_everystep = false,
-        rng = traj_rng,
-    )
+    sc_ops = kwargs[:sc_ops]
+    store_measurement = kwargs[:store_measurement]
+    noise = _make_noise(prob.prob.tspan[1], sc_ops, store_measurement, traj_rng)
 
     return remake(prob.prob, noise = noise, seed = seed)
 end
 
 # Standard output function
 _stochastic_output_func(sol, i) = (sol, false)
+
+#= 
+    Define diagonal or non-diagonal noise depending on the type of `sc_ops`.
+    If `sc_ops` is a `AbstractQuantumObject`, we avoid using the non-diagonal noise.
+=#
+function _make_noise(t0, sc_ops, store_measurement::Val, rng)
+    noise = RealWienerProcess!(
+        t0,
+        zeros(length(sc_ops)),
+        zeros(length(sc_ops)),
+        save_everystep = getVal(store_measurement),
+        rng = rng,
+    )
+
+    return noise
+end
+function _make_noise(t0, sc_ops::AbstractQuantumObject, store_measurement::Val, rng)
+    noise = RealWienerProcess(t0, 0.0, 0.0, save_everystep = getVal(store_measurement), rng = rng)
+
+    return noise
+end
+
+#=
+    struct DiffusionOperator
+
+A struct to represent the diffusion operator. This is used to perform the diffusion process on N different Wiener processes.
+=#
+struct DiffusionOperator{T,OpType<:Tuple{Vararg{AbstractSciMLOperator}}} <: AbstractSciMLOperator{T}
+    ops::OpType
+    function DiffusionOperator(ops::OpType) where {OpType}
+        T = mapreduce(eltype, promote_type, ops)
+        return new{T,OpType}(ops)
+    end
+end
+
+@generated function update_coefficients!(L::DiffusionOperator, u, p, t)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        Base.@nexprs $N i -> begin
+            update_coefficients!(L.ops[i], u, p, t)
+        end
+
+        nothing
+    end
+end
+
+@generated function LinearAlgebra.mul!(v::AbstractVecOrMat, L::DiffusionOperator, u::AbstractVecOrMat)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        M = length(u)
+        S = (size(v, 1), size(v, 2)) # This supports also `v` as a `Vector`
+        (S[1] == M && S[2] == $N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
+        Base.@nexprs $N i -> begin
+            mul!(@view(v[:, i]), L.ops[i], u)
+        end
+        return v
+    end
+end
 
 #######################################
 
