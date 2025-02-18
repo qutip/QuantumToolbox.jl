@@ -90,6 +90,7 @@ partial_transpose
 EigsolveResult
 eigenenergies
 eigenstates
+groundstate
 LinearAlgebra.eigen
 LinearAlgebra.eigvals
 eigsolve

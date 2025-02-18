@@ -92,6 +92,14 @@
     @test isapprox(vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])), vec2mat(vecs2[1]).data, atol = 1e-7)
     @test isapprox(vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])), vec2mat(state3[1]).data, atol = 1e-5)
 
+    # ground state # TODO: support for sparse eigsolve
+    U = rand_unitary(5)
+    M = U * Qobj(diagm([1, 1, 2, 3, 4])) * U'  # degenerate ground state
+    gval_1, gvec_1 = @test_logs (:warn,) groundstate(M)
+    # gval_2, gvec_2 = @test_logs (:warn,) groundstate(M, sparse = true)
+    @test gval_1 ≈ 1# ≈ gval_2
+    #@test isapprox(gvec_1, gvec_2, atol = 1e-6)
+
     @testset "Type Inference (eigen)" begin
         N = 5
         a = kron(destroy(N), qeye(N))
@@ -112,6 +120,8 @@
         @inferred eigenstates(H, sparse = false)
         @inferred eigenstates(H, sparse = true)
         @inferred eigenstates(L, sparse = true)
+        @inferred groundstate(H)#, sparse = false) # TODO: support for sparse eigsolve
+        #@inferred groundstate(H, sparse = true)  
         @inferred eigsolve_al(L, 1 \ (40 * κ), eigvals = 10)
     end
 end

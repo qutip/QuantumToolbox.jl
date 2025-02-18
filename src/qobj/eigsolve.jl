@@ -3,7 +3,7 @@ Eigen solvers and results for QuantumObject
 =#
 
 export EigsolveResult
-export eigenenergies, eigenstates, eigsolve
+export eigenenergies, eigenstates, groundstate, eigsolve
 export eigsolve_al
 
 @doc raw"""
@@ -87,13 +87,19 @@ function Base.getproperty(res::EigsolveResult, key::Symbol)
     end
 end
 
+_eigenvector_type(::Type{OperatorQuantumObject}) = Ket
+_eigenvector_type(::Type{SuperOperatorQuantumObject}) = OperatorKet
+
 Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1,T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
-Base.iterate(res::EigsolveResult{T1,T2,OperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], Ket, res.dimensions) for k in 1:length(res.values)], Val(:vectors))
-Base.iterate(res::EigsolveResult{T1,T2,SuperOperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], OperatorKet, res.dimensions) for k in 1:length(res.values)], Val(:vectors))
+Base.iterate(
+    res::EigsolveResult{T1,T2,OpType},
+    ::Val{:vector_list},
+) where {T1,T2,OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = (
+    [QuantumObject(res.vectors[:, k], _eigenvector_type(OpType), res.dimensions) for k in 1:length(res.values)],
+    Val(:vectors),
+)
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
@@ -537,4 +543,41 @@ function eigenstates(
     else
         return eigsolve(A; kwargs...)
     end
+end
+
+@doc raw"""
+    groundstate(A::QuantumObject; safe::Bool=true, tol::Real=1e-8, kwargs...)
+
+Calculate the ground state eigenvalue and corresponding eigenvector
+
+# Arguments
+- `A::QuantumObject`: the [`QuantumObject`](@ref) to solve ground state eigenvalue and eigenvector
+- `safe::Bool`: if `true` check for degenerate ground state. Default to `true`.
+- `tol::Real`: the tolerance. Default is `1e-8`.
+- `kwargs`: Additional keyword arguments passed to the solver. If `sparse=true`, the keyword arguments are passed to [`eigsolve`](@ref), otherwise to [`eigen`](@ref).
+
+# Returns
+- `eigval::Number`: the ground state eigenvalue
+- `eigvec::QuantumObject`: the ground state eigenvector
+"""
+function groundstate(
+    A::QuantumObject{OpType};
+    safe::Bool = true,
+    tol::Real = 1e-8,
+    kwargs...,
+) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+    # TODO: support for sparse eigsolve
+    #if !sparse
+    result = eigen(A; kwargs...)
+    #else
+    #    eigvals = safe ? 2 : 1  # number of eigenvalues to calculate
+    #    result = eigsolve(A; eigvals = eigvals, tol = tol, kwargs...)
+    #end
+
+    # the tolarence should be less strick than the `tol` for the eigensolver
+    # so it's numerical errors are not seen as degenerate states.
+    evals = result.values
+    safe && (abs(evals[2] - evals[1]) < (10 * tol)) && @warn "Ground state may be degenerate."
+
+    return evals[1], QuantumObject(result.vectors[:, 1], _eigenvector_type(OpType), result.dimensions)
 end
