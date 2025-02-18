@@ -132,7 +132,7 @@ function mcsolveProblem(
     T = Base.promote_eltype(H_eff_evo, ψ0)
 
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
-    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., progress_bar = Val(false))
+    default_values = (DEFAULT_ODE_SE_MC_SOLVER_OPTIONS..., progress_bar = Val(false))
     kwargs2 = _merge_saveat(tlist, e_ops, default_values; kwargs...)
     kwargs3 = _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rng, kwargs2)
 

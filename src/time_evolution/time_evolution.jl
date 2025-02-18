@@ -2,8 +2,11 @@ export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
 
 export liouvillian_floquet, liouvillian_generalized
 
-const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
-const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
+# Dynamics of density matrices generally support larger tolerances
+const DEFAULT_ODE_SE_MC_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
+const DEFAULT_ODE_ME_SOLVER_OPTIONS = (abstol = 1e-7, reltol = 1e-5, save_everystep = false, save_end = true)
+const DEFAULT_SDE_SE_SOLVER_OPTIONS = (abstol = 5e-3, reltol = 1e-2, save_everystep = false, save_end = true)
+const DEFAULT_SDE_ME_SOLVER_OPTIONS = (abstol = 1e-2, reltol = 1e-2, save_everystep = false, save_end = true)
 const COL_TIMES_WHICH_INIT_SIZE = 200
 
 @doc raw"""

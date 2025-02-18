@@ -118,7 +118,7 @@ function ssesolveProblem(
     D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(prod(dims)), sc_ops_evo_data)
     D = DiffusionOperator(D_l)
 
-    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
+    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_stochastic_kwargs(
         e_ops,
         sc_ops_list,

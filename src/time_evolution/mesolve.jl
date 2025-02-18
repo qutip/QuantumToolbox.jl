@@ -79,7 +79,7 @@ function mesolveProblem(
     ρ0 = to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
     L = L_evo.data
 
-    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
+    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_ME_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncMESolve)
 
     tspan = (tlist[1], tlist[end])
