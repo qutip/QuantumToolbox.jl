@@ -56,8 +56,8 @@ function _generate_save_callback(e_ops, tlist, progress_bar, method)
 
     expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
 
-    _save_affect! = method(e_ops_data, progr, Ref(1), expvals)
-    return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+    _save_func = method(e_ops_data, progr, Ref(1), expvals)
+    return FunctionCallingCallback(_save_func, funcat = tlist)
 end
 
 function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
@@ -69,8 +69,8 @@ function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurem
     expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
     m_expvals = getVal(store_measurement) ? Array{Float64}(undef, length(sc_ops), length(tlist) - 1) : nothing
 
-    _save_affect! = method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals)
-    return PresetTimeCallback(tlist, _save_affect!, save_positions = (false, false))
+    _save_func = method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals)
+    return FunctionCallingCallback(_save_func, funcat = tlist)
 end
 
 ##
@@ -98,20 +98,20 @@ function _get_m_expvals(integrator::AbstractODESolution, method::Type{SF}) where
     if cb isa Nothing
         return nothing
     else
-        return cb.affect!.m_expvals
+        return cb.affect!.func.m_expvals
     end
 end
 
 #=
     With this function we extract the e_ops from the SaveFuncMCSolve `affect!` function of the callback of the integrator.
-    This callback can only be a PresetTimeCallback (DiscreteCallback).
+    This callback can only be a FunctionCallingCallback (DiscreteCallback).
 =#
 function _get_e_ops(integrator::AbstractODEIntegrator, method::Type{SF}) where {SF<:AbstractSaveFunc}
     cb = _get_save_callback(integrator, method)
     if cb isa Nothing
         return nothing
     else
-        return cb.affect!.e_ops
+        return cb.affect!.func.e_ops
     end
 end
 
@@ -121,7 +121,7 @@ function _get_expvals(sol::AbstractODESolution, method::Type{SF}) where {SF<:Abs
     if cb isa Nothing
         return nothing
     else
-        return cb.affect!.expvals
+        return cb.affect!.func.expvals
     end
 end
 
@@ -151,7 +151,7 @@ function _get_save_callback(cb::CallbackSet, method::Type{SF}) where {SF<:Abstra
     end
 end
 function _get_save_callback(cb::DiscreteCallback, ::Type{SF}) where {SF<:AbstractSaveFunc}
-    if typeof(cb.affect!) <: AbstractSaveFunc
+    if typeof(cb.affect!) <: FunctionCallingAffect && typeof(cb.affect!.func) <: AbstractSaveFunc
         return cb
     end
     return nothing

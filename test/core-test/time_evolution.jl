@@ -85,11 +85,11 @@
         @testset "Memory Allocations" begin
             allocs_tot = @allocations sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false)) # Warm-up
             allocs_tot = @allocations sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
-            @test allocs_tot < 150
+            @test allocs_tot < 110
 
             allocs_tot = @allocations sesolve(H, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false)) # Warm-up
             allocs_tot = @allocations sesolve(H, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false))
-            @test allocs_tot < 100
+            @test allocs_tot < 90
         end
 
         @testset "Type Inference sesolve" begin
@@ -327,21 +327,21 @@
 
             allocs_tot = @allocations mesolve(L, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false)) # Warm-up
             allocs_tot = @allocations mesolve(L, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
-            @test allocs_tot < 210
+            @test allocs_tot < 180
 
             allocs_tot = @allocations mesolve(L, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false)) # Warm-up
             allocs_tot = @allocations mesolve(L, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false))
-            @test allocs_tot < 120
+            @test allocs_tot < 110
 
             allocs_tot = @allocations mesolve(L_td, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p) # Warm-up
             allocs_tot = @allocations mesolve(L_td, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
-            @test allocs_tot < 210
+            @test allocs_tot < 180
 
             allocs_tot =
                 @allocations mesolve(L_td, ψ0, tlist, progress_bar = Val(false), saveat = [tlist[end]], params = p) # Warm-up
             allocs_tot =
                 @allocations mesolve(L_td, ψ0, tlist, progress_bar = Val(false), saveat = [tlist[end]], params = p)
-            @test allocs_tot < 120
+            @test allocs_tot < 110
         end
 
         @testset "Memory Allocations (mcsolve)" begin
@@ -350,7 +350,7 @@
                 @allocations mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, ntraj = ntraj, progress_bar = Val(false)) # Warm-up
             allocs_tot =
                 @allocations mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, ntraj = ntraj, progress_bar = Val(false))
-            @test allocs_tot < 160 * ntraj + 500 # 150 allocations per trajectory + 500 for initialization
+            @test allocs_tot < 120 * ntraj + 400 # 150 allocations per trajectory + 500 for initialization
 
             allocs_tot = @allocations mcsolve(
                 H,
@@ -370,22 +370,23 @@
                 saveat = [tlist[end]],
                 progress_bar = Val(false),
             )
-            @test allocs_tot < 160 * ntraj + 300 # 100 allocations per trajectory + 300 for initialization
+            @test allocs_tot < 110 * ntraj + 300 # 100 allocations per trajectory + 300 for initialization
         end
 
         @testset "Memory Allocations (ssesolve)" begin
+            ntraj = 100
             allocs_tot =
-                @allocations ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, ntraj = 100, progress_bar = Val(false)) # Warm-up
+                @allocations ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, ntraj = ntraj, progress_bar = Val(false)) # Warm-up
             allocs_tot =
-                @allocations ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, ntraj = 100, progress_bar = Val(false))
-            @test allocs_tot < 1950000 # TODO: Fix this high number of allocations
+                @allocations ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, ntraj = ntraj, progress_bar = Val(false))
+            @test allocs_tot < 1100 * ntraj + 400 # TODO: Fix this high number of allocations
 
             allocs_tot = @allocations ssesolve(
                 H,
                 ψ0,
                 tlist,
                 c_ops,
-                ntraj = 100,
+                ntraj = ntraj,
                 saveat = [tlist[end]],
                 progress_bar = Val(false),
             ) # Warm-up
@@ -394,14 +395,15 @@
                 ψ0,
                 tlist,
                 c_ops,
-                ntraj = 100,
+                ntraj = ntraj,
                 saveat = [tlist[end]],
                 progress_bar = Val(false),
             )
-            @test allocs_tot < 570000 # TODO: Fix this high number of allocations
+            @test allocs_tot < 1000 * ntraj + 300 # TODO: Fix this high number of allocations
         end
 
         @testset "Memory Allocations (smesolve)" begin
+            ntraj = 100
             allocs_tot = @allocations smesolve(
                 H,
                 ψ0,
@@ -409,7 +411,7 @@
                 c_ops_sme,
                 sc_ops_sme,
                 e_ops = e_ops,
-                ntraj = 100,
+                ntraj = ntraj,
                 progress_bar = Val(false),
             ) # Warm-up
             allocs_tot = @allocations smesolve(
@@ -419,10 +421,10 @@
                 c_ops_sme,
                 sc_ops_sme,
                 e_ops = e_ops,
-                ntraj = 100,
+                ntraj = ntraj,
                 progress_bar = Val(false),
             )
-            @test allocs_tot < 2750000 # TODO: Fix this high number of allocations
+            @test allocs_tot < 1100 * ntraj + 1800 # TODO: Fix this high number of allocations
 
             allocs_tot = @allocations smesolve(
                 H,
@@ -430,7 +432,7 @@
                 tlist,
                 c_ops_sme,
                 sc_ops_sme,
-                ntraj = 100,
+                ntraj = ntraj,
                 saveat = [tlist[end]],
                 progress_bar = Val(false),
             ) # Warm-up
@@ -440,11 +442,56 @@
                 tlist,
                 c_ops_sme,
                 sc_ops_sme,
-                ntraj = 100,
+                ntraj = ntraj,
                 saveat = [tlist[end]],
                 progress_bar = Val(false),
             )
-            @test allocs_tot < 570000 # TODO: Fix this high number of allocations
+            @test allocs_tot < 1000 * ntraj + 1500 # TODO: Fix this high number of allocations
+
+            # Diagonal Noise Case
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme2,
+                sc_ops_sme2,
+                e_ops = e_ops,
+                ntraj = ntraj,
+                progress_bar = Val(false),
+            ) # Warm-up
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme2,
+                sc_ops_sme2,
+                e_ops = e_ops,
+                ntraj = 1,
+                progress_bar = Val(false),
+            )
+            @test allocs_tot < 600 * ntraj + 1400 # TODO: Fix this high number of allocations
+
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme2,
+                sc_ops_sme2,
+                ntraj = ntraj,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+            ) # Warm-up
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme2,
+                sc_ops_sme2,
+                ntraj = 1,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+            )
+            @test allocs_tot < 550 * ntraj + 1000 # TODO: Fix this high number of allocations
         end
 
         @testset "Type Inference mesolve" begin

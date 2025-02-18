@@ -53,7 +53,7 @@ import SciMLOperators:
     concretize
 import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
 import DiffEqBase: get_tstops
-import DiffEqCallbacks: PeriodicCallback, PresetTimeCallback, TerminateSteadyState
+import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
 import OrdinaryDiffEqTsit5: Tsit5
 import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
