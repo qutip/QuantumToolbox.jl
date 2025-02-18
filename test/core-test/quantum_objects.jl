@@ -128,7 +128,7 @@
         ρ_ket = operator_to_vector(ρ)
         ρ_bra = ρ_ket'
         @test ρ_bra == Qobj(operator_to_vector(ρ.data)', type = OperatorBra)
-        @test ρ == vector_to_opeartor(ρ_ket)
+        @test ρ == vector_to_operator(ρ_ket)
         @test isket(ρ_ket) == false
         @test isbra(ρ_ket) == false
         @test isoper(ρ_ket) == false
