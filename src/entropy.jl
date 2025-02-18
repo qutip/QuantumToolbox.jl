@@ -2,7 +2,7 @@
 Entropy related functions.
 =#
 
-export entropy_vn
+export entropy_vn, entropy_linear
 export entanglement
 
 @doc raw"""
@@ -12,7 +12,7 @@ Calculates the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neumann_e
 
 # Notes
 
-- `ρ` is the quantum state, can be either a [`Ket`](@ref) or [`Operator`](@ref).
+- `ρ` is the quantum state, can be either a [`Ket`](@ref) or an [`Operator`](@ref).
 - `base` specifies the base of the logarithm to use, and when using the default value `0`, the natural logarithm is used.
 - `tol` describes the absolute tolerance for detecting the zero-valued eigenvalues of the density matrix ``\hat{\rho}``.
 
@@ -57,6 +57,16 @@ function entropy_vn(
     logvals = base != 0 ? log.(base, Complex.(nzvals)) : log.(Complex.(nzvals))
     return -real(mapreduce(*, +, nzvals, logvals))
 end
+
+@doc raw"""
+    entropy_linear(ρ::QuantumObject)
+
+Calculates the linear entropy ``S_L = 1 - \textrm{Tr} \left[ \hat{\rho}^2 \right]``, where ``\hat{\rho}`` is the density matrix of the system.
+
+Note that `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+"""
+entropy_linear(ρ::QuantumObject{ObjType}) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject}} =
+    1.0 - purity(ρ) # use 1.0 to make sure it always return value in Float-type
 
 """
     entanglement(QO::QuantumObject, sel::Union{Int,AbstractVector{Int},Tuple})
