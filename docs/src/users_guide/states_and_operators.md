@@ -314,7 +314,7 @@ Therefore, a given density matrix ``\hat{\rho}`` can then be vectorized, denoted
 |\hat{\rho}\rangle\rangle = \textrm{vec}(\hat{\rho}).
 ```
 
-`QuantumToolbox` uses the column-stacking convention for the isomorphism between ``\mathcal{L}(\mathcal{H})`` and ``\mathcal{H}\otimes\mathcal{H}``. This isomorphism is implemented by the functions [`mat2vec`](@ref) and [`vec2mat`](@ref):
+`QuantumToolbox` uses the column-stacking convention for the isomorphism between ``\mathcal{L}(\mathcal{H})`` and ``\mathcal{H}\otimes\mathcal{H}``. This isomorphism is implemented by the functions [`mat2vec`](@ref) (or [`operator_to_vector`](@ref)) and [`vec2mat`](@ref) (or [`vector_to_operator`](@ref)):
 
 ```@example states_and_operators
 rho = Qobj([1 2; 3 4])

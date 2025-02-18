@@ -6,6 +6,7 @@ export Qobj, QobjEvo, shape, isherm
 export trans, dag, matrix_element, unit
 export tensor, ⊗
 export qeye
+export vector_to_operator, operator_to_vector
 export sqrtm, logm, expm, sinm, cosm
 
 @doc raw"""
@@ -51,6 +52,9 @@ const tensor = kron
 const ⊗ = kron
 
 const qeye = eye
+
+const vector_to_operator = vec2mat
+const operator_to_vector = mat2vec
 
 @doc raw"""
     sqrtm(A::QuantumObject)
