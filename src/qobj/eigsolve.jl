@@ -257,7 +257,7 @@ end
     eigsolve(A::QuantumObject; 
         v0::Union{Nothing,AbstractVector}=nothing, 
         sigma::Union{Nothing, Real}=nothing,
-        k::Int = 1,
+        eigvals::Int = 1,
         krylovdim::Int = max(20, 2*k+1),
         tol::Real = 1e-8,
         maxiter::Int = 200,
@@ -265,6 +265,17 @@ end
         kwargs...)
 
 Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi method.
+
+# Arguments
+- `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues and eigenvectors.
+- `v0::Union{Nothing,AbstractVector}`: the initial vector for the Arnoldi method. Default is a random vector.
+- `sigma::Union{Nothing, Real}`: the shift for the eigenvalue problem. Default is `nothing`.
+- `eigvals::Int`: the number of eigenvalues to compute. Default is `1`.
+- `krylovdim::Int`: the dimension of the Krylov subspace. Default is `max(20, 2*k+1)`.
+- `tol::Real`: the tolerance for the Arnoldi method. Default is `1e-8`.
+- `maxiter::Int`: the maximum number of iterations for the Arnoldi method. Default is `200`.
+- `solver::Union{Nothing, SciMLLinearSolveAlgorithm}`: the linear solver algorithm. Default is `nothing`.
+- `kwargs`: Additional keyword arguments passed to the solver.
 
 # Notes
 - For more details about `solver` and extra `kwargs`, please refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/)
@@ -276,8 +287,8 @@ function eigsolve(
     A::QuantumObject;
     v0::Union{Nothing,AbstractVector} = nothing,
     sigma::Union{Nothing,Real} = nothing,
-    k::Int = 1,
-    krylovdim::Int = max(20, 2 * k + 1),
+    eigvals::Int = 1,
+    krylovdim::Int = max(20, 2 * eigvals + 1),
     tol::Real = 1e-8,
     maxiter::Int = 200,
     solver::Union{Nothing,SciMLLinearSolveAlgorithm} = nothing,
@@ -289,7 +300,7 @@ function eigsolve(
         type = A.type,
         dimensions = A.dimensions,
         sigma = sigma,
-        k = k,
+        eigvals = eigvals,
         krylovdim = krylovdim,
         tol = tol,
         maxiter = maxiter,
@@ -304,8 +315,8 @@ function eigsolve(
     type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject} = nothing,
     dimensions = nothing,
     sigma::Union{Nothing,Real} = nothing,
-    k::Int = 1,
-    krylovdim::Int = max(20, 2 * k + 1),
+    eigvals::Int = 1,
+    krylovdim::Int = max(20, 2 * eigvals + 1),
     tol::Real = 1e-8,
     maxiter::Int = 200,
     solver::Union{Nothing,SciMLLinearSolveAlgorithm} = nothing,
@@ -316,7 +327,7 @@ function eigsolve(
     v0 === nothing && (v0 = normalize!(rand(T, size(A, 1))))
 
     if sigma === nothing
-        res = _eigsolve(A, v0, type, dimensions, k, krylovdim, tol = tol, maxiter = maxiter)
+        res = _eigsolve(A, v0, type, dimensions, eigvals, krylovdim, tol = tol, maxiter = maxiter)
         vals = res.values
     else
         Aₛ = A - sigma * I
@@ -334,7 +345,7 @@ function eigsolve(
 
         Amap = EigsolveInverseMap(T, size(A), linsolve)
 
-        res = _eigsolve(Amap, v0, type, dimensions, k, krylovdim, tol = tol, maxiter = maxiter)
+        res = _eigsolve(Amap, v0, type, dimensions, eigvals, krylovdim, tol = tol, maxiter = maxiter)
         vals = @. (1 + sigma * res.values) / res.values
     end
 
@@ -349,7 +360,7 @@ end
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         params::NamedTuple = NamedTuple(),
         ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
-        k::Int = 1,
+        eigvals::Int = 1,
         krylovdim::Int = min(10, size(H, 1)),
         maxiter::Int = 200,
         eigstol::Real = 1e-6,
@@ -365,7 +376,7 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - `alg`: The differential equation solver algorithm. Default is `Tsit5()`.
 - `params`: A `NamedTuple` containing the parameters of the system.
 - `ρ0`: The initial density matrix. If not specified, a random density matrix is used.
-- `k`: The number of eigenvalues to compute.
+- `eigvals`: The number of eigenvalues to compute.
 - `krylovdim`: The dimension of the Krylov subspace.
 - `maxiter`: The maximum number of iterations for the eigsolver.
 - `eigstol`: The tolerance for the eigsolver.
@@ -388,7 +399,7 @@ function eigsolve_al(
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     params::NamedTuple = NamedTuple(),
     ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
-    k::Int = 1,
+    eigvals::Int = 1,
     krylovdim::Int = min(10, size(H, 1)),
     maxiter::Int = 200,
     eigstol::Real = 1e-6,
@@ -406,12 +417,10 @@ function eigsolve_al(
         ).prob
     integrator = init(prob, alg)
 
-    # prog = ProgressUnknown(desc="Applications:", showspeed = true, enabled=progress)
-
     Lmap = ArnoldiLindbladIntegratorMap(eltype(H), size(L_evo), integrator)
 
-    res = _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo.dimensions, k, krylovdim, maxiter = maxiter, tol = eigstol)
-    # finish!(prog)
+    res =
+        _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo.dimensions, eigvals, krylovdim, maxiter = maxiter, tol = eigstol)
 
     vals = similar(res.values)
     vecs = similar(res.vectors)
@@ -488,7 +497,7 @@ Calculate the eigenenergies
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues
 - `sparse::Bool`: if `false` call [`eigvals(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
-- `kwargs`: Additional keyword arguments passed to the solver
+- `kwargs`: Additional keyword arguments passed to the solver. If `sparse=true`, the keyword arguments are passed to [`eigsolve`](@ref), otherwise to [`eigen`](@ref).
 
 # Returns
 - `::Vector{<:Number}`: a list of eigenvalues
@@ -513,7 +522,7 @@ Calculate the eigenvalues and corresponding eigenvectors
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues and eigenvectors
 - `sparse::Bool`: if `false` call [`eigen(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
-- `kwargs`: Additional keyword arguments passed to the solver
+- `kwargs`: Additional keyword arguments passed to the solver. If `sparse=true`, the keyword arguments are passed to [`eigsolve`](@ref), otherwise to [`eigen`](@ref).
 
 # Returns
 - `::EigsolveResult`: containing the eigenvalues, the eigenvectors, and some information from the solver. see also [`EigsolveResult`](@ref)

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for single `AbstractQuantumObject` in `sc_ops` for faster specific method in `ssesolve` and `smesolve`. ([#408])
 - Change save callbacks from `PresetTimeCallback` to `FunctionCallingCallback`. ([#410])
+- Align `eigenstates` and `eigenenergies` to QuTiP. ([#411])
 
 ## [v0.27.0]
 Release date: 2025-02-14
@@ -145,3 +146,4 @@ Release date: 2024-11-13
 [#405]: https://github.com/qutip/QuantumToolbox.jl/issues/405
 [#408]: https://github.com/qutip/QuantumToolbox.jl/issues/408
 [#410]: https://github.com/qutip/QuantumToolbox.jl/issues/410
+[#411]: https://github.com/qutip/QuantumToolbox.jl/issues/411
