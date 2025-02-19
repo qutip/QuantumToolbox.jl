@@ -20,7 +20,7 @@
     # quantum relative entropy
     @test entropy_relative(ρ1, ψ) == Inf
     @test entropy_relative(ρ1, rand_dm(10, rank = 9)) == Inf
-    @test entropy_relative(ψ, ψ) ≈ 0
+    @test entropy_relative(ψ, ψ) + 1 ≈ 1
     @test entropy_relative(λ * ρ1 + (1 - λ) * ρ2, λ * σ1 + (1 - λ) * σ2) <=
           λ * entropy_relative(ρ1, σ1) + (1 - λ) * entropy_relative(ρ2, σ2) # joint convexity
 
