@@ -252,6 +252,7 @@ PseudoInverse
 
 ```@docs
 entropy_vn
+entropy_relative
 entropy_linear
 entropy_mutual
 entropy_conditional

@@ -2,7 +2,7 @@
 Entropy related functions.
 =#
 
-export entropy_vn, entropy_linear, entropy_mutual, entropy_conditional
+export entropy_vn, entropy_relative, entropy_linear, entropy_mutual, entropy_conditional
 export entanglement
 
 @doc raw"""
@@ -59,9 +59,73 @@ function entropy_vn(
 end
 
 @doc raw"""
+    entropy_relative(ρ::QuantumObject, σ::QuantumObject; base::Int=0, tol::Real=1e-15)
+
+Calculates the [quantum relative entropy](https://en.wikipedia.org/wiki/Quantum_relative_entropy) of ``\hat{\rho}`` with respect to ``\hat{\sigma}``: ``D(\hat{\rho}||\hat{\sigma}) = \textrm{Tr} \left[ \hat{\rho} \log \left( \hat{\rho} \right) \right] - \textrm{Tr} \left[ \hat{\rho} \log \left( \hat{\sigma} \right) \right]``.
+
+# Notes
+
+- `ρ` is a quantum state, can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+- `σ` is a quantum state, can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+- `base` specifies the base of the logarithm to use, and when using the default value `0`, the natural logarithm is used.
+- `tol` describes the absolute tolerance for detecting the zero-valued eigenvalues of the density matrix ``\hat{\rho}``.
+
+# References
+- [Nielsen-Chuang2011; section 11.3.1, page 511](@citet)
+"""
+function entropy_relative(
+    ρ::QuantumObject{ObjType1},
+    σ::QuantumObject{ObjType2};
+    base::Int = 0,
+    tol::Real = 1e-15,
+) where {
+    ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},
+    ObjType2<:Union{KetQuantumObject,OperatorQuantumObject},
+}
+    check_dimensions(ρ, σ)
+
+    # the logic of this code follows the detail given in the reference of the docstring
+    # consider the eigen decompositions:
+    #   ρ = Σ_i p_i |i⟩⟨i|
+    #   σ = Σ_j q_j |j⟩⟨j|
+    ρ_result = eigenstates(ket2dm(ρ))
+    σ_result = eigenstates(ket2dm(σ))
+
+    # make sure all p_i and q_j are real
+    any(p_i -> imag(p_i) >= tol, ρ_result.values) && error("Input `ρ` has non-real eigenvalues.")
+    any(q_j -> imag(q_j) >= tol, σ_result.values) && error("Input `σ` has non-real eigenvalues.")
+    p = real(ρ_result.values)
+    q = real(σ_result.values)
+    Uρ = ρ_result.vectors
+    Uσ = σ_result.vectors
+
+    # create P_ij matrix (all elements should be real)
+    P = abs2(Uρ' * Uσ) # this equals to ⟨i|j⟩⟨j|i⟩
+
+    # return +∞ if kernel of σ overlaps with support of ρ
+    dot((p .>= tol), (P .>= tol), (q .< tol)) && return Inf
+
+    # Avoid -∞ from log(0), these terms will be multiplied by zero later anyway
+    replace!(q_j -> abs(q_j) < tol ? 1 : q_j, q)
+    p_vals = filter(p_i -> abs(p_i) >= tol, p)
+
+    if base == 0
+        log_p = log.(p_vals)
+        log_q = log.(q)
+    else
+        log_p = log.(base, p_vals)
+        log_q = log.(base, q)
+    end
+
+    # the relative entropy is guaranteed to be ≥ 0
+    # so we calculate the value to 0 to avoid small violations of the lower bound.
+    return max(0, dot(p_vals, log_p) - dot(p, P, log_q))
+end
+
+@doc raw"""
     entropy_linear(ρ::QuantumObject)
 
-Calculates the linear entropy ``S_L = 1 - \textrm{Tr} \left[ \hat{\rho}^2 \right]``, where ``\hat{\rho}`` is the density matrix of the system.
+Calculates the quantum linear entropy ``S_L = 1 - \textrm{Tr} \left[ \hat{\rho}^2 \right]``, where ``\hat{\rho}`` is the density matrix of the system.
 
 Note that `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
 """
@@ -71,7 +135,7 @@ entropy_linear(ρ::QuantumObject{ObjType}) where {ObjType<:Union{KetQuantumObjec
 @doc raw"""
     entropy_mutual(ρAB::QuantumObject, selA, selB; kwargs...)
 
-Calculates the mutual information ``I(A:B) = S(\hat{\rho}_A) + S(\hat{\rho}_B) - S(\hat{\rho}_{AB})`` between subsystems ``A`` and ``B``.
+Calculates the [quantum mutual information](https://en.wikipedia.org/wiki/Quantum_mutual_information) ``I(A:B) = S(\hat{\rho}_A) + S(\hat{\rho}_B) - S(\hat{\rho}_{AB})`` between subsystems ``A`` and ``B``.
 
 Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neumann_entropy), ``\hat{\rho}_{AB}`` is the density matrix of the entire system, ``\hat{\rho}_A = \textrm{Tr}_B \left[ \hat{\rho}_{AB} \right]``, ``\hat{\rho}_B = \textrm{Tr}_A \left[ \hat{\rho}_{AB} \right]``.
 
@@ -108,7 +172,7 @@ end
 @doc raw"""
     entropy_conditional(ρAB::QuantumObject, selB; kwargs...)
 
-Calculates the conditional entropy with respect to sub-system ``B``: ``S(A|B) = S(\hat{\rho}_{AB}) - S(\hat{\rho}_{B})``.
+Calculates the [conditional quantum entropy](https://en.wikipedia.org/wiki/Conditional_quantum_entropy) with respect to sub-system ``B``: ``S(A|B) = S(\hat{\rho}_{AB}) - S(\hat{\rho}_{B})``.
 
 Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neumann_entropy), ``\hat{\rho}_{AB}`` is the density matrix of the entire system, and ``\hat{\rho}_B = \textrm{Tr}_A \left[ \hat{\rho}_{AB} \right]``.
 
