@@ -150,15 +150,10 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 """
 function entropy_mutual(
     ρAB::QuantumObject{ObjType,<:AbstractDimensions{N}},
-    selA::AType,
-    selB::BType;
+    selA::Union{Int,AbstractVector{Int},Tuple},
+    selB::Union{Int,AbstractVector{Int},Tuple};
     kwargs...,
-) where {
-    ObjType<:Union{KetQuantumObject,OperatorQuantumObject},
-    N,
-    AType<:Union{Int,AbstractVector{Int},Tuple},
-    BType<:Union{Int,AbstractVector{Int},Tuple},
-}
+) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject},N}
     # check if selA and selB matches the dimensions of ρAB
     sel_A_B = (selA..., selB...)
     (length(sel_A_B) != N) && throw(
@@ -188,22 +183,29 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 """
 entropy_conditional(
     ρAB::QuantumObject{ObjType,<:AbstractDimensions{N}},
-    selB::BType;
+    selB::Union{Int,AbstractVector{Int},Tuple};
     kwargs...,
-) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject},N,BType<:Union{Int,AbstractVector{Int},Tuple}} =
+) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject},N} =
     entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
 
-"""
-    entanglement(QO::QuantumObject, sel::Union{Int,AbstractVector{Int},Tuple})
+@doc raw"""
+    entanglement(ρ::QuantumObject, sel; kwargs...)
 
-Calculates the entanglement by doing the partial trace of `QO`, selecting only the dimensions with the indices contained in the `sel` vector, and then using the Von Neumann entropy [`entropy_vn`](@ref).
+Calculates the [entanglement entropy](https://en.wikipedia.org/wiki/Entropy_of_entanglement) by doing the partial trace of `ρ`, selecting only the dimensions with the indices contained in the `sel` vector, and then use the Von Neumann entropy [`entropy_vn`](@ref).
+
+# Notes
+
+- `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+- `sel` specifies the indices of the remaining sub-system. See also [`ptrace`](@ref).
+- `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
 function entanglement(
-    QO::QuantumObject{OpType},
+    ρ::QuantumObject{OpType},
     sel::Union{Int,AbstractVector{Int},Tuple},
-) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
-    ψ = normalize(QO)
-    ρ_tr = ptrace(ψ, sel)
-    entropy = entropy_vn(ρ_tr)
-    return (entropy > 0) * entropy
+    kwargs...,
+) where {OpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    _ρ = normalize(ρ)
+    ρ_tr = ptrace(_ρ, sel)
+    val = entropy_vn(ρ_tr; kwargs...)
+    return (val > 0) * val
 end
