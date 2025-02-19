@@ -100,10 +100,12 @@ function entropy_relative(
     Uσ = σ_result.vectors
 
     # create P_ij matrix (all elements should be real)
-    P = abs2(Uρ' * Uσ) # this equals to ⟨i|j⟩⟨j|i⟩
+    P = abs2.(Uρ' * Uσ) # this equals to ⟨i|j⟩⟨j|i⟩
 
-    # return +∞ if kernel of σ overlaps with support of ρ
-    dot((p .>= tol), (P .>= tol), (q .< tol)) && return Inf
+    # return +∞ if kernel of σ overlaps with support of ρ, i.e., supp(p) ⊆ supp(q)
+    # That is, if σ is not full rank, S(ρ||σ) = +∞
+    # note that, one special case is that S(ρ||σ) = 0 (if ρ == σ)
+    ((transpose(p .>= tol) * (P .>= tol) * (q .< tol)) == 0) || return Inf
 
     # Avoid -∞ from log(0), these terms will be multiplied by zero later anyway
     replace!(q_j -> abs(q_j) < tol ? 1 : q_j, q)
@@ -119,7 +121,7 @@ function entropy_relative(
 
     # the relative entropy is guaranteed to be ≥ 0
     # so we calculate the value to 0 to avoid small violations of the lower bound.
-    return max(0, dot(p_vals, log_p) - dot(p, P, log_q))
+    return max(0.0, dot(p_vals, log_p) - dot(p, P, log_q))
 end
 
 @doc raw"""
@@ -158,9 +160,11 @@ function entropy_mutual(
     BType<:Union{Int,AbstractVector{Int},Tuple},
 }
     # check if selA and selB matches the dimensions of ρAB
-    sel_A_B = vcat(selA, selB)
-    (length(sel_A_B) != N) && ArgumentError(
-        "The indices in `selA = $(selA)` and `selB = $(selB)` does not match the given QuantumObject which has $N sub-systems",
+    sel_A_B = (selA..., selB...)
+    (length(sel_A_B) != N) && throw(
+        ArgumentError(
+            "The indices in `selA = $(selA)` and `selB = $(selB)` does not match the given QuantumObject which has $N sub-systems",
+        ),
     )
     allunique(sel_A_B) || throw(ArgumentError("Duplicate selection indices in `selA = $(selA)` and `selB = $(selB)`"))
 
@@ -196,11 +200,10 @@ Calculates the entanglement by doing the partial trace of `QO`, selecting only t
 """
 function entanglement(
     QO::QuantumObject{OpType},
-    sel::Union{AbstractVector{Int},Tuple},
+    sel::Union{Int,AbstractVector{Int},Tuple},
 ) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     ψ = normalize(QO)
     ρ_tr = ptrace(ψ, sel)
     entropy = entropy_vn(ρ_tr)
     return (entropy > 0) * entropy
 end
-entanglement(QO::QuantumObject, sel::Int) = entanglement(QO, (sel,))

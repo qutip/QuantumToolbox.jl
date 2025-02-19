@@ -566,54 +566,20 @@
         end
     end
 
-    @testset "trace distance" begin
-        ψz0 = basis(2, 0)
-        ψz1 = basis(2, 1)
-        ρz0 = to_sparse(ket2dm(ψz0))
-        ρz1 = to_sparse(ket2dm(ψz1))
-        ψx0 = sqrt(0.5) * (basis(2, 0) + basis(2, 1))
-        @test tracedist(ψz0, ψx0) ≈ sqrt(0.5)
-        @test tracedist(ρz0, ψz1) ≈ 1.0
-        @test tracedist(ψz1, ρz0) ≈ 1.0
-        @test tracedist(ρz0, ρz1) ≈ 1.0
-
-        @testset "Type Inference (trace distance)" begin
-            @inferred tracedist(ψz0, ψx0)
-            @inferred tracedist(ρz0, ψz1)
-            @inferred tracedist(ψz1, ρz0)
-            @inferred tracedist(ρz0, ρz1)
-        end
-    end
-
-    @testset "sqrt and fidelity" begin
-        M = sprand(ComplexF64, 5, 5, 0.5)
-        M0 = Qobj(M * M')
-        ψ1 = Qobj(rand(ComplexF64, 5))
-        ψ2 = Qobj(rand(ComplexF64, 5))
-        M1 = ψ1 * ψ1'
-        @test sqrtm(M0) ≈ sqrtm(to_dense(M0))
-        @test isapprox(fidelity(M0, M1), fidelity(ψ1, M0); atol = 1e-6)
-        @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1e-6)
-
-        @testset "Type Inference (sqrt and fidelity)" begin
-            @inferred sqrtm(M0)
-            @inferred fidelity(M0, M1)
-            @inferred fidelity(ψ1, M0)
-            @inferred fidelity(ψ1, ψ2)
-        end
-    end
-
-    @testset "log, exp, sinm, cosm" begin
+    @testset "sqrt, log, exp, sinm, cosm" begin
         M0 = rand(ComplexF64, 4, 4)
         Md = Qobj(M0 * M0')
         Ms = to_sparse(Md)
         e_p = expm(1im * Md)
         e_m = expm(-1im * Md)
+        @test sqrtm(Md) ≈ sqrtm(Ms)
         @test logm(expm(Ms)) ≈ expm(logm(Md))
         @test cosm(Ms) ≈ (e_p + e_m) / 2
         @test sinm(Ms) ≈ (e_p - e_m) / 2im
 
         @testset "Type Inference" begin
+            @inferred sqrtm(Md)
+            @inferred sqrtm(Ms)
             @inferred expm(Md)
             @inferred expm(Ms)
             @inferred logm(Md)
