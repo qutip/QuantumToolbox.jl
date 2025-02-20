@@ -4,6 +4,7 @@ Functions for calculating metrics (distance measures) between states and operato
 
 export fidelity
 export tracedist, hilbert_dist
+export bures_dist, bures_angle
 
 @doc raw"""
     fidelity(ρ::QuantumObject, σ::QuantumObject)
@@ -11,7 +12,7 @@ export tracedist, hilbert_dist
 Calculate the fidelity of two [`QuantumObject`](@ref):
 ``F(\hat{\rho}, \hat{\sigma}) = \textrm{Tr} \sqrt{\sqrt{\hat{\rho}} \hat{\sigma} \sqrt{\hat{\rho}}}``
 
-Here, the definition is from Nielsen & Chuang, "Quantum Computation and Quantum Information". It is the square root of the fidelity defined in R. Jozsa, Journal of Modern Optics, 41:12, 2315 (1994).
+Here, the definition is from [Nielsen-Chuang2011](@citet). It is the square root of the fidelity defined in [Jozsa1994](@citet).
 
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
@@ -63,3 +64,27 @@ function hilbert_dist(
     A = ket2dm(ρ) - ket2dm(σ)
     return tr(A' * A)
 end
+
+@doc raw"""
+    bures_dist(ρ::QuantumObject, σ::QuantumObject)
+
+Calculate the [Bures distance](https://en.wikipedia.org/wiki/Bures_metric) between two [`QuantumObject`](@ref):
+``D_B(\hat{\rho}, \hat{\sigma}) = \sqrt{2 \left(1 - F(\hat{\rho}, \hat{\sigma}) \right)}``
+
+Here, the definition of [`fidelity`](@ref) ``F`` is from [Nielsen-Chuang2011](@citet). It is the square root of the fidelity defined in [Jozsa1994](@citet).
+
+Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
+"""
+bures_dist(ρ::QuantumObject, σ::QuantumObject) = sqrt(2 * (1 - fidelity(ρ, σ)))
+
+@doc raw"""
+    bures_angle(ρ::QuantumObject, σ::QuantumObject)
+
+Calculate the [Bures angle](https://en.wikipedia.org/wiki/Bures_metric) between two [`QuantumObject`](@ref):
+``D_A(\hat{\rho}, \hat{\sigma}) = \arccos\left(F(\hat{\rho}, \hat{\sigma})\right)``
+
+Here, the definition of [`fidelity`](@ref) ``F`` is from [Nielsen-Chuang2011](@citet). It is the square root of the fidelity defined in [Jozsa1994](@citet).
+
+Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
+"""
+bures_angle(ρ::QuantumObject, σ::QuantumObject) = acos(fidelity(ρ, σ))

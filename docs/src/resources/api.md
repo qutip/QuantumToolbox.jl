@@ -262,6 +262,8 @@ entanglement
 fidelity
 tracedist
 hilbert_dist
+bures_dist
+bures_angle
 ```
 
 ## [Spin Lattice](@id doc-API:Spin-Lattice)
