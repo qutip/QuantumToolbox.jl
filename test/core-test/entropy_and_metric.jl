@@ -72,8 +72,9 @@ end
     @test isapprox(val, sqrt(2 * entropy_linear(ptrace(ψr, 1))); atol = 1e-5) # √(2 * (1 - Tr(ρA^2)))
     @test isapprox(val, sqrt(2 * entropy_linear(ptrace(ψr, 2))); atol = 1e-5) # √(2 * (1 - Tr(ρB^2)))
 
-    @test_throws ArgumentError concurrence(rand_dm(4))
+    @test_throws ArgumentError entanglement(rand_dm((2, 2)), 1)
     @test_throws ArgumentError concurrence(rand_dm((2, 3)))
+    @test_throws ArgumentError concurrence(rand_dm(4))
 
     @testset "Type Stability (entanglement)" begin
         @inferred entanglement(ψb, 1)

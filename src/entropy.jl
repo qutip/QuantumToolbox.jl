@@ -195,7 +195,7 @@ Calculates the [entanglement entropy](https://en.wikipedia.org/wiki/Entropy_of_e
 
 # Notes
 
-- `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+- `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref). But should be a pure state.
 - `sel` specifies the indices of the remaining sub-system. See also [`ptrace`](@ref).
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
@@ -204,10 +204,16 @@ function entanglement(
     sel::Union{Int,AbstractVector{Int},Tuple},
     kwargs...,
 ) where {OpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-    _ρ = normalize(ρ)
-    ρ_tr = ptrace(_ρ, sel)
+    p = purity(ρ)
+    isapprox(p, 1; atol = 1e-2) || throw(
+        ArgumentError(
+            "The entanglement entropy only works for normalized pure state, the purity of the given state: $(p) ≉ 1",
+        ),
+    )
+
+    ρ_tr = ptrace(ρ, sel)
     val = entropy_vn(ρ_tr; kwargs...)
-    return (val > 0) * val
+    return max(0.0, val)  # use 0.0 to make sure it always return value in Float-type
 end
 
 @doc raw"""
@@ -220,7 +226,11 @@ Calculate the [concurrence](https://en.wikipedia.org/wiki/Concurrence_(quantum_c
 - `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
 """
 function concurrence(ρ::QuantumObject{OpType}) where {OpType<:Union{KetQuantumObject,OperatorQuantumObject}}
-    (ρ.dimensions == Dimensions((Space(2), Space(2)))) || throw(ArgumentError("The `concurrence` only support for a two-qubit state, invalid dims = $(_get_dims_string(ρ.dimensions))."))
+    (ρ.dimensions == Dimensions((Space(2), Space(2)))) || throw(
+        ArgumentError(
+            "The `concurrence` only works for a two-qubit state, invalid dims = $(_get_dims_string(ρ.dimensions)).",
+        ),
+    )
 
     _ρ = ket2dm(ρ).data
     σy = sigmay()
