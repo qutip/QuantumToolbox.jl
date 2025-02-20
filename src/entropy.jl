@@ -1,5 +1,5 @@
 #=
-Entropy related functions.
+Entropy related functions and some entanglement measures.
 =#
 
 export entropy_vn, entropy_relative, entropy_linear, entropy_mutual, entropy_conditional
