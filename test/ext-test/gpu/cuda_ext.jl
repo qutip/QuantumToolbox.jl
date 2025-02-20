@@ -146,8 +146,8 @@ end
     c_ops_gpu_csr = [CuSparseMatrixCSR(c_op) for c_op in c_ops_gpu_csc]
     ρ_ss_gpu_csr = steadystate(H_gpu_csr, c_ops_gpu_csr, solver = SteadyStateLinearSolver())
 
-    @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csc.data) atol = 1e-8*length(ρ_ss_cpu)
-    @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csr.data) atol = 1e-8*length(ρ_ss_cpu)
+    @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csc.data) atol = 1e-8 * length(ρ_ss_cpu)
+    @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csr.data) atol = 1e-8 * length(ρ_ss_cpu)
 end
 
 @testset "CUDA ptrace" begin
