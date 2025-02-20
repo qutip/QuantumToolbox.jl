@@ -161,7 +161,7 @@ coherent_dm(5, 1.25)
 thermal_dm(5, 1.25)
 ```
 
-`QuantumToolbox` also provides a set of distance metrics (see section [Entropy and Metrics](@ref doc-API:Entropy-and-Metrics) in API page) for determining how close two density matrix distributions are to each other. Included are the [`fidelity`](@ref), and trace distance ([`tracedist`](@ref)).
+`QuantumToolbox` also provides a set of distance metrics for determining how close two density matrix distributions are to each other. For example, [`fidelity`](@ref), and trace distance ([`tracedist`](@ref)) are included. For more metric functions, see section [Entropy and Metrics](@ref doc-API:Entropy-and-Metrics) in the API page.
 
 ```@example states_and_operators
 x = coherent_dm(5, 1.25)
