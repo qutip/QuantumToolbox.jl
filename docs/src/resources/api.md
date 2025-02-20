@@ -250,7 +250,7 @@ ExponentialSeries
 PseudoInverse
 ```
 
-## [Entropies and Metrics](@id doc-API:Entropies-and-Metrics)
+## [Entropy and Metrics](@id doc-API:Entropy-and-Metrics)
 
 ```@docs
 entropy_vn
