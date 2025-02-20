@@ -3,7 +3,7 @@ Entropy related functions.
 =#
 
 export entropy_vn, entropy_relative, entropy_linear, entropy_mutual, entropy_conditional
-export entanglement
+export entanglement, concurrence
 
 @doc raw"""
     entropy_vn(ρ::QuantumObject; base::Int=0, tol::Real=1e-15)
@@ -121,7 +121,7 @@ function entropy_relative(
 
     # the relative entropy is guaranteed to be ≥ 0
     # so we calculate the value to 0 to avoid small violations of the lower bound.
-    return max(0.0, dot(p_vals, log_p) - dot(p, P, log_q))
+    return max(0.0, dot(p_vals, log_p) - dot(p, P, log_q)) # use 0.0 to make sure it always return value in Float-type
 end
 
 @doc raw"""
@@ -208,4 +208,29 @@ function entanglement(
     ρ_tr = ptrace(_ρ, sel)
     val = entropy_vn(ρ_tr; kwargs...)
     return (val > 0) * val
+end
+
+@doc raw"""
+    concurrence(ρ::QuantumObject)
+
+Calculate the [concurrence](https://en.wikipedia.org/wiki/Concurrence_(quantum_computing)) for a two-qubit state.
+
+# Notes
+
+- `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+"""
+function concurrence(ρ::QuantumObject{OpType}) where {OpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    (ρ.dimensions == Dimensions((Space(2), Space(2)))) || throw(ArgumentError("The `concurrence` only support for a two-qubit state, invalid dims = $(_get_dims_string(ρ.dimensions))."))
+
+    _ρ = ket2dm(ρ).data
+    σy = sigmay()
+    σyσy = kron(σy, σy).data
+    ρ_tilde = σyσy * conj(_ρ) * σyσy
+
+    # we use the alternative way to calculate concurrence (more efficient)
+    # calculate the square root of each eigenvalues (in decreasing order) of the non-Hermitian matrix: ρ * ρ_tilde
+    # note that we add abs here to avoid problems with sqrt for very small negative numbers
+    λ = sqrt.(abs.(real(eigvals(_ρ * ρ_tilde; sortby = x -> -real(x)))))
+
+    return max(0.0, λ[1] - λ[2] - λ[3] - λ[4]) # use 0.0 to make sure it always return value in Float-type
 end
