@@ -259,6 +259,8 @@ entropy_linear
 entropy_mutual
 entropy_conditional
 entanglement
+concurrence
+negativity
 tracedist
 fidelity
 ```
@@ -282,7 +284,6 @@ BlockDiagonalForm
 
 ```@docs
 wigner
-negativity
 ```
 
 ## [Linear Maps](@id doc-API:Linear-Maps)
