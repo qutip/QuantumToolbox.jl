@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `entropy_mutual`
   - `entropy_conditional`
   - `entropy_relative`
+- Fix `entanglement` and introduce `concurrence`. ([#418], [#419])
 
 ## [v0.27.0]
 Release date: 2025-02-14
@@ -155,3 +156,5 @@ Release date: 2024-11-13
 [#411]: https://github.com/qutip/QuantumToolbox.jl/issues/411
 [#413]: https://github.com/qutip/QuantumToolbox.jl/issues/413
 [#416]: https://github.com/qutip/QuantumToolbox.jl/issues/416
+[#418]: https://github.com/qutip/QuantumToolbox.jl/issues/418
+[#419]: https://github.com/qutip/QuantumToolbox.jl/issues/419
