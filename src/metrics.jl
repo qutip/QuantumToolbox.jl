@@ -84,8 +84,8 @@ function hellinger_dist(
     ObjType2<:Union{KetQuantumObject,OperatorQuantumObject},
 }
     # Ket (pure state) doesn't need to do square root
-    sqrt_ρ = (ρ isa KetQuantumObject) ? ket2dm(ρ) : sqrt(ρ)
-    sqrt_σ = (σ isa KetQuantumObject) ? ket2dm(σ) : sqrt(σ)
+    sqrt_ρ = isket(ρ) ? ket2dm(ρ) : sqrt(ρ)
+    sqrt_σ = isket(σ) ? ket2dm(σ) : sqrt(σ)
 
     # `max` is to avoid numerical instabilities
     # it happens when ρ = σ, sum(eigvals) might be slightly larger than 1
