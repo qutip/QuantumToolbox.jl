@@ -2,6 +2,7 @@ module QuantumToolboxCUDAExt
 
 using QuantumToolbox
 using QuantumToolbox: makeVal, getVal
+import QuantumToolbox: _sparse_similar
 import CUDA: cu, CuArray, allowscalar
 import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR, AbstractCuSparseArray
 import SparseArrays: SparseVector, SparseMatrixCSC
@@ -105,5 +106,8 @@ QuantumToolbox.to_dense(A::MT) where {MT<:AbstractCuSparseArray} = CuArray(A)
 
 QuantumToolbox.to_dense(::Type{T1}, A::CuArray{T2}) where {T1<:Number,T2<:Number} = CuArray{T1}(A)
 QuantumToolbox.to_dense(::Type{T}, A::AbstractCuSparseArray) where {T<:Number} = CuArray{T}(A)
+
+QuantumToolbox._sparse_similar(A::CuSparseMatrixCSC, args...) = sparse(args..., fmt = :csc)
+QuantumToolbox._sparse_similar(A::CuSparseMatrixCSR, args...) = sparse(args..., fmt = :csr)
 
 end

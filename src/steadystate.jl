@@ -108,18 +108,18 @@ function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::Stea
     N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
 
-    v0 = _get_dense_similar(L_tmp, N^2)
+    v0 = _dense_similar(L_tmp, N^2)
     fill!(v0, 0)
     allowed_setindex!(v0, weight, 1) # Because scalar indexing is not allowed on GPU arrays
 
     idx_range = collect(1:N)
-    rows = _get_dense_similar(L_tmp, N)
-    cols = _get_dense_similar(L_tmp, N)
-    vals = _get_dense_similar(L_tmp, N)
+    rows = _dense_similar(L_tmp, N)
+    cols = _dense_similar(L_tmp, N)
+    vals = _dense_similar(L_tmp, N)
     fill!(rows, 1)
     copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
     fill!(vals, weight)
-    Tn = sparse(rows, cols, vals, N^2, N^2)
+    Tn = _sparse_similar(L_tmp, rows, cols, vals, N^2, N^2)
     L_tmp = L_tmp + Tn
 
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
@@ -155,14 +155,14 @@ function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::Stea
     N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
 
-    v0 = _get_dense_similar(L_tmp, N^2)
+    v0 = _dense_similar(L_tmp, N^2)
     fill!(v0, 0)
     allowed_setindex!(v0, weight, 1) # Because scalar indexing is not allowed on GPU arrays
 
     idx_range = collect(1:N)
-    rows = _get_dense_similar(L_tmp, N)
-    cols = _get_dense_similar(L_tmp, N)
-    vals = _get_dense_similar(L_tmp, N)
+    rows = _dense_similar(L_tmp, N)
+    cols = _dense_similar(L_tmp, N)
+    vals = _dense_similar(L_tmp, N)
     fill!(rows, 1)
     copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
     fill!(vals, weight)
