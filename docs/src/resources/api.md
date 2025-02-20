@@ -259,8 +259,9 @@ entropy_linear
 entropy_mutual
 entropy_conditional
 entanglement
-tracedist
 fidelity
+tracedist
+hilbert_dist
 ```
 
 ## [Spin Lattice](@id doc-API:Spin-Lattice)
