@@ -12,7 +12,7 @@ core_tests = [
     "dynamical_fock_dimension_mesolve.jl",
     "dynamical-shifted-fock.jl",
     "eigenvalues_and_operators.jl",
-    "entanglement.jl",
+    "entropy_and_metric.jl",
     "generalized_master_equation.jl",
     "low_rank_dynamics.jl",
     "negativity_and_partial_transpose.jl",

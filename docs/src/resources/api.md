@@ -250,10 +250,14 @@ ExponentialSeries
 PseudoInverse
 ```
 
-## [Metrics](@id doc-API:Metrics)
+## [Entropy and Metrics](@id doc-API:Entropy-and-Metrics)
 
 ```@docs
 entropy_vn
+entropy_relative
+entropy_linear
+entropy_mutual
+entropy_conditional
 entanglement
 tracedist
 fidelity

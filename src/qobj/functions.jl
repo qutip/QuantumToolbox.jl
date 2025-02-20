@@ -125,7 +125,7 @@ to_dense(::Type{T}, A::AbstractSparseArray) where {T<:Number} = Array{T}(A)
 to_dense(::Type{T1}, A::AbstractArray{T2}) where {T1<:Number,T2<:Number} = Array{T1}(A)
 to_dense(::Type{T}, A::AbstractArray{T}) where {T<:Number} = A
 
-function to_dense(::Type{M}) where {M<:SparseMatrixCSC}
+function to_dense(::Type{M}) where {M<:Union{Diagonal,SparseMatrixCSC}}
     T = M
     par = T.parameters
     npar = length(par)

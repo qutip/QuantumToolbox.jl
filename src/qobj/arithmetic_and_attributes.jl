@@ -568,8 +568,7 @@ Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
 function ptrace(QO::QuantumObject{KetQuantumObject}, sel::Union{AbstractVector{Int},Tuple})
     _non_static_array_warning("sel", sel)
 
-    n_s = length(sel)
-    if n_s == 0 # return full trace for empty sel
+    if length(sel) == 0 # return full trace for empty sel
         return tr(ket2dm(QO))
     else
         n_d = length(QO.dimensions)
@@ -577,7 +576,7 @@ function ptrace(QO::QuantumObject{KetQuantumObject}, sel::Union{AbstractVector{I
         (any(>(n_d), sel) || any(<(1), sel)) && throw(
             ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(n_d) sub-systems"),
         )
-        (n_s != length(unique(sel))) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
+        allunique(sel) || throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
         (n_d == 1) && return ket2dm(QO) # ptrace should always return Operator
     end
 
@@ -596,8 +595,7 @@ function ptrace(QO::QuantumObject{OperatorQuantumObject}, sel::Union{AbstractVec
 
     _non_static_array_warning("sel", sel)
 
-    n_s = length(sel)
-    if n_s == 0 # return full trace for empty sel
+    if length(sel) == 0 # return full trace for empty sel
         return tr(QO)
     else
         n_d = length(QO.dimensions)
@@ -605,7 +603,7 @@ function ptrace(QO::QuantumObject{OperatorQuantumObject}, sel::Union{AbstractVec
         (any(>(n_d), sel) || any(<(1), sel)) && throw(
             ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(n_d) sub-systems"),
         )
-        (n_s != length(unique(sel))) && throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
+        allunique(sel) || throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
         (n_d == 1) && return QO
     end
 
