@@ -3,7 +3,7 @@ Functions for calculating metrics (distance measures) between states and operato
 =#
 
 export fidelity
-export tracedist, hilbert_dist
+export tracedist, hilbert_dist, hellinger_dist
 export bures_dist, bures_angle
 
 @doc raw"""
@@ -63,6 +63,33 @@ function hilbert_dist(
 
     A = ket2dm(ρ) - ket2dm(σ)
     return tr(A' * A)
+end
+
+@doc raw"""
+    hellinger_dist(ρ::QuantumObject, σ::QuantumObject)
+
+Calculates the [Hellinger distance](https://en.wikipedia.org/wiki/Hellinger_distance) between two [`QuantumObject`](@ref):
+``D_H(\hat{\rho}, \hat{\sigma}) = \sqrt{2 - 2 \textrm{Tr}\left(\sqrt{\hat{\rho}}\sqrt{\hat{\sigma}}\right)}``
+
+Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
+
+# References
+- [Spehner2017](@citet)
+"""
+function hellinger_dist(
+    ρ::QuantumObject{ObjType1},
+    σ::QuantumObject{ObjType2},
+) where {
+    ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},
+    ObjType2<:Union{KetQuantumObject,OperatorQuantumObject},
+}
+    # Ket (pure state) doesn't need to do square root
+    sqrt_ρ = (ρ isa KetQuantumObject) ? ket2dm(ρ) : sqrt(ρ)
+    sqrt_σ = (σ isa KetQuantumObject) ? ket2dm(σ) : sqrt(σ)
+
+    # `max` is to avoid numerical instabilities
+    # it happens when ρ = σ, sum(eigvals) might be slightly larger than 1
+    return sqrt(2.0 * max(0.0, 1.0 - sum(real, eigvals(sqrt_ρ * sqrt_σ))))
 end
 
 @doc raw"""

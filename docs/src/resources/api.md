@@ -262,6 +262,7 @@ entanglement
 fidelity
 tracedist
 hilbert_dist
+hellinger_dist
 bures_dist
 bures_angle
 ```
