@@ -11,12 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change save callbacks from `PresetTimeCallback` to `FunctionCallingCallback`. ([#410])
 - Align `eigenstates` and `eigenenergies` to QuTiP. ([#411])
 - Introduce `vector_to_operator` and `operator_to_vector`. ([#413])
-- Introduce some entropy related functions. ([#416])
+- Introduce some entropy related functions. ([#414], [#416])
   - `entropy_linear`
   - `entropy_mutual`
   - `entropy_conditional`
   - `entropy_relative`
-- Fix `entanglement` and introduce `concurrence`. ([#418], [#419])
+- Fix `entanglement` and introduce `concurrence`. ([#414], [#418], [#419])
 
 ## [v0.27.0]
 Release date: 2025-02-14
@@ -155,6 +155,7 @@ Release date: 2024-11-13
 [#410]: https://github.com/qutip/QuantumToolbox.jl/issues/410
 [#411]: https://github.com/qutip/QuantumToolbox.jl/issues/411
 [#413]: https://github.com/qutip/QuantumToolbox.jl/issues/413
+[#414]: https://github.com/qutip/QuantumToolbox.jl/issues/414
 [#416]: https://github.com/qutip/QuantumToolbox.jl/issues/416
 [#418]: https://github.com/qutip/QuantumToolbox.jl/issues/418
 [#419]: https://github.com/qutip/QuantumToolbox.jl/issues/419
