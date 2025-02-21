@@ -47,8 +47,6 @@ end
         alg = Tsit5(),
         ψ0 = nothing,
         tmax = Inf,
-        reltol = 1.0e-6,
-        abstol = 1.0e-8,
         )
 
 An ordinary differential equation (ODE) solver for solving [`steadystate`](@ref).
@@ -71,18 +69,14 @@ or
 - `alg::OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm to solve the ODE.
 - `ψ0::Union{Nothing,QuantumObject}=nothing`: The initial state of the system. If not specified, a random pure state will be generated.
 - `tmax::Real=Inf`: The final time step for the steady state problem.
-- `reltol::Real=1.0e-6`: Relative tolerance in steady state terminate condition. It can be different from the integrator's tolerance.
-- `abstol::Real=1.0e-8`: Absolute tolerance in steady state terminate condition. It can be different from the integrator's tolerance.
 
 For more details about the solvers, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/).
 """
-Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm,ST<:Union{Nothing,QuantumObject}} <:
+Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm,ST<:Union{Nothing,QuantumObject},T<:Real} <:
                    SteadyStateSolver
     alg::MT = Tsit5()
     ψ0::ST = nothing
-    tmax::Float64 = Inf
-    reltol::Float64 = 1.0e-4
-    abstol::Float64 = 1.0e-6
+    tmax::T = Inf
 end
 
 @doc raw"""
@@ -207,10 +201,10 @@ end
 
 function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateODESolver; kwargs...)
     tmax = solver.tmax
-    abstol = solver.abstol
-    reltol = solver.reltol
 
     ψ0 = isnothing(solver.ψ0) ? rand_ket(L.dimensions) : solver.ψ0
+    abstol = haskey(kwargs, :abstol) ? kwargs[:abstol] : DEFAULT_ODE_SOLVER_OPTIONS.abstol
+    reltol = haskey(kwargs, :reltol) ? kwargs[:reltol] : DEFAULT_ODE_SOLVER_OPTIONS.reltol
 
     ftype = _FType(ψ0)
     _terminate_func = SteadyStateODECondition(similar(mat2vec(ket2dm(ψ0)).data))
