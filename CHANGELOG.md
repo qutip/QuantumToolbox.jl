@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `entropy_conditional`
   - `entropy_relative`
 - Fix `entanglement` and introduce `concurrence`. ([#414], [#418], [#419])
+- Introduce some metric functions. ([#414], [#420])
+  - `hilbert_dist`
+  - `hellinger_dist`
+  - `bures_dist`
+  - `bures_angle`
 
 ## [v0.27.0]
 Release date: 2025-02-14
@@ -159,3 +164,4 @@ Release date: 2024-11-13
 [#416]: https://github.com/qutip/QuantumToolbox.jl/issues/416
 [#418]: https://github.com/qutip/QuantumToolbox.jl/issues/418
 [#419]: https://github.com/qutip/QuantumToolbox.jl/issues/419
+[#420]: https://github.com/qutip/QuantumToolbox.jl/issues/420
