@@ -261,8 +261,12 @@ entropy_conditional
 entanglement
 concurrence
 negativity
-tracedist
 fidelity
+tracedist
+hilbert_dist
+hellinger_dist
+bures_dist
+bures_angle
 ```
 
 ## [Spin Lattice](@id doc-API:Spin-Lattice)

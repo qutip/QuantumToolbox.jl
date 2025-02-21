@@ -87,7 +87,7 @@ end
     end
 end
 
-@testset "trace distance" begin
+@testset "trace and Hilbert-Schmidt distance" begin
     ψz0 = basis(2, 0)
     ψz1 = basis(2, 1)
     ρz0 = to_sparse(ket2dm(ψz0))
@@ -98,26 +98,81 @@ end
     @test tracedist(ψz1, ρz0) ≈ 1.0
     @test tracedist(ρz0, ρz1) ≈ 1.0
 
+    ψ = rand_ket(10)
+    ϕ = rand_ket(10)
+    @test isapprox(tracedist(ψ, ϕ)^2, hilbert_dist(ψ, ϕ) / 2; atol = 1e-6)
+
     @testset "Type Inference (trace distance)" begin
         @inferred tracedist(ψz0, ψx0)
         @inferred tracedist(ρz0, ψz1)
         @inferred tracedist(ψz1, ρz0)
         @inferred tracedist(ρz0, ρz1)
     end
+
+    @testset "Type Inference (Hilbert-Schmidt distance)" begin
+        @inferred hilbert_dist(ψz0, ψx0)
+        @inferred hilbert_dist(ρz0, ψz1)
+        @inferred hilbert_dist(ψz1, ρz0)
+        @inferred hilbert_dist(ρz0, ρz1)
+    end
 end
 
-@testset "fidelity" begin
-    M = sprand(ComplexF64, 5, 5, 0.5)
-    M0 = Qobj(M * M')
-    ψ1 = Qobj(rand(ComplexF64, 5))
-    ψ2 = Qobj(rand(ComplexF64, 5))
-    M1 = ψ1 * ψ1'
+@testset "fidelity, Bures metric, and Hellinger distance" begin
+    M0 = rand_dm(5)
+    ψ1 = rand_ket(5)
+    ψ2 = rand_ket(5)
+    M1 = ket2dm(ψ1)
+    b00 = bell_state(Val(0), Val(0))
+    b01 = bell_state(Val(0), Val(1))
     @test isapprox(fidelity(M0, M1), fidelity(ψ1, M0); atol = 1e-6)
     @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1e-6)
+    @test isapprox(fidelity(b00, b00), 1; atol = 1e-6)
+    @test isapprox(bures_dist(b00, b00) + 1, 1; atol = 1e-6)
+    @test isapprox(bures_angle(b00, b00) + 1, 1; atol = 1e-6)
+    @test isapprox(hellinger_dist(b00, b00) + 1, 1; atol = 1e-6)
+    @test isapprox(fidelity(b00, b01) + 1, 1; atol = 1e-6)
+    @test isapprox(bures_dist(b00, b01), √2; atol = 1e-6)
+    @test isapprox(bures_angle(b00, b01), π / 2; atol = 1e-6)
+    @test isapprox(hellinger_dist(b00, b01), √2; atol = 1e-6)
+
+    # some relations between Bures and Hellinger dintances
+    # together with some monotonicity under tensor products
+    # [see arXiv:1611.03449 (2017); section 4.2]
+    ρA = rand_dm(5)
+    ρB = rand_dm(6)
+    ρAB = tensor(ρA, ρB)
+    σA = rand_dm(5)
+    σB = rand_dm(6)
+    σAB = tensor(σA, σB)
+    d_Bu_A = bures_dist(ρA, σA)
+    d_Bu_AB = bures_dist(ρAB, σAB)
+    d_He_A = hellinger_dist(ρA, σA)
+    d_He_AB = hellinger_dist(ρAB, σAB)
+    @test isapprox(fidelity(ρAB, σAB), fidelity(ρA, σA) * fidelity(ρB, σB); atol = 1e-6)
+    @test d_He_AB >= d_Bu_AB
+    @test d_Bu_AB >= d_Bu_A
+    @test isapprox(bures_dist(ρAB, tensor(σA, ρB)), d_Bu_A; atol = 1e-6)
+    @test d_He_AB >= d_He_A
+    @test isapprox(hellinger_dist(ρAB, tensor(σA, ρB)), d_He_A; atol = 1e-6)
 
     @testset "Type Inference (fidelity)" begin
         @inferred fidelity(M0, M1)
         @inferred fidelity(ψ1, M0)
         @inferred fidelity(ψ1, ψ2)
+    end
+
+    @testset "Type Inference (Hellinger distance)" begin
+        @inferred hellinger_dist(M0, M1)
+        @inferred hellinger_dist(ψ1, M0)
+        @inferred hellinger_dist(ψ1, ψ2)
+    end
+
+    @testset "Type Inference (Bures metric)" begin
+        @inferred bures_dist(M0, M1)
+        @inferred bures_dist(ψ1, M0)
+        @inferred bures_dist(ψ1, ψ2)
+        @inferred bures_angle(M0, M1)
+        @inferred bures_angle(ψ1, M0)
+        @inferred bures_angle(ψ1, ψ2)
     end
 end
