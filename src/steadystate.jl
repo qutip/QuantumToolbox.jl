@@ -27,7 +27,7 @@ struct SteadyStateEigenSolver <: SteadyStateSolver end
 
 A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillian [`SuperOperator`](@ref) using the `alg`orithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/).
 
-# Parameters
+# Arguments
 - `alg::SciMLLinearSolveAlgorithm=KrylovJL_GMRES()`: algorithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/)
 - `Pl::Union{Function,Nothing}=nothing`: left preconditioner, see documentation [Solving for Steady-State Solutions](@ref doc:Solving-for-Steady-State-Solutions) for more details.
 - `Pr::Union{Function,Nothing}=nothing`: right preconditioner, see documentation [Solving for Steady-State Solutions](@ref doc:Solving-for-Steady-State-Solutions) for more details.
@@ -43,16 +43,40 @@ Base.@kwdef struct SteadyStateLinearSolver{
 end
 
 @doc raw"""
-    SteadyStateODESolver(alg = Tsit5())
+    SteadyStateODESolver(
+        alg = Tsit5(),
+        ψ0 = nothing,
+        tmax = Inf,
+        )
 
 An ordinary differential equation (ODE) solver for solving [`steadystate`](@ref).
 
-It includes a field (attribute) `SteadyStateODESolver.alg` that specifies the solving algorithm. Default to `Tsit5()`.
+Solve the stationary state based on time evolution (ordinary differential equations; `OrdinaryDiffEq.jl`) with a given initial state.
 
-For more details about the solvers, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/)
+The termination condition of the stationary state ``|\rho\rangle\rangle`` is that either the following condition is `true`:
+
+```math
+\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}+|\hat{\rho}\rangle\rangle\rVert
+```
+
+or
+
+```math
+\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{abstol}
+```
+
+# Arguments
+- `alg::OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm to solve the ODE.
+- `ψ0::Union{Nothing,QuantumObject}=nothing`: The initial state of the system. If not specified, a random pure state will be generated.
+- `tmax::Real=Inf`: The final time step for the steady state problem.
+
+For more details about the solvers, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/).
 """
-Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm} <: SteadyStateSolver
+Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm,ST<:Union{Nothing,QuantumObject},T<:Real} <:
+                   SteadyStateSolver
     alg::MT = Tsit5()
+    ψ0::ST = nothing
+    tmax::T = Inf
 end
 
 @doc raw"""
@@ -108,18 +132,18 @@ function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::Stea
     N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
 
-    v0 = _get_dense_similar(L_tmp, N^2)
+    v0 = _dense_similar(L_tmp, N^2)
     fill!(v0, 0)
     allowed_setindex!(v0, weight, 1) # Because scalar indexing is not allowed on GPU arrays
 
     idx_range = collect(1:N)
-    rows = _get_dense_similar(L_tmp, N)
-    cols = _get_dense_similar(L_tmp, N)
-    vals = _get_dense_similar(L_tmp, N)
+    rows = _dense_similar(L_tmp, N)
+    cols = _dense_similar(L_tmp, N)
+    vals = _dense_similar(L_tmp, N)
     fill!(rows, 1)
     copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
     fill!(vals, weight)
-    Tn = sparse(rows, cols, vals, N^2, N^2)
+    Tn = _sparse_similar(L_tmp, rows, cols, vals, N^2, N^2)
     L_tmp = L_tmp + Tn
 
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
@@ -155,14 +179,14 @@ function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::Stea
     N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
 
-    v0 = _get_dense_similar(L_tmp, N^2)
+    v0 = _dense_similar(L_tmp, N^2)
     fill!(v0, 0)
     allowed_setindex!(v0, weight, 1) # Because scalar indexing is not allowed on GPU arrays
 
     idx_range = collect(1:N)
-    rows = _get_dense_similar(L_tmp, N)
-    cols = _get_dense_similar(L_tmp, N)
-    vals = _get_dense_similar(L_tmp, N)
+    rows = _dense_similar(L_tmp, N)
+    cols = _dense_similar(L_tmp, N)
+    vals = _dense_similar(L_tmp, N)
     fill!(rows, 1)
     copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
     fill!(vals, weight)
@@ -175,68 +199,20 @@ function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::Stea
     return QuantumObject(ρss, Operator, L.dimensions)
 end
 
-_steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateODESolver; kwargs...) = throw(
-    ArgumentError(
-        "The initial state ψ0 is required for SteadyStateODESolver, use the following call instead: `steadystate(H, ψ0, tmax, c_ops)`.",
-    ),
-)
+function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateODESolver; kwargs...)
+    tmax = solver.tmax
 
-@doc raw"""
-    steadystate(
-        H::QuantumObject{HOpType},
-        ψ0::QuantumObject{StateOpType},
-        tmax::Real = Inf,
-        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-        solver::SteadyStateODESolver = SteadyStateODESolver(),
-        reltol::Real = 1.0e-8,
-        abstol::Real = 1.0e-10,
-        kwargs...,
-    )
+    ψ0 = isnothing(solver.ψ0) ? rand_ket(L.dimensions) : solver.ψ0
+    abstol = haskey(kwargs, :abstol) ? kwargs[:abstol] : DEFAULT_ODE_SOLVER_OPTIONS.abstol
+    reltol = haskey(kwargs, :reltol) ? kwargs[:reltol] : DEFAULT_ODE_SOLVER_OPTIONS.reltol
 
-Solve the stationary state based on time evolution (ordinary differential equations; `OrdinaryDiffEq.jl`) with a given initial state.
-
-The termination condition of the stationary state ``|\rho\rangle\rangle`` is that either the following condition is `true`:
-
-```math
-\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}+|\hat{\rho}\rangle\rangle\rVert
-```
-
-or
-
-```math
-\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{abstol}
-```
-
-# Parameters
-- `H`: The Hamiltonian or the Liouvillian of the system.
-- `ψ0`: The initial state of the system.
-- `tmax=Inf`: The final time step for the steady state problem.
-- `c_ops=nothing`: The list of the collapse operators.
-- `solver`: see [`SteadyStateODESolver`](@ref) for more details.
-- `reltol=1.0e-8`: Relative tolerance in steady state terminate condition and solver adaptive timestepping.
-- `abstol=1.0e-10`: Absolute tolerance in steady state terminate condition and solver adaptive timestepping.
-- `kwargs`: The keyword arguments for the ODEProblem.
-"""
-function steadystate(
-    H::QuantumObject{HOpType},
-    ψ0::QuantumObject{StateOpType},
-    tmax::Real = Inf,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    solver::SteadyStateODESolver = SteadyStateODESolver(),
-    reltol::Real = 1.0e-8,
-    abstol::Real = 1.0e-10,
-    kwargs...,
-) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
-}
     ftype = _FType(ψ0)
-    cb = TerminateSteadyState(abstol, reltol, _steadystate_ode_condition)
+    _terminate_func = SteadyStateODECondition(similar(mat2vec(ket2dm(ψ0)).data))
+    cb = TerminateSteadyState(abstol, reltol, _terminate_func)
     sol = mesolve(
-        H,
+        L,
         ψ0,
         [ftype(0), ftype(tmax)],
-        c_ops,
         progress_bar = Val(false),
         save_everystep = false,
         saveat = ftype[],
@@ -247,12 +223,17 @@ function steadystate(
     return ρss
 end
 
-function _steadystate_ode_condition(integrator, abstol, reltol, min_t)
+struct SteadyStateODECondition{CT<:AbstractArray}
+    cache::CT
+end
+
+function (f::SteadyStateODECondition)(integrator, abstol, reltol, min_t)
     # this condition is same as DiffEqBase.NormTerminationMode
 
-    du_dt = (integrator.u - integrator.uprev) / integrator.dt
-    norm_du_dt = norm(du_dt)
-    if (norm_du_dt <= reltol * norm(du_dt + integrator.u)) || (norm_du_dt <= abstol)
+    f.cache .= (integrator.u .- integrator.uprev) ./ integrator.dt
+    norm_du_dt = norm(f.cache)
+    f.cache .+= integrator.u
+    if norm_du_dt <= reltol * norm(f.cache) || norm_du_dt <= abstol
         return true
     else
         return false

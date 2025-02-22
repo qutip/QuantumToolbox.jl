@@ -37,10 +37,6 @@ To change a solver, use the keyword argument `solver`, for example:
 ρ_ss = steadystate(H, c_ops; solver = SteadyStateLinearSolver())
 ```
 
-!!! note "Initial state for `SteadyStateODESolver()`"
-    It is necessary to provide the initial state `ψ0` for ODE solving method, namely
-    `steadystate(H, ψ0, tspan, c_ops, solver = SteadyStateODESolver())`, where `tspan::Real` represents the final time step, defaults to `Inf` (infinity).
-
 Although it is not obvious, the [`SteadyStateDirectSolver()`](@ref SteadyStateDirectSolver) and [`SteadyStateEigenSolver()`](@ref SteadyStateEigenSolver) methods all use an LU decomposition internally and thus can have a large memory overhead. In contrast, for [`SteadyStateLinearSolver()`](@ref SteadyStateLinearSolver), iterative algorithms provided by [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/), such as `KrylovJL_GMRES()` and `KrylovJL_BICGSTAB()`, do not factor the matrix and thus take less memory than the LU methods and allow, in principle, for extremely large system sizes. The downside is that these methods can take much longer than the direct method as the condition number of the Liouvillian matrix is large, indicating that these iterative methods require a large number of iterations for convergence. 
 
 To overcome this, one can provide preconditioner that solves for an approximate inverse for the (modified) Liouvillian, thus better conditioning the problem, leading to faster convergence. The left and right preconditioner can be specified as the keyword argument `Pl` and `Pr`, respectively:

@@ -130,8 +130,10 @@ end
 
 get_typename_wrapper(A) = Base.typename(typeof(A)).wrapper
 
-_get_dense_similar(A::AbstractArray, args...) = similar(A, args...)
-_get_dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
+_dense_similar(A::AbstractArray, args...) = similar(A, args...)
+_dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
+
+_sparse_similar(A::AbstractArray, args...) = sparse(args...)
 
 _Ginibre_ensemble(n::Int, rank::Int = n) = randn(ComplexF64, n, rank) / sqrt(n)
 

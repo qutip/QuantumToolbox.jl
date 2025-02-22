@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `hellinger_dist`
   - `bures_dist`
   - `bures_angle`
+- Align `steadystate` ODE solver to other methods and improve GPU support. ([#421])
 
 ## [v0.27.0]
 Release date: 2025-02-14
@@ -165,3 +166,4 @@ Release date: 2024-11-13
 [#418]: https://github.com/qutip/QuantumToolbox.jl/issues/418
 [#419]: https://github.com/qutip/QuantumToolbox.jl/issues/419
 [#420]: https://github.com/qutip/QuantumToolbox.jl/issues/420
+[#421]: https://github.com/qutip/QuantumToolbox.jl/issues/421
