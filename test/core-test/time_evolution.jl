@@ -158,6 +158,11 @@
         )
         sol_sme3 = smesolve(H, ψ0, tlist, c_ops_sme2, sc_ops_sme2, e_ops = e_ops, progress_bar = Val(false))
 
+        # For testing the `OperatorKet` input
+        sol_me4 = mesolve(H, operator_to_vector(ket2dm(ψ0)), tlist, c_ops, saveat=saveat, progress_bar = Val(false))
+        sol_sme4 = smesolve(H, ψ0, tlist, c_ops_sme, sc_ops_sme, saveat=saveat, ntraj=10, progress_bar = Val(false), rng = MersenneTwister(12))
+        sol_sme5 = smesolve(H, operator_to_vector(ket2dm(ψ0)), tlist, c_ops_sme, sc_ops_sme, saveat=saveat, ntraj=10, progress_bar = Val(false), rng = MersenneTwister(12))
+
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
         expect_mc_states_mean = sum(expect_mc_states, dims = 2) / size(expect_mc_states, 2)
@@ -190,6 +195,7 @@
         @test length(sol_me3.states) == length(saveat)
         @test size(sol_me3.expect) == (length(e_ops), length(tlist))
         @test sol_me3.expect[1, saveat_idxs] ≈ expect(e_ops[1], sol_me3.states) atol = 1e-6
+        @test all([sol_me3.states[i] ≈ vector_to_operator(sol_me4.states[i]) for i in eachindex(saveat)])
         @test length(sol_mc.times) == length(tlist)
         @test size(sol_mc.expect) == (length(e_ops), length(tlist))
         @test length(sol_mc_states.times) == length(tlist)
@@ -202,6 +208,7 @@
         @test isnothing(sol_sme.measurement)
         @test size(sol_sse2.measurement) == (length(c_ops), 20, length(tlist) - 1)
         @test size(sol_sme2.measurement) == (length(sc_ops_sme), 20, length(tlist) - 1)
+        @test all([sol_sme4.states[j][i] ≈ vector_to_operator(sol_sme5.states[j][i]) for i in eachindex(saveat), j in 1:10])
 
         @test sol_me_string ==
               "Solution of time evolution\n" *

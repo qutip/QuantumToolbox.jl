@@ -1,6 +1,7 @@
 export smesolveProblem, smesolveEnsembleProblem, smesolve
 
-_smesolve_generate_state(u, dims) = QuantumObject(vec2mat(u), type = Operator, dims = dims)
+_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator, dims = dims)
+_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet, dims = dims)
 
 function _smesolve_update_coeff(u, p, t, op_vec)
     return 2 * real(dot(op_vec, u)) #this is Tr[Sn * ρ + ρ * Sn']
@@ -47,7 +48,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
@@ -84,7 +85,7 @@ function smesolveProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject}}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -100,7 +101,11 @@ function smesolveProblem(
     dims = L_evo.dimensions
 
     T = Base.promote_eltype(L_evo, ψ0)
-    ρ0 = to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
+    ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
+        to_dense(_CType(T), copy(ψ0.data))
+    else
+        to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) 
+    end
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 
@@ -143,7 +148,7 @@ function smesolveProblem(
         kwargs3...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, dims)
+    return TimeEvolutionProblem(prob, tlist, dims, (isoperket=Val(isoperket(ψ0)),))
 end
 
 @doc raw"""
@@ -188,7 +193,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
@@ -233,7 +238,7 @@ function smesolveEnsembleProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject}}
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
@@ -266,7 +271,7 @@ function smesolveEnsembleProblem(
         EnsembleProblem(prob_sme, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
         prob_sme.times,
         prob_sme.dimensions,
-        (progr = _output_func[2], channel = _output_func[3]),
+        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3])),
     )
 
     return ensemble_prob
@@ -315,7 +320,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_i\}_i``. It can be either a `Vector` or a `Tuple`.
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
@@ -362,7 +367,7 @@ function smesolve(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject}}
     ensemble_prob = smesolveEnsembleProblem(
         H,
         ψ0,
@@ -406,7 +411,8 @@ function smesolve(
     _expvals_all =
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMESolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
-    states = map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims)), eachindex(sol))
+
+    states = map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims), ens_prob.kwargs.isoperket), eachindex(sol))
 
     _m_expvals =
         _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSMESolve), eachindex(sol))
