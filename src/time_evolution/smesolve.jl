@@ -104,7 +104,7 @@ function smesolveProblem(
     ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
         to_dense(_CType(T), copy(ψ0.data))
     else
-        to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) 
+        to_dense(_CType(T), mat2vec(ket2dm(ψ0).data))
     end
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
@@ -148,7 +148,7 @@ function smesolveProblem(
         kwargs3...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, dims, (isoperket=Val(isoperket(ψ0)),))
+    return TimeEvolutionProblem(prob, tlist, dims, (isoperket = Val(isoperket(ψ0)),))
 end
 
 @doc raw"""

@@ -79,7 +79,7 @@ function mesolveProblem(
     ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
         to_dense(_CType(T), copy(ψ0.data))
     else
-        to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) 
+        to_dense(_CType(T), mat2vec(ket2dm(ψ0).data))
     end
     L = L_evo.data
 
@@ -89,7 +89,7 @@ function mesolveProblem(
     tspan = (tlist[1], tlist[end])
     prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
 
-    return TimeEvolutionProblem(prob, tlist, L_evo.dimensions, (isoperket=Val(isoperket(ψ0)),))
+    return TimeEvolutionProblem(prob, tlist, L_evo.dimensions, (isoperket = Val(isoperket(ψ0)),))
 end
 
 @doc raw"""
