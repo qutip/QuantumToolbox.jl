@@ -33,7 +33,7 @@ where
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
@@ -65,7 +65,7 @@ function mesolveProblem(
     kwargs...,
 ) where {
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
+    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject},
 }
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
@@ -76,7 +76,11 @@ function mesolveProblem(
     check_dimensions(L_evo, ψ0)
 
     T = Base.promote_eltype(L_evo, ψ0)
-    ρ0 = to_dense(_CType(T), mat2vec(ket2dm(ψ0).data)) # Convert it to dense vector with complex element type
+    ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
+        to_dense(_CType(T), copy(ψ0.data))
+    else
+        to_dense(_CType(T), mat2vec(ket2dm(ψ0).data))
+    end
     L = L_evo.data
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
@@ -85,7 +89,7 @@ function mesolveProblem(
     tspan = (tlist[1], tlist[end])
     prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
 
-    return TimeEvolutionProblem(prob, tlist, L_evo.dimensions)
+    return TimeEvolutionProblem(prob, tlist, L_evo.dimensions, (isoperket = Val(isoperket(ψ0)),))
 end
 
 @doc raw"""
@@ -117,7 +121,7 @@ where
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
 - `tlist`: List of times at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm for the ODE solver. The default value is `Tsit5()`.
@@ -152,7 +156,7 @@ function mesolve(
     kwargs...,
 ) where {
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
+    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject},
 }
     prob = mesolveProblem(
         H,
@@ -173,7 +177,12 @@ end
 function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob.prob, alg)
 
-    ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = prob.dimensions), sol.u)
+    # No type instabilities since `isoperket` is a Val, and so it is known at compile time
+    if getVal(prob.kwargs.isoperket)
+        ρt = map(ϕ -> QuantumObject(ϕ, type = OperatorKet, dims = prob.dimensions), sol.u)
+    else
+        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = prob.dimensions), sol.u)
+    end
 
     return TimeEvolutionSol(
         prob.times,

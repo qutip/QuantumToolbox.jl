@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Add support for `OperatorKet` state input for `mesolve` and `smesolve`. ([#423])
+
 ## [v0.28.0]
 Release date: 2025-02-22
 
@@ -171,3 +173,4 @@ Release date: 2024-11-13
 [#419]: https://github.com/qutip/QuantumToolbox.jl/issues/419
 [#420]: https://github.com/qutip/QuantumToolbox.jl/issues/420
 [#421]: https://github.com/qutip/QuantumToolbox.jl/issues/421
+[#423]: https://github.com/qutip/QuantumToolbox.jl/issues/423
