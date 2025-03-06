@@ -1,7 +1,8 @@
 module QuantumToolboxCairoMakieExt
 
 using QuantumToolbox
-using CairoMakie: Axis, Axis3, Colorbar, Figure, GridLayout, heatmap!, surface!, GridPosition, @L_str, Reverse
+using CairoMakie:
+    Axis, Axis3, Colorbar, Figure, GridLayout, heatmap!, surface!, barplot!, GridPosition, @L_str, Reverse, ylims!
 
 @doc raw"""
     plot_wigner(
@@ -137,6 +138,84 @@ function _plot_wigner(
     ax.ylabel = L"\textrm{Im}(\alpha)"
     ax.zlabel = "Wigner function"
     return fig, ax, surf
+end
+
+@doc raw"""
+    plot_fock_distribution(
+        library::Val{:CairoMakie},
+        ρ::QuantumObject{SType};
+        fock_numbers::Union{Nothing, AbstractVector} = nothing,
+        unit_y_range::Bool = true,
+        location::Union{GridPosition,Nothing} = nothing,
+        kwargs...
+    ) where {SType<:Union{KetQuantumObject,OperatorQuantumObject}}
+
+Plot the [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution of `ρ`. 
+
+# Arguments
+- `library::Val{:CairoMakie}`: The plotting library to use.
+- `ρ::QuantumObject`: The quantum state for which the Fock state distribution is to be plotted. It can be either a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
+- `location::Union{GridPosition,Nothing}`: The location of the plot in the layout. If `nothing`, the plot is created in a new figure. Default is `nothing`.
+- `fock_numbers::Union{Nothing, AbstractVector}`: list of x ticklabels to represent fock numbers, default is `nothing`.
+- `unit_y_range::Bool`: Set y-axis limits [0, 1] or not, default is `true`.
+- `kwargs...`: Additional keyword arguments to pass to the plotting function. 
+
+# Returns
+- `fig`: The figure object.
+- `ax`: The axis object.
+- `hm`: Either the heatmap or surface object, depending on the projection.
+
+!!! note "Import library first"
+    [`CairoMakie`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) must first be imported before using this function.
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `Val(:two_dim)` and `Val(:three_dim)` instead of `:two_dim` and `:three_dim`, respectively. Also, specify the library as `Val(:CairoMakie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+"""
+function QuantumToolbox.plot_fock_distribution(
+    library::Val{:CairoMakie},
+    ρ::QuantumObject{SType};
+    fock_numbers::Union{Nothing,AbstractVector} = nothing,
+    unit_y_range::Bool = true,
+    location::Union{GridPosition,Nothing} = nothing,
+    kwargs...,
+) where {SType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+    return _plot_fock_distribution(
+        library,
+        ρ;
+        fock_numbers = fock_numbers,
+        unit_y_range = unit_y_range,
+        location = location,
+        kwargs...,
+    )
+end
+
+function _plot_fock_distribution(
+    ::Val{:CairoMakie},
+    ρ::QuantumObject{SType};
+    fock_numbers::Union{Nothing,AbstractVector} = nothing,
+    unit_y_range::Bool = true,
+    location::Union{GridPosition,Nothing} = nothing,
+    kwargs...,
+) where {SType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+    ρ = ket2dm(ρ)
+    D = prod(ρ.dims)
+    (real(tr(ρ)) > 1) && (@warn "The input ρ should be normalized.")
+
+    xvec = 0:(D-1)
+    isnothing(fock_numbers) && (fock_numbers = string.(collect(xvec)))
+
+    fig, location = _getFigAndLocation(location)
+    lyt = GridLayout(location)
+    ax = Axis(lyt[1, 1])
+
+    barplot!(ax, xvec, real(diag(ρ)); kwargs...)
+
+    ax.xticks = (xvec, fock_numbers)
+    ax.xlabel = "Fock number"
+    ax.ylabel = "Occupation probability"
+    unit_y_range && ylims!(ax, 0, 1)
+
+    return fig, ax
 end
 
 raw"""
