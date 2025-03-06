@@ -313,4 +313,5 @@ meshgrid
 
 ```@docs
 plot_wigner
+plot_fock_distribution
 ```
