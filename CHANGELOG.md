@@ -125,6 +125,7 @@ Release date: 2024-11-13
 [v0.26.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.26.0
 [v0.27.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.27.0
 [v0.28.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.28.0
+[v0.29.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.29.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
