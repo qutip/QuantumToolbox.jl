@@ -147,7 +147,6 @@ end
         fock_numbers::Union{Nothing, AbstractVector} = nothing,
         unit_y_range::Bool = true,
         location::Union{GridPosition,Nothing} = nothing,
-        atol::Real = 1e-6,
         kwargs...
     ) where {SType<:Union{KetQuantumObject,OperatorQuantumObject}}
 
@@ -157,7 +156,6 @@ Plot the [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution of 
 - `library::Val{:CairoMakie}`: The plotting library to use.
 - `ρ::QuantumObject`: The quantum state for which the Fock state distribution is to be plotted. It can be either a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
 - `location::Union{GridPosition,Nothing}`: The location of the plot in the layout. If `nothing`, the plot is created in a new figure. Default is `nothing`.
-- `atol::Real`: The tolerance for checking normalization condition. Default is `1e-6`.
 - `fock_numbers::Union{Nothing, AbstractVector}`: list of x ticklabels to represent fock numbers, default is `nothing`.
 - `unit_y_range::Bool`: Set y-axis limits [0, 1] or not, default is `true`.
 - `kwargs...`: Additional keyword arguments to pass to the plotting function. 
@@ -165,7 +163,6 @@ Plot the [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution of 
 # Returns
 - `fig`: The figure object.
 - `ax`: The axis object.
-- `hm`: Either the heatmap or surface object, depending on the projection.
 
 !!! note "Import library first"
     [`CairoMakie`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) must first be imported before using this function.
@@ -197,12 +194,11 @@ function _plot_fock_distribution(
     fock_numbers::Union{Nothing,AbstractVector} = nothing,
     unit_y_range::Bool = true,
     location::Union{GridPosition,Nothing} = nothing,
-    atol::Real = 1e-6,
     kwargs...,
 ) where {SType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
     ρ = ket2dm(ρ)
     D = prod(ρ.dims)
-    isapprox(real(tr(ρ)), 1, atol=atol) && (@warn "The input ρ should be normalized.")
+    isapprox(tr(ρ), 1, atol = 1e-4) || (@warn "The input ρ should be normalized.")
 
     xvec = 0:(D-1)
     isnothing(fock_numbers) && (fock_numbers = string.(collect(xvec)))
