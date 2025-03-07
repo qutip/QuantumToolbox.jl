@@ -190,3 +190,10 @@ _CType(::Type{Complex{Int32}}) = ComplexF32
 _CType(::Type{Complex{Int64}}) = ComplexF64
 _CType(::Type{Complex{Float32}}) = ComplexF32
 _CType(::Type{Complex{Float64}}) = ComplexF64
+
+_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:Int} = Int64
+_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:Int} = Int32
+_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:AbstractFloat} = Float64
+_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:AbstractFloat} = Float32
+_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{64}) where {T<:Union{Int,AbstractFloat}} = ComplexF64
+_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{32}) where {T<:Union{Int,AbstractFloat}} = ComplexF32
