@@ -163,6 +163,7 @@ Plot the [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution of 
 # Returns
 - `fig`: The figure object.
 - `ax`: The axis object.
+- `bp`: The barplot object.
 
 !!! note "Import library first"
     [`CairoMakie`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) must first be imported before using this function.
@@ -207,14 +208,14 @@ function _plot_fock_distribution(
     lyt = GridLayout(location)
     ax = Axis(lyt[1, 1])
 
-    barplot!(ax, xvec, real(diag(ρ)); kwargs...)
+    bp = barplot!(ax, xvec, real(diag(ρ)); kwargs...)
 
     ax.xticks = (xvec, fock_numbers)
     ax.xlabel = "Fock number"
     ax.ylabel = "Occupation probability"
     unit_y_range && ylims!(ax, 0, 1)
 
-    return fig, ax
+    return fig, ax, bp
 end
 
 raw"""
