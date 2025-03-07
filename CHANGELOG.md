@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+## [v0.29.0]
+Release date: 2025-03-07
+
 - Add support for `OperatorKet` state input for `mesolve` and `smesolve`. ([#423])
 - Introduce `plot_fock_distribution` to plot the population of a state (ket, bra, or density matrix) in its basis (assumed to be Fock basis). ([#428])
 
@@ -122,6 +125,7 @@ Release date: 2024-11-13
 [v0.26.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.26.0
 [v0.27.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.27.0
 [v0.28.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.28.0
+[v0.29.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.29.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
