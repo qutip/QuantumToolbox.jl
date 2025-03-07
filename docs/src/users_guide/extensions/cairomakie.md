@@ -19,3 +19,4 @@ The supported plotting functions are listed as follows:
 | **Plotting Function** | **Description** |
 |:----------------------|:----------------|
 | [`plot_wigner`](@ref) | [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) |
+| [`plot_fock_distribution`](@ref) | [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution |
