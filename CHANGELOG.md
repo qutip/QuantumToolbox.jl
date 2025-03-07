@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+## [v0.29.1]
+Release date: 2025-03-07
+
+- Minor changes for GPU matrices element type and word size handling. ([#430])
+
 ## [v0.29.0]
 Release date: 2025-03-07
 
@@ -126,6 +131,7 @@ Release date: 2024-11-13
 [v0.27.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.27.0
 [v0.28.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.28.0
 [v0.29.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.29.0
+[v0.29.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.29.1
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -180,3 +186,4 @@ Release date: 2024-11-13
 [#421]: https://github.com/qutip/QuantumToolbox.jl/issues/421
 [#423]: https://github.com/qutip/QuantumToolbox.jl/issues/423
 [#428]: https://github.com/qutip/QuantumToolbox.jl/issues/428
+[#430]: https://github.com/qutip/QuantumToolbox.jl/issues/430
