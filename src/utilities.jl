@@ -130,8 +130,10 @@ end
 
 get_typename_wrapper(A) = Base.typename(typeof(A)).wrapper
 
-_get_dense_similar(A::AbstractArray, args...) = similar(A, args...)
-_get_dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
+_dense_similar(A::AbstractArray, args...) = similar(A, args...)
+_dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
+
+_sparse_similar(A::AbstractArray, args...) = sparse(args...)
 
 _Ginibre_ensemble(n::Int, rank::Int = n) = randn(ComplexF64, n, rank) / sqrt(n)
 
@@ -188,3 +190,10 @@ _CType(::Type{Complex{Int32}}) = ComplexF32
 _CType(::Type{Complex{Int64}}) = ComplexF64
 _CType(::Type{Complex{Float32}}) = ComplexF32
 _CType(::Type{Complex{Float64}}) = ComplexF64
+
+_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:Int} = Int64
+_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:Int} = Int32
+_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:AbstractFloat} = Float64
+_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:AbstractFloat} = Float32
+_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{64}) where {T<:Union{Int,AbstractFloat}} = ComplexF64
+_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{32}) where {T<:Union{Int,AbstractFloat}} = ComplexF32

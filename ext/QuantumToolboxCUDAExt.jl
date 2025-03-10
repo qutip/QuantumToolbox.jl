@@ -2,6 +2,7 @@ module QuantumToolboxCUDAExt
 
 using QuantumToolbox
 using QuantumToolbox: makeVal, getVal
+import QuantumToolbox: _sparse_similar, _convert_eltype_wordsize
 import CUDA: cu, CuArray, allowscalar
 import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR, AbstractCuSparseArray
 import SparseArrays: SparseVector, SparseMatrixCSC
@@ -80,30 +81,26 @@ function cu(A::QuantumObject; word_size::Union{Val,Int} = Val(64))
 
     return cu(A, makeVal(word_size))
 end
-cu(A::QuantumObject, word_size::Union{Val{32},Val{64}}) = CuArray{_change_eltype(eltype(A), word_size)}(A)
+cu(A::QuantumObject, word_size::Union{Val{32},Val{64}}) = CuArray{_convert_eltype_wordsize(eltype(A), word_size)}(A)
 function cu(
     A::QuantumObject{ObjType,DimsType,<:SparseVector},
     word_size::Union{Val{32},Val{64}},
 ) where {ObjType<:QuantumObjectType,DimsType<:AbstractDimensions}
-    return CuSparseVector{_change_eltype(eltype(A), word_size)}(A)
+    return CuSparseVector{_convert_eltype_wordsize(eltype(A), word_size)}(A)
 end
 function cu(
     A::QuantumObject{ObjType,DimsType,<:SparseMatrixCSC},
     word_size::Union{Val{32},Val{64}},
 ) where {ObjType<:QuantumObjectType,DimsType<:AbstractDimensions}
-    return CuSparseMatrixCSC{_change_eltype(eltype(A), word_size)}(A)
+    return CuSparseMatrixCSC{_convert_eltype_wordsize(eltype(A), word_size)}(A)
 end
-
-_change_eltype(::Type{T}, ::Val{64}) where {T<:Int} = Int64
-_change_eltype(::Type{T}, ::Val{32}) where {T<:Int} = Int32
-_change_eltype(::Type{T}, ::Val{64}) where {T<:AbstractFloat} = Float64
-_change_eltype(::Type{T}, ::Val{32}) where {T<:AbstractFloat} = Float32
-_change_eltype(::Type{Complex{T}}, ::Val{64}) where {T<:Union{Int,AbstractFloat}} = ComplexF64
-_change_eltype(::Type{Complex{T}}, ::Val{32}) where {T<:Union{Int,AbstractFloat}} = ComplexF32
 
 QuantumToolbox.to_dense(A::MT) where {MT<:AbstractCuSparseArray} = CuArray(A)
 
 QuantumToolbox.to_dense(::Type{T1}, A::CuArray{T2}) where {T1<:Number,T2<:Number} = CuArray{T1}(A)
 QuantumToolbox.to_dense(::Type{T}, A::AbstractCuSparseArray) where {T<:Number} = CuArray{T}(A)
+
+QuantumToolbox._sparse_similar(A::CuSparseMatrixCSC, args...) = sparse(args..., fmt = :csc)
+QuantumToolbox._sparse_similar(A::CuSparseMatrixCSR, args...) = sparse(args..., fmt = :csr)
 
 end

@@ -161,7 +161,7 @@ coherent_dm(5, 1.25)
 thermal_dm(5, 1.25)
 ```
 
-`QuantumToolbox` also provides a set of distance metrics for determining how close two density matrix distributions are to each other. Included are the [`fidelity`](@ref), and trace distance ([`tracedist`](@ref)).
+`QuantumToolbox` also provides a set of distance metrics for determining how close two density matrix distributions are to each other. For example, [`fidelity`](@ref), and trace distance ([`tracedist`](@ref)) are included. For more metric functions, see section [Entropy and Metrics](@ref doc-API:Entropy-and-Metrics) in the API page.
 
 ```@example states_and_operators
 x = coherent_dm(5, 1.25)
@@ -314,7 +314,7 @@ Therefore, a given density matrix ``\hat{\rho}`` can then be vectorized, denoted
 |\hat{\rho}\rangle\rangle = \textrm{vec}(\hat{\rho}).
 ```
 
-`QuantumToolbox` uses the column-stacking convention for the isomorphism between ``\mathcal{L}(\mathcal{H})`` and ``\mathcal{H}\otimes\mathcal{H}``. This isomorphism is implemented by the functions [`mat2vec`](@ref) and [`vec2mat`](@ref):
+`QuantumToolbox` uses the column-stacking convention for the isomorphism between ``\mathcal{L}(\mathcal{H})`` and ``\mathcal{H}\otimes\mathcal{H}``. This isomorphism is implemented by the functions [`mat2vec`](@ref) (or [`operator_to_vector`](@ref)) and [`vec2mat`](@ref) (or [`vector_to_operator`](@ref)):
 
 ```@example states_and_operators
 rho = Qobj([1 2; 3 4])

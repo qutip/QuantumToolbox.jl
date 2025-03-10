@@ -11,9 +11,8 @@
     rho_me = sol_me.states[end]
 
     solver = SteadyStateODESolver()
-    ρ_ss = steadystate(H, psi0, t_l[end], c_ops, solver = solver)
+    ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
-    @test_throws ArgumentError steadystate(H, c_ops, solver = solver)
 
     solver = SteadyStateDirectSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
@@ -34,9 +33,9 @@
     @testset "Type Inference (steadystate)" begin
         L = liouvillian(H, c_ops)
 
-        solver = SteadyStateODESolver()
-        @inferred steadystate(H, psi0, t_l[end], c_ops, solver = solver)
-        @inferred steadystate(L, psi0, t_l[end], solver = solver)
+        solver = SteadyStateODESolver(tmax = t_l[end])
+        @inferred steadystate(H, c_ops, solver = solver)
+        @inferred steadystate(L, solver = solver)
 
         solver = SteadyStateDirectSolver()
         @inferred steadystate(H, c_ops, solver = solver)

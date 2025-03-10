@@ -2,81 +2,28 @@
 Functions for calculating metrics (distance measures) between states and operators.
 =#
 
-export entropy_vn, entanglement, tracedist, fidelity
+export fidelity
+export tracedist, hilbert_dist, hellinger_dist
+export bures_dist, bures_angle
 
 @doc raw"""
-    entropy_vn(ρ::QuantumObject; base::Int=0, tol::Real=1e-15)
+    fidelity(ρ::QuantumObject, σ::QuantumObject)
 
-Calculates the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neumann_entropy)
-``S = - \textrm{Tr} \left[ \hat{\rho} \log \left( \hat{\rho} \right) \right]`` where ``\hat{\rho}``
-is the density matrix of the system.
+Calculate the fidelity of two [`QuantumObject`](@ref):
+``F(\hat{\rho}, \hat{\sigma}) = \textrm{Tr} \sqrt{\sqrt{\hat{\rho}} \hat{\sigma} \sqrt{\hat{\rho}}}``
 
-The `base` parameter specifies the base of the logarithm to use, and when using the default value 0,
-the natural logarithm is used. The `tol` parameter
-describes the absolute tolerance for detecting the zero-valued eigenvalues of the density
-matrix ``\hat{\rho}``.
+Here, the definition is from [Nielsen-Chuang2011](@citet). It is the square root of the fidelity defined in [Jozsa1994](@citet).
 
-# Examples
-
-Pure state:
-```jldoctest
-julia> ψ = fock(2,0)
-
-Quantum Object:   type=Ket   dims=[2]   size=(2,)
-2-element Vector{ComplexF64}:
- 1.0 + 0.0im
- 0.0 + 0.0im
-
-julia> ρ = ket2dm(ψ)
-
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
-2×2 Matrix{ComplexF64}:
- 1.0+0.0im  0.0+0.0im
- 0.0+0.0im  0.0+0.0im
-
-julia> entropy_vn(ρ, base=2)
--0.0
-```
-
-Mixed state:
-```jldoctest
-julia> ρ = maximally_mixed_dm(2)
-
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
-2×2 Diagonal{ComplexF64, Vector{ComplexF64}}:
- 0.5-0.0im      ⋅    
-     ⋅      0.5-0.0im
-
-julia> entropy_vn(ρ, base=2)
-1.0
-```
+Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
-function entropy_vn(ρ::QuantumObject{OperatorQuantumObject}; base::Int = 0, tol::Real = 1e-15)
-    T = eltype(ρ)
-    vals = eigenenergies(ρ)
-    indexes = findall(x -> abs(x) > tol, vals)
-    length(indexes) == 0 && return zero(real(T))
-    nzvals = vals[indexes]
-    logvals = base != 0 ? log.(base, Complex.(nzvals)) : log.(Complex.(nzvals))
-    return -real(mapreduce(*, +, nzvals, logvals))
+function fidelity(ρ::QuantumObject{OperatorQuantumObject}, σ::QuantumObject{OperatorQuantumObject})
+    sqrt_ρ = sqrt(ρ)
+    eigval = abs.(eigvals(sqrt_ρ * σ * sqrt_ρ))
+    return sum(sqrt, eigval)
 end
-
-"""
-    entanglement(QO::QuantumObject, sel::Union{Int,AbstractVector{Int},Tuple})
-
-Calculates the entanglement by doing the partial trace of `QO`, selecting only the dimensions
-with the indices contained in the `sel` vector, and then using the Von Neumann entropy [`entropy_vn`](@ref).
-"""
-function entanglement(
-    QO::QuantumObject{OpType},
-    sel::Union{AbstractVector{Int},Tuple},
-) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
-    ψ = normalize(QO)
-    ρ_tr = ptrace(ψ, sel)
-    entropy = entropy_vn(ρ_tr)
-    return (entropy > 0) * entropy
-end
-entanglement(QO::QuantumObject, sel::Int) = entanglement(QO, (sel,))
+fidelity(ρ::QuantumObject{OperatorQuantumObject}, ψ::QuantumObject{KetQuantumObject}) = sqrt(abs(expect(ρ, ψ)))
+fidelity(ψ::QuantumObject{KetQuantumObject}, σ::QuantumObject{OperatorQuantumObject}) = fidelity(σ, ψ)
+fidelity(ψ::QuantumObject{KetQuantumObject}, ϕ::QuantumObject{KetQuantumObject}) = abs(dot(ψ, ϕ))
 
 @doc raw"""
     tracedist(ρ::QuantumObject, σ::QuantumObject)
@@ -95,20 +42,76 @@ tracedist(
 } = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
 
 @doc raw"""
-    fidelity(ρ::QuantumObject, σ::QuantumObject)
+    hilbert_dist(ρ::QuantumObject, σ::QuantumObject)
 
-Calculate the fidelity of two [`QuantumObject`](@ref):
-``F(\hat{\rho}, \hat{\sigma}) = \textrm{Tr} \sqrt{\sqrt{\hat{\rho}} \hat{\sigma} \sqrt{\hat{\rho}}}``
+Calculates the Hilbert-Schmidt distance between two [`QuantumObject`](@ref):
+``D_{HS}(\hat{\rho}, \hat{\sigma}) = \textrm{Tr}\left[\hat{A}^\dagger \hat{A}\right]``, where ``\hat{A} = \hat{\rho} - \hat{\sigma}``.
 
-Here, the definition is from Nielsen & Chuang, "Quantum Computation and Quantum Information". It is the square root of the fidelity defined in R. Jozsa, Journal of Modern Optics, 41:12, 2315 (1994).
+Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
+
+# References
+- [Vedral-Plenio1998](@citet)
+"""
+function hilbert_dist(
+    ρ::QuantumObject{ObjType1},
+    σ::QuantumObject{ObjType2},
+) where {
+    ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},
+    ObjType2<:Union{KetQuantumObject,OperatorQuantumObject},
+}
+    check_dimensions(ρ, σ)
+
+    A = ket2dm(ρ) - ket2dm(σ)
+    return tr(A' * A)
+end
+
+@doc raw"""
+    hellinger_dist(ρ::QuantumObject, σ::QuantumObject)
+
+Calculates the [Hellinger distance](https://en.wikipedia.org/wiki/Hellinger_distance) between two [`QuantumObject`](@ref):
+``D_H(\hat{\rho}, \hat{\sigma}) = \sqrt{2 - 2 \textrm{Tr}\left(\sqrt{\hat{\rho}}\sqrt{\hat{\sigma}}\right)}``
+
+Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
+
+# References
+- [Spehner2017](@citet)
+"""
+function hellinger_dist(
+    ρ::QuantumObject{ObjType1},
+    σ::QuantumObject{ObjType2},
+) where {
+    ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},
+    ObjType2<:Union{KetQuantumObject,OperatorQuantumObject},
+}
+    # Ket (pure state) doesn't need to do square root
+    sqrt_ρ = isket(ρ) ? ket2dm(ρ) : sqrt(ρ)
+    sqrt_σ = isket(σ) ? ket2dm(σ) : sqrt(σ)
+
+    # `max` is to avoid numerical instabilities
+    # it happens when ρ = σ, sum(eigvals) might be slightly larger than 1
+    return sqrt(2.0 * max(0.0, 1.0 - sum(real, eigvals(sqrt_ρ * sqrt_σ))))
+end
+
+@doc raw"""
+    bures_dist(ρ::QuantumObject, σ::QuantumObject)
+
+Calculate the [Bures distance](https://en.wikipedia.org/wiki/Bures_metric) between two [`QuantumObject`](@ref):
+``D_B(\hat{\rho}, \hat{\sigma}) = \sqrt{2 \left(1 - F(\hat{\rho}, \hat{\sigma}) \right)}``
+
+Here, the definition of [`fidelity`](@ref) ``F`` is from [Nielsen-Chuang2011](@citet). It is the square root of the fidelity defined in [Jozsa1994](@citet).
 
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
-function fidelity(ρ::QuantumObject{OperatorQuantumObject}, σ::QuantumObject{OperatorQuantumObject})
-    sqrt_ρ = sqrt(ρ)
-    eigval = abs.(eigvals(sqrt_ρ * σ * sqrt_ρ))
-    return sum(sqrt, eigval)
-end
-fidelity(ρ::QuantumObject{OperatorQuantumObject}, ψ::QuantumObject{KetQuantumObject}) = sqrt(abs(expect(ρ, ψ)))
-fidelity(ψ::QuantumObject{KetQuantumObject}, σ::QuantumObject{OperatorQuantumObject}) = fidelity(σ, ψ)
-fidelity(ψ::QuantumObject{KetQuantumObject}, ϕ::QuantumObject{KetQuantumObject}) = abs(dot(ψ, ϕ))
+bures_dist(ρ::QuantumObject, σ::QuantumObject) = sqrt(2 * (1 - fidelity(ρ, σ)))
+
+@doc raw"""
+    bures_angle(ρ::QuantumObject, σ::QuantumObject)
+
+Calculate the [Bures angle](https://en.wikipedia.org/wiki/Bures_metric) between two [`QuantumObject`](@ref):
+``D_A(\hat{\rho}, \hat{\sigma}) = \arccos\left(F(\hat{\rho}, \hat{\sigma})\right)``
+
+Here, the definition of [`fidelity`](@ref) ``F`` is from [Nielsen-Chuang2011](@citet). It is the square root of the fidelity defined in [Jozsa1994](@citet).
+
+Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
+"""
+bures_angle(ρ::QuantumObject, σ::QuantumObject) = acos(fidelity(ρ, σ))

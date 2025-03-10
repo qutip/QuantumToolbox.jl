@@ -176,6 +176,8 @@ unit
 tensor
 ⊗
 qeye
+vector_to_operator
+operator_to_vector
 sqrtm
 logm
 expm
@@ -248,13 +250,23 @@ ExponentialSeries
 PseudoInverse
 ```
 
-## [Metrics](@id doc-API:Metrics)
+## [Entropy and Metrics](@id doc-API:Entropy-and-Metrics)
 
 ```@docs
 entropy_vn
+entropy_relative
+entropy_linear
+entropy_mutual
+entropy_conditional
 entanglement
-tracedist
+concurrence
+negativity
 fidelity
+tracedist
+hilbert_dist
+hellinger_dist
+bures_dist
+bures_angle
 ```
 
 ## [Spin Lattice](@id doc-API:Spin-Lattice)
@@ -276,7 +288,6 @@ BlockDiagonalForm
 
 ```@docs
 wigner
-negativity
 ```
 
 ## [Linear Maps](@id doc-API:Linear-Maps)
@@ -302,4 +313,5 @@ meshgrid
 
 ```@docs
 plot_wigner
+plot_fock_distribution
 ```
