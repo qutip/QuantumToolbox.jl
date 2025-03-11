@@ -224,6 +224,10 @@ Calculate the [concurrence](https://en.wikipedia.org/wiki/Concurrence_(quantum_c
 # Notes
 
 - `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
+
+# References
+
+- [Hill-Wootters1997](@citet)
 """
 function concurrence(ρ::QuantumObject{OpType}) where {OpType<:Union{KetQuantumObject,OperatorQuantumObject}}
     (ρ.dimensions == Dimensions((Space(2), Space(2)))) || throw(
