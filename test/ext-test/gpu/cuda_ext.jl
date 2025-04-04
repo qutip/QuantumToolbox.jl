@@ -67,8 +67,8 @@
     @test typeof(CuSparseMatrixCSR{ComplexF32}(Xsc).data) == CuSparseMatrixCSR{ComplexF32,Int32}
 
     # type conversion of CUDA Diagonal arrays
-    @test cu(qeye(10), word_size=Val(32)).data isa Diagonal{ComplexF32, <:CuVector{ComplexF32}}
-    @test cu(qeye(10), word_size=Val(64)).data isa Diagonal{ComplexF64, <:CuVector{ComplexF64}}
+    @test cu(qeye(10), word_size = Val(32)).data isa Diagonal{ComplexF32,<:CuVector{ComplexF32}}
+    @test cu(qeye(10), word_size = Val(64)).data isa Diagonal{ComplexF64,<:CuVector{ComplexF64}}
 
     # Sparse To Dense
     # @test to_dense(cu(ψsi; word_size = 64)).data isa CuVector{Int64} # TODO: Fix this in CUDA.jl

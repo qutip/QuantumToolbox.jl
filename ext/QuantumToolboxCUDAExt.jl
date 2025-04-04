@@ -82,7 +82,8 @@ function cu(A::QuantumObject; word_size::Union{Val,Int} = Val(64))
 
     return cu(A, makeVal(word_size))
 end
-cu(A::QuantumObject, word_size::Union{Val{32},Val{64}}) = QuantumObject(adapt(CuArray{_convert_eltype_wordsize(eltype(A), word_size)}, A.data), A.type, A.dimensions)
+cu(A::QuantumObject, word_size::Union{Val{32},Val{64}}) =
+    QuantumObject(adapt(CuArray{_convert_eltype_wordsize(eltype(A), word_size)}, A.data), A.type, A.dimensions)
 function cu(
     A::QuantumObject{ObjType,DimsType,<:SparseVector},
     word_size::Union{Val{32},Val{64}},
