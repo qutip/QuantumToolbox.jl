@@ -166,10 +166,10 @@ function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray,
     if method.parallel
         throw(ArgumentError("Parallel version is not implemented for dense matrices"))
     else
-        for m in 0:M-1
+        for m in 0:(M-1)
             ρmn = ρ[m+1, m+1]
             abs(ρmn) > tol && (@. W += real(ρmn * (-1)^m * _genlaguerre(m, 0, B)))
-            for n in m+1:M-1
+            for n in (m+1):(M-1)
                 ρmn = ρ[m+1, n+1]
                 # Γ_mn = sqrt(gamma(m+1) / gamma(n+1))
                 Γ_mn = sqrt(exp(loggamma(m + 1) - loggamma(n + 1))) # Is this a good trick?
@@ -197,7 +197,7 @@ function _genlaguerre(n::Int, α::Number, x::T) where {T<:BlasFloat}
     α = convert(T, α)
     p0, p1 = one(T), -x + (α + 1)
     n == 0 && return p0
-    for k in 1:n-1
+    for k in 1:(n-1)
         p1, p0 = ((2k + α + 1) / (k + 1) - x / (k + 1)) * p1 - (k + α) / (k + 1) * p0, p1
     end
     return p1

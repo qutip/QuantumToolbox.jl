@@ -225,7 +225,7 @@ function _eigsolve(
 
         # println( A * view(V, :, 1:k) ≈ view(V, :, 1:k) * M(view(H, 1:k, 1:k)) + qₘ * M(transpose(view(transpose(βeₘ) * Uₘ, 1:k))) )     # SHOULD BE TRUE
 
-        for j in k+1:m
+        for j in (k+1):m
             β = arnoldi_step!(A, V, H, j)
             if β < tol
                 numops += j - k - 1
@@ -406,15 +406,14 @@ function eigsolve_al(
     kwargs...,
 ) where {HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
-    prob =
-        mesolveProblem(
-            L_evo,
-            QuantumObject(ρ0, type = Operator, dims = H.dimensions),
-            [zero(T), T];
-            params = params,
-            progress_bar = Val(false),
-            kwargs...,
-        ).prob
+    prob = mesolveProblem(
+        L_evo,
+        QuantumObject(ρ0, type = Operator, dims = H.dimensions),
+        [zero(T), T];
+        params = params,
+        progress_bar = Val(false),
+        kwargs...,
+    ).prob
     integrator = init(prob, alg)
 
     Lmap = ArnoldiLindbladIntegratorMap(eltype(H), size(L_evo), integrator)
