@@ -55,7 +55,7 @@ function entropy_vn(
     length(indexes) == 0 && return zero(real(T))
     nzvals = vals[indexes]
     logvals = base != 0 ? log.(base, Complex.(nzvals)) : log.(Complex.(nzvals))
-    return -real(mapreduce(*, +, nzvals, logvals))
+    return -real(mapreduce(*,+,nzvals,logvals))
 end
 
 @doc raw"""

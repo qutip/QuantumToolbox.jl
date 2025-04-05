@@ -367,7 +367,7 @@ function _steadystate_fourier(
     N = size(L_0_mat, 1)
     Ns = isqrt(N)
     n_fourier = 2 * n_max + 1
-    n_list = -n_max:n_max
+    n_list = (-n_max):n_max
 
     weight = 1
     Mn = sparse(ones(Ns), [Ns * (j - 1) + j for j in 1:Ns], fill(weight, Ns), N, N)
@@ -399,15 +399,15 @@ function _steadystate_fourier(
 
     offset1 = n_max * N
     offset2 = (n_max + 1) * N
-    ρ0 = reshape(ρtot[offset1+1:offset2], Ns, Ns)
+    ρ0 = reshape(ρtot[(offset1+1):offset2], Ns, Ns)
     ρ0_tr = tr(ρ0)
     ρ0 = ρ0 / ρ0_tr
     ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator, dims = L_0.dimensions)
     ρtot = ρtot / ρ0_tr
 
     ρ_list = [ρ0]
-    for i in 0:n_max-1
-        ρi_m = reshape(ρtot[offset1-(i+1)*N+1:offset1-i*N], Ns, Ns)
+    for i in 0:(n_max-1)
+        ρi_m = reshape(ρtot[(offset1-(i+1)*N+1):(offset1-i*N)], Ns, Ns)
         ρi_m = QuantumObject(ρi_m, type = Operator, dims = L_0.dimensions)
         push!(ρ_list, ρi_m)
     end

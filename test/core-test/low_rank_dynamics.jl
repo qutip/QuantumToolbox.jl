@@ -17,13 +17,13 @@
         i += 1
         i <= M && (ϕ[i] = multisite_operator(latt, j => sigmap()) * ϕ[1])
     end
-    for k in 1:N_modes-1
-        for l in k+1:N_modes
+    for k in 1:(N_modes-1)
+        for l in (k+1):N_modes
             i += 1
             i <= M && (ϕ[i] = multisite_operator(latt, k => sigmap(), l => sigmap()) * ϕ[1])
         end
     end
-    for i in i+1:M
+    for i in (i+1):M
         ϕ[i] = QuantumObject(rand(ComplexF64, size(ϕ[1])[1]), dims = ϕ[1].dims)
         normalize!(ϕ[i])
     end

@@ -55,9 +55,7 @@ lr_mesolve_options_default = (
     Δt = 0.0,
 )
 
-#=======================================================#
 #                  ADDITIONAL FUNCTIONS
-#=======================================================#
 
 select(x::Real, xarr::AbstractArray, retval = false) = retval ? xarr[argmin(abs.(x .- xarr))] : argmin(abs.(x .- xarr))
 
@@ -133,9 +131,7 @@ function _calculate_expectation!(p, z, B, idx)
     end
 end
 
-#=======================================================#
 #                   SAVING FUNCTIONS
-#=======================================================#
 
 function _periodicsave_func(integrator)
     ip = integrator.p
@@ -151,8 +147,8 @@ function _save_affect_lr_mesolve!(integrator)
     N, M = ip.N, ip.M
     idx = select(integrator.t, ip.times)
 
-    @views z = reshape(integrator.u[1:N*M], N, M)
-    @views B = reshape(integrator.u[N*M+1:end], M, M)
+    @views z = reshape(integrator.u[1:(N*M)], N, M)
+    @views B = reshape(integrator.u[(N*M+1):end], M, M)
     _calculate_expectation!(ip, z, B, idx)
 
     if integrator.p.opt.progress
@@ -162,9 +158,7 @@ function _save_affect_lr_mesolve!(integrator)
     return u_modified!(integrator, false)
 end
 
-#=======================================================#
 #                CALLBACK FUNCTIONS
-#=======================================================#
 
 #=
     _adjM_condition_ratio(u, t, integrator)
@@ -185,8 +179,8 @@ function _adjM_condition_ratio(u, t, integrator)
 
     C = ip.A0
     σ = ip.temp_MM
-    @views z = reshape(u[1:N*M], N, M)
-    @views B = reshape(u[N*M+1:end], M, M)
+    @views z = reshape(u[1:(N*M)], N, M)
+    @views B = reshape(u[(N*M+1):end], M, M)
     mul!(C, z, sqrt(B))
     mul!(σ, C', C)
     p = abs.(eigvals(σ))
@@ -232,8 +226,8 @@ function _adjM_affect!(integrator)
     N, M = ip.N, ip.M
 
     @views begin
-        z = Δt > 0 ? reshape(ip.u_save[1:N*M], N, M) : reshape(integrator.u[1:N*M], N, M)
-        B = Δt > 0 ? reshape(ip.u_save[N*M+1:end], M, M) : reshape(integrator.u[N*M+1:end], M, M)
+        z = Δt > 0 ? reshape(ip.u_save[1:(N*M)], N, M) : reshape(integrator.u[1:(N*M)], N, M)
+        B = Δt > 0 ? reshape(ip.u_save[(N*M+1):end], M, M) : reshape(integrator.u[(N*M+1):end], M, M)
         ψ = ip.L_tilde[:, 1]
         normalize!(ψ)
 
@@ -241,7 +235,7 @@ function _adjM_affect!(integrator)
         B = cat(B, opt.p0, dims = (1, 2))
         resize!(integrator, length(z) + length(B))
         integrator.u[1:length(z)] .= z[:]
-        integrator.u[length(z)+1:end] .= B[:]
+        integrator.u[(length(z)+1):end] .= B[:]
     end
 
     integrator.p = merge(
@@ -277,9 +271,7 @@ function _adjM_affect!(integrator)
     end
 end
 
-#=======================================================#
 #            DYNAMICAL EVOLUTION EQUATIONS
-#=======================================================#
 
 #=
     dBdz!(du, u, p, t)
@@ -305,10 +297,10 @@ function dBdz!(du, u, p, t)
     N, M = p.N, p.M
     opt = p.opt
 
-    @views z = reshape(u[1:N*M], N, M)
-    @views dz = reshape(du[1:N*M], N, M)
-    @views B = reshape(u[N*M+1:end], M, M)
-    @views dB = reshape(du[N*M+1:end], M, M)
+    @views z = reshape(u[1:(N*M)], N, M)
+    @views dz = reshape(du[1:(N*M)], N, M)
+    @views B = reshape(u[(N*M+1):end], M, M)
+    @views dB = reshape(du[(N*M+1):end], M, M)
 
     #Assign A0 and S
     mul!(S, z', z)
@@ -352,17 +344,13 @@ function dBdz!(du, u, p, t)
     return dB .-= temp_MM
 end
 
-#=======================================================#
 #                  OUTPUT GENNERATION
-#=======================================================#
 
-get_z(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, 1:M*N), N, M)
+get_z(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, 1:(M*N)), N, M)
 
 get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (M*N+1):length(u)), M, M)
 
-#=======================================================#
 #                   PROBLEM FORMULATION
-#=======================================================#
 
 @doc raw"""
     lr_mesolveProblem(
