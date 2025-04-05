@@ -37,8 +37,7 @@ function fock(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N
     if getVal(sparse)
         array = sparsevec([j + 1], [1.0 + 0im], N)
     else
-        array = zeros(ComplexF64, N)
-        array[j+1] = 1
+        array = [j == i ? 1.0 + 0im : 0.0 + 0im for j in 1:N]
     end
     return QuantumObject(array; type = Ket, dims = dims)
 end
