@@ -55,7 +55,9 @@ lr_mesolve_options_default = (
     Δt = 0.0,
 )
 
-#                  ADDITIONAL FUNCTIONS
+#=
+                   ADDITIONAL FUNCTIONS
+=#
 
 select(x::Real, xarr::AbstractArray, retval = false) = retval ? xarr[argmin(abs.(x .- xarr))] : argmin(abs.(x .- xarr))
 
@@ -131,7 +133,9 @@ function _calculate_expectation!(p, z, B, idx)
     end
 end
 
-#                   SAVING FUNCTIONS
+#=
+                    SAVING FUNCTIONS
+=#
 
 function _periodicsave_func(integrator)
     ip = integrator.p
@@ -158,7 +162,9 @@ function _save_affect_lr_mesolve!(integrator)
     return u_modified!(integrator, false)
 end
 
-#                CALLBACK FUNCTIONS
+#=
+                 CALLBACK FUNCTIONS
+=#
 
 #=
     _adjM_condition_ratio(u, t, integrator)
@@ -271,7 +277,9 @@ function _adjM_affect!(integrator)
     end
 end
 
-#            DYNAMICAL EVOLUTION EQUATIONS
+#=
+             DYNAMICAL EVOLUTION EQUATIONS
+=#
 
 #=
     dBdz!(du, u, p, t)
@@ -344,13 +352,17 @@ function dBdz!(du, u, p, t)
     return dB .-= temp_MM
 end
 
-#                  OUTPUT GENNERATION
+#=
+                  OUTPUT GENNERATION
+=#
 
 get_z(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, 1:(M*N)), N, M)
 
 get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (M*N+1):length(u)), M, M)
 
-#                   PROBLEM FORMULATION
+#=
+                    PROBLEM FORMULATION
+=#
 
 @doc raw"""
     lr_mesolveProblem(
