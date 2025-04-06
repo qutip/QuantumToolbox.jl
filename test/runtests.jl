@@ -55,7 +55,20 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
     include(joinpath(testdir, "core-test", "code-quality", "code_quality.jl"))
 end
 
-if (GROUP == "CairoMakie_Ext")# || (GROUP == "All")
+if (GROUP == "AutoDiff_Ext")
+    Pkg.activate("ext-test/cpu/autodiff")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+
+    using QuantumToolbox
+    using Zygote
+    using Enzyme
+    using SciMLSensitivity
+
+    include(joinpath(testdir, "ext-test", "autodiff", "zygote.jl"))
+end
+
+if (GROUP == "CairoMakie_Ext")
     Pkg.activate("ext-test/cpu/cairomakie")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
@@ -67,7 +80,7 @@ if (GROUP == "CairoMakie_Ext")# || (GROUP == "All")
     include(joinpath(testdir, "ext-test", "cpu", "cairomakie", "cairomakie_ext.jl"))
 end
 
-if (GROUP == "CUDA_Ext")# || (GROUP == "All")
+if (GROUP == "CUDA_Ext")
     Pkg.activate("ext-test/gpu")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()

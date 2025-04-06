@@ -30,16 +30,19 @@ CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 GPUArrays = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 
 [extensions]
 QuantumToolboxCUDAExt = "CUDA"
 QuantumToolboxCairoMakieExt = "CairoMakie"
 QuantumToolboxGPUArraysExt = ["GPUArrays", "KernelAbstractions"]
+QuantumToolboxChainRulesCore = "ChainRulesCore"
 
 [compat]
 ArrayInterface = "6, 7"
 CUDA = "5"
 CairoMakie = "0.12, 0.13"
+ChainRulesCore = "1"
 DiffEqBase = "6"
 DiffEqCallbacks = "4.2.1 - 4"
 DiffEqNoiseProcess = "5"
