@@ -39,15 +39,15 @@ function _increase_dims(
 
     if n_d == 1
         ρmat = similar(QO, dims_new[1], dims_new[1])
-        fill!(selectdim(ρmat, 1, dims[1]+1:dims_new[1]), 0)
-        fill!(selectdim(ρmat, 2, dims[1]+1:dims_new[1]), 0)
+        fill!(selectdim(ρmat, 1, (dims[1]+1):dims_new[1]), 0)
+        fill!(selectdim(ρmat, 2, (dims[1]+1):dims_new[1]), 0)
         copyto!(view(ρmat, 1:dims[1], 1:dims[1]), QO)
     else
         ρmat2 = similar(QO, reverse(vcat(dims_new, dims_new))...)
         ρmat = reshape(QO, reverse(vcat(dims, dims))...)
         for i in eachindex(sel)
-            fill!(selectdim(ρmat2, n_d - sel[i] + 1, dims[sel[i]]+1:dims_new[sel[i]]), 0)
-            fill!(selectdim(ρmat2, 2 * n_d - sel[i] + 1, dims[sel[i]]+1:dims_new[sel[i]]), 0)
+            fill!(selectdim(ρmat2, n_d - sel[i] + 1, (dims[sel[i]]+1):dims_new[sel[i]]), 0)
+            fill!(selectdim(ρmat2, 2 * n_d - sel[i] + 1, (dims[sel[i]]+1):dims_new[sel[i]]), 0)
         end
         copyto!(view(ρmat2, reverse!(repeat([1:n for n in dims], 2))...), ρmat)
         ρmat = reshape(ρmat2, prod(dims_new), prod(dims_new))
@@ -77,7 +77,7 @@ function _DFDIncreaseReduceCondition(u, t, integrator)
         pillow_i = pillow_list[i]
         if dim_i < maxdim_i && dim_i > 2 && maxdim_i != 0
             ρi = _ptrace_oper(vec2mat(dfd_ρt_cache), dim_list, SVector(i))[1]
-            @views res = norm(ρi[diagind(ρi)[end-pillow_i:end]], 1) * sqrt(dim_i) / pillow_i
+            @views res = norm(ρi[diagind(ρi)[(end-pillow_i):end]], 1) * sqrt(dim_i) / pillow_i
             if res > tol_list[i]
                 increase_list[i] = true
             elseif res < tol_list[i] * 1e-2 && dim_i > 3

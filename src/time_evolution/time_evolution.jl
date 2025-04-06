@@ -397,7 +397,7 @@ end
 @generated function update_coefficients!(L::DiffusionOperator, u, p, t)
     ops_types = L.parameters[2].parameters
     N = length(ops_types)
-    quote
+    return quote
         Base.@nexprs $N i -> begin
             update_coefficients!(L.ops[i], u, p, t)
         end
@@ -538,7 +538,7 @@ function _liouvillian_floquet(
     S = -(L_0 - 1im * n_max * ω * I) \ L_p_dense
     T = -(L_0 + 1im * n_max * ω * I) \ L_m_dense
 
-    for n_i in n_max-1:-1:1
+    for n_i in (n_max-1):-1:1
         S = -(L_0 - 1im * n_i * ω * I + L_m * S) \ L_p_dense
         T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m_dense
     end
