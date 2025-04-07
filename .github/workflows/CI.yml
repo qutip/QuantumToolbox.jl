@@ -55,6 +55,13 @@ jobs:
           - 'Core'
 
         include:
+          # for core tests (intermediate versions)
+          # - version: '1.x'
+          #   node:
+          #     os: 'ubuntu-latest'
+          #     arch: 'x64'
+          #   group: 'Core'
+
           # for extension tests
           - version: '1'
             node:

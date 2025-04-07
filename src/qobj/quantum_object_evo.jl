@@ -397,7 +397,6 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
             )
 
             op = :(op_func_list[$i][1])
-            data_type = op_type.parameters[1]
             dims_expr = (dims_expr..., :($op.dimensions))
             func_methods_expr = (func_methods_expr..., :(methods(op_func_list[$i][2], [Any, Real]))) # [Any, Real] means each func must accept 2 arguments
             if i == 1
@@ -409,7 +408,6 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
             (isoper(op_type) || issuper(op_type)) ||
                 throw(ArgumentError("The element must be a Operator or SuperOperator."))
 
-            data_type = op_type.parameters[1]
             dims_expr = (dims_expr..., :(op_func_list[$i].dimensions))
             if i == 1
                 first_op = :(op_func_list[$i])
