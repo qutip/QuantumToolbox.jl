@@ -32,7 +32,7 @@
         my_f_sesolve(params)
 
 
-        grad_qt = Zygote.gradient(my_f_sesolve, params)[1] ./ 2
+        grad_qt = Zygote.gradient(my_f_sesolve, params)[1]
         grad_exact = [my_f_analytic_deriv(params[1])]
 
         @test grad_qt ≈ grad_exact atol=1e-6
@@ -76,7 +76,7 @@
         params = [Δ, F, γ]
 
         # The factor 2 is due to a bug
-        grad_qt = Zygote.gradient(my_f_mesolve, params)[1] ./ 2
+        grad_qt = Zygote.gradient(my_f_mesolve, params)[1]
 
         grad_exact = Zygote.gradient((p) -> n_ss(p[1], p[2], p[3]), params)[1]
 
