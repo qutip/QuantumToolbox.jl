@@ -65,7 +65,7 @@ if (GROUP == "AutoDiff_Ext")
     using Enzyme
     using SciMLSensitivity
 
-    include(joinpath(testdir, "ext-test", "autodiff", "zygote.jl"))
+    include(joinpath(testdir, "ext-test", "cpu", "autodiff", "zygote.jl"))
 end
 
 if (GROUP == "CairoMakie_Ext")
