@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make CUDA conversion more general using Adapt.jl. ([#436], [#437])
 - Make the generation of `fock` states non-mutating to support Zygote.jl. ([#438])
 - Remove Reexport.jl from the dependencies. ([#443])
+- Add support for automatic differentiation for `sesolve` and `mesolve`. ([#440])
 
 ## [v0.29.1]
 Release date: 2025-03-07
@@ -195,3 +196,4 @@ Release date: 2024-11-13
 [#437]: https://github.com/qutip/QuantumToolbox.jl/issues/437
 [#438]: https://github.com/qutip/QuantumToolbox.jl/issues/438
 [#443]: https://github.com/qutip/QuantumToolbox.jl/issues/443
+[#440]: https://github.com/qutip/QuantumToolbox.jl/issues/440

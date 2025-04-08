@@ -31,13 +31,12 @@
         my_f_analytic(Ω)
         my_f_sesolve(params)
 
-
         grad_qt = Zygote.gradient(my_f_sesolve, params)[1]
         grad_exact = [my_f_analytic_deriv(params[1])]
 
         @test grad_qt ≈ grad_exact atol=1e-6
     end
-    
+
     @testset "mesolve" begin
         N = 20
         a = destroy(N)
