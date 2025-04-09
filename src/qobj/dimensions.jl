@@ -91,9 +91,9 @@ _get_space_size(s::AbstractSpace)::Int = s.size
 Base.prod(dims::Dimensions) = prod(dims.to)
 Base.prod(spaces::NTuple{N,AbstractSpace}) where {N} = prod(_get_space_size, spaces)
 
-LinearAlgebra.transpose(dimensions::Dimensions) = dimensions
-LinearAlgebra.transpose(dimensions::GeneralDimensions) = GeneralDimensions(dimensions.from, dimensions.to) # switch `to` and `from`
-LinearAlgebra.adjoint(dimensions::AbstractDimensions) = transpose(dimensions)
+Base.transpose(dimensions::Dimensions) = dimensions
+Base.transpose(dimensions::GeneralDimensions) = GeneralDimensions(dimensions.from, dimensions.to) # switch `to` and `from`
+Base.adjoint(dimensions::AbstractDimensions) = transpose(dimensions)
 
 # this is used to show `dims` for Qobj and QobjEvo
 _get_dims_string(dimensions::Dimensions) = string(dimensions_to_dims(dimensions))

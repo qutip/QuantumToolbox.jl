@@ -5,10 +5,10 @@ module QuantumToolbox
 #   2. basic functions in LinearAlgebra and SparseArrays
 #   3. some functions in SciMLOperators
 import Reexport: @reexport
-@reexport import StaticArraysCore: SVector
-@reexport using LinearAlgebra
-@reexport using SparseArrays
-@reexport import SciMLOperators: cache_operator, iscached, isconstant
+import StaticArraysCore: SVector
+using LinearAlgebra
+using SparseArrays
+import SciMLOperators: cache_operator, iscached, isconstant
 
 # other functions in LinearAlgebra
 import LinearAlgebra: BlasReal, BlasInt, BlasFloat, BlasComplex, checksquare
