@@ -226,6 +226,8 @@ Which is an innocuous but huge difference in terms of performance. Hence, we hig
 In some functions of `QuantumToolbox.jl`, you may find the use of the [`Val`](https://docs.julialang.org/en/v1/base/base/#Base.Val) type in the arguments. This is a trick to pass a value at compile time, and it is very useful to avoid type instabilities. Let's make a very simple example, where we want to create a Fock state ``|j\rangle`` of a given dimension `N`, and we give the possibility to create it as a sparse or dense vector. At first, we can write the function without using `Val`:
 
 ```@example type-stability
+using SparseArrays
+
 function my_fock(N::Int, j::Int = 0; sparse::Bool = false)
     if sparse
         array = sparsevec([j + 1], [1.0 + 0im], N)

@@ -444,6 +444,8 @@ julia> a = destroy(5);
 
 julia> H = a + a';
 
+julia> using LinearAlgebra;
+
 julia> E, ψ, U = eigen(H)
 EigsolveResult:   type=Operator   dims=[5]
 values:
