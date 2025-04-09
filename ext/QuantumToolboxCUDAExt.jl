@@ -5,7 +5,7 @@ using QuantumToolbox: makeVal, getVal
 import QuantumToolbox: _sparse_similar, _convert_eltype_wordsize
 import CUDA: cu, CuArray, allowscalar
 import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR, AbstractCuSparseArray
-import SparseArrays: SparseVector, SparseMatrixCSC
+import SparseArrays: SparseVector, SparseMatrixCSC, sparse
 import CUDA.Adapt: adapt
 
 allowscalar(false)
