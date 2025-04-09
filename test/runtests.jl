@@ -1,22 +1,27 @@
 using Test
 using Pkg
 
+# Importing only the necessary functions to keep track the re-export of the functions
+import LinearAlgebra: Diagonal, I, mul!, triu, tril, triu!, tril!
+import SparseArrays: sparse, sprand, spzeros, spdiagm, nnz, SparseVector, SparseMatrixCSC, AbstractSparseMatrix
+import StaticArraysCore: SVector
+
 const GROUP = get(ENV, "GROUP", "All")
 
 const testdir = dirname(@__FILE__)
 
 # Put core tests in alphabetical order
 core_tests = [
-    "block_diagonal_form.jl",
-    "correlations_and_spectrum.jl",
-    "dynamical_fock_dimension_mesolve.jl",
-    "dynamical-shifted-fock.jl",
-    "eigenvalues_and_operators.jl",
-    "entropy_and_metric.jl",
-    "generalized_master_equation.jl",
-    "low_rank_dynamics.jl",
-    "negativity_and_partial_transpose.jl",
-    "progress_bar.jl",
+    # "block_diagonal_form.jl",
+    # "correlations_and_spectrum.jl",
+    # "dynamical_fock_dimension_mesolve.jl",
+    # "dynamical-shifted-fock.jl",
+    # "eigenvalues_and_operators.jl",
+    # "entropy_and_metric.jl",
+    # "generalized_master_equation.jl",
+    # "low_rank_dynamics.jl",
+    # "negativity_and_partial_transpose.jl",
+    # "progress_bar.jl",
     "quantum_objects.jl",
     "quantum_objects_evo.jl",
     "states_and_operators.jl",

@@ -1,13 +1,12 @@
 module QuantumToolbox
 
-# Re-export:
-#   1. StaticArraysCore.SVector for the type of dims
-#   2. basic functions in LinearAlgebra and SparseArrays
-#   3. some functions in SciMLOperators
-import Reexport: @reexport
-import StaticArraysCore: SVector
+"The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` instead of `sel = [1, 2]`. Alternatively, you can do `import QuantumToolbox: SVector` and use `dims = SVector(1, 2)`."
+
+"The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` instead of `sel = [1, 2]`. Alternatively, you can do `import QuantumToolbox: SVector` and use `sel = SVector(1, 2)`."
+
 using LinearAlgebra
 using SparseArrays
+import StaticArraysCore: SVector
 import SciMLOperators: cache_operator, iscached, isconstant
 
 # other functions in LinearAlgebra
@@ -69,9 +68,30 @@ import Random: AbstractRNG, default_rng, seed!
 import SpecialFunctions: loggamma
 import StaticArraysCore: MVector
 
-# Setting the number of threads to 1 allows
-# to achieve better performances for more massive parallelizations
-BLAS.set_num_threads(1)
+# Export functions from the other modules
+
+# LinearAlgebra
+export ishermitian,
+    issymmetric,
+    isposdef,
+    adjoint,
+    transpose,
+    dot,
+    tr,
+    svdvals,
+    norm,
+    normalize,
+    normalize!,
+    diag,
+    kron,
+    Hermitian,
+    Symmetric
+
+# SparseArrays
+export permute
+
+# SciMLOperators
+export cache_operator, iscached, isconstant
 
 # Utility
 include("utilities.jl")

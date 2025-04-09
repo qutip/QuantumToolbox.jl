@@ -17,7 +17,7 @@ The `dimensions` can be either the following types:
 - `dimensions::Union{Dimensions,AbstractVector{Int}, Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 !!! warning "Beware of type-stability!"
-    It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket, dimensions)
 zero_ket(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =
@@ -31,7 +31,7 @@ Generates a fock state ``\ket{\psi}`` of dimension `N`.
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `fock(N, j, dims=dims, sparse=Val(sparse))` instead of `fock(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `fock(N, j, dims=dims, sparse=Val(sparse))` instead of `fock(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function fock(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N, sparse::Union{Bool,Val} = Val(false))
     if getVal(sparse)
@@ -50,7 +50,7 @@ Generates a fock state like [`fock`](@ref).
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `basis(N, j, dims=dims)` with `dims` as a `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `basis(N, j, dims=dims)` with `dims` as a `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 basis(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N) = fock(N, j, dims = dims)
 
@@ -73,7 +73,7 @@ The `dimensions` can be either the following types:
 - `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `rand_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `rand_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 rand_ket(dimensions::Int) = rand_ket(SVector(dimensions))
 function rand_ket(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
@@ -90,7 +90,7 @@ Density matrix representation of a Fock state.
 Constructed via outer product of [`fock`](@ref).
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `fock_dm(N, j, dims=dims, sparse=Val(sparse))` instead of `fock_dm(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `fock_dm(N, j, dims=dims, sparse=Val(sparse))` instead of `fock_dm(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function fock_dm(
     N::Int,
@@ -146,7 +146,7 @@ The `dimensions` can be either the following types:
 - `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 maximally_mixed_dm(dimensions::Int) = QuantumObject(I(dimensions) / complex(dimensions), Operator, SVector(dimensions))
 function maximally_mixed_dm(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
@@ -166,7 +166,7 @@ The `dimensions` can be either the following types:
 The default keyword argument `rank = prod(dimensions)` (full rank).
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `rand_dm(dimensions; rank=rank)` with `dimensions` as `Tuple` or `SVector` instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `rand_dm(dimensions; rank=rank)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 
 # References
 - [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)

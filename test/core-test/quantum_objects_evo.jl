@@ -31,7 +31,7 @@
         @test_throws DomainError QobjEvo(a, dims = (2, -2))
         @test_logs (
             :warn,
-            "The argument dims should be a Tuple or a StaticVector for better performance. Try to use `dims = (2, 2)` or `dims = SVector(2, 2)` instead of `dims = [2, 2]`.",
+            "The argument dims should be a Tuple or a StaticVector for better performance. Try to use `dims = (2, 2)` instead of `dims = [2, 2]`. Alternatively, you can do `import QuantumToolbox: SVector` and use `dims = SVector(2, 2)`.",
         ) QobjEvo(MatrixOperator(rand(4, 4)), dims = [2, 2])
     end
 

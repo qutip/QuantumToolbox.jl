@@ -199,7 +199,7 @@ Which returns a tensor of size `2x2x2x2x2x2`. Let's check the `@code_warntype`:
 @code_warntype reshape_operator_data([2, 2, 2])
 ```
 
-We got a `Any` type, because the compiler doesn't know the size of the `dims` vector. We can fix this by using a `Tuple` (or `SVector`):
+We got a `Any` type, because the compiler doesn't know the size of the `dims` vector. We can fix this by using a `Tuple` (or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl)):
 
 ```@example type-stability
 typeof(reshape_operator_data((2, 2, 2)))
@@ -219,7 +219,7 @@ Finally, let's look at the benchmarks
 @benchmark reshape_operator_data($((2, 2, 2)))
 ```
 
-Which is an innocuous but huge difference in terms of performance. Hence, we highly recommend using `Tuple` or `SVector` when defining the dimensions of a user-defined [`QuantumObject`](@ref).
+Which is an innocuous but huge difference in terms of performance. Hence, we highly recommend using `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) when defining the dimensions of a user-defined [`QuantumObject`](@ref).
 
 ## The use of `Val` in some `QuantumToolbox.jl` functions
 

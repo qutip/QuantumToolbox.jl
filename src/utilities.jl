@@ -151,9 +151,11 @@ _non_static_array_warning(argname, arg::Tuple{}) =
     throw(ArgumentError("The argument $argname must be a Tuple or a StaticVector of non-zero length."))
 _non_static_array_warning(argname, arg::Union{SVector{N,T},MVector{N,T},NTuple{N,T}}) where {N,T} = nothing
 _non_static_array_warning(argname, arg::AbstractVector{T}) where {T} =
-    @warn "The argument $argname should be a Tuple or a StaticVector for better performance. Try to use `$argname = $(Tuple(arg))` or `$argname = SVector(" *
+    @warn "The argument $argname should be a Tuple or a StaticVector for better performance. Try to use `$argname = $(Tuple(arg))` instead of `$argname = $arg`. " *
+          "Alternatively, you can do `import QuantumToolbox: SVector` " *
+          "and use `$argname = SVector(" *
           join(arg, ", ") *
-          ")` instead of `$argname = $arg`." maxlog = 1
+          ")`." maxlog = 1
 
 # lazy tensor warning
 for AType in (:AbstractArray, :AbstractSciMLOperator)

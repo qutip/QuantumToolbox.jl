@@ -91,17 +91,11 @@ for ADimType in (:Dimensions, :GeneralDimensions)
     end
 end
 
-function Base.:(*)(
-    A::AbstractQuantumObject{OperatorQuantumObject},
-    B::QuantumObject{KetQuantumObject,<:Dimensions},
-)
+function Base.:(*)(A::AbstractQuantumObject{OperatorQuantumObject}, B::QuantumObject{KetQuantumObject,<:Dimensions})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
     return QuantumObject(A.data * B.data, Ket, Dimensions(get_dimensions_to(A)))
 end
-function Base.:(*)(
-    A::QuantumObject{BraQuantumObject,<:Dimensions},
-    B::AbstractQuantumObject{OperatorQuantumObject},
-)
+function Base.:(*)(A::QuantumObject{BraQuantumObject,<:Dimensions}, B::AbstractQuantumObject{OperatorQuantumObject})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
     return QuantumObject(A.data * B.data, Bra, Dimensions(get_dimensions_from(B)))
 end
@@ -113,10 +107,7 @@ function Base.:(*)(A::QuantumObject{BraQuantumObject}, B::QuantumObject{KetQuant
     check_dimensions(A, B)
     return A.data * B.data
 end
-function Base.:(*)(
-    A::AbstractQuantumObject{SuperOperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
-)
+function Base.:(*)(A::AbstractQuantumObject{SuperOperatorQuantumObject}, B::QuantumObject{OperatorQuantumObject})
     check_dimensions(A, B)
     return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator, A.dimensions)
 end
@@ -124,24 +115,17 @@ function Base.:(*)(A::QuantumObject{OperatorBraQuantumObject}, B::QuantumObject{
     check_dimensions(A, B)
     return A.data * B.data
 end
-function Base.:(*)(
-    A::AbstractQuantumObject{SuperOperatorQuantumObject},
-    B::QuantumObject{OperatorKetQuantumObject},
-)
+function Base.:(*)(A::AbstractQuantumObject{SuperOperatorQuantumObject}, B::QuantumObject{OperatorKetQuantumObject})
     check_dimensions(A, B)
     return QuantumObject(A.data * B.data, OperatorKet, A.dimensions)
 end
-function Base.:(*)(
-    A::QuantumObject{OperatorBraQuantumObject},
-    B::AbstractQuantumObject{SuperOperatorQuantumObject},
-)
+function Base.:(*)(A::QuantumObject{OperatorBraQuantumObject}, B::AbstractQuantumObject{SuperOperatorQuantumObject})
     check_dimensions(A, B)
     return QuantumObject(A.data * B.data, OperatorBra, A.dimensions)
 end
 
 Base.:(^)(A::QuantumObject, n::T) where {T<:Number} = QuantumObject(^(A.data, n), A.type, A.dimensions)
-Base.:(/)(A::AbstractQuantumObject, n::T) where {T<:Number} =
-    get_typename_wrapper(A)(A.data / n, A.type, A.dimensions)
+Base.:(/)(A::AbstractQuantumObject, n::T) where {T<:Number} = get_typename_wrapper(A)(A.data / n, A.type, A.dimensions)
 
 @doc raw"""
     A ⋅ B
@@ -236,9 +220,7 @@ Lazy adjoint (conjugate transposition) of the [`AbstractQuantumObject`](@ref)
 !!! note
     `A'` and `dag(A)` are synonyms of `adjoint(A)`.
 """
-Base.adjoint(
-    A::AbstractQuantumObject{OpType},
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+Base.adjoint(A::AbstractQuantumObject{OpType}) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     get_typename_wrapper(A)(adjoint(A.data), A.type, adjoint(A.dimensions))
 Base.adjoint(A::QuantumObject{KetQuantumObject}) = QuantumObject(adjoint(A.data), Bra, adjoint(A.dimensions))
 Base.adjoint(A::QuantumObject{BraQuantumObject}) = QuantumObject(adjoint(A.data), Ket, adjoint(A.dimensions))
@@ -768,7 +750,7 @@ true
 ```
 
 !!! warning "Beware of type-stability!"
-    It is highly recommended to use `permute(A, order)` with `order` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    It is highly recommended to use `permute(A, order)` with `order` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function SparseArrays.permute(
     A::QuantumObject{ObjType},
