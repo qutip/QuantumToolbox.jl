@@ -1,9 +1,5 @@
 module QuantumToolbox
 
-"The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` instead of `sel = [1, 2]`. Alternatively, you can do `import QuantumToolbox: SVector` and use `dims = SVector(1, 2)`."
-
-"The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` instead of `sel = [1, 2]`. Alternatively, you can do `import QuantumToolbox: SVector` and use `sel = SVector(1, 2)`."
-
 using LinearAlgebra
 using SparseArrays
 import StaticArraysCore: SVector
@@ -71,21 +67,7 @@ import StaticArraysCore: MVector
 # Export functions from the other modules
 
 # LinearAlgebra
-export ishermitian,
-    issymmetric,
-    isposdef,
-    adjoint,
-    transpose,
-    dot,
-    tr,
-    svdvals,
-    norm,
-    normalize,
-    normalize!,
-    diag,
-    kron,
-    Hermitian,
-    Symmetric
+export ishermitian, issymmetric, isposdef, dot, tr, svdvals, norm, normalize, normalize!, diag, Hermitian, Symmetric
 
 # SparseArrays
 export permute

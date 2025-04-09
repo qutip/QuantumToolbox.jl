@@ -1,4 +1,6 @@
 using BenchmarkTools
+using LinearAlgebra
+using SparseArrays
 using QuantumToolbox
 using OrdinaryDiffEq
 using LinearSolve
