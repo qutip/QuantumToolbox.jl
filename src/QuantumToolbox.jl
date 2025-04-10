@@ -1,14 +1,10 @@
 module QuantumToolbox
 
+# Standard Julia libraries
 using LinearAlgebra
-using SparseArrays
-import StaticArraysCore: SVector
-import SciMLOperators: cache_operator, iscached, isconstant
-
-# other functions in LinearAlgebra
-import LinearAlgebra: BlasReal, BlasInt, BlasFloat, BlasComplex, checksquare
-import LinearAlgebra.BLAS: @blasfunc
+import LinearAlgebra: BlasInt, BlasFloat, checksquare
 import LinearAlgebra.LAPACK: hseqr!
+using SparseArrays
 
 # SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
 import SciMLBase:
@@ -37,6 +33,9 @@ import SciMLBase:
     AbstractODESolution
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA2, SRIW1
 import SciMLOperators:
+    cache_operator,
+    iscached,
+    isconstant,
     SciMLOperators,
     AbstractSciMLOperator,
     MatrixOperator,
@@ -62,7 +61,7 @@ import IncompleteLU: ilu
 import Pkg
 import Random: AbstractRNG, default_rng, seed!
 import SpecialFunctions: loggamma
-import StaticArraysCore: MVector
+import StaticArraysCore: SVector, MVector
 
 # Export functions from the other modules
 
