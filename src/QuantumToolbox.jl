@@ -1,19 +1,10 @@
 module QuantumToolbox
 
-# Re-export:
-#   1. StaticArraysCore.SVector for the type of dims
-#   2. basic functions in LinearAlgebra and SparseArrays
-#   3. some functions in SciMLOperators
-import Reexport: @reexport
-@reexport import StaticArraysCore: SVector
-@reexport using LinearAlgebra
-@reexport using SparseArrays
-@reexport import SciMLOperators: cache_operator, iscached, isconstant
-
-# other functions in LinearAlgebra
-import LinearAlgebra: BlasReal, BlasInt, BlasFloat, BlasComplex, checksquare
-import LinearAlgebra.BLAS: @blasfunc
+# Standard Julia libraries
+using LinearAlgebra
+import LinearAlgebra: BlasInt, BlasFloat, checksquare
 import LinearAlgebra.LAPACK: hseqr!
+using SparseArrays
 
 # SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
 import SciMLBase:
@@ -42,6 +33,9 @@ import SciMLBase:
     AbstractODESolution
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA2, SRIW1
 import SciMLOperators:
+    cache_operator,
+    iscached,
+    isconstant,
     SciMLOperators,
     AbstractSciMLOperator,
     MatrixOperator,
@@ -67,11 +61,18 @@ import IncompleteLU: ilu
 import Pkg
 import Random: AbstractRNG, default_rng, seed!
 import SpecialFunctions: loggamma
-import StaticArraysCore: MVector
+import StaticArraysCore: SVector, MVector
 
-# Setting the number of threads to 1 allows
-# to achieve better performances for more massive parallelizations
-BLAS.set_num_threads(1)
+# Export functions from the other modules
+
+# LinearAlgebra
+export ishermitian, issymmetric, isposdef, dot, tr, svdvals, norm, normalize, normalize!, diag, Hermitian, Symmetric
+
+# SparseArrays
+export permute
+
+# SciMLOperators
+export cache_operator, iscached, isconstant
 
 # Utility
 include("utilities.jl")

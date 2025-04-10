@@ -36,16 +36,16 @@ end
 
 for op in (:(+), :(-), :(*))
     @eval begin
-        function LinearAlgebra.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
+        function Base.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
             check_dimensions(A, B)
             QType = promote_op_type(A, B)
             return QType($(op)(A.data, B.data), A.type, A.dimensions)
         end
-        LinearAlgebra.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dimensions)
+        Base.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dimensions)
 
-        LinearAlgebra.$op(n::T, A::AbstractQuantumObject) where {T<:Number} =
+        Base.$op(n::T, A::AbstractQuantumObject) where {T<:Number} =
             get_typename_wrapper(A)($(op)(n * I, A.data), A.type, A.dimensions)
-        LinearAlgebra.$op(A::AbstractQuantumObject, n::T) where {T<:Number} =
+        Base.$op(A::AbstractQuantumObject, n::T) where {T<:Number} =
             get_typename_wrapper(A)($(op)(A.data, n * I), A.type, A.dimensions)
     end
 end
@@ -63,7 +63,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
     for BDimType in (:Dimensions, :GeneralDimensions)
         if ADimType == BDimType == :Dimensions
             @eval begin
-                function LinearAlgebra.:(*)(
+                function Base.:(*)(
                     A::AbstractQuantumObject{OperatorQuantumObject,<:$ADimType},
                     B::AbstractQuantumObject{OperatorQuantumObject,<:$BDimType},
                 )
@@ -74,7 +74,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
             end
         else
             @eval begin
-                function LinearAlgebra.:(*)(
+                function Base.:(*)(
                     A::AbstractQuantumObject{OperatorQuantumObject,<:$ADimType},
                     B::AbstractQuantumObject{OperatorQuantumObject,<:$BDimType},
                 )
@@ -91,57 +91,41 @@ for ADimType in (:Dimensions, :GeneralDimensions)
     end
 end
 
-function LinearAlgebra.:(*)(
-    A::AbstractQuantumObject{OperatorQuantumObject},
-    B::QuantumObject{KetQuantumObject,<:Dimensions},
-)
+function Base.:(*)(A::AbstractQuantumObject{OperatorQuantumObject}, B::QuantumObject{KetQuantumObject,<:Dimensions})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
     return QuantumObject(A.data * B.data, Ket, Dimensions(get_dimensions_to(A)))
 end
-function LinearAlgebra.:(*)(
-    A::QuantumObject{BraQuantumObject,<:Dimensions},
-    B::AbstractQuantumObject{OperatorQuantumObject},
-)
+function Base.:(*)(A::QuantumObject{BraQuantumObject,<:Dimensions}, B::AbstractQuantumObject{OperatorQuantumObject})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
     return QuantumObject(A.data * B.data, Bra, Dimensions(get_dimensions_from(B)))
 end
-function LinearAlgebra.:(*)(A::QuantumObject{KetQuantumObject}, B::QuantumObject{BraQuantumObject})
+function Base.:(*)(A::QuantumObject{KetQuantumObject}, B::QuantumObject{BraQuantumObject})
     check_dimensions(A, B)
     return QuantumObject(A.data * B.data, Operator, A.dimensions) # to align with QuTiP, don't use kron(A, B) to do it.
 end
-function LinearAlgebra.:(*)(A::QuantumObject{BraQuantumObject}, B::QuantumObject{KetQuantumObject})
+function Base.:(*)(A::QuantumObject{BraQuantumObject}, B::QuantumObject{KetQuantumObject})
     check_dimensions(A, B)
     return A.data * B.data
 end
-function LinearAlgebra.:(*)(
-    A::AbstractQuantumObject{SuperOperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
-)
+function Base.:(*)(A::AbstractQuantumObject{SuperOperatorQuantumObject}, B::QuantumObject{OperatorQuantumObject})
     check_dimensions(A, B)
     return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator, A.dimensions)
 end
-function LinearAlgebra.:(*)(A::QuantumObject{OperatorBraQuantumObject}, B::QuantumObject{OperatorKetQuantumObject})
+function Base.:(*)(A::QuantumObject{OperatorBraQuantumObject}, B::QuantumObject{OperatorKetQuantumObject})
     check_dimensions(A, B)
     return A.data * B.data
 end
-function LinearAlgebra.:(*)(
-    A::AbstractQuantumObject{SuperOperatorQuantumObject},
-    B::QuantumObject{OperatorKetQuantumObject},
-)
+function Base.:(*)(A::AbstractQuantumObject{SuperOperatorQuantumObject}, B::QuantumObject{OperatorKetQuantumObject})
     check_dimensions(A, B)
     return QuantumObject(A.data * B.data, OperatorKet, A.dimensions)
 end
-function LinearAlgebra.:(*)(
-    A::QuantumObject{OperatorBraQuantumObject},
-    B::AbstractQuantumObject{SuperOperatorQuantumObject},
-)
+function Base.:(*)(A::QuantumObject{OperatorBraQuantumObject}, B::AbstractQuantumObject{SuperOperatorQuantumObject})
     check_dimensions(A, B)
     return QuantumObject(A.data * B.data, OperatorBra, A.dimensions)
 end
 
-LinearAlgebra.:(^)(A::QuantumObject, n::T) where {T<:Number} = QuantumObject(^(A.data, n), A.type, A.dimensions)
-LinearAlgebra.:(/)(A::AbstractQuantumObject, n::T) where {T<:Number} =
-    get_typename_wrapper(A)(A.data / n, A.type, A.dimensions)
+Base.:(^)(A::QuantumObject, n::T) where {T<:Number} = QuantumObject(^(A.data, n), A.type, A.dimensions)
+Base.:(/)(A::AbstractQuantumObject, n::T) where {T<:Number} = get_typename_wrapper(A)(A.data / n, A.type, A.dimensions)
 
 @doc raw"""
     A ⋅ B
@@ -221,7 +205,7 @@ Base.conj(A::AbstractQuantumObject) = get_typename_wrapper(A)(conj(A.data), A.ty
 
 Lazy matrix transpose of the [`AbstractQuantumObject`](@ref).
 """
-LinearAlgebra.transpose(
+Base.transpose(
     A::AbstractQuantumObject{OpType},
 ) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     get_typename_wrapper(A)(transpose(A.data), A.type, transpose(A.dimensions))
@@ -236,15 +220,13 @@ Lazy adjoint (conjugate transposition) of the [`AbstractQuantumObject`](@ref)
 !!! note
     `A'` and `dag(A)` are synonyms of `adjoint(A)`.
 """
-LinearAlgebra.adjoint(
-    A::AbstractQuantumObject{OpType},
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+Base.adjoint(A::AbstractQuantumObject{OpType}) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     get_typename_wrapper(A)(adjoint(A.data), A.type, adjoint(A.dimensions))
-LinearAlgebra.adjoint(A::QuantumObject{KetQuantumObject}) = QuantumObject(adjoint(A.data), Bra, adjoint(A.dimensions))
-LinearAlgebra.adjoint(A::QuantumObject{BraQuantumObject}) = QuantumObject(adjoint(A.data), Ket, adjoint(A.dimensions))
-LinearAlgebra.adjoint(A::QuantumObject{OperatorKetQuantumObject}) =
+Base.adjoint(A::QuantumObject{KetQuantumObject}) = QuantumObject(adjoint(A.data), Bra, adjoint(A.dimensions))
+Base.adjoint(A::QuantumObject{BraQuantumObject}) = QuantumObject(adjoint(A.data), Ket, adjoint(A.dimensions))
+Base.adjoint(A::QuantumObject{OperatorKetQuantumObject}) =
     QuantumObject(adjoint(A.data), OperatorBra, adjoint(A.dimensions))
-LinearAlgebra.adjoint(A::QuantumObject{OperatorBraQuantumObject}) =
+Base.adjoint(A::QuantumObject{OperatorBraQuantumObject}) =
     QuantumObject(adjoint(A.data), OperatorKet, adjoint(A.dimensions))
 
 @doc raw"""
@@ -415,7 +397,7 @@ Matrix square root of [`QuantumObject`](@ref)
 !!! note
     `√(A)` (where `√` can be typed by tab-completing `\sqrt` in the REPL) is a synonym of `sqrt(A)`.
 """
-LinearAlgebra.sqrt(A::QuantumObject) = QuantumObject(sqrt(to_dense(A.data)), A.type, A.dimensions)
+Base.sqrt(A::QuantumObject) = QuantumObject(sqrt(to_dense(A.data)), A.type, A.dimensions)
 
 @doc raw"""
     log(A::QuantumObject)
@@ -424,7 +406,7 @@ Matrix logarithm of [`QuantumObject`](@ref)
 
 Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-LinearAlgebra.log(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+Base.log(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     QuantumObject(log(to_dense(A.data)), A.type, A.dimensions)
 
 @doc raw"""
@@ -434,11 +416,11 @@ Matrix exponential of [`QuantumObject`](@ref)
 
 Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-LinearAlgebra.exp(
+Base.exp(
     A::QuantumObject{ObjType,DimsType,<:AbstractMatrix},
 ) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},DimsType} =
     QuantumObject(to_sparse(exp(A.data)), A.type, A.dimensions)
-LinearAlgebra.exp(
+Base.exp(
     A::QuantumObject{ObjType,DimsType,<:AbstractSparseMatrix},
 ) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},DimsType} =
     QuantumObject(_spexp(A.data), A.type, A.dimensions)
@@ -483,7 +465,7 @@ Matrix sine of [`QuantumObject`](@ref), defined as
 
 Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-LinearAlgebra.sin(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+Base.sin(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     (exp(1im * A) - exp(-1im * A)) / 2im
 
 @doc raw"""
@@ -495,7 +477,7 @@ Matrix cosine of [`QuantumObject`](@ref), defined as
 
 Note that this function only supports for [`Operator`](@ref) and [`SuperOperator`](@ref)
 """
-LinearAlgebra.cos(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+Base.cos(A::QuantumObject{ObjType}) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
     (exp(1im * A) + exp(-1im * A)) / 2
 
 @doc raw"""
@@ -768,7 +750,7 @@ true
 ```
 
 !!! warning "Beware of type-stability!"
-    It is highly recommended to use `permute(A, order)` with `order` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    It is highly recommended to use `permute(A, order)` with `order` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function SparseArrays.permute(
     A::QuantumObject{ObjType},

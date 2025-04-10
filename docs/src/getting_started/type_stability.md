@@ -199,7 +199,7 @@ Which returns a tensor of size `2x2x2x2x2x2`. Let's check the `@code_warntype`:
 @code_warntype reshape_operator_data([2, 2, 2])
 ```
 
-We got a `Any` type, because the compiler doesn't know the size of the `dims` vector. We can fix this by using a `Tuple` (or `SVector`):
+We got a `Any` type, because the compiler doesn't know the size of the `dims` vector. We can fix this by using a `Tuple` (or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl)):
 
 ```@example type-stability
 typeof(reshape_operator_data((2, 2, 2)))
@@ -219,13 +219,15 @@ Finally, let's look at the benchmarks
 @benchmark reshape_operator_data($((2, 2, 2)))
 ```
 
-Which is an innocuous but huge difference in terms of performance. Hence, we highly recommend using `Tuple` or `SVector` when defining the dimensions of a user-defined [`QuantumObject`](@ref).
+Which is an innocuous but huge difference in terms of performance. Hence, we highly recommend using `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) when defining the dimensions of a user-defined [`QuantumObject`](@ref).
 
 ## The use of `Val` in some `QuantumToolbox.jl` functions
 
 In some functions of `QuantumToolbox.jl`, you may find the use of the [`Val`](https://docs.julialang.org/en/v1/base/base/#Base.Val) type in the arguments. This is a trick to pass a value at compile time, and it is very useful to avoid type instabilities. Let's make a very simple example, where we want to create a Fock state ``|j\rangle`` of a given dimension `N`, and we give the possibility to create it as a sparse or dense vector. At first, we can write the function without using `Val`:
 
 ```@example type-stability
+using SparseArrays
+
 function my_fock(N::Int, j::Int = 0; sparse::Bool = false)
     if sparse
         array = sparsevec([j + 1], [1.0 + 0im], N)

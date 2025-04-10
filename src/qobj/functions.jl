@@ -187,7 +187,7 @@ julia> a.dims, O.dims
 ([20], [20, 20])
 ```
 """
-function LinearAlgebra.kron(
+function Base.kron(
     A::AbstractQuantumObject{OpType,<:Dimensions},
     B::AbstractQuantumObject{OpType,<:Dimensions},
 ) where {OpType<:Union{KetQuantumObject,BraQuantumObject,OperatorQuantumObject}}
@@ -201,7 +201,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
     for BDimType in (:Dimensions, :GeneralDimensions)
         if !(ADimType == BDimType == :Dimensions) # not for this case because it's already implemented
             @eval begin
-                function LinearAlgebra.kron(
+                function Base.kron(
                     A::AbstractQuantumObject{OperatorQuantumObject,<:$ADimType},
                     B::AbstractQuantumObject{OperatorQuantumObject,<:$BDimType},
                 )
@@ -226,7 +226,7 @@ for AOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
     for BOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
         if (AOpType != BOpType)
             @eval begin
-                function LinearAlgebra.kron(A::AbstractQuantumObject{$AOpType}, B::AbstractQuantumObject{$BOpType})
+                function Base.kron(A::AbstractQuantumObject{$AOpType}, B::AbstractQuantumObject{$BOpType})
                     QType = promote_op_type(A, B)
                     _lazy_tensor_warning(A.data, B.data)
                     return QType(
@@ -243,8 +243,8 @@ for AOpType in (:KetQuantumObject, :BraQuantumObject, :OperatorQuantumObject)
     end
 end
 
-LinearAlgebra.kron(A::AbstractQuantumObject) = A
-function LinearAlgebra.kron(A::Vector{<:AbstractQuantumObject})
+Base.kron(A::AbstractQuantumObject) = A
+function Base.kron(A::Vector{<:AbstractQuantumObject})
     @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."
     return kron(A...)
 end

@@ -1,6 +1,11 @@
 using Test
 using Pkg
 
+# Importing only the necessary functions to keep track the re-export of the functions
+import LinearAlgebra: Diagonal, I, mul!, triu, tril, triu!, tril!
+import SparseArrays: sparse, sprand, spzeros, spdiagm, nnz, SparseVector, SparseMatrixCSC, AbstractSparseMatrix
+import StaticArraysCore: SVector
+
 const GROUP = get(ENV, "GROUP", "All")
 
 const testdir = dirname(@__FILE__)

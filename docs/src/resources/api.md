@@ -1,5 +1,11 @@
 ```@meta
 CurrentModule = QuantumToolbox
+
+DocTestSetup = quote
+    using LinearAlgebra
+    using SparseArrays
+    using QuantumToolbox
+end
 ```
 
 # [API](@id doc-API)
