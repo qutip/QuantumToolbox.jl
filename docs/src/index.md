@@ -74,3 +74,25 @@ using QuantumToolbox
 QuantumToolbox.versioninfo()
 QuantumToolbox.about()
 ```
+
+# [Other Useful Packages](@id doc:Other-Useful-Packages)
+
+In order to get a better experience and take full advantage of `QuantumToolbox`, we recommend the following external packages:
+
+- Standard `Julia` Libraries: (recommended to also `using` with `QuantumToolbox.jl`)
+  - [`LinearAlgebra.jl`](https://github.com/JuliaLang/LinearAlgebra.jl)
+  - [`SparseArrays.jl`](https://github.com/JuliaSparse/SparseArrays.jl)
+- Solver `alg`orithms:
+  - [`DifferentialEquations.jl`](https://github.com/SciML/DifferentialEquations.jl) or [`OrdinaryDiffEq.jl`](https://github.com/SciML/OrdinaryDiffEq.jl)
+  - [`LinearSolve.jl`](https://github.com/SciML/LinearSolve.jl)
+- GPU support:
+  - [`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl)
+- Distributed Computing support:
+  - [`Disributed.jl`](https://github.com/JuliaLang/Distributed.jl)
+  - [`SlurmClusterManager.jl`](https://github.com/JuliaParallel/SlurmClusterManager.jl)
+- Plotting Libraries:
+  - [`Makie.jl`](https://github.com/MakieOrg/Makie.jl)
+- Packages for other advanced usage:
+  - [`StaticArrays.jl`](https://github.com/JuliaArrays/StaticArrays.jl)
+  - [`SciMLOperators.jl`](https://github.com/SciML/SciMLOperators.jl)
+  - [`DiffEqCallbacks.jl`](https://github.com/SciML/DiffEqCallbacks.jl)
