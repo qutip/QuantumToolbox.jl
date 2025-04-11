@@ -29,7 +29,7 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 1. [F. Mezzadri, How to generate random matrices from the classical compact groups, arXiv:math-ph/0609050 (2007)](https://arxiv.org/abs/math-ph/0609050)
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `rand_unitary(dimensions, Val(distribution))` instead of `rand_unitary(dimensions, distribution)`. Also, put `dimensions` as `Tuple` or `SVector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `rand_unitary(dimensions, Val(distribution))` instead of `rand_unitary(dimensions, distribution)`. Also, put `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl). See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 rand_unitary(dimensions::Int, distribution::Union{Symbol,Val} = Val(:haar)) =
     rand_unitary(SVector(dimensions), makeVal(distribution))
@@ -100,7 +100,7 @@ julia> fock(20, 3)' * a * fock(20, 4)
 2.0 + 0.0im
 ```
 """
-destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:N-1))), Operator, N)
+destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:(N-1)))), Operator, N)
 
 @doc raw"""
     create(N::Int)
@@ -126,7 +126,7 @@ julia> fock(20, 4)' * a_d * fock(20, 3)
 2.0 + 0.0im
 ```
 """
-create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:N-1))), Operator, N)
+create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:(N-1)))), Operator, N)
 
 @doc raw"""
     displace(N::Int, α::Number)
@@ -167,7 +167,7 @@ Bosonic number operator with Hilbert space cutoff `N`.
 
 This operator is defined as ``\hat{N}=\hat{a}^\dagger \hat{a}``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
-num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:N-1)), Operator, N)
+num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:(N-1))), Operator, N)
 
 @doc raw"""
     position(N::Int)
@@ -311,11 +311,11 @@ end
 jmat(j::Real, ::Val{T}) where {T} = throw(ArgumentError("Invalid spin operator: $(T)"))
 
 function _jm(j::Real)
-    m = j:(-1):-j
-    data = sqrt.(j * (j + 1) .- m .* (m .- 1))[1:end-1]
+    m = j:(-1):(-j)
+    data = sqrt.(j * (j + 1) .- m .* (m .- 1))[1:(end-1)]
     return spdiagm(-1 => Array{ComplexF64}(data))
 end
-_jz(j::Real) = spdiagm(0 => Array{ComplexF64}(j .- (0:Int(2 * j))))
+_jz(j::Real) = spdiagm(0 => Array{ComplexF64}(j .- (0:Int(2*j))))
 
 @doc raw"""
     spin_Jx(j::Real)
@@ -553,7 +553,7 @@ The `dimensions` can be either the following types:
 where ``\omega = \exp(\frac{2 \pi i}{N})``.
 
 !!! warning "Beware of type-stability!"
-    It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator, dimensions)
 qft(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =

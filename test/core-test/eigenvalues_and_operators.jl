@@ -58,7 +58,7 @@
 
     # eigen solve for general matrices
     vals, _, vecs = eigsolve(L.data, sigma = 0.01, eigvals = 10, krylovdim = 50)
-    vals2, vecs2 = eigen(to_dense(L.data))
+    vals2, _, vecs2 = eigenstates(L)
     vals3, state3, vecs3 = eigsolve_al(L, 1 \ (40 * κ), eigvals = 10, krylovdim = 50)
     idxs = sortperm(vals2, by = abs)
     vals2 = vals2[idxs][1:10]

@@ -15,7 +15,7 @@
     Tlist = [0, 0.0]
 
     E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
-    Ω = to_sparse((E'.-E)[1:N_trunc, 1:N_trunc], tol)
+    Ω = to_sparse((E' .- E)[1:N_trunc, 1:N_trunc], tol)
 
     H_d = Qobj(to_sparse((U'*H*U)[1:N_trunc, 1:N_trunc], tol))
     Xp = Qobj(Ω .* to_sparse(triu((U'*(a+a')*U).data[1:N_trunc, 1:N_trunc], 1), tol))
@@ -33,7 +33,7 @@
     Tlist = [0.2, 0.0]
 
     E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
-    Ω = to_sparse((E'.-E)[1:N_trunc, 1:N_trunc], tol)
+    Ω = to_sparse((E' .- E)[1:N_trunc, 1:N_trunc], tol)
 
     H_d = Qobj(to_sparse((U'*H*U)[1:N_trunc, 1:N_trunc], tol))
     Xp = Qobj(Ω .* to_sparse(triu((U'*(a+a')*U).data[1:N_trunc, 1:N_trunc], 1), tol))

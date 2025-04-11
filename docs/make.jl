@@ -10,7 +10,12 @@ using Changelog
 # Load of packages required to compile the extension documentation
 using CairoMakie
 
-DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox); recursive = true)
+doctest_setup = quote
+    using LinearAlgebra
+    using SparseArrays
+    using QuantumToolbox
+end
+DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, doctest_setup; recursive = true)
 
 # some options for `makedocs`
 const DRAFT = false  # set `true`  to disable cell evaluation

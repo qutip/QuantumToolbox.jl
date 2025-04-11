@@ -68,8 +68,8 @@
     ρ_ss2 =
         steadystate_fourier(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetEffectiveLiouvillian())
 
-    @test abs(sum(sol_me.expect[1, end-100:end]) / 101 - expect(e_ops[1], ρ_ss1)) < 1e-3
-    @test abs(sum(sol_me.expect[1, end-100:end]) / 101 - expect(e_ops[1], ρ_ss2)) < 1e-3
+    @test abs(sum(sol_me.expect[1, (end-100):end]) / 101 - expect(e_ops[1], ρ_ss1)) < 1e-3
+    @test abs(sum(sol_me.expect[1, (end-100):end]) / 101 - expect(e_ops[1], ρ_ss2)) < 1e-3
 
     @testset "Type Inference (steadystate_fourier)" begin
         @inferred steadystate_fourier(

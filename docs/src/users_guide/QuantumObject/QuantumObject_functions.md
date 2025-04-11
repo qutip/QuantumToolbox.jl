@@ -43,8 +43,6 @@ Here is a table that summarizes all the supported linear algebra functions and a
 
 - [`eigenenergies`](@ref): return eigenenergies (eigenvalues)
 - [`eigenstates`](@ref): return [`EigsolveResult`](@ref) (contains eigenvalues and eigenvectors)
-- [`eigvals`](@ref): return eigenvalues
-- [`eigen`](@ref): using dense eigen solver and return [`EigsolveResult`](@ref) (contains eigenvalues and eigenvectors)
 - [`eigsolve`](@ref): using sparse eigen solver and return [`EigsolveResult`](@ref) (contains eigenvalues and eigenvectors)
 - [`eigsolve_al`](@ref): using the Arnoldi-Lindblad eigen solver and return [`EigsolveResult`](@ref) (contains eigenvalues and eigenvectors)
 

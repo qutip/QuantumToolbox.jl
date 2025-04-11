@@ -10,7 +10,7 @@ on:
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
-      - 'test/ext-test/cairomakie/**'
+      - 'test/ext-test/cpu/**'
       - 'Project.toml'
   pull_request:
     branches:
@@ -21,7 +21,7 @@ on:
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
-      - 'test/ext-test/cairomakie/**'
+      - 'test/ext-test/cpu/**'
       - 'Project.toml'
     types:
       - opened

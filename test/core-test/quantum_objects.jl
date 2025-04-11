@@ -44,7 +44,7 @@
         @test_throws DomainError Qobj(rand(2, 2), dims = (2, -2))
         @test_logs (
             :warn,
-            "The argument dims should be a Tuple or a StaticVector for better performance. Try to use `dims = (2, 2)` or `dims = SVector(2, 2)` instead of `dims = [2, 2]`.",
+            "The argument dims should be a Tuple or a StaticVector for better performance. Try to use `dims = (2, 2)` instead of `dims = [2, 2]`. Alternatively, you can do `import QuantumToolbox: SVector` and use `dims = SVector(2, 2)`.",
         ) Qobj(rand(4, 4), dims = [2, 2])
     end
 
@@ -178,7 +178,7 @@
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator)
-        a4 = sparse(a2)
+        a4 = to_sparse(a2)
         @test isequal(a4, a2) == true
         @test isequal(a4, a3) == false
         @test a4 ≈ a2
@@ -412,7 +412,7 @@
     @testset "projection" begin
         N = 10
         ψ = fock(N, 3)
-        @test proj(ψ) ≈ proj(ψ') ≈ sparse(ket2dm(ψ)) ≈ projection(N, 3, 3)
+        @test proj(ψ) ≈ proj(ψ') ≈ to_sparse(ket2dm(ψ)) ≈ projection(N, 3, 3)
         @test isket(ψ') == false
         @test isbra(ψ') == true
         @test shape(ψ) == (N,)
@@ -715,11 +715,11 @@
         @test ptrace(ρtotal, (1, 3, 4)) ≈ ptrace(ρtotal, (3, 1, 4)) # check sort of sel
         @test_logs (
             :warn,
-            "The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` or `sel = SVector(1, 2)` instead of `sel = [1, 2]`.",
+            "The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` instead of `sel = [1, 2]`. Alternatively, you can do `import QuantumToolbox: SVector` and use `sel = SVector(1, 2)`.",
         ) ptrace(ψtotal, [1, 2])
         @test_logs (
             :warn,
-            "The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` or `sel = SVector(1, 2)` instead of `sel = [1, 2]`.",
+            "The argument sel should be a Tuple or a StaticVector for better performance. Try to use `sel = (1, 2)` instead of `sel = [1, 2]`. Alternatively, you can do `import QuantumToolbox: SVector` and use `sel = SVector(1, 2)`.",
         ) ptrace(ρtotal, [1, 2])
         @test_throws ArgumentError ptrace(ψtotal, 0)
         @test_throws ArgumentError ptrace(ψtotal, 5)

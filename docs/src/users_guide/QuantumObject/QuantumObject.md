@@ -45,6 +45,8 @@ Qobj(rand(4, 4))
 M = rand(ComplexF64, 4, 4)
 Qobj(M, dims = [2, 2])  # dims as Vector
 Qobj(M, dims = (2, 2))  # dims as Tuple (recommended)
+
+import QuantumToolbox: SVector # or using StaticArrays
 Qobj(M, dims = SVector(2, 2)) # dims as StaticArrays.SVector (recommended)
 ```
 
@@ -195,6 +197,8 @@ Vector{Int64}(v_d)
 ```
 
 ```@example Qobj
+using SparseArrays
+
 v_s = SparseVector(v_d)
 ```
 

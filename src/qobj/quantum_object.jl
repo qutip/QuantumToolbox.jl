@@ -37,7 +37,7 @@ julia> a isa QuantumObject
 true
 
 julia> a.dims
-1-element SVector{1, Int64} with indices SOneTo(1):
+1-element StaticArraysCore.SVector{1, Int64} with indices SOneTo(1):
  20
 
 julia> a.dimensions

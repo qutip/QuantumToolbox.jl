@@ -108,7 +108,7 @@ H = 0.5 * ωa * σz + ωc * a' * a + g * (a' * σm + a * σm')
 
 The partial trace is an operation that reduces the dimension of a Hilbert space by eliminating some degrees of freedom by averaging (tracing). In this sense it is therefore the converse of the tensor product. It is useful when one is interested in only a part of a coupled quantum system. For open quantum systems, this typically involves tracing over the environment leaving only the system of interest. In `QuantumToolbox` the function [`ptrace`](@ref) is used to take partial traces. [`ptrace`](@ref) takes one [`QuantumObject`](@ref) as an input, and also one argument `sel`, which marks the component systems that should be kept, and all the other components are traced out. 
 
-Remember that the index of `Julia` starts from `1`, and all the elements in `sel` should be positive `Integer`. Therefore, the type of `sel` can be either `Integer`, `Tuple`, `SVector`, or `Vector`.
+Remember that the index of `Julia` starts from `1`, and all the elements in `sel` should be positive `Integer`. Therefore, the type of `sel` can be either `Integer`, `Tuple`, `SVector` ([StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl)), or `Vector`.
 
 !!! warning "Beware of type-stability!"
     Although it supports also `Vector` type, it is recommended to use `Tuple` or `SVector` from [`StaticArrays.jl`](https://github.com/JuliaArrays/StaticArrays.jl) to improve performance. For a brief explanation on the impact of the type of `sel`, see the section [The Importance of Type-Stability](@ref doc:Type-Stability).
