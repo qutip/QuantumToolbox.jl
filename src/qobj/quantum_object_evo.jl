@@ -360,7 +360,7 @@ function QuantumObjectEvolution(
     if α isa Nothing
         return QuantumObjectEvolution(op.data, type, op.dimensions)
     end
-    return QuantumObjectEvolution(α * op.data, type, op.dimensions)
+    return QuantumObjectEvolution(_promote_to_scimloperator(α, op.data), type, op.dimensions)
 end
 
 #=
@@ -443,16 +443,33 @@ function _make_SciMLOperator(op_func::Tuple, α)
     T = eltype(op_func[1])
     update_func = (a, u, p, t) -> op_func[2](p, t)
     if α isa Nothing
-        return ScalarOperator(zero(T), update_func) * MatrixOperator(op_func[1].data)
+        return ScalarOperator(zero(T), update_func) * _promote_to_scimloperator(op_func[1].data)
     end
-    return ScalarOperator(zero(T), update_func) * MatrixOperator(α * op_func[1].data)
+    return ScalarOperator(zero(T), update_func) * _promote_to_scimloperator(α, op_func[1].data)
 end
 
-function _make_SciMLOperator(op::QuantumObject, α)
+function _make_SciMLOperator(op::AbstractQuantumObject, α)
     if α isa Nothing
-        return MatrixOperator(op.data)
+        return _promote_to_scimloperator(op.data)
     end
-    return MatrixOperator(α * op.data)
+    return _promote_to_scimloperator(α, op.data)
+end
+
+_promote_to_scimloperator(data::AbstractMatrix) = MatrixOperator(data)
+_promote_to_scimloperator(data::AbstractSciMLOperator) = data
+# TODO: The following special cases can be simplified after
+# https://github.com/SciML/SciMLOperators.jl/pull/264 is merged
+_promote_to_scimloperator(α::Number, data::AbstractMatrix) = MatrixOperator(α * data)
+function _promote_to_scimloperator(α::Number, data::MatrixOperator)
+    isconstant(data) && return MatrixOperator(α * data.A)
+    return ScaledOperator(α, data) # Going back to the generic case
+end
+function _promote_to_scimloperator(α::Number, data::ScaledOperator)
+    isconstant(data.λ) && return ScaledOperator(α * data.λ, data.L)
+    return ScaledOperator(data.λ, _promote_to_scimloperator(α, data.L)) # Try to propagate the rule
+end
+function _promote_to_scimloperator(α::Number, data::AbstractSciMLOperator)
+    return α * data # Going back to the generic case
 end
 
 @doc raw"""

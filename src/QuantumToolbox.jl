@@ -74,28 +74,6 @@ export permute
 # SciMLOperators
 export cache_operator, iscached, isconstant
 
-# TODO: To remove when https://github.com/SciML/SciMLOperators.jl/pull/264 is merged
-SCALINGNUMBERTYPES = (:AbstractSciMLScalarOperator, :Number, :UniformScaling)
-# Special cases for constant scalars. These simplify the structure when applicable
-for T in SCALINGNUMBERTYPES[2:end]
-    @eval function Base.:*(α::$T, L::ScaledOperator)
-        isconstant(L.λ) && return ScaledOperator(α * L.λ, L.L)
-        return ScaledOperator(L.λ, α * L.L) # Try to propagate the rule
-    end
-    @eval function Base.:*(L::ScaledOperator, α::$T)
-        isconstant(L.λ) && return ScaledOperator(α * L.λ, L.L)
-        return ScaledOperator(L.λ, α * L.L) # Try to propagate the rule
-    end
-    @eval function Base.:*(α::$T, L::MatrixOperator)
-        isconstant(L) && return MatrixOperator(α * L.A)
-        return ScaledOperator(α, L) # Going back to the generic case
-    end
-    @eval function Base.:*(L::MatrixOperator, α::$T)
-        isconstant(L) && return MatrixOperator(α * L.A)
-        return ScaledOperator(α, L) # Going back to the generic case
-    end
-end
-
 # Utility
 include("utilities.jl")
 include("versioninfo.jl")
