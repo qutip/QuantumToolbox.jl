@@ -19,7 +19,7 @@
         @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator)
 
         ψ = fock(10, 3)
-        @test_throws TypeError QobjEvo(ψ)
+        @test_throws MethodError QobjEvo(ψ)
     end
 
     # unsupported type of dims

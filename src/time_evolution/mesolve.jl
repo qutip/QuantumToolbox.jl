@@ -87,7 +87,13 @@ function mesolveProblem(
     kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncMESolve)
 
     tspan = (tlist[1], tlist[end])
-    prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
+
+    # TODO: Remove this when https://github.com/SciML/SciMLSensitivity.jl/issues/1181 is fixed
+    if haskey(kwargs3, :sensealg)
+        prob = ODEProblem{getVal(inplace)}(L, ρ0, tspan, params; kwargs3...)
+    else
+        prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
+    end
 
     return TimeEvolutionProblem(prob, tlist, L_evo.dimensions, (isoperket = Val(isoperket(ψ0)),))
 end
