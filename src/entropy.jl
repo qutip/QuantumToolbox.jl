@@ -149,11 +149,11 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
 function entropy_mutual(
-    ρAB::QuantumObject{ObjType,<:AbstractDimensions{N,M}},
+    ρAB::QuantumObject{ObjType,<:AbstractDimensions{N,N}},
     selA::Union{Int,AbstractVector{Int},Tuple},
     selB::Union{Int,AbstractVector{Int},Tuple};
     kwargs...,
-) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject},N,M}
+) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject},N}
     # check if selA and selB matches the dimensions of ρAB
     sel_A_B = (selA..., selB...)
     (length(sel_A_B) != N) && throw(

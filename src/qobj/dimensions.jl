@@ -4,7 +4,7 @@ This file defines the Dimensions structures, which can describe composite Hilber
 
 export AbstractDimensions, Dimensions, GeneralDimensions
 
-abstract type AbstractDimensions{N,M} end
+abstract type AbstractDimensions{M,N} end
 
 @doc raw"""
     struct Dimensions{N,T<:Tuple} <: AbstractDimensions{N, N}
@@ -42,14 +42,14 @@ Dimensions(dims::Any) = throw(
 
 A structure that describes the left-hand side (`to`) and right-hand side (`from`) Hilbert [`Space`](@ref) of an [`Operator`](@ref).
 """
-struct GeneralDimensions{N,M,T1<:Tuple,T2<:Tuple} <: AbstractDimensions{N,M}
+struct GeneralDimensions{M,N,T1<:Tuple,T2<:Tuple} <: AbstractDimensions{M,N}
     # note that the number `N` should be the same for both `to` and `from`
     to::T1   # space acting on the left
     from::T2 # space acting on the right
 
     # make sure the elements in the tuple are all AbstractSpace
-    GeneralDimensions(to::NTuple{N,T1}, from::NTuple{M,T2}) where {N,M,T1<:AbstractSpace,T2<:AbstractSpace} =
-        new{N,M,typeof(to),typeof(from)}(to, from)
+    GeneralDimensions(to::NTuple{M,T1}, from::NTuple{N,T2}) where {M,N,T1<:AbstractSpace,T2<:AbstractSpace} =
+        new{M,N,typeof(to),typeof(from)}(to, from)
 end
 function GeneralDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N}
     (length(dims) != 2) && throw(ArgumentError("Invalid dims = $dims"))
@@ -59,9 +59,8 @@ function GeneralDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<
 
     L1 = length(dims[1])
     L2 = length(dims[2])
-    ((L1 > 0) && (L2 > 0)) || throw(
-        DomainError((L1, L2), "The length of the arguments `dims[1]` and `dims[2]` must have at least one element."),
-    )
+    (L1 > 0) || throw(DomainError(L1, "The length of `dims[1]` must be larger or equal to 1."))  
+    (L2 > 0) || throw(DomainError(L2, "The length of `dims[2]` must be larger or equal to 1.")) 
 
     return GeneralDimensions(Tuple(Space.(dims[1])), Tuple(Space.(dims[2])))
 end
