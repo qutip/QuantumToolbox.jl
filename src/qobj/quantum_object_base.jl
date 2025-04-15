@@ -276,12 +276,10 @@ get_dimensions_to(
 get_dimensions_from(A::AbstractQuantumObject{KetQuantumObject,<:Dimensions{N}}) where {N} = space_one_list(N)
 get_dimensions_from(A::AbstractQuantumObject{BraQuantumObject,<:Dimensions}) = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject{OperatorQuantumObject,<:Dimensions}) = A.dimensions.to
-get_dimensions_from(A::AbstractQuantumObject{OperatorQuantumObject,<:GeneralDimensions}) =
-    A.dimensions.from
+get_dimensions_from(A::AbstractQuantumObject{OperatorQuantumObject,<:GeneralDimensions}) = A.dimensions.from
 get_dimensions_from(
     A::AbstractQuantumObject{ObjType,<:Dimensions},
-) where {ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject}} =
-    A.dimensions.to
+) where {ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject}} = A.dimensions.to
 
 # functions for getting Float or Complex element type
 _FType(A::AbstractQuantumObject) = _FType(eltype(A))

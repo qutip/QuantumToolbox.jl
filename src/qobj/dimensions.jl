@@ -59,8 +59,8 @@ function GeneralDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<
 
     L1 = length(dims[1])
     L2 = length(dims[2])
-    (L1 > 0) || throw(DomainError(L1, "The length of `dims[1]` must be larger or equal to 1."))  
-    (L2 > 0) || throw(DomainError(L2, "The length of `dims[2]` must be larger or equal to 1.")) 
+    (L1 > 0) || throw(DomainError(L1, "The length of `dims[1]` must be larger or equal to 1."))
+    (L2 > 0) || throw(DomainError(L2, "The length of `dims[2]` must be larger or equal to 1."))
 
     return GeneralDimensions(Tuple(Space.(dims[1])), Tuple(Space.(dims[2])))
 end
