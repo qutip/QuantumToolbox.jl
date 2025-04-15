@@ -55,7 +55,7 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
     include(joinpath(testdir, "core-test", "code-quality", "code_quality.jl"))
 end
 
-if (GROUP == "AutoDiff_Ext")
+if (GROUP == "All") || (GROUP == "AutoDiff_Ext")
     Pkg.activate("ext-test/cpu/autodiff")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
