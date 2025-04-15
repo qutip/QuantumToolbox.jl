@@ -276,7 +276,7 @@ get_dimensions_to(
 get_dimensions_from(A::AbstractQuantumObject{KetQuantumObject,<:Dimensions{N}}) where {N} = space_one_list(N)
 get_dimensions_from(A::AbstractQuantumObject{BraQuantumObject,<:Dimensions{N}}) where {N} = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject{OperatorQuantumObject,<:Dimensions{N}}) where {N} = A.dimensions.to
-get_dimensions_from(A::AbstractQuantumObject{OperatorQuantumObject,<:GeneralDimensions{N}}) where {N} =
+get_dimensions_from(A::AbstractQuantumObject{OperatorQuantumObject,<:GeneralDimensions{N,M}}) where {N,M} =
     A.dimensions.from
 get_dimensions_from(
     A::AbstractQuantumObject{ObjType,<:Dimensions{N}},
