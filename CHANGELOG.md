@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Support different length for `to` and `from` on GeneralDimensions. ([#448])
+
 ## [v0.30.0]
 Release date: 2025-04-12
 
@@ -201,3 +203,4 @@ Release date: 2024-11-13
 [#438]: https://github.com/qutip/QuantumToolbox.jl/issues/438
 [#440]: https://github.com/qutip/QuantumToolbox.jl/issues/440
 [#443]: https://github.com/qutip/QuantumToolbox.jl/issues/443
+[#448]: https://github.com/qutip/QuantumToolbox.jl/issues/448

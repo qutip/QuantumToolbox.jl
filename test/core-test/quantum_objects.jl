@@ -86,6 +86,7 @@
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator)
         a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # GeneralDimensions
+        a5 = QuantumObject(rand(ComplexF64, 2*3*4, 5), dims = ((2, 3, 4), (5,)))
         @test isket(a2) == false
         @test isbra(a2) == false
         @test isoper(a2) == true
@@ -116,6 +117,8 @@
         @test isconstant(a4) == true
         @test isunitary(a4) == false
         @test a4.dims == [[100], [10]]
+        @test isoper(a5) == true
+        @test a5.dims == [[2, 3, 4], [5]]
         @test_throws DimensionMismatch Qobj(a, dims = 2)
         @test_throws DimensionMismatch Qobj(a4.data, dims = 2)
         @test_throws DimensionMismatch Qobj(a4.data, dims = ((100,), (2,)))
@@ -351,7 +354,7 @@
         for T in [ComplexF32, ComplexF64]
             N = 4
             a = rand(T, N)
-            @inferred QuantumObject{KetQuantumObject,Dimensions{1},typeof(a)} Qobj(a)
+            @inferred Qobj(a)
             for type in [Ket, OperatorKet]
                 @inferred Qobj(a, type = type)
             end
@@ -367,7 +370,7 @@
             end
 
             UnionType2 = Union{
-                QuantumObject{OperatorQuantumObject,GeneralDimensions{1,Tuple{Space},Tuple{Space}},Matrix{T}},
+                QuantumObject{OperatorQuantumObject,GeneralDimensions{1,1,Tuple{Space},Tuple{Space}},Matrix{T}},
                 QuantumObject{OperatorQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
             }
             a = rand(T, N, N)
