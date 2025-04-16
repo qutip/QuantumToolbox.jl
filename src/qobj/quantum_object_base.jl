@@ -263,14 +263,13 @@ function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
 end
 
 # this returns `to` in GeneralDimensions representation
-get_dimensions_to(A::AbstractQuantumObject{KetQuantumObject,<:Dimensions{N}}) where {N} = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{KetQuantumObject,<:Dimensions}) = A.dimensions.to
 get_dimensions_to(A::AbstractQuantumObject{BraQuantumObject,<:Dimensions{N}}) where {N} = space_one_list(N)
-get_dimensions_to(A::AbstractQuantumObject{OperatorQuantumObject,<:Dimensions{N}}) where {N} = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{OperatorQuantumObject,<:GeneralDimensions{N}}) where {N} = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{OperatorQuantumObject,<:Dimensions}) = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{OperatorQuantumObject,<:GeneralDimensions}) = A.dimensions.to
 get_dimensions_to(
-    A::AbstractQuantumObject{ObjType,<:Dimensions{N}},
-) where {ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject},N} =
-    A.dimensions.to
+    A::AbstractQuantumObject{ObjType,<:Dimensions},
+) where {ObjType<:Union{SuperOperatorQuantumObject,OperatorBraQuantumObject,OperatorKetQuantumObject}} = A.dimensions.to
 
 # this returns `from` in GeneralDimensions representation
 get_dimensions_from(A::AbstractQuantumObject{KetQuantumObject,<:Dimensions{N}}) where {N} = space_one_list(N)
