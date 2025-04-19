@@ -9,27 +9,15 @@
 
     using Makie
 
-    fig, ax, hm = plot_wigner(
-        ψ;
-        library = Val(:Makie),
-        xvec = xvec,
-        yvec = yvec,
-        projection = Val(:two_dim),
-        colorbar = true,
-    )
+    fig, ax, hm =
+        plot_wigner(ψ; library = Val(:Makie), xvec = xvec, yvec = yvec, projection = Val(:two_dim), colorbar = true)
     @test fig isa Figure
     @test ax isa Axis
     @test hm isa Heatmap
     @test all(isapprox.(hm[3].val, wig, atol = 1e-6))
 
-    fig, ax, surf = plot_wigner(
-        ψ;
-        library = Val(:Makie),
-        xvec = xvec,
-        yvec = yvec,
-        projection = Val(:three_dim),
-        colorbar = true,
-    )
+    fig, ax, surf =
+        plot_wigner(ψ; library = Val(:Makie), xvec = xvec, yvec = yvec, projection = Val(:three_dim), colorbar = true)
     @test fig isa Figure
     @test ax isa Axis3
     @test surf isa Surface
