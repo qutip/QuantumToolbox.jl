@@ -81,7 +81,7 @@ const PAGES = [
 makedocs(;
     modules = [
         QuantumToolbox, 
-        Base.get_extension(QuantumToolbox, :QuantumToolboxCairoMakieExt),
+        Base.get_extension(QuantumToolbox, :QuantumToolboxMakieExt),
     ],
     authors = "Alberto Mercurio and Yi-Te Huang",
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),

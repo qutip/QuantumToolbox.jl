@@ -68,8 +68,8 @@ if (GROUP == "AutoDiff_Ext")
     include(joinpath(testdir, "ext-test", "cpu", "autodiff", "zygote.jl"))
 end
 
-if (GROUP == "CairoMakie_Ext")
-    Pkg.activate("ext-test/cpu/cairomakie")
+if (GROUP == "Makie_Ext")
+    Pkg.activate("ext-test/cpu/makie")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
 
@@ -77,7 +77,7 @@ if (GROUP == "CairoMakie_Ext")
     QuantumToolbox.about()
 
     # CarioMakie is imported in the following script
-    include(joinpath(testdir, "ext-test", "cpu", "cairomakie", "cairomakie_ext.jl"))
+    include(joinpath(testdir, "ext-test", "cpu", "makie", "makie_ext.jl"))
 end
 
 if (GROUP == "CUDA_Ext")
