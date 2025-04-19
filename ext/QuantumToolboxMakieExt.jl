@@ -1,12 +1,12 @@
-module QuantumToolboxCairoMakieExt
+module QuantumToolboxMakieExt
 
 using QuantumToolbox
-using CairoMakie:
+using Makie:
     Axis, Axis3, Colorbar, Figure, GridLayout, heatmap!, surface!, barplot!, GridPosition, @L_str, Reverse, ylims!
 
 @doc raw"""
     plot_wigner(
-        library::Val{:CairoMakie},
+        library::Val{:Makie},
         state::QuantumObject{OpType};
         xvec::Union{Nothing,AbstractVector} = nothing,
         yvec::Union{Nothing,AbstractVector} = nothing,
@@ -18,10 +18,10 @@ using CairoMakie:
         kwargs...
     ) where {OpType}
 
-Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) of `state` using the [`CairoMakie`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) plotting library.
+Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) of `state` using the [`Makie`](https://github.com/MakieOrg/Makie.jl) plotting library.
 
 # Arguments
-- `library::Val{:CairoMakie}`: The plotting library to use.
+- `library::Val{:Makie}`: The plotting library to use.
 - `state::QuantumObject`: The quantum state for which the Wigner function is calculated. It can be either a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
 - `xvec::AbstractVector`: The x-coordinates of the phase space grid. Defaults to a linear range from -7.5 to 7.5 with 200 points.
 - `yvec::AbstractVector`: The y-coordinates of the phase space grid. Defaults to a linear range from -7.5 to 7.5 with 200 points.
@@ -38,13 +38,13 @@ Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wi
 - `hm`: Either the heatmap or surface object, depending on the projection.
 
 !!! note "Import library first"
-    [`CairoMakie`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) must first be imported before using this function.
+    [`Makie.jl`](https://github.com/MakieOrg/Makie.jl) must first be imported before using this function. This can be done by importing one of the available backends, such as [`CairoMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie), [`GLMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/GLMakie), or [`WGLMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/WGLMakie).
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `Val(:two_dim)` and `Val(:three_dim)` instead of `:two_dim` and `:three_dim`, respectively. Also, specify the library as `Val(:CairoMakie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `Val(:two_dim)` and `Val(:three_dim)` instead of `:two_dim` and `:three_dim`, respectively. Also, specify the library as `Val(:Makie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function QuantumToolbox.plot_wigner(
-    library::Val{:CairoMakie},
+    library::Val{:Makie},
     state::QuantumObject{OpType};
     xvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
     yvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
@@ -74,7 +74,7 @@ function QuantumToolbox.plot_wigner(
 end
 
 function _plot_wigner(
-    ::Val{:CairoMakie},
+    ::Val{:Makie},
     state::QuantumObject{OpType},
     xvec::AbstractVector,
     yvec::AbstractVector,
@@ -107,7 +107,7 @@ function _plot_wigner(
 end
 
 function _plot_wigner(
-    ::Val{:CairoMakie},
+    ::Val{:Makie},
     state::QuantumObject{OpType},
     xvec::AbstractVector,
     yvec::AbstractVector,
@@ -142,7 +142,7 @@ end
 
 @doc raw"""
     plot_fock_distribution(
-        library::Val{:CairoMakie},
+        library::Val{:Makie},
         ρ::QuantumObject{SType};
         fock_numbers::Union{Nothing, AbstractVector} = nothing,
         unit_y_range::Bool = true,
@@ -153,7 +153,7 @@ end
 Plot the [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution of `ρ`. 
 
 # Arguments
-- `library::Val{:CairoMakie}`: The plotting library to use.
+- `library::Val{:Makie}`: The plotting library to use.
 - `ρ::QuantumObject`: The quantum state for which the Fock state distribution is to be plotted. It can be either a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
 - `location::Union{GridPosition,Nothing}`: The location of the plot in the layout. If `nothing`, the plot is created in a new figure. Default is `nothing`.
 - `fock_numbers::Union{Nothing, AbstractVector}`: list of x ticklabels to represent fock numbers, default is `nothing`.
@@ -166,13 +166,13 @@ Plot the [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution of 
 - `bp`: The barplot object.
 
 !!! note "Import library first"
-    [`CairoMakie`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie) must first be imported before using this function.
+    [`Makie.jl`](https://github.com/MakieOrg/Makie.jl) must first be imported before using this function. This can be done by importing one of the available backends, such as [`CairoMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie), [`GLMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/GLMakie), or [`WGLMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/WGLMakie).
 
 !!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `Val(:two_dim)` and `Val(:three_dim)` instead of `:two_dim` and `:three_dim`, respectively. Also, specify the library as `Val(:CairoMakie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+    If you want to keep type stability, it is recommended to use `Val(:two_dim)` and `Val(:three_dim)` instead of `:two_dim` and `:three_dim`, respectively. Also, specify the library as `Val(:Makie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function QuantumToolbox.plot_fock_distribution(
-    library::Val{:CairoMakie},
+    library::Val{:Makie},
     ρ::QuantumObject{SType};
     fock_numbers::Union{Nothing,AbstractVector} = nothing,
     unit_y_range::Bool = true,
@@ -190,7 +190,7 @@ function QuantumToolbox.plot_fock_distribution(
 end
 
 function _plot_fock_distribution(
-    ::Val{:CairoMakie},
+    ::Val{:Makie},
     ρ::QuantumObject{SType};
     fock_numbers::Union{Nothing,AbstractVector} = nothing,
     unit_y_range::Bool = true,
