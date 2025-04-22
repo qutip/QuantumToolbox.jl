@@ -378,7 +378,7 @@ println(issuper(S_AB))
 With the above definitions, the following equalities hold in `Julia`:
 
 ```math
-\textrm{vec}(\hat{A} \hat{\rho} \hat{B}) = \textrm{spre}(\hat{A}) * \textrm{spre}(\hat{B}) * \textrm{vec}(\hat{\rho}) = \textrm{sprepost}(\hat{A},\hat{B}) * \textrm{vec}(\hat{\rho}) ~~\forall~~\hat{A}, \hat{B}, \hat{\rho}
+\textrm{vec}(\hat{A} \hat{\rho} \hat{B}) = \textrm{spre}(\hat{A}) * \textrm{spost}(\hat{B}) * \textrm{vec}(\hat{\rho}) = \textrm{sprepost}(\hat{A},\hat{B}) * \textrm{vec}(\hat{\rho}) ~~\forall~~\hat{A}, \hat{B}, \hat{\rho}
 ```
 
 ```@example states_and_operators
