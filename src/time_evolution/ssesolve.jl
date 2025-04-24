@@ -113,7 +113,7 @@ function ssesolveProblem(
         sc_ops_evo_data,
     )
 
-    K = -1im * get_data(H_eff_evo) + K_l
+    K = get_data(QobjEvo(H_eff_evo, -1im)) + K_l
 
     D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(prod(dims)), sc_ops_evo_data)
     D = DiffusionOperator(D_l)
