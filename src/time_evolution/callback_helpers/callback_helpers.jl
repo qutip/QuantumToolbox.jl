@@ -169,7 +169,6 @@ _get_save_callback_idx(cb, method) = 1
 
 # %% ------------ Noise Measurement Helpers ------------ %%
 
-# TODO: Add some cache mechanism to avoid memory allocations
 # TODO: To improve. See https://github.com/SciML/DiffEqNoiseProcess.jl/issues/214
 function _homodyne_dWdt!(dWdt_cache, integrator, tlist, iter)
     idx = findfirst(>=(tlist[iter[]-1]), integrator.W.t)
