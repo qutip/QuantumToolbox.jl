@@ -74,7 +74,9 @@ function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurem
     expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
     m_expvals = getVal(store_measurement) ? Array{Float64}(undef, length(sc_ops), length(tlist) - 1) : nothing
 
-    _save_func = method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals, tlist)
+    _save_func_cache = Array{Float64}(undef, length(sc_ops))
+    _save_func =
+        method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals, tlist, _save_func_cache)
     return FunctionCallingCallback(_save_func, funcat = tlist)
 end
 
@@ -169,11 +171,11 @@ _get_save_callback_idx(cb, method) = 1
 
 # TODO: Add some cache mechanism to avoid memory allocations
 # TODO: To improve. See https://github.com/SciML/DiffEqNoiseProcess.jl/issues/214
-function _homodyne_dWdt(integrator, tlist, iter)
+function _homodyne_dWdt!(dWdt_cache, integrator, tlist, iter)
     idx = findfirst(>=(tlist[iter[]-1]), integrator.W.t)
 
     # We are assuming that the last element is tlist[iter[]]
-    @inbounds _dWdt = (integrator.W.u[end] .- integrator.W.u[idx]) ./ (integrator.W.t[end] - integrator.W.t[idx])
+    @inbounds dWdt_cache .= (integrator.W.u[end] .- integrator.W.u[idx]) ./ (integrator.W.t[end] - integrator.W.t[idx])
 
-    return _dWdt
+    return nothing
 end
