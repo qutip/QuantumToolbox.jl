@@ -468,6 +468,9 @@ function _promote_to_scimloperator(α::Number, data::ScaledOperator)
     isconstant(data.λ) && return ScaledOperator(α * data.λ, data.L)
     return ScaledOperator(data.λ, _promote_to_scimloperator(α, data.L)) # Try to propagate the rule
 end
+function _promote_to_scimloperator(α::Number, data::AddedOperator)
+    return AddedOperator(_promote_to_scimloperator.(α, data.ops)) # Try to propagate the rule
+end
 function _promote_to_scimloperator(α::Number, data::AbstractSciMLOperator)
     return α * data # Going back to the generic case
 end
