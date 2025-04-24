@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+## [v0.30.1]
+Release date: 2025-04-24
+
 - Support different length for `to` and `from` on GeneralDimensions. ([#448])
 - Extend the `Makie.jl` extension to all the other available backends. ([#450])
 - Fix definition of noise derivative in stochastic solvers. ([#453])
@@ -145,6 +148,7 @@ Release date: 2024-11-13
 [v0.29.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.29.0
 [v0.29.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.29.1
 [v0.30.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.30.0
+[v0.30.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.30.1
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
