@@ -26,7 +26,7 @@ function _generate_stochastic_kwargs(
 
     # Ensure that the noise is stored in tlist. # TODO: Fix this directly in DiffEqNoiseProcess.jl
     # See https://github.com/SciML/DiffEqNoiseProcess.jl/issues/214 for example
-    tstops = haskey(kwargs, :tstops) ? sort!(vcat(tlist, kwargs.tstops)) : tlist
+    tstops = haskey(kwargs, :tstops) ? unique!(sort!(vcat(tlist, kwargs.tstops))) : tlist
     kwargs2 = merge(kwargs, (tstops = tstops,))
 
     if SF === SaveFuncSSESolve
