@@ -24,12 +24,17 @@ function _generate_stochastic_kwargs(
 ) where {SF<:AbstractSaveFunc}
     cb_save = _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
 
+    # Ensure that the noise is stored in tlist. # TODO: Fix this directly in DiffEqNoiseProcess.jl
+    # See https://github.com/SciML/DiffEqNoiseProcess.jl/issues/214 for example
+    tstops = haskey(kwargs, :tstops) ? sort!(vcat(tlist, kwargs.tstops)) : tlist
+    kwargs2 = merge(kwargs, (tstops = tstops,))
+
     if SF === SaveFuncSSESolve
         cb_normalize = _ssesolve_generate_normalize_cb()
-        return _merge_kwargs_with_callback(kwargs, CallbackSet(cb_normalize, cb_save))
+        return _merge_kwargs_with_callback(kwargs2, CallbackSet(cb_normalize, cb_save))
     end
 
-    return _merge_kwargs_with_callback(kwargs, cb_save)
+    return _merge_kwargs_with_callback(kwargs2, cb_save)
 end
 _generate_stochastic_kwargs(
     e_ops::Nothing,
@@ -69,7 +74,7 @@ function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurem
     expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
     m_expvals = getVal(store_measurement) ? Array{Float64}(undef, length(sc_ops), length(tlist) - 1) : nothing
 
-    _save_func = method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals)
+    _save_func = method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals, tlist)
     return FunctionCallingCallback(_save_func, funcat = tlist)
 end
 
@@ -163,8 +168,12 @@ _get_save_callback_idx(cb, method) = 1
 # %% ------------ Noise Measurement Helpers ------------ %%
 
 # TODO: Add some cache mechanism to avoid memory allocations
-function _homodyne_dWdt(integrator)
-    @inbounds _dWdt = (integrator.W.u[end] .- integrator.W.u[end-1]) ./ (integrator.W.t[end] - integrator.W.t[end-1])
+# TODO: To improve. See https://github.com/SciML/DiffEqNoiseProcess.jl/issues/214
+function _homodyne_dWdt(integrator, tlist, iter)
+    idx = findfirst(>=(tlist[iter[]-1]), integrator.W.t)
+
+    # We are assuming that the last element is tlist[iter[]]
+    @inbounds _dWdt = (integrator.W.u[end] .- integrator.W.u[idx]) ./ (integrator.W.t[end] - integrator.W.t[idx])
 
     return _dWdt
 end
