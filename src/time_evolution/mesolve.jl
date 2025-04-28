@@ -46,6 +46,7 @@ where
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
+- If `H` is an [`OperatorQuantumObject`](@ref), `ψ0` is a [`KetQuantumObject`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolveProblem`](@ref) instead.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
@@ -67,6 +68,17 @@ function mesolveProblem(
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject},
 }
+    (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolveProblem(
+        H,
+        ψ0,
+        tlist;
+        e_ops = e_ops,
+        params = params,
+        progress_bar = progress_bar,
+        inplace = inplace,
+        kwargs...,
+    )
+
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -141,6 +153,7 @@ where
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
+- If `H` is an [`OperatorQuantumObject`](@ref), `ψ0` is a [`KetQuantumObject`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolveProblem`](@ref) instead.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
@@ -164,6 +177,18 @@ function mesolve(
     HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
     StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject},
 }
+    (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolve(
+        H,
+        ψ0,
+        tlist;
+        alg = alg,
+        e_ops = e_ops,
+        params = params,
+        progress_bar = progress_bar,
+        inplace = inplace,
+        kwargs...,
+    )
+
     prob = mesolveProblem(
         H,
         ψ0,
