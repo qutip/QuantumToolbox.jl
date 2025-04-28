@@ -112,6 +112,7 @@
         sol_me = mesolve(prob_me)
         sol_me2 = mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
         sol_me3 = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
+        sol_me4 = mesolve(H, ψ0, tlist, progress_bar = Val(false))
         prob_mc = mcsolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
         sol_mc = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
         sol_mc2 = mcsolve(
@@ -198,6 +199,7 @@
         sol_sme_string = sprint((t, s) -> show(t, "text/plain", s), sol_sme)
         @test prob_me.prob.f.f isa MatrixOperator
         @test prob_mc.prob.f.f isa MatrixOperator
+        @test isket(sol_me4.states[1])
         @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
         @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
         @test sum(abs, vec(expect_mc_states_mean) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
