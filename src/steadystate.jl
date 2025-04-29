@@ -115,7 +115,7 @@ function steadystate(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {OpType<:Union{Operator,SuperOperator}}
     solver isa SSFloquetEffectiveLiouvillian && throw(
         ArgumentError(
             "The solver `SSFloquetEffectiveLiouvillian` is only available for the `steadystate_fourier` function.",
@@ -127,7 +127,7 @@ function steadystate(
     return _steadystate(L, solver; kwargs...)
 end
 
-function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateLinearSolver; kwargs...)
+function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinearSolver; kwargs...)
     L_tmp = L.data
     N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
@@ -162,7 +162,7 @@ function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::Stea
     return QuantumObject(ρss, Operator, L.dimensions)
 end
 
-function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateEigenSolver; kwargs...)
+function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateEigenSolver; kwargs...)
     N = prod(L.dimensions)
 
     kwargs = merge((sigma = 1e-8, eigvals = 1), (; kwargs...))
@@ -174,7 +174,7 @@ function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::Stea
     return QuantumObject(ρss, Operator, L.dimensions)
 end
 
-function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateDirectSolver)
+function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirectSolver)
     L_tmp = L.data
     N = prod(L.dimensions)
     weight = norm(L_tmp, 1) / length(L_tmp)
@@ -199,7 +199,7 @@ function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::Stea
     return QuantumObject(ρss, Operator, L.dimensions)
 end
 
-function _steadystate(L::QuantumObject{SuperOperatorQuantumObject}, solver::SteadyStateODESolver; kwargs...)
+function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
     tmax = solver.tmax
 
     ψ0 = isnothing(solver.ψ0) ? rand_ket(L.dimensions) : solver.ψ0
@@ -333,9 +333,9 @@ function steadystate_fourier(
     solver::FSolver = SteadyStateLinearSolver(),
     kwargs...,
 ) where {
-    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType1<:Union{Operator,SuperOperator},
+    OpType2<:Union{Operator,SuperOperator},
+    OpType3<:Union{Operator,SuperOperator},
     R<:Real,
     FSolver<:SteadyStateSolver,
 }
@@ -346,9 +346,9 @@ function steadystate_fourier(
 end
 
 function _steadystate_fourier(
-    L_0::QuantumObject{SuperOperatorQuantumObject},
-    L_p::QuantumObject{SuperOperatorQuantumObject},
-    L_m::QuantumObject{SuperOperatorQuantumObject},
+    L_0::QuantumObject{SuperOperator},
+    L_p::QuantumObject{SuperOperator},
+    L_m::QuantumObject{SuperOperator},
     ωd::Number,
     solver::SteadyStateLinearSolver;
     n_max::Integer = 1,
@@ -416,9 +416,9 @@ function _steadystate_fourier(
 end
 
 function _steadystate_fourier(
-    L_0::QuantumObject{SuperOperatorQuantumObject},
-    L_p::QuantumObject{SuperOperatorQuantumObject},
-    L_m::QuantumObject{SuperOperatorQuantumObject},
+    L_0::QuantumObject{SuperOperator},
+    L_p::QuantumObject{SuperOperator},
+    L_m::QuantumObject{SuperOperator},
     ωd::Number,
     solver::SSFloquetEffectiveLiouvillian;
     n_max::Integer = 1,

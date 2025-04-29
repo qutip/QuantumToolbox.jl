@@ -158,7 +158,7 @@ and its type is
 obj_type = typeof(σx_2)
 ```
 
-This is exactly what the Julia compiler sees: it is a [`QuantumObject`](@ref), composed by a field of type `SparseMatrixCSC{ComplexF64, Int64}` (i.e., the 8x8 matrix containing the Pauli matrix, tensored with the identity matrices of the other two qubits). Then, we can also see that it is a [`OperatorQuantumObject`](@ref), with `3` subsystems in total. Hence, just looking at the type of the object, the compiler has all the information it needs to generate a specialized version of the functions.
+This is exactly what the Julia compiler sees: it is a [`QuantumObject`](@ref), composed by a field of type `SparseMatrixCSC{ComplexF64, Int64}` (i.e., the 8x8 matrix containing the Pauli matrix, tensored with the identity matrices of the other two qubits). Then, we can also see that it is a [`Operator`](@ref), with `3` subsystems in total. Hence, just looking at the type of the object, the compiler has all the information it needs to generate a specialized version of the functions.
 
 Let's see more in the details all the internal fields of the [`QuantumObject`](@ref) type:
 
@@ -174,7 +174,6 @@ fieldnames(obj_type)
 σx_2.type
 ```
 
-[`Operator`](@ref) is a synonym for [`OperatorQuantumObject`](@ref).
 
 ```@example type-stability
 σx_2.dims

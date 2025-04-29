@@ -73,7 +73,7 @@ Return the commutator (or `anti`-commutator) of the two [`QuantumObject`](@ref):
 
 Note that `A` and `B` must be [`Operator`](@ref)
 """
-commutator(A::QuantumObject{OperatorQuantumObject}, B::QuantumObject{OperatorQuantumObject}; anti::Bool = false) =
+commutator(A::QuantumObject{Operator}, B::QuantumObject{Operator}; anti::Bool = false) =
     A * B - (-1)^anti * B * A
 
 @doc raw"""
@@ -433,9 +433,9 @@ function eye(
     N::Int;
     type::ObjType = Operator,
     dims = nothing,
-) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {ObjType<:Union{Operator,SuperOperator}}
     if dims isa Nothing
-        dims = isa(type, OperatorQuantumObject) ? N : isqrt(N)
+        dims = isa(type, Operator) ? N : isqrt(N)
     end
     return QuantumObject(Diagonal(ones(ComplexF64, N)); type = type, dims = dims)
 end
@@ -478,9 +478,9 @@ Note that we put ``\hat{\sigma}_{-} = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatri
 """
 fcreate(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
 
-_Jordan_Wigner(N::Int, j::Int, op::QuantumObject{OperatorQuantumObject}) = _Jordan_Wigner(Val(N), j, op)
+_Jordan_Wigner(N::Int, j::Int, op::QuantumObject{Operator}) = _Jordan_Wigner(Val(N), j, op)
 
-function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{OperatorQuantumObject}) where {N}
+function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{Operator}) where {N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
     ((j > N) || (j < 1)) && throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 

@@ -29,13 +29,13 @@ function correlation_3op_2t(
     tlist::AbstractVector,
     τlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
-    C::QuantumObject{OperatorQuantumObject};
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
+    C::QuantumObject{Operator};
     kwargs...,
 ) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
+    HOpType<:Union{Operator,SuperOperator},
+    StateOpType<:Union{Ket,Operator},
 }
     # check tlist and τlist
     _check_correlation_time_list(tlist)
@@ -78,13 +78,13 @@ function correlation_3op_1t(
     ψ0::Union{Nothing,QuantumObject{StateOpType}},
     τlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
-    C::QuantumObject{OperatorQuantumObject};
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
+    C::QuantumObject{Operator};
     kwargs...,
 ) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
+    HOpType<:Union{Operator,SuperOperator},
+    StateOpType<:Union{Ket,Operator},
 }
     corr = correlation_3op_2t(H, ψ0, [0], τlist, c_ops, A, B, C; kwargs...)
 
@@ -114,13 +114,13 @@ function correlation_2op_2t(
     tlist::AbstractVector,
     τlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject};
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator};
     reverse::Bool = false,
     kwargs...,
 ) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
+    HOpType<:Union{Operator,SuperOperator},
+    StateOpType<:Union{Ket,Operator},
 }
     C = eye(prod(H.dimensions), dims = H.dimensions)
     if reverse
@@ -153,13 +153,13 @@ function correlation_2op_1t(
     ψ0::Union{Nothing,QuantumObject{StateOpType}},
     τlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject};
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator};
     reverse::Bool = false,
     kwargs...,
 ) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
+    HOpType<:Union{Operator,SuperOperator},
+    StateOpType<:Union{Ket,Operator},
 }
     corr = correlation_2op_2t(H, ψ0, [0], τlist, c_ops, A, B; reverse = reverse, kwargs...)
 

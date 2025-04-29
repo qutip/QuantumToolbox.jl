@@ -48,7 +48,7 @@ function entropy_vn(
     ρ::QuantumObject{ObjType};
     base::Int = 0,
     tol::Real = 1e-15,
-) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {ObjType<:Union{Ket,Operator}}
     T = eltype(ρ)
     vals = eigenenergies(ket2dm(ρ))
     indexes = findall(x -> abs(x) > tol, vals)
@@ -79,8 +79,8 @@ function entropy_relative(
     base::Int = 0,
     tol::Real = 1e-15,
 ) where {
-    ObjType1<:Union{KetQuantumObject,OperatorQuantumObject},
-    ObjType2<:Union{KetQuantumObject,OperatorQuantumObject},
+    ObjType1<:Union{Ket,Operator},
+    ObjType2<:Union{Ket,Operator},
 }
     check_dimensions(ρ, σ)
 
@@ -131,7 +131,7 @@ Calculates the quantum linear entropy ``S_L = 1 - \textrm{Tr} \left[ \hat{\rho}^
 
 Note that `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
 """
-entropy_linear(ρ::QuantumObject{ObjType}) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject}} =
+entropy_linear(ρ::QuantumObject{ObjType}) where {ObjType<:Union{Ket,Operator}} =
     1.0 - purity(ρ) # use 1.0 to make sure it always return value in Float-type
 
 @doc raw"""
@@ -153,7 +153,7 @@ function entropy_mutual(
     selA::Union{Int,AbstractVector{Int},Tuple},
     selB::Union{Int,AbstractVector{Int},Tuple};
     kwargs...,
-) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject},N}
+) where {ObjType<:Union{Ket,Operator},N}
     # check if selA and selB matches the dimensions of ρAB
     sel_A_B = (selA..., selB...)
     (length(sel_A_B) != N) && throw(
@@ -185,7 +185,7 @@ entropy_conditional(
     ρAB::QuantumObject{ObjType,<:AbstractDimensions{N,N}},
     selB::Union{Int,AbstractVector{Int},Tuple};
     kwargs...,
-) where {ObjType<:Union{KetQuantumObject,OperatorQuantumObject},N} =
+) where {ObjType<:Union{Ket,Operator},N} =
     entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
 
 @doc raw"""
@@ -203,7 +203,7 @@ function entanglement(
     ρ::QuantumObject{OpType},
     sel::Union{Int,AbstractVector{Int},Tuple},
     kwargs...,
-) where {OpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{Ket,Operator}}
     p = purity(ρ)
     isapprox(p, 1; atol = 1e-2) || throw(
         ArgumentError(
@@ -229,7 +229,7 @@ Calculate the [concurrence](https://en.wikipedia.org/wiki/Concurrence_(quantum_c
 
 - [Hill-Wootters1997](@citet)
 """
-function concurrence(ρ::QuantumObject{OpType}) where {OpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+function concurrence(ρ::QuantumObject{OpType}) where {OpType<:Union{Ket,Operator}}
     (ρ.dimensions == Dimensions((Space(2), Space(2)))) || throw(
         ArgumentError(
             "The `concurrence` only works for a two-qubit state, invalid dims = $(_get_dims_string(ρ.dimensions)).",

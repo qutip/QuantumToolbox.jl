@@ -40,8 +40,8 @@ end
 
 @doc raw"""
     mcsolveProblem(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -109,8 +109,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the `ODEProblem` for the Monte Carlo wave function time evolution.
 """
 function mcsolveProblem(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -141,8 +141,8 @@ end
 
 @doc raw"""
     mcsolveEnsembleProblem(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -220,8 +220,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the Ensemble `ODEProblem` for the Monte Carlo wave function time evolution.
 """
 function mcsolveEnsembleProblem(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -264,8 +264,8 @@ end
 
 @doc raw"""
     mcsolve(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
@@ -349,8 +349,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - `sol::TimeEvolutionMCSol`: The solution of the time evolution. See also [`TimeEvolutionMCSol`](@ref).
 """
 function mcsolve(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),

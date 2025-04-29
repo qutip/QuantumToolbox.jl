@@ -109,7 +109,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ```
 """
 struct QuantumObjectEvolution{
-    ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    ObjType<:Union{Operator,SuperOperator},
     DimType<:AbstractDimensions,
     DataType<:AbstractSciMLOperator,
 } <: AbstractQuantumObject{ObjType,DimType,DataType}
@@ -164,11 +164,11 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObject
     _size = _get_size(data)
 
     if dims isa Nothing
-        if type isa OperatorQuantumObject
+        if type isa Operator
             dims =
                 (_size[1] == _size[2]) ? Dimensions(_size[1]) :
                 GeneralDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
-        elseif type isa SuperOperatorQuantumObject
+        elseif type isa SuperOperator
             dims = Dimensions(isqrt(_size[2]))
         end
     end
@@ -482,7 +482,7 @@ Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the inpu
 
 # Arguments
 - `ψout::QuantumObject`: The output state. It must have the same type as `ψin`.
-- `ψin::QuantumObject`: The input state. It must be either a [`KetQuantumObject`](@ref) or a [`OperatorKetQuantumObject`](@ref).
+- `ψin::QuantumObject`: The input state. It must be either a [`Ket`](@ref) or a [`OperatorKet`](@ref).
 - `p`: The parameters of the time-dependent coefficients.
 - `t`: The time at which the coefficients are evaluated.
 
@@ -525,7 +525,7 @@ function (A::QuantumObjectEvolution)(
     ψin::QuantumObject{QobjType},
     p,
     t,
-) where {QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+) where {QobjType<:Union{Ket,OperatorKet}}
     check_dimensions(A, ψout, ψin)
 
     if isoper(A) && isoperket(ψin)
@@ -552,7 +552,7 @@ function (A::QuantumObjectEvolution)(
     ψ::QuantumObject{QobjType},
     p,
     t,
-) where {QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+) where {QobjType<:Union{Ket,OperatorKet}}
     ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dimensions)
     return A(ψout, ψ, p, t)
 end

@@ -65,8 +65,8 @@ function mesolveProblem(
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject},
+    HOpType<:Union{Operator,SuperOperator},
+    StateOpType<:Union{Ket,Operator,OperatorKet},
 }
     (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolveProblem(
         H,
@@ -174,8 +174,8 @@ function mesolve(
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject},
+    HOpType<:Union{Operator,SuperOperator},
+    StateOpType<:Union{Ket,Operator,OperatorKet},
 }
     (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolve(
         H,

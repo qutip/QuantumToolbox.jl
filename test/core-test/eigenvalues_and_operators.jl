@@ -8,7 +8,7 @@
     λs, ψs, Ts = eigenstates(σx, sparse = true, eigvals = 2)
     λs1, ψs1, Ts1 = eigenstates(σx, sparse = true, eigvals = 1)
 
-    @test all([ψ.type isa KetQuantumObject for ψ in ψd])
+    @test all([ψ.type isa Ket for ψ in ψd])
     @test typeof(Td) <: AbstractMatrix
     @test typeof(Ts) <: AbstractMatrix
     @test typeof(Ts1) <: AbstractMatrix
@@ -83,9 +83,9 @@
     vals2 = vals2[idxs][1:10]
     vecs2 = vecs2[idxs][1:10]
 
-    @test result.type isa SuperOperatorQuantumObject
+    @test result.type isa SuperOperator
     @test result.dims == L.dims
-    @test all([v.type isa OperatorKetQuantumObject for v in vecs])
+    @test all([v.type isa OperatorKet for v in vecs])
     @test typeof(result.vectors) <: AbstractMatrix
     @test isapprox(sum(abs2, vals), sum(abs2, vals2), atol = 1e-7)
     @test isapprox(abs2(vals2[1]), abs2(vals3[1]), atol = 1e-7)

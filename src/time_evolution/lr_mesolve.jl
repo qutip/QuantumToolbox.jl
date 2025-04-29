@@ -366,7 +366,7 @@ get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (
 
 @doc raw"""
     lr_mesolveProblem(
-        H::QuantumObject{OperatorQuantumObject},
+        H::QuantumObject{Operator},
         z::AbstractArray{T,2},
         B::AbstractArray{T,2},
         tlist::AbstractVector,
@@ -391,7 +391,7 @@ Formulates the ODEproblem for the low-rank time evolution of the system. The fun
 - `kwargs`: Additional keyword arguments.
 """
 function lr_mesolveProblem(
-    H::QuantumObject{OperatorQuantumObject},
+    H::QuantumObject{Operator},
     z::AbstractArray{T,2},
     B::AbstractArray{T,2},
     tlist::AbstractVector,
@@ -497,7 +497,7 @@ end
 
 @doc raw"""
     lr_mesolve(
-        H::QuantumObject{OperatorQuantumObject},
+        H::QuantumObject{Operator},
         z::AbstractArray{T,2},
         B::AbstractArray{T,2},
         tlist::AbstractVector,
@@ -522,7 +522,7 @@ Time evolution of an open quantum system using the low-rank master equation. For
 - `kwargs`: Additional keyword arguments.
 """
 function lr_mesolve(
-    H::QuantumObject{OperatorQuantumObject},
+    H::QuantumObject{Operator},
     z::AbstractArray{T2,2},
     B::AbstractArray{T2,2},
     tlist::AbstractVector,

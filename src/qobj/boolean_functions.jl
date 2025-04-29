@@ -8,55 +8,55 @@ export isunitary
 @doc raw"""
     isbra(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`BraQuantumObject`](@ref). Default case returns `false` for any other inputs.
+Checks if the [`QuantumObject`](@ref) `A` is a [`Bra`](@ref). Default case returns `false` for any other inputs.
 """
 isbra(A::QuantumObject) = isbra(typeof(A))
-isbra(::Type{<:QuantumObject{BraQuantumObject,N}}) where {N} = true
+isbra(::Type{<:QuantumObject{Bra,N}}) where {N} = true
 isbra(A) = false # default case
 
 @doc raw"""
     isket(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`KetQuantumObject`](@ref). Default case returns `false` for any other inputs.
+Checks if the [`QuantumObject`](@ref) `A` is a [`Ket`](@ref). Default case returns `false` for any other inputs.
 """
 isket(A::QuantumObject) = isket(typeof(A))
-isket(::Type{<:QuantumObject{KetQuantumObject,N}}) where {N} = true
+isket(::Type{<:QuantumObject{Ket,N}}) where {N} = true
 isket(A) = false # default case
 
 @doc raw"""
     isoper(A)
 
-Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`OperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
+Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`Operator`](@ref). Default case returns `false` for any other inputs.
 """
 isoper(A::AbstractQuantumObject) = isoper(typeof(A))
-isoper(::Type{<:AbstractQuantumObject{OperatorQuantumObject,N}}) where {N} = true
+isoper(::Type{<:AbstractQuantumObject{Operator,N}}) where {N} = true
 isoper(A) = false # default case
 
 @doc raw"""
     isoperbra(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBraQuantumObject`](@ref). Default case returns `false` for any other inputs.
+Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBra`](@ref). Default case returns `false` for any other inputs.
 """
 isoperbra(A::QuantumObject) = isoperbra(typeof(A))
-isoperbra(::Type{<:QuantumObject{OperatorBraQuantumObject,N}}) where {N} = true
+isoperbra(::Type{<:QuantumObject{OperatorBra,N}}) where {N} = true
 isoperbra(A) = false # default case
 
 @doc raw"""
     isoperket(A)
 
-Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKetQuantumObject`](@ref). Default case returns `false` for any other inputs.
+Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKet`](@ref). Default case returns `false` for any other inputs.
 """
 isoperket(A::QuantumObject) = isoperket(typeof(A))
-isoperket(::Type{<:QuantumObject{OperatorKetQuantumObject,N}}) where {N} = true
+isoperket(::Type{<:QuantumObject{OperatorKet,N}}) where {N} = true
 isoperket(A) = false # default case
 
 @doc raw"""
     issuper(A)
 
-Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperatorQuantumObject`](@ref). Default case returns `false` for any other inputs.
+Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperator`](@ref). Default case returns `false` for any other inputs.
 """
 issuper(A::AbstractQuantumObject) = issuper(typeof(A))
-issuper(::Type{<:AbstractQuantumObject{SuperOperatorQuantumObject,N}}) where {N} = true
+issuper(::Type{<:AbstractQuantumObject{SuperOperator,N}}) where {N} = true
 issuper(A) = false # default case
 
 @doc raw"""

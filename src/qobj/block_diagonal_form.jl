@@ -52,7 +52,7 @@ The [`BlockDiagonalForm`](@ref) of `A`.
 """
 function block_diagonal_form(
     A::QuantumObject{OpType},
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {OpType<:Union{Operator,SuperOperator}}
     bdf = block_diagonal_form(A.data)
     B = QuantumObject(bdf.B, type = A.type, dims = A.dimensions)
     P = QuantumObject(bdf.P, type = A.type, dims = A.dimensions)

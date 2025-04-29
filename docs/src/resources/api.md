@@ -21,17 +21,11 @@ Space
 Dimensions
 GeneralDimensions
 AbstractQuantumObject
-BraQuantumObject
 Bra
-KetQuantumObject
 Ket
-OperatorQuantumObject
 Operator
-OperatorBraQuantumObject
 OperatorBra
-OperatorKetQuantumObject
 OperatorKet
-SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
 QuantumObjectEvolution

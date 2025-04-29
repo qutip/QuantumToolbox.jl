@@ -360,8 +360,8 @@
             end
 
             UnionType = Union{
-                QuantumObject{BraQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
-                QuantumObject{OperatorQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Bra,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Operator,Dimensions{1,Tuple{Space}},Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
@@ -370,8 +370,8 @@
             end
 
             UnionType2 = Union{
-                QuantumObject{OperatorQuantumObject,GeneralDimensions{1,1,Tuple{Space},Tuple{Space}},Matrix{T}},
-                QuantumObject{OperatorQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Operator,GeneralDimensions{1,1,Tuple{Space},Tuple{Space}},Matrix{T}},
+                QuantumObject{Operator,Dimensions{1,Tuple{Space}},Matrix{T}},
             }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)

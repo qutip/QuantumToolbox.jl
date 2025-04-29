@@ -87,13 +87,13 @@ function QuantumObject(
     end
 
     if dims isa Nothing
-        if type isa BraQuantumObject
+        if type isa Bra
             dims = Dimensions(_size[2])
-        elseif type isa OperatorQuantumObject
+        elseif type isa Operator
             dims =
                 (_size[1] == _size[2]) ? Dimensions(_size[1]) :
                 GeneralDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
-        elseif type isa SuperOperatorQuantumObject || type isa OperatorBraQuantumObject
+        elseif type isa SuperOperator || type isa OperatorBra
             dims = Dimensions(isqrt(_size[2]))
         end
     end
@@ -114,9 +114,9 @@ function QuantumObject(
 
     if dims isa Nothing
         _size = _get_size(A)
-        if type isa KetQuantumObject
+        if type isa Ket
             dims = Dimensions(_size[1])
-        elseif type isa OperatorKetQuantumObject
+        elseif type isa OperatorKet
             dims = Dimensions(isqrt(_size[1]))
         end
     end
@@ -144,11 +144,11 @@ function Base.show(
     QO::QuantumObject{OpType},
 ) where {
     OpType<:Union{
-        BraQuantumObject,
-        KetQuantumObject,
-        OperatorBraQuantumObject,
-        OperatorKetQuantumObject,
-        SuperOperatorQuantumObject,
+        Bra,
+        Ket,
+        OperatorBra,
+        OperatorKet,
+        SuperOperator,
     },
 }
     op_data = QO.data
@@ -204,15 +204,15 @@ Here, `u` can be in either the following types:
 SciMLOperators.cache_operator(
     L::AbstractQuantumObject{OpType},
     u::AbstractVector,
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+) where {OpType<:Union{Operator,SuperOperator}} =
     get_typename_wrapper(L)(cache_operator(L.data, to_dense(similar(u))), L.type, L.dimensions)
 
 function SciMLOperators.cache_operator(
     L::AbstractQuantumObject{OpType},
     u::QuantumObject{SType},
 ) where {
-    OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    SType<:Union{KetQuantumObject,OperatorKetQuantumObject},
+    OpType<:Union{Operator,SuperOperator},
+    SType<:Union{Ket,OperatorKet},
 }
     check_dimensions(L, u)
 

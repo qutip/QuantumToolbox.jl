@@ -423,9 +423,9 @@ end
 #######################################
 
 function liouvillian_floquet(
-    L₀::QuantumObject{SuperOperatorQuantumObject},
-    Lₚ::QuantumObject{SuperOperatorQuantumObject},
-    Lₘ::QuantumObject{SuperOperatorQuantumObject},
+    L₀::QuantumObject{SuperOperator},
+    Lₚ::QuantumObject{SuperOperator},
+    Lₘ::QuantumObject{SuperOperator},
     ω::Real;
     n_max::Int = 3,
     tol::Real = 1e-15,
@@ -443,9 +443,9 @@ function liouvillian_floquet(
     n_max::Int = 3,
     tol::Real = 1e-15,
 ) where {
-    OpType1<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType2<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    OpType3<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    OpType1<:Union{Operator,SuperOperator},
+    OpType2<:Union{Operator,SuperOperator},
+    OpType3<:Union{Operator,SuperOperator},
 }
     return liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
 end
@@ -459,7 +459,7 @@ Constructs the generalized Liouvillian for a system coupled to a bath of harmoni
 See, e.g., Settineri, Alessio, et al. "Dissipation and thermal noise in hybrid quantum systems in the ultrastrong-coupling regime." Physical Review A 98.5 (2018): 053834.
 """
 function liouvillian_generalized(
-    H::QuantumObject{OperatorQuantumObject},
+    H::QuantumObject{Operator},
     fields::Vector,
     T_list::Vector{<:Real};
     N_trunc::Union{Int,Nothing} = nothing,
@@ -522,9 +522,9 @@ function liouvillian_generalized(
 end
 
 function _liouvillian_floquet(
-    L₀::QuantumObject{SuperOperatorQuantumObject},
-    Lₚ::QuantumObject{SuperOperatorQuantumObject},
-    Lₘ::QuantumObject{SuperOperatorQuantumObject},
+    L₀::QuantumObject{SuperOperator},
+    Lₚ::QuantumObject{SuperOperator},
+    Lₘ::QuantumObject{SuperOperator},
     ω::Real,
     n_max::Int,
     tol::Real,
