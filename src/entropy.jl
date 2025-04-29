@@ -44,11 +44,7 @@ julia> entropy_vn(ρ, base=2)
 1.0
 ```
 """
-function entropy_vn(
-    ρ::QuantumObject{ObjType};
-    base::Int = 0,
-    tol::Real = 1e-15,
-) where {ObjType<:Union{Ket,Operator}}
+function entropy_vn(ρ::QuantumObject{ObjType}; base::Int = 0, tol::Real = 1e-15) where {ObjType<:Union{Ket,Operator}}
     T = eltype(ρ)
     vals = eigenenergies(ket2dm(ρ))
     indexes = findall(x -> abs(x) > tol, vals)
@@ -78,10 +74,7 @@ function entropy_relative(
     σ::QuantumObject{ObjType2};
     base::Int = 0,
     tol::Real = 1e-15,
-) where {
-    ObjType1<:Union{Ket,Operator},
-    ObjType2<:Union{Ket,Operator},
-}
+) where {ObjType1<:Union{Ket,Operator},ObjType2<:Union{Ket,Operator}}
     check_dimensions(ρ, σ)
 
     # the logic of this code follows the detail given in the reference of the docstring
@@ -131,8 +124,7 @@ Calculates the quantum linear entropy ``S_L = 1 - \textrm{Tr} \left[ \hat{\rho}^
 
 Note that `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
 """
-entropy_linear(ρ::QuantumObject{ObjType}) where {ObjType<:Union{Ket,Operator}} =
-    1.0 - purity(ρ) # use 1.0 to make sure it always return value in Float-type
+entropy_linear(ρ::QuantumObject{ObjType}) where {ObjType<:Union{Ket,Operator}} = 1.0 - purity(ρ) # use 1.0 to make sure it always return value in Float-type
 
 @doc raw"""
     entropy_mutual(ρAB::QuantumObject, selA, selB; kwargs...)
@@ -185,8 +177,7 @@ entropy_conditional(
     ρAB::QuantumObject{ObjType,<:AbstractDimensions{N,N}},
     selB::Union{Int,AbstractVector{Int},Tuple};
     kwargs...,
-) where {ObjType<:Union{Ket,Operator},N} =
-    entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
+) where {ObjType<:Union{Ket,Operator},N} = entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
 
 @doc raw"""
     entanglement(ρ::QuantumObject, sel; kwargs...)

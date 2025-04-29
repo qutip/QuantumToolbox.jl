@@ -142,15 +142,7 @@ end
 function Base.show(
     io::IO,
     QO::QuantumObject{OpType},
-) where {
-    OpType<:Union{
-        Bra,
-        Ket,
-        OperatorBra,
-        OperatorKet,
-        SuperOperator,
-    },
-}
+) where {OpType<:Union{Bra,Ket,OperatorBra,OperatorKet,SuperOperator}}
     op_data = QO.data
     println(
         io,
@@ -210,10 +202,7 @@ SciMLOperators.cache_operator(
 function SciMLOperators.cache_operator(
     L::AbstractQuantumObject{OpType},
     u::QuantumObject{SType},
-) where {
-    OpType<:Union{Operator,SuperOperator},
-    SType<:Union{Ket,OperatorKet},
-}
+) where {OpType<:Union{Operator,SuperOperator},SType<:Union{Ket,OperatorKet}}
     check_dimensions(L, u)
 
     if isoper(L) && isoperket(u)

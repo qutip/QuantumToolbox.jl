@@ -52,8 +52,7 @@ julia> round.(expect([a' * a, a' + a, a], [ψ1, ψ2]), digits = 1)
  0.0+0.0im  0.6+0.8im
 ```
 """
-expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Ket}) =
-    dot(ψ.data, O.data, ψ.data)
+expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Ket}) = dot(ψ.data, O.data, ψ.data)
 expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Bra}) = expect(O, ψ')
 expect(O::QuantumObject{Operator}, ρ::QuantumObject{Operator}) = tr(O * ρ)
 expect(

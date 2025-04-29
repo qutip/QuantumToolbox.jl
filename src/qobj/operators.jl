@@ -73,8 +73,7 @@ Return the commutator (or `anti`-commutator) of the two [`QuantumObject`](@ref):
 
 Note that `A` and `B` must be [`Operator`](@ref)
 """
-commutator(A::QuantumObject{Operator}, B::QuantumObject{Operator}; anti::Bool = false) =
-    A * B - (-1)^anti * B * A
+commutator(A::QuantumObject{Operator}, B::QuantumObject{Operator}; anti::Bool = false) = A * B - (-1)^anti * B * A
 
 @doc raw"""
     destroy(N::Int)
@@ -429,11 +428,7 @@ Note that `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref
 !!! note
     `qeye` is a synonym of `eye`.
 """
-function eye(
-    N::Int;
-    type::ObjType = Operator,
-    dims = nothing,
-) where {ObjType<:Union{Operator,SuperOperator}}
+function eye(N::Int; type::ObjType = Operator, dims = nothing) where {ObjType<:Union{Operator,SuperOperator}}
     if dims isa Nothing
         dims = isa(type, Operator) ? N : isqrt(N)
     end

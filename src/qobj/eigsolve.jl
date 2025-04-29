@@ -467,10 +467,7 @@ julia> expect(H, ψ[1]) ≈ E[1]
 true
 ```
 """
-function LinearAlgebra.eigen(
-    A::QuantumObject{OpType};
-    kwargs...,
-) where {OpType<:Union{Operator,SuperOperator}}
+function LinearAlgebra.eigen(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Operator,SuperOperator}}
     MT = typeof(A.data)
     F = eigen(to_dense(A.data); kwargs...)
     # This fixes a type inference issue. But doesn't work for GPU arrays
@@ -485,10 +482,8 @@ end
 
 Same as [`eigen(A::QuantumObject; kwargs...)`](@ref) but for only the eigenvalues.
 """
-LinearAlgebra.eigvals(
-    A::QuantumObject{OpType};
-    kwargs...,
-) where {OpType<:Union{Operator,SuperOperator}} = eigvals(to_dense(A.data); kwargs...)
+LinearAlgebra.eigvals(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Operator,SuperOperator}} =
+    eigvals(to_dense(A.data); kwargs...)
 
 @doc raw"""
     eigenenergies(A::QuantumObject; sparse::Bool=false, kwargs...)

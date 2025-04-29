@@ -4,13 +4,7 @@ This file defines the AbstractQuantumObject structure, all the type structures f
 =#
 
 export AbstractQuantumObject
-export QuantumObjectType,
-    Bra,
-    Ket,
-    Operator,
-    OperatorBra,
-    OperatorKet,
-    SuperOperator
+export QuantumObjectType, Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 
 @doc raw"""
     abstract type AbstractQuantumObject{ObjType,DimType,DataType}
@@ -129,15 +123,7 @@ _check_QuantumObject(
     dimensions::GeneralDimensions,
     m::Int,
     n::Int,
-) where {
-    ObjType<:Union{
-        Ket,
-        Bra,
-        SuperOperator,
-        OperatorBra,
-        OperatorKet,
-    },
-} = throw(
+) where {ObjType<:Union{Ket,Bra,SuperOperator,OperatorBra,OperatorKet}} = throw(
     DomainError(
         _get_dims_string(dimensions),
         "The given `dims` is not compatible with type = $type, should be a single list of integers.",
