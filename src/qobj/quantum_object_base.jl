@@ -196,6 +196,10 @@ function _check_QuantumObject(type::OperatorBra, dimensions::Dimensions, m::Int,
     return nothing
 end
 
+_get_type(type::QuantumObjectType) = type
+_get_type(::Type{ObjType}) where {ObjType<:QuantumObjectType} = ObjType()
+_get_type(::Nothing) = nothing
+
 function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
     # a comment here to avoid bad render by JuliaFormatter
     if key === :dims

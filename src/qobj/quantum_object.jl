@@ -50,8 +50,14 @@ struct QuantumObject{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,Data
     type::ObjType
     dimensions::DimType
 
-    function QuantumObject(data::DT, type::ObjType, dims) where {DT<:AbstractArray,ObjType<:QuantumObjectType}
+    function QuantumObject(
+        data::DT,
+        type::Union{ObjType,Type{ObjType}},
+        dims,
+    ) where {DT<:AbstractArray,ObjType<:QuantumObjectType}
         dimensions = _gen_dimensions(dims)
+
+        type = _get_type(type)
 
         _size = _get_size(data)
         _check_QuantumObject(type, dimensions, _size[1], _size[2])
@@ -71,14 +77,16 @@ Generate [`QuantumObject`](@ref) with a given `A::AbstractArray` and specified `
 """
 function QuantumObject(
     A::AbstractMatrix{T};
-    type::ObjType = nothing,
+    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
     dims = nothing,
-) where {T,ObjType<:Union{Nothing,QuantumObjectType}}
+) where {T,ObjType<:QuantumObjectType}
     _size = _get_size(A)
 
+    type = _get_type(type)
+
     if type isa Nothing
-        type = (_size[1] == 1 && _size[2] > 1) ? Bra : Operator # default type
-    elseif type != Operator && type != SuperOperator && type != Bra && type != OperatorBra
+        type = (_size[1] == 1 && _size[2] > 1) ? Bra() : Operator() # default type
+    elseif !(type isa Operator) && !(type isa SuperOperator) && !(type isa Bra) && !(type isa OperatorBra)
         throw(
             ArgumentError(
                 "The argument type must be Operator, SuperOperator, Bra or OperatorBra if the input array is a matrix.",
@@ -103,12 +111,12 @@ end
 
 function QuantumObject(
     A::AbstractVector{T};
-    type::ObjType = nothing,
+    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
     dims = nothing,
-) where {T,ObjType<:Union{Nothing,QuantumObjectType}}
+) where {T,ObjType<:QuantumObjectType}
     if type isa Nothing
         type = Ket # default type
-    elseif type != Ket && type != OperatorKet
+    elseif !(type isa Ket) && !(type isa OperatorKet)
         throw(ArgumentError("The argument type must be Ket or OperatorKet if the input array is a vector."))
     end
 
@@ -126,15 +134,20 @@ end
 
 function QuantumObject(
     A::AbstractArray{T,N};
-    type::ObjType = nothing,
+    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
     dims = nothing,
-) where {T,N,ObjType<:Union{Nothing,QuantumObjectType}}
+) where {T,N,ObjType<:QuantumObjectType}
     throw(DomainError(size(A), "The size of the array is not compatible with vector or matrix."))
 end
 
-function QuantumObject(A::QuantumObject; type::ObjType = A.type, dims = A.dimensions) where {ObjType<:QuantumObjectType}
+function QuantumObject(
+    A::QuantumObject;
+    type::Union{ObjType,Type{ObjType}} = A.type,
+    dims = A.dimensions,
+) where {ObjType<:QuantumObjectType}
     _size = _get_size(A.data)
     dimensions = _gen_dimensions(dims)
+    type = _get_type(type)
     _check_QuantumObject(type, dimensions, _size[1], _size[2])
     return QuantumObject(copy(A.data), type, dimensions)
 end

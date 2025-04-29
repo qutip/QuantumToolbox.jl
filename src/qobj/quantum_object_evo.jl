@@ -119,13 +119,14 @@ struct QuantumObjectEvolution{
 
     function QuantumObjectEvolution(
         data::DT,
-        type::ObjType,
+        type::Union{ObjType,Type{ObjType}},
         dims,
     ) where {DT<:AbstractSciMLOperator,ObjType<:QuantumObjectType}
-        (type == Operator || type == SuperOperator) ||
-            throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
+        (ObjType == Operator || ObjType == SuperOperator) ||
+            throw(ArgumentError("The type $ObjType is not supported for QuantumObjectEvolution."))
 
         dimensions = _gen_dimensions(dims)
+        type = _get_type(type)
 
         _size = _get_size(data)
         _check_QuantumObject(type, dimensions, _size[1], _size[2])
@@ -153,15 +154,20 @@ function Base.show(io::IO, QO::QuantumObjectEvolution)
 end
 
 @doc raw"""
-    QobjEvo(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
-    QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
+    QobjEvo(data::AbstractSciMLOperator; type::Union{ObjType, Type{ObjType}} = Operator, dims = nothing)
+    QuantumObjectEvolution(data::AbstractSciMLOperator; type::Union{ObjType, Type{ObjType}} = Operator, dims = nothing)
 
 Generate a [`QuantumObjectEvolution`](@ref) object from a [`SciMLOperator`](https://github.com/SciML/SciMLOperators.jl), in the same way as [`QuantumObject`](@ref) for `AbstractArray` inputs.
 
 Note that `QobjEvo` is a synonym of `QuantumObjectEvolution`
 """
-function QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
+function QuantumObjectEvolution(
+    data::AbstractSciMLOperator;
+    type::Union{ObjType,Type{ObjType}} = Operator,
+    dims = nothing,
+) where {ObjType<:QuantumObjectType}
     _size = _get_size(data)
+    type = _get_type(type)
 
     if dims isa Nothing
         if type isa Operator
@@ -177,8 +183,8 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObject
 end
 
 @doc raw"""
-    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing)
-    QuantumObjectEvolution(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing)
+    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, ObjType, Type{ObjType}}=nothing)
+    QuantumObjectEvolution(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, ObjType, Type{ObjType}}=nothing)
 
 Generate [`QuantumObjectEvolution`](@ref).
 
@@ -272,10 +278,12 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 function QuantumObjectEvolution(
     op_func_list::Tuple,
     α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-)
+    type::Union{ObjType,Type{ObjType}} = nothing,
+) where {ObjType<:QuantumObjectType}
     op, data = _QobjEvo_generate_data(op_func_list, α)
     dims = op.dimensions
+    type = _get_type(type)
+
     if type isa Nothing
         type = op.type
     end
@@ -291,12 +299,12 @@ end
 QuantumObjectEvolution(
     op_func::Tuple{QuantumObject,Function},
     α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-) = QuantumObjectEvolution((op_func,), α; type = type)
+    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
+) where {ObjType<:QuantumObjectType} = QuantumObjectEvolution((op_func,), α; type = type)
 
 @doc raw"""
-    QuantumObjectEvolution(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type::Union{Nothing,QuantumObjectType} = nothing)
-    QobjEvo(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type::Union{Nothing,QuantumObjectType} = nothing)
+    QuantumObjectEvolution(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type::Union{Nothing, ObjType, Type{ObjType}} = nothing)
+    QobjEvo(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type::Union{Nothing, ObjType, Type{ObjType}} = nothing)
 
 Generate [`QuantumObjectEvolution`](@ref).
 
@@ -329,14 +337,15 @@ QuantumObjectEvolution(
     op::QuantumObject,
     f::Function,
     α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-) = QuantumObjectEvolution(((op, f),), α; type = type)
+    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
+) where {ObjType<:QuantumObjectType} = QuantumObjectEvolution(((op, f),), α; type = type)
 
 function QuantumObjectEvolution(
     op::QuantumObject,
     α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-)
+    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
+) where {ObjType<:QuantumObjectType}
+    type = _get_type(type)
     if type isa Nothing
         type = op.type
     end
@@ -346,8 +355,9 @@ end
 function QuantumObjectEvolution(
     op::QuantumObjectEvolution,
     α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-)
+    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
+) where {ObjType<:QuantumObjectType}
+    type = _get_type(type)
     if type isa Nothing
         type = op.type
     elseif type != op.type
