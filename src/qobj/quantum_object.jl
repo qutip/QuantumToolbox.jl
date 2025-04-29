@@ -50,11 +50,7 @@ struct QuantumObject{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,Data
     type::ObjType
     dimensions::DimType
 
-    function QuantumObject(
-        data::DT,
-        type::Union{ObjType,Type{ObjType}},
-        dims,
-    ) where {DT<:AbstractArray,ObjType<:QuantumObjectType}
+    function QuantumObject(data::DT, type, dims) where {DT<:AbstractArray}
         dimensions = _gen_dimensions(dims)
 
         type = _get_type(type)
@@ -62,7 +58,7 @@ struct QuantumObject{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,Data
         _size = _get_size(data)
         _check_QuantumObject(type, dimensions, _size[1], _size[2])
 
-        return new{ObjType,typeof(dimensions),DT}(data, type, dimensions)
+        return new{typeof(type),typeof(dimensions),DT}(data, type, dimensions)
     end
 end
 
@@ -75,11 +71,7 @@ Generate [`QuantumObject`](@ref) with a given `A::AbstractArray` and specified `
 !!! note
     `Qobj` is a synonym of `QuantumObject`.
 """
-function QuantumObject(
-    A::AbstractMatrix{T};
-    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
-    dims = nothing,
-) where {T,ObjType<:QuantumObjectType}
+function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) where {T}
     _size = _get_size(A)
 
     type = _get_type(type)
@@ -109,13 +101,10 @@ function QuantumObject(
     return QuantumObject(A, type, dims)
 end
 
-function QuantumObject(
-    A::AbstractVector{T};
-    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
-    dims = nothing,
-) where {T,ObjType<:QuantumObjectType}
+function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) where {T}
+    type = _get_type(type)
     if type isa Nothing
-        type = Ket # default type
+        type = Ket() # default type
     elseif !(type isa Ket) && !(type isa OperatorKet)
         throw(ArgumentError("The argument type must be Ket or OperatorKet if the input array is a vector."))
     end
@@ -132,19 +121,11 @@ function QuantumObject(
     return QuantumObject(A, type, dims)
 end
 
-function QuantumObject(
-    A::AbstractArray{T,N};
-    type::Union{Nothing,ObjType,Type{ObjType}} = nothing,
-    dims = nothing,
-) where {T,N,ObjType<:QuantumObjectType}
+function QuantumObject(A::AbstractArray{T,N}; type = nothing, dims = nothing) where {T,N}
     throw(DomainError(size(A), "The size of the array is not compatible with vector or matrix."))
 end
 
-function QuantumObject(
-    A::QuantumObject;
-    type::Union{ObjType,Type{ObjType}} = A.type,
-    dims = A.dimensions,
-) where {ObjType<:QuantumObjectType}
+function QuantumObject(A::QuantumObject; type = A.type, dims = A.dimensions)
     _size = _get_size(A.data)
     dimensions = _gen_dimensions(dims)
     type = _get_type(type)

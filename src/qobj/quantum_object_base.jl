@@ -197,8 +197,9 @@ function _check_QuantumObject(type::OperatorBra, dimensions::Dimensions, m::Int,
 end
 
 _get_type(type::QuantumObjectType) = type
-_get_type(::Type{ObjType}) where {ObjType<:QuantumObjectType} = ObjType()
+_get_type(type::Type{<:QuantumObjectType}) = type()
 _get_type(::Nothing) = nothing
+_get_type(type) = throw(ArgumentError("The argument type must be QuantumObjectType."))
 
 function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
     # a comment here to avoid bad render by JuliaFormatter

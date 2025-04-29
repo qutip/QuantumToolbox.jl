@@ -351,11 +351,11 @@
     end
 
     @testset "Type Inference (QuantumObject)" begin
-        for T in [ComplexF32, ComplexF64]
+        for T in (ComplexF32, ComplexF64)
             N = 4
             a = rand(T, N)
             @inferred Qobj(a)
-            for type in [Ket, OperatorKet]
+            for type in (Ket(), OperatorKet())
                 @inferred Qobj(a, type = type)
             end
 
@@ -365,7 +365,7 @@
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
-            for type in [Bra, OperatorBra]
+            for type in (Bra(), OperatorBra())
                 @inferred Qobj(a, type = type)
             end
 

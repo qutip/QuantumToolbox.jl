@@ -428,11 +428,7 @@ Note that `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref
 !!! note
     `qeye` is a synonym of `eye`.
 """
-function eye(
-    N::Int;
-    type::Union{ObjType,Type{ObjType}} = Operator,
-    dims = nothing,
-) where {ObjType<:Union{Operator,SuperOperator}}
+function eye(N::Int; type = Operator, dims = nothing)
     type = _get_type(type)
     if dims isa Nothing
         dims = isa(type, Operator) ? N : isqrt(N)
