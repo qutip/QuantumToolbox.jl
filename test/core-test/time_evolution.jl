@@ -183,6 +183,9 @@
             rng = MersenneTwister(12),
         )
 
+        # Redirect to `sesolve`
+        sol_me5 = mesolve(H, ψ0, tlist, progress_bar = Val(false))
+
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
         expect_mc_states_mean = sum(expect_mc_states, dims = 2) / size(expect_mc_states, 2)
@@ -198,6 +201,7 @@
         sol_sme_string = sprint((t, s) -> show(t, "text/plain", s), sol_sme)
         @test prob_me.prob.f.f isa MatrixOperator
         @test prob_mc.prob.f.f isa MatrixOperator
+        @test isket(sol_me5.states[1])
         @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
         @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
         @test sum(abs, vec(expect_mc_states_mean) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1

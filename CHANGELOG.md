@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Return `sesolve` when `mesolve` allows it. ([#455])
+
 ## [v0.30.1]
 Release date: 2025-04-24
 
@@ -212,3 +214,4 @@ Release date: 2024-11-13
 [#448]: https://github.com/qutip/QuantumToolbox.jl/issues/448
 [#450]: https://github.com/qutip/QuantumToolbox.jl/issues/450
 [#453]: https://github.com/qutip/QuantumToolbox.jl/issues/453
+[#455]: https://github.com/qutip/QuantumToolbox.jl/issues/455
