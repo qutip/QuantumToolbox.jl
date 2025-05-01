@@ -42,7 +42,7 @@ const PAGES = [
         # "Key differences from QuTiP" => "getting_started/qutip_differences.md",
         "The Importance of Type-Stability" => "getting_started/type_stability.md",
         "Example: Create QuantumToolbox.jl Logo" => "getting_started/logo.md",
-        # "Cite QuantumToolbox.jl" => "getting_started/cite.md",
+        "Cite QuantumToolbox.jl" => "getting_started/cite.md",
     ],
     "Users Guide" => [
         "Basic Operations on Quantum Objects" => [
