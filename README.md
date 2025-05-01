@@ -10,7 +10,7 @@
 and [Y.-T. Huang](https://github.com/ytdHuang).
 
 <!-- Table of Badges -->
-| **Release**       | [![Release][release-img]][release-url] [![License][license-img]][license-url] [![DOI][doi-img]][doi-url] [![Downloads][download-img]][download-url] |
+| **Release**       | [![Release][release-img]][release-url] [![License][license-img]][license-url] [![Cite][cite-img]][cite-url] [![Downloads][download-img]][download-url] |
 |:-----------------:|:-------------|
 | **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] |
 | **Code Quality**  | [![Code Quality][code-quality-img]][code-quality-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] |
@@ -24,8 +24,8 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [license-img]: https://img.shields.io/badge/license-New%20BSD-blue.svg
 [license-url]: https://opensource.org/licenses/BSD-3-Clause
 
-[doi-img]: https://zenodo.org/badge/DOI/10.5281/zenodo.10822816.svg
-[doi-url]: https://doi.org/10.5281/zenodo.10822816
+[cite-img]: https://img.shields.io/badge/cite-arXiv%3A2504.21440_(2023)-blue
+[cite-url]: https://doi.org/10.48550/arXiv.2504.21440
 
 [download-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuantumToolbox&query=total_requests&label=Downloads
 [download-url]: https://juliapkgstats.com/pkg/QuantumToolbox
@@ -176,6 +176,23 @@ Here we provide a brief performance comparison between `QuantumToolbox.jl` and o
 You are most welcome to contribute to `QuantumToolbox.jl` development by forking this repository and sending pull requests (PRs), or filing bug reports at the issues page. You can also help out with users' questions, or discuss proposed changes in the [QuTiP discussion group](https://groups.google.com/g/qutip).
 
 For more information about contribution, including technical advice, please see the [Contributing to Quantum Toolbox in Julia](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing).
+
+## Cite `QuantumToolbox.jl`
+If you like `QuantumToolbox.jl`, we would appreciate it if you starred the repository in order to help us increase its visibility. Furthermore, if you find the framework useful in your research, we would be grateful if you could cite our arXiv preprint [ [arXiv:2504.21440 (2025)](https://doi.org/10.48550/arXiv.2504.21440)  ] using the following bibtex entry:
+
+```bib
+@article{QuantumToolbox-jl2025,
+    title={{QuantumToolbox.jl}: An efficient {Julia} framework for simulating open quantum systems},
+    author={Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
+    journal={arXiv preprint arXiv:2504.21440},
+    year={2025},
+    publisher = {arXiv},
+    eprint={2504.21440},
+    archivePrefix={arXiv},
+    primaryClass={quant-ph},
+    doi = {10.48550/arXiv.2504.21440}
+}
+```
 
 ## Acknowledgements
 

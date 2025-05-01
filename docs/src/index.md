@@ -23,6 +23,9 @@ hero:
       text: API
       link: /resources/api
     - theme: alt
+      text: Cite us
+      link: /getting_started/cite
+    - theme: alt
       text: View on Github
       link: https://github.com/qutip/QuantumToolbox.jl
     - theme: alt
