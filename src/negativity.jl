@@ -97,7 +97,7 @@ function _partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     ]
     return QuantumObject(
         reshape(permutedims(reshape(ρ.data, (dims..., dims...)), pt_idx), size(ρ)),
-        Operator,
+        Operator(),
         Dimensions(ρ.dimensions.to),
     )
 end
@@ -144,5 +144,5 @@ function _partial_transpose(
         end
     end
 
-    return QuantumObject(sparse(I_pt, J_pt, V_pt, M, N), Operator, ρ.dimensions)
+    return QuantumObject(sparse(I_pt, J_pt, V_pt, M, N), Operator(), ρ.dimensions)
 end

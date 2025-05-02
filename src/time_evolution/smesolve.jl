@@ -1,7 +1,7 @@
 export smesolveProblem, smesolveEnsembleProblem, smesolve
 
-_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator, dims = dims)
-_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet, dims = dims)
+_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
+_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
 
 function _smesolve_update_coeff(u, p, t, op_vec)
     return 2 * real(dot(op_vec, u)) #this is Tr[Sn * ρ + ρ * Sn']

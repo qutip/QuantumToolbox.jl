@@ -198,10 +198,9 @@ function _check_QuantumObject(type::OperatorBra, dimensions::Dimensions, m::Int,
     return nothing
 end
 
-_get_type(type::QuantumObjectType) = type
-_get_type(type::Type{<:QuantumObjectType}) = type()
-_get_type(::Nothing) = nothing
-_get_type(type) = throw(ArgumentError("The argument type must be QuantumObjectType."))
+_check_type(::T) where {T<:Union{Nothing, <:QuantumObjectType}} = T
+_check_type(::Type{T}) where T = throw(ArgumentError("The argument `$T` is not valid. You may probably want to use `$T()` instead."))
+_check_type(t) = throw(ArgumentError("The argument $t is not valid. It should be a subtype of `QuantumObjectType`."))
 
 function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
     # a comment here to avoid bad render by JuliaFormatter

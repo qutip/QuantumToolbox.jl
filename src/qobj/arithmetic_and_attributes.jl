@@ -69,7 +69,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
                 )
                     check_dimensions(A, B)
                     QType = promote_op_type(A, B)
-                    return QType(A.data * B.data, Operator, A.dimensions)
+                    return QType(A.data * B.data, Operator(), A.dimensions)
                 end
             end
         else
@@ -82,7 +82,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
                     QType = promote_op_type(A, B)
                     return QType(
                         A.data * B.data,
-                        Operator,
+                        Operator(),
                         GeneralDimensions(get_dimensions_to(A), get_dimensions_from(B)),
                     )
                 end
@@ -93,15 +93,15 @@ end
 
 function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket,<:Dimensions})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-    return QuantumObject(A.data * B.data, Ket, Dimensions(get_dimensions_to(A)))
+    return QuantumObject(A.data * B.data, Ket(), Dimensions(get_dimensions_to(A)))
 end
 function Base.:(*)(A::QuantumObject{Bra,<:Dimensions}, B::AbstractQuantumObject{Operator})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-    return QuantumObject(A.data * B.data, Bra, Dimensions(get_dimensions_from(B)))
+    return QuantumObject(A.data * B.data, Bra(), Dimensions(get_dimensions_from(B)))
 end
 function Base.:(*)(A::QuantumObject{Ket}, B::QuantumObject{Bra})
     check_dimensions(A, B)
-    return QuantumObject(A.data * B.data, Operator, A.dimensions) # to align with QuTiP, don't use kron(A, B) to do it.
+    return QuantumObject(A.data * B.data, Operator(), A.dimensions) # to align with QuTiP, don't use kron(A, B) to do it.
 end
 function Base.:(*)(A::QuantumObject{Bra}, B::QuantumObject{Ket})
     check_dimensions(A, B)
@@ -109,7 +109,7 @@ function Base.:(*)(A::QuantumObject{Bra}, B::QuantumObject{Ket})
 end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{Operator})
     check_dimensions(A, B)
-    return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator, A.dimensions)
+    return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator(), A.dimensions)
 end
 function Base.:(*)(A::QuantumObject{OperatorBra}, B::QuantumObject{OperatorKet})
     check_dimensions(A, B)
@@ -117,11 +117,11 @@ function Base.:(*)(A::QuantumObject{OperatorBra}, B::QuantumObject{OperatorKet})
 end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{OperatorKet})
     check_dimensions(A, B)
-    return QuantumObject(A.data * B.data, OperatorKet, A.dimensions)
+    return QuantumObject(A.data * B.data, OperatorKet(), A.dimensions)
 end
 function Base.:(*)(A::QuantumObject{OperatorBra}, B::AbstractQuantumObject{SuperOperator})
     check_dimensions(A, B)
-    return QuantumObject(A.data * B.data, OperatorBra, A.dimensions)
+    return QuantumObject(A.data * B.data, OperatorBra(), A.dimensions)
 end
 
 Base.:(^)(A::QuantumObject, n::T) where {T<:Number} = QuantumObject(^(A.data, n), A.type, A.dimensions)
@@ -213,10 +213,10 @@ Lazy adjoint (conjugate transposition) of the [`AbstractQuantumObject`](@ref)
 """
 Base.adjoint(A::AbstractQuantumObject{OpType}) where {OpType<:Union{Operator,SuperOperator}} =
     get_typename_wrapper(A)(adjoint(A.data), A.type, adjoint(A.dimensions))
-Base.adjoint(A::QuantumObject{Ket}) = QuantumObject(adjoint(A.data), Bra, adjoint(A.dimensions))
-Base.adjoint(A::QuantumObject{Bra}) = QuantumObject(adjoint(A.data), Ket, adjoint(A.dimensions))
-Base.adjoint(A::QuantumObject{OperatorKet}) = QuantumObject(adjoint(A.data), OperatorBra, adjoint(A.dimensions))
-Base.adjoint(A::QuantumObject{OperatorBra}) = QuantumObject(adjoint(A.data), OperatorKet, adjoint(A.dimensions))
+Base.adjoint(A::QuantumObject{Ket}) = QuantumObject(adjoint(A.data), Bra(), adjoint(A.dimensions))
+Base.adjoint(A::QuantumObject{Bra}) = QuantumObject(adjoint(A.data), Ket(), adjoint(A.dimensions))
+Base.adjoint(A::QuantumObject{OperatorKet}) = QuantumObject(adjoint(A.data), OperatorBra(), adjoint(A.dimensions))
+Base.adjoint(A::QuantumObject{OperatorBra}) = QuantumObject(adjoint(A.data), OperatorKet(), adjoint(A.dimensions))
 
 @doc raw"""
     inv(A::AbstractQuantumObject)
@@ -521,7 +521,7 @@ function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int},Tuple})
 
     _sort_sel = sort(SVector{length(sel),Int}(sel))
     ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, _sort_sel)
-    return QuantumObject(ρtr, type = Operator, dims = Dimensions(dkeep))
+    return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
 
 ptrace(QO::QuantumObject{Bra}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
@@ -549,7 +549,7 @@ function ptrace(QO::QuantumObject{Operator}, sel::Union{AbstractVector{Int},Tupl
     dims = dimensions_to_dims(get_dimensions_to(QO))
     _sort_sel = sort(SVector{length(sel),Int}(sel))
     ρtr, dkeep = _ptrace_oper(QO.data, dims, _sort_sel)
-    return QuantumObject(ρtr, type = Operator, dims = Dimensions(dkeep))
+    return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 

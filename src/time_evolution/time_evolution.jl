@@ -474,14 +474,14 @@ function liouvillian_generalized(
     E = real.(result.values[1:final_size])
     U = QuantumObject(result.vectors, result.type, result.dimensions)
 
-    H_d = QuantumObject(Diagonal(complex(E)), type = Operator, dims = dims)
+    H_d = QuantumObject(Diagonal(complex(E)), type = Operator(), dims = dims)
 
     Ω = E' .- E
     Ωp = triu(to_sparse(Ω, tol), 1)
 
     # Filter in the Hilbert space
     σ = isnothing(σ_filter) ? 500 * maximum([norm(field) / length(field) for field in fields]) : σ_filter
-    F1 = QuantumObject(gaussian.(Ω, 0, σ), type = Operator, dims = dims)
+    F1 = QuantumObject(gaussian.(Ω, 0, σ), type = Operator(), dims = dims)
     F1 = to_sparse(F1, tol)
 
     # Filter in the Liouville space
@@ -491,7 +491,7 @@ function liouvillian_generalized(
     Ω1 = kron(Ω, M1)
     Ω2 = kron(M1, Ω)
     Ωdiff = Ω1 .- Ω2
-    F2 = QuantumObject(gaussian.(Ωdiff, 0, σ), SuperOperator, dims)
+    F2 = QuantumObject(gaussian.(Ωdiff, 0, σ), SuperOperator(), dims)
     F2 = to_sparse(F2, tol)
 
     L = liouvillian(H_d)
@@ -505,9 +505,9 @@ function liouvillian_generalized(
 
         # Ohmic reservoir
         N_th = n_thermal.(Ωp, T_list[i])
-        Sp₀ = QuantumObject(triu(X_op, 1), type = Operator, dims = dims)
-        Sp₁ = QuantumObject(droptol!((@. Ωp * N_th * Sp₀.data), tol), type = Operator, dims = dims)
-        Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), type = Operator, dims = dims)
+        Sp₀ = QuantumObject(triu(X_op, 1), type = Operator(), dims = dims)
+        Sp₁ = QuantumObject(droptol!((@. Ωp * N_th * Sp₀.data), tol), type = Operator(), dims = dims)
+        Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), type = Operator(), dims = dims)
         # S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
 
         L +=
@@ -543,6 +543,6 @@ function _liouvillian_floquet(
         T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m_dense
     end
 
-    tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator, L₀.dimensions)
-    return QuantumObject(to_sparse(L_0 + L_m * S + L_p * T, tol), SuperOperator, L₀.dimensions)
+    tol == 0 && return QuantumObject(L_0 + L_m * S + L_p * T, SuperOperator(), L₀.dimensions)
+    return QuantumObject(to_sparse(L_0 + L_m * S + L_p * T, tol), SuperOperator(), L₀.dimensions)
 end

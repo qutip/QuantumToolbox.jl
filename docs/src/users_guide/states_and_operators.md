@@ -389,7 +389,7 @@ B = Qobj(rand(ComplexF64, N, N))
 mat2vec(A * ρ * B) ≈ spre(A) * spost(B) * mat2vec(ρ) ≈ sprepost(A, B) * mat2vec(ρ)
 ```
 
-In addition, dynamical generators on this extended space, often called Liouvillian superoperators, can be created using the [`liouvillian`](@ref) function. Each of these takes a Hamiltonian along with a list of collapse operators, and returns a [`type=SuperOperator`](@ref SuperOperator) object that can be exponentiated to find the superoperator for that evolution.
+In addition, dynamical generators on this extended space, often called Liouvillian superoperators, can be created using the [`liouvillian`](@ref) function. Each of these takes a Hamiltonian along with a list of collapse operators, and returns a [`QuantumObject`](@ref) of type [`SuperOperator`](@ref) that can be exponentiated to find the superoperator for that evolution.
 
 ```@example states_and_operators
 H = 10 * sigmaz()

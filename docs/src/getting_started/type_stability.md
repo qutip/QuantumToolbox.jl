@@ -183,7 +183,7 @@ The `dims` field contains the dimensions of the subsystems (in this case, three 
 
 ```@example type-stability
 function reshape_operator_data(dims)
-    op = Qobj(randn(prod(dims), prod(dims)), type=Operator, dims=dims)
+    op = Qobj(randn(prod(dims), prod(dims)), type=Operator(), dims=dims)
     op_dims = op.dims
     op_data = op.data
     return reshape(op_data, vcat(op_dims, op_dims)...)
@@ -234,7 +234,7 @@ function my_fock(N::Int, j::Int = 0; sparse::Bool = false)
         array = zeros(ComplexF64, N)
         array[j+1] = 1
     end
-    return QuantumObject(array; type = Ket)
+    return QuantumObject(array; type = Ket())
 end
 @show my_fock(2, 1)
 @show my_fock(2, 1; sparse = true)
@@ -262,7 +262,7 @@ function my_fock_good(N::Int, j::Int = 0; sparse::Val = Val(false))
     else
         array = sparsevec([j + 1], [1.0 + 0im], N)
     end
-    return QuantumObject(array; type = Ket)
+    return QuantumObject(array; type = Ket())
 end
 @show my_fock_good(2, 1)
 @show my_fock_good(2, 1; sparse = Val(true))

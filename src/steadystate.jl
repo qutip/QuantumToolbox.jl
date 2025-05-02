@@ -159,7 +159,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
 
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator, L.dimensions)
+    return QuantumObject(ρss, Operator(), L.dimensions)
 end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateEigenSolver; kwargs...)
@@ -171,7 +171,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateEigenS
     ρss = reshape(ρss_vec, N, N)
     ρss /= tr(ρss)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator, L.dimensions)
+    return QuantumObject(ρss, Operator(), L.dimensions)
 end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirectSolver)
@@ -196,7 +196,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirect
     ρss_vec = L_tmp \ v0 # This is still not supported on GPU, yet
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator, L.dimensions)
+    return QuantumObject(ρss, Operator(), L.dimensions)
 end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
@@ -402,13 +402,13 @@ function _steadystate_fourier(
     ρ0 = reshape(ρtot[(offset1+1):offset2], Ns, Ns)
     ρ0_tr = tr(ρ0)
     ρ0 = ρ0 / ρ0_tr
-    ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator, dims = L_0.dimensions)
+    ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator(), dims = L_0.dimensions)
     ρtot = ρtot / ρ0_tr
 
     ρ_list = [ρ0]
     for i in 0:(n_max-1)
         ρi_m = reshape(ρtot[(offset1-(i+1)*N+1):(offset1-i*N)], Ns, Ns)
-        ρi_m = QuantumObject(ρi_m, type = Operator, dims = L_0.dimensions)
+        ρi_m = QuantumObject(ρi_m, type = Operator(), dims = L_0.dimensions)
         push!(ρ_list, ρi_m)
     end
 

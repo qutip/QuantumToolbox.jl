@@ -68,7 +68,7 @@
 
         mul!(C, z, sqrt(B))
         mul!(σ, C', C)
-        return entropy_vn(Qobj(Hermitian(σ), type = Operator), base = 2)
+        return entropy_vn(Qobj(Hermitian(σ), type = Operator()), base = 2)
     end
 
     opt = (err_max = 1e-3, p0 = 0.0, atol_inv = 1e-6, adj_condition = "variational", Δt = 0.0, progress = false)

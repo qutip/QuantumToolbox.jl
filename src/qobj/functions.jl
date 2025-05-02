@@ -208,7 +208,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
                     _lazy_tensor_warning(A.data, B.data)
                     return QType(
                         kron(A.data, B.data),
-                        Operator,
+                        Operator(),
                         GeneralDimensions(
                             (get_dimensions_to(A)..., get_dimensions_to(B)...),
                             (get_dimensions_from(A)..., get_dimensions_from(B)...),
@@ -230,7 +230,7 @@ for AOpType in (:Ket, :Bra, :Operator)
                     _lazy_tensor_warning(A.data, B.data)
                     return QType(
                         kron(A.data, B.data),
-                        Operator,
+                        Operator(),
                         GeneralDimensions(
                             (get_dimensions_to(A)..., get_dimensions_to(B)...),
                             (get_dimensions_from(A)..., get_dimensions_from(B)...),
@@ -267,7 +267,7 @@ Convert a quantum object from vector ([`OperatorKet`](@ref)-type) to matrix ([`O
 !!! note
     `vector_to_operator` is a synonym of `vec2mat`.
 """
-vec2mat(A::QuantumObject{OperatorKet}) = QuantumObject(vec2mat(A.data), Operator, A.dimensions)
+vec2mat(A::QuantumObject{OperatorKet}) = QuantumObject(vec2mat(A.data), Operator(), A.dimensions)
 
 @doc raw"""
     mat2vec(A::QuantumObject)
@@ -278,7 +278,7 @@ Convert a quantum object from matrix ([`Operator`](@ref)-type) to vector ([`Oper
 !!! note
     `operator_to_vector` is a synonym of `mat2vec`.
 """
-mat2vec(A::QuantumObject{Operator}) = QuantumObject(mat2vec(A.data), OperatorKet, A.dimensions)
+mat2vec(A::QuantumObject{Operator}) = QuantumObject(mat2vec(A.data), OperatorKet(), A.dimensions)
 
 @doc raw"""
     mat2vec(A::AbstractMatrix)

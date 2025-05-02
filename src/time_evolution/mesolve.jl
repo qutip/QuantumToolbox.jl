@@ -1,6 +1,6 @@
 export mesolveProblem, mesolve
 
-_mesolve_make_L_QobjEvo(H::Union{QuantumObject,Nothing}, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator)
+_mesolve_make_L_QobjEvo(H::Union{QuantumObject,Nothing}, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator())
 _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
 _mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both H and
 c_ops are Nothing. You are probably running the wrong function."))
@@ -210,9 +210,9 @@ function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
 
     # No type instabilities since `isoperket` is a Val, and so it is known at compile time
     if getVal(prob.kwargs.isoperket)
-        ρt = map(ϕ -> QuantumObject(ϕ, type = OperatorKet, dims = prob.dimensions), sol.u)
+        ρt = map(ϕ -> QuantumObject(ϕ, type = OperatorKet(), dims = prob.dimensions), sol.u)
     else
-        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = prob.dimensions), sol.u)
+        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator(), dims = prob.dimensions), sol.u)
     end
 
     return TimeEvolutionSol(

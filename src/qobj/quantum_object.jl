@@ -53,12 +53,12 @@ struct QuantumObject{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,Data
     function QuantumObject(data::DT, type, dims) where {DT<:AbstractArray}
         dimensions = _gen_dimensions(dims)
 
-        type = _get_type(type)
+        ObjType = _check_type(type)
 
         _size = _get_size(data)
         _check_QuantumObject(type, dimensions, _size[1], _size[2])
 
-        return new{typeof(type),typeof(dimensions),DT}(data, type, dimensions)
+        return new{ObjType,typeof(dimensions),DT}(data, type, dimensions)
     end
 end
 
@@ -74,14 +74,14 @@ Generate [`QuantumObject`](@ref) with a given `A::AbstractArray` and specified `
 function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) where {T}
     _size = _get_size(A)
 
-    type = _get_type(type)
+    _check_type(type)
 
     if type isa Nothing
         type = (_size[1] == 1 && _size[2] > 1) ? Bra() : Operator() # default type
     elseif !(type isa Operator) && !(type isa SuperOperator) && !(type isa Bra) && !(type isa OperatorBra)
         throw(
             ArgumentError(
-                "The argument type must be Operator, SuperOperator, Bra or OperatorBra if the input array is a matrix.",
+                "The argument type must be Operator(), SuperOperator(), Bra() or OperatorBra() if the input array is a matrix.",
             ),
         )
     end
@@ -102,11 +102,11 @@ function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) whe
 end
 
 function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) where {T}
-    type = _get_type(type)
+    _check_type(type)
     if type isa Nothing
         type = Ket() # default type
     elseif !(type isa Ket) && !(type isa OperatorKet)
-        throw(ArgumentError("The argument type must be Ket or OperatorKet if the input array is a vector."))
+        throw(ArgumentError("The argument type must be Ket() or OperatorKet() if the input array is a vector."))
     end
 
     if dims isa Nothing
@@ -128,7 +128,7 @@ end
 function QuantumObject(A::QuantumObject; type = A.type, dims = A.dimensions)
     _size = _get_size(A.data)
     dimensions = _gen_dimensions(dims)
-    type = _get_type(type)
+    _check_type(type)
     _check_QuantumObject(type, dimensions, _size[1], _size[2])
     return QuantumObject(copy(A.data), type, dimensions)
 end

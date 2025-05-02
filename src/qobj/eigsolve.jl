@@ -91,9 +91,9 @@ Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1,T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1,T2,Operator}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], Ket, res.dimensions) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], Ket(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1,T2,SuperOperator}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], OperatorKet, res.dimensions) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], OperatorKet(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
@@ -408,7 +408,7 @@ function eigsolve_al(
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     prob = mesolveProblem(
         L_evo,
-        QuantumObject(ρ0, type = Operator, dims = H.dimensions),
+        QuantumObject(ρ0, type = Operator(), dims = H.dimensions),
         [zero(T), T];
         params = params,
         progress_bar = Val(false),

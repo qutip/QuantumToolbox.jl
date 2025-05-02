@@ -19,9 +19,9 @@ The `dimensions` can be either the following types:
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket, dimensions)
+zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket(), dimensions)
 zero_ket(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =
-    QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket, dimensions)
+    QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket(), dimensions)
 
 @doc raw"""
     fock(N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -39,7 +39,7 @@ function fock(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N
     else
         array = [i == (j + 1) ? 1.0 + 0im : 0.0 + 0im for i in 1:N]
     end
-    return QuantumObject(array; type = Ket, dims = dims)
+    return QuantumObject(array; type = Ket(), dims = dims)
 end
 
 @doc raw"""
@@ -79,7 +79,7 @@ rand_ket(dimensions::Int) = rand_ket(SVector(dimensions))
 function rand_ket(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
     N = prod(dimensions)
     ψ = rand(ComplexF64, N) .- (0.5 + 0.5im)
-    return QuantumObject(normalize!(ψ); type = Ket, dims = dimensions)
+    return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
 end
 
 @doc raw"""
@@ -130,9 +130,9 @@ function thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val} = Val(false))
     N_list = Array{Float64}(0:(N-1))
     data = exp.(-β .* N_list)
     if getVal(sparse)
-        return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator, N)
+        return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator(), N)
     else
-        return QuantumObject(diagm(0 => data ./ sum(data)), Operator, N)
+        return QuantumObject(diagm(0 => data ./ sum(data)), Operator(), N)
     end
 end
 
@@ -148,10 +148,10 @@ The `dimensions` can be either the following types:
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-maximally_mixed_dm(dimensions::Int) = QuantumObject(I(dimensions) / complex(dimensions), Operator, SVector(dimensions))
+maximally_mixed_dm(dimensions::Int) = QuantumObject(I(dimensions) / complex(dimensions), Operator(), SVector(dimensions))
 function maximally_mixed_dm(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
     N = prod(dimensions)
-    return QuantumObject(I(N) / complex(N), Operator, dimensions)
+    return QuantumObject(I(N) / complex(N), Operator(), dimensions)
 end
 
 @doc raw"""
@@ -181,7 +181,7 @@ function rand_dm(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}; rank::
     X = _Ginibre_ensemble(N, rank)
     ρ = X * X'
     ρ /= tr(ρ)
-    return QuantumObject(ρ; type = Operator, dims = dimensions)
+    return QuantumObject(ρ; type = Operator(), dims = dimensions)
 end
 
 @doc raw"""
@@ -275,10 +275,10 @@ Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
     If you want to keep type stability, it is recommended to use `bell_state(Val(x), Val(z))` instead of `bell_state(x, z)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 bell_state(x::Int, z::Int) = bell_state(Val(x), Val(z))
-bell_state(::Val{0}, ::Val{0}) = QuantumObject(ComplexF64[1, 0, 0, 1] / sqrt(2), Ket, (2, 2))
-bell_state(::Val{0}, ::Val{1}) = QuantumObject(ComplexF64[1, 0, 0, -1] / sqrt(2), Ket, (2, 2))
-bell_state(::Val{1}, ::Val{0}) = QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket, (2, 2))
-bell_state(::Val{1}, ::Val{1}) = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket, (2, 2))
+bell_state(::Val{0}, ::Val{0}) = QuantumObject(ComplexF64[1, 0, 0, 1] / sqrt(2), Ket(), (2, 2))
+bell_state(::Val{0}, ::Val{1}) = QuantumObject(ComplexF64[1, 0, 0, -1] / sqrt(2), Ket(), (2, 2))
+bell_state(::Val{1}, ::Val{0}) = QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket(), (2, 2))
+bell_state(::Val{1}, ::Val{1}) = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket(), (2, 2))
 bell_state(::Val{T1}, ::Val{T2}) where {T1,T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
 
 @doc raw"""
@@ -286,7 +286,7 @@ bell_state(::Val{T1}, ::Val{T2}) where {T1,T2} = throw(ArgumentError("Invalid Be
 
 Return the two particle singlet state: ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
 """
-singlet_state() = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket, (2, 2))
+singlet_state() = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket(), (2, 2))
 
 @doc raw"""
     triplet_states()
@@ -299,9 +299,9 @@ Return a list of the two particle triplet states:
 """
 function triplet_states()
     return QuantumObject[
-        QuantumObject(ComplexF64[0, 0, 0, 1], Ket, (2, 2)),
-        QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket, (2, 2)),
-        QuantumObject(ComplexF64[1, 0, 0, 0], Ket, (2, 2)),
+        QuantumObject(ComplexF64[0, 0, 0, 1], Ket(), (2, 2)),
+        QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket(), (2, 2)),
+        QuantumObject(ComplexF64[1, 0, 0, 0], Ket(), (2, 2)),
     ]
 end
 
@@ -320,7 +320,7 @@ Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
 function w_state(::Val{n}) where {n}
     nzind = 2 .^ (0:(n-1)) .+ 1
     nzval = fill(ComplexF64(1 / sqrt(n)), n)
-    return QuantumObject(SparseVector(2^n, nzind, nzval), Ket, ntuple(x -> 2, Val(n)))
+    return QuantumObject(SparseVector(2^n, nzind, nzval), Ket(), ntuple(x -> 2, Val(n)))
 end
 w_state(n::Int) = w_state(Val(n))
 
@@ -341,6 +341,6 @@ Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
 function ghz_state(::Val{n}; d::Int = 2) where {n}
     nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
     nzval = ones(ComplexF64, d) / sqrt(d)
-    return QuantumObject(SparseVector(d^n, nzind, nzval), Ket, ntuple(x -> d, Val(n)))
+    return QuantumObject(SparseVector(d^n, nzind, nzval), Ket(), ntuple(x -> d, Val(n)))
 end
 ghz_state(n::Int; d::Int = 2) = ghz_state(Val(n), d = d)

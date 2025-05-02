@@ -239,7 +239,7 @@ function dfd_mesolve(
         idx = findfirst(>=(sol.t[i]), sol.prob.p.dim_list_evo_times)
         idx2 = isnothing(idx) ? length(sol.prob.p.dim_list_evo) : (idx == 1 ? 1 : idx - 1)
 
-        return QuantumObject(vec2mat(sol.u[i]), type = Operator, dims = sol.prob.p.dim_list_evo[idx2])
+        return QuantumObject(vec2mat(sol.u[i]), type = Operator(), dims = sol.prob.p.dim_list_evo[idx2])
     end
 
     return TimeEvolutionSol(
