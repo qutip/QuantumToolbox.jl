@@ -4,7 +4,7 @@ This file defines the AbstractQuantumObject structure, all the type structures f
 =#
 
 export AbstractQuantumObject
-export QuantumObjectType, Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
+export QuantumObjectType, SuperOperatorType, Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
 
 @doc raw"""
     abstract type AbstractQuantumObject{ObjType,DimType,DataType}
@@ -20,6 +20,8 @@ true
 abstract type AbstractQuantumObject{ObjType,DimType,DataType} end
 
 abstract type QuantumObjectType end
+
+abstract type SuperOperatorType <: QuantumObjectType end
 
 @doc raw"""
     Bra <: QuantumObjectType
@@ -46,11 +48,11 @@ struct Operator <: QuantumObjectType end
 Base.show(io::IO, ::Operator) = print(io, "Operator")
 
 @doc raw"""
-    SuperOperator <: QuantumObjectType
+    SuperOperator <: SuperOperatorType
 
 Constructor representing a super-operator ``\hat{\mathcal{O}}`` acting on vectorized density operator matrices.
 """
-struct SuperOperator <: QuantumObjectType end
+struct SuperOperator <: SuperOperatorType end
 Base.show(io::IO, ::SuperOperator) = print(io, "SuperOperator")
 
 @doc raw"""
