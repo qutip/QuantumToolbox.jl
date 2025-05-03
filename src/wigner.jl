@@ -25,7 +25,7 @@ Generates the [Wigner quasipropability distribution](https://en.wikipedia.org/wi
 The `method` parameter can be either `WignerLaguerre()` or `WignerClenshaw()`. The former uses the Laguerre polynomial expansion of the Wigner function, while the latter uses the Clenshaw algorithm. The Laguerre expansion is faster for sparse matrices, while the Clenshaw algorithm is faster for dense matrices. The `WignerLaguerre` method has an optional `parallel` parameter which defaults to `true` and uses multithreading to speed up the calculation.
 
 # Arguments
-- `state::QuantumObject`: The quantum state for which the Wigner function is calculated. It can be either a [`KetQuantumObject`](@ref), [`BraQuantumObject`](@ref), or [`OperatorQuantumObject`](@ref).
+- `state::QuantumObject`: The quantum state for which the Wigner function is calculated. It can be either a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
 - `xvec::AbstractVector`: The x-coordinates of the phase space grid.
 - `yvec::AbstractVector`: The y-coordinates of the phase space grid.
 - `g::Real`: The scaling factor related to the value of ``\hbar`` in the commutation relation ``[x, y] = i \hbar`` via ``\hbar=2/g^2``.
@@ -38,7 +38,7 @@ The `method` parameter can be either `WignerLaguerre()` or `WignerClenshaw()`. T
 ```jldoctest wigner
 julia> ψ = fock(10, 0) + fock(10, 1) |> normalize
 
-Quantum Object:   type=Ket   dims=[10]   size=(10,)
+Quantum Object:   type=Ket()   dims=[10]   size=(10,)
 10-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
@@ -72,7 +72,7 @@ function wigner(
     yvec::AbstractVector;
     g::Real = √2,
     method::WignerSolver = WignerClenshaw(),
-) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{Bra,Ket,Operator}}
     ρ = ket2dm(state).data
 
     return _wigner(ρ, xvec, yvec, g, method)

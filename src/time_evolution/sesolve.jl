@@ -1,15 +1,17 @@
 export sesolveProblem, sesolve
 
 _sesolve_make_U_QobjEvo(
-    H::QuantumObjectEvolution{OperatorQuantumObject,DimsType,<:MatrixOperator},
-) where {DimsType<:AbstractDimensions} = QobjEvo(MatrixOperator(-1im * H.data.A), dims = H.dimensions, type = Operator)
-_sesolve_make_U_QobjEvo(H::QuantumObject) = QobjEvo(MatrixOperator(-1im * H.data), dims = H.dimensions, type = Operator)
+    H::QuantumObjectEvolution{Operator,DimsType,<:MatrixOperator},
+) where {DimsType<:AbstractDimensions} =
+    QobjEvo(MatrixOperator(-1im * H.data.A), dims = H.dimensions, type = Operator())
+_sesolve_make_U_QobjEvo(H::QuantumObject) =
+    QobjEvo(MatrixOperator(-1im * H.data), dims = H.dimensions, type = Operator())
 _sesolve_make_U_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}) = QobjEvo(H, -1im)
 
 @doc raw"""
     sesolveProblem(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::QuantumObject{Ket},
         tlist::AbstractVector;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
@@ -47,8 +49,8 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the `ODEProblem` for the Schrödinger time evolution of the system.
 """
 function sesolveProblem(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
@@ -86,8 +88,8 @@ end
 
 @doc raw"""
     sesolve(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::QuantumObject{Ket},
         tlist::AbstractVector;
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -128,8 +130,8 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `sol::TimeEvolutionSol`: The solution of the time evolution. See also [`TimeEvolutionSol`](@ref)
 """
 function sesolve(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -155,7 +157,7 @@ end
 function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
     sol = solve(prob.prob, alg)
 
-    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket, dims = prob.dimensions), sol.u)
+    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.dimensions), sol.u)
 
     return TimeEvolutionSol(
         prob.times,

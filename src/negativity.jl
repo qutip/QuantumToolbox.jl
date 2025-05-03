@@ -8,7 +8,7 @@ where ``\hat{\rho}^{\Gamma}`` is the partial transpose of ``\hat{\rho}`` with re
 and ``\Vert \hat{X} \Vert_1=\textrm{Tr}\sqrt{\hat{X}^\dagger \hat{X}}`` is the trace norm.
 
 # Arguments
-- `ρ::QuantumObject`: The density matrix (`ρ.type` must be [`OperatorQuantumObject`](@ref)).
+- `ρ::QuantumObject`: The density matrix (`ρ.type` must be [`Operator`](@ref)).
 - `subsys::Int`: an index that indicates which subsystem to compute the negativity for.
 - `logarithmic::Bool`: choose whether to calculate logarithmic negativity or not. Default as `false`
 
@@ -20,7 +20,7 @@ and ``\Vert \hat{X} \Vert_1=\textrm{Tr}\sqrt{\hat{X}^\dagger \hat{X}}`` is the t
 ```jldoctest
 julia> Ψ = bell_state(0, 0)
 
-Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
+Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
 4-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
                 0.0 + 0.0im
@@ -29,7 +29,7 @@ Quantum Object:   type=Ket   dims=[2, 2]   size=(4,)
 
 julia> ρ = ket2dm(Ψ)
 
-Quantum Object:   type=Operator   dims=[2, 2]   size=(4, 4)   ishermitian=true
+Quantum Object:   type=Operator()   dims=[2, 2]   size=(4, 4)   ishermitian=true
 4×4 Matrix{ComplexF64}:
  0.5+0.0im  0.0+0.0im  0.0+0.0im  0.5+0.0im
  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
@@ -64,13 +64,13 @@ end
 Return the partial transpose of a density matrix ``\rho``, where `mask` is an array/vector with length that equals the length of `ρ.dims`. The elements in `mask` are boolean (`true` or `false`) which indicates whether or not the corresponding subsystem should be transposed.
 
 # Arguments
-- `ρ::QuantumObject`: The density matrix (`ρ.type` must be [`OperatorQuantumObject`](@ref)).
+- `ρ::QuantumObject`: The density matrix (`ρ.type` must be [`Operator`](@ref)).
 - `mask::Vector{Bool}`: A boolean vector selects which subsystems should be transposed.
 
 # Returns
 - `ρ_pt::QuantumObject`: The density matrix with the selected subsystems transposed.
 """
-function partial_transpose(ρ::QuantumObject{OperatorQuantumObject}, mask::Vector{Bool})
+function partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     if length(mask) != length(ρ.dimensions)
         throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
     end
@@ -78,7 +78,7 @@ function partial_transpose(ρ::QuantumObject{OperatorQuantumObject}, mask::Vecto
 end
 
 # for dense matrices
-function _partial_transpose(ρ::QuantumObject{OperatorQuantumObject}, mask::Vector{Bool})
+function _partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     isa(ρ.dimensions, GeneralDimensions) &&
         (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
         throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
@@ -97,14 +97,14 @@ function _partial_transpose(ρ::QuantumObject{OperatorQuantumObject}, mask::Vect
     ]
     return QuantumObject(
         reshape(permutedims(reshape(ρ.data, (dims..., dims...)), pt_idx), size(ρ)),
-        Operator,
+        Operator(),
         Dimensions(ρ.dimensions.to),
     )
 end
 
 # for sparse matrices
 function _partial_transpose(
-    ρ::QuantumObject{OperatorQuantumObject,DimsType,<:AbstractSparseArray},
+    ρ::QuantumObject{Operator,DimsType,<:AbstractSparseArray},
     mask::Vector{Bool},
 ) where {DimsType<:AbstractDimensions}
     isa(ρ.dimensions, GeneralDimensions) &&
@@ -144,5 +144,5 @@ function _partial_transpose(
         end
     end
 
-    return QuantumObject(sparse(I_pt, J_pt, V_pt, M, N), Operator, ρ.dimensions)
+    return QuantumObject(sparse(I_pt, J_pt, V_pt, M, N), Operator(), ρ.dimensions)
 end

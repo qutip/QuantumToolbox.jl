@@ -27,7 +27,7 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-type eigenvectors by:
 ```jldoctest
 julia> result = eigenstates(sigmax())
-EigsolveResult:   type=Operator   dims=[2]
+EigsolveResult:   type=Operator()   dims=[2]
 values:
 2-element Vector{ComplexF64}:
  -1.0 + 0.0im
@@ -45,14 +45,14 @@ julia> λ
   1.0 + 0.0im
 
 julia> ψ
-2-element Vector{QuantumObject{KetQuantumObject, Dimensions{1, Tuple{Space}}, Vector{ComplexF64}}}:
+2-element Vector{QuantumObject{Ket, Dimensions{1, Tuple{Space}}, Vector{ComplexF64}}}:
 
-Quantum Object:   type=Ket   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
  -0.7071067811865475 + 0.0im
   0.7071067811865475 + 0.0im
 
-Quantum Object:   type=Ket   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
@@ -66,7 +66,7 @@ julia> U
 struct EigsolveResult{
     T1<:Vector{<:Number},
     T2<:AbstractMatrix{<:Number},
-    ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject},
+    ObjType<:Union{Nothing,Operator,SuperOperator},
     DimType<:Union{Nothing,AbstractDimensions},
 }
     values::T1
@@ -90,10 +90,10 @@ end
 Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1,T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
-Base.iterate(res::EigsolveResult{T1,T2,OperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], Ket, res.dimensions) for k in 1:length(res.values)], Val(:vectors))
-Base.iterate(res::EigsolveResult{T1,T2,SuperOperatorQuantumObject}, ::Val{:vector_list}) where {T1,T2} =
-    ([QuantumObject(res.vectors[:, k], OperatorKet, res.dimensions) for k in 1:length(res.values)], Val(:vectors))
+Base.iterate(res::EigsolveResult{T1,T2,Operator}, ::Val{:vector_list}) where {T1,T2} =
+    ([QuantumObject(res.vectors[:, k], Ket(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
+Base.iterate(res::EigsolveResult{T1,T2,SuperOperator}, ::Val{:vector_list}) where {T1,T2} =
+    ([QuantumObject(res.vectors[:, k], OperatorKet(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
@@ -170,7 +170,7 @@ function _eigsolve(
     m::Int = max(20, 2 * k + 1);
     tol::Real = 1e-8,
     maxiter::Int = 200,
-) where {T<:BlasFloat,ObjType<:Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {T<:BlasFloat,ObjType<:Union{Nothing,Operator,SuperOperator}}
     n = size(A, 2)
     V = similar(b, n, m + 1)
     H = zeros(T, m + 1, m)
@@ -312,7 +312,7 @@ end
 function eigsolve(
     A;
     v0::Union{Nothing,AbstractVector} = nothing,
-    type::Union{Nothing,OperatorQuantumObject,SuperOperatorQuantumObject} = nothing,
+    type::Union{Nothing,Operator,SuperOperator} = nothing,
     dimensions = nothing,
     sigma::Union{Nothing,Real} = nothing,
     eigvals::Int = 1,
@@ -404,11 +404,11 @@ function eigsolve_al(
     maxiter::Int = 200,
     eigstol::Real = 1e-6,
     kwargs...,
-) where {HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {HOpType<:Union{Operator,SuperOperator}}
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     prob = mesolveProblem(
         L_evo,
-        QuantumObject(ρ0, type = Operator, dims = H.dimensions),
+        QuantumObject(ρ0, type = Operator(), dims = H.dimensions),
         [zero(T), T];
         params = params,
         progress_bar = Val(false),
@@ -447,7 +447,7 @@ julia> H = a + a';
 julia> using LinearAlgebra;
 
 julia> E, ψ, U = eigen(H)
-EigsolveResult:   type=Operator   dims=[5]
+EigsolveResult:   type=Operator()   dims=[5]
 values:
 5-element Vector{ComplexF64}:
        -2.8569700138728 + 0.0im
@@ -467,10 +467,7 @@ julia> expect(H, ψ[1]) ≈ E[1]
 true
 ```
 """
-function LinearAlgebra.eigen(
-    A::QuantumObject{OpType};
-    kwargs...,
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+function LinearAlgebra.eigen(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Operator,SuperOperator}}
     MT = typeof(A.data)
     F = eigen(to_dense(A.data); kwargs...)
     # This fixes a type inference issue. But doesn't work for GPU arrays
@@ -485,10 +482,8 @@ end
 
 Same as [`eigen(A::QuantumObject; kwargs...)`](@ref) but for only the eigenvalues.
 """
-LinearAlgebra.eigvals(
-    A::QuantumObject{OpType};
-    kwargs...,
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} = eigvals(to_dense(A.data); kwargs...)
+LinearAlgebra.eigvals(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Operator,SuperOperator}} =
+    eigvals(to_dense(A.data); kwargs...)
 
 @doc raw"""
     eigenenergies(A::QuantumObject; sparse::Bool=false, kwargs...)
@@ -507,7 +502,7 @@ function eigenenergies(
     A::QuantumObject{OpType};
     sparse::Bool = false,
     kwargs...,
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {OpType<:Union{Operator,SuperOperator}}
     if !sparse
         return eigvals(A; kwargs...)
     else
@@ -532,7 +527,7 @@ function eigenstates(
     A::QuantumObject{OpType};
     sparse::Bool = false,
     kwargs...,
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {OpType<:Union{Operator,SuperOperator}}
     if !sparse
         return eigen(A; kwargs...)
     else

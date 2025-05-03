@@ -14,8 +14,8 @@ _ScalarOperator_e2_2(op, f = +) =
 
 @doc raw"""
     ssesolveProblem(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
         sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -75,8 +75,8 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `prob`: The `SDEProblem` for the Stochastic Schrödinger time evolution of the system.
 """
 function ssesolveProblem(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -148,8 +148,8 @@ end
 
 @doc raw"""
     ssesolveEnsembleProblem(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
         sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -218,8 +218,8 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 - `prob::EnsembleProblem with SDEProblem`: The Ensemble SDEProblem for the Stochastic Shrödinger time evolution.
 """
 function ssesolveEnsembleProblem(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -272,8 +272,8 @@ end
 
 @doc raw"""
     ssesolve(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-        ψ0::QuantumObject{KetQuantumObject},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
         sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
         alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
@@ -347,8 +347,8 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `sol::TimeEvolutionStochasticSol`: The solution of the time evolution. See [`TimeEvolutionStochasticSol`](@ref).
 """
 function ssesolve(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
-    ψ0::QuantumObject{KetQuantumObject},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,

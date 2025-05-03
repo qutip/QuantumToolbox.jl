@@ -33,15 +33,12 @@ correlation_3op_2t(
     ψ0::QuantumObject{StateOpType},
     t_l::AbstractVector,
     τ_l::AbstractVector,
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
-    C::QuantumObject{OperatorQuantumObject},
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
+    C::QuantumObject{Operator},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     kwargs...,
-) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
-} = error(
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}} = error(
     "The parameter order of `correlation_3op_2t` has been changed, please use `?correlation_3op_2t` to check the updated docstring.",
 )
 
@@ -49,15 +46,12 @@ correlation_3op_1t(
     H::QuantumObject{HOpType},
     ψ0::QuantumObject{StateOpType},
     τ_l::AbstractVector,
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
-    C::QuantumObject{OperatorQuantumObject},
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
+    C::QuantumObject{Operator},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     kwargs...,
-) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
-} = error(
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}} = error(
     "The parameter order of `correlation_3op_1t` has been changed, please use `?correlation_3op_1t` to check the updated docstring.",
 )
 
@@ -66,15 +60,12 @@ correlation_2op_2t(
     ψ0::QuantumObject{StateOpType},
     t_l::AbstractVector,
     τ_l::AbstractVector,
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     reverse::Bool = false,
     kwargs...,
-) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
-} = error(
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}} = error(
     "The parameter order of `correlation_2op_2t` has been changed, please use `?correlation_2op_2t` to check the updated docstring.",
 )
 
@@ -82,15 +73,12 @@ correlation_2op_1t(
     H::QuantumObject{HOpType},
     ψ0::QuantumObject{StateOpType},
     τ_l::AbstractVector,
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     reverse::Bool = false,
     kwargs...,
-) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject},
-} = error(
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}} = error(
     "The parameter order of `correlation_2op_1t` has been changed, please use `?correlation_2op_1t` to check the updated docstring.",
 )
 

@@ -2,38 +2,38 @@
     # ArgumentError: type is incompatible with vector or matrix
     @testset "ArgumentError" begin
         a = rand(ComplexF64, 2)
-        for t in [Operator, SuperOperator, Bra, OperatorBra]
+        for t in (Operator(), SuperOperator(), Bra(), OperatorBra())
             @test_throws ArgumentError Qobj(a, type = t)
         end
         a = rand(ComplexF64, 2, 2)
-        @test_throws ArgumentError Qobj(a, type = Ket)
-        @test_throws ArgumentError Qobj(a, type = OperatorKet)
+        @test_throws ArgumentError Qobj(a, type = Ket())
+        @test_throws ArgumentError Qobj(a, type = OperatorKet())
     end
 
     # DomainError: incompatible between size of array and type
     @testset "DomainError" begin
         a = rand(ComplexF64, 3, 2)
-        for t in [SuperOperator, Bra, OperatorBra]
+        for t in [SuperOperator(), Bra(), OperatorBra()]
             @test_throws DomainError Qobj(a, type = t)
         end
 
         a = rand(ComplexF64, 2, 2, 2)
-        for t in [nothing, Ket, Bra, Operator, SuperOperator, OperatorBra, OperatorKet]
+        for t in (nothing, Ket(), Bra(), Operator(), SuperOperator(), OperatorBra(), OperatorKet())
             @test_throws DomainError Qobj(a, type = t)
         end
 
         a = rand(ComplexF64, 1, 2)
-        @test_throws DomainError Qobj(a, type = Operator)
-        @test_throws DomainError Qobj(a, type = SuperOperator)
+        @test_throws DomainError Qobj(a, type = Operator())
+        @test_throws DomainError Qobj(a, type = SuperOperator())
 
-        @test_throws DomainError Qobj(rand(ComplexF64, 2, 1), type = Operator) # should be type = Bra
+        @test_throws DomainError Qobj(rand(ComplexF64, 2, 1), type = Operator()) # should be type = Bra
 
         # check that Ket, Bra, SuperOperator, OperatorKet, and OperatorBra don't support GeneralDimensions
-        @test_throws DomainError Qobj(rand(ComplexF64, 2), type = Ket, dims = ((2,), (1,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 1, 2), type = Bra, dims = ((1,), (2,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 4, 4), type = SuperOperator, dims = ((2,), (2,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 4), type = OperatorKet, dims = ((2,), (1,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 1, 4), type = OperatorBra, dims = ((1,), (2,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 1, 2), type = Bra(), dims = ((1,), (2,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 4, 4), type = SuperOperator(), dims = ((2,), (2,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 4), type = OperatorKet(), dims = ((2,), (1,)))
+        @test_throws DomainError Qobj(rand(ComplexF64, 1, 4), type = OperatorBra(), dims = ((1,), (2,)))
     end
 
     # unsupported type of dims
@@ -84,7 +84,7 @@
 
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
-        a3 = Qobj(a, type = SuperOperator)
+        a3 = Qobj(a, type = SuperOperator())
         a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # GeneralDimensions
         a5 = QuantumObject(rand(ComplexF64, 2*3*4, 5), dims = ((2, 3, 4), (5,)))
         @test isket(a2) == false
@@ -130,7 +130,7 @@
         ρ = Qobj(rand(ComplexF64, 2, 2))
         ρ_ket = operator_to_vector(ρ)
         ρ_bra = ρ_ket'
-        @test ρ_bra == Qobj(operator_to_vector(ρ.data)', type = OperatorBra)
+        @test ρ_bra == Qobj(operator_to_vector(ρ.data)', type = OperatorBra())
         @test ρ == vector_to_operator(ρ_ket)
         @test isket(ρ_ket) == false
         @test isbra(ρ_ket) == false
@@ -155,8 +155,8 @@
         @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
         @test (ρ_bra * L')' == L * ρ_ket
         @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
-        @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet, dims = 4)
-        @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra, dims = 4)
+        @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet(), dims = 4)
+        @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra(), dims = 4)
     end
 
     @testset "Checks on non-QuantumObjects" begin
@@ -180,7 +180,7 @@
     @testset "arithmetic" begin
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
-        a3 = Qobj(a, type = SuperOperator)
+        a3 = Qobj(a, type = SuperOperator())
         a4 = to_sparse(a2)
         @test isequal(a4, a2) == true
         @test isequal(a4, a3) == false
@@ -262,7 +262,7 @@
         a_size = size(a)
         a_isherm = isherm(a)
         @test opstring ==
-              "\nQuantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+              "\nQuantum Object:   type=Operator()   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
         # GeneralDimensions
         Gop = tensor(a, ψ)
@@ -272,7 +272,7 @@
         Gop_size = size(Gop)
         Gop_isherm = isherm(Gop)
         @test opstring ==
-              "\nQuantum Object:   type=Operator   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
+              "\nQuantum Object:   type=Operator()   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
 
         a = spre(a)
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
@@ -280,42 +280,42 @@
         a_dims = a.dims
         a_size = size(a)
         a_isherm = isherm(a)
-        @test opstring == "\nQuantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=SuperOperator()   dims=$a_dims   size=$a_size\n$datastring"
 
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
         ψ_dims = ψ.dims
         ψ_size = size(ψ)
-        @test opstring == "\nQuantum Object:   type=Ket   dims=$ψ_dims   size=$ψ_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=Ket()   dims=$ψ_dims   size=$ψ_size\n$datastring"
 
         ψ = ψ'
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
         ψ_dims = ψ.dims
         ψ_size = size(ψ)
-        @test opstring == "\nQuantum Object:   type=Bra   dims=$ψ_dims   size=$ψ_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=Bra()   dims=$ψ_dims   size=$ψ_size\n$datastring"
 
-        ψ2 = Qobj(rand(ComplexF64, 4), type = OperatorKet)
+        ψ2 = Qobj(rand(ComplexF64, 4), type = OperatorKet())
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
         ψ2_dims = ψ2.dims
         ψ2_size = size(ψ2)
-        @test opstring == "\nQuantum Object:   type=OperatorKet   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=OperatorKet()   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
         ψ2 = ψ2'
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
         ψ2_dims = ψ2.dims
         ψ2_size = size(ψ2)
-        @test opstring == "\nQuantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=OperatorBra()   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
     end
 
     @testset "matrix element" begin
         H = Qobj([1 2; 3 4])
         L = liouvillian(H)
-        s0 = Qobj(basis(4, 0).data; type = OperatorKet)
-        s1 = Qobj(basis(4, 1).data; type = OperatorKet)
-        s_wrong = Qobj(basis(9, 0).data; type = OperatorKet)
+        s0 = Qobj(basis(4, 0).data; type = OperatorKet())
+        s1 = Qobj(basis(4, 1).data; type = OperatorKet())
+        s_wrong = Qobj(basis(9, 0).data; type = OperatorKet())
         @test matrix_element(basis(2, 0), H, basis(2, 1)) == H[1, 2]
         @test matrix_element(s0, L, s1) == L[1, 2]
         @test_throws DimensionMismatch matrix_element(basis(3, 0), H, basis(2, 1))
@@ -351,32 +351,32 @@
     end
 
     @testset "Type Inference (QuantumObject)" begin
-        for T in [ComplexF32, ComplexF64]
+        for T in (ComplexF32, ComplexF64)
             N = 4
             a = rand(T, N)
             @inferred Qobj(a)
-            for type in [Ket, OperatorKet]
+            for type in (Ket(), OperatorKet())
                 @inferred Qobj(a, type = type)
             end
 
             UnionType = Union{
-                QuantumObject{BraQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
-                QuantumObject{OperatorQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Bra,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Operator,Dimensions{1,Tuple{Space}},Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
-            for type in [Bra, OperatorBra]
+            for type in (Bra(), OperatorBra())
                 @inferred Qobj(a, type = type)
             end
 
             UnionType2 = Union{
-                QuantumObject{OperatorQuantumObject,GeneralDimensions{1,1,Tuple{Space},Tuple{Space}},Matrix{T}},
-                QuantumObject{OperatorQuantumObject,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Operator,GeneralDimensions{1,1,Tuple{Space},Tuple{Space}},Matrix{T}},
+                QuantumObject{Operator,Dimensions{1,Tuple{Space}},Matrix{T}},
             }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)
-            @inferred UnionType2 Qobj(a, type = Operator)
-            @inferred Qobj(a, type = SuperOperator)
+            @inferred UnionType2 Qobj(a, type = Operator())
+            @inferred Qobj(a, type = SuperOperator())
         end
 
         @testset "Math Operation" begin

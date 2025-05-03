@@ -2,21 +2,21 @@
     # DomainError: incompatible between size of array and type
     @testset "Thrown Errors" begin
         a = MatrixOperator(rand(ComplexF64, 3, 2))
-        @test_throws DomainError QobjEvo(a, type = SuperOperator)
+        @test_throws DomainError QobjEvo(a, type = SuperOperator())
 
         a = MatrixOperator(rand(ComplexF64, 4, 4))
-        @test_throws DomainError QobjEvo(a, type = SuperOperator, dims = ((2,), (2,)))
+        @test_throws DomainError QobjEvo(a, type = SuperOperator(), dims = ((2,), (2,)))
 
         a = MatrixOperator(rand(ComplexF64, 3, 2))
-        for t in (Ket, Bra, OperatorKet, OperatorBra)
+        for t in (Ket(), Bra(), OperatorKet(), OperatorBra())
             @test_throws ArgumentError QobjEvo(a, type = t)
         end
 
         a = QobjEvo(destroy(20))
-        @test_throws ArgumentError QobjEvo(a, type = SuperOperator)
+        @test_throws ArgumentError QobjEvo(a, type = SuperOperator())
 
         a = MatrixOperator(rand(ComplexF64, 5, 5))
-        @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator)
+        @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator())
 
         ψ = fock(10, 3)
         @test_throws MethodError QobjEvo(ψ)
@@ -38,7 +38,7 @@
     @testset "Operator and SuperOperator" begin
         a = MatrixOperator(sprand(ComplexF64, 100, 100, 0.1))
         a2 = QobjEvo(a)
-        a3 = QobjEvo(a, type = SuperOperator)
+        a3 = QobjEvo(a, type = SuperOperator())
 
         @test isket(a2) == false
         @test isbra(a2) == false
@@ -67,7 +67,7 @@
     @testset "arithmetic" begin
         a = MatrixOperator(sprand(ComplexF64, 100, 100, 0.1))
         a2 = QobjEvo(a)
-        a3 = QobjEvo(a, type = SuperOperator)
+        a3 = QobjEvo(a, type = SuperOperator())
 
         @test +a2 == a2
         @test -(-a2) == a2
@@ -91,7 +91,7 @@
 
         N = 10
         # We use MatrixOperator instead of directly using a Qobj to increase coverage
-        a = QobjEvo(MatrixOperator(sprand(ComplexF64, N, N, 5 / N)), Operator, N)
+        a = QobjEvo(MatrixOperator(sprand(ComplexF64, N, N, 5 / N)), Operator(), N)
         a_d = a'
         X = a + a_d
         # Y = 1im * (a - a_d) # Currently doesn't work. Fix in SciMLOperators.jl
@@ -115,7 +115,7 @@
         H_isherm = isherm(H)
         H_isconst = isconstant(H)
         @test opstring ==
-              "\nQuantum Object Evo.:   type=Operator   dims=$H_dims   size=$H_size   ishermitian=$H_isherm   isconstant=$H_isconst\n$datastring"
+              "\nQuantum Object Evo.:   type=Operator()   dims=$H_dims   size=$H_size   ishermitian=$H_isherm   isconstant=$H_isconst\n$datastring"
 
         L = QobjEvo(spre(a))
         opstring = sprint((t, s) -> show(t, "text/plain", s), L)
@@ -125,7 +125,7 @@
         L_isherm = isherm(L)
         L_isconst = isconstant(L)
         @test opstring ==
-              "\nQuantum Object Evo.:   type=SuperOperator   dims=$L_dims   size=$L_size   ishermitian=$L_isherm   isconstant=$L_isconst\n$datastring"
+              "\nQuantum Object Evo.:   type=SuperOperator()   dims=$L_dims   size=$L_size   ishermitian=$L_isherm   isconstant=$L_isconst\n$datastring"
     end
 
     @testset "Type Inference (QobjEvo)" begin
@@ -133,12 +133,12 @@
         for T in [ComplexF32, ComplexF64]
             a = MatrixOperator(rand(T, N, N))
             UnionType = Union{
-                QuantumObjectEvolution{OperatorQuantumObject,GeneralDimensions{1,Tuple{Space},Tuple{Space}},typeof(a)},
-                QuantumObjectEvolution{OperatorQuantumObject,Dimensions{1,Tuple{Space}},typeof(a)},
+                QuantumObjectEvolution{Operator,GeneralDimensions{1,Tuple{Space},Tuple{Space}},typeof(a)},
+                QuantumObjectEvolution{Operator,Dimensions{1,Tuple{Space}},typeof(a)},
             }
             @inferred UnionType QobjEvo(a)
-            @inferred UnionType QobjEvo(a, type = Operator)
-            @inferred QobjEvo(a, type = SuperOperator)
+            @inferred UnionType QobjEvo(a, type = Operator())
+            @inferred QobjEvo(a, type = SuperOperator())
         end
 
         a = destroy(N)

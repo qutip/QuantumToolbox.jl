@@ -54,7 +54,7 @@ function QuantumToolbox.plot_wigner(
     location::Union{GridPosition,Nothing} = nothing,
     colorbar::Bool = false,
     kwargs...,
-) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{Bra,Ket,Operator}}
     QuantumToolbox.getVal(projection) == :two_dim ||
         QuantumToolbox.getVal(projection) == :three_dim ||
         throw(ArgumentError("Unsupported projection: $projection"))
@@ -84,7 +84,7 @@ function _plot_wigner(
     location::Union{GridPosition,Nothing},
     colorbar::Bool;
     kwargs...,
-) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{Bra,Ket,Operator}}
     fig, location = _getFigAndLocation(location)
 
     lyt = GridLayout(location)
@@ -117,7 +117,7 @@ function _plot_wigner(
     location::Union{GridPosition,Nothing},
     colorbar::Bool;
     kwargs...,
-) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {OpType<:Union{Bra,Ket,Operator}}
     fig, location = _getFigAndLocation(location)
 
     lyt = GridLayout(location)
@@ -148,7 +148,7 @@ end
         unit_y_range::Bool = true,
         location::Union{GridPosition,Nothing} = nothing,
         kwargs...
-    ) where {SType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    ) where {SType<:Union{Ket,Operator}}
 
 Plot the [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution of `ρ`. 
 
@@ -178,7 +178,7 @@ function QuantumToolbox.plot_fock_distribution(
     unit_y_range::Bool = true,
     location::Union{GridPosition,Nothing} = nothing,
     kwargs...,
-) where {SType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {SType<:Union{Bra,Ket,Operator}}
     return _plot_fock_distribution(
         library,
         ρ;
@@ -196,7 +196,7 @@ function _plot_fock_distribution(
     unit_y_range::Bool = true,
     location::Union{GridPosition,Nothing} = nothing,
     kwargs...,
-) where {SType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}}
+) where {SType<:Union{Bra,Ket,Operator}}
     ρ = ket2dm(ρ)
     D = prod(ρ.dims)
     isapprox(tr(ρ), 1, atol = 1e-4) || (@warn "The input ρ should be normalized.")

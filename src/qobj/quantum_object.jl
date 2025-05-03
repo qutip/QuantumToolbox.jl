@@ -25,7 +25,7 @@ Julia structure representing any time-independent quantum objects. For time-depe
 ```jldoctest
 julia> a = destroy(20)
 
-Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
@@ -50,8 +50,10 @@ struct QuantumObject{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,Data
     type::ObjType
     dimensions::DimType
 
-    function QuantumObject(data::DT, type::ObjType, dims) where {DT<:AbstractArray,ObjType<:QuantumObjectType}
+    function QuantumObject(data::DT, type, dims) where {DT<:AbstractArray}
         dimensions = _gen_dimensions(dims)
+
+        ObjType = _check_type(type)
 
         _size = _get_size(data)
         _check_QuantumObject(type, dimensions, _size[1], _size[2])
@@ -69,31 +71,29 @@ Generate [`QuantumObject`](@ref) with a given `A::AbstractArray` and specified `
 !!! note
     `Qobj` is a synonym of `QuantumObject`.
 """
-function QuantumObject(
-    A::AbstractMatrix{T};
-    type::ObjType = nothing,
-    dims = nothing,
-) where {T,ObjType<:Union{Nothing,QuantumObjectType}}
+function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) where {T}
     _size = _get_size(A)
 
+    _check_type(type)
+
     if type isa Nothing
-        type = (_size[1] == 1 && _size[2] > 1) ? Bra : Operator # default type
-    elseif type != Operator && type != SuperOperator && type != Bra && type != OperatorBra
+        type = (_size[1] == 1 && _size[2] > 1) ? Bra() : Operator() # default type
+    elseif !(type isa Operator) && !(type isa SuperOperator) && !(type isa Bra) && !(type isa OperatorBra)
         throw(
             ArgumentError(
-                "The argument type must be Operator, SuperOperator, Bra or OperatorBra if the input array is a matrix.",
+                "The argument type must be Operator(), SuperOperator(), Bra() or OperatorBra() if the input array is a matrix.",
             ),
         )
     end
 
     if dims isa Nothing
-        if type isa BraQuantumObject
+        if type isa Bra
             dims = Dimensions(_size[2])
-        elseif type isa OperatorQuantumObject
+        elseif type isa Operator
             dims =
                 (_size[1] == _size[2]) ? Dimensions(_size[1]) :
                 GeneralDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
-        elseif type isa SuperOperatorQuantumObject || type isa OperatorBraQuantumObject
+        elseif type isa SuperOperator || type isa OperatorBra
             dims = Dimensions(isqrt(_size[2]))
         end
     end
@@ -101,22 +101,19 @@ function QuantumObject(
     return QuantumObject(A, type, dims)
 end
 
-function QuantumObject(
-    A::AbstractVector{T};
-    type::ObjType = nothing,
-    dims = nothing,
-) where {T,ObjType<:Union{Nothing,QuantumObjectType}}
+function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) where {T}
+    _check_type(type)
     if type isa Nothing
-        type = Ket # default type
-    elseif type != Ket && type != OperatorKet
-        throw(ArgumentError("The argument type must be Ket or OperatorKet if the input array is a vector."))
+        type = Ket() # default type
+    elseif !(type isa Ket) && !(type isa OperatorKet)
+        throw(ArgumentError("The argument type must be Ket() or OperatorKet() if the input array is a vector."))
     end
 
     if dims isa Nothing
         _size = _get_size(A)
-        if type isa KetQuantumObject
+        if type isa Ket
             dims = Dimensions(_size[1])
-        elseif type isa OperatorKetQuantumObject
+        elseif type isa OperatorKet
             dims = Dimensions(isqrt(_size[1]))
         end
     end
@@ -124,17 +121,14 @@ function QuantumObject(
     return QuantumObject(A, type, dims)
 end
 
-function QuantumObject(
-    A::AbstractArray{T,N};
-    type::ObjType = nothing,
-    dims = nothing,
-) where {T,N,ObjType<:Union{Nothing,QuantumObjectType}}
+function QuantumObject(A::AbstractArray{T,N}; type = nothing, dims = nothing) where {T,N}
     throw(DomainError(size(A), "The size of the array is not compatible with vector or matrix."))
 end
 
-function QuantumObject(A::QuantumObject; type::ObjType = A.type, dims = A.dimensions) where {ObjType<:QuantumObjectType}
+function QuantumObject(A::QuantumObject; type = A.type, dims = A.dimensions)
     _size = _get_size(A.data)
     dimensions = _gen_dimensions(dims)
+    _check_type(type)
     _check_QuantumObject(type, dimensions, _size[1], _size[2])
     return QuantumObject(copy(A.data), type, dimensions)
 end
@@ -142,15 +136,7 @@ end
 function Base.show(
     io::IO,
     QO::QuantumObject{OpType},
-) where {
-    OpType<:Union{
-        BraQuantumObject,
-        KetQuantumObject,
-        OperatorBraQuantumObject,
-        OperatorKetQuantumObject,
-        SuperOperatorQuantumObject,
-    },
-}
+) where {OpType<:Union{Bra,Ket,OperatorBra,OperatorKet,SuperOperator}}
     op_data = QO.data
     println(
         io,
@@ -204,16 +190,13 @@ Here, `u` can be in either the following types:
 SciMLOperators.cache_operator(
     L::AbstractQuantumObject{OpType},
     u::AbstractVector,
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}} =
+) where {OpType<:Union{Operator,SuperOperator}} =
     get_typename_wrapper(L)(cache_operator(L.data, to_dense(similar(u))), L.type, L.dimensions)
 
 function SciMLOperators.cache_operator(
     L::AbstractQuantumObject{OpType},
     u::QuantumObject{SType},
-) where {
-    OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    SType<:Union{KetQuantumObject,OperatorKetQuantumObject},
-}
+) where {OpType<:Union{Operator,SuperOperator},SType<:Union{Ket,OperatorKet}}
     check_dimensions(L, u)
 
     if isoper(L) && isoperket(u)

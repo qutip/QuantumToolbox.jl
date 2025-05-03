@@ -5,7 +5,7 @@ export plot_wigner, plot_fock_distribution
         state::QuantumObject{OpType}; 
         library::Union{Val,Symbol}=Val(:Makie), 
         kwargs...
-    ) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}
+    ) where {OpType<:Union{Bra,Ket,Operator}
 
 Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) of `state` using the [`wigner`](@ref) function. 
     
@@ -26,14 +26,9 @@ plot_wigner(
     state::QuantumObject{OpType};
     library::Union{Val,Symbol} = Val(:Makie),
     kwargs...,
-) where {OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}} =
-    plot_wigner(makeVal(library), state; kwargs...)
+) where {OpType<:Union{Bra,Ket,Operator}} = plot_wigner(makeVal(library), state; kwargs...)
 
-plot_wigner(
-    ::Val{T},
-    state::QuantumObject{OpType};
-    kwargs...,
-) where {T,OpType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}} =
+plot_wigner(::Val{T}, state::QuantumObject{OpType}; kwargs...) where {T,OpType<:Union{Bra,Ket,Operator}} =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))
 
 @doc raw"""
@@ -41,7 +36,7 @@ plot_wigner(
         ρ::QuantumObject{SType};
         library::Union{Val, Symbol} = Val(:Makie),
         kwargs...
-    ) where {SType<:Union{KetQuantumObject,OperatorQuantumObject}}
+    ) where {SType<:Union{Ket,Operator}}
 
 Plot the [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution of `ρ`. 
     
@@ -62,12 +57,7 @@ plot_fock_distribution(
     ρ::QuantumObject{SType};
     library::Union{Val,Symbol} = Val(:Makie),
     kwargs...,
-) where {SType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}} =
-    plot_fock_distribution(makeVal(library), ρ; kwargs...)
+) where {SType<:Union{Bra,Ket,Operator}} = plot_fock_distribution(makeVal(library), ρ; kwargs...)
 
-plot_fock_distribution(
-    ::Val{T},
-    ρ::QuantumObject{SType};
-    kwargs...,
-) where {T,SType<:Union{BraQuantumObject,KetQuantumObject,OperatorQuantumObject}} =
+plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T,SType<:Union{Bra,Ket,Operator}} =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))

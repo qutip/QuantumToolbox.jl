@@ -48,7 +48,7 @@ function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, :
     # Because inv(Λ) ⋅ R has real and strictly positive elements, Q · Λ is therefore Haar distributed.
     Λ = diag(R) # take the diagonal elements of R
     Λ ./= abs.(Λ) # rescaling the elements
-    return QuantumObject(to_dense(Q * Diagonal(Λ)); type = Operator, dims = dimensions)
+    return QuantumObject(to_dense(Q * Diagonal(Λ)); type = Operator(), dims = dimensions)
 end
 function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{:exp})
     N = prod(dimensions)
@@ -57,7 +57,7 @@ function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, :
     Z = randn(ComplexF64, N, N)
 
     # generate Hermitian matrix
-    H = QuantumObject((Z + Z') / 2; type = Operator, dims = dimensions)
+    H = QuantumObject((Z + Z') / 2; type = Operator(), dims = dimensions)
 
     return to_dense(exp(-1.0im * H))
 end
@@ -73,8 +73,7 @@ Return the commutator (or `anti`-commutator) of the two [`QuantumObject`](@ref):
 
 Note that `A` and `B` must be [`Operator`](@ref)
 """
-commutator(A::QuantumObject{OperatorQuantumObject}, B::QuantumObject{OperatorQuantumObject}; anti::Bool = false) =
-    A * B - (-1)^anti * B * A
+commutator(A::QuantumObject{Operator}, B::QuantumObject{Operator}; anti::Bool = false) = A * B - (-1)^anti * B * A
 
 @doc raw"""
     destroy(N::Int)
@@ -88,7 +87,7 @@ This operator acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
 ```jldoctest
 julia> a = destroy(20)
 
-Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
@@ -100,7 +99,7 @@ julia> fock(20, 3)' * a * fock(20, 4)
 2.0 + 0.0im
 ```
 """
-destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:(N-1)))), Operator, N)
+destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:(N-1)))), Operator(), N)
 
 @doc raw"""
     create(N::Int)
@@ -114,7 +113,7 @@ This operator acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ke
 ```jldoctest
 julia> a_d = create(20)
 
-Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠢⡀⠀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠈⠢⡀⠀⠀⠀⠀⠀⠀⎥
@@ -126,7 +125,7 @@ julia> fock(20, 4)' * a_d * fock(20, 3)
 2.0 + 0.0im
 ```
 """
-create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:(N-1)))), Operator, N)
+create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:(N-1)))), Operator(), N)
 
 @doc raw"""
     displace(N::Int, α::Number)
@@ -167,7 +166,7 @@ Bosonic number operator with Hilbert space cutoff `N`.
 
 This operator is defined as ``\hat{N}=\hat{a}^\dagger \hat{a}``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
-num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:(N-1))), Operator, N)
+num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:(N-1))), Operator(), N)
 
 @doc raw"""
     position(N::Int)
@@ -223,7 +222,7 @@ function phase(N::Int, ϕ0::Real = 0)
     N_list = collect(0:(N-1))
     ϕ = ϕ0 .+ (2 * π / N) .* N_list
     states = [exp.((1.0im * ϕ[m]) .* N_list) ./ sqrt(N) for m in 1:N]
-    return QuantumObject(sum([ϕ[m] * states[m] * states[m]' for m in 1:N]); type = Operator, dims = N)
+    return QuantumObject(sum([ϕ[m] * states[m] * states[m]' for m in 1:N]); type = Operator(), dims = N)
 end
 
 @doc raw"""
@@ -244,21 +243,21 @@ Note that if the parameter `which` is not specified, returns a set of Spin-`j` o
 ```jldoctest
 julia> jmat(0.5, :x)
 
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 SparseMatrixCSC{ComplexF64, Int64} with 2 stored entries:
      ⋅      0.5+0.0im
  0.5+0.0im      ⋅
 
 julia> jmat(0.5, Val(:-))
 
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=false
 2×2 SparseMatrixCSC{ComplexF64, Int64} with 1 stored entry:
      ⋅          ⋅    
  1.0+0.0im      ⋅
 
 julia> jmat(1.5, Val(:z))
 
-Quantum Object:   type=Operator   dims=[4]   size=(4, 4)   ishermitian=true
+Quantum Object:   type=Operator()   dims=[4]   size=(4, 4)   ishermitian=true
 4×4 SparseMatrixCSC{ComplexF64, Int64} with 4 stored entries:
  1.5+0.0im      ⋅           ⋅           ⋅    
      ⋅      0.5+0.0im       ⋅           ⋅    
@@ -277,7 +276,7 @@ function jmat(j::Real, ::Val{:x})
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
     σ = _jm(j)
-    return QuantumObject((σ' + σ) / 2, Operator, Int(J))
+    return QuantumObject((σ' + σ) / 2, Operator(), Int(J))
 end
 function jmat(j::Real, ::Val{:y})
     J = 2 * j + 1
@@ -285,28 +284,28 @@ function jmat(j::Real, ::Val{:y})
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
     σ = _jm(j)
-    return QuantumObject((σ' - σ) / 2im, Operator, Int(J))
+    return QuantumObject((σ' - σ) / 2im, Operator(), Int(J))
 end
 function jmat(j::Real, ::Val{:z})
     J = 2 * j + 1
     ((floor(J) != J) || (j < 0)) &&
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
-    return QuantumObject(_jz(j), Operator, Int(J))
+    return QuantumObject(_jz(j), Operator(), Int(J))
 end
 function jmat(j::Real, ::Val{:+})
     J = 2 * j + 1
     ((floor(J) != J) || (j < 0)) &&
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
-    return QuantumObject(adjoint(_jm(j)), Operator, Int(J))
+    return QuantumObject(adjoint(_jm(j)), Operator(), Int(J))
 end
 function jmat(j::Real, ::Val{:-})
     J = 2 * j + 1
     ((floor(J) != J) || (j < 0)) &&
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
-    return QuantumObject(_jm(j), Operator, Int(J))
+    return QuantumObject(_jm(j), Operator(), Int(J))
 end
 jmat(j::Real, ::Val{T}) where {T} = throw(ArgumentError("Invalid spin operator: $(T)"))
 
@@ -429,13 +428,9 @@ Note that `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref
 !!! note
     `qeye` is a synonym of `eye`.
 """
-function eye(
-    N::Int;
-    type::ObjType = Operator,
-    dims = nothing,
-) where {ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+function eye(N::Int; type = Operator(), dims = nothing)
     if dims isa Nothing
-        dims = isa(type, OperatorQuantumObject) ? N : isqrt(N)
+        dims = isa(type, Operator) ? N : isqrt(N)
     end
     return QuantumObject(Diagonal(ones(ComplexF64, N)); type = type, dims = dims)
 end
@@ -478,9 +473,9 @@ Note that we put ``\hat{\sigma}_{-} = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatri
 """
 fcreate(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
 
-_Jordan_Wigner(N::Int, j::Int, op::QuantumObject{OperatorQuantumObject}) = _Jordan_Wigner(Val(N), j, op)
+_Jordan_Wigner(N::Int, j::Int, op::QuantumObject{Operator}) = _Jordan_Wigner(Val(N), j, op)
 
-function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{OperatorQuantumObject}) where {N}
+function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{Operator}) where {N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
     ((j > N) || (j < 1)) && throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
@@ -490,7 +485,7 @@ function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{OperatorQuantumObjec
     S = 2^(N - j)
     I_tensor = sparse((1.0 + 0.0im) * LinearAlgebra.I, S, S)
 
-    return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator, dims = ntuple(i -> 2, Val(N)))
+    return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator(), dims = ntuple(i -> 2, Val(N)))
 end
 
 @doc raw"""
@@ -499,7 +494,7 @@ end
 Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N`.
 """
 projection(N::Int, i::Int, j::Int) =
-    QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator, dims = N)
+    QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator(), dims = N)
 
 @doc raw"""
     tunneling(N::Int, m::Int=1; sparse::Union{Bool,Val{<:Bool}}=Val(false))
@@ -522,9 +517,9 @@ function tunneling(N::Int, m::Int = 1; sparse::Union{Bool,Val} = Val(false))
 
     data = ones(ComplexF64, N - m)
     if getVal(sparse)
-        return QuantumObject(spdiagm(m => data, -m => data); type = Operator, dims = N)
+        return QuantumObject(spdiagm(m => data, -m => data); type = Operator(), dims = N)
     else
-        return QuantumObject(diagm(m => data, -m => data); type = Operator, dims = N)
+        return QuantumObject(diagm(m => data, -m => data); type = Operator(), dims = N)
     end
 end
 
@@ -555,9 +550,9 @@ where ``\omega = \exp(\frac{2 \pi i}{N})``.
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator, dimensions)
+qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator(), dimensions)
 qft(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =
-    QuantumObject(_qft_op(prod(dimensions)), Operator, dimensions)
+    QuantumObject(_qft_op(prod(dimensions)), Operator(), dimensions)
 function _qft_op(N::Int)
     ω = exp(2.0im * π / N)
     arr = 0:(N-1)
