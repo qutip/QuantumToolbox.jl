@@ -262,7 +262,7 @@
         a_size = size(a)
         a_isherm = isherm(a)
         @test opstring ==
-              "\nQuantum Object:   type=Operator   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+              "\nQuantum Object:   type=Operator()   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
         # GeneralDimensions
         Gop = tensor(a, ψ)
@@ -272,7 +272,7 @@
         Gop_size = size(Gop)
         Gop_isherm = isherm(Gop)
         @test opstring ==
-              "\nQuantum Object:   type=Operator   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
+              "\nQuantum Object:   type=Operator()   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
 
         a = spre(a)
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
@@ -280,34 +280,34 @@
         a_dims = a.dims
         a_size = size(a)
         a_isherm = isherm(a)
-        @test opstring == "\nQuantum Object:   type=SuperOperator   dims=$a_dims   size=$a_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=SuperOperator()   dims=$a_dims   size=$a_size\n$datastring"
 
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
         ψ_dims = ψ.dims
         ψ_size = size(ψ)
-        @test opstring == "\nQuantum Object:   type=Ket   dims=$ψ_dims   size=$ψ_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=Ket()   dims=$ψ_dims   size=$ψ_size\n$datastring"
 
         ψ = ψ'
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
         ψ_dims = ψ.dims
         ψ_size = size(ψ)
-        @test opstring == "\nQuantum Object:   type=Bra   dims=$ψ_dims   size=$ψ_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=Bra()   dims=$ψ_dims   size=$ψ_size\n$datastring"
 
         ψ2 = Qobj(rand(ComplexF64, 4), type = OperatorKet())
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
         ψ2_dims = ψ2.dims
         ψ2_size = size(ψ2)
-        @test opstring == "\nQuantum Object:   type=OperatorKet   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=Operator()Ket()   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
 
         ψ2 = ψ2'
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
         ψ2_dims = ψ2.dims
         ψ2_size = size(ψ2)
-        @test opstring == "\nQuantum Object:   type=OperatorBra   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+        @test opstring == "\nQuantum Object:   type=Operator()Bra()   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
     end
 
     @testset "matrix element" begin

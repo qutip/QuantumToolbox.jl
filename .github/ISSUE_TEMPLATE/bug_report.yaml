@@ -22,7 +22,7 @@ body:
     attributes:
       label: Code Output
       description: Please paste the relevant output here (automatically formatted)
-      placeholder: "Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true\n2×2 Diagonal{ComplexF64, Vector{ComplexF64}}:\n 1.0+0.0im      ⋅    \n     ⋅      1.0+0.0im"
+      placeholder: "Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true\n2×2 Diagonal{ComplexF64, Vector{ComplexF64}}:\n 1.0+0.0im      ⋅    \n     ⋅      1.0+0.0im"
       render: shell
   - type: textarea
     id: expected-behaviour

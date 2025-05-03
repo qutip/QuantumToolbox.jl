@@ -38,7 +38,7 @@ The `method` parameter can be either `WignerLaguerre()` or `WignerClenshaw()`. T
 ```jldoctest wigner
 julia> ψ = fock(10, 0) + fock(10, 1) |> normalize
 
-Quantum Object:   type=Ket   dims=[10]   size=(10,)
+Quantum Object:   type=Ket()   dims=[10]   size=(10,)
 10-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im

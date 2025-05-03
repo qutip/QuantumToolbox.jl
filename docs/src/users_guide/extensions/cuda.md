@@ -36,7 +36,7 @@ V = fock(2, 0) # CPU dense vector
 ```
 
 ```
-Quantum Object:   type=Ket   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
  1.0 + 0.0im
  0.0 + 0.0im
@@ -47,7 +47,7 @@ cu(V)
 ```
 
 ```
-Quantum Object:   type=Ket   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element CuArray{ComplexF64, 1, CUDA.DeviceMemory}:
  1.0 + 0.0im
  0.0 + 0.0im
@@ -58,7 +58,7 @@ cu(V; word_size = 32)
 ```
 
 ```
-Quantum Object:   type=Ket   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element CuArray{ComplexF32, 1, CUDA.DeviceMemory}:
  1.0 + 0.0im
  0.0 + 0.0im
@@ -69,7 +69,7 @@ M = Qobj([1 2; 3 4]) # CPU dense matrix
 ```
 
 ```
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=false
 2×2 Matrix{Int64}:
  1  2
  3  4
@@ -80,7 +80,7 @@ cu(M)
 ```
 
 ```
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=false
 2×2 CuArray{Int64, 2, CUDA.DeviceMemory}:
  1  2
  3  4
@@ -91,7 +91,7 @@ cu(M; word_size = 32)
 ```
 
 ```
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=false
 2×2 CuArray{Int32, 2, CUDA.DeviceMemory}:
  1  2
  3  4
@@ -104,7 +104,7 @@ V = fock(2, 0; sparse=true) # CPU sparse vector
 ```
 
 ```
-Quantum Object:   type=Ket   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element SparseVector{ComplexF64, Int64} with 1 stored entry:
   [1]  =  1.0+0.0im
 ```
@@ -114,7 +114,7 @@ cu(V)
 ```
 
 ```
-Quantum Object:   type=Ket   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element CuSparseVector{ComplexF64, Int32} with 1 stored entry:
   [1]  =  1.0+0.0im
 ```
@@ -124,7 +124,7 @@ cu(V; word_size = 32)
 ```
 
 ```
-Quantum Object:   type=Ket   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element CuSparseVector{ComplexF32, Int32} with 1 stored entry:
   [1]  =  1.0+0.0im
 ```
@@ -134,7 +134,7 @@ M = sigmax() # CPU sparse matrix
 ```
 
 ```
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 SparseMatrixCSC{ComplexF64, Int64} with 2 stored entries:
      ⋅      1.0+0.0im
  1.0+0.0im      ⋅    
@@ -145,7 +145,7 @@ cu(M)
 ```
 
 ```
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 CuSparseMatrixCSC{ComplexF64, Int32} with 2 stored entries:
      ⋅      1.0+0.0im
  1.0+0.0im      ⋅    
@@ -156,7 +156,7 @@ cu(M; word_size = 32)
 ```
 
 ```
-Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
 2×2 CuSparseMatrixCSC{ComplexF32, Int32} with 2 stored entries:
      ⋅      1.0+0.0im
  1.0+0.0im      ⋅    

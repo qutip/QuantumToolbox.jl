@@ -56,7 +56,7 @@ isoperket(A) = false # default case
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperator`](@ref). Default case returns `false` for any other inputs.
 """
 issuper(A::AbstractQuantumObject) = issuper(typeof(A))
-issuper(::Type{<:AbstractQuantumObject{SuperOperator,N}}) where {N} = true
+issuper(::Type{<:AbstractQuantumObject{<:SuperOperatorType,N}}) where {N} = true
 issuper(A) = false # default case
 
 @doc raw"""

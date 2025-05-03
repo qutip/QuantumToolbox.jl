@@ -169,7 +169,7 @@ Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product)
 ```jldoctest
 julia> a = destroy(20)
 
-Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
