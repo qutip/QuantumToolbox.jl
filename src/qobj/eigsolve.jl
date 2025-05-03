@@ -27,7 +27,7 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-type eigenvectors by:
 ```jldoctest
 julia> result = eigenstates(sigmax())
-EigsolveResult:   type=Operator   dims=[2]
+EigsolveResult:   type=Operator()   dims=[2]
 values:
 2-element Vector{ComplexF64}:
  -1.0 + 0.0im
@@ -447,7 +447,7 @@ julia> H = a + a';
 julia> using LinearAlgebra;
 
 julia> E, ψ, U = eigen(H)
-EigsolveResult:   type=Operator   dims=[5]
+EigsolveResult:   type=Operator()   dims=[5]
 values:
 5-element Vector{ComplexF64}:
        -2.8569700138728 + 0.0im

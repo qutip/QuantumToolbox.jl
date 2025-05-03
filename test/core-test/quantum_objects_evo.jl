@@ -115,7 +115,7 @@
         H_isherm = isherm(H)
         H_isconst = isconstant(H)
         @test opstring ==
-              "\nQuantum Object Evo.:   type=Operator   dims=$H_dims   size=$H_size   ishermitian=$H_isherm   isconstant=$H_isconst\n$datastring"
+              "\nQuantum Object Evo.:   type=Operator()   dims=$H_dims   size=$H_size   ishermitian=$H_isherm   isconstant=$H_isconst\n$datastring"
 
         L = QobjEvo(spre(a))
         opstring = sprint((t, s) -> show(t, "text/plain", s), L)
@@ -125,7 +125,7 @@
         L_isherm = isherm(L)
         L_isconst = isconstant(L)
         @test opstring ==
-              "\nQuantum Object Evo.:   type=SuperOperator   dims=$L_dims   size=$L_size   ishermitian=$L_isherm   isconstant=$L_isconst\n$datastring"
+              "\nQuantum Object Evo.:   type=SuperOperator()   dims=$L_dims   size=$L_size   ishermitian=$L_isherm   isconstant=$L_isconst\n$datastring"
     end
 
     @testset "Type Inference (QobjEvo)" begin

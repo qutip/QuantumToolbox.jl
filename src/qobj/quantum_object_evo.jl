@@ -42,7 +42,7 @@ coef1 (generic function with 1 method)
 
 julia> op = QobjEvo(a, coef1)
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 
@@ -64,7 +64,7 @@ coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 ```
 
@@ -91,7 +91,7 @@ coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
 julia> p = (ω1 = 1.0, ω2 = 0.5)
@@ -223,7 +223,7 @@ coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 ```
 
@@ -250,7 +250,7 @@ coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
 julia> p = (ω1 = 1.0, ω2 = 0.5)
@@ -314,7 +314,7 @@ coef (generic function with 1 method)
 
 julia> op = QobjEvo(a, coef)
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 """
@@ -492,7 +492,7 @@ coef2 (generic function with 1 method)
 
 julia> A = QobjEvo(((a, coef1), (a', coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
 julia> ψ1 = fock(20, 3);

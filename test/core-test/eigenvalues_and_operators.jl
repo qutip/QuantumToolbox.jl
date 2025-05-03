@@ -15,7 +15,7 @@
     @test all(abs.(eigenenergies(σx, sparse = false)) .≈ abs.(λd))
     @test all(abs.(eigenenergies(σx, sparse = true, eigvals = 2)) .≈ abs.(λs))
     @test resstring ==
-          "EigsolveResult:   type=$(Operator)   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
+          "EigsolveResult:   type=$(Operator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
     N = 30
     a = kron(destroy(N), qeye(2))
@@ -76,7 +76,7 @@
     valstring = sprint((t, s) -> show(t, "text/plain", s), result.values)
     vecsstring = sprint((t, s) -> show(t, "text/plain", s), result.vectors)
     @test resstring ==
-          "EigsolveResult:   type=$(SuperOperator)   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
+          "EigsolveResult:   type=$(SuperOperator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
     vals2, vecs2 = eigenstates(L, sparse = false)
     idxs = sortperm(vals2, by = abs)
