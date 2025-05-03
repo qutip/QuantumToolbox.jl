@@ -31,8 +31,7 @@ In `QuantumToolbox`, given a Hamiltonian, we can calculate the unitary (non-diss
 
 ```@example mesolve
 H = 0.5 * sigmax()
-state0 = basis(2, 0)         # state vector
-state0 = ket2dm(basis(2, 0)) # density matrix
+state0 = basis(2, 0) # state vector
 tlist = LinRange(0.0, 10.0, 20)
 
 sol = mesolve(H, state0, tlist, e_ops = [sigmaz()])
@@ -41,7 +40,7 @@ sol = mesolve(H, state0, tlist, e_ops = [sigmaz()])
 !!! note "Use sesolve for improved efficiency"
     Here, if the Hamiltonian `H` is given as an [`Operator`](@ref), and the initial state `state0` is given as a state vector ``|\psi(0)\rangle`` (in the type of [`Ket`](@ref)), it will automatically call [`sesolve`](@ref) for improved efficiency.
 
-The function returns [`TimeEvolutionSol`](@ref), as described in the previous section [Time Evolution Solutions](@ref doc-TE:Time-Evolution-Solutions). The stored `states` will always be in the type of [`Operator`](@ref) (density matrix).
+The function returns [`TimeEvolutionSol`](@ref), as described in the previous section [Time Evolution Solutions](@ref doc-TE:Time-Evolution-Solutions).
 
 ```@example mesolve
 sol.states
@@ -53,6 +52,7 @@ One can also specify `e_ops` and `saveat` separately:
 
 ```@example mesolve
 tlist = [0, 5, 10]
+state0 = ket2dm(basis(2, 0))  # density matrix
 sol = mesolve(H, state0, tlist, e_ops = [sigmay()], saveat = tlist)
 ```
 
@@ -63,6 +63,8 @@ sol.expect
 ```@example mesolve
 sol.states
 ```
+
+Note that when the initial state `state0` is given as a density matrix ``|\psi(0)\rangle\langle\psi(0)|`` (in the type of [`Operator`](@ref)), the stored `states` will also be in the type of [`Operator`](@ref) (density matrix).
 
 ## [The Lindblad master equation](@id doc-TE:The-Lindblad-master-equation)
 
