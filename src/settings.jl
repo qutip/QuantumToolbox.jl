@@ -1,5 +1,5 @@
 Base.@kwdef struct Settings
-    tidyup_tol::Ref{Real} = 1e-14
+    tidyup_tol::Ref{Float64} = 1e-14
     auto_tidyup::Ref{Bool} = true
 end
 
@@ -17,7 +17,7 @@ Contains all the default global settings of QuantumToolbox.jl.
 
 # List of settings
 
-- `tidyup_tol::Real = 1e-14` : tolerance for [`tidyup`](@ref) and [`tidyup!`](@ref).
+- `tidyup_tol::Float64 = 1e-14` : tolerance for [`tidyup`](@ref) and [`tidyup!`](@ref).
 - `auto_tidyup::Bool = true` : Automatically tidyup.
 
 For detailed explanation of each settings, see our documentation [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/settings).
