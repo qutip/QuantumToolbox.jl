@@ -1,6 +1,6 @@
 Base.@kwdef struct Settings
-    tidyup_tol::Ref{Float64} = 1e-14
-    auto_tidyup::Ref{Bool} = true
+    tidyup_tol::RefValue{Float64} = 1e-14
+    auto_tidyup::RefValue{Bool} = true
 end
 
 function Base.show(io::IO, s::Settings)
