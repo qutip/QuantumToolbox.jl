@@ -64,6 +64,7 @@ const PAGES = [
         "Hierarchical Equations of Motion" => "users_guide/HEOM.md",
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
+        "QuantumToolbox Settings" => "users_guide/settings.md",
         "Extensions" => [
             "users_guide/extensions/cuda.md",
             "users_guide/extensions/cairomakie.md",

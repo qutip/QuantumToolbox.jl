@@ -249,6 +249,7 @@ function _eigsolve(
     end
     mul!(cache1, Vₘ, M(Uₘ * VR))
     vecs = cache1[:, 1:k]
+    settings.auto_tidyup[] && tidyup!(vecs)
 
     return EigsolveResult(vals, vecs, type, dimensions, iter, numops, (iter < maxiter))
 end
@@ -349,7 +350,10 @@ function eigsolve(
         vals = @. (1 + sigma * res.values) / res.values
     end
 
-    return EigsolveResult(vals, res.vectors, res.type, res.dimensions, res.iter, res.numops, res.converged)
+    vecs = res.vectors
+    settings.auto_tidyup[] && tidyup!(vecs)
+
+    return EigsolveResult(vals, vecs, res.type, res.dimensions, res.iter, res.numops, res.converged)
 end
 
 @doc raw"""
@@ -430,6 +434,8 @@ function eigsolve_al(
         @. vecs[:, i] = vec * exp(-1im * angle(vec[1]))
     end
 
+    settings.auto_tidyup[] && tidyup!(vecs)
+
     return EigsolveResult(vals, vecs, res.type, res.dimensions, res.iter, res.numops, res.converged)
 end
 
@@ -473,6 +479,7 @@ function LinearAlgebra.eigen(A::QuantumObject{OpType}; kwargs...) where {OpType<
     # This fixes a type inference issue. But doesn't work for GPU arrays
     E::mat2vec(to_dense(MT)) = F.values
     U::to_dense(MT) = F.vectors
+    settings.auto_tidyup[] && tidyup!(U)
 
     return EigsolveResult(E, U, A.type, A.dimensions, 0, 0, true)
 end

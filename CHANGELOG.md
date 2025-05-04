@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Introduce `QuantumToolbox.settings` and `auto_tidyup`. ([#460])
+
 ## [v0.31.0]
 Release date: 2025-05-03
 
@@ -221,3 +223,4 @@ Release date: 2024-11-13
 [#453]: https://github.com/qutip/QuantumToolbox.jl/issues/453
 [#455]: https://github.com/qutip/QuantumToolbox.jl/issues/455
 [#456]: https://github.com/qutip/QuantumToolbox.jl/issues/456
+[#460]: https://github.com/qutip/QuantumToolbox.jl/issues/460

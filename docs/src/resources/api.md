@@ -299,6 +299,7 @@ AbstractLinearMap
 ## [Utility functions](@id doc-API:Utility-functions)
 
 ```@docs
+QuantumToolbox.settings
 QuantumToolbox.versioninfo
 QuantumToolbox.about
 gaussian
