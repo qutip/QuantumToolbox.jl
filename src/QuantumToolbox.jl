@@ -1,7 +1,6 @@
 module QuantumToolbox
 
 # Standard Julia libraries
-import Base: RefValue
 using LinearAlgebra
 import LinearAlgebra: BlasInt, BlasFloat, checksquare
 import LinearAlgebra.LAPACK: hseqr!
