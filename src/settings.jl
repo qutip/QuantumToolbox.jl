@@ -1,12 +1,12 @@
-Base.@kwdef struct Settings
-    tidyup_tol::RefValue{Float64} = 1e-14
-    auto_tidyup::RefValue{Bool} = true
+Base.@kwdef mutable struct Settings
+    tidyup_tol::Float64 = 1e-14
+    auto_tidyup::Bool = true
 end
 
 function Base.show(io::IO, s::Settings)
     println(io, "QuantumToolbox.jl Settings")
     println(io, "--------------------------")
-    map(x -> println(io, "$x[] = ", getfield(s, x)[]), fieldnames(Settings))
+    map(x -> println(io, "$x = ", getfield(s, x)), fieldnames(Settings))
     return nothing
 end
 
@@ -29,8 +29,8 @@ One can overwrite the default global settings by
 ```julia
 using QuantumToolbox
 
-QuantumToolbox.settings.tidyup_tol[] = 1e-10
-QuantumToolbox.settings.auto_tidyup[] = false
+QuantumToolbox.settings.tidyup_tol = 1e-10
+QuantumToolbox.settings.auto_tidyup = false
 ```
 """
 const settings = Settings()

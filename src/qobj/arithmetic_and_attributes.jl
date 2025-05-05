@@ -629,28 +629,28 @@ purity(ρ::QuantumObject{ObjType}) where {ObjType<:Union{Ket,Bra}} = sum(abs2, �
 purity(ρ::QuantumObject{Operator}) = real(tr(ρ.data^2))
 
 @doc raw"""
-    tidyup(A::QuantumObject, tol::Real=settings.tidyup_tol[])
+    tidyup(A::QuantumObject, tol::Real=settings.tidyup_tol)
 
 Given a [`QuantumObject`](@ref) `A`, check the real and imaginary parts of each element separately. Remove the real or imaginary value if its absolute value is less than `tol`.
 """
-tidyup(A::QuantumObject, tol::T = settings.tidyup_tol[]) where {T<:Real} =
+tidyup(A::QuantumObject, tol::T = settings.tidyup_tol) where {T<:Real} =
     QuantumObject(tidyup(A.data, tol), A.type, A.dimensions)
-tidyup(A::AbstractArray, tol::T2 = settings.tidyup_tol[]) where {T2<:Real} = tidyup!(copy(A), tol)
+tidyup(A::AbstractArray, tol::T2 = settings.tidyup_tol) where {T2<:Real} = tidyup!(copy(A), tol)
 
 @doc raw"""
-    tidyup!(A::QuantumObject, tol::Real=settings.tidyup_tol[])
+    tidyup!(A::QuantumObject, tol::Real=settings.tidyup_tol)
 
 Given a [`QuantumObject`](@ref) `A`, check the real and imaginary parts of each element separately. Remove the real or imaginary value if its absolute value is less than `tol`.
 
 Note that this function is an in-place version of [`tidyup`](@ref).
 """
-tidyup!(A::QuantumObject, tol::T = settings.tidyup_tol[]) where {T<:Real} = (tidyup!(A.data, tol); A)
-function tidyup!(A::AbstractSparseArray, tol::T2 = settings.tidyup_tol[]) where {T2<:Real}
+tidyup!(A::QuantumObject, tol::T = settings.tidyup_tol) where {T<:Real} = (tidyup!(A.data, tol); A)
+function tidyup!(A::AbstractSparseArray, tol::T2 = settings.tidyup_tol) where {T2<:Real}
     tidyup!(nonzeros(A), tol) # tidyup A.nzval in-place (also support for CUDA sparse arrays)
     return dropzeros!(A)
 end
-tidyup!(A::AbstractArray{T}, tol::T2 = settings.tidyup_tol[]) where {T<:Real,T2<:Real} = @. A = T(abs(A) > tol) * A
-tidyup!(A::AbstractArray{T}, tol::T2 = settings.tidyup_tol[]) where {T,T2<:Real} =
+tidyup!(A::AbstractArray{T}, tol::T2 = settings.tidyup_tol) where {T<:Real,T2<:Real} = @. A = T(abs(A) > tol) * A
+tidyup!(A::AbstractArray{T}, tol::T2 = settings.tidyup_tol) where {T,T2<:Real} =
     @. A = T(abs(real(A)) > tol) * real(A) + 1im * T(abs(imag(A)) > tol) * imag(A)
 
 @doc raw"""

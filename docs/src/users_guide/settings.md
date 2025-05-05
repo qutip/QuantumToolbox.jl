@@ -29,8 +29,8 @@ QuantumToolbox.settings
 Next, one can overwrite the default settings by
 
 ```@example settings
-QuantumToolbox.settings.tidyup_tol[] = 1e-10
-QuantumToolbox.settings.auto_tidyup[] = false
+QuantumToolbox.settings.tidyup_tol = 1e-10
+QuantumToolbox.settings.auto_tidyup = false
 
 QuantumToolbox.settings
 ```
