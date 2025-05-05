@@ -75,6 +75,7 @@ export permute
 export cache_operator, iscached, isconstant
 
 # Utility
+include("settings.jl")
 include("utilities.jl")
 include("versioninfo.jl")
 include("progress_bar.jl")

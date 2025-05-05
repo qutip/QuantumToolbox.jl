@@ -249,6 +249,7 @@ function _eigsolve(
     end
     mul!(cache1, Vₘ, M(Uₘ * VR))
     vecs = cache1[:, 1:k]
+    settings.auto_tidyup && tidyup!(vecs)
 
     return EigsolveResult(vals, vecs, type, dimensions, iter, numops, (iter < maxiter))
 end
@@ -349,7 +350,10 @@ function eigsolve(
         vals = @. (1 + sigma * res.values) / res.values
     end
 
-    return EigsolveResult(vals, res.vectors, res.type, res.dimensions, res.iter, res.numops, res.converged)
+    vecs = res.vectors
+    settings.auto_tidyup && tidyup!(vecs)
+
+    return EigsolveResult(vals, vecs, res.type, res.dimensions, res.iter, res.numops, res.converged)
 end
 
 @doc raw"""
@@ -430,6 +434,8 @@ function eigsolve_al(
         @. vecs[:, i] = vec * exp(-1im * angle(vec[1]))
     end
 
+    settings.auto_tidyup && tidyup!(vecs)
+
     return EigsolveResult(vals, vecs, res.type, res.dimensions, res.iter, res.numops, res.converged)
 end
 
@@ -457,11 +463,11 @@ values:
      2.8569700138728056 + 0.0im
 vectors:
 5×5 Matrix{ComplexF64}:
-  0.106101+0.0im  -0.471249-0.0im  …   0.471249-0.0im  0.106101-0.0im
- -0.303127-0.0im   0.638838+0.0im      0.638838+0.0im  0.303127-0.0im
-  0.537348+0.0im  -0.279149-0.0im      0.279149-0.0im  0.537348-0.0im
+  0.106101+0.0im  -0.471249-0.0im  …   0.471249+0.0im  0.106101+0.0im
+ -0.303127-0.0im   0.638838+0.0im      0.638838+0.0im  0.303127+0.0im
+  0.537348+0.0im  -0.279149-0.0im      0.279149+0.0im  0.537348+0.0im
  -0.638838-0.0im  -0.303127-0.0im     -0.303127-0.0im  0.638838+0.0im
-  0.447214+0.0im   0.447214+0.0im     -0.447214-0.0im  0.447214-0.0im
+  0.447214+0.0im   0.447214+0.0im     -0.447214-0.0im  0.447214+0.0im
 
 julia> expect(H, ψ[1]) ≈ E[1]
 true
@@ -473,6 +479,7 @@ function LinearAlgebra.eigen(A::QuantumObject{OpType}; kwargs...) where {OpType<
     # This fixes a type inference issue. But doesn't work for GPU arrays
     E::mat2vec(to_dense(MT)) = F.values
     U::to_dense(MT) = F.vectors
+    settings.auto_tidyup && tidyup!(U)
 
     return EigsolveResult(E, U, A.type, A.dimensions, 0, 0, true)
 end
