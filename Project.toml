@@ -33,10 +33,10 @@ KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [extensions]
-QuantumToolboxMakieExt = "Makie"
-QuantumToolboxChainRulesCoreExt = "ChainRulesCore"
 QuantumToolboxCUDAExt = "CUDA"
+QuantumToolboxChainRulesCoreExt = "ChainRulesCore"
 QuantumToolboxGPUArraysExt = ["GPUArrays", "KernelAbstractions"]
+QuantumToolboxMakieExt = "Makie"
 
 [compat]
 ArrayInterface = "6, 7"
@@ -59,7 +59,7 @@ OrdinaryDiffEqTsit5 = "1"
 Pkg = "1"
 Random = "1"
 SciMLBase = "2"
-SciMLOperators = "0.3"
+SciMLOperators = "0.3, 0.4"
 SparseArrays = "1"
 SpecialFunctions = "2"
 StaticArraysCore = "1"
