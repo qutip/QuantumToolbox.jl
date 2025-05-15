@@ -5,7 +5,7 @@ layout: home
 
 hero:
   name: "QuantumToolbox.jl"
-  tagline: A pure Julia framework designed for High-performance quantum physics simulations
+  tagline: A pure Julia framework designed for high-performance quantum physics simulations
   image:
     src: /logo.png
     alt: QuantumToolbox

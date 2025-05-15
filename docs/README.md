@@ -7,13 +7,14 @@ The document pages will be generated in the directory: `/path/to/QuantumToolbox.
 
 ## Method 1: Run with `make` command
 Run the following command to instantiate and build the documentation:
+> [!NOTE]
+> You need to install `Node.js` and `npm` first.
 ```shell
 make docs
 ```
 
-Run the following command to start Vitepress site of documentation:
-> [!NOTE]
-> You need to install `Node.js` and `npm` first.
+For Windows OS, you will need to run the following command to start Vitepress site of documentation:
+
 ```shell
 make vitepress
 ```
@@ -29,20 +30,13 @@ julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.in
 
 ### Build Documentation
 Run the following command:
+> [!NOTE]
+> You need to install `Node.js` and `npm` first.
 ```shell
 julia --project=docs docs/make.jl
 ```
 
-### Start a local Vitepress site
-> [!NOTE]
-> You need to install `Node.js` and `npm` first.
-
-Install `npm` dependencies:
-```shell
-npm --prefix docs i
-```
-
-Run the following command:
+For Windows OS, you will need to run the following command to start Vitepress site of documentation:
 ```shell
 npm --prefix docs run docs:dev
 ```

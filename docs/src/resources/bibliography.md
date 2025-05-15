@@ -1,3 +1,5 @@
+# [Bibliography](@id doc-Bibliography)
+
 ```@meta
 CurrentModule = QuantumToolbox
 ```

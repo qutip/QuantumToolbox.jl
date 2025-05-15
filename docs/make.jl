@@ -46,8 +46,8 @@ const PAGES = [
     ],
     "Users Guide" => [
         "Basic Operations on Quantum Objects" => [
-            "users_guide/QuantumObject/QuantumObject.md",
-            "users_guide/QuantumObject/QuantumObject_functions.md",
+            "Quantum Objects (Qobj)" => "users_guide/QuantumObject/QuantumObject.md",
+            "Functions operating on Qobj" => "users_guide/QuantumObject/QuantumObject_functions.md",
         ],
         "Manipulating States and Operators" => "users_guide/states_and_operators.md",
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
@@ -66,8 +66,8 @@ const PAGES = [
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
         "QuantumToolbox Settings" => "users_guide/settings.md",
         "Extensions" => [
-            "users_guide/extensions/cuda.md",
-            "users_guide/extensions/cairomakie.md",
+            "Extension for CUDA.jl" => "users_guide/extensions/cuda.md",
+            "Extension for the Makie.jl ecosystem" => "users_guide/extensions/cairomakie.md",
         ],
     ],
     "Resources" => [
@@ -90,15 +90,18 @@ makedocs(;
     pages = PAGES,
     format = DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/qutip/QuantumToolbox.jl",
+        devbranch = "main",
+        devurl = "dev",
+        deploy_url = "qutip.org/QuantumToolbox.jl"
     ),
     draft = DRAFT,
     doctest = DOCTEST,
     plugins = [bib],
 )
 
-deploydocs(;
+DocumenterVitepress.deploydocs(;
     repo = "github.com/qutip/QuantumToolbox.jl",
-    target = "build", # this is where Vitepress stores its output
+    target = joinpath(@__DIR__, "build"),
     devbranch = "main",
     branch = "gh-pages",
     push_preview = true,
