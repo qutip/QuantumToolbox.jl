@@ -74,7 +74,7 @@ To read the documentation in a browser, you can run the following command:
 make vitepress
 ```
 
-This will start a local Vitepress site of documentation at [http://localhost:5173](http://localhost:5173) in your computer.
+This will start a local Vitepress site of documentation at `http://localhost:5173` in your computer.
 
 ## [Update ChangeLog](@id doc-Contribute:Update-ChangeLog)
 
