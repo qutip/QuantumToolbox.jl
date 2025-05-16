@@ -17,7 +17,7 @@ Run the following command to start a local Vitepress site:
 ```shell
 make vitepress
 ```
-This will start a local Vitepress site of documentation at `[http://localhost:5173](http://localhost:5173)` in your computer.
+This will start a local Vitepress site of documentation at [http://localhost:5173](http://localhost:5173) in your computer.
 
 ## Method 2: Run commands manually
 
@@ -41,4 +41,4 @@ Run the following command:
 ```shell
 npm --prefix docs run docs:dev
 ```
-This will start a local Vitepress site of documentation at `[http://localhost:5173](http://localhost:5173)` in your computer.
+This will start a local Vitepress site of documentation at [http://localhost:5173](http://localhost:5173) in your computer.
