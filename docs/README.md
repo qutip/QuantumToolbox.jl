@@ -3,7 +3,7 @@
 ## Working Directory
 All the commands should be run under the root folder of the package: `/path/to/QuantumToolbox.jl/`
 
-The document pages will be generated in the directory: `/path/to/QuantumToolbox.jl/docs/build/` (which is ignored by git).
+The document pages will be generated in the directory: `/path/to/QuantumToolbox.jl/docs/build/1/` (which is ignored by git).
 
 ## Method 1: Run with `make` command
 Run the following command to instantiate and build the documentation:
@@ -13,11 +13,11 @@ Run the following command to instantiate and build the documentation:
 make docs
 ```
 
-For Windows OS, you will need to run the following command to start Vitepress site of documentation:
-
+Run the following command to start a local Vitepress site:
 ```shell
 make vitepress
 ```
+This will start a local Vitepress site of documentation at `[http://localhost:5173](http://localhost:5173)` in your computer.
 
 ## Method 2: Run commands manually
 
@@ -36,7 +36,9 @@ Run the following command:
 julia --project=docs docs/make.jl
 ```
 
-For Windows OS, you will need to run the following command to start Vitepress site of documentation:
+### Start a local Vitepress site
+Run the following command:
 ```shell
 npm --prefix docs run docs:dev
 ```
+This will start a local Vitepress site of documentation at `[http://localhost:5173](http://localhost:5173)` in your computer.
