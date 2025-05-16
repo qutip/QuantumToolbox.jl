@@ -92,7 +92,6 @@ makedocs(;
         repo = "github.com/qutip/QuantumToolbox.jl",
         devbranch = "main",
         devurl = "dev",
-        deploy_url = "QuantumToolbox.jl" # the prefix 'qutip.org/' will be added automatically
     ),
     draft = DRAFT,
     doctest = DOCTEST,
