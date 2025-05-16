@@ -19,7 +19,6 @@ docs:
 	${JULIA} --project=docs docs/make.jl
 
 vitepress:
-	npm --prefix docs i
 	npm --prefix docs run docs:dev
 
 all: setup format changelog test docs vitepress

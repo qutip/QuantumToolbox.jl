@@ -55,9 +55,12 @@ make format
 
 All the documentation source files [in markdown (`.md`) format] and build scripts should be located in the folder `docs` in the repository.
 
-The document pages will be generated in the folder `docs/build` (which is ignored by `git`) in the repository.
+The document pages will be generated in the folder `docs/build/1/` (which is ignored by `git`) in the repository.
 
 To instantiate and build the documentation, run the following command under the *__root directory of the repository__* you are working on:
+
+!!! note "Requirements"
+    You need to install `Node.js` and `npm` first.
 
 ```shell
 make docs
@@ -67,14 +70,11 @@ This command will automatically rebuild `Julia` and run the script located in `d
 
 To read the documentation in a browser, you can run the following command:
 
-!!! note "Requirements"
-    You need to install `Node.js` and `npm` first.
-
 ```shell
 make vitepress
 ```
 
-This will start a local Vitepress site of documentation at `http://localhost:5173/QuantumToolbox.jl/` in your computer.
+This will start a local Vitepress site of documentation at `http://localhost:5173` in your computer.
 
 ## [Update ChangeLog](@id doc-Contribute:Update-ChangeLog)
 
