@@ -110,9 +110,14 @@ A structure storing the results and some information from solving quantum trajec
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 
-# Methods
+# Notes
 
-We also provide the following functions for analyzing statistics from multi-trajectory solutions.
+The index-order of the elements in fields `states` and `expect` are:
+
+- `sol.states[trajectory][time]`
+- `sol.expect[e_op,trajectory,time]`
+
+We also provide the following functions for statistical analysis of multi-trajectory solutions.
 
 - [`average_states`](@ref)
 - [`average_expect`](@ref)
@@ -173,9 +178,14 @@ A structure storing the results and some information from solving trajectories o
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 
-# Methods
+# Notes
 
-We also provide the following functions for analyzing statistics from multi-trajectory solutions.
+The index-order of the elements in fields `states` and `expect` are:
+
+- `sol.states[trajectory][time]`
+- `sol.expect[e_op,trajectory,time]`
+
+We also provide the following functions for statistical analysis of multi-trajectory solutions.
 
 - [`average_states`](@ref)
 - [`average_expect`](@ref)
@@ -221,16 +231,17 @@ end
 @doc raw"""
     average_states(sol::TimeEvolutionMultiTrajSol)
 
-Return the trajectory-averaged result states at each time point.
+Return the trajectory-averaged result states (as density [`Operator`](@ref)) at each time point.
 """
-average_states(sol::TimeEvolutionMultiTrajSol) = mean(sol.states)
+average_states(sol::TimeEvolutionMultiTrajSol) = mean(ket2dm, sol.states)
 
 @doc raw"""
     average_expect(sol::TimeEvolutionMultiTrajSol)
 
 Return the trajectory-averaged expectation values at each time point.
 """
-average_expect(sol::TimeEvolutionMultiTrajSol{TE}) where {TE<:AbstractArray} = dropdims(mean(sol.runs_expect, dims = 2), dims = 2)
+average_expect(sol::TimeEvolutionMultiTrajSol{TE}) where {TE<:AbstractArray} =
+    dropdims(mean(sol.expect, dims = 2), dims = 2)
 average_expect(sol::TimeEvolutionMultiTrajSol{Nothing}) = nothing
 
 @doc raw"""
@@ -238,7 +249,15 @@ average_expect(sol::TimeEvolutionMultiTrajSol{Nothing}) = nothing
 
 Return the trajectory-wise standard deviation of the expectation values at each time point.
 """
-std_expect(sol::TimeEvolutionMultiTrajSol{TE}) where {TE<:AbstractArray} = dropdims(std(sol.runs_expect, dims = 2), dims = 2)
+function std_expect(sol::TimeEvolutionMultiTrajSol{TE}) where {TE<:AbstractArray}
+    # the following standard deviation (std) is defined as the square-root of variance instead of pseudo-variance
+    # i.e., it is equivalent to (even for complex expectation values):
+    #    dropdims(
+    #        sqrt.(mean(abs2.(sol.expect), dims = 2) .- abs2.(mean(sol.expect, dims = 2))),
+    #        dims = 2
+    #    )
+    return dropdims(std(sol.expect, corrected = false, dims = 2), dims = 2)
+end
 std_expect(sol::TimeEvolutionMultiTrajSol{Nothing}) = nothing
 
 #######################################
