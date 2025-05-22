@@ -186,6 +186,11 @@
         # Redirect to `sesolve`
         sol_me5 = mesolve(H, ψ0, tlist, progress_bar = Val(false))
 
+        # standard deviation
+        std_mc = dropdims(sqrt.(mean(abs2.(sol_mc.expect), dims = 2) .- abs2.(mean(sol_mc.expect, dims = 2))), dims = 2)
+        std_mc2 =
+            dropdims(sqrt.(mean(abs2.(sol_mc2.expect), dims = 2) .- abs2.(mean(sol_mc2.expect, dims = 2))), dims = 2)
+
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
         expect_mc_states_mean = sum(expect_mc_states, dims = 2) / size(expect_mc_states, 2)
@@ -202,13 +207,17 @@
         @test prob_me.prob.f.f isa MatrixOperator
         @test prob_mc.prob.f.f isa MatrixOperator
         @test isket(sol_me5.states[1])
-        @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
-        @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
+        @test all(isapprox.(average_states(sol_mc), sol_me.states; atol = 0.1))
+        @test all(isapprox.(average_states(sol_mc2), sol_me.states; atol = 0.1))
+        @test all(isapprox.(average_expect(sol_mc), sol_me.expect; atol = 0.1))
+        @test all(isapprox.(average_expect(sol_mc2), sol_me.expect; atol = 0.1))
+        @test all(std_expect(sol_mc) .≈ std_mc)
+        @test all(std_expect(sol_mc2) .≈ std_mc2)
         @test sum(abs, vec(expect_mc_states_mean) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
         @test sum(abs, vec(expect_mc_states_mean2) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
-        @test sum(abs, sol_sse.expect .- sol_me.expect) / length(tlist) < 0.1
-        @test sum(abs, sol_sme.expect .- sol_me.expect) / length(tlist) < 0.1
-        @test sum(abs, sol_sme3.expect .- sol_me.expect) / length(tlist) < 0.1
+        @test sum(abs, average_expect(sol_sse) .- sol_me.expect) / length(tlist) < 0.1
+        @test sum(abs, average_expect(sol_sme) .- sol_me.expect) / length(tlist) < 0.1
+        @test sum(abs, average_expect(sol_sme3) .- sol_me.expect) / length(tlist) < 0.1
         @test length(sol_me.times) == length(tlist)
         @test length(sol_me.states) == 1
         @test size(sol_me.expect) == (length(e_ops), length(tlist))
@@ -221,13 +230,15 @@
         @test sol_me3.expect[1, saveat_idxs] ≈ expect(e_ops[1], sol_me3.states) atol = 1e-6
         @test all([sol_me3.states[i] ≈ vector_to_operator(sol_me4.states[i]) for i in eachindex(saveat)])
         @test length(sol_mc.times) == length(tlist)
-        @test size(sol_mc.expect) == (length(e_ops), length(tlist))
+        @test size(sol_mc.expect) == (length(e_ops), 500, length(tlist))
         @test length(sol_mc_states.times) == length(tlist)
         @test sol_mc_states.expect === nothing
+        @test average_expect(sol_mc_states) === nothing
+        @test std_expect(sol_mc_states) === nothing
         @test length(sol_sse.times) == length(tlist)
-        @test size(sol_sse.expect) == (length(e_ops), length(tlist))
+        @test size(sol_sse.expect) == (length(e_ops), 500, length(tlist))
         @test length(sol_sme.times) == length(tlist)
-        @test size(sol_sme.expect) == (length(e_ops), length(tlist))
+        @test size(sol_sme.expect) == (length(e_ops), 500, length(tlist))
         @test isnothing(sol_sse.measurement)
         @test isnothing(sol_sme.measurement)
         @test size(sol_sse2.measurement) == (length(c_ops), 20, length(tlist) - 1)
@@ -336,7 +347,7 @@
 
         @test sol_se.expect ≈ sol_se_td.expect atol = 1e-6 * length(tlist)
         @test sol_me.expect ≈ sol_me_td.expect atol = 1e-6 * length(tlist)
-        @test sol_mc.expect ≈ sol_mc_td.expect atol = 1e-2 * length(tlist)
+        @test average_expect(sol_mc) ≈ average_expect(sol_mc_td) atol = 1e-2 * length(tlist)
         # @test sol_sse.expect ≈ sol_sse_td.expect atol = 1e-2 * length(tlist)
 
         H_td2 = QobjEvo(H_td)
@@ -350,7 +361,7 @@
 
         @test sol_se.expect ≈ sol_se_td2.expect atol = 1e-6 * length(tlist)
         @test sol_me.expect ≈ sol_me_td2.expect atol = 1e-6 * length(tlist)
-        @test sol_mc.expect ≈ sol_mc_td2.expect atol = 1e-2 * length(tlist)
+        @test average_expect(sol_mc) ≈ average_expect(sol_mc_td2) atol = 1e-2 * length(tlist)
         # @test sol_sse.expect ≈ sol_sse_td2.expect atol = 1e-2 * length(tlist)
 
         @testset "Memory Allocations (mesolve)" begin
@@ -542,7 +553,7 @@
             @inferred mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
         end
 
-        @testset "Type Inference mcsolve" begin
+        @testset "Type Inference mcsolve and statistical analysis functions" begin
             @inferred mcsolveEnsembleProblem(
                 H,
                 ψ0,
@@ -553,10 +564,11 @@
                 progress_bar = Val(false),
                 rng = rng,
             )
-            @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            sol1 =
+                @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+            sol2 = @inferred mcsolve(H, ψ0_int, tlist, c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
             @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng)
             @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
-            @inferred mcsolve(H, ψ0_int, tlist, c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
             @inferred mcsolve(
                 H,
                 ψ0,
@@ -578,6 +590,13 @@
                 params = p,
                 rng = rng,
             )
+
+            @inferred average_states(sol1)
+            @inferred average_expect(sol1)
+            @inferred std_expect(sol1)
+            @inferred average_states(sol2)
+            @inferred average_expect(sol2)
+            @inferred std_expect(sol2)
         end
 
         @testset "Type Inference ssesolve" begin
@@ -763,21 +782,18 @@
             )
 
             @test sol_mc1.expect ≈ sol_mc2.expect atol = 1e-10
-            @test sol_mc1.runs_expect ≈ sol_mc2.runs_expect atol = 1e-10
             @test sol_mc1.col_times ≈ sol_mc2.col_times atol = 1e-10
             @test sol_mc1.col_which ≈ sol_mc2.col_which atol = 1e-10
 
-            @test sol_mc1.runs_expect ≈ sol_mc3.runs_expect[:, 1:500, :] atol = 1e-10
+            @test sol_mc1.expect ≈ sol_mc3.expect[:, 1:500, :] atol = 1e-10
 
             @test sol_sse1.expect ≈ sol_sse2.expect atol = 1e-10
-            @test sol_sse1.runs_expect ≈ sol_sse2.runs_expect atol = 1e-10
 
-            @test sol_sse1.runs_expect ≈ sol_sse3.runs_expect[:, 1:50, :] atol = 1e-10
+            @test sol_sse1.expect ≈ sol_sse3.expect[:, 1:50, :] atol = 1e-10
 
             @test sol_sme1.expect ≈ sol_sme2.expect atol = 1e-10
-            @test sol_sme1.runs_expect ≈ sol_sme2.runs_expect atol = 1e-10
 
-            @test sol_sme1.runs_expect ≈ sol_sme3.runs_expect[:, 1:50, :] atol = 1e-10
+            @test sol_sme1.expect ≈ sol_sme3.expect[:, 1:50, :] atol = 1e-10
         end
     end
 
@@ -818,7 +834,7 @@
         t_l = LinRange(0, 20 / γ1, 1000)
         sol_me = mesolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = false) # Here we don't put Val(false) because we want to test the support for Bool type
         sol_mc = mcsolve(H, psi0, t_l, c_ops, e_ops = [sp1 * sm1, sp2 * sm2], progress_bar = Val(false))
-        @test sum(abs.(sol_mc.expect[1:2, :] .- sol_me.expect[1:2, :])) / length(t_l) < 0.1
+        @test sum(abs.(average_expect(sol_mc) .- sol_me.expect)) / length(t_l) < 0.1
         @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], 1))
     end
 end
