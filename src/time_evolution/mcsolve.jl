@@ -407,14 +407,10 @@ function mcsolve(
     col_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_times, eachindex(sol))
     col_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_which, eachindex(sol))
 
-    expvals = _expvals_sol_1 isa Nothing ? nothing : dropdims(sum(expvals_all, dims = 2), dims = 2) ./ length(sol)
-
     return TimeEvolutionMCSol(
         ntraj,
         ens_prob_mc.times,
         states,
-        expvals,
-        expvals, # This is average_expect
         expvals_all,
         col_times,
         col_which,

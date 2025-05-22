@@ -412,16 +412,10 @@ function ssesolve(
         _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
     m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2)
 
-    expvals =
-        _get_expvals(_sol_1, SaveFuncSSESolve) isa Nothing ? nothing :
-        dropdims(sum(expvals_all, dims = 2), dims = 2) ./ length(sol)
-
     return TimeEvolutionStochasticSol(
         ntraj,
         ens_prob.times,
         states,
-        expvals,
-        expvals, # This is average_expect
         expvals_all,
         m_expvals, # Measurement expectation values
         sol.converged,

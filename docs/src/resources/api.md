@@ -192,6 +192,9 @@ TimeEvolutionProblem
 TimeEvolutionSol
 TimeEvolutionMCSol
 TimeEvolutionStochasticSol
+average_states
+average_expect
+std_expect
 sesolveProblem
 mesolveProblem
 mcsolveProblem
