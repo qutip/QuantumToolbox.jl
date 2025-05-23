@@ -16,6 +16,9 @@ ket2dm(ψ::QuantumObject{Ket}) = ψ * ψ'
 
 ket2dm(ρ::QuantumObject{Operator}) = ρ
 
+# for special usage, e.g., average_states
+ket2dm(states::Vector{<:QuantumObject{T}}) where {T<:Union{Ket,Operator}} = map(s -> ket2dm(s), states)
+
 @doc raw"""
     expect(O::Union{AbstractQuantumObject,Vector{AbstractQuantumObject}}, ψ::Union{QuantumObject,Vector{QuantumObject}})
 

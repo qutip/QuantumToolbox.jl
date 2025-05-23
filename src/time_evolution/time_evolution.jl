@@ -132,7 +132,7 @@ struct TimeEvolutionMCSol{
     AlgT<:OrdinaryDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
-} <: TimeEvolutionMultiTrajSol{TE}
+} <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
     times::TT
     states::TS
@@ -199,7 +199,7 @@ struct TimeEvolutionStochasticSol{
     AlgT<:StochasticDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
-} <: TimeEvolutionMultiTrajSol{TE}
+} <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
     times::TT
     states::TS
@@ -242,7 +242,7 @@ Return the trajectory-averaged expectation values at each time point.
 """
 average_expect(sol::TimeEvolutionMultiTrajSol{TE}) where {TE<:AbstractArray} =
     dropdims(mean(sol.expect, dims = 2), dims = 2)
-average_expect(sol::TimeEvolutionMultiTrajSol{Nothing}) = nothing
+average_expect(::TimeEvolutionMultiTrajSol{Nothing}) = nothing
 
 @doc raw"""
     std_expect(sol::TimeEvolutionMultiTrajSol)
@@ -258,7 +258,7 @@ function std_expect(sol::TimeEvolutionMultiTrajSol{TE}) where {TE<:AbstractArray
     #    )
     return dropdims(std(sol.expect, corrected = false, dims = 2), dims = 2)
 end
-std_expect(sol::TimeEvolutionMultiTrajSol{Nothing}) = nothing
+std_expect(::TimeEvolutionMultiTrajSol{Nothing}) = nothing
 
 #######################################
 #=
