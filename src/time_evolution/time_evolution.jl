@@ -132,7 +132,7 @@ struct TimeEvolutionMCSol{
     AlgT<:OrdinaryDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
-} <: TimeEvolutionMultiTrajSol{TS,TE}
+} <: TimeEvolutionMultiTrajSol{TE}
     ntraj::Int
     times::TT
     states::TS
@@ -199,7 +199,7 @@ struct TimeEvolutionStochasticSol{
     AlgT<:StochasticDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
-} <: TimeEvolutionMultiTrajSol{TS,TE}
+} <: TimeEvolutionMultiTrajSol{TE}
     ntraj::Int
     times::TT
     states::TS
