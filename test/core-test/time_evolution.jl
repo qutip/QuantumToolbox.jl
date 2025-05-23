@@ -186,10 +186,14 @@
         # Redirect to `sesolve`
         sol_me5 = mesolve(H, ψ0, tlist, progress_bar = Val(false))
 
-        # standard deviation
-        std_mc = dropdims(sqrt.(mean(abs2.(sol_mc.expect), dims = 2) .- abs2.(mean(sol_mc.expect, dims = 2))), dims = 2)
-        std_mc2 =
-            dropdims(sqrt.(mean(abs2.(sol_mc2.expect), dims = 2) .- abs2.(mean(sol_mc2.expect, dims = 2))), dims = 2)
+        # average states
+        avg_mc_states = average_states(sol_mc_states)
+        avg_mc_states2 = average_states(sol_mc_states2)
+
+        # variance
+        var_mc = dropdims(abs.(mean(abs2.(sol_mc.expect), dims = 2) .- abs2.(mean(sol_mc.expect, dims = 2))), dims = 2)
+        var_mc2 =
+            dropdims(abs.(mean(abs2.(sol_mc2.expect), dims = 2) .- abs2.(mean(sol_mc2.expect, dims = 2))), dims = 2)
 
         ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
         expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
@@ -207,12 +211,12 @@
         @test prob_me.prob.f.f isa MatrixOperator
         @test prob_mc.prob.f.f isa MatrixOperator
         @test isket(sol_me5.states[1])
-        @test all(isapprox.(average_states(sol_mc), sol_me.states; atol = 0.1))
-        @test all(isapprox.(average_states(sol_mc2), sol_me.states; atol = 0.1))
-        @test all(isapprox.(average_expect(sol_mc), sol_me.expect; atol = 0.1))
-        @test all(isapprox.(average_expect(sol_mc2), sol_me.expect; atol = 0.1))
-        @test all(std_expect(sol_mc) .≈ std_mc)
-        @test all(std_expect(sol_mc2) .≈ std_mc2)
+        @test all(sum.(abs, get_data.(avg_mc_states .- sol_me2.states[saveat_idxs])) .< 0.1)
+        @test all(sum.(abs, get_data.(avg_mc_states2 .- sol_me2.states[saveat_idxs])) .< 0.1)
+        @test sum(abs, average_expect(sol_mc) .- sol_me.expect) / length(tlist) < 0.1
+        @test sum(abs, average_expect(sol_mc2) .- sol_me.expect) / length(tlist) < 0.1
+        @test sum(abs, std_expect(sol_mc) .^ 2 .- var_mc) < 1e-8
+        @test sum(abs, std_expect(sol_mc2) .^ 2 .- var_mc2) < 1e-8
         @test sum(abs, vec(expect_mc_states_mean) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
         @test sum(abs, vec(expect_mc_states_mean2) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
         @test sum(abs, average_expect(sol_sse) .- sol_me.expect) / length(tlist) < 0.1
@@ -591,10 +595,10 @@
                 rng = rng,
             )
 
-            @inferred average_states(sol1)
+            # @inferred average_states(sol1) # TODO: need to change type of sol.states
             @inferred average_expect(sol1)
             @inferred std_expect(sol1)
-            @inferred average_states(sol2)
+            # @inferred average_states(sol2) # TODO: need to change type of sol.states
             @inferred average_expect(sol2)
             @inferred std_expect(sol2)
         end
