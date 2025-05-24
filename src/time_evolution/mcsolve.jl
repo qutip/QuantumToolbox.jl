@@ -235,7 +235,10 @@ function mcsolveEnsembleProblem(
     output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
 ) where {TJC<:LindbladJumpCallbackType}
-    _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
+    copied_rng = copy(rng) # use the copied rng, and keep the initial one to pass it directly to solution later
+
+    _prob_func =
+        isnothing(prob_func) ? _ensemble_dispatch_prob_func(copied_rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
         _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _mcsolve_output_func) : output_func
@@ -247,7 +250,7 @@ function mcsolveEnsembleProblem(
         c_ops;
         e_ops = e_ops,
         params = params,
-        rng = rng,
+        rng = copied_rng,
         jump_callback = jump_callback,
         kwargs...,
     )

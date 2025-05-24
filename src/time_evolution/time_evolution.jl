@@ -103,7 +103,7 @@ A structure storing the results and some information from solving quantum trajec
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
 - `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
-- `rng::AbstractRNG`: Random number generator for reproducibility.
+- `rng::AbstractRNG`: Initial random number generator for reproducibility.
 - `col_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
 - `col_which::Vector{Vector{Int}}`: The indices of which collapse operator was responsible for each quantum jump in `col_times`.
 - `converged::Bool`: Whether the solution is converged or not.
@@ -176,7 +176,7 @@ A structure storing the results and some information from solving trajectories o
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
 - `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
-- `rng::AbstractRNG`: Random number generator for reproducibility.
+- `rng::AbstractRNG`: Initial random number generator for reproducibility.
 - `measurement::Union{AbstractArray,Nothing}`: Measurements for each trajectories and stochastic collapse operators (`sc_ops`).
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.

@@ -104,7 +104,7 @@ We also provide the following functions for statistical analysis of multi-trajec
 | [`average_expect(sol)`](@ref average_expect) | Return the trajectory-averaged expectation values at each time point. |
 | [`std_expect(sol)`](@ref std_expect) | Return the trajectory-wise standard deviation of the expectation values at each time point. |
 
-Multi-trajectory solutions also keep the random number generator (`rng`) to allow recomputing the results:
+Multi-trajectory solutions also keep the initial random number generator (`rng`) to allow recomputing the results:
 
 ```julia
 rng = sol.rng # this can be specified as a keyword argument (`rng = rng`) to the solvers

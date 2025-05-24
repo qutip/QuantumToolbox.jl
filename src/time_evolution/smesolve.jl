@@ -239,10 +239,12 @@ function smesolveEnsembleProblem(
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 ) where {StateOpType<:Union{Ket,Operator,OperatorKet}}
+    copied_rng = copy(rng) # use the copied rng, and keep the initial one to pass it directly to solution later
+
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
-            rng,
+            copied_rng,
             ntraj,
             tlist,
             _stochastic_prob_func;
@@ -261,7 +263,7 @@ function smesolveEnsembleProblem(
         sc_ops;
         e_ops = e_ops,
         params = params,
-        rng = rng,
+        rng = copied_rng,
         progress_bar = Val(false),
         store_measurement = makeVal(store_measurement),
         kwargs...,
