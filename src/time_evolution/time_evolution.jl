@@ -103,6 +103,7 @@ A structure storing the results and some information from solving quantum trajec
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
 - `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
+- `rng::AbstractRNG`: Random number generator for reproducibility.
 - `col_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
 - `col_which::Vector{Vector{Int}}`: The indices of which collapse operator was responsible for each quantum jump in `col_times`.
 - `converged::Bool`: Whether the solution is converged or not.
@@ -127,6 +128,7 @@ struct TimeEvolutionMCSol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Union{AbstractArray,Nothing},
+    TR<:AbstractRNG,
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
     AlgT<:OrdinaryDiffEqAlgorithm,
@@ -137,6 +139,7 @@ struct TimeEvolutionMCSol{
     times::TT
     states::TS
     expect::TE
+    rng::TR
     col_times::TJT
     col_which::TJW
     converged::Bool
@@ -173,6 +176,8 @@ A structure storing the results and some information from solving trajectories o
 - `times::AbstractVector`: The time list of the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
 - `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
+- `rng::AbstractRNG`: Random number generator for reproducibility.
+- `measurement::Union{AbstractArray,Nothing}`: Measurements for each trajectories and stochastic collapse operators (`sc_ops`).
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -195,6 +200,7 @@ struct TimeEvolutionStochasticSol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Union{AbstractArray,Nothing},
+    TR<:AbstractRNG,
     TEM<:Union{AbstractArray,Nothing},
     AlgT<:StochasticDiffEqAlgorithm,
     AT<:Real,
@@ -204,6 +210,7 @@ struct TimeEvolutionStochasticSol{
     times::TT
     states::TS
     expect::TE
+    rng::TR
     measurement::TEM
     converged::Bool
     alg::AlgT

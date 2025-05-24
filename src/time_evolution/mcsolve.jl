@@ -256,7 +256,7 @@ function mcsolveEnsembleProblem(
         EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob_mc.times,
         prob_mc.dimensions,
-        (progr = _output_func[2], channel = _output_func[3]),
+        (progr = _output_func[2], channel = _output_func[3], rng = rng),
     )
 
     return ensemble_prob
@@ -412,11 +412,12 @@ function mcsolve(
         ens_prob_mc.times,
         states,
         expvals_all,
+        ens_prob_mc.kwargs.rng,
         col_times,
         col_which,
         sol.converged,
         _sol_1.alg,
-        NamedTuple(_sol_1.prob.kwargs).abstol,
-        NamedTuple(_sol_1.prob.kwargs).reltol,
+        _sol_1.prob.kwargs[:abstol],
+        _sol_1.prob.kwargs[:reltol],
     )
 end

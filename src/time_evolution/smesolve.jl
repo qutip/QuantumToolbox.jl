@@ -271,7 +271,7 @@ function smesolveEnsembleProblem(
         EnsembleProblem(prob_sme, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
         prob_sme.times,
         prob_sme.dimensions,
-        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3])),
+        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3], rng = rng)),
     )
 
     return ensemble_prob
@@ -423,6 +423,7 @@ function smesolve(
         ens_prob.times,
         states,
         expvals_all,
+        ens_prob.kwargs.rng,
         m_expvals, # Measurement expectation values
         sol.converged,
         _sol_1.alg,

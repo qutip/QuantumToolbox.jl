@@ -751,11 +751,9 @@
                 rng = rng,
             )
 
-            rng = MersenneTwister(1234)
-            sol_mc2 = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng)
-            rng = MersenneTwister(1234)
-            sol_sse2 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
-            rng = MersenneTwister(1234)
+            sol_mc2 = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = sol_mc1.rng)
+            sol_sse2 =
+                ssesolve(H, ψ0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = sol_sse1.rng)
             sol_sme2 = smesolve(
                 H,
                 ψ0,
@@ -765,14 +763,13 @@
                 ntraj = 50,
                 e_ops = e_ops,
                 progress_bar = Val(false),
-                rng = rng,
+                rng = sol_sme1.rng,
             )
 
-            rng = MersenneTwister(1234)
-            sol_mc3 = mcsolve(H, ψ0, tlist, c_ops, ntraj = 510, e_ops = e_ops, progress_bar = Val(false), rng = rng)
-            rng = MersenneTwister(1234)
-            sol_sse3 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 60, e_ops = e_ops, progress_bar = Val(false), rng = rng)
-            rng = MersenneTwister(1234)
+            sol_mc3 =
+                mcsolve(H, ψ0, tlist, c_ops, ntraj = 510, e_ops = e_ops, progress_bar = Val(false), rng = sol_mc1.rng)
+            sol_sse3 =
+                ssesolve(H, ψ0, tlist, c_ops, ntraj = 60, e_ops = e_ops, progress_bar = Val(false), rng = sol_sse1.rng)
             sol_sme3 = smesolve(
                 H,
                 ψ0,
@@ -782,7 +779,7 @@
                 ntraj = 60,
                 e_ops = e_ops,
                 progress_bar = Val(false),
-                rng = rng,
+                rng = sol_sme1.rng,
             )
 
             @test sol_mc1.expect ≈ sol_mc2.expect atol = 1e-10
