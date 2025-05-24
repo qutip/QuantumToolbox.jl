@@ -132,7 +132,7 @@ e_ops = [
 
 # solve dynamics 
 exp_me = mesolve(H_t, ψ0, tlist, c_ops; e_ops = e_ops, progress_bar = Val(false)).expect
-exp_mc = mcsolve(H_t, ψ0, tlist, c_ops; e_ops = e_ops, ntraj = 100, progress_bar = Val(false)).expect
+exp_mc = average_expect(mcsolve(H_t, ψ0, tlist, c_ops; e_ops = e_ops, ntraj = 100, progress_bar = Val(false)))
 
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))

@@ -89,7 +89,23 @@ Some other solvers can have other output.
 
 ## [Multiple trajectories solution](@id doc-TE:Multiple-trajectories-solution)
 
-This part is still under construction, please read the docstrings for the following functions first:
+The solutions are different for solvers which compute multiple trajectories, such as the [`TimeEvolutionMCSol`](@ref) (Monte Carlo) or the [`TimeEvolutionStochasticSol`](@ref) (stochastic methods). The expectation values and states for all trajectories at each time points will be stored in these solutions. The index-order of the elements in fields `states` and `expect` are:
 
-- [`TimeEvolutionMCSol`](@ref)
-- [`TimeEvolutionStochasticSol`](@ref)
+```julia
+sol.states[trajectory][time]
+sol.expect[e_op,trajectory,time]
+```
+
+We also provide the following functions for statistical analysis of multi-trajectory `sol`utions:
+
+| **Functions** | **Description** |
+|:------------|:----------------|
+| [`average_states(sol)`](@ref average_states) | Return the trajectory-averaged result states (as density [`Operator`](@ref)) at each time point. |
+| [`average_expect(sol)`](@ref average_expect) | Return the trajectory-averaged expectation values at each time point. |
+| [`std_expect(sol)`](@ref std_expect) | Return the trajectory-wise standard deviation of the expectation values at each time point. |
+
+Multi-trajectory solutions also keep the random number generator (`rng`) to allow recomputing the results:
+
+```julia
+rng = sol.rng # this can be specified as a keyword argument (`rng = rng`) to the solvers
+```
