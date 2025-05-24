@@ -70,6 +70,7 @@ c_ops = [sqrt(0.1) * a]
 e_ops = [a' * a, σm' * σm]
 
 sol_500 = mcsolve(H, ψ0, times, c_ops, e_ops=e_ops)
+expect_avg = average_expect(sol_500)
 
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
@@ -78,8 +79,8 @@ ax = Axis(fig[1, 1],
     ylabel = "Expectation values",
     title = "Monte Carlo time evolution (500 trajectories)",
 )
-lines!(ax, times, real(sol_500.expect[1,:]), label = "cavity photon number", linestyle = :solid)
-lines!(ax, times, real(sol_500.expect[2,:]), label = "atom excitation probability", linestyle = :dash)
+lines!(ax, times, real(expect_avg[1,:]), label = "cavity photon number", linestyle = :solid)
+lines!(ax, times, real(expect_avg[2,:]), label = "atom excitation probability", linestyle = :dash)
 
 axislegend(ax, position = :rt)
 
@@ -104,9 +105,9 @@ ax = Axis(fig[1, 1],
     ylabel = "Expectation values",
     title = "Monte Carlo time evolution",
 )
-lines!(ax, times, real(sol_1.expect[1,:]), label = "1 trajectory", linestyle = :dashdot)
-lines!(ax, times, real(sol_10.expect[1,:]), label = "10 trajectories", linestyle = :dash)
-lines!(ax, times, real(sol_100.expect[1,:]), label = "100 trajectories", linestyle = :solid)
+lines!(ax, times, real(average_expect(sol_1)[1,:]), label = "1 trajectory", linestyle = :dashdot)
+lines!(ax, times, real(average_expect(sol_10)[1,:]), label = "10 trajectories", linestyle = :dash)
+lines!(ax, times, real(average_expect(sol_100)[1,:]), label = "100 trajectories", linestyle = :solid)
 
 axislegend(ax, position = :rt)
 

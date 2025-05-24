@@ -94,7 +94,7 @@ tlist = LinRange(0, 50, 100)
 
 # monte-carlo
 sol_mc = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ntraj=100, progress_bar=false)
-exp_mc = real(sol_mc.expect[1, :])
+exp_mc = real(average_expect(sol_mc)[1, :])
 
 # master eq.
 sol_me = mesolve(H, ψ0, tlist, c_ops, e_ops=e_ops, progress_bar=false)

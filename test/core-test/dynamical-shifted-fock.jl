@@ -63,7 +63,7 @@
     )
     val_ss = abs2(sol0.expect[1, end])
     @test sum(abs2.(sol0.expect[1, :] .- sol_dsf_me.expect[1, :])) / (val_ss * length(tlist)) < 0.1
-    @test sum(abs2.(sol0.expect[1, :] .- sol_dsf_mc.expect[1, :])) / (val_ss * length(tlist)) < 0.1
+    @test sum(abs2.(sol0.expect[1, :] .- average_expect(sol_dsf_mc)[1, :])) / (val_ss * length(tlist)) < 0.1
 
     # Two cavities case
     F = 2
@@ -143,7 +143,7 @@
 
     val_ss = abs2(sol0.expect[1, end])
     @test sum(abs2.(sol0.expect[1, :] .- sol_dsf_me.expect[1, :])) / (val_ss * length(tlist)) < 0.6
-    @test sum(abs2.(sol0.expect[1, :] .- sol_dsf_mc.expect[1, :])) / (val_ss * length(tlist)) < 0.6
+    @test sum(abs2.(sol0.expect[1, :] .- average_expect(sol_dsf_mc)[1, :])) / (val_ss * length(tlist)) < 0.6
     @test sum(abs2.(sol0.expect[2, :] .- sol_dsf_me.expect[2, :])) / (val_ss * length(tlist)) < 0.6
-    @test sum(abs2.(sol0.expect[2, :] .- sol_dsf_mc.expect[2, :])) / (val_ss * length(tlist)) < 0.6
+    @test sum(abs2.(sol0.expect[2, :] .- average_expect(sol_dsf_mc)[2, :])) / (val_ss * length(tlist)) < 0.6
 end

@@ -1,10 +1,14 @@
-export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
+export TimeEvolutionSol
+export TimeEvolutionMultiTrajSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
+export average_states, average_expect, std_expect
 
 export liouvillian_floquet, liouvillian_generalized
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
 const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-3, reltol = 2e-3, save_everystep = false, save_end = true)
 const COL_TIMES_WHICH_INIT_SIZE = 200
+
+abstract type TimeEvolutionMultiTrajSol{Texpect} end
 
 @doc raw"""
     struct TimeEvolutionProblem
@@ -89,7 +93,7 @@ function Base.show(io::IO, sol::TimeEvolutionSol)
 end
 
 @doc raw"""
-    struct TimeEvolutionMCSol
+    struct TimeEvolutionMCSol <: TimeEvolutionMultiTrajSol
 
 A structure storing the results and some information from solving quantum trajectories of the Monte Carlo wave function time evolution.
 
@@ -97,34 +101,45 @@ A structure storing the results and some information from solving quantum trajec
 
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The time list of the evolution.
-- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
-- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
+- `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
+- `rng::AbstractRNG`: Initial random number generator for reproducibility.
 - `col_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
 - `col_which::Vector{Vector{Int}}`: The indices of which collapse operator was responsible for each quantum jump in `col_times`.
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
+
+# Notes
+
+The index-order of the elements in fields `states` and `expect` are:
+
+- `sol.states[trajectory][time]`
+- `sol.expect[e_op,trajectory,time]`
+
+We also provide the following functions for statistical analysis of multi-trajectory solutions.
+
+- [`average_states`](@ref)
+- [`average_expect`](@ref)
+- [`std_expect`](@ref)
 """
 struct TimeEvolutionMCSol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
-    TE<:Union{AbstractMatrix,Nothing},
-    TEA<:Union{AbstractArray,Nothing},
+    TE<:Union{AbstractArray,Nothing},
+    TR<:AbstractRNG,
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
     AlgT<:OrdinaryDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
-}
+} <: TimeEvolutionMultiTrajSol{TE}
     ntraj::Int
     times::TT
     states::TS
     expect::TE
-    average_expect::TE # Currently just a synonym for `expect`
-    runs_expect::TEA
+    rng::TR
     col_times::TJT
     col_which::TJW
     converged::Bool
@@ -142,7 +157,7 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
     if sol.expect isa Nothing
         print(io, "num_expect = 0\n")
     else
-        print(io, "num_expect = $(size(sol.average_expect, 1))\n")
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
     end
     print(io, "ODE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
@@ -151,7 +166,7 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
 end
 
 @doc raw"""
-    struct TimeEvolutionStochasticSol
+    struct TimeEvolutionStochasticSol <: TimeEvolutionMultiTrajSol
 
 A structure storing the results and some information from solving trajectories of the Stochastic time evolution.
 
@@ -159,31 +174,43 @@ A structure storing the results and some information from solving trajectories o
 
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The time list of the evolution.
-- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
-- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
+- `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
+- `rng::AbstractRNG`: Initial random number generator for reproducibility.
+- `measurement::Union{AbstractArray,Nothing}`: Measurements for each trajectories and stochastic collapse operators (`sc_ops`).
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
+
+# Notes
+
+The index-order of the elements in fields `states` and `expect` are:
+
+- `sol.states[trajectory][time]`
+- `sol.expect[e_op,trajectory,time]`
+
+We also provide the following functions for statistical analysis of multi-trajectory solutions.
+
+- [`average_states`](@ref)
+- [`average_expect`](@ref)
+- [`std_expect`](@ref)
 """
 struct TimeEvolutionStochasticSol{
     TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
-    TE<:Union{AbstractMatrix,Nothing},
-    TEA<:Union{AbstractArray,Nothing},
+    TE<:Union{AbstractArray,Nothing},
+    TR<:AbstractRNG,
     TEM<:Union{AbstractArray,Nothing},
     AlgT<:StochasticDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
-}
+} <: TimeEvolutionMultiTrajSol{TE}
     ntraj::Int
     times::TT
     states::TS
     expect::TE
-    average_expect::TE # Currently just a synonym for `expect`
-    runs_expect::TEA
+    rng::TR
     measurement::TEM
     converged::Bool
     alg::AlgT
@@ -200,13 +227,45 @@ function Base.show(io::IO, sol::TimeEvolutionStochasticSol)
     if sol.expect isa Nothing
         print(io, "num_expect = 0\n")
     else
-        print(io, "num_expect = $(size(sol.average_expect, 1))\n")
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
     end
     print(io, "SDE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
     print(io, "reltol = $(sol.reltol)\n")
     return nothing
 end
+
+@doc raw"""
+    average_states(sol::TimeEvolutionMultiTrajSol)
+
+Return the trajectory-averaged result states (as density [`Operator`](@ref)) at each time point.
+"""
+average_states(sol::TimeEvolutionMultiTrajSol) = mean(ket2dm, sol.states)
+
+@doc raw"""
+    average_expect(sol::TimeEvolutionMultiTrajSol)
+
+Return the trajectory-averaged expectation values at each time point.
+"""
+average_expect(sol::TimeEvolutionMultiTrajSol{TE}) where {TE<:AbstractArray} =
+    dropdims(mean(sol.expect, dims = 2), dims = 2)
+average_expect(::TimeEvolutionMultiTrajSol{Nothing}) = nothing
+
+@doc raw"""
+    std_expect(sol::TimeEvolutionMultiTrajSol)
+
+Return the trajectory-wise standard deviation of the expectation values at each time point.
+"""
+function std_expect(sol::TimeEvolutionMultiTrajSol{TE}) where {TE<:AbstractArray}
+    # the following standard deviation (std) is defined as the square-root of variance instead of pseudo-variance
+    # i.e., it is equivalent to (even for complex expectation values):
+    #    dropdims(
+    #        sqrt.(mean(abs2.(sol.expect), dims = 2) .- abs2.(mean(sol.expect, dims = 2))),
+    #        dims = 2
+    #    )
+    return dropdims(std(sol.expect, corrected = false, dims = 2), dims = 2)
+end
+std_expect(::TimeEvolutionMultiTrajSol{Nothing}) = nothing
 
 #######################################
 #=

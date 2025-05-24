@@ -32,6 +32,7 @@ core_tests = [
 ]
 
 if (GROUP == "All") || (GROUP == "Core")
+    import Statistics: mean
     using QuantumToolbox
     import QuantumToolbox: position, momentum
     import Random: MersenneTwister
