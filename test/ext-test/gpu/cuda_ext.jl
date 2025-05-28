@@ -155,13 +155,6 @@ end
 end
 
 @testset "CUDA ptrace" begin
-    using Test
-    using QuantumToolbox
-    import StaticArraysCore: SVector
-
-    using CUDA
-    using CUDA.CUSPARSE
-
     g = fock(2, 1)
     e = fock(2, 0)
     α = sqrt(0.7)
