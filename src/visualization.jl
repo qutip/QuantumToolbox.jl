@@ -150,6 +150,10 @@ end
 function render end
 
 function plot_bloch(state::QuantumObject{<:Union{Ket,Bra,Operator}}; library::Union{Symbol,Val} = :Makie, kwargs...)
-    # Convert library symbol to Val type for dispatch
-    return plot_bloch(Val(library), state; kwargs...)
+    lib_val = library isa Symbol ? Val(library) : library
+    return plot_bloch(lib_val, state; kwargs...)
+end
+
+function plot_bloch(::Val{T}, state::QuantumObject; kwargs...) where {T}
+    return error("Unsupported backend: $T. Try :Makie or another supported library.")
 end

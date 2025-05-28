@@ -305,21 +305,18 @@ where σ_i are the Pauli matrices.
 For higher-dimensional systems, projects onto the generalized Bloch sphere.
 """
 function _state_to_bloch(state::QuantumObject{<:Ket})
-    # Check if state is normalized
     if !isapprox(norm(state), 1.0, atol = 1e-6)
         @warn "State is not normalized. Normalizing before Bloch vector conversion."
         state = normalize(state)
     end
     N = length(state)
-    if N == 2  # Qubit case - standard Bloch sphere
+    if N == 2  # Qubit case
         ψ = state.data
         x = 2 * real(ψ[1] * conj(ψ[2]))
         y = 2 * imag(ψ[1] * conj(ψ[2]))
         z = abs2(ψ[1]) - abs2(ψ[2])
         return [x, y, z]
     else
-        # For higher dimensions, use generalized Gell-Mann basis
-        # This returns a vector in higher-dimensional Bloch space
         return _higher_dim_bloch_vector(state)
     end
 end
@@ -373,49 +370,24 @@ Plot the state on a Bloch sphere using Makie.jl.
   - `ax`: The Axis3 object
   - `bloch`: The Bloch sphere object
 """
-function QuantumToolbox.plot_bloch(
-    ::Val{:Makie},
-    state::QuantumObject{<:Union{Ket,Bra,Operator}};
-    location::Union{GridPosition,Nothing} = nothing,
-    show_axes::Bool = true,
-    show_labels::Bool = true,
-    sphere_alpha::Real = 0.1,
-    vector_color::Union{Symbol,String} = :red,
-    kwargs...,
-)
-    # Convert Bra to Ket if needed
-    if isbra(state)
-        state = dag(state)
-    end
-    # Handle both state vectors and density matrices
-    if isket(state)
-        bloch_vec = _state_to_bloch(state)
-    else
-        bloch_vec = _dm_to_bloch(state)
-    end
-    # Create Bloch sphere
-    b = Bloch()
-    # Configure appearance
-    b.sphere_alpha = sphere_alpha
-    b.vector_color = [string(vector_color)]
-    b.xlabel = show_labels ? ["x", "-x"] : ["", ""]
-    b.ylabel = show_labels ? ["y", "-y"] : ["", ""]
-    b.zlabel = show_labels ? ["|0⟩", "|1⟩"] : ["", ""]
-    # Add the state vector
-    add_vectors!(b, bloch_vec)
-    # Render
-    fig, location = _getFigAndLocation(location)
-    fig, ax = render(b; location = location, kwargs...)
-    return fig, ax
+function QuantumToolbox.plot_bloch(::Val{:Makie}, state::QuantumObject{<:Union{Ket,Bra}}; kwargs...)
+    state = isbra(state) ? dag(state) : state
+    bloch_vec = _state_to_bloch(state)
+    return _render_bloch_makie(bloch_vec; kwargs...)
 end
 
-# Add method for density matrices
-function QuantumToolbox.plot_bloch(::Val{:Makie}, ρ::QuantumObject{<:Operator}; kwargs...)
-    # For density matrices, convert to Bloch vector using expectation values
+"""
+    _dm_to_bloch(ρ::QuantumObject{<:Operator}) -> Vector{Float64}
+
+Convert a density matrix to its Bloch vector representation.
+For qubits, uses Pauli matrices. For higher dimensions, uses generalized Gell-Mann basis.
+"""
+function _dm_to_bloch(ρ::QuantumObject{<:Operator})
     if !ishermitian(ρ)
         @warn "Density matrix is not Hermitian. Results may not be meaningful."
     end
     N = size(ρ, 1)
+
     if N == 2  # Qubit case
         σx = sigmax()
         σy = sigmay()
@@ -423,14 +395,35 @@ function QuantumToolbox.plot_bloch(::Val{:Makie}, ρ::QuantumObject{<:Operator};
         x = real(expect(σx, ρ))
         y = real(expect(σy, ρ))
         z = real(expect(σz, ρ))
-        bloch_vec = [x, y, z]
+        return [x, y, z]
     else
-        # For higher dimensions, use generalized Gell-Mann basis
-        bloch_vec = _higher_dim_bloch_vector(ρ)
+        return _higher_dim_bloch_vector(ρ)
     end
+end
+
+function QuantumToolbox.plot_bloch(::Val{:Makie}, ρ::QuantumObject{<:Operator}; kwargs...)
+    bloch_vec = _dm_to_bloch(ρ)
+    return _render_bloch_makie(bloch_vec; kwargs...)
+end
+
+function _render_bloch_makie(
+    bloch_vec::Vector{Float64};
+    location = nothing,
+    show_axes = true,
+    show_labels = true,
+    sphere_alpha = 0.1,
+    vector_color = :red,
+    kwargs...,
+)
     b = Bloch()
+    b.sphere_alpha = sphere_alpha
+    b.vector_color = [string(vector_color)]
+    b.xlabel = show_labels ? ["x", "-x"] : ["", ""]
+    b.ylabel = show_labels ? ["y", "-y"] : ["", ""]
+    b.zlabel = show_labels ? ["|0⟩", "|1⟩"] : ["", ""]
     add_vectors!(b, bloch_vec)
-    fig, location = _getFigAndLocation(get(kwargs, :location, nothing))
+
+    fig, location = _getFigAndLocation(location)
     fig, ax = render(b; location = location, kwargs...)
     return fig, ax
 end
