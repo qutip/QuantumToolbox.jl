@@ -38,11 +38,11 @@ The tests are divided into several test groups, where the group names are define
 make GROUP=Core test
 ```
 
-### [Test items](@id doc-Contribute:Test-items)
+### [Test Item Framework for Core tests](@id doc-Contribute:Test-Item-Framework-for-Core-tests)
 
-Our tests are provided using the [Test Item Framework](https://www.julia-vscode.org/docs/stable/userguide/testitems/), which structures the test code into `@testitems` and makes it easy to run individually.
+The tests in `GROUP=Core` are provided using the [Test Item Framework](https://www.julia-vscode.org/docs/stable/userguide/testitems/), which structures the test codes into `@testitems` and makes it easier to run individually.
 
-The [VS Code](https://code.visualstudio.com/) and its [Julia extension](https://www.julia-vscode.org/) provides us with options to run individual `@testitems`. It is much easier to find the specific test that failed since the [Julia extension](https://www.julia-vscode.org/) in [VS Code](https://code.visualstudio.com/) will collect all these test failures and then display them in a structured way, directly at the place in the code where a specific test failed. See [here](https://www.julia-vscode.org/docs/stable/userguide/testitems/) for more details.
+The [VS Code](https://code.visualstudio.com/) and its [Julia extension](https://www.julia-vscode.org/) provides us with options to run individual `@testitems`. It is much easier to find the specific core test that failed since the [Julia extension](https://www.julia-vscode.org/) in [VS Code](https://code.visualstudio.com/) will collect all core test failures and then display them in a structured way, directly at the place in the code where a specific core test failed. See [here](https://www.julia-vscode.org/docs/stable/userguide/testitems/) for more details.
 
 ## [Julia Code Format](@id doc-Contribute:Julia-Code-Format)
 

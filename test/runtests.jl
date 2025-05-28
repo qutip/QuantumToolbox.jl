@@ -1,54 +1,80 @@
+using Test
 using TestItemRunner
 using Pkg
-
-using QuantumToolbox
 
 const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext"]
 
 const GROUP = get(ENV, "GROUP", "All")
 (GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP"))
 
-testfilter = ti -> begin
-    if (GROUP == "All") || (GROUP == "Core")
-        return :core in ti.tags
-    end
+# Core tests
+if (GROUP == "All") || (GROUP == "Core")
+    import QuantumToolbox
 
-    if GROUP == "AutoDiff_Ext"
-        return :autodiff in ti.tags
-    end
+    QuantumToolbox.about()
 
-    if GROUP == "Makie_Ext"
-        return :makie in ti.tags
-    end
-
-    if GROUP == "CUDA_Ext"
-        return :cuda in ti.tags
-    end
-
-    if GROUP == "Code-Quality"
-        return false
-    end
+    println("\nStart running Core tests...\n")
+    @run_package_tests verbose=true
 end
 
-QuantumToolbox.about()
+########################################################################
+# Use traditional Test.jl instead of TestItemRunner.jl for other tests #
+########################################################################
 
-println("\nStart running tests [for GROUP = $GROUP]...\n")
+const testdir = dirname(@__FILE__)
 
-# TestItemRunner.jl
-@run_package_tests filter=testfilter
-(GROUP == "Code-Quality") && println("[Other tests skipped]\n")
-
-# Use traditional Test.jl instead of TestItemRunner.jl for Aqua and JET
 if (GROUP == "All") || (GROUP == "Code-Quality")
-    println("Start running code quality tests...")
-
     Pkg.activate("core-test/code-quality")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
 
-    using Test
     using QuantumToolbox
     using Aqua, JET
 
-    include(joinpath(dirname(@__FILE__), "core-test", "code-quality", "code_quality.jl"))
+    (GROUP == "Code-Quality") && QuantumToolbox.about() # print version info. for code quality CI in GitHub
+
+    include(joinpath(testdir, "core-test", "code-quality", "code_quality.jl"))
+end
+
+if (GROUP == "AutoDiff_Ext")
+    Pkg.activate("ext-test/cpu/autodiff")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+
+    using QuantumToolbox
+    using Zygote
+    using Enzyme
+    using SciMLSensitivity
+
+    QuantumToolbox.about()
+
+    include(joinpath(testdir, "ext-test", "cpu", "autodiff", "zygote.jl"))
+end
+
+if (GROUP == "Makie_Ext")
+    Pkg.activate("ext-test/cpu/makie")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+
+    using QuantumToolbox
+    QuantumToolbox.about()
+
+    # CarioMakie is imported in the following script
+    include(joinpath(testdir, "ext-test", "cpu", "makie", "makie_ext.jl"))
+end
+
+if (GROUP == "CUDA_Ext")
+    Pkg.activate("ext-test/gpu")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+
+    using QuantumToolbox
+    using CUDA
+    using CUDA.CUSPARSE
+    # CUDA.allowscalar(false) # This is already set in the extension script
+
+    QuantumToolbox.about()
+    CUDA.versioninfo()
+
+    include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
 end

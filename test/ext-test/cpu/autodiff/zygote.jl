@@ -1,10 +1,4 @@
-@testitem "Zygote Extension" tags=[:autodiff] default_imports=false begin
-    using Test
-    using QuantumToolbox
-    using Zygote
-    using Enzyme
-    using SciMLSensitivity
-
+@testset "Zygote Extension" verbose=true begin
     @testset "sesolve" begin
         coef_Ω(p, t) = p[1]
 

@@ -1,12 +1,4 @@
-@testitem "CUDA Extension" tags=[:cuda] default_imports=false begin
-    using Test
-    using QuantumToolbox
-    import LinearAlgebra: Diagonal
-
-    using CUDA
-    using CUDA.CUSPARSE
-    CUDA.versioninfo()
-
+@testset "CUDA Extension" verbose = true begin
     # Test that scalar indexing is disallowed
     @test_throws ErrorException CUDA.rand(1)[1]
 
@@ -137,12 +129,7 @@
     @test all([isapprox(sol_cpu.expect[i], sol_gpu32.expect[i]; atol = 1e-6) for i in 1:length(tlist)])
 end
 
-@testitem "CUDA steadystate" tags=[:cuda] default_imports=false begin
-    using Test
-    using QuantumToolbox
-    using CUDA
-    using CUDA.CUSPARSE
-
+@testset "CUDA steadystate" begin
     N = 50
     Δ = 0.01
     F = 0.1
@@ -167,7 +154,7 @@ end
     @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csr.data) atol = 1e-8 * length(ρ_ss_cpu)
 end
 
-@testitem "CUDA ptrace" tags=[:cuda] default_imports=false begin
+@testset "CUDA ptrace" begin
     using Test
     using QuantumToolbox
     import StaticArraysCore: SVector
