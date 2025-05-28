@@ -1,5 +1,5 @@
 export spectrum, spectrum_correlation_fft
-export SpectrumSolver, ExponentialSeries, PseudoInverse
+export SpectrumSolver, ExponentialSeries, PseudoInverse, Lanczos
 
 abstract type SpectrumSolver end
 
@@ -25,6 +25,21 @@ struct PseudoInverse{MT<:SciMLLinearSolveAlgorithm} <: SpectrumSolver
 end
 
 PseudoInverse(; alg::SciMLLinearSolveAlgorithm = KrylovJL_GMRES()) = PseudoInverse(alg)
+
+@doc raw"""
+    Lanczos(; tol = 1e-8, maxiter = 5000, verbose = 0)
+
+A solver which solves [`spectrum`](@ref) by using a non-symmetric Lanczos variant of the algorithm in [Koch2011](https://www.cond-mat.de/events/correl11/manuscripts/koch.pdf).
+The nonsymmetric Lanczos algorithm is adapted from Algorithm 6.6 in [Saad2011](https://www-users.cse.umn.edu/~saad/eig_book_2ndEd.pdf).
+The running estimate is updated via a [Wallis-Euler recursion](https://en.wikipedia.org/wiki/Continued_fraction).
+"""
+struct Lanczos{T<:Real,IT<:Int} <: SpectrumSolver
+    tol::T
+    maxiter::IT
+    verbose::IT
+end
+
+Lanczos(; tol = 1e-8, maxiter = 5000, verbose = 0) = Lanczos(tol, maxiter, verbose)
 
 @doc raw"""
     spectrum(H::QuantumObject,
@@ -142,6 +157,141 @@ function _spectrum(
     end
 
     return spec
+end
+
+function _spectrum(
+    L::QuantumObject{SuperOperator},
+    ωlist::AbstractVector,
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
+    solver::Lanczos;
+    kwargs...,
+)
+    check_dimensions(L, A, B)
+
+    # Define type shortcuts
+    fT = _FType(L)
+    cT = _CType(L)
+
+    # Handle input frequency range
+    ωList = convert(Vector{fT}, ωlist) # Convert it to support GPUs and avoid type instabilities
+    Length = length(ωList)
+    #spec = Vector{fT}(undef, Length)
+
+    # Calculate |v₁> = B|ρss>
+    ρss = mat2vec(steadystate(L))
+    vₖ = Array{cT}((spre(B) * ρss).data)
+
+    # Calculate <w₁| = <I|A
+    D = prod(L.dimensions)
+    Ivec = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(cT, D)) # same as vec(system_identity_matrix)
+    wₖ = transpose(typeof(vₖ)(Ivec)) * spre(A).data
+
+    # Store the norm of the Green's function before renormalizing |v₁> and <w₁|
+    gfNorm = abs(wₖ * vₖ)
+    vₖ ./= sqrt(gfNorm)
+    wₖ ./= sqrt(gfNorm)
+
+    # println("  type: $(typeof(vₖ))")
+    # println("  type: $(typeof(wₖ))")
+
+    # Current and previous estimates of the spectrum
+    lanczosFactor   = zeros(cT, Length)
+    lanczosFactor₋₁ = zeros(cT, Length)
+
+    # Tridiagonal matrix elements
+    αₖ = cT( 0)
+    βₖ = cT(-1)
+    δₖ = cT(+1)
+
+    # Current and up to second-to-last A and B Euler sequences
+    A₋₂ =  ones(cT, Length)
+    A₋₁ = zeros(cT, Length)
+    Aₖ  = zeros(cT, Length)
+    B₋₂ = zeros(cT, Length)
+    B₋₁ =  ones(cT, Length)
+    Bₖ  = zeros(cT, Length)
+
+    # Maximum norm and residue
+    maxNorm    = zeros(cT, length(ωList))
+    maxResidue = fT(0.0)
+
+    # Previous and next left/right Krylov vectors
+    v₋₁ = zeros(cT, (D^2, 1))
+    v₊₁ = zeros(cT, (D^2, 1))
+    w₋₁ = zeros(cT, (1, D^2))
+    w₊₁ = zeros(cT, (1, D^2))
+
+    # Frequency of renormalization
+    renormFrequency::typeof(solver.maxiter) = 1
+
+    # Loop over the Krylov subspace(s)
+    for k in 1:solver.maxiter
+        # k-th diagonal element
+        αₖ = (wₖ * L.data) * vₖ
+        
+        # Update A(k), B(k) and continuous fraction; normalization avoids overflow
+        Aₖ .= (-1im .* ωList .+ αₖ) .* A₋₁ .- (βₖ * δₖ) .* A₋₂
+        Bₖ .= (-1im .* ωList .+ αₖ) .* B₋₁ .- (βₖ * δₖ) .* B₋₂
+        lanczosFactor₋₁ .= lanczosFactor
+        lanczosFactor .= Aₖ ./ Bₖ
+
+        # Renormalize Euler sequences to avoid overflow
+        if k % renormFrequency == 0
+            maxNorm .= max.(abs.(Aₖ), abs.(Bₖ))  # Note: the MATLAB and C++ codes return the actual complex number
+            Aₖ ./= maxNorm
+            Bₖ ./= maxNorm
+            A₋₁ ./= maxNorm
+            B₋₁ ./= maxNorm
+        end
+
+        # Check for convergence
+        maxResidue = maximum(abs.(lanczosFactor .- lanczosFactor₋₁)) / 
+                     max(maximum(abs.(lanczosFactor)), maximum(abs.(lanczosFactor₋₁)))
+        if maxResidue <= solver.tol
+            if solver.verbose > 1
+                println("spectrum(): solver::Lanczos converged after $(k) iterations")
+            end
+            break
+        end
+
+        # (k+1)-th left/right vectors, orthogonal to previous ones
+        # Consider using explicit BLAS calls
+        v₊₁ .= L.data * vₖ .- αₖ .* vₖ .- βₖ .* v₋₁
+        w₊₁ .= wₖ * L.data .- αₖ .* wₖ .- δₖ .* w₋₁
+        v₋₁ .= vₖ
+        w₋₁ .= wₖ
+        vₖ  .= v₊₁
+        wₖ  .= w₊₁
+
+        # k-th off-diagonal elements
+        buf = wₖ * vₖ
+        δₖ  = sqrt(abs(buf))
+        βₖ  = buf / δₖ
+
+        # Normalize (k+1)-th left/right vectors
+        vₖ ./= δₖ
+        wₖ ./= βₖ
+
+        # Update everything for the next cycle
+        A₋₂ .= A₋₁
+        A₋₁ .= Aₖ
+        B₋₂ .= B₋₁
+        B₋₁ .= Bₖ
+    end
+
+    if solver.verbose > 0
+        if maxResidue > solver.tol
+            println("spectrum(): maxiter = $(solver.maxiter) reached before convergence!")
+            println("spectrum(): Max residue = $maxResidue")
+            println("spectrum(): Consider increasing maxiter and/or tol")
+        end
+    end
+
+    # Restore the norm
+    lanczosFactor .= gfNorm .* lanczosFactor
+
+    return -2 .* real( lanczosFactor )
 end
 
 @doc raw"""
