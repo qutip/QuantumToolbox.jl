@@ -134,6 +134,8 @@ _dense_similar(A::AbstractArray, args...) = similar(A, args...)
 _dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
 
 _sparse_similar(A::AbstractArray, args...) = sparse(args...)
+_sparse_similar(A::AbstractArray, m::Int, n::Int) = spzeros(eltype(A), m, n)
+_sparse_similar(A::AbstractArray, rows, cols, vals, m::Int, n::Int) = sparse(rows, cols, vals, m, n)
 
 _Ginibre_ensemble(n::Int, rank::Int = n) = randn(ComplexF64, n, rank) / sqrt(n)
 

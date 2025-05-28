@@ -370,29 +370,62 @@ function _steadystate_fourier(
     n_list = (-n_max):n_max
 
     weight = 1
-    Mn = sparse(ones(Ns), [Ns * (j - 1) + j for j in 1:Ns], fill(weight, Ns), N, N)
+    rows = _dense_similar(L_0_mat, Ns)
+    cols = _dense_similar(L_0_mat, Ns)
+    vals = _dense_similar(L_0_mat, Ns)
+    fill!(rows, 1)
+    for j in 1:Ns
+        cols[j] = Ns * (j - 1) + j
+    end
+    fill!(vals, weight)
+    Mn = _sparse_similar(L_0_mat, rows, cols, vals, N, N)
     L = L_0_mat + Mn
 
-    M = spzeros(T, n_fourier * N, n_fourier * N)
-    M += kron(spdiagm(1 => ones(n_fourier - 1)), L_m_mat)
-    M += kron(spdiagm(-1 => ones(n_fourier - 1)), L_p_mat)
-    for i in 1:n_fourier
-        n = n_list[i]
-        M += kron(sparse([i], [i], one(T), n_fourier, n_fourier), L - 1im * ωd * n * I)
+    M = _sparse_similar(L_0_mat, n_fourier * N, n_fourier * N)
+
+    # Add superdiagonal blocks (L_m)
+    for i in 1:(n_fourier-1)
+        rows_block = _dense_similar(L_0_mat, N)
+        cols_block = _dense_similar(L_0_mat, N)
+        fill!(rows_block, i)
+        fill!(cols_block, i+1)
+        block = _sparse_similar(L_0_mat, rows_block, cols_block, ones(N), n_fourier, n_fourier)
+        M += kron(block, L_m_mat)
     end
 
-    v0 = zeros(T, n_fourier * N)
-    v0[n_max*N+1] = weight
+    # Add subdiagonal blocks (L_p)
+    for i in 1:(n_fourier-1)
+        rows_block = _dense_similar(L_0_mat, N)
+        cols_block = _dense_similar(L_0_mat, N)
+        fill!(rows_block, i+1)
+        fill!(cols_block, i)
+        block = _sparse_similar(L_0_mat, rows_block, cols_block, ones(N), n_fourier, n_fourier)
+        M += kron(block, L_p_mat)
+    end
 
-    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
+    # Add diagonal blocks (L - i*ωd*n)
+    for i in 1:n_fourier
+        n = n_list[i]
+        block_diag = L - 1im * ωd * n * I
+        rows_block = _dense_similar(L_0_mat, N)
+        cols_block = _dense_similar(L_0_mat, N)
+        fill!(rows_block, i)
+        fill!(cols_block, i)
+        block = _sparse_similar(L_0_mat, rows_block, cols_block, ones(N), n_fourier, n_fourier)
+        M += kron(block, block_diag)
+    end
+
+    v0 = _dense_similar(L_0_mat, n_fourier * N)
+    fill!(v0, 0)
+    allowed_setindex!(v0, weight, n_max * N + 1)
+
     if !isnothing(solver.Pl)
         kwargs = merge((; kwargs...), (Pl = solver.Pl(M),))
     elseif isa(M, SparseMatrixCSC)
         kwargs = merge((; kwargs...), (Pl = ilu(M, τ = 0.01),))
     end
     !isnothing(solver.Pr) && (kwargs = merge((; kwargs...), (Pr = solver.Pr(M),)))
-    !haskey(kwargs, :abstol) && (kwargs = merge((; kwargs...), (abstol = tol,)))
-    !haskey(kwargs, :reltol) && (kwargs = merge((; kwargs...), (reltol = tol,)))
+    kwargs = merge((abstol = tol, reltol = tol), kwargs)
 
     prob = LinearProblem(M, v0)
     ρtot = solve(prob, solver.alg; kwargs...).u
