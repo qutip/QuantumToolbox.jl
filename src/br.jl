@@ -1,5 +1,3 @@
-import QuantumToolbox: _spre, _spost, _sprepost, makeVal, getVal
-
 @doc raw"""
     bloch_redfield_tensor(
         H::QuantumObject{Operator},
@@ -55,74 +53,6 @@ function bloch_redfield_tensor(
         return R0 + SU * R1 * SU'
     else
         return SU' * R0 * SU + R1, U
-    end
-end
-
-
-function brcrossterm(
-        H::T, a_op::T, b_op::T, spectra::F; sec_cutoff::Real=0.1,
-        fock_basis::Bool=false
-        ) where {T<:QuantumObject{Operator}, F<:Function}
-    return brcrossterm(H, a_op, b_op, spectra, sec_cutoff, makeVal(fock_basis))
-end
-
-function brcrossterm(
-        H::T, a_op::T, b_op::T, spectra::F, sec_cutoff::Real, fock_basis::Val{true}
-        ) where {T<:QuantumObject{Operator}, F<:Function}
-    rst = eigenstates(H)
-    return _brcrossterm(rst, a_op, b_op, spectra, sec_cutoff, Val(true))
-end
-
-function brcrossterm(
-        H::T, a_op::T, b_op::T, spectra::F, sec_cutoff::Real, fock_basis::Val{false}
-        ) where {T<:QuantumObject{Operator}, F<:Function}
-    rst = eigenstates(H)
-    return _brcrossterm(rst, a_op, b_op, spectra, sec_cutoff, Val(false)), Qobj(rst.vectors, Operator(), rst.dimensions)
-end
-
-function _brcrossterm(
-        rst::EigsolveResult,
-        a_op::T,
-        b_op::T,
-        spectra::F,
-        sec_cutoff::Real,
-        fock_basis::Union{Val{true},Val{false}}
-    ) where {T<:QuantumObject{Operator},F<:Function}
-    
-    _check_br_spectra(spectra)
-    
-    cutoff = (sec_cutoff == -1) ? Inf : sec_cutoff |> float
-    U, N = rst.vectors, length(rst.values)
-    
-    skew = @. rst.values - rst.values' |> real
-    spectrum = spectra.(skew)
-
-    A_mat = U' * a_op.data * U
-    B_mat = U' * b_op.data * U
-    
-    m_cut = similar(A_mat)
-    map!(x -> abs(x) < cutoff, m_cut, skew)
-
-    ac_term = (A_mat .* spectrum) * B_mat
-    bd_term = A_mat * (B_mat .* trans(spectrum))
-    ac_term .*= m_cut
-    bd_term .*= m_cut
-
-    Id = I(N)
-    vec_skew = vec(skew)
-    M_cut = @. abs(vec_skew - vec_skew') < cutoff
-
-    out = 1/2 * (
-        + QuantumToolbox._sprepost(B_mat .* trans(spectrum), A_mat)
-        + QuantumToolbox._sprepost(B_mat, A_mat .* spectrum)
-        - _spost(ac_term, Id) 
-        - QuantumToolbox._spre(bd_term, Id)
-    ) .* M_cut
-
-    if getVal(fock_basis)
-        return QuantumObject(_sprepost(U, U') * out * _sprepost(U', U), SuperOperator(), rst.dimensions)
-    else
-        return QuantumObject(out, SuperOperator(), rst.dimensions)
     end
 end
 
@@ -200,10 +130,10 @@ function _brterm(
     end
     
     out = 0.5 * (
-        + QuantumToolbox._sprepost(A_mat .* trans(spectrum), A_mat)
-        + QuantumToolbox._sprepost(A_mat, A_mat .* spectrum)
+        + _sprepost(A_mat .* trans(spectrum), A_mat)
+        + _sprepost(A_mat, A_mat .* spectrum)
         - _spost(ac_term, Id) 
-        - QuantumToolbox._spre(bd_term, Id)
+        - _spre(bd_term, Id)
     )
 
     (sec_cutoff != -1) && (out .*= M_cut)
