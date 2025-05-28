@@ -1,3 +1,35 @@
+function bloch_redfield_tensor(
+        H::QuantumObject{Operator},
+        a_ops::Union{AbstractVector, Tuple},
+        c_ops::Union{AbstractVector, Tuple, Nothing}=nothing;
+        sec_cutoff::Real=0.1,
+        fock_basis::Union{Val,Bool}=Val(false)
+    )
+    rst = eigenstates(H)
+    U = QuantumObject(rst.vectors, Operator(), H.dimensions)
+    sec_cutoff = float(sec_cutoff)
+
+    # in fock basis
+    R0 = liouvillian(H, c_ops)
+    
+    # set fock_basis=Val(false) and change basis together at the end
+    R1 = 0
+    if !isempty(a_ops)
+        R1 += mapreduce(x -> _brterm(rst, x[1], x[2], sec_cutoff, Val(false)), +, a_ops) 
+        
+        # do (a_op, spectra)
+        #     _brterm(rst, a_op, spectra, sec_cutoff, Val(false))
+        # end
+    end
+
+    SU = sprepost(U, U') # transformation matrix from eigen basis back to fock basis
+    if getVal(fock_basis)
+        return R0 + SU * R1 * SU'
+    else
+        return SU' * R0 * SU + R1, U
+    end
+end
+
 function brterm(
         H::QuantumObject{Operator},
         a_op::QuantumObject{Operator}, 
