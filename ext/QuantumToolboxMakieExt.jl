@@ -299,14 +299,14 @@ _figFromChildren(::Nothing) = throw(ArgumentError("No Figure has been found at t
 Convert a quantum state (Ket) to its Bloch vector representation.
 
 For a 2-level system (qubit), the Bloch vector components are calculated as:
-    r_i = ⟨ψ|σ_i|ψ⟩
+r_i = ⟨ψ|σ_i|ψ⟩
 where σ_i are the Pauli matrices.
 
 For higher-dimensional systems, projects onto the generalized Bloch sphere.
 """
 function _state_to_bloch(state::QuantumObject{<:Ket})
     # Check if state is normalized
-    if !isapprox(norm(state), 1.0, atol=1e-6)
+    if !isapprox(norm(state), 1.0, atol = 1e-6)
         @warn "State is not normalized. Normalizing before Bloch vector conversion."
         state = normalize(state)
     end
@@ -336,16 +336,16 @@ function _higher_dim_bloch_vector(state::QuantumObject{<:Ket})
     bloch_vec = zeros(Float64, N^2 - 1)
     # Symmetric (off-diagonal) components
     idx = 1
-    for j = 1:N
-        for k = j+1:N
+    for j in 1:N
+        for k in (j+1):N
             bloch_vec[idx] = 2 * real(ψ[j] * conj(ψ[k]))
             bloch_vec[idx+1] = 2 * imag(ψ[j] * conj(ψ[k]))
             idx += 2
         end
     end
     # Diagonal components
-    for l = 2:N
-        for m = 1:l-1
+    for l in 2:N
+        for m in 1:(l-1)
             bloch_vec[idx] = sqrt(2/(l*(l-1))) * (abs2(ψ[m]) - (l-1)*abs2(ψ[l]))
             idx += 1
         end
@@ -359,17 +359,19 @@ end
 Plot the state on a Bloch sphere using Makie.jl.
 
 # Arguments
-- `state`: Quantum state to visualize (must be a Ket or Bra)
-- `show_axes`: Whether to show x/y/z axes (default: true)
-- `show_labels`: Whether to show axis labels (default: true)
-- `sphere_alpha`: Transparency of the sphere (default: 0.1)
-- `vector_color`: Color of the state vector (default: :red)
-- `kwargs...`: Additional arguments passed to the Bloch sphere renderer
+
+  - `state`: Quantum state to visualize (must be a Ket or Bra)
+  - `show_axes`: Whether to show x/y/z axes (default: true)
+  - `show_labels`: Whether to show axis labels (default: true)
+  - `sphere_alpha`: Transparency of the sphere (default: 0.1)
+  - `vector_color`: Color of the state vector (default: :red)
+  - `kwargs...`: Additional arguments passed to the Bloch sphere renderer
 
 # Returns
-- `fig`: The Makie Figure object
-- `ax`: The Axis3 object
-- `bloch`: The Bloch sphere object
+
+  - `fig`: The Makie Figure object
+  - `ax`: The Axis3 object
+  - `bloch`: The Bloch sphere object
 """
 function QuantumToolbox.plot_bloch(
     ::Val{:Makie},
@@ -379,7 +381,7 @@ function QuantumToolbox.plot_bloch(
     show_labels::Bool = true,
     sphere_alpha::Real = 0.1,
     vector_color::Union{Symbol,String} = :red,
-    kwargs...
+    kwargs...,
 )
     # Convert Bra to Ket if needed
     if isbra(state)
@@ -403,16 +405,12 @@ function QuantumToolbox.plot_bloch(
     add_vectors!(b, bloch_vec)
     # Render
     fig, location = _getFigAndLocation(location)
-    fig, ax = render(b; location=location, kwargs...)
+    fig, ax = render(b; location = location, kwargs...)
     return fig, ax
 end
 
 # Add method for density matrices
-function QuantumToolbox.plot_bloch(
-    ::Val{:Makie},
-    ρ::QuantumObject{<:Operator};
-    kwargs...
-)
+function QuantumToolbox.plot_bloch(::Val{:Makie}, ρ::QuantumObject{<:Operator}; kwargs...)
     # For density matrices, convert to Bloch vector using expectation values
     if !ishermitian(ρ)
         @warn "Density matrix is not Hermitian. Results may not be meaningful."
@@ -433,7 +431,7 @@ function QuantumToolbox.plot_bloch(
     b = Bloch()
     add_vectors!(b, bloch_vec)
     fig, location = _getFigAndLocation(get(kwargs, :location, nothing))
-    fig, ax = render(b; location=location, kwargs...)
+    fig, ax = render(b; location = location, kwargs...)
     return fig, ax
 end
 
@@ -447,17 +445,17 @@ function _higher_dim_bloch_vector(ρ::QuantumObject{<:Operator})
     bloch_vec = zeros(Float64, N^2 - 1)
     # Symmetric (off-diagonal) components
     idx = 1
-    for j = 1:N
-        for k = j+1:N
-            bloch_vec[idx] = real(ρ[j,k] + ρ[k,j])
-            bloch_vec[idx+1] = imag(ρ[j,k] - ρ[k,j])
+    for j in 1:N
+        for k in (j+1):N
+            bloch_vec[idx] = real(ρ[j, k] + ρ[k, j])
+            bloch_vec[idx+1] = imag(ρ[j, k] - ρ[k, j])
             idx += 2
         end
     end
     # Diagonal components
-    for l = 2:N
-        for m = 1:l-1
-            bloch_vec[idx] = sqrt(2/(l*(l-1))) * (real(ρ[m,m]) - (l-1)*real(ρ[l,l]))
+    for l in 2:N
+        for m in 1:(l-1)
+            bloch_vec[idx] = sqrt(2/(l*(l-1))) * (real(ρ[m, m]) - (l-1)*real(ρ[l, l]))
             idx += 1
         end
     end

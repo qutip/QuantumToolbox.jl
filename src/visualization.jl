@@ -1,4 +1,5 @@
-export plot_wigner, plot_fock_distribution, plot_bloch, Bloch, add_points!, add_vectors!, add_line!, add_arc!, clear!, render
+export plot_wigner,
+    plot_fock_distribution, plot_bloch, Bloch, add_points!, add_vectors!, add_line!, add_arc!, clear!, render
 
 @doc raw"""
     plot_wigner(
@@ -91,47 +92,51 @@ mutable struct Bloch
     ax::Any
 
     function Bloch()
-        new(
-            [], [], [], [],
-            "black", 20,
-            0.1, "gray", 1,
+        return new(
+            [],
+            [],
+            [],
+            [],
+            "black",
+            20,
+            0.1,
+            "gray",
+            1,
             ["blue", "red", "green", "#CC6600"],
             [:circle, :rect, :diamond, :utriangle],
             [5, 7, 9, 11],
-            0.2, "#FFDDDD",
+            0.2,
+            "#FFDDDD",
             [700, 700],
             ["green", "#CC6600", "blue", "red"],
-            1, [-60, 30],
-            ["x", "-x"], [1.1, -1.1],
-            ["y", "-y"], [1.2, -1.2],
-            ["|0⟩", "|1⟩"], [1.2, -1.2],
-            nothing, nothing
+            1,
+            [-60, 30],
+            ["x", "-x"],
+            [1.1, -1.1],
+            ["y", "-y"],
+            [1.2, -1.2],
+            ["|0⟩", "|1⟩"],
+            [1.2, -1.2],
+            nothing,
+            nothing,
         )
     end
 end
 
-function add_points!(b::Bloch, pnt::Vector{<:Real})
-    push!(b.points, convert(Vector{Float64}, pnt))
-end
-function add_points!(b::Bloch, pnts::Vector{<:Vector{<:Real}})
-    append!(b.points, [convert(Vector{Float64}, p) for p in pnts])
-end
+add_points!(b::Bloch, pnt::Vector{<:Real}) = push!(b.points, convert(Vector{Float64}, pnt))
+add_points!(b::Bloch, pnts::Vector{<:Vector{<:Real}}) = append!(b.points, [convert(Vector{Float64}, p) for p in pnts])
 function add_vectors!(b::Bloch, vec::Vector{<:Real})
     normalized_vec = normalize(convert(Vector{Float64}, vec))
-    push!(b.vectors, normalized_vec)
+    return push!(b.vectors, normalized_vec)
 end
 function add_vectors!(b::Bloch, vecs::Vector{<:Vector{<:Real}})
-    append!(b.vectors, [normalize(convert(Vector{Float64}, v)) for v in vecs])
+    return append!(b.vectors, [normalize(convert(Vector{Float64}, v)) for v in vecs])
 end
 function add_line!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real})
-    push!(b.lines, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2)])
+    return push!(b.lines, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2)])
 end
 function add_arc!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}, p3::Vector{<:Real})
-    push!(b.arcs, [
-        convert(Vector{Float64}, p1),
-        convert(Vector{Float64}, p2),
-        convert(Vector{Float64}, p3)
-    ])
+    return push!(b.arcs, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2), convert(Vector{Float64}, p3)])
 end
 
 function clear!(b::Bloch)
@@ -147,7 +152,7 @@ function render end
 function plot_bloch(
     state::QuantumObject{<:Union{Ket,Bra,Operator}};
     library::Union{Val,Symbol} = Val(:Makie),
-    kwargs...
+    kwargs...,
 )
-    plot_bloch(makeVal(library), state; kwargs...)
+    return plot_bloch(makeVal(library), state; kwargs...)
 end
