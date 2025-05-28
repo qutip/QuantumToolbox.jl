@@ -154,6 +154,27 @@ end
     @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csr.data) atol = 1e-8 * length(ρ_ss_cpu)
 end
 
+@testset "CUDA steadystate_fourier" begin
+    N = 2
+    ωd = 1.0
+    n_max = 2
+    H0 = cu(sigmaz())
+    Hp = cu(sigmax())
+    Hm = cu(sigmax())
+    c_ops = [cu(sqrt(0.1) * sigmam())]
+    ρ_list1 = steadystate_fourier(H0, Hp, Hm, ωd, c_ops; solver = SteadyStateLinearSolver(), n_max = n_max)
+    ρ0 = steadystate_fourier(
+        H0,
+        Hp,
+        Hm,
+        ωd,
+        c_ops;
+        solver = SSFloquetEffectiveLiouvillian(SteadyStateDirectSolver()),
+        n_max = n_max,
+    )
+    @test isapprox(ρ0, ρ_list1[1]; atol = 1e-6)
+end
+
 @testset "CUDA ptrace" begin
     g = fock(2, 1)
     e = fock(2, 0)
