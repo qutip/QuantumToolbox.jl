@@ -149,10 +149,7 @@ end
 
 function render end
 
-function plot_bloch(
-    state::QuantumObject{<:Union{Ket,Bra,Operator}};
-    library::Union{Val,Symbol} = Val(:Makie),
-    kwargs...,
-)
-    return plot_bloch(makeVal(library), state; kwargs...)
+function plot_bloch(state::QuantumObject{<:Union{Ket,Bra,Operator}}; library::Union{Symbol,Val} = :Makie, kwargs...)
+    # Convert library symbol to Val type for dispatch
+    return plot_bloch(Val(library), state; kwargs...)
 end
