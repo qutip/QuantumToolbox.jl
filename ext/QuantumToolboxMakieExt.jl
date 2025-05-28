@@ -4,6 +4,8 @@ using QuantumToolbox
 using Makie:
     Axis, Axis3, Colorbar, Figure, GridLayout, heatmap!, surface!, barplot!, GridPosition, @L_str, Reverse, ylims!
 
+include("bloch.jl")
+
 @doc raw"""
     plot_wigner(
         library::Val{:Makie},
@@ -290,5 +292,176 @@ raw"""
     - `ArgumentError`: If no figure has been found.
 """
 _figFromChildren(::Nothing) = throw(ArgumentError("No Figure has been found at the top of the layout hierarchy."))
+
+"""
+    _state_to_bloch(state::QuantumObject{<:Ket}) -> Vector{Float64}
+
+Convert a quantum state (Ket) to its Bloch vector representation.
+
+For a 2-level system (qubit), the Bloch vector components are calculated as:
+    r_i = ⟨ψ|σ_i|ψ⟩
+where σ_i are the Pauli matrices.
+
+For higher-dimensional systems, projects onto the generalized Bloch sphere.
+"""
+function _state_to_bloch(state::QuantumObject{<:Ket})
+    # Check if state is normalized
+    if !isapprox(norm(state), 1.0, atol=1e-6)
+        @warn "State is not normalized. Normalizing before Bloch vector conversion."
+        state = normalize(state)
+    end
+    N = length(state)
+    if N == 2  # Qubit case - standard Bloch sphere
+        ψ = state.data
+        x = 2 * real(ψ[1] * conj(ψ[2]))
+        y = 2 * imag(ψ[1] * conj(ψ[2]))
+        z = abs2(ψ[1]) - abs2(ψ[2])
+        return [x, y, z]
+    else
+        # For higher dimensions, use generalized Gell-Mann basis
+        # This returns a vector in higher-dimensional Bloch space
+        return _higher_dim_bloch_vector(state)
+    end
+end
+
+"""
+    _higher_dim_bloch_vector(state::QuantumObject{<:Ket}) -> Vector{Float64}
+
+Compute the generalized Bloch vector for higher-dimensional systems using Gell-Mann basis.
+"""
+function _higher_dim_bloch_vector(state::QuantumObject{<:Ket})
+    N = length(state)
+    ψ = state.data
+    # Number of generalized Bloch vector components: N²-1
+    bloch_vec = zeros(Float64, N^2 - 1)
+    # Symmetric (off-diagonal) components
+    idx = 1
+    for j = 1:N
+        for k = j+1:N
+            bloch_vec[idx] = 2 * real(ψ[j] * conj(ψ[k]))
+            bloch_vec[idx+1] = 2 * imag(ψ[j] * conj(ψ[k]))
+            idx += 2
+        end
+    end
+    # Diagonal components
+    for l = 2:N
+        for m = 1:l-1
+            bloch_vec[idx] = sqrt(2/(l*(l-1))) * (abs2(ψ[m]) - (l-1)*abs2(ψ[l]))
+            idx += 1
+        end
+    end
+    return bloch_vec
+end
+
+"""
+    plot_bloch(::Val{:Makie}, state::QuantumObject{<:Union{Ket,Bra}}; kwargs...)
+
+Plot the state on a Bloch sphere using Makie.jl.
+
+# Arguments
+- `state`: Quantum state to visualize (must be a Ket or Bra)
+- `show_axes`: Whether to show x/y/z axes (default: true)
+- `show_labels`: Whether to show axis labels (default: true)
+- `sphere_alpha`: Transparency of the sphere (default: 0.1)
+- `vector_color`: Color of the state vector (default: :red)
+- `kwargs...`: Additional arguments passed to the Bloch sphere renderer
+
+# Returns
+- `fig`: The Makie Figure object
+- `ax`: The Axis3 object
+- `bloch`: The Bloch sphere object
+"""
+function QuantumToolbox.plot_bloch(
+    ::Val{:Makie},
+    state::QuantumObject{<:Union{Ket,Bra,Operator}};
+    location::Union{GridPosition,Nothing} = nothing,
+    show_axes::Bool = true,
+    show_labels::Bool = true,
+    sphere_alpha::Real = 0.1,
+    vector_color::Union{Symbol,String} = :red,
+    kwargs...
+)
+    # Convert Bra to Ket if needed
+    if isbra(state)
+        state = dag(state)
+    end
+    # Handle both state vectors and density matrices
+    if isket(state)
+        bloch_vec = _state_to_bloch(state)
+    else
+        bloch_vec = _dm_to_bloch(state)
+    end
+    # Create Bloch sphere
+    b = Bloch()
+    # Configure appearance
+    b.sphere_alpha = sphere_alpha
+    b.vector_color = [string(vector_color)]
+    b.xlabel = show_labels ? ["x", "-x"] : ["", ""]
+    b.ylabel = show_labels ? ["y", "-y"] : ["", ""]
+    b.zlabel = show_labels ? ["|0⟩", "|1⟩"] : ["", ""]
+    # Add the state vector
+    add_vectors!(b, bloch_vec)
+    # Render
+    fig, location = _getFigAndLocation(location)
+    fig, ax = render(b; location=location, kwargs...)
+    return fig, ax
+end
+
+# Add method for density matrices
+function QuantumToolbox.plot_bloch(
+    ::Val{:Makie},
+    ρ::QuantumObject{<:Operator};
+    kwargs...
+)
+    # For density matrices, convert to Bloch vector using expectation values
+    if !ishermitian(ρ)
+        @warn "Density matrix is not Hermitian. Results may not be meaningful."
+    end
+    N = size(ρ, 1)
+    if N == 2  # Qubit case
+        σx = sigmax()
+        σy = sigmay()
+        σz = sigmaz()
+        x = real(expect(σx, ρ))
+        y = real(expect(σy, ρ))
+        z = real(expect(σz, ρ))
+        bloch_vec = [x, y, z]
+    else
+        # For higher dimensions, use generalized Gell-Mann basis
+        bloch_vec = _higher_dim_bloch_vector(ρ)
+    end
+    b = Bloch()
+    add_vectors!(b, bloch_vec)
+    fig, location = _getFigAndLocation(get(kwargs, :location, nothing))
+    fig, ax = render(b; location=location, kwargs...)
+    return fig, ax
+end
+
+"""
+    _higher_dim_bloch_vector(ρ::QuantumObject{<:Operator}) -> Vector{Float64}
+
+Compute the generalized Bloch vector for higher-dimensional density matrices.
+"""
+function _higher_dim_bloch_vector(ρ::QuantumObject{<:Operator})
+    N = size(ρ, 1)
+    bloch_vec = zeros(Float64, N^2 - 1)
+    # Symmetric (off-diagonal) components
+    idx = 1
+    for j = 1:N
+        for k = j+1:N
+            bloch_vec[idx] = real(ρ[j,k] + ρ[k,j])
+            bloch_vec[idx+1] = imag(ρ[j,k] - ρ[k,j])
+            idx += 2
+        end
+    end
+    # Diagonal components
+    for l = 2:N
+        for m = 1:l-1
+            bloch_vec[idx] = sqrt(2/(l*(l-1))) * (real(ρ[m,m]) - (l-1)*real(ρ[l,l]))
+            idx += 1
+        end
+    end
+    return bloch_vec
+end
 
 end

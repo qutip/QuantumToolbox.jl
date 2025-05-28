@@ -60,4 +60,21 @@
     fig = Figure()
     pos = fig[2, 3]
     fig1, ax = @test_logs (:warn,) plot_fock_distribution(ψ * 2; library = Val(:Makie), location = pos)
+
+    ρ = 0.7*ket2dm(basis(2,0)) + 0.3*ket2dm(basis(2,1))
+    fig, ax = plot_bloch(ρ)
+    @test fig isa Figure
+    @test ax isa Axis3
+    ψ = (basis(2,0) + basis(2,1))/√2
+    fig, ax = plot_bloch(ψ)
+    @test fig isa Figure
+    @test ax isa Axis3
+    ϕ = dag(ψ)
+    fig, ax = plot_bloch(ϕ)
+    @test fig isa Figure
+    @test ax isa Axis3
+    fig = Figure()
+    pos = fig[1, 1]
+    fig1, ax = plot_bloch(ψ; location=pos)
+    @test fig1 === fig
 end

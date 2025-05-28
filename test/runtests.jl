@@ -73,6 +73,9 @@ if (GROUP == "Makie_Ext")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
 
+    using Colors
+    using LaTeXStrings
+    using CairoMakie
     using QuantumToolbox
     QuantumToolbox.about()
 
