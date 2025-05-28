@@ -59,6 +59,7 @@ S(\omega) = \int_{-\infty}^\infty \lim_{t \rightarrow \infty} \left\langle \hat{
 See also the following list for `SpectrumSolver` docstrings:
 - [`ExponentialSeries`](@ref)
 - [`PseudoInverse`](@ref)
+- [`Lanczos`](@ref)
 """
 function spectrum(
     H::QuantumObject{HOpType},
@@ -228,7 +229,8 @@ function _spectrum(
     # Loop over the Krylov subspace(s)
     for k in 1:solver.maxiter
         # k-th diagonal element
-        αₖ = (wₖ * L.data) * vₖ
+        w₊₁ = wₖ * L.data
+        αₖ = w₊₁ * vₖ
         
         # Update A(k), B(k) and continuous fraction; normalization avoids overflow
         Aₖ .= (-1im .* ωList .+ αₖ) .* A₋₁ .- (βₖ * δₖ) .* A₋₂
@@ -257,8 +259,9 @@ function _spectrum(
 
         # (k+1)-th left/right vectors, orthogonal to previous ones
         # Consider using explicit BLAS calls
-        v₊₁ .= L.data * vₖ .- αₖ .* vₖ .- βₖ .* v₋₁
-        w₊₁ .= wₖ * L.data .- αₖ .* wₖ .- δₖ .* w₋₁
+        v₊₁ = L.data * vₖ
+        v₊₁ .= v₊₁ .- αₖ .* vₖ .- βₖ .* v₋₁
+        w₊₁ .= w₊₁ .- αₖ .* wₖ .- δₖ .* w₋₁
         v₋₁ .= vₖ
         w₋₁ .= wₖ
         vₖ  .= v₊₁
