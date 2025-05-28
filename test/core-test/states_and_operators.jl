@@ -1,4 +1,4 @@
-@testitem "States and Operators" tags=[:core] default_imports=false begin
+@testitem "States and Operators" default_imports=false begin
     using Test
     using QuantumToolbox
     import QuantumToolbox: position, momentum

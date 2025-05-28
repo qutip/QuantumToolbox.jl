@@ -1,4 +1,4 @@
-@testitem "Negativity and Partial Transpose" tags=[:core] begin
+@testitem "Negativity and Partial Transpose" begin
     @testset "negativity" begin
         rho = (1 / 40) * Qobj(
             [

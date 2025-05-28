@@ -1,4 +1,4 @@
-@testitem "Low Rank Dynamics" tags=[:core] default_imports=false begin
+@testitem "Low Rank Dynamics" default_imports=false begin
     using Test
     using QuantumToolbox
     import LinearAlgebra: Diagonal, mul!

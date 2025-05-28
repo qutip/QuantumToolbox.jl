@@ -1,4 +1,4 @@
-@testitem "Steady State" tags=[:core] begin
+@testitem "Steady State" begin
     N = 10
     a = destroy(N)
     a_d = a'

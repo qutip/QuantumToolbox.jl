@@ -1,4 +1,4 @@
-@testitem "Correlations and Spectrum" tags=[:core] begin
+@testitem "Correlations and Spectrum" begin
     N = 10
     Id = qeye(N)
     a = destroy(N)

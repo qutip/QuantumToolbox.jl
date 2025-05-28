@@ -1,4 +1,4 @@
-@testitem "Eigenvalues and Operators" tags=[:core] begin
+@testitem "Eigenvalues and Operators" begin
     σx = sigmax()
     result = eigenstates(σx, sparse = false)
     λd, ψd, Td = result

@@ -1,4 +1,4 @@
-@testitem "Block Diagonal Form" tags=[:core] begin
+@testitem "Block Diagonal Form" begin
     # Block Diagonal Form
     N = 20
     Δ = 0

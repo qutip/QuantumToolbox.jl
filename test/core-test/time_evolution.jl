@@ -1,4 +1,4 @@
-@testitem "Time Evolution and Partial Trace" tags=[:core] default_imports=false begin
+@testitem "Time Evolution and Partial Trace" default_imports=false begin
     using Test
     using QuantumToolbox
     import Random: MersenneTwister

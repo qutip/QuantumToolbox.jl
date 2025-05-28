@@ -1,4 +1,4 @@
-@testitem "Generalized Master Equation" tags=[:core] default_imports=false begin
+@testitem "Generalized Master Equation" default_imports=false begin
     using Test
     using QuantumToolbox
     import LinearAlgebra: triu

@@ -1,4 +1,4 @@
-@testitem "Quantum Objects Evolution" tags=[:core] default_imports=false begin
+@testitem "Quantum Objects Evolution" default_imports=false begin
     using Test
     using QuantumToolbox
 

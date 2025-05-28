@@ -1,4 +1,4 @@
-@testitem "Wigner" tags=[:core] begin
+@testitem "Wigner" begin
     α = 0.5 + 0.8im
     ψ = coherent(30, α)
     ρ = to_sparse(ket2dm(ψ), 1e-6)
