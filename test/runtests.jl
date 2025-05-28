@@ -1,97 +1,54 @@
-using Test
+using TestItemRunner
 using Pkg
 
-# Importing only the necessary functions to keep track the re-export of the functions
-import LinearAlgebra: Diagonal, I, mul!, triu, tril, triu!, tril!
-import SparseArrays: sparse, sprand, spzeros, spdiagm, nnz, SparseVector, SparseMatrixCSC, AbstractSparseMatrix
-import StaticArraysCore: SVector
+using QuantumToolbox
+
+const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext"]
 
 const GROUP = get(ENV, "GROUP", "All")
+(GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP"))
 
-const testdir = dirname(@__FILE__)
+testfilter = ti -> begin
+    if (GROUP == "All") || (GROUP == "Core")
+        return :core in ti.tags
+    end
 
-# Put core tests in alphabetical order
-core_tests = [
-    "block_diagonal_form.jl",
-    "correlations_and_spectrum.jl",
-    "dynamical_fock_dimension_mesolve.jl",
-    "dynamical-shifted-fock.jl",
-    "eigenvalues_and_operators.jl",
-    "entropy_and_metric.jl",
-    "generalized_master_equation.jl",
-    "low_rank_dynamics.jl",
-    "negativity_and_partial_transpose.jl",
-    "progress_bar.jl",
-    "quantum_objects.jl",
-    "quantum_objects_evo.jl",
-    "states_and_operators.jl",
-    "steady_state.jl",
-    "time_evolution.jl",
-    "utilities.jl",
-    "wigner.jl",
-]
+    if GROUP == "AutoDiff_Ext"
+        return :autodiff in ti.tags
+    end
 
-if (GROUP == "All") || (GROUP == "Core")
-    using QuantumToolbox
-    import QuantumToolbox: position, momentum
-    import Random: MersenneTwister
-    import SciMLOperators: MatrixOperator, NullOperator, IdentityOperator
+    if GROUP == "Makie_Ext"
+        return :makie in ti.tags
+    end
 
-    QuantumToolbox.about()
+    if GROUP == "CUDA_Ext"
+        return :cuda in ti.tags
+    end
 
-    for test in core_tests
-        include(joinpath(testdir, "core-test", test))
+    if GROUP == "Code-Quality"
+        return false
     end
 end
 
+QuantumToolbox.about()
+
+println("\nStart running tests [for GROUP = $GROUP]...\n")
+
+# TestItemRunner.jl
+@run_package_tests filter=testfilter
+(GROUP == "Code-Quality") && println("[Other tests skipped]\n")
+
+# Use traditional Test.jl instead of TestItemRunner.jl for Aqua and JET
 if (GROUP == "All") || (GROUP == "Code-Quality")
+    println("Start running code quality tests...")
+
     Pkg.activate("core-test/code-quality")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
 
+    using Test
     using QuantumToolbox
     using Aqua, JET
 
-    include(joinpath(testdir, "core-test", "code-quality", "code_quality.jl"))
-end
-
-if (GROUP == "AutoDiff_Ext")
-    Pkg.activate("ext-test/cpu/autodiff")
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.instantiate()
-
-    using QuantumToolbox
-    using Zygote
-    using Enzyme
-    using SciMLSensitivity
-
-    include(joinpath(testdir, "ext-test", "cpu", "autodiff", "zygote.jl"))
-end
-
-if (GROUP == "Makie_Ext")
-    Pkg.activate("ext-test/cpu/makie")
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.instantiate()
-
-    using QuantumToolbox
-    QuantumToolbox.about()
-
-    # CarioMakie is imported in the following script
-    include(joinpath(testdir, "ext-test", "cpu", "makie", "makie_ext.jl"))
-end
-
-if (GROUP == "CUDA_Ext")
-    Pkg.activate("ext-test/gpu")
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.instantiate()
-
-    using QuantumToolbox
-    using CUDA
-    using CUDA.CUSPARSE
-    # CUDA.allowscalar(false) # This is already set in the extension script
-
-    QuantumToolbox.about()
-    CUDA.versioninfo()
-
-    include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
+    include(joinpath(dirname(@__FILE__), "core-test", "code-quality", "code_quality.jl"))
 end

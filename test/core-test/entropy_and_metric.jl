@@ -1,4 +1,4 @@
-@testset "entropy" begin
+@testitem "entropy" tags=[:core] begin
     base = 2
     λ = rand()
     ψ = rand_ket(10)
@@ -51,7 +51,7 @@
     end
 end
 
-@testset "entanglement and concurrence" begin
+@testitem "entanglement and concurrence" tags=[:core] begin
     # bell state
     ψb = bell_state(Val(1), Val(0))
     ρb = ket2dm(ψb)
@@ -87,7 +87,7 @@ end
     end
 end
 
-@testset "trace and Hilbert-Schmidt distance" begin
+@testitem "trace and Hilbert-Schmidt distance" tags=[:core] begin
     ψz0 = basis(2, 0)
     ψz1 = basis(2, 1)
     ρz0 = to_sparse(ket2dm(ψz0))
@@ -117,7 +117,7 @@ end
     end
 end
 
-@testset "fidelity, Bures metric, and Hellinger distance" begin
+@testitem "fidelity, Bures metric, and Hellinger distance" tags=[:core] begin
     M0 = rand_dm(5)
     ψ1 = rand_ket(5)
     ψ2 = rand_ket(5)

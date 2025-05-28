@@ -1,4 +1,9 @@
-@testset "Time Evolution and Partial Trace" verbose = true begin
+@testitem "Time Evolution and Partial Trace" tags=[:core] default_imports=false begin
+    using Test
+    using QuantumToolbox
+    import Random: MersenneTwister
+    import SciMLOperators: MatrixOperator
+
     # Global definition of the system
     N = 10
     a = kron(destroy(N), qeye(2))

@@ -1,4 +1,12 @@
-@testset "States and Operators" verbose = true begin
+@testitem "States and Operators" tags=[:core] default_imports=false begin
+    using Test
+    using QuantumToolbox
+    import QuantumToolbox: position, momentum
+
+    # Importing only the necessary functions to keep track the re-export of the functions
+    import LinearAlgebra: I
+    import SparseArrays: sparse, spzeros, spdiagm, SparseMatrixCSC, AbstractSparseMatrix
+
     @testset "zero state" begin
         v1 = zero_ket(4)
         v2 = zero_ket((2, 2))

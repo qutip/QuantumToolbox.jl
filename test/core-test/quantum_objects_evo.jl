@@ -1,4 +1,13 @@
-@testset "Quantum Objects Evolution" verbose = true begin
+@testitem "Quantum Objects Evolution" tags=[:core] default_imports=false begin
+    using Test
+    using QuantumToolbox
+
+    # Importing only the necessary functions to keep track the re-export of the functions
+    import LinearAlgebra: I
+    import SparseArrays: sprand
+    import StaticArraysCore: SVector
+    import SciMLOperators: MatrixOperator, NullOperator, IdentityOperator
+
     # DomainError: incompatible between size of array and type
     @testset "Thrown Errors" begin
         a = MatrixOperator(rand(ComplexF64, 3, 2))

@@ -1,4 +1,8 @@
-@testset "Makie Extension" verbose = true begin
+@testitem "Makie Extension" tags=[:makie] default_imports=false begin
+    using Test
+    using QuantumToolbox
+    # Makie is imported below
+
     ψ = normalize(coherent(50, 5.0) + coherent(50, -5.0))
     xvec = yvec = -15.0:0.1:15.0
     wig = transpose(wigner(ψ, xvec, yvec))

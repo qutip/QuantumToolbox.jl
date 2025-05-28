@@ -1,4 +1,4 @@
-@testset "Utilities" verbose = true begin
+@testitem "Utilities" tags=[:core] begin
     @testset "n_thermal" begin
         ω1 = rand(Float64)
         ω2 = rand(Float64)
