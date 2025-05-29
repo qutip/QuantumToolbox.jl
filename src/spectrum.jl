@@ -33,13 +33,11 @@ A solver which solves [`spectrum`](@ref) by using a non-symmetric Lanczos varian
 The nonsymmetric Lanczos algorithm is adapted from Algorithm 6.6 in [Saad2011](https://www-users.cse.umn.edu/~saad/eig_book_2ndEd.pdf).
 The running estimate is updated via a [Wallis-Euler recursion](https://en.wikipedia.org/wiki/Continued_fraction).
 """
-struct Lanczos{T<:Real,IT<:Int} <: SpectrumSolver
-    tol::T
-    maxiter::IT
-    verbose::IT
+Base.@kwdef struct Lanczos{T<:Real,IT<:Int} <: SpectrumSolver
+    tol::T = 1e-8
+    maxiter::IT = 5000
+    verbose::IT = 0
 end
-
-Lanczos(; tol = 1e-8, maxiter = 5000, verbose = 0) = Lanczos(tol, maxiter, verbose)
 
 @doc raw"""
     spectrum(H::QuantumObject,
@@ -166,7 +164,6 @@ function _spectrum(
     A::QuantumObject{Operator},
     B::QuantumObject{Operator},
     solver::Lanczos;
-    kwargs...,
 )
     check_dimensions(L, A, B)
 
@@ -283,12 +280,10 @@ function _spectrum(
         B₋₁ .= Bₖ
     end
 
-    if solver.verbose > 0
-        if maxResidue > solver.tol
-            println("spectrum(): maxiter = $(solver.maxiter) reached before convergence!")
-            println("spectrum(): Max residue = $maxResidue")
-            println("spectrum(): Consider increasing maxiter and/or tol")
-        end
+    if solver.verbose > 0 && maxResidue > solver.tol
+        println("spectrum(): maxiter = $(solver.maxiter) reached before convergence!")
+        println("spectrum(): Max residue = $maxResidue")
+        println("spectrum(): Consider increasing maxiter and/or tol")
     end
 
     # Restore the norm
