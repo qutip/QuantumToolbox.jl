@@ -1,10 +1,10 @@
 module QuantumToolboxMakieExt
 
 using QuantumToolbox
+using LinearAlgebra
+using Makie
 using Makie:
     Axis, Axis3, Colorbar, Figure, GridLayout, heatmap!, surface!, barplot!, GridPosition, @L_str, Reverse, ylims!
-
-include("bloch.jl")
 
 @doc raw"""
     plot_wigner(
@@ -293,68 +293,343 @@ raw"""
 """
 _figFromChildren(::Nothing) = throw(ArgumentError("No Figure has been found at the top of the layout hierarchy."))
 
-"""
+raw"""
     _state_to_bloch(state::QuantumObject{<:Ket}) -> Vector{Float64}
 
-Convert a quantum state (Ket) to its Bloch vector representation for a qubit.
+Convert a pure qubit state (`Ket`) to its Bloch vector representation.
+
+If the state is not normalized, it is automatically normalized before conversion.
+
+# Arguments
+- `state`: A `Ket` representing a pure quantum state.
+
+# Returns
+A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
+
+# Throws
+- `ArgumentError` if the state dimension is not 2.
 """
 function _state_to_bloch(state::QuantumObject{<:Ket})
-    if !isapprox(norm(state), 1.0, atol=1e-6)
+    if !isapprox(norm(state), 1.0, atol = 1e-6)
         @warn "State is not normalized. Normalizing before Bloch vector conversion."
         state = normalize(state)
     end
-    
     ψ = state.data
     if length(ψ) != 2
         error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
     end
-    
     x = 2 * real(ψ[1] * conj(ψ[2]))
     y = 2 * imag(ψ[1] * conj(ψ[2]))
     z = abs2(ψ[1]) - abs2(ψ[2])
     return [x, y, z]
 end
 
-"""
+raw"""
     _dm_to_bloch(ρ::QuantumObject{<:Operator}) -> Vector{Float64}
 
-Convert a density matrix to its Bloch vector representation for a qubit.
+Convert a qubit density matrix (`Operator`) to its Bloch vector representation.
+
+This function assumes the input is Hermitian. If the density matrix is not Hermitian, a warning is issued.
+
+# Arguments
+- `ρ`: A density matrix (`Operator`) representing a mixed or pure quantum state.
+
+# Returns
+A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
+
+# Throws
+- `ArgumentError` if the matrix dimension is not 2.
 """
 function _dm_to_bloch(ρ::QuantumObject{<:Operator})
     if !ishermitian(ρ)
         @warn "Density matrix is not Hermitian. Results may not be meaningful."
     end
-
     if size(ρ, 1) != 2
         error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
     end
-
-    x = real(ρ[1,2] + ρ[2,1])
-    y = imag(ρ[2,1] - ρ[1,2])
-    z = real(ρ[1,1] - ρ[2,2])
+    x = real(ρ[1, 2] + ρ[2, 1])
+    y = imag(ρ[2, 1] - ρ[1, 2])
+    z = real(ρ[1, 1] - ρ[2, 2])
     return [x, y, z]
 end
 
-function _render_bloch_makie(
-    bloch_vec::Vector{Float64};
-    location=nothing,
-    show_axes=true,
-    show_labels=true,
-    sphere_alpha=0.1,
-    vector_color=:red,
+function _render_bloch_makie(bloch_vec::Vector{Float64}; location = nothing, kwargs...)
+    b = Bloch()
+    add_vectors!(b, bloch_vec)
+    fig, location = _getFigAndLocation(location)
+    fig, ax = render(b; location = location, kwargs...)
+    return fig, ax
+end
+
+raw"""
+    add_line!(
+        b::QuantumToolbox.Bloch,
+        start::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}},
+        endp::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}};
+        fmt = "k",
+        kwargs...,
+    )
+
+Add a line between two quantum states or operators on the Bloch sphere visualization.
+
+# Arguments
+
+- `b::Bloch`: The Bloch sphere object to modify.
+- `start::QuantumObject`: The starting quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
+- `endp::QuantumObject`: The ending quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
+- `fmt::String="k"`: (optional) A format string specifying the line style and color (default is black `"k"`).
+- `kwargs...`: Additional keyword arguments forwarded to the underlying line drawing function.
+
+# Description
+
+This function converts the given quantum objects (states or operators) into their Bloch vector representations and adds a line between these two points on the Bloch sphere visualization. 
+
+# Example
+
+```julia
+b = Bloch()
+ψ₁ = normalize(basis(2, 0) + basis(2, 1))
+ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
+add_line!(b, ψ₁, ψ₂; fmt = "r--")
+```
+"""
+function QuantumToolbox.add_line!(
+    b::QuantumToolbox.Bloch,
+    start::QuantumObject{<:Union{Ket,Bra,Operator}},
+    endp::QuantumObject{<:Union{Ket,Bra,Operator}};
+    fmt = "k",
     kwargs...,
 )
-    b = Bloch()
-    b.sphere_alpha = sphere_alpha
-    b.vector_color = [string(vector_color)]
-    b.xlabel = show_labels ? ["x", "-x"] : ["", ""]
-    b.ylabel = show_labels ? ["y", "-y"] : ["", ""]
-    b.zlabel = show_labels ? ["|0⟩", "|1⟩"] : ["", ""]
-    add_vectors!(b, bloch_vec)
+    p1 = if isket(start) || isbra(start)
+        _state_to_bloch(start)
+    else
+        _dm_to_bloch(start)
+    end
+    p2 = if isket(endp) || isbra(endp)
+        _state_to_bloch(endp)
+    else
+        _dm_to_bloch(endp)
+    end
+    return add_line!(b, p1, p2; fmt = fmt, kwargs...)
+end
 
+raw"""
+    QuantumToolbox.add_states!(b::Bloch, states::QuantumObject...)
+
+Add one or more quantum states to the Bloch sphere visualization by converting them into Bloch vectors.
+
+# Arguments
+- `b::Bloch`: The Bloch sphere object to modify
+- `states::QuantumObject...`: One or more quantum states (Ket, Bra, or Operator)
+
+"""
+function QuantumToolbox.add_states!(b::Bloch, states::Vector{<:QuantumObject})
+    vecs = Vector{Vector{Float64}}()
+    for state in states
+        vec = if isket(state) || isbra(state)
+            _state_to_bloch(state)
+        else
+            _dm_to_bloch(state)
+        end
+        push!(vecs, vec)
+    end
+    return add_vectors!(b, vecs)
+end
+
+raw"""
+    render(b::QuantumToolbox.Bloch; location=nothing)
+
+Render the Bloch sphere visualization from the given `Bloch` object `b`.
+
+# Arguments
+
+- `b::QuantumToolbox.Bloch`
+  The Bloch sphere object containing states, vectors, and settings to visualize.
+
+- `location` (optional)  
+  Specifies where to display or save the rendered figure.
+  - If `nothing` (default), the figure is displayed interactively.
+  - If a file path (String), the figure is saved to the specified location.
+  - Other values depend on backend support.
+
+# Returns
+
+- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting.
+  These can be further manipulated or saved by the user.
+"""
+function QuantumToolbox.render(b::QuantumToolbox.Bloch; location = nothing)
     fig, location = _getFigAndLocation(location)
-    fig, ax = render(b; location=location, kwargs...)
-    return fig, ax, b
+    if isnothing(b.fig) || b.fig !== fig
+        b.fig = fig
+        b.ax = Makie.Axis3(
+            location;
+            aspect = :data,
+            limits = (-1.1, 1.1, -1.1, 1.1, -1.1, 1.1),
+            xgridvisible = false,
+            ygridvisible = false,
+            zgridvisible = false,
+            xticklabelsvisible = false,
+            yticklabelsvisible = false,
+            zticklabelsvisible = false,
+            xticksvisible = false,
+            yticksvisible = false,
+            zticksvisible = false,
+            xlabel = "",
+            ylabel = "",
+            zlabel = "",
+            backgroundcolor = Makie.RGBAf(1, 1, 1, 0.0),
+            xypanelvisible = false,
+            xzpanelvisible = false,
+            yzpanelvisible = false,
+            xspinesvisible = false,
+            yspinesvisible = false,
+            zspinesvisible = false,
+            protrusions = (0, 0, 0, 0),
+            viewmode = :fit,
+        )
+        b.ax.azimuth[] = deg2rad(b.view_angles[1])
+        b.ax.elevation[] = deg2rad(b.view_angles[2])
+    else
+        if !(b.ax in contents(location))
+            location[] = b.ax
+        end
+    end
+    Makie.empty!(b.ax)
+    sphere_color = Makie.RGBAf(1.0, 0.86, 0.86, 0.2)
+    Makie.mesh!(b.ax, Makie.Sphere(Point3f(0, 0, 0), 1.0f0); color = sphere_color, transparency = false)
+    wire_color = Makie.RGBAf(0.5, 0.5, 0.5, 0.4)
+    φ = range(0, 2π, length = 100)
+    Makie.lines!(b.ax, [Point3f(sin(φi), -cos(φi), 0) for φi in φ]; color = wire_color, linewidth = 1.0)
+    Makie.lines!(b.ax, [Point3f(0, -cos(φi), sin(φi)) for φi in φ]; color = wire_color, linewidth = 1.0)
+    Makie.lines!(b.ax, [Point3f(sin(φi), 0, cos(φi)) for φi in φ]; color = wire_color, linewidth = 1.0)
+    axis_color = Makie.RGBAf(0.3, 0.3, 0.3, 0.8)
+    axis_width = 0.8
+    Makie.lines!(b.ax, [Point3f(0, -1.01, 0), Point3f(0, 1.01, 0)]; color = axis_color, linewidth = axis_width)
+    Makie.lines!(b.ax, [Point3f(-1.01, 0, 0), Point3f(1.01, 0, 0)]; color = axis_color, linewidth = axis_width)
+    Makie.lines!(b.ax, [Point3f(0, 0, -1.01), Point3f(0, 0, 1.01)]; color = axis_color, linewidth = axis_width)
+    for (k, points) in enumerate(b.points)
+        style = b.point_style[k]
+        color = b.point_color[k]
+        alpha = b.point_alpha[k]
+        marker = b.point_marker[(k-1)%length(b.point_marker)+1]
+        x = points[2, :]
+        y = -points[1, :]
+        z = points[3, :]
+
+        if style == :s || style == :m
+            Makie.scatter!(
+                b.ax,
+                x,
+                y,
+                z;
+                color = color,
+                markersize = 6,
+                marker = marker,
+                strokewidth = 0.05,
+                transparency = alpha < 1,
+                alpha = alpha,
+            )
+        elseif style == :l
+            Makie.lines!(b.ax, x, y, z; color = color, linewidth = 2.0, transparency = alpha < 1, alpha = alpha)
+        end
+    end
+    for (line, fmt, kwargs) in b.lines
+        x, y, z = line
+        color_map =
+            Dict("k" => :black, "r" => :red, "g" => :green, "b" => :blue, "c" => :cyan, "m" => :magenta, "y" => :yellow)
+        c = get(color_map, first(fmt), :black)
+        ls = nothing
+        if occursin("--", fmt)
+            ls = :dash
+        elseif occursin(":", fmt)
+            ls = :dot
+        elseif occursin("-.", fmt)
+            ls = :dashdot
+        else
+            ls = :solid
+        end
+        color = get(kwargs, :color, c)
+        linewidth = get(kwargs, :linewidth, 1.0)
+        linestyle = get(kwargs, :linestyle, ls)
+        Makie.lines!(b.ax, x, y, z; color = color, linewidth = linewidth, linestyle = linestyle)
+    end
+    for arc_pts in b.arcs
+        if length(arc_pts) >= 2
+            v1 = normalize(arc_pts[1])
+            v2 = normalize(arc_pts[end])
+            n = normalize(cross(v1, v2))
+            θ = acos(clamp(dot(v1, v2), -1.0, 1.0))
+            if length(arc_pts) == 3
+                vm = normalize(arc_pts[2])
+                if dot(cross(v1, vm), n) < 0
+                    θ = 2π - θ
+                end
+            end
+            t_range = range(0, θ, length = 100)
+            arc_points = [Makie.Point3f((v1*cos(t) + cross(n, v1)*sin(t))...) for t in t_range]
+            Makie.lines!(b.ax, arc_points; color = Makie.RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
+        end
+    end
+    r = 1.0
+    if !isempty(b.vectors)
+        for (i, v) in enumerate(b.vectors)
+            color = Base.get(b.vector_color, i, Makie.RGBAf(0.2, 0.5, 0.8, 0.9))
+            start = Point3f(0, 0, 0)
+            vec = Vec3f(v[2], -v[1], v[3])
+            length = norm(vec)
+            max_length = r * 0.79
+            if length > max_length
+                vec = (vec / length) * max_length
+            end
+            endp = Point3f(vec)
+            arrowsize = Vec3f(0.07, 0.08, 0.08)
+            Makie.arrows!(
+                b.ax,
+                [start],
+                [vec];
+                color = color,
+                linewidth = 0.028,
+                arrowsize = arrowsize,
+                arrowcolor = color,
+            )
+        end
+    end
+    label_color = Makie.RGBf(0.2, 0.2, 0.2)
+    label_size = 16
+    label_font = "TeX Gyre Heros"
+    Makie.text!(
+        b.ax,
+        "y";
+        position = Point3f(1.04, 0, 0),
+        color = label_color,
+        fontsize = label_size,
+        font = label_font,
+    )
+    Makie.text!(
+        b.ax,
+        "x";
+        position = Point3f(0, -1.10, 0),
+        color = label_color,
+        fontsize = label_size,
+        font = label_font,
+    )
+    Makie.text!(
+        b.ax,
+        "|1⟩";
+        position = Point3f(0, 0, -1.10),
+        color = label_color,
+        fontsize = label_size,
+        font = label_font,
+    )
+    Makie.text!(
+        b.ax,
+        "|0⟩";
+        position = Point3f(0, 0, 1.08),
+        color = label_color,
+        fontsize = label_size,
+        font = label_font,
+    )
+    return fig, b.ax
 end
 
 function QuantumToolbox.plot_bloch(::Val{:Makie}, state::QuantumObject{<:Union{Ket,Bra}}; kwargs...)

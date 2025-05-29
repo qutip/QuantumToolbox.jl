@@ -51,6 +51,7 @@ const PAGES = [
         ],
         "Manipulating States and Operators" => "users_guide/states_and_operators.md",
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
+        "Bloch Sphere Rendering" => "users_guide/plotting_the_bloch_sphere.md",
         "Time Evolution and Dynamics" => [
             "Introduction" => "users_guide/time_evolution/intro.md",
             "Time Evolution Solutions" => "users_guide/time_evolution/solution.md",
