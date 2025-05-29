@@ -33,10 +33,11 @@ A solver which solves [`spectrum`](@ref) by using a non-symmetric Lanczos varian
 The nonsymmetric Lanczos algorithm is adapted from Algorithm 6.6 in [Saad2011](https://www-users.cse.umn.edu/~saad/eig_book_2ndEd.pdf).
 The running estimate is updated via a [Wallis-Euler recursion](https://en.wikipedia.org/wiki/Continued_fraction).
 """
-Base.@kwdef struct Lanczos{T<:Real,IT<:Int} <: SpectrumSolver
+Base.@kwdef mutable struct Lanczos{T<:Real,IT<:Int} <: SpectrumSolver
     tol::T = 1e-8
     maxiter::IT = 5000
     verbose::IT = 0
+    steadystate_solver::Union{Nothing,SteadyStateSolver} = nothing
 end
 
 @doc raw"""
@@ -172,7 +173,9 @@ function _spectrum(
     cT = _CType(L)
 
     # Calculate |v₁> = B|ρss>
-    ρss = mat2vec(steadystate(L))
+    ρss =
+        solver.steadystate_solver === nothing ? mat2vec(steadystate(L)) :
+        mat2vec(steadystate(L; solver = solver.steadystate_solver))
     vₖ = (spre(B) * ρss).data
 
     # Define (possibly GPU) vector type
