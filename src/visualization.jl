@@ -97,46 +97,55 @@ mutable struct Bloch
             [],
             [],
             [],
-            "black",
-            20,
-            0.1,
-            "gray",
-            1,
-            ["blue", "red", "green", "#CC6600"],
-            [:circle, :rect, :diamond, :utriangle],
-            [5, 7, 9, 11],
-            0.2,
-            "#FFDDDD",
-            [700, 700],
-            ["green", "#CC6600", "blue", "red"],
-            1,
-            [-60, 30],
+            "black",           # Font color
+            18,                # Slightly smaller font size
+            0.0,               # Transparent frame (minimal background)
+            "white",           # Background color (invisible if alpha = 0)
+            0,                 # No visible frame grid
+            ["blue", "red"],   # Fewer point colors
+            [:circle, :rect],  # Simplified marker shapes
+            [6, 6],            # Uniform point sizes
+            0.8,               # High opacity sphere
+            "#DDDDFF",         # Subtle light-blue sphere
+            [800, 800],        # Slightly larger canvas
+            ["blue", "red"],   # Fewer vector colors
+            2,                 # Thinner vector lines
+            [-60, 30],         # Standard Bloch viewing angle
             ["x", "-x"],
-            [1.1, -1.1],
+            [1.05, -1.05],     # Slightly closer label position
             ["y", "-y"],
-            [1.2, -1.2],
+            [1.05, -1.05],
             ["|0⟩", "|1⟩"],
-            [1.2, -1.2],
+            [1.1, -1.1],
             nothing,
             nothing,
         )
     end
 end
 
-add_points!(b::Bloch, pnt::Vector{<:Real}) = push!(b.points, convert(Vector{Float64}, pnt))
-add_points!(b::Bloch, pnts::Vector{<:Vector{<:Real}}) = append!(b.points, [convert(Vector{Float64}, p) for p in pnts])
+function add_points!(b::Bloch, pnt::Vector{<:Real}) 
+    push!(b.points, convert(Vector{Float64}, pnt))
+end
+
+function add_points!(b::Bloch, pnts::Vector{<:Vector{<:Real}}) 
+    append!(b.points, [convert(Vector{Float64}, p) for p in pnts])
+end
+
 function add_vectors!(b::Bloch, vec::Vector{<:Real})
     normalized_vec = normalize(convert(Vector{Float64}, vec))
-    return push!(b.vectors, normalized_vec)
+    push!(b.vectors, normalized_vec)
 end
+
 function add_vectors!(b::Bloch, vecs::Vector{<:Vector{<:Real}})
-    return append!(b.vectors, [normalize(convert(Vector{Float64}, v)) for v in vecs])
+    append!(b.vectors, [normalize(convert(Vector{Float64}, v)) for v in vecs])
 end
+
 function add_line!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real})
-    return push!(b.lines, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2)])
+    push!(b.lines, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2)])
 end
+
 function add_arc!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}, p3::Vector{<:Real})
-    return push!(b.arcs, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2), convert(Vector{Float64}, p3)])
+    push!(b.arcs, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2), convert(Vector{Float64}, p3)])
 end
 
 function clear!(b::Bloch)
@@ -149,11 +158,11 @@ end
 
 function render end
 
-function plot_bloch(state::QuantumObject{<:Union{Ket,Bra,Operator}}; library::Union{Symbol,Val} = :Makie, kwargs...)
+function plot_bloch(state::QuantumObject{<:Union{Ket,Bra,Operator}}; library::Union{Symbol,Val}=:Makie, kwargs...)
     lib_val = library isa Symbol ? Val(library) : library
     return plot_bloch(lib_val, state; kwargs...)
 end
 
 function plot_bloch(::Val{T}, state::QuantumObject; kwargs...) where {T}
-    return error("Unsupported backend: $T. Try :Makie or another supported library.")
+    error("Unsupported backend: $T. Try :Makie or another supported library.")
 end

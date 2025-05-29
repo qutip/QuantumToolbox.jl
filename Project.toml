@@ -26,25 +26,22 @@ StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 
 [weakdeps]
-Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 GPUArrays = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
-LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [extensions]
 QuantumToolboxCUDAExt = "CUDA"
 QuantumToolboxChainRulesCoreExt = "ChainRulesCore"
 QuantumToolboxGPUArraysExt = ["GPUArrays", "KernelAbstractions"]
-QuantumToolboxMakieExt = ["Colors", "LaTeXStrings", "Makie",]
+QuantumToolboxMakieExt = "Makie"
 
 [compat]
 ArrayInterface = "6, 7"
 CUDA = "5"
 ChainRulesCore = "1"
-Colors = "0.12, 0.13"
 DiffEqBase = "6"
 DiffEqCallbacks = "4.2.1 - 4"
 DiffEqNoiseProcess = "5"
@@ -54,7 +51,6 @@ GPUArrays = "10, 11"
 Graphs = "1.7"
 IncompleteLU = "0.2"
 KernelAbstractions = "0.9.2"
-LaTeXStrings = "1.4.0"
 LinearAlgebra = "1"
 LinearSolve = "2, 3"
 Makie = "0.20, 0.21, 0.22"
