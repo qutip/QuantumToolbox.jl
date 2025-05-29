@@ -200,3 +200,5 @@ _convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:AbstractFloat} = Float6
 _convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:AbstractFloat} = Float32
 _convert_eltype_wordsize(::Type{Complex{T}}, ::Val{64}) where {T<:Union{Int,AbstractFloat}} = ComplexF64
 _convert_eltype_wordsize(::Type{Complex{T}}, ::Val{32}) where {T<:Union{Int,AbstractFloat}} = ComplexF32
+
+function allowed_setindex! end

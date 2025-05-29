@@ -369,63 +369,45 @@ function _steadystate_fourier(
     n_fourier = 2 * n_max + 1
     n_list = (-n_max):n_max
 
-    weight = 1
-    rows = _dense_similar(L_0_mat, Ns)
-    cols = _dense_similar(L_0_mat, Ns)
-    vals = _dense_similar(L_0_mat, Ns)
-    fill!(rows, 1)
-    for j in 1:Ns
-        cols[j] = Ns * (j - 1) + j
-    end
-    fill!(vals, weight)
+    weight = one(T)
+    rows = ones(Int, Ns)
+    cols = [Ns * (j - 1) + j for j in 1:Ns]
+    vals = fill(weight, Ns)
     Mn = _sparse_similar(L_0_mat, rows, cols, vals, N, N)
     L = L_0_mat + Mn
 
     M = _sparse_similar(L_0_mat, n_fourier * N, n_fourier * N)
-
-    # Add superdiagonal blocks (L_m)
     for i in 1:(n_fourier-1)
-        rows_block = _dense_similar(L_0_mat, N)
-        cols_block = _dense_similar(L_0_mat, N)
-        fill!(rows_block, i)
-        fill!(cols_block, i+1)
-        block = _sparse_similar(L_0_mat, rows_block, cols_block, ones(N), n_fourier, n_fourier)
-        M += kron(block, L_m_mat)
+        M_block = _sparse_similar(L_0_mat, N, N)
+        copyto!(M_block, L_p_mat)
+        M[(i*N+1):((i+1)*N), ((i-1)*N+1):(i*N)] = M_block
+        M_block = _sparse_similar(L_0_mat, N, N)
+        copyto!(M_block, L_m_mat)
+        M[((i-1)*N+1):(i*N), (i*N+1):((i+1)*N)] = M_block
     end
 
-    # Add subdiagonal blocks (L_p)
-    for i in 1:(n_fourier-1)
-        rows_block = _dense_similar(L_0_mat, N)
-        cols_block = _dense_similar(L_0_mat, N)
-        fill!(rows_block, i+1)
-        fill!(cols_block, i)
-        block = _sparse_similar(L_0_mat, rows_block, cols_block, ones(N), n_fourier, n_fourier)
-        M += kron(block, L_p_mat)
-    end
-
-    # Add diagonal blocks (L - i*ωd*n)
     for i in 1:n_fourier
         n = n_list[i]
-        block_diag = L - 1im * ωd * n * I
-        rows_block = _dense_similar(L_0_mat, N)
-        cols_block = _dense_similar(L_0_mat, N)
-        fill!(rows_block, i)
-        fill!(cols_block, i)
-        block = _sparse_similar(L_0_mat, rows_block, cols_block, ones(N), n_fourier, n_fourier)
-        M += kron(block, block_diag)
+        M_block = _sparse_similar(L_0_mat, N, N)
+        copyto!(M_block, L)
+        M_block -= 1im * ωd * n * sparse(I, N, N)
+        M[((i-1)*N+1):(i*N), ((i-1)*N+1):(i*N)] = M_block
     end
 
-    v0 = _dense_similar(L_0_mat, n_fourier * N)
-    fill!(v0, 0)
-    allowed_setindex!(v0, weight, n_max * N + 1)
+    v0 = similar(L_0_mat, n_fourier * N)
+    fill!(v0, zero(T))
+    target_idx = n_max*N + 1
+    QuantumToolbox.allowed_setindex!(v0, weight, target_idx)
 
+    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
     if !isnothing(solver.Pl)
         kwargs = merge((; kwargs...), (Pl = solver.Pl(M),))
     elseif isa(M, SparseMatrixCSC)
         kwargs = merge((; kwargs...), (Pl = ilu(M, τ = 0.01),))
     end
     !isnothing(solver.Pr) && (kwargs = merge((; kwargs...), (Pr = solver.Pr(M),)))
-    kwargs = merge((abstol = tol, reltol = tol), kwargs)
+    !haskey(kwargs, :abstol) && (kwargs = merge((; kwargs...), (abstol = tol,)))
+    !haskey(kwargs, :reltol) && (kwargs = merge((; kwargs...), (reltol = tol,)))
 
     prob = LinearProblem(M, v0)
     ρtot = solve(prob, solver.alg; kwargs...).u
