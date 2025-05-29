@@ -1,7 +1,7 @@
 export smesolveProblem, smesolveEnsembleProblem, smesolve
 
-_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator, dims = dims)
-_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet, dims = dims)
+_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
+_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
 
 function _smesolve_update_coeff(u, p, t, op_vec)
     return 2 * real(dot(op_vec, u)) #this is Tr[Sn * ρ + ρ * Sn']
@@ -12,7 +12,7 @@ _smesolve_ScalarOperator(op_vec) =
 
 @doc raw"""
     smesolveProblem(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -74,7 +74,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the `SDEProblem` for the Stochastic Master Equation time evolution.
 """
 function smesolveProblem(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -85,7 +85,7 @@ function smesolveProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject}}
+) where {StateOpType<:Union{Ket,Operator,OperatorKet}}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -153,7 +153,7 @@ end
 
 @doc raw"""
     smesolveEnsembleProblem(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -223,7 +223,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the Ensemble `SDEProblem` for the Stochastic Master Equation time evolution.
 """
 function smesolveEnsembleProblem(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -238,7 +238,7 @@ function smesolveEnsembleProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject}}
+) where {StateOpType<:Union{Ket,Operator,OperatorKet}}
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
@@ -279,7 +279,7 @@ end
 
 @doc raw"""
     smesolve(
-        H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+        H::Union{AbstractQuantumObject{Operator},Tuple},
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -351,7 +351,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `sol::TimeEvolutionStochasticSol`: The solution of the time evolution. See [`TimeEvolutionStochasticSol`](@ref).
 """
 function smesolve(
-    H::Union{AbstractQuantumObject{OperatorQuantumObject},Tuple},
+    H::Union{AbstractQuantumObject{Operator},Tuple},
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -367,7 +367,7 @@ function smesolve(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject}}
+) where {StateOpType<:Union{Ket,Operator,OperatorKet}}
     ensemble_prob = smesolveEnsembleProblem(
         H,
         ψ0,

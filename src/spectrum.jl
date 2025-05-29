@@ -30,8 +30,8 @@ PseudoInverse(; alg::SciMLLinearSolveAlgorithm = KrylovJL_GMRES()) = PseudoInver
     spectrum(H::QuantumObject,
         ωlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple},
-        A::QuantumObject{OperatorQuantumObject},
-        B::QuantumObject{OperatorQuantumObject};
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator};
         solver::SpectrumSolver=ExponentialSeries(),
         kwargs...)
 
@@ -49,11 +49,11 @@ function spectrum(
     H::QuantumObject{HOpType},
     ωlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject};
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator};
     solver::SpectrumSolver = ExponentialSeries(),
     kwargs...,
-) where {HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+) where {HOpType<:Union{Operator,SuperOperator}}
     return _spectrum(liouvillian(H, c_ops), ωlist, A, B, solver; kwargs...)
 end
 
@@ -77,10 +77,10 @@ function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T,false}) wher
 end
 
 function _spectrum(
-    L::QuantumObject{SuperOperatorQuantumObject},
+    L::QuantumObject{SuperOperator},
     ωlist::AbstractVector,
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
     solver::ExponentialSeries;
     kwargs...,
 )
@@ -103,10 +103,10 @@ function _spectrum(
 end
 
 function _spectrum(
-    L::QuantumObject{SuperOperatorQuantumObject},
+    L::QuantumObject{SuperOperator},
     ωlist::AbstractVector,
-    A::QuantumObject{OperatorQuantumObject},
-    B::QuantumObject{OperatorQuantumObject},
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
     solver::PseudoInverse;
     kwargs...,
 )

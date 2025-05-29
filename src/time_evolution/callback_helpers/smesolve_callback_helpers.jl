@@ -10,6 +10,8 @@ struct SaveFuncSMESolve{
     IT,
     TEXPV<:Union{Nothing,AbstractMatrix},
     TMEXPV<:Union{Nothing,AbstractMatrix},
+    TLT<:AbstractVector,
+    CT<:AbstractVector,
 } <: AbstractSaveFunc
     store_measurement::Val{SM}
     e_ops::TE
@@ -18,10 +20,12 @@ struct SaveFuncSMESolve{
     iter::IT
     expvals::TEXPV
     m_expvals::TMEXPV
+    tlist::TLT
+    dWdt_cache::CT
 end
 
 (f::SaveFuncSMESolve)(u, t, integrator) =
-    _save_func_smesolve(u, integrator, f.e_ops, f.m_ops, f.progr, f.iter, f.expvals, f.m_expvals)
+    _save_func_smesolve(u, integrator, f.e_ops, f.m_ops, f.progr, f.iter, f.expvals, f.m_expvals, f.tlist, f.dWdt_cache)
 (f::SaveFuncSMESolve{false,Nothing})(u, t, integrator) = _save_func(integrator, f.progr) # Common for both all solvers
 
 _get_e_ops_data(e_ops, ::Type{SaveFuncSMESolve}) = _get_e_ops_data(e_ops, SaveFuncMESolve)
@@ -31,7 +35,7 @@ _get_m_ops_data(sc_ops, ::Type{SaveFuncSMESolve}) =
 ##
 
 # When e_ops is a list of operators
-function _save_func_smesolve(u, integrator, e_ops, m_ops, progr, iter, expvals, m_expvals)
+function _save_func_smesolve(u, integrator, e_ops, m_ops, progr, iter, expvals, m_expvals, tlist, dWdt_cache)
     # This is equivalent to tr(op * ρ), when both are matrices.
     # The advantage of using this convention is that We don't need
     # to reshape u to make it a matrix, but we reshape the e_ops once.
@@ -45,8 +49,8 @@ function _save_func_smesolve(u, integrator, e_ops, m_ops, progr, iter, expvals, 
     end
 
     if !isnothing(m_expvals) && iter[] > 1
-        _dWdt = _homodyne_dWdt(integrator)
-        @. m_expvals[:, iter[]-1] = real(_expect(m_ops)) + _dWdt
+        _homodyne_dWdt!(dWdt_cache, integrator, tlist, iter)
+        @. m_expvals[:, iter[]-1] = real(_expect(m_ops)) + dWdt_cache
     end
 
     iter[] += 1

@@ -5,7 +5,7 @@ layout: home
 
 hero:
   name: "QuantumToolbox.jl"
-  tagline: A pure Julia framework designed for High-performance quantum physics simulations
+  tagline: A pure Julia framework designed for high-performance quantum physics simulations
   image:
     src: /logo.png
     alt: QuantumToolbox
@@ -22,6 +22,9 @@ hero:
     - theme: alt
       text: API
       link: /resources/api
+    - theme: alt
+      text: Cite us
+      link: /getting_started/cite
     - theme: alt
       text: View on Github
       link: https://github.com/qutip/QuantumToolbox.jl

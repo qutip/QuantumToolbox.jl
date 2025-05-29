@@ -29,7 +29,7 @@ This operator can be initialized in the same way as the QuTiP `QobjEvo` object. 
 ```jldoctest qobjevo
 julia> a = tensor(destroy(10), qeye(2))
 
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
 ⎡⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⎥
@@ -42,7 +42,7 @@ coef1 (generic function with 1 method)
 
 julia> op = QobjEvo(a, coef1)
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 
@@ -51,7 +51,7 @@ If there are more than 2 operators, we need to put each set of operator and coef
 ```jldoctest qobjevo
 julia> σm = tensor(qeye(10), sigmam())
 
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 10 stored entries:
 ⎡⠂⡀⠀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠂⡀⠀⠀⠀⠀⠀⠀⎥
@@ -64,7 +64,7 @@ coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 ```
 
@@ -72,7 +72,7 @@ We can also concretize the operator at a specific time `t`
 ```jldoctest qobjevo
 julia> op1(0.1)
 
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
 ⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠂⡑⢄⠀⠀⠀⠀⠀⎥
@@ -91,7 +91,7 @@ coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
 julia> p = (ω1 = 1.0, ω2 = 0.5)
@@ -99,7 +99,7 @@ julia> p = (ω1 = 1.0, ω2 = 0.5)
 
 julia> op1(p, 0.1)
 
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
 ⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠂⡑⢄⠀⠀⠀⠀⠀⎥
@@ -109,7 +109,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ```
 """
 struct QuantumObjectEvolution{
-    ObjType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
+    ObjType<:Union{Operator,SuperOperator},
     DimType<:AbstractDimensions,
     DataType<:AbstractSciMLOperator,
 } <: AbstractQuantumObject{ObjType,DimType,DataType}
@@ -117,12 +117,9 @@ struct QuantumObjectEvolution{
     type::ObjType
     dimensions::DimType
 
-    function QuantumObjectEvolution(
-        data::DT,
-        type::ObjType,
-        dims,
-    ) where {DT<:AbstractSciMLOperator,ObjType<:QuantumObjectType}
-        (type == Operator || type == SuperOperator) ||
+    function QuantumObjectEvolution(data::DT, type, dims) where {DT<:AbstractSciMLOperator}
+        ObjType = _check_type(type)
+        (type isa Operator || type isa SuperOperator) ||
             throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
 
         dimensions = _gen_dimensions(dims)
@@ -153,22 +150,23 @@ function Base.show(io::IO, QO::QuantumObjectEvolution)
 end
 
 @doc raw"""
-    QobjEvo(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
-    QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
+    QobjEvo(data::AbstractSciMLOperator; type = Operator(), dims = nothing)
+    QuantumObjectEvolution(data::AbstractSciMLOperator; type = Operator(), dims = nothing)
 
 Generate a [`QuantumObjectEvolution`](@ref) object from a [`SciMLOperator`](https://github.com/SciML/SciMLOperators.jl), in the same way as [`QuantumObject`](@ref) for `AbstractArray` inputs.
 
 Note that `QobjEvo` is a synonym of `QuantumObjectEvolution`
 """
-function QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObjectType = Operator, dims = nothing)
+function QuantumObjectEvolution(data::AbstractSciMLOperator; type = Operator(), dims = nothing)
     _size = _get_size(data)
+    _check_type(type)
 
     if dims isa Nothing
-        if type isa OperatorQuantumObject
+        if type isa Operator
             dims =
                 (_size[1] == _size[2]) ? Dimensions(_size[1]) :
                 GeneralDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
-        elseif type isa SuperOperatorQuantumObject
+        elseif type isa SuperOperator
             dims = Dimensions(isqrt(_size[2]))
         end
     end
@@ -177,8 +175,8 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type::QuantumObject
 end
 
 @doc raw"""
-    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing)
-    QuantumObjectEvolution(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type::Union{Nothing, QuantumObjectType}=nothing)
+    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type=nothing)
+    QuantumObjectEvolution(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type=nothing)
 
 Generate [`QuantumObjectEvolution`](@ref).
 
@@ -199,7 +197,7 @@ This operator can be initialized in the same way as the QuTiP `QobjEvo` object. 
 ```jldoctest qobjevo
 julia> a = tensor(destroy(10), qeye(2))
 
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
 ⎡⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⎥
@@ -209,7 +207,7 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 
 julia> σm = tensor(qeye(10), sigmam())
 
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 10 stored entries:
 ⎡⠂⡀⠀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠂⡀⠀⠀⠀⠀⠀⠀⎥
@@ -225,7 +223,7 @@ coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 ```
 
@@ -233,7 +231,7 @@ We can also concretize the operator at a specific time `t`
 ```jldoctest qobjevo
 julia> op1(0.1)
 
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
 ⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠂⡑⢄⠀⠀⠀⠀⠀⎥
@@ -252,7 +250,7 @@ coef2 (generic function with 1 method)
 
 julia> op1 = QobjEvo(((a, coef1), (σm, coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
 julia> p = (ω1 = 1.0, ω2 = 0.5)
@@ -260,7 +258,7 @@ julia> p = (ω1 = 1.0, ω2 = 0.5)
 
 julia> op1(p, 0.1)
 
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 28 stored entries:
 ⎡⠂⡑⢄⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠂⡑⢄⠀⠀⠀⠀⠀⎥
@@ -269,13 +267,11 @@ Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=fal
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡑⎦
 ```
 """
-function QuantumObjectEvolution(
-    op_func_list::Tuple,
-    α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-)
+function QuantumObjectEvolution(op_func_list::Tuple, α::Union{Nothing,Number} = nothing; type = nothing)
     op, data = _QobjEvo_generate_data(op_func_list, α)
     dims = op.dimensions
+    _check_type(type)
+
     if type isa Nothing
         type = op.type
     end
@@ -288,15 +284,12 @@ function QuantumObjectEvolution(
 end
 
 # this is a extra method if user accidentally specify `QuantumObjectEvolution( (op, func) )` or `QuantumObjectEvolution( ((op, func)) )`
-QuantumObjectEvolution(
-    op_func::Tuple{QuantumObject,Function},
-    α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-) = QuantumObjectEvolution((op_func,), α; type = type)
+QuantumObjectEvolution(op_func::Tuple{QuantumObject,Function}, α::Union{Nothing,Number} = nothing; type = nothing) =
+    QuantumObjectEvolution((op_func,), α; type = type)
 
 @doc raw"""
-    QuantumObjectEvolution(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type::Union{Nothing,QuantumObjectType} = nothing)
-    QobjEvo(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type::Union{Nothing,QuantumObjectType} = nothing)
+    QuantumObjectEvolution(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type = nothing)
+    QobjEvo(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type = nothing)
 
 Generate [`QuantumObjectEvolution`](@ref).
 
@@ -308,7 +301,7 @@ Generate [`QuantumObjectEvolution`](@ref).
 ```jldoctest
 julia> a = tensor(destroy(10), qeye(2))
 
-Quantum Object:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 18 stored entries:
 ⎡⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⎥
@@ -321,33 +314,23 @@ coef (generic function with 1 method)
 
 julia> op = QobjEvo(a, coef)
 
-Quantum Object Evo.:   type=Operator   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=true   isconstant=false
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 """
-QuantumObjectEvolution(
-    op::QuantumObject,
-    f::Function,
-    α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-) = QuantumObjectEvolution(((op, f),), α; type = type)
+QuantumObjectEvolution(op::QuantumObject, f::Function, α::Union{Nothing,Number} = nothing; type = nothing) =
+    QuantumObjectEvolution(((op, f),), α; type = type)
 
-function QuantumObjectEvolution(
-    op::QuantumObject,
-    α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-)
+function QuantumObjectEvolution(op::QuantumObject, α::Union{Nothing,Number} = nothing; type = nothing)
+    _check_type(type)
     if type isa Nothing
         type = op.type
     end
     return QuantumObjectEvolution(_make_SciMLOperator(op, α), type, op.dimensions)
 end
 
-function QuantumObjectEvolution(
-    op::QuantumObjectEvolution,
-    α::Union{Nothing,Number} = nothing;
-    type::Union{Nothing,QuantumObjectType} = nothing,
-)
+function QuantumObjectEvolution(op::QuantumObjectEvolution, α::Union{Nothing,Number} = nothing; type = nothing)
+    _check_type(type)
     if type isa Nothing
         type = op.type
     elseif type != op.type
@@ -360,7 +343,7 @@ function QuantumObjectEvolution(
     if α isa Nothing
         return QuantumObjectEvolution(op.data, type, op.dimensions)
     end
-    return QuantumObjectEvolution(α * op.data, type, op.dimensions)
+    return QuantumObjectEvolution(_promote_to_scimloperator(α, op.data), type, op.dimensions)
 end
 
 #=
@@ -397,7 +380,6 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
             )
 
             op = :(op_func_list[$i][1])
-            data_type = op_type.parameters[1]
             dims_expr = (dims_expr..., :($op.dimensions))
             func_methods_expr = (func_methods_expr..., :(methods(op_func_list[$i][2], [Any, Real]))) # [Any, Real] means each func must accept 2 arguments
             if i == 1
@@ -409,7 +391,6 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
             (isoper(op_type) || issuper(op_type)) ||
                 throw(ArgumentError("The element must be a Operator or SuperOperator."))
 
-            data_type = op_type.parameters[1]
             dims_expr = (dims_expr..., :(op_func_list[$i].dimensions))
             if i == 1
                 first_op = :(op_func_list[$i])
@@ -445,16 +426,27 @@ function _make_SciMLOperator(op_func::Tuple, α)
     T = eltype(op_func[1])
     update_func = (a, u, p, t) -> op_func[2](p, t)
     if α isa Nothing
-        return ScalarOperator(zero(T), update_func) * MatrixOperator(op_func[1].data)
+        return ScalarOperator(zero(T), update_func) * _promote_to_scimloperator(op_func[1].data)
     end
-    return ScalarOperator(zero(T), update_func) * MatrixOperator(α * op_func[1].data)
+    return ScalarOperator(zero(T), update_func) * _promote_to_scimloperator(α, op_func[1].data)
 end
 
-function _make_SciMLOperator(op::QuantumObject, α)
+function _make_SciMLOperator(op::AbstractQuantumObject, α)
     if α isa Nothing
-        return MatrixOperator(op.data)
+        return _promote_to_scimloperator(op.data)
     end
-    return MatrixOperator(α * op.data)
+    return _promote_to_scimloperator(α, op.data)
+end
+
+_promote_to_scimloperator(data::AbstractMatrix) = MatrixOperator(data)
+_promote_to_scimloperator(data::AbstractSciMLOperator) = data
+_promote_to_scimloperator(α::Number, data::AbstractMatrix) = MatrixOperator(α * data)
+# We still have to define this for AddedOperator, as it is not present in SciMLOperators.jl
+function _promote_to_scimloperator(α::Number, data::AddedOperator)
+    return AddedOperator(_promote_to_scimloperator.(α, data.ops)) # Try to propagate the rule
+end
+function _promote_to_scimloperator(α::Number, data::AbstractSciMLOperator)
+    return α * data # Going back to the generic case
 end
 
 @doc raw"""
@@ -464,7 +456,7 @@ Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the inpu
 
 # Arguments
 - `ψout::QuantumObject`: The output state. It must have the same type as `ψin`.
-- `ψin::QuantumObject`: The input state. It must be either a [`KetQuantumObject`](@ref) or a [`OperatorKetQuantumObject`](@ref).
+- `ψin::QuantumObject`: The input state. It must be either a [`Ket`](@ref) or a [`OperatorKet`](@ref).
 - `p`: The parameters of the time-dependent coefficients.
 - `t`: The time at which the coefficients are evaluated.
 
@@ -475,7 +467,7 @@ Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the inpu
 ```jldoctest
 julia> a = destroy(20)
 
-Quantum Object:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
@@ -491,7 +483,7 @@ coef2 (generic function with 1 method)
 
 julia> A = QobjEvo(((a, coef1), (a', coef2)))
 
-Quantum Object Evo.:   type=Operator   dims=[20]   size=(20, 20)   ishermitian=true   isconstant=false
+Quantum Object Evo.:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=true   isconstant=false
 (ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20) + ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20))
 
 julia> ψ1 = fock(20, 3);
@@ -507,7 +499,7 @@ function (A::QuantumObjectEvolution)(
     ψin::QuantumObject{QobjType},
     p,
     t,
-) where {QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+) where {QobjType<:Union{Ket,OperatorKet}}
     check_dimensions(A, ψout, ψin)
 
     if isoper(A) && isoperket(ψin)
@@ -530,11 +522,7 @@ end
 
 Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the input state `ψ` at time `t` with parameters `p`. Out-of-place version of [`(A::QuantumObjectEvolution)(ψout, ψin, p, t)`](@ref). The output state is stored in a new [`QuantumObject`](@ref) object. This function mimics the behavior of a `AbstractSciMLOperator` object.
 """
-function (A::QuantumObjectEvolution)(
-    ψ::QuantumObject{QobjType},
-    p,
-    t,
-) where {QobjType<:Union{KetQuantumObject,OperatorKetQuantumObject}}
+function (A::QuantumObjectEvolution)(ψ::QuantumObject{QobjType}, p, t) where {QobjType<:Union{Ket,OperatorKet}}
     ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dimensions)
     return A(ψout, ψ, p, t)
 end

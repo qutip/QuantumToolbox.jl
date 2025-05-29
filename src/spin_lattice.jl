@@ -59,7 +59,7 @@ function multisite_operator(dims::Union{AbstractVector,Tuple}, pairs::Pair{<:Int
     end
     data = kron(data, I(prod(_dims[(sites[end]+1):end])))
 
-    return QuantumObject(data; type = Operator, dims = dims)
+    return QuantumObject(data; type = Operator(), dims = dims)
 end
 function multisite_operator(N::Union{Integer,Val}, pairs::Pair{<:Integer,<:QuantumObject}...)
     dims = ntuple(j -> 2, makeVal(N))

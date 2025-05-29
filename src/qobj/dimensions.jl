@@ -4,16 +4,16 @@ This file defines the Dimensions structures, which can describe composite Hilber
 
 export AbstractDimensions, Dimensions, GeneralDimensions
 
-abstract type AbstractDimensions{N} end
+abstract type AbstractDimensions{M,N} end
 
 @doc raw"""
-    struct Dimensions{N,T<:Tuple} <: AbstractDimensions{N}
+    struct Dimensions{N,T<:Tuple} <: AbstractDimensions{N, N}
         to::T
     end
 
 A structure that describes the Hilbert [`Space`](@ref) of each subsystems.
 """
-struct Dimensions{N,T<:Tuple} <: AbstractDimensions{N}
+struct Dimensions{N,T<:Tuple} <: AbstractDimensions{N,N}
     to::T
 
     # make sure the elements in the tuple are all AbstractSpace
@@ -24,7 +24,7 @@ function Dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Intege
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
 
-    return Dimensions(NTuple{L,Space}(Space.(dims)))
+    return Dimensions(Tuple(Space.(dims)))
 end
 Dimensions(dims::Int) = Dimensions(Space(dims))
 Dimensions(dims::DimType) where {DimType<:AbstractSpace} = Dimensions((dims,))
@@ -42,14 +42,14 @@ Dimensions(dims::Any) = throw(
 
 A structure that describes the left-hand side (`to`) and right-hand side (`from`) Hilbert [`Space`](@ref) of an [`Operator`](@ref).
 """
-struct GeneralDimensions{N,T1<:Tuple,T2<:Tuple} <: AbstractDimensions{N}
+struct GeneralDimensions{M,N,T1<:Tuple,T2<:Tuple} <: AbstractDimensions{M,N}
     # note that the number `N` should be the same for both `to` and `from`
     to::T1   # space acting on the left
     from::T2 # space acting on the right
 
     # make sure the elements in the tuple are all AbstractSpace
-    GeneralDimensions(to::NTuple{N,T1}, from::NTuple{N,T2}) where {N,T1<:AbstractSpace,T2<:AbstractSpace} =
-        new{N,typeof(to),typeof(from)}(to, from)
+    GeneralDimensions(to::NTuple{M,T1}, from::NTuple{N,T2}) where {M,N,T1<:AbstractSpace,T2<:AbstractSpace} =
+        new{M,N,typeof(to),typeof(from)}(to, from)
 end
 function GeneralDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N}
     (length(dims) != 2) && throw(ArgumentError("Invalid dims = $dims"))
@@ -59,14 +59,10 @@ function GeneralDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<
 
     L1 = length(dims[1])
     L2 = length(dims[2])
-    ((L1 > 0) && (L1 == L2)) || throw(
-        DomainError(
-            (L1, L2),
-            "The length of the arguments `dims[1]` and `dims[2]` must be in the same length and have at least one element.",
-        ),
-    )
+    (L1 > 0) || throw(DomainError(L1, "The length of `dims[1]` must be larger or equal to 1."))
+    (L2 > 0) || throw(DomainError(L2, "The length of `dims[2]` must be larger or equal to 1."))
 
-    return GeneralDimensions(NTuple{L1,Space}(Space.(dims[1])), NTuple{L1,Space}(Space.(dims[2])))
+    return GeneralDimensions(Tuple(Space.(dims[1])), Tuple(Space.(dims[2])))
 end
 
 _gen_dimensions(dims::AbstractDimensions) = dims

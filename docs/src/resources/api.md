@@ -21,17 +21,11 @@ Space
 Dimensions
 GeneralDimensions
 AbstractQuantumObject
-BraQuantumObject
 Bra
-KetQuantumObject
 Ket
-OperatorQuantumObject
 Operator
-OperatorBraQuantumObject
 OperatorBra
-OperatorKetQuantumObject
 OperatorKet
-SuperOperatorQuantumObject
 SuperOperator
 QuantumObject
 QuantumObjectEvolution
@@ -305,6 +299,7 @@ AbstractLinearMap
 ## [Utility functions](@id doc-API:Utility-functions)
 
 ```@docs
+QuantumToolbox.settings
 QuantumToolbox.versioninfo
 QuantumToolbox.about
 gaussian

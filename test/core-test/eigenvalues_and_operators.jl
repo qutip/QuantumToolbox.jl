@@ -8,14 +8,14 @@
     λs, ψs, Ts = eigenstates(σx, sparse = true, eigvals = 2)
     λs1, ψs1, Ts1 = eigenstates(σx, sparse = true, eigvals = 1)
 
-    @test all([ψ.type isa KetQuantumObject for ψ in ψd])
+    @test all([ψ.type isa Ket for ψ in ψd])
     @test typeof(Td) <: AbstractMatrix
     @test typeof(Ts) <: AbstractMatrix
     @test typeof(Ts1) <: AbstractMatrix
     @test all(abs.(eigenenergies(σx, sparse = false)) .≈ abs.(λd))
     @test all(abs.(eigenenergies(σx, sparse = true, eigvals = 2)) .≈ abs.(λs))
     @test resstring ==
-          "EigsolveResult:   type=$(Operator)   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
+          "EigsolveResult:   type=$(Operator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
     N = 30
     a = kron(destroy(N), qeye(2))
@@ -76,16 +76,16 @@
     valstring = sprint((t, s) -> show(t, "text/plain", s), result.values)
     vecsstring = sprint((t, s) -> show(t, "text/plain", s), result.vectors)
     @test resstring ==
-          "EigsolveResult:   type=$(SuperOperator)   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
+          "EigsolveResult:   type=$(SuperOperator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
     vals2, vecs2 = eigenstates(L, sparse = false)
     idxs = sortperm(vals2, by = abs)
     vals2 = vals2[idxs][1:10]
     vecs2 = vecs2[idxs][1:10]
 
-    @test result.type isa SuperOperatorQuantumObject
+    @test result.type isa SuperOperator
     @test result.dims == L.dims
-    @test all([v.type isa OperatorKetQuantumObject for v in vecs])
+    @test all([v.type isa OperatorKet for v in vecs])
     @test typeof(result.vectors) <: AbstractMatrix
     @test isapprox(sum(abs2, vals), sum(abs2, vals2), atol = 1e-7)
     @test isapprox(abs2(vals2[1]), abs2(vals3[1]), atol = 1e-7)

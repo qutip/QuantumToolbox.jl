@@ -50,9 +50,7 @@ Return the block-diagonal form of a [`QuantumObject`](@ref). This is very useful
 # Returns
 The [`BlockDiagonalForm`](@ref) of `A`.
 """
-function block_diagonal_form(
-    A::QuantumObject{OpType},
-) where {OpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject}}
+function block_diagonal_form(A::QuantumObject{OpType}) where {OpType<:Union{Operator,SuperOperator}}
     bdf = block_diagonal_form(A.data)
     B = QuantumObject(bdf.B, type = A.type, dims = A.dimensions)
     P = QuantumObject(bdf.P, type = A.type, dims = A.dimensions)

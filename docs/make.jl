@@ -42,12 +42,12 @@ const PAGES = [
         # "Key differences from QuTiP" => "getting_started/qutip_differences.md",
         "The Importance of Type-Stability" => "getting_started/type_stability.md",
         "Example: Create QuantumToolbox.jl Logo" => "getting_started/logo.md",
-        # "Cite QuantumToolbox.jl" => "getting_started/cite.md",
+        "Cite QuantumToolbox.jl" => "getting_started/cite.md",
     ],
     "Users Guide" => [
         "Basic Operations on Quantum Objects" => [
-            "users_guide/QuantumObject/QuantumObject.md",
-            "users_guide/QuantumObject/QuantumObject_functions.md",
+            "Quantum Objects (Qobj)" => "users_guide/QuantumObject/QuantumObject.md",
+            "Functions operating on Qobj" => "users_guide/QuantumObject/QuantumObject_functions.md",
         ],
         "Manipulating States and Operators" => "users_guide/states_and_operators.md",
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
@@ -64,9 +64,10 @@ const PAGES = [
         "Hierarchical Equations of Motion" => "users_guide/HEOM.md",
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
+        "QuantumToolbox Settings" => "users_guide/settings.md",
         "Extensions" => [
-            "users_guide/extensions/cuda.md",
-            "users_guide/extensions/cairomakie.md",
+            "Extension for CUDA.jl" => "users_guide/extensions/cuda.md",
+            "Extension for the Makie.jl ecosystem" => "users_guide/extensions/cairomakie.md",
         ],
     ],
     "Resources" => [
@@ -81,7 +82,7 @@ const PAGES = [
 makedocs(;
     modules = [
         QuantumToolbox, 
-        Base.get_extension(QuantumToolbox, :QuantumToolboxCairoMakieExt),
+        Base.get_extension(QuantumToolbox, :QuantumToolboxMakieExt),
     ],
     authors = "Alberto Mercurio and Yi-Te Huang",
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),
@@ -89,15 +90,17 @@ makedocs(;
     pages = PAGES,
     format = DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/qutip/QuantumToolbox.jl",
+        devbranch = "main",
+        devurl = "dev",
     ),
     draft = DRAFT,
     doctest = DOCTEST,
     plugins = [bib],
 )
 
-deploydocs(;
+DocumenterVitepress.deploydocs(;
     repo = "github.com/qutip/QuantumToolbox.jl",
-    target = "build", # this is where Vitepress stores its output
+    target = joinpath(@__DIR__, "build"),
     devbranch = "main",
     branch = "gh-pages",
     push_preview = true,

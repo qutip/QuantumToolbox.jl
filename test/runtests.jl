@@ -55,8 +55,21 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
     include(joinpath(testdir, "core-test", "code-quality", "code_quality.jl"))
 end
 
-if (GROUP == "CairoMakie_Ext")# || (GROUP == "All")
-    Pkg.activate("ext-test/cpu/cairomakie")
+if (GROUP == "AutoDiff_Ext")
+    Pkg.activate("ext-test/cpu/autodiff")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+
+    using QuantumToolbox
+    using Zygote
+    using Enzyme
+    using SciMLSensitivity
+
+    include(joinpath(testdir, "ext-test", "cpu", "autodiff", "zygote.jl"))
+end
+
+if (GROUP == "Makie_Ext")
+    Pkg.activate("ext-test/cpu/makie")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
 
@@ -64,10 +77,10 @@ if (GROUP == "CairoMakie_Ext")# || (GROUP == "All")
     QuantumToolbox.about()
 
     # CarioMakie is imported in the following script
-    include(joinpath(testdir, "ext-test", "cpu", "cairomakie", "cairomakie_ext.jl"))
+    include(joinpath(testdir, "ext-test", "cpu", "makie", "makie_ext.jl"))
 end
 
-if (GROUP == "CUDA_Ext")# || (GROUP == "All")
+if (GROUP == "CUDA_Ext")
     Pkg.activate("ext-test/gpu")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()

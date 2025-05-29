@@ -9,7 +9,7 @@
     M = latt.N + 1       # Number of states in the LR basis
 
     # Define initial state
-    ϕ = Vector{QuantumObject{KetQuantumObject,Dimensions{M - 1,NTuple{M - 1,Space}},Vector{ComplexF64}}}(undef, M)
+    ϕ = Vector{QuantumObject{Ket,Dimensions{M - 1,NTuple{M - 1,Space}},Vector{ComplexF64}}}(undef, M)
     ϕ[1] = kron(fill(basis(2, 1), N_modes)...)
 
     i = 1
@@ -68,7 +68,7 @@
 
         mul!(C, z, sqrt(B))
         mul!(σ, C', C)
-        return entropy_vn(Qobj(Hermitian(σ), type = Operator), base = 2)
+        return entropy_vn(Qobj(Hermitian(σ), type = Operator()), base = 2)
     end
 
     opt = (err_max = 1e-3, p0 = 0.0, atol_inv = 1e-6, adj_condition = "variational", Δt = 0.0, progress = false)

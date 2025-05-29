@@ -1,0 +1,17 @@
+# [Cite QuantumToolbox.jl](@id doc:Cite)
+
+If you like `QuantumToolbox.jl`, we would appreciate it if you could cite our arXiv preprint [ [arXiv:2504.21440 (2025)](https://doi.org/10.48550/arXiv.2504.21440)  ] using the following bibtex entry:
+
+```bib
+@article{QuantumToolbox-jl2025,
+    title={{QuantumToolbox.jl}: An efficient {Julia} framework for simulating open quantum systems},
+    author={Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
+    journal={arXiv preprint arXiv:2504.21440},
+    year={2025},
+    publisher = {arXiv},
+    eprint={2504.21440},
+    archivePrefix={arXiv},
+    primaryClass={quant-ph},
+    doi = {10.48550/arXiv.2504.21440}
+}
+```

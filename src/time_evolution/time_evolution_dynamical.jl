@@ -148,7 +148,7 @@ function dfd_mesolveProblem(
     params::NamedTuple = NamedTuple(),
     tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
     kwargs...,
-) where {T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {T2<:Integer,StateOpType<:Union{Ket,Operator}}
     length(ψ0.dimensions) != length(maxdims) &&
         throw(DimensionMismatch("`dim_list` and `maxdims` do not have the same dimension."))
 
@@ -219,7 +219,7 @@ function dfd_mesolve(
     params::NamedTuple = NamedTuple(),
     tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
     kwargs...,
-) where {T2<:Integer,StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {T2<:Integer,StateOpType<:Union{Ket,Operator}}
     dfd_prob = dfd_mesolveProblem(
         H,
         ψ0,
@@ -239,7 +239,7 @@ function dfd_mesolve(
         idx = findfirst(>=(sol.t[i]), sol.prob.p.dim_list_evo_times)
         idx2 = isnothing(idx) ? length(sol.prob.p.dim_list_evo) : (idx == 1 ? 1 : idx - 1)
 
-        return QuantumObject(vec2mat(sol.u[i]), type = Operator, dims = sol.prob.p.dim_list_evo[idx2])
+        return QuantumObject(vec2mat(sol.u[i]), type = Operator(), dims = sol.prob.p.dim_list_evo[idx2])
     end
 
     return TimeEvolutionSol(
@@ -350,7 +350,7 @@ function dsf_mesolveProblem(
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
-) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {StateOpType<:Union{Ket,Operator}}
     op_list = deepcopy(op_list)
     H₀ = H(op_list .+ α0_l, dsf_params)
     c_ops₀ = c_ops(op_list .+ α0_l, dsf_params)
@@ -433,7 +433,7 @@ function dsf_mesolve(
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
-) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {StateOpType<:Union{Ket,Operator}}
     dsf_prob = dsf_mesolveProblem(
         H,
         ψ0,
@@ -465,7 +465,7 @@ function dsf_mesolve(
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
     krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
     kwargs...,
-) where {StateOpType<:Union{KetQuantumObject,OperatorQuantumObject}}
+) where {StateOpType<:Union{Ket,Operator}}
     c_ops = op_list -> ()
     return dsf_mesolve(
         H,
@@ -599,7 +599,7 @@ end
 
 function dsf_mcsolveEnsembleProblem(
     H::Function,
-    ψ0::QuantumObject{KetQuantumObject},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     c_ops::Function,
     op_list::Union{AbstractVector,Tuple},
@@ -694,7 +694,7 @@ Time evolution of a quantum system using the Monte Carlo wave function method an
 """
 function dsf_mcsolve(
     H::Function,
-    ψ0::QuantumObject{KetQuantumObject},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     c_ops::Function,
     op_list::Union{AbstractVector,Tuple},

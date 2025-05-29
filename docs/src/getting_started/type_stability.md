@@ -158,7 +158,7 @@ and its type is
 obj_type = typeof(σx_2)
 ```
 
-This is exactly what the Julia compiler sees: it is a [`QuantumObject`](@ref), composed by a field of type `SparseMatrixCSC{ComplexF64, Int64}` (i.e., the 8x8 matrix containing the Pauli matrix, tensored with the identity matrices of the other two qubits). Then, we can also see that it is a [`OperatorQuantumObject`](@ref), with `3` subsystems in total. Hence, just looking at the type of the object, the compiler has all the information it needs to generate a specialized version of the functions.
+This is exactly what the Julia compiler sees: it is a [`QuantumObject`](@ref), composed by a field of type `SparseMatrixCSC{ComplexF64, Int64}` (i.e., the 8x8 matrix containing the Pauli matrix, tensored with the identity matrices of the other two qubits). Then, we can also see that it is a [`Operator`](@ref), with `3` subsystems in total. Hence, just looking at the type of the object, the compiler has all the information it needs to generate a specialized version of the functions.
 
 Let's see more in the details all the internal fields of the [`QuantumObject`](@ref) type:
 
@@ -174,7 +174,6 @@ fieldnames(obj_type)
 σx_2.type
 ```
 
-[`Operator`](@ref) is a synonym for [`OperatorQuantumObject`](@ref).
 
 ```@example type-stability
 σx_2.dims
@@ -184,7 +183,7 @@ The `dims` field contains the dimensions of the subsystems (in this case, three 
 
 ```@example type-stability
 function reshape_operator_data(dims)
-    op = Qobj(randn(prod(dims), prod(dims)), type=Operator, dims=dims)
+    op = Qobj(randn(prod(dims), prod(dims)), type=Operator(), dims=dims)
     op_dims = op.dims
     op_data = op.data
     return reshape(op_data, vcat(op_dims, op_dims)...)
@@ -235,7 +234,7 @@ function my_fock(N::Int, j::Int = 0; sparse::Bool = false)
         array = zeros(ComplexF64, N)
         array[j+1] = 1
     end
-    return QuantumObject(array; type = Ket)
+    return QuantumObject(array; type = Ket())
 end
 @show my_fock(2, 1)
 @show my_fock(2, 1; sparse = true)
@@ -263,7 +262,7 @@ function my_fock_good(N::Int, j::Int = 0; sparse::Val = Val(false))
     else
         array = sparsevec([j + 1], [1.0 + 0im], N)
     end
-    return QuantumObject(array; type = Ket)
+    return QuantumObject(array; type = Ket())
 end
 @show my_fock_good(2, 1)
 @show my_fock_good(2, 1; sparse = Val(true))

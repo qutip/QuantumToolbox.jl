@@ -1,6 +1,6 @@
 export mesolveProblem, mesolve
 
-_mesolve_make_L_QobjEvo(H::Union{QuantumObject,Nothing}, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator)
+_mesolve_make_L_QobjEvo(H::Union{QuantumObject,Nothing}, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator())
 _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
 _mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both H and
 c_ops are Nothing. You are probably running the wrong function."))
@@ -46,6 +46,7 @@ where
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
+- If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolveProblem`](@ref) instead.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
@@ -63,10 +64,18 @@ function mesolveProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject},
-}
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet}}
+    (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolveProblem(
+        H,
+        ψ0,
+        tlist;
+        e_ops = e_ops,
+        params = params,
+        progress_bar = progress_bar,
+        inplace = inplace,
+        kwargs...,
+    )
+
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -87,6 +96,7 @@ function mesolveProblem(
     kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncMESolve)
 
     tspan = (tlist[1], tlist[end])
+
     prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
 
     return TimeEvolutionProblem(prob, tlist, L_evo.dimensions, (isoperket = Val(isoperket(ψ0)),))
@@ -135,6 +145,7 @@ where
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
+- If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolve`](@ref) instead.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
@@ -154,10 +165,19 @@ function mesolve(
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {
-    HOpType<:Union{OperatorQuantumObject,SuperOperatorQuantumObject},
-    StateOpType<:Union{KetQuantumObject,OperatorQuantumObject,OperatorKetQuantumObject},
-}
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet}}
+    (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolve(
+        H,
+        ψ0,
+        tlist;
+        alg = alg,
+        e_ops = e_ops,
+        params = params,
+        progress_bar = progress_bar,
+        inplace = inplace,
+        kwargs...,
+    )
+
     prob = mesolveProblem(
         H,
         ψ0,
@@ -179,9 +199,9 @@ function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
 
     # No type instabilities since `isoperket` is a Val, and so it is known at compile time
     if getVal(prob.kwargs.isoperket)
-        ρt = map(ϕ -> QuantumObject(ϕ, type = OperatorKet, dims = prob.dimensions), sol.u)
+        ρt = map(ϕ -> QuantumObject(ϕ, type = OperatorKet(), dims = prob.dimensions), sol.u)
     else
-        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator, dims = prob.dimensions), sol.u)
+        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator(), dims = prob.dimensions), sol.u)
     end
 
     return TimeEvolutionSol(
