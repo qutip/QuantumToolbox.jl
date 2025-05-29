@@ -193,24 +193,24 @@ function _spectrum(
     Length = length(ωList)
 
     # Current and previous estimates of the spectrum
-    lanczosFactor   = vT(zeros(cT, Length))
+    lanczosFactor = vT(zeros(cT, Length))
     lanczosFactor₋₁ = vT(zeros(cT, Length))
 
     # Tridiagonal matrix elements
-    αₖ = cT( 0)
+    αₖ = cT(0)
     βₖ = cT(-1)
     δₖ = cT(+1)
 
     # Current and up to second-to-last A and B Euler sequences
-    A₋₂ = vT( ones(cT, Length))
+    A₋₂ = vT(ones(cT, Length))
     A₋₁ = vT(zeros(cT, Length))
-    Aₖ  = vT(zeros(cT, Length))
+    Aₖ = vT(zeros(cT, Length))
     B₋₂ = vT(zeros(cT, Length))
-    B₋₁ = vT( ones(cT, Length))
-    Bₖ  = vT(zeros(cT, Length))
+    B₋₁ = vT(ones(cT, Length))
+    Bₖ = vT(zeros(cT, Length))
 
     # Maximum norm and residue
-    maxNorm    = vT(zeros(cT, length(ωList)))
+    maxNorm = vT(zeros(cT, length(ωList)))
     maxResidue = fT(0.0)
 
     # Previous and next left/right Krylov vectors
@@ -227,7 +227,7 @@ function _spectrum(
         # k-th diagonal element
         w₊₁ = wₖ * L.data
         αₖ = w₊₁ * vₖ
-        
+
         # Update A(k), B(k) and continuous fraction; normalization avoids overflow
         Aₖ .= (-1im .* ωList .+ αₖ) .* A₋₁ .- (βₖ * δₖ) .* A₋₂
         Bₖ .= (-1im .* ωList .+ αₖ) .* B₋₁ .- (βₖ * δₖ) .* B₋₂
@@ -236,7 +236,7 @@ function _spectrum(
 
         # Renormalize Euler sequences to avoid overflow
         if k % renormFrequency == 0
-            maxNorm .= max.(abs.(Aₖ), abs.(Bₖ))  # Note: the MATLAB and C++ codes return the actual complex number
+            maxNorm .= max.(abs.(Aₖ), abs.(Bₖ))
             Aₖ ./= maxNorm
             Bₖ ./= maxNorm
             A₋₁ ./= maxNorm
@@ -244,8 +244,9 @@ function _spectrum(
         end
 
         # Check for convergence
-        maxResidue = maximum(abs.(lanczosFactor .- lanczosFactor₋₁)) / 
-                     max(maximum(abs.(lanczosFactor)), maximum(abs.(lanczosFactor₋₁)))
+        maxResidue =
+            maximum(abs.(lanczosFactor .- lanczosFactor₋₁)) /
+            max(maximum(abs.(lanczosFactor)), maximum(abs.(lanczosFactor₋₁)))
         if maxResidue <= solver.tol
             if solver.verbose > 1
                 println("spectrum(): solver::Lanczos converged after $(k) iterations")
@@ -260,13 +261,13 @@ function _spectrum(
         w₊₁ .= w₊₁ .- αₖ .* wₖ .- δₖ .* w₋₁
         v₋₁ .= vₖ
         w₋₁ .= wₖ
-        vₖ  .= v₊₁
-        wₖ  .= w₊₁
+        vₖ .= v₊₁
+        wₖ .= w₊₁
 
         # k-th off-diagonal elements
         buf = wₖ * vₖ
-        δₖ  = sqrt(abs(buf))
-        βₖ  = buf / δₖ
+        δₖ = sqrt(abs(buf))
+        βₖ = buf / δₖ
 
         # Normalize (k+1)-th left/right vectors
         vₖ ./= δₖ
@@ -288,7 +289,7 @@ function _spectrum(
     # Restore the norm
     lanczosFactor .= gfNorm .* lanczosFactor
 
-    return -2 .* real( lanczosFactor )
+    return -2 .* real(lanczosFactor)
 end
 
 @doc raw"""
