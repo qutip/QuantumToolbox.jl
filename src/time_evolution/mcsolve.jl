@@ -235,7 +235,10 @@ function mcsolveEnsembleProblem(
     output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
 ) where {TJC<:LindbladJumpCallbackType}
-    _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
+    copied_rng = copy(rng) # use the copied rng, and keep the initial one to pass it directly to solution later
+
+    _prob_func =
+        isnothing(prob_func) ? _ensemble_dispatch_prob_func(copied_rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
         _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _mcsolve_output_func) : output_func
@@ -247,7 +250,7 @@ function mcsolveEnsembleProblem(
         c_ops;
         e_ops = e_ops,
         params = params,
-        rng = rng,
+        rng = copied_rng,
         jump_callback = jump_callback,
         kwargs...,
     )
@@ -256,7 +259,7 @@ function mcsolveEnsembleProblem(
         EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob_mc.times,
         prob_mc.dimensions,
-        (progr = _output_func[2], channel = _output_func[3]),
+        (progr = _output_func[2], channel = _output_func[3], rng = rng),
     )
 
     return ensemble_prob
@@ -407,20 +410,17 @@ function mcsolve(
     col_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_times, eachindex(sol))
     col_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_which, eachindex(sol))
 
-    expvals = _expvals_sol_1 isa Nothing ? nothing : dropdims(sum(expvals_all, dims = 2), dims = 2) ./ length(sol)
-
     return TimeEvolutionMCSol(
         ntraj,
         ens_prob_mc.times,
         states,
-        expvals,
-        expvals, # This is average_expect
         expvals_all,
+        ens_prob_mc.kwargs.rng,
         col_times,
         col_which,
         sol.converged,
         _sol_1.alg,
-        NamedTuple(_sol_1.prob.kwargs).abstol,
-        NamedTuple(_sol_1.prob.kwargs).reltol,
+        _sol_1.prob.kwargs[:abstol],
+        _sol_1.prob.kwargs[:reltol],
     )
 end

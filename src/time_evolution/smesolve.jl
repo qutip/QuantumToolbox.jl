@@ -239,10 +239,12 @@ function smesolveEnsembleProblem(
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 ) where {StateOpType<:Union{Ket,Operator,OperatorKet}}
+    copied_rng = copy(rng) # use the copied rng, and keep the initial one to pass it directly to solution later
+
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
-            rng,
+            copied_rng,
             ntraj,
             tlist,
             _stochastic_prob_func;
@@ -261,7 +263,7 @@ function smesolveEnsembleProblem(
         sc_ops;
         e_ops = e_ops,
         params = params,
-        rng = rng,
+        rng = copied_rng,
         progress_bar = Val(false),
         store_measurement = makeVal(store_measurement),
         kwargs...,
@@ -271,7 +273,7 @@ function smesolveEnsembleProblem(
         EnsembleProblem(prob_sme, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
         prob_sme.times,
         prob_sme.dimensions,
-        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3])),
+        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3], rng = rng)),
     )
 
     return ensemble_prob
@@ -418,17 +420,12 @@ function smesolve(
         _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSMESolve), eachindex(sol))
     m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2)
 
-    expvals =
-        _get_expvals(_sol_1, SaveFuncMESolve) isa Nothing ? nothing :
-        dropdims(sum(expvals_all, dims = 2), dims = 2) ./ length(sol)
-
     return TimeEvolutionStochasticSol(
         ntraj,
         ens_prob.times,
         states,
-        expvals,
-        expvals, # This is average_expect
         expvals_all,
+        ens_prob.kwargs.rng,
         m_expvals, # Measurement expectation values
         sol.converged,
         _sol_1.alg,

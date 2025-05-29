@@ -5,6 +5,7 @@ using LinearAlgebra
 import LinearAlgebra: BlasInt, BlasFloat, checksquare
 import LinearAlgebra.LAPACK: hseqr!
 using SparseArrays
+import Statistics: mean, std
 
 # SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
 import SciMLBase:

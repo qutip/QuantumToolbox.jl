@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Align statistical analysis methods for multi-trajectory solutions to `QuTiP`. ([#471])
+  - Breaking Changes:
+    - the origin field `expect` in multi-trajectory solutions now stores the expectation values for all trajectories at each time points.
+    - remove field `average_expect` from multi-trajectory solutions
+    - remove field `runs_expect` from multi-trajectory solutions
+    - add field `rng` (random number generator) to multi-trajectory solutions for reproducibility
+  - New statistical analysis functions:
+    - `average_states`
+    - `average_expect`
+    - `std_expect`
+
 ## [v0.31.1]
 Release date: 2025-05-16
 
@@ -228,3 +239,4 @@ Release date: 2024-11-13
 [#455]: https://github.com/qutip/QuantumToolbox.jl/issues/455
 [#456]: https://github.com/qutip/QuantumToolbox.jl/issues/456
 [#460]: https://github.com/qutip/QuantumToolbox.jl/issues/460
+[#471]: https://github.com/qutip/QuantumToolbox.jl/issues/471
