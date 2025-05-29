@@ -171,31 +171,30 @@ function _spectrum(
     fT = _FType(L)
     cT = _CType(L)
 
-    # Handle input frequency range
-    ωList = convert(Vector{fT}, ωlist) # Convert it to support GPUs and avoid type instabilities
-    Length = length(ωList)
-    #spec = Vector{fT}(undef, Length)
-
     # Calculate |v₁> = B|ρss>
     ρss = mat2vec(steadystate(L))
-    vₖ = Array{cT}((spre(B) * ρss).data)
+    vₖ = (spre(B) * ρss).data
+
+    # Define (possibly GPU) vector type
+    vT = typeof(vₖ)
 
     # Calculate <w₁| = <I|A
     D = prod(L.dimensions)
     Ivec = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(cT, D)) # same as vec(system_identity_matrix)
-    wₖ = transpose(typeof(vₖ)(Ivec)) * spre(A).data
+    wₖ = transpose(vT(Ivec)) * spre(A).data
 
     # Store the norm of the Green's function before renormalizing |v₁> and <w₁|
     gfNorm = abs(wₖ * vₖ)
     vₖ ./= sqrt(gfNorm)
     wₖ ./= sqrt(gfNorm)
 
-    # println("  type: $(typeof(vₖ))")
-    # println("  type: $(typeof(wₖ))")
+    # Handle input frequency range
+    ωList = vT(convert(Vector{fT}, ωlist))  # Make sure they're real frequencies and potentially on GPU
+    Length = length(ωList)
 
     # Current and previous estimates of the spectrum
-    lanczosFactor   = zeros(cT, Length)
-    lanczosFactor₋₁ = zeros(cT, Length)
+    lanczosFactor   = vT(zeros(cT, Length))
+    lanczosFactor₋₁ = vT(zeros(cT, Length))
 
     # Tridiagonal matrix elements
     αₖ = cT( 0)
@@ -203,22 +202,22 @@ function _spectrum(
     δₖ = cT(+1)
 
     # Current and up to second-to-last A and B Euler sequences
-    A₋₂ =  ones(cT, Length)
-    A₋₁ = zeros(cT, Length)
-    Aₖ  = zeros(cT, Length)
-    B₋₂ = zeros(cT, Length)
-    B₋₁ =  ones(cT, Length)
-    Bₖ  = zeros(cT, Length)
+    A₋₂ = vT( ones(cT, Length))
+    A₋₁ = vT(zeros(cT, Length))
+    Aₖ  = vT(zeros(cT, Length))
+    B₋₂ = vT(zeros(cT, Length))
+    B₋₁ = vT( ones(cT, Length))
+    Bₖ  = vT(zeros(cT, Length))
 
     # Maximum norm and residue
-    maxNorm    = zeros(cT, length(ωList))
+    maxNorm    = vT(zeros(cT, length(ωList)))
     maxResidue = fT(0.0)
 
     # Previous and next left/right Krylov vectors
-    v₋₁ = zeros(cT, (D^2, 1))
-    v₊₁ = zeros(cT, (D^2, 1))
-    w₋₁ = zeros(cT, (1, D^2))
-    w₊₁ = zeros(cT, (1, D^2))
+    v₋₁ = vT(zeros(cT, D^2))
+    v₊₁ = vT(zeros(cT, D^2))
+    w₋₁ = vT(zeros(cT, D^2))'
+    w₊₁ = vT(zeros(cT, D^2))'
 
     # Frequency of renormalization
     renormFrequency::typeof(solver.maxiter) = 1
