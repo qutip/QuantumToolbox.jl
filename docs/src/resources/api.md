@@ -248,6 +248,7 @@ spectrum_correlation_fft
 spectrum
 ExponentialSeries
 PseudoInverse
+Lanczos
 ```
 
 ## [Entropy and Metrics](@id doc-API:Entropy-and-Metrics)
