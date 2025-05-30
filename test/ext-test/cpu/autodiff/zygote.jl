@@ -1,4 +1,4 @@
-@testset "Zygote.jl Autodiff" verbose=true begin
+@testset "Zygote Extension" verbose=true begin
     @testset "sesolve" begin
         coef_Ω(p, t) = p[1]
 

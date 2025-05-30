@@ -1,4 +1,9 @@
-@testset "Quantum Objects Evolution" verbose = true begin
+@testitem "Quantum Objects Evolution" begin
+    using LinearAlgebra
+    using SparseArrays
+    using StaticArraysCore
+    using SciMLOperators
+
     # DomainError: incompatible between size of array and type
     @testset "Thrown Errors" begin
         a = MatrixOperator(rand(ComplexF64, 3, 2))

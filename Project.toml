@@ -64,11 +64,4 @@ SparseArrays = "1"
 SpecialFunctions = "2"
 StaticArraysCore = "1"
 StochasticDiffEq = "6"
-Test = "1"
 julia = "1.10"
-
-[extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test"]

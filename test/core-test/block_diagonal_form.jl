@@ -1,4 +1,4 @@
-@testset "Block Diagonal Form" begin
+@testitem "Block Diagonal Form" begin
     # Block Diagonal Form
     N = 20
     Δ = 0
