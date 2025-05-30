@@ -374,7 +374,7 @@ function _steadystate_fourier(
     I_N = sparse(I, N, N)
     I_F = spdiagm(0 => ones(T, n_fourier))
     D_F = spdiagm(0 => n_vals)
-    block_diag = kron(I_F, L) + kron(D_F, I_N)
+    block_diag = _spre(L, I_F) + _spost(D_F, I_N)
     M += block_diag
     v0 = zeros(T, n_fourier * N)
     allowed_setindex!(v0, weight, n_max * N + 1)
