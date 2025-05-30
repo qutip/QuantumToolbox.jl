@@ -1,8 +1,8 @@
 @testitem "Time Evolution and Partial Trace" default_imports=false begin
     using Test
     using QuantumToolbox
-    import Random: MersenneTwister
-    import SciMLOperators: MatrixOperator
+    using Random
+    using SciMLOperators
 
     # Global definition of the system
     N = 10

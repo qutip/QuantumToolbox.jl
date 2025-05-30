@@ -2,10 +2,8 @@
     using Test
     using QuantumToolbox
     import QuantumToolbox: position, momentum
-
-    # Importing only the necessary functions to keep track the re-export of the functions
-    import LinearAlgebra: I
-    import SparseArrays: sparse, spzeros, spdiagm, SparseMatrixCSC, AbstractSparseMatrix
+    using LinearAlgebra
+    using SparseArrays
 
     @testset "zero state" begin
         v1 = zero_ket(4)

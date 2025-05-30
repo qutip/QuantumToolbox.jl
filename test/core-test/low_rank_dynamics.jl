@@ -1,7 +1,7 @@
 @testitem "Low Rank Dynamics" default_imports=false begin
     using Test
     using QuantumToolbox
-    import LinearAlgebra: Diagonal, mul!
+    using LinearAlgebra
 
     # Define lattice
     Nx, Ny = 2, 3

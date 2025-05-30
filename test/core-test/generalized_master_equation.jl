@@ -1,7 +1,7 @@
 @testitem "Generalized Master Equation" default_imports=false begin
     using Test
     using QuantumToolbox
-    import LinearAlgebra: triu
+    using LinearAlgebra
 
     N_c = 30
     N_trunc = 10

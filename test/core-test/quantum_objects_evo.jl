@@ -1,12 +1,10 @@
 @testitem "Quantum Objects Evolution" default_imports=false begin
     using Test
     using QuantumToolbox
-
-    # Importing only the necessary functions to keep track the re-export of the functions
-    import LinearAlgebra: I
-    import SparseArrays: sprand
-    import StaticArraysCore: SVector
-    import SciMLOperators: MatrixOperator, NullOperator, IdentityOperator
+    using LinearAlgebra
+    using SparseArrays
+    using StaticArraysCore
+    using SciMLOperators
 
     # DomainError: incompatible between size of array and type
     @testset "Thrown Errors" begin

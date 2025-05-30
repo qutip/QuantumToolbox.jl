@@ -1,11 +1,9 @@
 @testitem "Quantum Objects" default_imports=false begin
     using Test
     using QuantumToolbox
-
-    # Importing only the necessary functions to keep track the re-export of the functions
-    import LinearAlgebra: I, triu, tril, triu!, tril!
-    import SparseArrays: sparse, sprand, spzeros, nnz, SparseVector, SparseMatrixCSC
-    import StaticArraysCore: SVector
+    using LinearAlgebra
+    using SparseArrays
+    using StaticArraysCore
 
     # ArgumentError: type is incompatible with vector or matrix
     @testset "ArgumentError" begin
