@@ -355,76 +355,75 @@ function _steadystate_fourier(
     tol::R = 1e-8,
     kwargs...,
 ) where {R<:Real}
-    T1 = eltype(L_0)
-    T2 = eltype(L_p)
-    T3 = eltype(L_m)
-    T = promote_type(T1, T2, T3)
+    # Get matrix data and promote types
+    L0_mat = get_data(L_0)
+    Lp_mat = get_data(L_p)
+    Lm_mat = get_data(L_m)
+    T = promote_type(eltype(L0_mat), eltype(Lp_mat), eltype(Lm_mat))
 
-    L_0_mat = get_data(L_0)
-    L_p_mat = get_data(L_p)
-    L_m_mat = get_data(L_m)
-
-    N = size(L_0_mat, 1)
+    N = size(L0_mat, 1)
     Ns = isqrt(N)
     n_fourier = 2 * n_max + 1
     n_list = (-n_max):n_max
 
+    # Create stabilization matrix Mn
     weight = one(T)
-    rows = ones(Int, Ns)
-    cols = [Ns * (j - 1) + j for j in 1:Ns]
-    vals = fill(weight, Ns)
-    Mn = _sparse_similar(L_0_mat, rows, cols, vals, N, N)
-    L = L_0_mat + Mn
+    diag_indices = Ns * (0:(Ns-1)) .+ (1:Ns)
+    Mn = _sparse_similar(L0_mat, ones(Int, Ns), diag_indices, fill(weight, Ns), N, N)
 
-    M = _sparse_similar(L_0_mat, n_fourier * N, n_fourier * N)
-    for i in 1:(n_fourier-1)
-        M_block = _sparse_similar(L_0_mat, N, N)
-        copyto!(M_block, L_p_mat)
-        M[(i*N+1):((i+1)*N), ((i-1)*N+1):(i*N)] = M_block
-        M_block = _sparse_similar(L_0_mat, N, N)
-        copyto!(M_block, L_m_mat)
-        M[((i-1)*N+1):(i*N), (i*N+1):((i+1)*N)] = M_block
-    end
+    # Base Liouvillian
+    L = L0_mat + Mn
 
-    for i in 1:n_fourier
-        n = n_list[i]
-        M_block = _sparse_similar(L_0_mat, N, N)
-        copyto!(M_block, L)
-        M_block -= 1im * ωd * n * sparse(I, N, N)
-        M[((i-1)*N+1):(i*N), ((i-1)*N+1):(i*N)] = M_block
-    end
+    # Build off-diagonal blocks
+    Kp = _sparse_similar(L0_mat, spdiagm(-1 => ones(T, n_fourier-1)))
+    Km = _sparse_similar(L0_mat, spdiagm(1 => ones(T, n_fourier-1)))
+    M = kron(Kp, Lm_mat) + kron(Km, Lp_mat)
 
-    v0 = similar(L_0_mat, n_fourier * N)
-    fill!(v0, zero(T))
-    target_idx = n_max*N + 1
-    QuantumToolbox.allowed_setindex!(v0, weight, target_idx)
+    # Build diagonal blocks
+    n_vals = -1im * ωd * T.(n_list)
+    diag_blocks = [L + n * sparse(I, N, N) for n in n_vals]
+    block_diag = blockdiag(diag_blocks...)
+    M += block_diag
 
+    # Initialize RHS vector
+    v0 = zeros(T, n_fourier * N)
+    v0[n_max*N+1] = weight
+
+    # Preconditioners setup
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
     if !isnothing(solver.Pl)
-        kwargs = merge((; kwargs...), (Pl = solver.Pl(M),))
+        kwargs = (; kwargs..., Pl = solver.Pl(M))
     elseif isa(M, SparseMatrixCSC)
-        kwargs = merge((; kwargs...), (Pl = ilu(M, τ = 0.01),))
+        kwargs = (; kwargs..., Pl = ilu(M, τ = 0.01))
     end
-    !isnothing(solver.Pr) && (kwargs = merge((; kwargs...), (Pr = solver.Pr(M),)))
-    !haskey(kwargs, :abstol) && (kwargs = merge((; kwargs...), (abstol = tol,)))
-    !haskey(kwargs, :reltol) && (kwargs = merge((; kwargs...), (reltol = tol,)))
+    if !isnothing(solver.Pr)
+        kwargs = (; kwargs..., Pr = solver.Pr(M))
+    end
+    if !haskey(kwargs, :abstol)
+        kwargs = (; kwargs..., abstol = tol)
+    end
+    if !haskey(kwargs, :reltol)
+        kwargs = (; kwargs..., reltol = tol)
+    end
 
+    # Solve linear system
     prob = LinearProblem(M, v0)
     ρtot = solve(prob, solver.alg; kwargs...).u
 
+    # Extract ρ0 and normalize
     offset1 = n_max * N
     offset2 = (n_max + 1) * N
-    ρ0 = reshape(ρtot[(offset1+1):offset2], Ns, Ns)
+    ρ0 = Matrix(reshape(ρtot[(offset1+1):offset2], Ns, Ns))  # Explicitly convert to Matrix
     ρ0_tr = tr(ρ0)
-    ρ0 = ρ0 / ρ0_tr
+    ρ0 ./= ρ0_tr
     ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator(), dims = L_0.dimensions)
-    ρtot = ρtot / ρ0_tr
 
+    # Collect higher-order Fourier components
     ρ_list = [ρ0]
     for i in 0:(n_max-1)
-        ρi_m = reshape(ρtot[(offset1-(i+1)*N+1):(offset1-i*N)], Ns, Ns)
-        ρi_m = QuantumObject(ρi_m, type = Operator(), dims = L_0.dimensions)
-        push!(ρ_list, ρi_m)
+        idx_range = (offset1-(i+1)*N+1):(offset1-i*N)
+        ρi_m = Matrix(reshape(ρtot[idx_range], Ns, Ns))  # Explicitly convert to Matrix
+        push!(ρ_list, QuantumObject(ρi_m, type = Operator(), dims = L_0.dimensions))
     end
 
     return ρ_list

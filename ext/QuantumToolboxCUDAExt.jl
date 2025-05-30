@@ -2,8 +2,8 @@ module QuantumToolboxCUDAExt
 
 using QuantumToolbox
 using QuantumToolbox: makeVal, getVal
-import QuantumToolbox: _sparse_similar, _convert_eltype_wordsize, allowed_setindex!
-import CUDA: cu, CuArray, allowscalar, @allowscalar, has_cuda
+import QuantumToolbox: _sparse_similar, _convert_eltype_wordsize
+import CUDA: cu, CuArray, allowscalar
 import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR, AbstractCuSparseArray
 import SparseArrays: SparseVector, SparseMatrixCSC, sparse, spzeros
 import CUDA.Adapt: adapt
@@ -104,11 +104,22 @@ QuantumToolbox.to_dense(::Type{T}, A::AbstractCuSparseArray) where {T<:Number} =
 
 QuantumToolbox._sparse_similar(A::CuSparseMatrixCSC, args...) = sparse(args..., fmt = :csc)
 QuantumToolbox._sparse_similar(A::CuSparseMatrixCSR, args...) = sparse(args..., fmt = :csr)
-QuantumToolbox._sparse_similar(A::CuSparseMatrixCSC, I::AbstractVector, J::AbstractVector, V::AbstractVector, m::Int, n::Int) =
-    CuSparseMatrixCSC(sparse(I, J, V, m, n))
+QuantumToolbox._sparse_similar(
+    A::CuSparseMatrixCSC,
+    I::AbstractVector,
+    J::AbstractVector,
+    V::AbstractVector,
+    m::Int,
+    n::Int,
+) = CuSparseMatrixCSC(sparse(I, J, V, m, n))
 QuantumToolbox._sparse_similar(A::CuSparseMatrixCSC, m::Int, n::Int) = CuSparseMatrixCSC(spzeros(eltype(A), m, n))
-QuantumToolbox._sparse_similar(A::CuSparseMatrixCSR, I::AbstractVector, J::AbstractVector, V::AbstractVector, m::Int, n::Int) =
-    CuSparseMatrixCSR(sparse(I, J, V, m, n))
+QuantumToolbox._sparse_similar(
+    A::CuSparseMatrixCSR,
+    I::AbstractVector,
+    J::AbstractVector,
+    V::AbstractVector,
+    m::Int,
+    n::Int,
+) = CuSparseMatrixCSR(sparse(I, J, V, m, n))
 QuantumToolbox._sparse_similar(A::CuSparseMatrixCSR, m::Int, n::Int) = CuSparseMatrixCSR(spzeros(eltype(A), m, n))
-QuantumToolbox.allowed_setindex!(A::AbstractCuSparseArray, v, I...) = @allowscalar A[I...] = v
 end
