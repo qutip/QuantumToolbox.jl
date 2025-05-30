@@ -367,19 +367,19 @@ function _steadystate_fourier(
     diag_indices = Ns * (0:(Ns-1)) .+ (1:Ns)
     Mn = _sparse_similar(L0_mat, ones(Int, Ns), diag_indices, fill(weight, Ns), N, N)
     L = L0_mat + Mn
-    Kp = _sparse_similar(L0_mat, spdiagm(-1 => ones(T, n_fourier-1)))
-    Km = _sparse_similar(L0_mat, spdiagm(1 => ones(T, n_fourier-1)))
+    Kp = _sparse_similar(L0_mat, spdiagm(-1 => ones(T, n_fourier - 1)))
+    Km = _sparse_similar(L0_mat, spdiagm(1 => ones(T, n_fourier - 1)))
     M = kron(Kp, Lm_mat) + kron(Km, Lp_mat)
     n_vals = -1im * ωd * T.(n_list)
-    I_N  = sparse(I, N, N)
+    I_N = sparse(I, N, N)
     I_F = spdiagm(0 => ones(T, n_fourier))
-    block_diag = kron(I_F, L) .+ kron(spdiagm(0 => n_vals), I_N)
-    D_F  = spdiagm(0 => n_vals)
-    block_diag = kron(I_F, L) .+ kron(D_F, I_N)
+    D_F = spdiagm(0 => n_vals)
+    block_diag = kron(I_F, L) + kron(D_F, I_N)
     M += block_diag
     v0 = zeros(T, n_fourier * N)
-    allowed_setindex!(v0, weight, n_max*N+1)
-    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
+    allowed_setindex!(v0, weight, n_max * N + 1)
+    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) &&
+        error("The use of preconditioners must be defined in the solver.")
     if !isnothing(solver.Pl)
         kwargs = (; kwargs..., Pl = solver.Pl(M))
     elseif isa(M, SparseMatrixCSC)
@@ -388,25 +388,19 @@ function _steadystate_fourier(
     if !isnothing(solver.Pr)
         kwargs = (; kwargs..., Pr = solver.Pr(M))
     end
-    if !haskey(kwargs, :abstol)
-        kwargs = (; kwargs..., abstol = tol)
-    end
-    if !haskey(kwargs, :reltol)
-        kwargs = (; kwargs..., reltol = tol)
-    end
+    kwargs = merge((; abstol = tol, reltol = tol), kwargs)
     prob = LinearProblem(M, v0)
     ρtot = solve(prob, solver.alg; kwargs...).u
     offset1 = n_max * N
     offset2 = (n_max + 1) * N
-    ρ0 = Matrix(reshape(view(ρtot, (offset1+1):offset2), Ns, Ns))
-    ρ0_tr = tr(ρ0)
-    ρ0 ./= ρ0_tr
+    ρ0 = Matrix(reshape(view(ρtot, (offset1 + 1):offset2), Ns, Ns))
+    ρ0 ./= tr(ρ0)
     ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator(), dims = L_0.dimensions)
-    idx_ranges = [(offset1-(i+1)*N+1):(offset1-i*N) for i in 0:(n_max-1)]
-    ρ_components = map(idx_range -> 
-        QuantumObject(Matrix(reshape(view(ρtot, idx_range), Ns, Ns)), 
-        type = Operator(), 
-        dims = L_0.dimensions),
+    idx_ranges = [(offset1 - (i + 1) * N + 1):(offset1 - i * N) for i in 0:(n_max - 1)]
+    ρ_components = map(idx_range ->
+        QuantumObject(Matrix(reshape(view(ρtot, idx_range), Ns, Ns)),
+                      type = Operator(),
+                      dims = L_0.dimensions),
         idx_ranges)
     return vcat([ρ0], ρ_components)
 end
