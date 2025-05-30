@@ -1,6 +1,4 @@
-@testitem "Generalized Master Equation" default_imports=false begin
-    using Test
-    using QuantumToolbox
+@testitem "Generalized Master Equation" begin
     using LinearAlgebra
 
     N_c = 30

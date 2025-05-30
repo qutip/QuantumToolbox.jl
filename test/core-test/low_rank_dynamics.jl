@@ -1,6 +1,4 @@
-@testitem "Low Rank Dynamics" default_imports=false begin
-    using Test
-    using QuantumToolbox
+@testitem "Low Rank Dynamics" begin
     using LinearAlgebra
 
     # Define lattice

@@ -1,6 +1,4 @@
-@testitem "Quantum Objects Evolution" default_imports=false begin
-    using Test
-    using QuantumToolbox
+@testitem "Quantum Objects Evolution" begin
     using LinearAlgebra
     using SparseArrays
     using StaticArraysCore

@@ -1,6 +1,4 @@
-@testitem "Quantum Objects" default_imports=false begin
-    using Test
-    using QuantumToolbox
+@testitem "Quantum Objects" begin
     using LinearAlgebra
     using SparseArrays
     using StaticArraysCore

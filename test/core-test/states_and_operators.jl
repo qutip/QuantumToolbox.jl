@@ -1,6 +1,4 @@
-@testitem "States and Operators" default_imports=false begin
-    using Test
-    using QuantumToolbox
+@testitem "States and Operators" begin
     import QuantumToolbox: position, momentum
     using LinearAlgebra
     using SparseArrays
