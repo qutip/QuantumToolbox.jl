@@ -366,7 +366,7 @@ function _steadystate_fourier(
     n_fourier = 2 * n_max + 1
     n_list = (-n_max):n_max
 
-    # Create stabilization matrix Mn
+    # Create stabilization matrix Mn without scalar indexing
     weight = one(T)
     diag_indices = Ns * (0:(Ns-1)) .+ (1:Ns)
     Mn = _sparse_similar(L0_mat, ones(Int, Ns), diag_indices, fill(weight, Ns), N, N)
@@ -379,15 +379,15 @@ function _steadystate_fourier(
     Km = _sparse_similar(L0_mat, spdiagm(1 => ones(T, n_fourier-1)))
     M = kron(Kp, Lm_mat) + kron(Km, Lp_mat)
 
-    # Build diagonal blocks
+    # Build diagonal blocks without comprehensions or loops
     n_vals = -1im * ωd * T.(n_list)
-    diag_blocks = [L + n * sparse(I, N, N) for n in n_vals]
+    diag_blocks = broadcast(n -> L + n * sparse(I, N, N), n_vals)
     block_diag = blockdiag(diag_blocks...)
     M += block_diag
 
-    # Initialize RHS vector
+    # Initialize RHS vector without scalar indexing
     v0 = zeros(T, n_fourier * N)
-    v0[n_max*N+1] = weight
+    allowed_setindex!(v0, weight, n_max*N+1)
 
     # Preconditioners setup
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
@@ -410,23 +410,22 @@ function _steadystate_fourier(
     prob = LinearProblem(M, v0)
     ρtot = solve(prob, solver.alg; kwargs...).u
 
-    # Extract ρ0 and normalize
+    # Extract ρ0 and normalize without scalar indexing
     offset1 = n_max * N
     offset2 = (n_max + 1) * N
-    ρ0 = Matrix(reshape(ρtot[(offset1+1):offset2], Ns, Ns))  # Explicitly convert to Matrix
+    ρ0 = Matrix(reshape(view(ρtot, (offset1+1):offset2), Ns, Ns))
     ρ0_tr = tr(ρ0)
     ρ0 ./= ρ0_tr
     ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator(), dims = L_0.dimensions)
 
-    # Collect higher-order Fourier components
-    ρ_list = [ρ0]
-    for i in 0:(n_max-1)
-        idx_range = (offset1-(i+1)*N+1):(offset1-i*N)
-        ρi_m = Matrix(reshape(ρtot[idx_range], Ns, Ns))  # Explicitly convert to Matrix
-        push!(ρ_list, QuantumObject(ρi_m, type = Operator(), dims = L_0.dimensions))
-    end
-
-    return ρ_list
+    # Collect higher-order Fourier components without loops
+    idx_ranges = [(offset1-(i+1)*N+1):(offset1-i*N) for i in 0:(n_max-1)]
+    ρ_components = map(idx_range -> 
+        QuantumObject(Matrix(reshape(view(ρtot, idx_range), Ns, Ns)), 
+        type = Operator(), 
+        dims = L_0.dimensions),
+        idx_ranges)
+    return vcat([ρ0], ρ_components)
 end
 
 function _steadystate_fourier(
