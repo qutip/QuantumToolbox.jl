@@ -355,64 +355,54 @@ function _steadystate_fourier(
     tol::R = 1e-8,
     kwargs...,
 ) where {R<:Real}
-    T1 = eltype(L_0)
-    T2 = eltype(L_p)
-    T3 = eltype(L_m)
-    T = promote_type(T1, T2, T3)
-
-    L_0_mat = get_data(L_0)
-    L_p_mat = get_data(L_p)
-    L_m_mat = get_data(L_m)
-
-    N = size(L_0_mat, 1)
+    L0_mat = get_data(L_0)
+    Lp_mat = get_data(L_p)
+    Lm_mat = get_data(L_m)
+    T = promote_type(eltype(L0_mat), eltype(Lp_mat), eltype(Lm_mat))
+    N = size(L0_mat, 1)
     Ns = isqrt(N)
     n_fourier = 2 * n_max + 1
     n_list = (-n_max):n_max
-
-    weight = 1
-    Mn = sparse(ones(Ns), [Ns * (j - 1) + j for j in 1:Ns], fill(weight, Ns), N, N)
-    L = L_0_mat + Mn
-
-    M = spzeros(T, n_fourier * N, n_fourier * N)
-    M += kron(spdiagm(1 => ones(n_fourier - 1)), L_m_mat)
-    M += kron(spdiagm(-1 => ones(n_fourier - 1)), L_p_mat)
-    for i in 1:n_fourier
-        n = n_list[i]
-        M += kron(sparse([i], [i], one(T), n_fourier, n_fourier), L - 1im * ωd * n * I)
-    end
-
+    weight = one(T)
+    diag_indices = Ns * (0:(Ns-1)) .+ (1:Ns)
+    Mn = _sparse_similar(L0_mat, ones(Int, Ns), diag_indices, fill(weight, Ns), N, N)
+    L = L0_mat + Mn
+    Kp = _sparse_similar(L0_mat, spdiagm(-1 => ones(T, n_fourier - 1)))
+    Km = _sparse_similar(L0_mat, spdiagm(1 => ones(T, n_fourier - 1)))
+    M = kron(Kp, Lm_mat) + kron(Km, Lp_mat)
+    n_vals = -1im * ωd * T.(n_list)
+    I_N = sparse(I, N, N)
+    I_F = spdiagm(0 => ones(T, n_fourier))
+    D_F = spdiagm(0 => n_vals)
+    block_diag = _spre(L, I_F) + _spost(D_F, I_N)
+    M += block_diag
     v0 = zeros(T, n_fourier * N)
-    v0[n_max*N+1] = weight
-
-    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
+    allowed_setindex!(v0, weight, n_max * N + 1)
+    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) &&
+        error("The use of preconditioners must be defined in the solver.")
     if !isnothing(solver.Pl)
-        kwargs = merge((; kwargs...), (Pl = solver.Pl(M),))
+        kwargs = (; kwargs..., Pl = solver.Pl(M))
     elseif isa(M, SparseMatrixCSC)
-        kwargs = merge((; kwargs...), (Pl = ilu(M, τ = 0.01),))
+        kwargs = (; kwargs..., Pl = ilu(M, τ = 0.01))
     end
-    !isnothing(solver.Pr) && (kwargs = merge((; kwargs...), (Pr = solver.Pr(M),)))
-    !haskey(kwargs, :abstol) && (kwargs = merge((; kwargs...), (abstol = tol,)))
-    !haskey(kwargs, :reltol) && (kwargs = merge((; kwargs...), (reltol = tol,)))
-
+    if !isnothing(solver.Pr)
+        kwargs = (; kwargs..., Pr = solver.Pr(M))
+    end
+    kwargs = merge((; abstol = tol, reltol = tol), kwargs)
     prob = LinearProblem(M, v0)
     ρtot = solve(prob, solver.alg; kwargs...).u
-
     offset1 = n_max * N
     offset2 = (n_max + 1) * N
-    ρ0 = reshape(ρtot[(offset1+1):offset2], Ns, Ns)
-    ρ0_tr = tr(ρ0)
-    ρ0 = ρ0 / ρ0_tr
+    ρ0 = Matrix(reshape(view(ρtot, (offset1 + 1):offset2), Ns, Ns))
+    ρ0 ./= tr(ρ0)
     ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator(), dims = L_0.dimensions)
-    ρtot = ρtot / ρ0_tr
-
-    ρ_list = [ρ0]
-    for i in 0:(n_max-1)
-        ρi_m = reshape(ρtot[(offset1-(i+1)*N+1):(offset1-i*N)], Ns, Ns)
-        ρi_m = QuantumObject(ρi_m, type = Operator(), dims = L_0.dimensions)
-        push!(ρ_list, ρi_m)
-    end
-
-    return ρ_list
+    idx_ranges = [(offset1 - (i + 1) * N + 1):(offset1 - i * N) for i in 0:(n_max - 1)]
+    ρ_components = map(idx_range ->
+        QuantumObject(Matrix(reshape(view(ρtot, idx_range), Ns, Ns)),
+                      type = Operator(),
+                      dims = L_0.dimensions),
+        idx_ranges)
+    return vcat([ρ0], ρ_components)
 end
 
 function _steadystate_fourier(
