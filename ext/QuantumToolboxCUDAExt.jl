@@ -2,8 +2,8 @@ module QuantumToolboxCUDAExt
 
 using QuantumToolbox
 using QuantumToolbox: makeVal, getVal
-import QuantumToolbox: _sparse_similar, _convert_eltype_wordsize
-import CUDA: cu, CuArray, allowscalar
+import QuantumToolbox: _sparse_similar, _convert_eltype_wordsize, _spre, _spost
+import CUDA: cu, CuArray, allowscalar, adapt, kron
 import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR, AbstractCuSparseArray
 import SparseArrays: SparseVector, SparseMatrixCSC, sparse, spzeros
 import CUDA.Adapt: adapt
@@ -122,4 +122,14 @@ QuantumToolbox._sparse_similar(
     n::Int,
 ) = CuSparseMatrixCSR(sparse(I, J, V, m, n))
 QuantumToolbox._sparse_similar(A::CuSparseMatrixCSR, m::Int, n::Int) = CuSparseMatrixCSR(spzeros(eltype(A), m, n))
+function QuantumToolbox._spre(A::AbstractCuSparseArray, Id::AbstractMatrix)
+    Id_gpu = Id isa AbstractCuSparseArray ? Id : CuSparseMatrixCSC(sparse(Id))
+    return kron(Id_gpu, A)
+end
+QuantumToolbox._spre(A::AbstractCuSparseArray, Id::AbstractCuSparseArray) = kron(Id, A)
+function _spost(B::AbstractCuSparseArray, Id::AbstractMatrix)
+    Id_gpu = Id isa AbstractCuSparseArray ? Id : CuSparseMatrixCSC(sparse(Id))
+    return kron(B, Id_gpu)
+end
+QuantumToolbox._spost(B::AbstractCuSparseArray, Id::AbstractCuSparseArray) = kron(B, Id)
 end

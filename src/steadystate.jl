@@ -378,8 +378,7 @@ function _steadystate_fourier(
     M += block_diag
     v0 = zeros(T, n_fourier * N)
     allowed_setindex!(v0, weight, n_max * N + 1)
-    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) &&
-        error("The use of preconditioners must be defined in the solver.")
+    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
     if !isnothing(solver.Pl)
         kwargs = (; kwargs..., Pl = solver.Pl(M))
     elseif isa(M, SparseMatrixCSC)
@@ -393,15 +392,15 @@ function _steadystate_fourier(
     ρtot = solve(prob, solver.alg; kwargs...).u
     offset1 = n_max * N
     offset2 = (n_max + 1) * N
-    ρ0 = Matrix(reshape(view(ρtot, (offset1 + 1):offset2), Ns, Ns))
+    ρ0 = Matrix(reshape(view(ρtot, (offset1+1):offset2), Ns, Ns))
     ρ0 ./= tr(ρ0)
     ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator(), dims = L_0.dimensions)
-    idx_ranges = [(offset1 - (i + 1) * N + 1):(offset1 - i * N) for i in 0:(n_max - 1)]
-    ρ_components = map(idx_range ->
-        QuantumObject(Matrix(reshape(view(ρtot, idx_range), Ns, Ns)),
-                      type = Operator(),
-                      dims = L_0.dimensions),
-        idx_ranges)
+    idx_ranges = [(offset1-(i+1)*N+1):(offset1-i*N) for i in 0:(n_max-1)]
+    ρ_components = map(
+        idx_range ->
+            QuantumObject(Matrix(reshape(view(ρtot, idx_range), Ns, Ns)), type = Operator(), dims = L_0.dimensions),
+        idx_ranges,
+    )
     return vcat([ρ0], ρ_components)
 end
 
