@@ -371,9 +371,9 @@ function _steadystate_fourier(
     Km = _sparse_similar(L0_mat, spdiagm(1 => ones(T, n_fourier - 1)))
     M = kron(Kp, Lm_mat) + kron(Km, Lp_mat)
     n_vals = -1im * ωd * T.(n_list)
-    I_N = sparse(I, N, N)
-    I_F = spdiagm(0 => ones(T, n_fourier))
-    D_F = spdiagm(0 => n_vals)
+    I_N = _sparse_similar(L0_mat, sparse(I, N, N))
+    I_F = _sparse_similar(L0_mat, spdiagm(0 => ones(T, n_fourier)))
+    D_F = _sparse_similar(L0_mat, spdiagm(0 => n_vals))
     block_diag = _spre(L, I_F) + _spost(D_F, I_N)
     M += block_diag
     v0 = zeros(T, n_fourier * N)
