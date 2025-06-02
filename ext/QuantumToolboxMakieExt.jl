@@ -424,15 +424,13 @@ Add one or more quantum states to the Bloch sphere visualization by converting t
 
 """
 function QuantumToolbox.add_states!(b::Bloch, states::Vector{<:QuantumObject})
-    vecs = Vector{Vector{Float64}}()
-    for state in states
-        vec = if isket(state) || isbra(state)
-            _state_to_bloch(state)
-        else
-            _dm_to_bloch(state)
-        end
-        push!(vecs, vec)
+vecs = map(states) do state
+    if isket(state) || isbra(state)
+        return _state_to_bloch(state)
+    else
+        return _dm_to_bloch(state)
     end
+end
     return add_vectors!(b, vecs)
 end
 
