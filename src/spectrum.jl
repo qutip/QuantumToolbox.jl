@@ -247,9 +247,10 @@ function _spectrum(
         end
 
         # Check for convergence
-        maxResidue =
-            mapreduce((x, y) -> abs(x - y), max, lanczosFactor, lanczosFactor₋₁) /
-            max(maximum(abs, lanczosFactor), maximum(abs, lanczosFactor₋₁))
+
+        residueNorm = max(maximum(abs, lanczosFactor), maximum(abs, lanczosFactor₋₁))
+        lanczosFactor₋₁ .-= lanczosFactor
+        maxResidue = maximum(abs, lanczosFactor₋₁) / residueNorm
         if maxResidue <= solver.tol
             if solver.verbose > 1
                 println("spectrum(): solver::Lanczos converged after $(k) iterations")
