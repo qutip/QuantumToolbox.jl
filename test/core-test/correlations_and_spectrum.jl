@@ -38,6 +38,18 @@
         @inferred spectrum(H, ω_l2, c_ops, a', a; solver = Lanczos())
     end
 
+    @testset "Verbose mode Lanczos" begin
+        cout = stdout
+        r, w = redirect_stdout()
+        nout = @async read(r, String)
+        spectrum(H, ω_l2, c_ops, a', a; solver = Lanczos(verbose = 2, maxiter = 2, tol = 1e-16));
+        redirect_stdout(cout)
+        close(w)
+        out = fetch(nout)
+        outlines = split(out, '\n', keepempty = false)
+        @test last(outlines) == "spectrum(): Consider increasing maxiter and/or tol"
+    end
+
     # tlist and τlist checks
     t_fft_wrong = [0, 1, 10]
     t_wrong1 = [1, 2, 3]
