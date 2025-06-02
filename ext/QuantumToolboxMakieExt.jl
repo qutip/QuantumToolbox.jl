@@ -1,10 +1,31 @@
 module QuantumToolboxMakieExt
 
 using QuantumToolbox
-using LinearAlgebra
-using Makie
+using LinearAlgebra: cross, deg2rad, normalize
 using Makie:
-    Axis, Axis3, Colorbar, Figure, GridLayout, heatmap!, surface!, barplot!, GridPosition, @L_str, Reverse, ylims!
+    Axis,
+    Axis3,
+    Colorbar,
+    Figure,
+    GridLayout,
+    heatmap!,
+    surface!,
+    barplot!,
+    GridPosition,
+    @L_str,
+    Reverse,
+    ylims!,
+    RGBAf,
+    Sphere,
+    lines!,
+    scatter!,
+    arrows!,
+    text!,
+    Point3f,
+    mesh!,
+    RGBf,
+    Vec3f,
+    Point3f
 
 @doc raw"""
     plot_wigner(
@@ -364,8 +385,8 @@ end
 raw"""
     add_line!(
         b::QuantumToolbox.Bloch,
-        start::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}},
-        endp::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}};
+        start_point_point::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}},
+        end_point::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}};
         fmt = "k",
         kwargs...,
     )
@@ -375,8 +396,8 @@ Add a line between two quantum states or operators on the Bloch sphere visualiza
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object to modify.
-- `start::QuantumObject`: The starting quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
-- `endp::QuantumObject`: The ending quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
+- `start_point_point::QuantumObject`: The start_point_pointing quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
+- `end_point::QuantumObject`: The ending quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
 - `fmt::String="k"`: (optional) A format string specifying the line style and color (default is black `"k"`).
 - `kwargs...`: Additional keyword arguments forwarded to the underlying line drawing function.
 
@@ -395,22 +416,25 @@ add_line!(b, ψ₁, ψ₂; fmt = "r--")
 """
 function QuantumToolbox.add_line!(
     b::QuantumToolbox.Bloch,
-    start::QuantumObject{<:Union{Ket,Bra,Operator}},
-    endp::QuantumObject{<:Union{Ket,Bra,Operator}};
+    start_point_point::QuantumObject{<:Union{Ket,Bra,Operator}},
+    end_point::QuantumObject{<:Union{Ket,Bra,Operator}};
     fmt = "k",
     kwargs...,
 )
-    p1 = if isket(start) || isbra(start)
-        _state_to_bloch(start)
+    p1 = if isket(start_point_point) || isbra(start_point_point)
+        _state_to_bloch(start_point_point)
     else
-        _dm_to_bloch(start)
+        _dm_to_bloch(start_point_point)
     end
-    p2 = if isket(endp) || isbra(endp)
-        _state_to_bloch(endp)
+    p2 = if isket(end_point) || isbra(end_point)
+        _state_to_bloch(end_point)
     else
-        _dm_to_bloch(endp)
+        _dm_to_bloch(end_point)
     end
-    return add_line!(b, p1, p2; fmt = fmt, kwargs...)
+    x = [p1[2], p2[2]]
+    y = [-p1[1], -p2[1]]
+    z = [p1[3], p2[3]]
+    return push!(b.lines, ([x, y, z], fmt, kwargs))
 end
 
 raw"""
@@ -422,16 +446,26 @@ Add one or more quantum states to the Bloch sphere visualization by converting t
 - `b::Bloch`: The Bloch sphere object to modify
 - `states::QuantumObject...`: One or more quantum states (Ket, Bra, or Operator)
 
+# Example
+
+```julia
+x = basis(2, 0) + basis(2, 1);
+y = basis(2, 0) - im * basis(2, 1);
+z = basis(2, 0);
+b = Bloch();
+add_states!(b, [x, y, z])
+```
 """
 function QuantumToolbox.add_states!(b::Bloch, states::Vector{<:QuantumObject})
-vecs = map(states) do state
-    if isket(state) || isbra(state)
-        return _state_to_bloch(state)
-    else
-        return _dm_to_bloch(state)
+    vecs = map(states) do state
+        if isket(state) || isbra(state)
+            return _state_to_bloch(state)
+        else
+            return _dm_to_bloch(state)
+        end
     end
-end
-    return add_vectors!(b, vecs)
+    append!(b.vectors, [normalize(v) for v in vecs])
+    return b.vectors
 end
 
 raw"""
@@ -455,68 +489,150 @@ Render the Bloch sphere visualization from the given `Bloch` object `b`.
 - A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting.
   These can be further manipulated or saved by the user.
 """
-function QuantumToolbox.render(b::QuantumToolbox.Bloch; location = nothing)
+function QuantumToolbox.render(b::Bloch; location = nothing)
+    fig, ax = _setup_bloch_plot(b, location)
+    _draw_bloch_sphere(ax)
+    _draw_reference_circles(ax)
+    _draw_axes(ax)
+    _plot_points(b, ax)
+    _plot_lines(b, ax)
+    _plot_arcs(b, ax)
+    _plot_vectors(b, ax)
+    _add_labels(ax)
+    return fig, ax
+end
+
+raw"""
+    _setup_bloch_plot(b::Bloch, location) -> (fig, ax)
+
+Initialize the figure and `3D` axis for Bloch sphere visualization.
+
+# Arguments
+- `b::Bloch`: Bloch sphere object containing view parameters
+- `location`: Figure layout position specification
+
+# Returns
+- `fig`: Created Makie figure
+- `ax`: Configured Axis3 object
+
+Sets up the `3D` coordinate system with appropriate limits and view angles.
+"""
+function _setup_bloch_plot(b::Bloch, location)
     fig, location = _getFigAndLocation(location)
-    if isnothing(b.fig) || b.fig !== fig
-        b.fig = fig
-        b.ax = Makie.Axis3(
-            location;
-            aspect = :data,
-            limits = (-1.1, 1.1, -1.1, 1.1, -1.1, 1.1),
-            xgridvisible = false,
-            ygridvisible = false,
-            zgridvisible = false,
-            xticklabelsvisible = false,
-            yticklabelsvisible = false,
-            zticklabelsvisible = false,
-            xticksvisible = false,
-            yticksvisible = false,
-            zticksvisible = false,
-            xlabel = "",
-            ylabel = "",
-            zlabel = "",
-            backgroundcolor = Makie.RGBAf(1, 1, 1, 0.0),
-            xypanelvisible = false,
-            xzpanelvisible = false,
-            yzpanelvisible = false,
-            xspinesvisible = false,
-            yspinesvisible = false,
-            zspinesvisible = false,
-            protrusions = (0, 0, 0, 0),
-            viewmode = :fit,
-        )
-        b.ax.azimuth[] = deg2rad(b.view_angles[1])
-        b.ax.elevation[] = deg2rad(b.view_angles[2])
-    else
-        if !(b.ax in contents(location))
-            location[] = b.ax
-        end
-    end
-    Makie.empty!(b.ax)
-    sphere_color = Makie.RGBAf(1.0, 0.86, 0.86, 0.2)
-    Makie.mesh!(b.ax, Makie.Sphere(Point3f(0, 0, 0), 1.0f0); color = sphere_color, transparency = false)
-    wire_color = Makie.RGBAf(0.5, 0.5, 0.5, 0.4)
+    ax = Axis3(
+        location;
+        aspect = :data,
+        limits = (-1.1, 1.1, -1.1, 1.1, -1.1, 1.1),
+        xgridvisible = false,
+        ygridvisible = false,
+        zgridvisible = false,
+        xticklabelsvisible = false,
+        yticklabelsvisible = false,
+        zticklabelsvisible = false,
+        xticksvisible = false,
+        yticksvisible = false,
+        zticksvisible = false,
+        xlabel = "",
+        ylabel = "",
+        zlabel = "",
+        backgroundcolor = RGBAf(1, 1, 1, 0.0),
+        xypanelvisible = false,
+        xzpanelvisible = false,
+        yzpanelvisible = false,
+        xspinesvisible = false,
+        yspinesvisible = false,
+        zspinesvisible = false,
+        protrusions = (0, 0, 0, 0),
+        viewmode = :fit,
+    )
+    ax.azimuth[] = deg2rad(b.view_angles[1])
+    ax.elevation[] = deg2rad(b.view_angles[2])
+    return fig, ax
+end
+
+raw"""
+    _draw_bloch_sphere(ax)
+
+Draw the translucent sphere representing the Bloch sphere surface.
+
+# Arguments
+- `ax`: Makie Axis3 object where the sphere will be drawn
+
+Creates a semi-transparent spherical surface at the origin with radius 1.
+"""
+function _draw_bloch_sphere(ax)
+    sphere_color = RGBAf(1.0, 0.86, 0.86, 0.2)
+    return mesh!(ax, Sphere(Point3f(0, 0, 0), 1.0f0); color = sphere_color, transparency = true)
+end
+
+raw"""
+    _draw_reference_circles(ax)
+
+Draw the three great circles `(XY, YZ, XZ planes)` on the Bloch sphere.
+
+# Arguments
+- `ax`: Makie Axis3 object for drawing
+
+Adds faint circular guidelines representing the three principal planes.
+"""
+function _draw_reference_circles(ax)
+    wire_color = RGBAf(0.5, 0.5, 0.5, 0.4)
     φ = range(0, 2π, length = 100)
-    Makie.lines!(b.ax, [Point3f(sin(φi), -cos(φi), 0) for φi in φ]; color = wire_color, linewidth = 1.0)
-    Makie.lines!(b.ax, [Point3f(0, -cos(φi), sin(φi)) for φi in φ]; color = wire_color, linewidth = 1.0)
-    Makie.lines!(b.ax, [Point3f(sin(φi), 0, cos(φi)) for φi in φ]; color = wire_color, linewidth = 1.0)
-    axis_color = Makie.RGBAf(0.3, 0.3, 0.3, 0.8)
+    # XY, YZ, XZ circles
+    circles = [
+        [Point3f(sin(φi), -cos(φi), 0) for φi in φ],  # XY
+        [Point3f(0, -cos(φi), sin(φi)) for φi in φ],   # YZ
+        [Point3f(sin(φi), 0, cos(φi)) for φi in φ],     # XZ
+    ]
+    for circle in circles
+        lines!(ax, circle; color = wire_color, linewidth = 1.0)
+    end
+end
+
+raw"""
+    _draw_axes(ax)
+
+Draw the three principal axes `(x, y, z)` of the Bloch sphere.
+
+# Arguments
+- `ax`: Makie Axis3 object for drawing
+
+Creates visible axis lines extending slightly beyond the unit sphere.
+"""
+function _draw_axes(ax)
+    axis_color = RGBAf(0.3, 0.3, 0.3, 0.8)
     axis_width = 0.8
-    Makie.lines!(b.ax, [Point3f(0, -1.01, 0), Point3f(0, 1.01, 0)]; color = axis_color, linewidth = axis_width)
-    Makie.lines!(b.ax, [Point3f(-1.01, 0, 0), Point3f(1.01, 0, 0)]; color = axis_color, linewidth = axis_width)
-    Makie.lines!(b.ax, [Point3f(0, 0, -1.01), Point3f(0, 0, 1.01)]; color = axis_color, linewidth = axis_width)
+    axes = [
+        ([Point3f(0, -1.01, 0), Point3f(0, 1.01, 0)], "y"),  # Y-axis
+        ([Point3f(-1.01, 0, 0), Point3f(1.01, 0, 0)], "x"),  # X-axis
+        ([Point3f(0, 0, -1.01), Point3f(0, 0, 1.01)], "z"),  # Z-axis
+    ]
+    for (points, _) in axes
+        lines!(ax, points; color = axis_color, linewidth = axis_width)
+    end
+end
+
+raw"""
+    _plot_points(b::Bloch, ax)
+
+Plot all quantum state points on the Bloch sphere.
+
+# Arguments
+- `b::Bloch`: Contains point data and styling information
+- `ax`: Axis3 object for plotting
+
+Handles both scatter points and line traces based on style specifications.
+"""
+function _plot_points(b::Bloch, ax)
     for (k, points) in enumerate(b.points)
         style = b.point_style[k]
         color = b.point_color[k]
         alpha = b.point_alpha[k]
         marker = b.point_marker[(k-1)%length(b.point_marker)+1]
-        x = points[2, :]
-        y = -points[1, :]
-        z = points[3, :]
-
-        if style == :s || style == :m
-            Makie.scatter!(
-                b.ax,
+        x, y, z = points[2, :], -points[1, :], points[3, :]
+        if style ∈ (:s, :m)  # scatter/marker style
+            scatter!(
+                ax,
                 x,
                 y,
                 z;
@@ -524,110 +640,137 @@ function QuantumToolbox.render(b::QuantumToolbox.Bloch; location = nothing)
                 markersize = 6,
                 marker = marker,
                 strokewidth = 0.05,
-                transparency = alpha < 1,
+                transparency = alpha<1,
                 alpha = alpha,
             )
-        elseif style == :l
-            Makie.lines!(b.ax, x, y, z; color = color, linewidth = 2.0, transparency = alpha < 1, alpha = alpha)
+        elseif style == :l  # line style
+            lines!(ax, x, y, z; color = color, linewidth = 2.0, transparency = alpha<1, alpha = alpha)
         end
     end
+end
+
+raw"""
+    _plot_lines(b::Bloch, ax)
+
+Draw all connecting lines between points on the Bloch sphere.
+
+# Arguments
+- `b::Bloch`: Contains line data and formatting
+- `ax`: Axis3 object for drawing
+
+Processes line style specifications and color mappings.
+"""
+function _plot_lines(b::Bloch, ax)
+    color_map = Dict("k"=>:black, "r"=>:red, "g"=>:green, "b"=>:blue, "c"=>:cyan, "m"=>:magenta, "y"=>:yellow)
     for (line, fmt, kwargs) in b.lines
         x, y, z = line
-        color_map =
-            Dict("k" => :black, "r" => :red, "g" => :green, "b" => :blue, "c" => :cyan, "m" => :magenta, "y" => :yellow)
         c = get(color_map, first(fmt), :black)
-        ls = nothing
-        if occursin("--", fmt)
-            ls = :dash
+        # Determine line style
+        ls = if occursin("--", fmt)
+            :dash
         elseif occursin(":", fmt)
-            ls = :dot
+            :dot
         elseif occursin("-.", fmt)
-            ls = :dashdot
+            :dashdot
         else
-            ls = :solid
+            :solid
         end
-        color = get(kwargs, :color, c)
-        linewidth = get(kwargs, :linewidth, 1.0)
-        linestyle = get(kwargs, :linestyle, ls)
-        Makie.lines!(b.ax, x, y, z; color = color, linewidth = linewidth, linestyle = linestyle)
+        lines!(
+            ax,
+            x,
+            y,
+            z;
+            color = get(kwargs, :color, c),
+            linewidth = get(kwargs, :linewidth, 1.0),
+            linestyle = get(kwargs, :linestyle, ls),
+        )
     end
+end
+
+raw"""
+    _plot_arcs(b::Bloch, ax)
+
+Draw circular arcs connecting points on the Bloch sphere surface.
+
+# Arguments
+- `b::Bloch`: Contains arc data points
+- `ax`: Axis3 object for drawing
+
+Calculates great circle arcs between specified points.
+"""
+function _plot_arcs(b::Bloch, ax)
     for arc_pts in b.arcs
-        if length(arc_pts) >= 2
-            v1 = normalize(arc_pts[1])
-            v2 = normalize(arc_pts[end])
-            n = normalize(cross(v1, v2))
-            θ = acos(clamp(dot(v1, v2), -1.0, 1.0))
-            if length(arc_pts) == 3
-                vm = normalize(arc_pts[2])
-                if dot(cross(v1, vm), n) < 0
-                    θ = 2π - θ
-                end
-            end
-            t_range = range(0, θ, length = 100)
-            arc_points = [Makie.Point3f((v1*cos(t) + cross(n, v1)*sin(t))...) for t in t_range]
-            Makie.lines!(b.ax, arc_points; color = Makie.RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
+        length(arc_pts) >= 2 || continue
+        v1 = normalize(arc_pts[1])
+        v2 = normalize(arc_pts[end])
+        n = normalize(cross(v1, v2))
+        θ = acos(clamp(dot(v1, v2), -1.0, 1.0))
+        if length(arc_pts) == 3
+            vm = normalize(arc_pts[2])
+            dot(cross(v1, vm), n) < 0 && (θ = 2π - θ)
         end
+        t_range = range(0, θ, length = 100)
+        arc_points = [Point3f((v1*cos(t) + cross(n, v1)*sin(t))...) for t in t_range]
+        lines!(ax, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
     end
+end
+
+raw"""
+    _plot_vectors(b::Bloch, ax)
+
+Draw vectors from origin representing quantum states.
+
+# Arguments
+- `b::Bloch`: Contains vector data
+- `ax`: Axis3 object for drawing
+
+Scales vectors appropriately and adds `3D` arrow markers.
+"""
+function _plot_vectors(b::Bloch, ax)
+    isempty(b.vectors) && return
     r = 1.0
-    if !isempty(b.vectors)
-        for (i, v) in enumerate(b.vectors)
-            color = Base.get(b.vector_color, i, Makie.RGBAf(0.2, 0.5, 0.8, 0.9))
-            start = Point3f(0, 0, 0)
-            vec = Vec3f(v[2], -v[1], v[3])
-            length = norm(vec)
-            max_length = r * 0.79
-            if length > max_length
-                vec = (vec / length) * max_length
-            end
-            endp = Point3f(vec)
-            arrowsize = Vec3f(0.07, 0.08, 0.08)
-            Makie.arrows!(
-                b.ax,
-                [start],
-                [vec];
-                color = color,
-                linewidth = 0.028,
-                arrowsize = arrowsize,
-                arrowcolor = color,
-            )
-        end
+    for (i, v) in enumerate(b.vectors)
+        color = get(b.vector_color, i, RGBAf(0.2, 0.5, 0.8, 0.9))
+        vec = Vec3f(v[2], -v[1], v[3])
+        length = norm(vec)
+        max_length = r * 0.90
+        vec = length > max_length ? (vec/length) * max_length : vec
+        arrows!(
+            ax,
+            [Point3f(0, 0, 0)],
+            [vec];
+            color = color,
+            linewidth = 0.028,
+            arrowsize = Vec3f(0.07, 0.08, 0.08),
+            arrowcolor = color,
+        )
     end
-    label_color = Makie.RGBf(0.2, 0.2, 0.2)
+end
+
+raw"""
+    _add_labels(ax)
+
+Add axis labels and state labels to the Bloch sphere.
+
+# Arguments
+- `ax`: Axis3 object for text placement
+
+Positions standard labels `(x, y, |0⟩, |1⟩)` at appropriate locations.
+"""
+function _add_labels(ax)
+    label_color = RGBf(0.2, 0.2, 0.2)
     label_size = 16
     label_font = "TeX Gyre Heros"
-    Makie.text!(
-        b.ax,
-        "y";
-        position = Point3f(1.04, 0, 0),
-        color = label_color,
-        fontsize = label_size,
-        font = label_font,
-    )
-    Makie.text!(
-        b.ax,
-        "x";
-        position = Point3f(0, -1.10, 0),
-        color = label_color,
-        fontsize = label_size,
-        font = label_font,
-    )
-    Makie.text!(
-        b.ax,
-        "|1⟩";
-        position = Point3f(0, 0, -1.10),
-        color = label_color,
-        fontsize = label_size,
-        font = label_font,
-    )
-    Makie.text!(
-        b.ax,
-        "|0⟩";
-        position = Point3f(0, 0, 1.08),
-        color = label_color,
-        fontsize = label_size,
-        font = label_font,
-    )
-    return fig, b.ax
+
+    labels = [
+        (Point3f(1.04, 0, 0), L"\textbf{y}"),
+        (Point3f(0, -1.10, 0), L"\textbf{x}"),
+        (Point3f(0, 0, -1.10), L"\mathbf{|1\rangle}"),
+        (Point3f(0, 0, 1.08), L"\mathbf{|0\rangle}"),
+    ]
+    for (pos, text) in labels
+        text!(ax, text; position = pos, color = label_color, fontsize = label_size, font = label_font)
+    end
 end
 
 function QuantumToolbox.plot_bloch(::Val{:Makie}, state::QuantumObject{<:Union{Ket,Bra}}; kwargs...)

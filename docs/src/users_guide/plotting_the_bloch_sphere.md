@@ -3,7 +3,6 @@
 ```@setup Bloch_sphere_rendering
 using QuantumToolbox
 
-using Makie
 using CairoMakie
 CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 ```
@@ -12,7 +11,7 @@ CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 
 When studying the dynamics of a two-level system, it's often convenient to visualize the state of the system by plotting the state vector or density matrix on the Bloch sphere.
 
-In [QuantumToolbox.jl](https://qutip.org/QuantumToolbox.jl/), this can be done using the [`Bloch`](@ref) or [`plot_bloch`](@ref) methods that provide same syntax as [QuTiP](https://github.com/qutip/qutip).
+In [QuantumToolbox.jl](https://qutip.org/QuantumToolbox.jl/), this can be done using the [`Bloch`](@ref) or [`plot_bloch`](@ref) methods that provide same syntax as [QuTiP](https://qutip.readthedocs.io/en/stable/guide/guide-bloch.html).
 
 ## Create a Bloch Sphere
 

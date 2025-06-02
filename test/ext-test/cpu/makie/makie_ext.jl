@@ -120,11 +120,46 @@
     @test isempty(b.vectors)
     @test isempty(b.lines)
     @test isempty(b.arcs)
-
     b = Bloch()
     add_points!(b, hcat([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]))
     add_vectors!(b, [[1, 1, 0], [0, 1, 1]])
     add_line!(b, [0, 0, 0], [1, 1, 1])
+    add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
+    try
+        fig, ax = QuantumToolbox.render(b)
+        @test !isnothing(fig)
+        @test !isnothing(ax)
+    catch e
+        @test false
+        @info "Render threw unexpected error" exception=e
+    end
+    b = Bloch()
+    ψ₁ = normalize(basis(2, 0) + basis(2, 1))
+    ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
+    add_line!(b, ψ₁, ψ₂; fmt = "r--")
+    try
+        fig, ax = QuantumToolbox.render(b)
+        @test !isnothing(fig)
+        @test !isnothing(ax)
+    catch e
+        @test false
+        @info "Render threw unexpected error" exception=e
+    end
+    b = Bloch()
+    x = basis(2, 0) + basis(2, 1)
+    y = basis(2, 0) - im * basis(2, 1)
+    z = basis(2, 0)
+    add_states!(b, [x, y, z])
+    th = range(0, 2π; length = 20);
+    xp = cos.(th);
+    yp = sin.(th);
+    zp = zeros(20);
+    pnts = [xp, yp, zp];
+    pnts = Matrix(hcat(xp, yp, zp)');
+    add_points!(b, pnts);
+    vec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+    add_vectors!(b, vec);
+    add_line!(b, [1, 0, 0], [0, 1, 0])
     add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
     try
         fig, ax = QuantumToolbox.render(b)

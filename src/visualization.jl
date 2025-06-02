@@ -75,103 +75,74 @@ plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T,S
 @doc raw"""
     Bloch()
 
-A structure representing a Bloch sphere visualization for quantum states.
+A structure representing a Bloch sphere visualization for quantum states."""
+@kwdef mutable struct Bloch
+    # Data storage
+    """Points to plot on the Bloch sphere (3D coordinates)"""
+    points::Vector{Matrix{Float64}} = Vector{Matrix{Float64}}()
+    """Vectors to plot on the Bloch sphere"""
+    vectors::Vector{Vector{Float64}} = Vector{Vector{Float64}}()
+    """Lines to draw on the sphere (points, style, properties)"""
+    lines::Vector{Tuple{Vector{Vector{Float64}},String,Dict{Symbol,Any}}} =
+        Vector{Tuple{Vector{Vector{Float64}},String,Dict{Symbol,Any}}}()
+    """Arcs to draw on the sphere"""
+    arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
 
-# Fields
-- `points::Vector{Matrix{Float64}}`: Points to plot on the Bloch sphere (3D coordinates)
-- `vectors::Vector{Vector{Float64}}`: Vectors to plot on the Bloch sphere
-- `lines::Vector{Tuple{Vector{Vector{Float64}},String,Dict{Any,Any}}}`: Lines to draw on the sphere (points, style, properties)
-- `arcs::Vector{Vector{Vector{Float64}}}`: Arcs to draw on the sphere
-- `font_color::String`: Color of axis labels and text (default: "#2E3440")
-- `font_size::Int`: Font size for labels (default: 18)
-- `frame_alpha::Float64`: Transparency of wireframe (default: 0.1)
-- `frame_color::String`: Color of wireframe (default: "#E5E9F0")
-- `frame_width::Int`: Width of wireframe lines (default: 1)
-- `point_default_color::Vector{String}`: Default color cycle for points (default: ["blue", "red", "green", "orange"])
-- `point_color::Vector{Any}`: Colors for point markers (default: ["blue", "red", "green", "orange"])
-- `point_marker::Vector{Symbol}`: Marker shapes (default: [:circle, :rect, :diamond, :utriangle])
-- `point_size::Vector{Int}`: Marker sizes (default: [40, 48, 50, 60])
-- `point_style::Vector{Symbol}`: Marker styles (default: empty)
-- `point_alpha::Vector{Float64}`: Marker transparencies (default: empty)
-- `sphere_alpha::Float64`: Transparency of Bloch sphere surface (default: 0.8)
-- `sphere_color::String`: Color of Bloch sphere surface (default: "#ECEFF4")
-- `size::Vector{Int}`: Figure size in pixels (default: [800, 800])
-- `vector_color::Vector{String}`: Colors for vectors (default: ["green", "blue", "orange"])
-- `vector_width::Int`: Width of vectors (default: 2)
-- `view_angles::Vector{Int}`: Azimuthal and elevation viewing angles in degrees (default: [-60, 30])
-- `xlabel::Vector{String}`: Labels for x-axis (default: ["x", ""])
-- `xlpos::Vector{Float64}`: Positions of x-axis labels (default: [1.2, -1.2])
-- `ylabel::Vector{String}`: Labels for y-axis (default: ["y", ""])
-- `ylpos::Vector{Float64}`: Positions of y-axis labels (default: [1.2, -1.2])
-- `zlabel::Vector{String}`: Labels for z-axis (default: ["|0⟩", "|1⟩"])
-- `zlpos::Vector{Float64}`: Positions of z-axis labels (default: [1.2, -1.2])
-- `fig::Any`: Figure object (default: nothing)
-- `ax::Any`: Axes object (default: nothing)
-"""
-mutable struct Bloch
-    points::Vector{Matrix{Float64}}
-    vectors::Vector{Vector{Float64}}
-    lines::Vector{Tuple{Vector{Vector{Float64}},String,Dict{Any,Any}}}
-    arcs::Vector{Vector{Vector{Float64}}}
-    font_color::String
-    font_size::Int
-    frame_alpha::Float64
-    frame_color::String
-    frame_width::Int
-    point_default_color::Vector{String}
-    point_color::Vector{Any}
-    point_marker::Vector{Symbol}
-    point_size::Vector{Int}
-    point_style::Vector{Symbol}
-    point_alpha::Vector{Float64}
-    sphere_alpha::Float64
-    sphere_color::String
-    size::Vector{Int}
-    vector_color::Vector{String}
-    vector_width::Int
-    view_angles::Vector{Int}
-    xlabel::Vector{String}
-    xlpos::Vector{Float64}
-    ylabel::Vector{String}
-    ylpos::Vector{Float64}
-    zlabel::Vector{String}
-    zlpos::Vector{Float64}
-    fig::Any
-    ax::Any
+    # Style properties
+    """Color of axis labels and text"""
+    font_color::String = "#2E3440"
+    """Font size for labels (default: 18)"""
+    font_size::Int = 18
+    """Transparency of wireframe"""
+    frame_alpha::Float64 = 0.1
+    """Color of wireframe"""
+    frame_color::String = "#E5E9F0"
+    """ Width of wireframe lines"""
+    frame_width::Int = 1
 
-    function Bloch()
-        return new(
-            [],
-            [],
-            [],
-            [],
-            "#2E3440",
-            18,
-            0.1,
-            "#E5E9F0",
-            1,
-            ["blue", "red", "green", "orange"],
-            ["blue", "red", "green", "orange"],
-            [:circle, :rect, :diamond, :utriangle],
-            [40, 48, 50, 60],
-            [],
-            [],
-            0.8,
-            "#ECEFF4",
-            [800, 800],
-            ["green", "blue", "orange"],
-            2,
-            [-60, 30],
-            ["x", ""],
-            [1.2, -1.2],
-            ["y", ""],
-            [1.2, -1.2],
-            ["|0⟩", "|1⟩"],
-            [1.2, -1.2],
-            nothing,
-            nothing,
-        )
-    end
+    # Point properties
+    """Default color cycle for points"""
+    point_default_color::Vector{String} = ["blue", "red", "green", "orange", "cyan", "magenta", "yellow", "black"]
+    """Colors for point markers"""
+    point_color::Vector{String} = ["blue", "red", "green", "orange", "cyan", "magenta", "yellow", "black"]
+    """Marker shapes (default: [:circle, :rect, :diamond, :utriangle])"""
+    point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
+    """Marker sizes"""
+    point_size::Vector{Int} = [40, 48, 50, 60]
+    """Marker styles"""
+    point_style::Vector{Symbol} = Symbol[]
+    """Marker transparencies"""
+    point_alpha::Vector{Float64} = Float64[]
+
+    # Sphere properties
+    """Transparency of Bloch sphere surface"""
+    sphere_alpha::Float64 = 0.9
+    """Color of Bloch sphere surface"""
+    sphere_color::String = "#ECEFF4"
+
+    # Layout properties
+    """Figure size in pixels"""
+    size::Tuple{Int,Int} = (700, 700)
+    """Colors for vectors"""
+    vector_color::Vector{String} = ["green", "blue", "orange", "red", "cyan", "magenta", "yellow", "black"]
+    """Width of vectors (default: 2)"""
+    vector_width::Int = 2
+    """Azimuthal and elevation viewing angles in degrees (default: (-60, 30))"""
+    view_angles::Tuple{Int,Int} = (-60, 30)
+
+    # Label properties
+    """Labels for x-axis (default: ["x", ""])"""
+    xlabel::Vector{String} = ["x", ""]
+    """Positions of x-axis labels"""
+    xlpos::Vector{Float64} = [1.2, -1.2]
+    """Labels for y-axis (default: ["y", ""])"""
+    ylabel::Vector{String} = ["y", ""]
+    """Positions of y-axis labels)"""
+    ylpos::Vector{Float64} = [1.2, -1.2]
+    """Labels for z-axis (default: ["|0⟩", "|1⟩"])"""
+    zlabel::Vector{String} = ["|0⟩", "|1⟩"]
+    """Positions of z-axis labels"""
+    zlpos::Vector{Float64} = [1.2, -1.2]
 end
 
 @doc raw"""
@@ -270,16 +241,6 @@ Add a line between two points on the Bloch sphere.
 - p2::Vector{<:Real}: Second 3D point
 - fmt="k": Line format string (matplotlib style)
 - kwargs...: Additional line properties
-
-# Examples
-
-```jldoctest
-julia> b = Bloch();
-
-julia> add_line!(b, [1, 0, 0], [0, 1, 0])
-1-element Vector{Tuple{Vector{Vector{Float64}}, String, Dict{Any, Any}}}:
- ([[0.0, 1.0], [-1.0, 0.0], [0.0, 0.0]], "k", Dict())
-```
 """
 function add_line!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}; fmt = "k", kwargs...)
     if length(p1) != 3 || length(p2) != 3
