@@ -60,7 +60,9 @@
     fig = Figure()
     pos = fig[2, 3]
     fig1, ax = @test_logs (:warn,) plot_fock_distribution(ψ * 2; library = Val(:Makie), location = pos)
+end
 
+@testset "Makie Bloch sphere" begin
     ρ = 0.7*ket2dm(basis(2, 0)) + 0.3*ket2dm(basis(2, 1))
     fig, ax = plot_bloch(ρ)
     @test fig isa Figure
@@ -162,7 +164,7 @@
     add_line!(b, [1, 0, 0], [0, 1, 0])
     add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
     try
-        fig, ax = QuantumToolbox.render(b)
+        fig, ax = render(b)
         @test !isnothing(fig)
         @test !isnothing(ax)
     catch e

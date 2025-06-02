@@ -415,26 +415,14 @@ add_line!(b, ψ₁, ψ₂; fmt = "r--")
 ```
 """
 function QuantumToolbox.add_line!(
-    b::QuantumToolbox.Bloch,
-    start_point_point::QuantumObject{<:Union{Ket,Bra,Operator}},
-    end_point::QuantumObject{<:Union{Ket,Bra,Operator}};
+    b::Bloch,
+    p1::QuantumObject{<:Union{Ket,Bra,Operator}},
+    p2::QuantumObject{<:Union{Ket,Bra,Operator}};
     fmt = "k",
-    kwargs...,
 )
-    p1 = if isket(start_point_point) || isbra(start_point_point)
-        _state_to_bloch(start_point_point)
-    else
-        _dm_to_bloch(start_point_point)
-    end
-    p2 = if isket(end_point) || isbra(end_point)
-        _state_to_bloch(end_point)
-    else
-        _dm_to_bloch(end_point)
-    end
-    x = [p1[2], p2[2]]
-    y = [-p1[1], -p2[1]]
-    z = [p1[3], p2[3]]
-    return push!(b.lines, ([x, y, z], fmt, kwargs))
+    coords1 = isket(p1) || isbra(p1) ? _state_to_bloch(p1) : _dm_to_bloch(p1)
+    coords2 = isket(p2) || isbra(p2) ? _state_to_bloch(p2) : _dm_to_bloch(p2)
+    return add_line!(b, coords1, coords2; fmt = fmt)
 end
 
 raw"""
@@ -490,20 +478,20 @@ Render the Bloch sphere visualization from the given `Bloch` object `b`.
   These can be further manipulated or saved by the user.
 """
 function QuantumToolbox.render(b::Bloch; location = nothing)
-    fig, ax = _setup_bloch_plot(b, location)
-    _draw_bloch_sphere(ax)
-    _draw_reference_circles(ax)
-    _draw_axes(ax)
-    _plot_points(b, ax)
-    _plot_lines(b, ax)
-    _plot_arcs(b, ax)
-    _plot_vectors(b, ax)
-    _add_labels(ax)
+    fig, ax = _setup_bloch_plot!(b, location)
+    _draw_bloch_sphere!(ax)
+    _draw_reference_circles!(ax)
+    _draw_axes!(ax)
+    _plot_points!(b, ax)
+    _plot_lines!(b, ax)
+    _plot_arcs!(b, ax)
+    _plot_vectors!(b, ax)
+    _add_labels!(ax)
     return fig, ax
 end
 
 raw"""
-    _setup_bloch_plot(b::Bloch, location) -> (fig, ax)
+    _setup_bloch_plot!(b::Bloch, location) -> (fig, ax)
 
 Initialize the figure and `3D` axis for Bloch sphere visualization.
 
@@ -517,12 +505,12 @@ Initialize the figure and `3D` axis for Bloch sphere visualization.
 
 Sets up the `3D` coordinate system with appropriate limits and view angles.
 """
-function _setup_bloch_plot(b::Bloch, location)
+function _setup_bloch_plot!(b::Bloch, location)
     fig, location = _getFigAndLocation(location)
     ax = Axis3(
         location;
         aspect = :data,
-        limits = (-1.1, 1.1, -1.1, 1.1, -1.1, 1.1),
+        limits = (-1.4, 1.4, -1.4, 1.4, -1.4, 1.4),
         xgridvisible = false,
         ygridvisible = false,
         zgridvisible = false,
@@ -551,22 +539,37 @@ function _setup_bloch_plot(b::Bloch, location)
 end
 
 raw"""
-    _draw_bloch_sphere(ax)
+    _draw_bloch_sphere!(ax)
 
 Draw the translucent sphere representing the Bloch sphere surface.
-
-# Arguments
-- `ax`: Makie Axis3 object where the sphere will be drawn
-
-Creates a semi-transparent spherical surface at the origin with radius 1.
 """
-function _draw_bloch_sphere(ax)
-    sphere_color = RGBAf(1.0, 0.86, 0.86, 0.2)
-    return mesh!(ax, Sphere(Point3f(0, 0, 0), 1.0f0); color = sphere_color, transparency = true)
+function _draw_bloch_sphere!(ax)
+    n_lon = 4
+    n_lat = 4
+    radius = 1.0f0
+    sphere_mesh = Sphere(Point3f(0), radius)
+    mesh!(ax, sphere_mesh; color = RGBAf(0.9, 0.9, 0.9, 0.3), shading = false, transparency = true)
+    θ_vals = range(0.0f0, 2π, length = n_lon + 1)[1:(end-1)]
+    φ_curve = range(0.0f0, π, length = 600)
+    for θi in θ_vals
+        x_line = [radius * sin(ϕ) * cos(θi) for ϕ in φ_curve]
+        y_line = [radius * sin(ϕ) * sin(θi) for ϕ in φ_curve]
+        z_line = [radius * cos(ϕ) for ϕ in φ_curve]
+        lines!(ax, x_line, y_line, z_line; color = RGBAf(0.5, 0.5, 0.5, 0.1), linewidth = 1, transparency = true)
+    end
+    φ_vals = range(0.0f0, π, length = n_lat + 2)
+    θ_curve = range(0.0f0, 2π, length = 600)
+    for ϕ in φ_vals
+        x_ring = [radius * sin(ϕ) * cos(θi) for θi in θ_curve]
+        y_ring = [radius * sin(ϕ) * sin(θi) for θi in θ_curve]
+        z_ring = fill(radius * cos(ϕ), length(θ_curve))
+        lines!(ax, x_ring, y_ring, z_ring; color = RGBAf(0.5, 0.5, 0.5, 0.1), linewidth = 1, transparency = true)
+    end
+    return nothing
 end
 
 raw"""
-    _draw_reference_circles(ax)
+    _draw_reference_circles!(ax)
 
 Draw the three great circles `(XY, YZ, XZ planes)` on the Bloch sphere.
 
@@ -575,7 +578,7 @@ Draw the three great circles `(XY, YZ, XZ planes)` on the Bloch sphere.
 
 Adds faint circular guidelines representing the three principal planes.
 """
-function _draw_reference_circles(ax)
+function _draw_reference_circles!(ax)
     wire_color = RGBAf(0.5, 0.5, 0.5, 0.4)
     φ = range(0, 2π, length = 100)
     # XY, YZ, XZ circles
@@ -590,7 +593,7 @@ function _draw_reference_circles(ax)
 end
 
 raw"""
-    _draw_axes(ax)
+    _draw_axes!(ax)
 
 Draw the three principal axes `(x, y, z)` of the Bloch sphere.
 
@@ -599,13 +602,13 @@ Draw the three principal axes `(x, y, z)` of the Bloch sphere.
 
 Creates visible axis lines extending slightly beyond the unit sphere.
 """
-function _draw_axes(ax)
+function _draw_axes!(ax)
     axis_color = RGBAf(0.3, 0.3, 0.3, 0.8)
     axis_width = 0.8
     axes = [
-        ([Point3f(0, -1.01, 0), Point3f(0, 1.01, 0)], "y"),  # Y-axis
-        ([Point3f(-1.01, 0, 0), Point3f(1.01, 0, 0)], "x"),  # X-axis
-        ([Point3f(0, 0, -1.01), Point3f(0, 0, 1.01)], "z"),  # Z-axis
+        ([Point3f(0, -1.0, 0), Point3f(0, 1.0, 0)], "y"),  # Y-axis
+        ([Point3f(-1.0, 0, 0), Point3f(1.0, 0, 0)], "x"),  # X-axis
+        ([Point3f(0, 0, -1.0), Point3f(0, 0, 1.0)], "z"),  # Z-axis
     ]
     for (points, _) in axes
         lines!(ax, points; color = axis_color, linewidth = axis_width)
@@ -613,7 +616,7 @@ function _draw_axes(ax)
 end
 
 raw"""
-    _plot_points(b::Bloch, ax)
+    _plot_points!(b::Bloch, ax)
 
 Plot all quantum state points on the Bloch sphere.
 
@@ -623,7 +626,7 @@ Plot all quantum state points on the Bloch sphere.
 
 Handles both scatter points and line traces based on style specifications.
 """
-function _plot_points(b::Bloch, ax)
+function _plot_points!(b::Bloch, ax)
     for (k, points) in enumerate(b.points)
         style = b.point_style[k]
         color = b.point_color[k]
@@ -650,7 +653,7 @@ function _plot_points(b::Bloch, ax)
 end
 
 raw"""
-    _plot_lines(b::Bloch, ax)
+    _plot_lines!(b::Bloch, ax)
 
 Draw all connecting lines between points on the Bloch sphere.
 
@@ -660,13 +663,14 @@ Draw all connecting lines between points on the Bloch sphere.
 
 Processes line style specifications and color mappings.
 """
-function _plot_lines(b::Bloch, ax)
-    color_map = Dict("k"=>:black, "r"=>:red, "g"=>:green, "b"=>:blue, "c"=>:cyan, "m"=>:magenta, "y"=>:yellow)
-    for (line, fmt, kwargs) in b.lines
+function _plot_lines!(b::Bloch, ax)
+    color_map =
+        Dict("k" => :black, "r" => :red, "g" => :green, "b" => :blue, "c" => :cyan, "m" => :magenta, "y" => :yellow)
+    for (line, fmt) in b.lines
         x, y, z = line
-        c = get(color_map, first(fmt), :black)
-        # Determine line style
-        ls = if occursin("--", fmt)
+        color_char = first(fmt)
+        color = get(color_map, color_char, :black)
+        linestyle = if occursin("--", fmt)
             :dash
         elseif occursin(":", fmt)
             :dot
@@ -675,20 +679,12 @@ function _plot_lines(b::Bloch, ax)
         else
             :solid
         end
-        lines!(
-            ax,
-            x,
-            y,
-            z;
-            color = get(kwargs, :color, c),
-            linewidth = get(kwargs, :linewidth, 1.0),
-            linestyle = get(kwargs, :linestyle, ls),
-        )
+        lines!(ax, x, y, z; color = color, linewidth = 1.0, linestyle = linestyle)
     end
 end
 
 raw"""
-    _plot_arcs(b::Bloch, ax)
+    _plot_arcs!(b::Bloch, ax)
 
 Draw circular arcs connecting points on the Bloch sphere surface.
 
@@ -698,7 +694,7 @@ Draw circular arcs connecting points on the Bloch sphere surface.
 
 Calculates great circle arcs between specified points.
 """
-function _plot_arcs(b::Bloch, ax)
+function _plot_arcs!(b::Bloch, ax)
     for arc_pts in b.arcs
         length(arc_pts) >= 2 || continue
         v1 = normalize(arc_pts[1])
@@ -716,7 +712,7 @@ function _plot_arcs(b::Bloch, ax)
 end
 
 raw"""
-    _plot_vectors(b::Bloch, ax)
+    _plot_vectors!(b::Bloch, ax)
 
 Draw vectors from origin representing quantum states.
 
@@ -726,7 +722,7 @@ Draw vectors from origin representing quantum states.
 
 Scales vectors appropriately and adds `3D` arrow markers.
 """
-function _plot_vectors(b::Bloch, ax)
+function _plot_vectors!(b::Bloch, ax)
     isempty(b.vectors) && return
     r = 1.0
     for (i, v) in enumerate(b.vectors)
@@ -748,7 +744,7 @@ function _plot_vectors(b::Bloch, ax)
 end
 
 raw"""
-    _add_labels(ax)
+    _add_labels!(ax)
 
 Add axis labels and state labels to the Bloch sphere.
 
@@ -757,16 +753,16 @@ Add axis labels and state labels to the Bloch sphere.
 
 Positions standard labels `(x, y, |0⟩, |1⟩)` at appropriate locations.
 """
-function _add_labels(ax)
+function _add_labels!(ax)
     label_color = RGBf(0.2, 0.2, 0.2)
     label_size = 16
     label_font = "TeX Gyre Heros"
 
     labels = [
-        (Point3f(1.04, 0, 0), L"\textbf{y}"),
-        (Point3f(0, -1.10, 0), L"\textbf{x}"),
-        (Point3f(0, 0, -1.10), L"\mathbf{|1\rangle}"),
-        (Point3f(0, 0, 1.08), L"\mathbf{|0\rangle}"),
+        (Point3f(1.34, -0.1, 0.02), L"\textbf{y}"),
+        (Point3f(0.07, -1.39, 0.02), L"\textbf{x}"),
+        (Point3f(-0.08, 0.02, -1.4), L"\mathbf{|1\rangle}"),
+        (Point3f(-0.08, 0.0, 1.2), L"\mathbf{|0\rangle}"),
     ]
     for (pos, text) in labels
         text!(ax, text; position = pos, color = label_color, fontsize = label_size, font = label_font)

@@ -1,14 +1,6 @@
 export plot_wigner
 export plot_fock_distribution
-export plot_bloch,
-    Bloch,
-    render,
-    add_points!,
-    add_vectors!,
-    add_line!,
-    add_arc!,
-    clear!,
-    add_states!
+export plot_bloch, Bloch, render, add_points!, add_vectors!, add_line!, add_arc!, clear!, add_states!
 
 @doc raw"""
     plot_wigner(
@@ -76,73 +68,77 @@ plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T,S
     Bloch()
 
 A structure representing a Bloch sphere visualization for quantum states.
+
+# Fields
+
+## Data storage
+- `points::Vector{Matrix{Float64}}`: Points to plot on the Bloch sphere (3D coordinates)
+- `vectors::Vector{Vector{Float64}}}`: Vectors to plot on the Bloch sphere
+- `lines::Vector{Tuple{Vector{Vector{Float64}},String,Dict{Any,Any}}}`: Lines to draw on the sphere (points, style, properties)
+- `arcs::Vector{Vector{Vector{Float64}}}}`: Arcs to draw on the sphere
+
+## Style properties
+
+- `font_color::String`: Color of axis labels and text
+- `font_size::Int`: Font size for labels (default: 18)
+- `frame_alpha::Float64`: Transparency of wireframe
+- `frame_color::String`: Color of wireframe
+- `frame_width::Int`: Width of wireframe lines
+
+## Point properties
+
+- `point_default_color::Vector{String}}`: Default color cycle for points
+- `point_color::Vector{String}}`: Colors for point markers
+- `point_marker::Vector{Symbol}}`: Marker shapes (default: [:circle, :rect, :diamond, :utriangle])
+- `point_size::Vector{Int}}`: Marker sizes
+- `point_style::Vector{Symbol}}`: Marker styles
+- `point_alpha::Vector{Float64}}`: Marker transparencies
+
+## Sphere properties
+
+- `sphere_color::String`: Color of Bloch sphere surface
+
+## Layout properties
+
+- `size::Tuple{Int,Int}}`: Figure size in pixels
+- `vector_color::Vector{String}}`: Colors for vectors
+- `vector_width::Int`: Width of vectors
+- `view_angles::Tuple{Int,Int}}`: Azimuthal and elevation viewing angles in degrees (default: (-60, 30))
+
+## Label properties
+- `xlabel::Vector{String}}`: Labels for x-axis (default: ["x", ""])
+- `xlpos::Vector{Float64}}`: Positions of x-axis labels (default: [1.2, -1.2])
+- `ylabel::Vector{String}}`: Labels for y-axis (default: ["y", ""])
+- `ylpos::Vector{Float64}}`: Positions of y-axis labels (default: [1.2, -1.2])
+- `zlabel::Vector{String}}`: Labels for z-axis (default: ["|0⟩", "|1⟩"])
+- `zlpos::Vector{Float64}}`: Positions of z-axis labels (default: [1.2, -1.2])
 """
 @kwdef mutable struct Bloch
-    # Data storage
-    """Points to plot on the Bloch sphere (3D coordinates)"""
     points::Vector{Matrix{Float64}} = Vector{Matrix{Float64}}()
-    """Vectors to plot on the Bloch sphere"""
     vectors::Vector{Vector{Float64}} = Vector{Vector{Float64}}()
-    """Lines to draw on the sphere (points, style, properties)"""
-    lines::Vector{Tuple{Vector{Vector{Float64}},String,Dict{Symbol,Any}}} =
-        Vector{Tuple{Vector{Vector{Float64}},String,Dict{Symbol,Any}}}()
-    """Arcs to draw on the sphere"""
+    lines::Vector{Tuple{Vector{Vector{Float64}},String}} = Vector{Tuple{Vector{Vector{Float64}},String}}()
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
-
-    # Style properties
-    """Color of axis labels and text"""
     font_color::String = "#2E3440"
-    """Font size for labels (default: 18)"""
     font_size::Int = 18
-    """Transparency of wireframe"""
     frame_alpha::Float64 = 0.1
-    """Color of wireframe"""
     frame_color::String = "#E5E9F0"
-    """ Width of wireframe lines"""
     frame_width::Int = 1
-
-    # Point properties
-    """Default color cycle for points"""
     point_default_color::Vector{String} = ["blue", "red", "green", "orange", "cyan", "magenta", "yellow", "black"]
-    """Colors for point markers"""
     point_color::Vector{String} = ["blue", "red", "green", "orange", "cyan", "magenta", "yellow", "black"]
-    """Marker shapes (default: [:circle, :rect, :diamond, :utriangle])"""
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
-    """Marker sizes"""
     point_size::Vector{Int} = [40, 48, 50, 60]
-    """Marker styles"""
     point_style::Vector{Symbol} = Symbol[]
-    """Marker transparencies"""
     point_alpha::Vector{Float64} = Float64[]
-
-    # Sphere properties
-    """Transparency of Bloch sphere surface"""
-    sphere_alpha::Float64 = 0.9
-    """Color of Bloch sphere surface"""
     sphere_color::String = "#ECEFF4"
-
-    # Layout properties
-    """Figure size in pixels"""
     size::Tuple{Int,Int} = (700, 700)
-    """Colors for vectors"""
     vector_color::Vector{String} = ["green", "blue", "orange", "red", "cyan", "magenta", "yellow", "black"]
-    """Width of vectors (default: 2)"""
     vector_width::Int = 2
-    """Azimuthal and elevation viewing angles in degrees (default: (-60, 30))"""
     view_angles::Tuple{Int,Int} = (-60, 30)
-
-    # Label properties
-    """Labels for x-axis (default: ["x", ""])"""
     xlabel::Vector{String} = ["x", ""]
-    """Positions of x-axis labels"""
     xlpos::Vector{Float64} = [1.2, -1.2]
-    """Labels for y-axis (default: ["y", ""])"""
     ylabel::Vector{String} = ["y", ""]
-    """Positions of y-axis labels)"""
     ylpos::Vector{Float64} = [1.2, -1.2]
-    """Labels for z-axis (default: ["|0⟩", "|1⟩"])"""
     zlabel::Vector{String} = ["|0⟩", "|1⟩"]
-    """Positions of z-axis labels"""
     zlpos::Vector{Float64} = [1.2, -1.2]
 end
 
@@ -241,16 +237,16 @@ Add a line between two points on the Bloch sphere.
 - p1::Vector{<:Real}: First 3D point
 - p2::Vector{<:Real}: Second 3D point
 - fmt="k": Line format string (matplotlib style)
-- kwargs...: Additional line properties
 """
-function add_line!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}; fmt = "k", kwargs...)
+function add_line!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}; fmt = "k")
     if length(p1) != 3 || length(p2) != 3
         error("Points must be 3D vectors")
     end
     x = [p1[2], p2[2]]
     y = [-p1[1], -p2[1]]
     z = [p1[3], p2[3]]
-    return push!(b.lines, ([x, y, z], fmt, kwargs))
+    push!(b.lines, (([x, y, z]), fmt))
+    return b
 end
 
 @doc raw"""

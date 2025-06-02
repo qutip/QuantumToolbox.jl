@@ -56,7 +56,6 @@ if (GROUP == "Makie_Ext")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.instantiate()
 
-    using CairoMakie
     using QuantumToolbox
     QuantumToolbox.about()
 
