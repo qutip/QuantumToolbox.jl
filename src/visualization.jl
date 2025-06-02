@@ -1,13 +1,13 @@
-export plot_wigner,
-    plot_fock_distribution,
-    plot_bloch,
+export plot_wigner
+export plot_fock_distribution
+export plot_bloch,
     Bloch,
+    render,
     add_points!,
     add_vectors!,
     add_line!,
     add_arc!,
     clear!,
-    render,
     add_states!
 
 @doc raw"""
