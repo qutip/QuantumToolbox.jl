@@ -58,6 +58,7 @@ import Distributed: RemoteChannel
 import FFTW: fft, ifft, fftfreq, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
+using Makie # TODO: change to import
 import Pkg
 import Random: AbstractRNG, default_rng, seed!
 import SpecialFunctions: loggamma
@@ -124,6 +125,7 @@ include("metrics.jl")
 include("negativity.jl")
 include("steadystate.jl")
 include("visualization.jl")
+include("bloch.jl")
 
 # deprecated functions
 include("deprecated.jl")
