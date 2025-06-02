@@ -1,4 +1,4 @@
-# [Plotting on the Bloch Sphere](@id doc: plotting_the_bloch_sphere.md)
+# [Plotting on the Bloch Sphere](@id doc:Plotting-on-the-Bloch-Sphere)
 
 ```@setup Bloch_sphere_rendering
 using QuantumToolbox
