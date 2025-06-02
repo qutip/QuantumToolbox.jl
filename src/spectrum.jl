@@ -184,10 +184,10 @@ function _spectrum(
     # Calculate <w₁| = <I|A
     D = prod(L.dimensions)
     Ivec = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(cT, D)) # same as vec(system_identity_matrix)
-    wₖ = transpose(vT(Ivec)) * spre(A).data
+    wₖ = spre(A).data' * vT(Ivec)
 
     # Store the norm of the Green's function before renormalizing |v₁> and <w₁|
-    gfNorm = abs(wₖ * vₖ)
+    gfNorm = abs(dot(wₖ, vₖ))
     vₖ ./= sqrt(gfNorm)
     wₖ ./= sqrt(gfNorm)
 
@@ -219,8 +219,8 @@ function _spectrum(
     # Previous and next left/right Krylov vectors
     v₋₁ = vT(zeros(cT, D^2))
     v₊₁ = vT(zeros(cT, D^2))
-    w₋₁ = transpose(vT(zeros(cT, D^2)))
-    w₊₁ = transpose(vT(zeros(cT, D^2)))
+    w₋₁ = vT(zeros(cT, D^2))
+    w₊₁ = vT(zeros(cT, D^2))
 
     # Frequency of renormalization
     renormFrequency::typeof(solver.maxiter) = 1
@@ -228,8 +228,8 @@ function _spectrum(
     # Loop over the Krylov subspace(s)
     for k in 1:solver.maxiter
         # k-th diagonal element
-        mul!(w₊₁.parent, transpose(L.data), wₖ.parent) # Equivalent to: w₊₁ = wₖ * L.data
-        αₖ = w₊₁ * vₖ
+        mul!(w₊₁, L.data', wₖ)
+        αₖ = dot(w₊₁, vₖ)
 
         # Update A(k), B(k) and continuous fraction; normalization avoids overflow
         Aₖ .= (-1im .* ωList .+ αₖ) .* A₋₁ .- (βₖ * δₖ) .* A₋₂
@@ -258,22 +258,22 @@ function _spectrum(
         end
 
         # (k+1)-th left/right vectors, orthogonal to previous ones
-        mul!(v₊₁,L.data,vₖ) # Equivalent to: v₊₁ = L.data * vₖ
+        mul!(v₊₁, L.data, vₖ)
         v₊₁ .= v₊₁ .- αₖ .* vₖ .- βₖ .* v₋₁
-        w₊₁ .= w₊₁ .- αₖ .* wₖ .- δₖ .* w₋₁
+        w₊₁ .= w₊₁ .- conj(αₖ) .* wₖ .- conj(δₖ) .* w₋₁
         v₋₁, vₖ = vₖ, v₋₁
         vₖ, v₊₁ = v₊₁, vₖ
         w₋₁, wₖ = wₖ, w₋₁
         wₖ, w₊₁ = w₊₁, wₖ
 
         # k-th off-diagonal elements
-        buf = wₖ * vₖ
+        buf = dot(wₖ, vₖ)
         δₖ = sqrt(abs(buf))
         βₖ = buf / δₖ
 
         # Normalize (k+1)-th left/right vectors
         vₖ ./= δₖ
-        wₖ ./= βₖ
+        wₖ ./= conj(βₖ)
 
         # Update everything for the next cycle
         A₋₂, A₋₁ = A₋₁, A₋₂
