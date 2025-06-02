@@ -33,10 +33,10 @@ A solver which solves [`spectrum`](@ref) by using a non-symmetric Lanczos varian
 The nonsymmetric Lanczos algorithm is adapted from Algorithm 6.6 in [Saad2011](https://www-users.cse.umn.edu/~saad/eig_book_2ndEd.pdf).
 The running estimate is updated via a [Wallis-Euler recursion](https://en.wikipedia.org/wiki/Continued_fraction).
 """
-Base.@kwdef struct Lanczos{T<:Real,IT<:Int,SS<:Union{Nothing,<:SteadyStateSolver}} <: SpectrumSolver
+Base.@kwdef struct Lanczos{T<:Real,SS<:Union{Nothing,<:SteadyStateSolver}} <: SpectrumSolver
     tol::T = 1e-8
-    maxiter::IT = 5000
-    verbose::IT = 0
+    maxiter::Int = 5000
+    verbose::Int = 0
     steadystate_solver::SS = nothing
 end
 
@@ -223,7 +223,7 @@ function _spectrum(
     w₊₁ = vT(zeros(cT, D^2))
 
     # Frequency of renormalization
-    renormFrequency::typeof(solver.maxiter) = 1
+    renormFrequency = 1
 
     # Loop over the Krylov subspace(s)
     for k in 1:solver.maxiter
