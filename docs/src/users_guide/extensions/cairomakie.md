@@ -20,4 +20,4 @@ The supported plotting functions are listed as follows:
 |:----------------------|:----------------|
 | [`plot_wigner`](@ref) | [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) |
 | [`plot_fock_distribution`](@ref) | [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution |
-| [`plot_bloch`](@ref)  | [Plotting on the Bloch Sphere](https://qutip.readthedocs.io/en/stable/guide/guide-bloch.html) |
+| [`plot_bloch`](@ref)  | [Plotting on the Bloch Sphere](@ref doc:Plotting-on-the-Bloch-Sphere) |
