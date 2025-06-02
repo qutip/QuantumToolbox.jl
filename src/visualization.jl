@@ -75,7 +75,8 @@ plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T,S
 @doc raw"""
     Bloch()
 
-A structure representing a Bloch sphere visualization for quantum states."""
+A structure representing a Bloch sphere visualization for quantum states.
+"""
 @kwdef mutable struct Bloch
     # Data storage
     """Points to plot on the Bloch sphere (3D coordinates)"""
