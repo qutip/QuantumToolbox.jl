@@ -1,4 +1,6 @@
-@testset "Generalized Master Equation" begin
+@testitem "Generalized Master Equation" begin
+    using LinearAlgebra
+
     N_c = 30
     N_trunc = 10
     tol = 1e-14

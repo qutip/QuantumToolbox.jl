@@ -1,4 +1,8 @@
-@testset "States and Operators" verbose = true begin
+@testitem "States and Operators" begin
+    import QuantumToolbox: position, momentum
+    using LinearAlgebra
+    using SparseArrays
+
     @testset "zero state" begin
         v1 = zero_ket(4)
         v2 = zero_ket((2, 2))
