@@ -33,11 +33,11 @@ A solver which solves [`spectrum`](@ref) by using a non-symmetric Lanczos varian
 The nonsymmetric Lanczos algorithm is adapted from Algorithm 6.6 in [Saad2011](https://www-users.cse.umn.edu/~saad/eig_book_2ndEd.pdf).
 The running estimate is updated via a [Wallis-Euler recursion](https://en.wikipedia.org/wiki/Continued_fraction).
 """
-Base.@kwdef mutable struct Lanczos{T<:Real,IT<:Int} <: SpectrumSolver
+Base.@kwdef struct Lanczos{T<:Real,IT<:Int,SS<:Union{Nothing,<:SteadyStateSolver}} <: SpectrumSolver
     tol::T = 1e-8
     maxiter::IT = 5000
     verbose::IT = 0
-    steadystate_solver::Union{Nothing,SteadyStateSolver} = nothing
+    steadystate_solver::SS = nothing
 end
 
 @doc raw"""
@@ -164,7 +164,7 @@ function _spectrum(
     ωlist::AbstractVector,
     A::QuantumObject{Operator},
     B::QuantumObject{Operator},
-    solver::Lanczos;
+    solver::Lanczos,
 )
     check_dimensions(L, A, B)
 
@@ -202,7 +202,7 @@ function _spectrum(
     # Tridiagonal matrix elements
     αₖ = cT(0)
     βₖ = cT(-1)
-    δₖ = cT(+1)
+    δₖ = fT(+1)
 
     # Current and up to second-to-last A and B Euler sequences
     A₋₂ = vT(ones(cT, Length))
