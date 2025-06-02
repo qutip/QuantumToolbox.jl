@@ -774,7 +774,7 @@ function _add_labels(ax)
 end
 
 function QuantumToolbox.plot_bloch(::Val{:Makie}, state::QuantumObject{<:Union{Ket,Bra}}; kwargs...)
-    state = isbra(state) ? dag(state) : state
+    state = isbra(state) ? state' : state
     bloch_vec = _state_to_bloch(state)
     return _render_bloch_makie(bloch_vec; kwargs...)
 end
