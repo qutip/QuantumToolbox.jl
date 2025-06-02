@@ -174,7 +174,7 @@ function _spectrum(
 
     # Calculate |v₁> = B|ρss>
     ρss =
-        solver.steadystate_solver === nothing ? mat2vec(steadystate(L)) :
+        isnothing(solver.steadystate_solver) ? mat2vec(steadystate(L)) :
         mat2vec(steadystate(L; solver = solver.steadystate_solver))
     vₖ = (spre(B) * ρss).data
 
@@ -219,8 +219,8 @@ function _spectrum(
     # Previous and next left/right Krylov vectors
     v₋₁ = vT(zeros(cT, D^2))
     v₊₁ = vT(zeros(cT, D^2))
-    w₋₁ = vT(zeros(cT, D^2))'
-    w₊₁ = vT(zeros(cT, D^2))'
+    w₋₁ = transpose(vT(zeros(cT, D^2)))
+    w₊₁ = transpose(vT(zeros(cT, D^2)))
 
     # Frequency of renormalization
     renormFrequency::typeof(solver.maxiter) = 1
@@ -228,7 +228,7 @@ function _spectrum(
     # Loop over the Krylov subspace(s)
     for k in 1:solver.maxiter
         # k-th diagonal element
-        w₊₁ = wₖ * L.data
+        mul!(w₊₁.parent, transpose(L.data), wₖ.parent) # Equivalent to: w₊₁ = wₖ * L.data
         αₖ = w₊₁ * vₖ
 
         # Update A(k), B(k) and continuous fraction; normalization avoids overflow
@@ -239,7 +239,7 @@ function _spectrum(
 
         # Renormalize Euler sequences to avoid overflow
         if k % renormFrequency == 0
-            maxNorm .= max.(abs.(Aₖ), abs.(Bₖ))
+            map!((x, y) -> max(abs(x), abs(y)), maxNorm, Aₖ, Bₖ)
             Aₖ ./= maxNorm
             Bₖ ./= maxNorm
             A₋₁ ./= maxNorm
@@ -248,8 +248,8 @@ function _spectrum(
 
         # Check for convergence
         maxResidue =
-            maximum(abs.(lanczosFactor .- lanczosFactor₋₁)) /
-            max(maximum(abs.(lanczosFactor)), maximum(abs.(lanczosFactor₋₁)))
+            mapreduce((x, y) -> abs(x - y), max, lanczosFactor, lanczosFactor₋₁) /
+            max(maximum(abs, lanczosFactor), maximum(abs, lanczosFactor₋₁))
         if maxResidue <= solver.tol
             if solver.verbose > 1
                 println("spectrum(): solver::Lanczos converged after $(k) iterations")
@@ -258,14 +258,13 @@ function _spectrum(
         end
 
         # (k+1)-th left/right vectors, orthogonal to previous ones
-        # Consider using explicit BLAS calls
-        v₊₁ = L.data * vₖ
+        mul!(v₊₁,L.data,vₖ) # Equivalent to: v₊₁ = L.data * vₖ
         v₊₁ .= v₊₁ .- αₖ .* vₖ .- βₖ .* v₋₁
         w₊₁ .= w₊₁ .- αₖ .* wₖ .- δₖ .* w₋₁
-        v₋₁ .= vₖ
-        w₋₁ .= wₖ
-        vₖ .= v₊₁
-        wₖ .= w₊₁
+        v₋₁, vₖ = vₖ, v₋₁
+        vₖ, v₊₁ = v₊₁, vₖ
+        w₋₁, wₖ = wₖ, w₋₁
+        wₖ, w₊₁ = w₊₁, wₖ
 
         # k-th off-diagonal elements
         buf = wₖ * vₖ
@@ -277,10 +276,10 @@ function _spectrum(
         wₖ ./= βₖ
 
         # Update everything for the next cycle
-        A₋₂ .= A₋₁
-        A₋₁ .= Aₖ
-        B₋₂ .= B₋₁
-        B₋₁ .= Bₖ
+        A₋₂, A₋₁ = A₋₁, A₋₂
+        A₋₁, Aₖ = Aₖ, A₋₁
+        B₋₂, B₋₁ = B₋₁, B₋₂
+        B₋₁, Bₖ = Bₖ, B₋₁
     end
 
     if solver.verbose > 0 && maxResidue > solver.tol
