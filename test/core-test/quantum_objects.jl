@@ -1,4 +1,8 @@
-@testset "Quantum Objects" verbose = true begin
+@testitem "Quantum Objects" begin
+    using LinearAlgebra
+    using SparseArrays
+    using StaticArraysCore
+
     # ArgumentError: type is incompatible with vector or matrix
     @testset "ArgumentError" begin
         a = rand(ComplexF64, 2)

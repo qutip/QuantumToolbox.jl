@@ -1,48 +1,27 @@
 using Test
+using TestItemRunner
 using Pkg
 
-# Importing only the necessary functions to keep track the re-export of the functions
-import LinearAlgebra: Diagonal, I, mul!, triu, tril, triu!, tril!
-import SparseArrays: sparse, sprand, spzeros, spdiagm, nnz, SparseVector, SparseMatrixCSC, AbstractSparseMatrix
-import StaticArraysCore: SVector
+const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext"]
 
 const GROUP = get(ENV, "GROUP", "All")
+(GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP"))
 
-const testdir = dirname(@__FILE__)
-
-# Put core tests in alphabetical order
-core_tests = [
-    "block_diagonal_form.jl",
-    "correlations_and_spectrum.jl",
-    "dynamical_fock_dimension_mesolve.jl",
-    "dynamical-shifted-fock.jl",
-    "eigenvalues_and_operators.jl",
-    "entropy_and_metric.jl",
-    "generalized_master_equation.jl",
-    "low_rank_dynamics.jl",
-    "negativity_and_partial_transpose.jl",
-    "progress_bar.jl",
-    "quantum_objects.jl",
-    "quantum_objects_evo.jl",
-    "states_and_operators.jl",
-    "steady_state.jl",
-    "time_evolution.jl",
-    "utilities.jl",
-    "wigner.jl",
-]
-
+# Core tests
 if (GROUP == "All") || (GROUP == "Core")
-    using QuantumToolbox
-    import QuantumToolbox: position, momentum
-    import Random: MersenneTwister
-    import SciMLOperators: MatrixOperator, NullOperator, IdentityOperator
+    import QuantumToolbox
 
     QuantumToolbox.about()
 
-    for test in core_tests
-        include(joinpath(testdir, "core-test", test))
-    end
+    println("\nStart running Core tests...\n")
+    @run_package_tests verbose=true
 end
+
+########################################################################
+# Use traditional Test.jl instead of TestItemRunner.jl for other tests #
+########################################################################
+
+const testdir = dirname(@__FILE__)
 
 if (GROUP == "All") || (GROUP == "Code-Quality")
     Pkg.activate("core-test/code-quality")
@@ -51,6 +30,8 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
 
     using QuantumToolbox
     using Aqua, JET
+
+    (GROUP == "Code-Quality") && QuantumToolbox.about() # print version info. for code quality CI in GitHub
 
     include(joinpath(testdir, "core-test", "code-quality", "code_quality.jl"))
 end
@@ -64,6 +45,8 @@ if (GROUP == "AutoDiff_Ext")
     using Zygote
     using Enzyme
     using SciMLSensitivity
+
+    QuantumToolbox.about()
 
     include(joinpath(testdir, "ext-test", "cpu", "autodiff", "zygote.jl"))
 end
@@ -87,6 +70,8 @@ if (GROUP == "CUDA_Ext")
     Pkg.instantiate()
 
     using QuantumToolbox
+    import LinearAlgebra: Diagonal
+    import StaticArraysCore: SVector
     using CUDA
     using CUDA.CUSPARSE
     # CUDA.allowscalar(false) # This is already set in the extension script
