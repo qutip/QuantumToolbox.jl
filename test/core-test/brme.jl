@@ -24,7 +24,7 @@ end;
     A_op = a+a'
     spectra(x) = x>0
 
-    # this test applys for limited cutoff
+    # this test applies for limited cutoff
     lindblad = lindblad_dissipator(a)
     computation = brterm(H, A_op, spectra, sec_cutoff = 1.5, fock_basis = true)
     @test isapprox(lindblad, computation, atol = 1e-15)
