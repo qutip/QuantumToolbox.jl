@@ -42,13 +42,7 @@ function bloch_redfield_tensor(
 
     # set fock_basis=Val(false) and change basis together at the end
     R1 = 0
-    if !isempty(a_ops)
-        R1 += mapreduce(x -> _brterm(rst, x[1], x[2], sec_cutoff, Val(false)), +, a_ops)
-
-        # do (a_op, spectra)
-        #     _brterm(rst, a_op, spectra, sec_cutoff, Val(false))
-        # end
-    end
+    isempty(a_ops) || (R1 += mapreduce(x -> _brterm(rst, x[1], x[2], sec_cutoff, Val(false)), +, a_ops))
 
     SU = sprepost(U, U') # transformation matrix from eigen basis back to fock basis
     if getVal(fock_basis)
@@ -109,8 +103,8 @@ function _brterm(
 ) where {T<:QuantumObject{Operator},F<:Function}
     _check_br_spectra(spectra)
 
-    U, N = rst.vectors, prod(rst.dimensions)
-    Id = I(N)
+    U = rst.vectors
+    Id = I(prod(rst.dimensions))
 
     skew = @. rst.values - rst.values' |> real
     spectrum = spectra.(skew)
