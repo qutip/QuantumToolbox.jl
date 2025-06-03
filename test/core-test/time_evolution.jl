@@ -1,4 +1,7 @@
-@testset "Time Evolution and Partial Trace" verbose = true begin
+@testitem "Time Evolution and Partial Trace" begin
+    using Random
+    using SciMLOperators
+
     # Global definition of the system
     N = 10
     a = kron(destroy(N), qeye(2))
