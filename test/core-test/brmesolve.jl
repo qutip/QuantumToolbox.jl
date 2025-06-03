@@ -107,11 +107,9 @@ end
     times = LinRange(0, 10, 100)
 
     for (me_c_ops, brme_c_ops, brme_a_ops) in arg_sets
-        me = mesolve(H, ψ0, times, me_c_ops, e_ops = e_ops)
+        me = mesolve(H, ψ0, times, me_c_ops, e_ops = e_ops, progre)
         brme = brmesolve(H, ψ0, times, brme_a_ops, brme_c_ops, e_ops = e_ops)
 
-        for (me_expect, brme_expect) in zip(me.expect, brme.expect)
-            @test me_expect == brme_expect
-        end
+        @test all(me.expect .== brme.expect)
     end
 end;
