@@ -43,7 +43,7 @@ end
         @test isa(R, QuantumObject)
         @test isa(R_eig, QuantumObject)
         @test isa(evecs, QuantumObject)
-        
+
         state = rand_dm(N) |> mat2vec
         fock_computed = R * state
         eig_computed = (sprepost(evecs, evecs') * R_eig * sprepost(evecs', evecs)) * state
@@ -81,7 +81,7 @@ end
         @test isa(R, QuantumObject)
         @test isa(R_eig, QuantumObject)
         @test isa(evecs, QuantumObject)
-        
+
         state = rand_dm(N) |> mat2vec
         fock_computed = R * state
         eig_computed = (sprepost(evecs, evecs') * R_eig * sprepost(evecs', evecs)) * state
