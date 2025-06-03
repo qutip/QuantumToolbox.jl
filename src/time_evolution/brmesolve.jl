@@ -110,6 +110,7 @@ function _brterm(
     _check_br_spectra(spectra)
 
     U, N = rst.vectors, prod(rst.dimensions)
+    Id = I(N)
 
     skew = @. rst.values - rst.values' |> real
     spectrum = spectra.(skew)
@@ -125,7 +126,6 @@ function _brterm(
         ac_term .*= m_cut
         bd_term .*= m_cut
 
-        Id = I(N)
         vec_skew = vec(skew)
         M_cut = @. abs(vec_skew - vec_skew') < sec_cutoff
     end

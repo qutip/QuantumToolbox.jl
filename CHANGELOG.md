@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Add functions for `brmesolve`
+
 ## [v0.31.1]
 Release date: 2025-05-16
 
