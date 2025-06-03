@@ -88,3 +88,30 @@ end
         @test isapprox(fock_computed, eig_computed, atol = 1e-15)
     end
 end
+
+@testitem "simple qubit system" begin
+    pauli_vectors = [sigmax(), sigmay(), sigmaz()]
+    γ = 0.25
+    spectra(x) = γ * (x>=0)
+    _m_c_op = √γ * sigmam()
+    _z_c_op = √γ * sigmaz()
+    _x_a_op = (sigmax(), spectra)
+
+    arg_sets = [[[_m_c_op], [], [_x_a_op]], [[_m_c_op], [_m_c_op], []], [[_m_c_op, _z_c_op], [_z_c_op], [_x_a_op]]]
+
+    δ = 0
+    ϵ = 0.5 * 2π
+    e_ops = pauli_vectors
+    H = δ * 0.5 * sigmax() + ϵ * 0.5 * sigmaz()
+    ψ0 = unit(2basis(2, 0) + basis(2, 1))
+    times = LinRange(0, 10, 100)
+
+    for (me_c_ops, brme_c_ops, brme_a_ops) in arg_sets
+        me = mesolve(H, ψ0, times, me_c_ops, e_ops = e_ops)
+        brme = brmesolve(H, ψ0, times, brme_a_ops, brme_c_ops, e_ops = e_ops)
+
+        for (me_expect, brme_expect) in zip(me.expect, brme.expect)
+            @test me_expect == brme_expect
+        end
+    end
+end;
