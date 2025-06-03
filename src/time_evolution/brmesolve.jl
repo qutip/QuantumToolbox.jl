@@ -1,3 +1,5 @@
+export bloch_redfield_tensor, brterm, brmesolve
+
 @doc raw"""
     bloch_redfield_tensor(
         H::QuantumObject{Operator},
