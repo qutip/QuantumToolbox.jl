@@ -121,7 +121,7 @@ fig, ax = render(b);
 fig
 ```
 
-Notice that, in contrast to states or vectors, each point remains the same color as the initial point. This is because adding multiple data points using [`add_points!`](@ref) is interpreted, by default, to correspond to a single data point (single qubit state) plotted at different times. This is very useful when visualizing the dynamics of a qubit. An example of this is given in the example . If we want to plot additional qubit states we can call additional [`add_points!`](@ref) functions:
+Notice that, in contrast to states or vectors, each point remains the same color as the initial point. This is because adding multiple data points using [`add_points!`](@ref) is interpreted, by default, to correspond to a single data point (single qubit state) plotted at different times. This is very useful when visualizing the dynamics of a qubit. If we want to plot additional qubit states we can call additional [`add_points!`](@ref):
 
 ## Add Another Set of Points
 
@@ -135,9 +135,9 @@ fig, ax = render(b);
 fig
 ```
 
-The color and shape of the data points is varied automatically by [`Bloch`](@ref). Notice how the color and point markers change for each set of data. Again, we have had to call add_points twice because adding more than one set of multiple data points is not supported by the add_points function.
+The color and shape of the data points is varied automatically by [`Bloch`](@ref). Notice how the color and point markers change for each set of data.
 
-What if we want to vary the color of our points. We can tell [`Bloch`](@ref) to vary the color of each point according to the colors listed in the `point_color` attribute..
+What if we want to vary the color of our points. We can tell [`Bloch`](@ref) to vary the color of each point according to the colors listed in the `point_color` attribute.
 
 ```@example Bloch_sphere_rendering
 clear!(b)

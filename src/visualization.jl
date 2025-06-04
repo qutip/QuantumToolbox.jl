@@ -140,7 +140,7 @@ A structure representing a Bloch sphere visualization for quantum states.
     point_default_color::Vector{String} = ["blue", "red", "green", "orange"]
     point_color::Vector{Union{Nothing,String}} = Union{Nothing,String}[]
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
-    point_size::Vector{Float64} = [5.0, 6.0, 7.0, 8.0]
+    point_size::Vector{Float64} = [6.0, 7.0, 8.0, 9.0]
     point_style::Vector{Symbol} = Symbol[]
     point_alpha::Vector{Float64} = Float64[]
     sphere_alpha::Float64 = 0.4
