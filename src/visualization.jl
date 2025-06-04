@@ -147,11 +147,11 @@ A structure representing a Bloch sphere visualization for quantum states.
     vector_width::Float64 = 0.025
     vector_arrowsize::NTuple{3,Real} = (0.07, 0.08, 0.08)
     view_angles::Tuple{Int,Int} = (-60, 30)
-    xlabel::Vector{AbstractString} = ["x", ""]
+    xlabel::Vector{AbstractString} = [L"x", ""]
     xlpos::Vector{Float64} = [1.0, -1.0]
-    ylabel::Vector{AbstractString} = ["y", ""]
+    ylabel::Vector{AbstractString} = [L"y", ""]
     ylpos::Vector{Float64} = [1.0, -1.0]
-    zlabel::Vector{AbstractString} = ["|0⟩", "|1⟩"]
+    zlabel::Vector{AbstractString} = [L"|0\rangle", L"|1\rangle"]
     zlpos::Vector{Float64} = [1.0, -1.0]
 end
 
