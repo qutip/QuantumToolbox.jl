@@ -116,7 +116,6 @@ include("time_evolution/time_evolution_dynamical.jl")
 
 # Others
 include("correlations.jl")
-include("spectrum.jl")
 include("wigner.jl")
 include("spin_lattice.jl")
 include("arnoldi.jl")
@@ -124,6 +123,7 @@ include("entropy.jl")
 include("metrics.jl")
 include("negativity.jl")
 include("steadystate.jl")
+include("spectrum.jl")
 include("visualization.jl")
 
 # deprecated functions
