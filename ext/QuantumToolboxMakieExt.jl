@@ -803,7 +803,7 @@ function _add_labels!(b::Bloch, ax)
             position = Point3f(0, -offset_scale * b.xlpos[1], 0),
             color = label_color,
             fontsize = label_size,
-            align = (:center, :center)
+            align = (:center, :center),
         )
     end
     if length(b.xlabel) > 1 && !isempty(b.xlabel[2])
@@ -813,7 +813,7 @@ function _add_labels!(b::Bloch, ax)
             position = Point3f(0, -offset_scale * b.xlpos[2], 0),
             color = label_color,
             fontsize = label_size,
-            align = (:center, :center)
+            align = (:center, :center),
         )
     end
     if !isempty(b.ylabel) && !isempty(b.ylabel[1])
@@ -823,7 +823,7 @@ function _add_labels!(b::Bloch, ax)
             position = Point3f(offset_scale * b.ylpos[1], 0, 0),
             color = label_color,
             fontsize = label_size,
-            align = (:center, :center)
+            align = (:center, :center),
         )
     end
     if length(b.ylabel) > 1 && !isempty(b.ylabel[2])
@@ -833,7 +833,7 @@ function _add_labels!(b::Bloch, ax)
             position = Point3f(offset_scale * b.ylpos[2], 0, 0),
             color = label_color,
             fontsize = label_size,
-            align = (:center, :center)
+            align = (:center, :center),
         )
     end
     if !isempty(b.zlabel) && !isempty(b.zlabel[1])
@@ -843,7 +843,7 @@ function _add_labels!(b::Bloch, ax)
             position = Point3f(0, 0, offset_scale * b.zlpos[1]),
             color = label_color,
             fontsize = label_size,
-            align = (:center, :center)
+            align = (:center, :center),
         )
     end
     if length(b.zlabel) > 1 && !isempty(b.zlabel[2])
@@ -853,7 +853,7 @@ function _add_labels!(b::Bloch, ax)
             position = Point3f(0, 0, offset_scale * b.zlpos[2]),
             color = label_color,
             fontsize = label_size,
-            align = (:center, :center)
+            align = (:center, :center),
         )
     end
 end

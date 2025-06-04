@@ -86,7 +86,7 @@ end
     b = Bloch()
     add_points!(b, [0.0, 0.0, 1.0])
     @test length(b.points) == 1
-    @test b.points[1] ≈ [0.0, 0.0, 1.0] 
+    @test b.points[1] ≈ [0.0, 0.0, 1.0]
 
     pts = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
     add_points!(b, hcat(pts...))
