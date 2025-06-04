@@ -118,11 +118,11 @@ A structure representing a Bloch sphere visualization for quantum states.
 - `view_angles::Tuple{Int,Int}}`: Azimuthal and elevation viewing angles in degrees (default: (-60, 30))
 
 ## Label properties
-- `xlabel::Vector{String}}`: Labels for x-axis (default: ["x", ""])
+- `xlabel::Vector{AbstractString}}`: Labels for x-axis (default: [L"x", ""])
 - `xlpos::Vector{Float64}}`: Positions of x-axis labels (default: [1.0, -1.0])
-- `ylabel::Vector{String}}`: Labels for y-axis (default: ["y", ""])
+- `ylabel::Vector{AbstractString}}`: Labels for y-axis (default: [L"y", ""])
 - `ylpos::Vector{Float64}}`: Positions of y-axis labels (default: [1.0, -1.0])
-- `zlabel::Vector{String}}`: Labels for z-axis (default: ["|0⟩", "|1⟩"])
+- `zlabel::Vector{AbstractString}}`: Labels for z-axis (default: [L"|0\rangle", L"|1\rangle"])
 - `zlpos::Vector{Float64}}`: Positions of z-axis labels (default: [1.0, -1.0])
 """
 @kwdef mutable struct Bloch
