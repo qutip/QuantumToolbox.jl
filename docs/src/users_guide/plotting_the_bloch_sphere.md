@@ -81,7 +81,7 @@ fig, _ = render(b)
 fig
 ```
 
-a similar method works for adding vectors:
+A similar method works for adding vectors:
 
 ```@example Bloch_sphere_rendering
 clear!(b)

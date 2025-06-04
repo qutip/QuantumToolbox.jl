@@ -794,6 +794,8 @@ function _tolatex(s)
     return s
 end
 
+_lerp(a::Float64, b::Float64, t::Float64) = a + t * (b - a)
+
 raw"""
     _add_labels!(ax)
 
@@ -808,68 +810,71 @@ function _add_labels!(b::Bloch, ax)
     label_color = parse(RGBf, b.font_color)
     label_size = b.font_size
     label_font = b.font_name
-    label_offset = 0.1
-
+    offset_scale = b.frame_limit
     if !isempty(b.xlabel) && !isempty(b.xlabel[1])
         text!(
             ax,
-            _tolatex(b.xlabel[1]);
-            position = Point3f(0.07, -b.xlpos[1] - 2*label_offset, 0.05),
+            _tolatex(b.xlabel[1]),
+            position = Point3f(0, -offset_scale * b.xlpos[1], 0),
             color = label_color,
             fontsize = label_size,
             font = label_font,
+            align = (:center, :center)
         )
     end
     if length(b.xlabel) > 1 && !isempty(b.xlabel[2])
         text!(
             ax,
-            _tolatex(b.xlabel[2]);
-            position = Point3f(-0.1, -b.xlpos[2] + 1.65*label_offset, -0.03),
+            _tolatex(b.xlabel[2]),
+            position = Point3f(0, -offset_scale * b.xlpos[2], 0),
             color = label_color,
             fontsize = label_size,
             font = label_font,
+            align = (:center, :center)
         )
     end
-
     if !isempty(b.ylabel) && !isempty(b.ylabel[1])
         text!(
             ax,
-            _tolatex(b.ylabel[1]);
-            position = Point3f(b.ylpos[1] + label_offset, -1.5label_offset, 0.02),
+            _tolatex(b.ylabel[1]),
+            position = Point3f(offset_scale * b.ylpos[1], 0, 0),
             color = label_color,
             fontsize = label_size,
             font = label_font,
+            align = (:center, :center)
         )
     end
     if length(b.ylabel) > 1 && !isempty(b.ylabel[2])
         text!(
             ax,
-            _tolatex(b.ylabel[2]);
-            position = Point3f(b.ylpos[2] - 2*label_offset, -1.5*label_offset, -0.02),
+            _tolatex(b.ylabel[2]),
+            position = Point3f(offset_scale * b.ylpos[2], 0, 0),
             color = label_color,
             fontsize = label_size,
             font = label_font,
+            align = (:center, :center)
         )
     end
-
     if !isempty(b.zlabel) && !isempty(b.zlabel[1])
         text!(
             ax,
-            _tolatex(b.zlabel[1]);
-            position = Point3f(-0.08, 0, b.zlpos[1]),
+            _tolatex(b.zlabel[1]),
+            position = Point3f(0, 0, offset_scale * b.zlpos[1]),
             color = label_color,
             fontsize = label_size,
             font = label_font,
+            align = (:center, :center)
         )
     end
     if length(b.zlabel) > 1 && !isempty(b.zlabel[2])
         text!(
             ax,
-            _tolatex(b.zlabel[2]);
-            position = Point3f(-0.08, 0.02, b.zlpos[2] - 2*label_offset),
+            _tolatex(b.zlabel[2]),
+            position = Point3f(0, 0, offset_scale * b.zlpos[2]),
             color = label_color,
             fontsize = label_size,
             font = label_font,
+            align = (:center, :center)
         )
     end
 end

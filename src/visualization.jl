@@ -132,29 +132,29 @@ A structure representing a Bloch sphere visualization for quantum states.
     lines::Vector{Tuple{Vector{Vector{Float64}},String}} = Vector{Tuple{Vector{Vector{Float64}},String}}()
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
     font_color::String = "#333333"
-    font_size::Int = 16
-    font_name::String = "TeX Gyre Heros"
+    font_size::Int = 15
+    font_name::String = "Ariel"
     frame_alpha::Float64 = 0.0
     frame_color::String = "white"
-    frame_limit::Float64 = 1.5
+    frame_limit::Float64 = 1.13
     point_default_color::Vector{String} = ["blue", "red", "green", "orange"]
     point_color::Vector{Union{Nothing,String}} = Union{Nothing,String}[]
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
-    point_size::Vector{Float64} = [6.0, 7.0, 8.0, 9.0]
+    point_size::Vector{Float64} = [5.5, 6.2, 6.5, 7.5]
     point_style::Vector{Symbol} = Symbol[]
     point_alpha::Vector{Float64} = Float64[]
-    sphere_alpha::Float64 = 0.4
-    sphere_color::String = "#ECEFF4"
+    sphere_alpha::Float64 = 0.2
+    sphere_color::String = "#FFDDDD"
     vector_color::Vector{String} = ["green", "orange", "blue", "red"]
     vector_width::Float64 = 0.025
     vector_arrowsize::NTuple{3,Real} = (0.07, 0.08, 0.08)
     view_angles::Tuple{Int,Int} = (-60, 30)
     xlabel::Vector{String} = ["x", ""]
-    xlpos::Vector{Float64} = [1.3, -1.3]
+    xlpos::Vector{Float64} = [1.0, -1.0]
     ylabel::Vector{String} = ["y", ""]
-    ylpos::Vector{Float64} = [1.3, -1.3]
+    ylpos::Vector{Float64} = [1.0, -1.0]
     zlabel::Vector{String} = ["|0⟩", "|1⟩"]
-    zlpos::Vector{Float64} = [1.2, -1.3]
+    zlpos::Vector{Float64} = [1.0, -1.0]
 end
 
 @doc raw"""
