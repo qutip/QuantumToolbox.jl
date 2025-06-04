@@ -89,7 +89,6 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 - `font_color::String`: Color of axis labels and text
 - `font_size::Int`: Font size for labels (default: 18)
-- `font_name::String`: Font family name (default: "TeX Gyre Heros")
 - `frame_alpha::Float64`: Transparency of the frame background
 - `frame_color::String`: Background color of the frame
 - `frame_limit::Float64`: Axis limits for the 3D frame (symmetric around origin)
@@ -133,7 +132,6 @@ A structure representing a Bloch sphere visualization for quantum states.
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
     font_color::String = "#333333"
     font_size::Int = 15
-    font_name::String = "Ariel"
     frame_alpha::Float64 = 0.0
     frame_color::String = "white"
     frame_limit::Float64 = 1.13
@@ -149,11 +147,11 @@ A structure representing a Bloch sphere visualization for quantum states.
     vector_width::Float64 = 0.025
     vector_arrowsize::NTuple{3,Real} = (0.07, 0.08, 0.08)
     view_angles::Tuple{Int,Int} = (-60, 30)
-    xlabel::Vector{String} = ["x", ""]
+    xlabel::Vector{AbstractString} = ["x", ""]
     xlpos::Vector{Float64} = [1.0, -1.0]
-    ylabel::Vector{String} = ["y", ""]
+    ylabel::Vector{AbstractString} = ["y", ""]
     ylpos::Vector{Float64} = [1.0, -1.0]
-    zlabel::Vector{String} = ["|0⟩", "|1⟩"]
+    zlabel::Vector{AbstractString} = ["|0⟩", "|1⟩"]
     zlpos::Vector{Float64} = [1.0, -1.0]
 end
 
