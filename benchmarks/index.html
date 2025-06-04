@@ -224,6 +224,14 @@
             canvas.width = 10;
             parent.appendChild(canvas);
 
+            const commitIdSet = new Set();
+            for (const benches of dataset.values()) {
+              for (const d of benches) {
+                commitIdSet.add(d.commit.id);
+              }
+            }
+            const commitIds = Array.from(commitIdSet);
+
             const op_to_color = new Map();
             var idx = 0;
             const datasets = [];
@@ -237,9 +245,12 @@
                 idx += 1;
               }
               const color = op_to_color.get(op_name);
+
+              const valueMap = new Map(op_data.map(d => [d.commit.id, d.bench.value / 1e6]));
+
               const benchdata = {
                 label: op_name,
-                data: op_data.map(d => d.bench.value / 1e6),
+                data: commitIds.map(id => valueMap.has(id) ? valueMap.get(id) : null),
                 borderColor: color,
                 fill: false,
               };
@@ -247,7 +258,7 @@
             }
 
             const data = {
-              labels: dataset.entries().next().value[1].map((d) => d.commit.id.slice(0, 7)),
+              labels: commitIds.map(id => id.slice(0, 7)),
               datasets,
             };
 
@@ -262,12 +273,22 @@
                     afterTitle: items => {
                       const label = items[0].dataset.label;
                       const index = items[0].dataIndex;
-                      const data = dataset.get(label)[index];
+                      const commitId = commitIds[index];
+                      const dataArr = dataset.get(label);
+                      if (!dataArr) return '';
+                      const data = dataArr.find(d => d.commit.id === commitId);
+                      if (!data) return '';
                       return '\n' + data.commit.message + '\n\n' + data.commit.timestamp + ' committed by @' + data.commit.committer.username + '\n';
                     },
                     label: function(context) {
                       let label = context.dataset.label;
-                      const { value, range, unit } = dataset.get(label)[context.dataIndex].bench;
+                      const index = context.dataIndex;
+                      const commitId = commitIds[index];
+                      const dataArr = dataset.get(label);
+                      if (!dataArr) return label;
+                      const data = dataArr.find(d => d.commit.id === commitId);
+                      if (!data) return label;
+                      const { value, range, unit } = data.bench;
                       label += " : " + value + " " + unit;
                       if (range) {
                         label += " (" + range + ")";
@@ -276,7 +297,13 @@
                     },
                     afterLabel: item => {
                       const label = item.dataset.label;
-                      const { extra } = dataset.get(label)[item.dataIndex].bench;
+                      const index = item.dataIndex;
+                      const commitId = commitIds[index];
+                      const dataArr = dataset.get(label);
+                      if (!dataArr) return '';
+                      const data = dataArr.find(d => d.commit.id === commitId);
+                      if (!data) return '';
+                      const { extra } = data.bench;
                       return extra ? '\n' + extra : '';
                     }
                   }
