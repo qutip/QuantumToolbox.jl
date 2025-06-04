@@ -1,6 +1,14 @@
-export plot_wigner
-export plot_fock_distribution
-export plot_bloch, Bloch, render, add_points!, add_vectors!, add_line!, add_arc!, clear!, add_states!
+export plot_wigner,
+    plot_fock_distribution,
+    plot_bloch,
+    Bloch,
+    render,
+    add_points!,
+    add_vectors!,
+    add_line!,
+    add_arc!,
+    clear!,
+    add_states!
 
 @doc raw"""
     plot_wigner(
@@ -81,9 +89,10 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 - `font_color::String`: Color of axis labels and text
 - `font_size::Int`: Font size for labels (default: 18)
-- `frame_alpha::Float64`: Transparency of wireframe
-- `frame_color::String`: Color of wireframe
-- `frame_width::Int`: Width of wireframe lines
+- `font_name::String`: Font family name (default: "TeX Gyre Heros")
+- `frame_alpha::Float64`: Transparency of the frame background
+- `frame_color::String`: Background color of the frame
+- `frame_limit::Float64`: Axis limits for the 3D frame (symmetric around origin)
 
 ## Point properties
 
@@ -97,12 +106,16 @@ A structure representing a Bloch sphere visualization for quantum states.
 ## Sphere properties
 
 - `sphere_color::String`: Color of Bloch sphere surface
+- `sphere_alpha::Float64`: Transparency of sphere surface (default: 0.4)
+
+# Vector properties
+
+- `vector_color`::Vector{String}: Colors for vectors
+- `vector_width`::Float64: Width of vectors
+- `vector_arrowsize`::NTuple{3, Real}: Arrow size parameters as (head length, head width, stem width)
 
 ## Layout properties
 
-- `size::Tuple{Int,Int}}`: Figure size in pixels
-- `vector_color::Vector{String}}`: Colors for vectors
-- `vector_width::Int`: Width of vectors
 - `view_angles::Tuple{Int,Int}}`: Azimuthal and elevation viewing angles in degrees (default: (-60, 30))
 
 ## Label properties
@@ -118,28 +131,30 @@ A structure representing a Bloch sphere visualization for quantum states.
     vectors::Vector{Vector{Float64}} = Vector{Vector{Float64}}()
     lines::Vector{Tuple{Vector{Vector{Float64}},String}} = Vector{Tuple{Vector{Vector{Float64}},String}}()
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
-    font_color::String = "#2E3440"
-    font_size::Int = 18
-    frame_alpha::Float64 = 0.1
-    frame_color::String = "#E5E9F0"
-    frame_width::Int = 1
-    point_default_color::Vector{String} = ["blue", "red", "green", "orange", "cyan", "magenta", "yellow", "black"]
-    point_color::Vector{String} = ["blue", "red", "green", "orange", "cyan", "magenta", "yellow", "black"]
+    font_color::String = "#333333"
+    font_size::Int = 16
+    font_name::String = "TeX Gyre Heros"
+    frame_alpha::Float64 = 0.0
+    frame_color::String = "white"
+    frame_limit::Float64 = 1.5
+    point_default_color::Vector{String} = ["blue", "red", "green", "orange"]
+    point_color::Vector{Union{Nothing,String}} = Union{Nothing,String}[]
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
-    point_size::Vector{Int} = [40, 48, 50, 60]
+    point_size::Vector{Float64} = [5.0, 6.0, 7.0, 8.0]
     point_style::Vector{Symbol} = Symbol[]
     point_alpha::Vector{Float64} = Float64[]
+    sphere_alpha::Float64 = 0.4
     sphere_color::String = "#ECEFF4"
-    size::Tuple{Int,Int} = (700, 700)
-    vector_color::Vector{String} = ["green", "blue", "orange", "red", "cyan", "magenta", "yellow", "black"]
-    vector_width::Int = 2
+    vector_color::Vector{String} = ["green", "orange", "blue", "red"]
+    vector_width::Float64 = 0.025
+    vector_arrowsize::NTuple{3,Real} = (0.07, 0.08, 0.08)
     view_angles::Tuple{Int,Int} = (-60, 30)
     xlabel::Vector{String} = ["x", ""]
-    xlpos::Vector{Float64} = [1.2, -1.2]
+    xlpos::Vector{Float64} = [1.3, -1.3]
     ylabel::Vector{String} = ["y", ""]
-    ylpos::Vector{Float64} = [1.2, -1.2]
+    ylpos::Vector{Float64} = [1.3, -1.3]
     zlabel::Vector{String} = ["|0⟩", "|1⟩"]
-    zlpos::Vector{Float64} = [1.2, -1.2]
+    zlpos::Vector{Float64} = [1.2, -1.3]
 end
 
 @doc raw"""
@@ -181,50 +196,60 @@ function add_vectors!(b::Bloch, vecs::Vector{<:Vector{<:Real}})
 end
 
 @doc raw"""
-    add_points!(b::Bloch, pnt::Vector{<:Real}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+    add_points!(b::Bloch, pnt::Vector{<:Real}; meth::Symbol = :s, color = "blue", alpha = 1.0)
 
 Add a single point to the Bloch sphere visualization.
 
 # Arguments
 - b::Bloch: The Bloch sphere object to modify
-- pnt::Vector{<:Real}: A 3D point to add
+- pnt::Vector{Float64}: A 3D point to add
 - meth::Symbol=:s: Display method (:s for single point, :m for multiple, :l for line)
 - color: Color of the point (defaults to first default color if nothing)
 - alpha=1.0: Transparency (1.0 = opaque, 0.0 = transparent)
 """
-function add_points!(b::Bloch, pnt::Vector{<:Real}; meth::Symbol = :s, color = nothing, alpha = 1.0)
-    points = reshape(convert(Vector{Float64}, pnt), 3, 1)
-    return add_points!(b, points; meth = meth, color = color, alpha = alpha)
+function add_points!(b::Bloch, pnt::Vector{Float64}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+    return add_points!(b, reshape(pnt, 3, 1); meth, color, alpha)
+end
+function add_points!(b::Bloch, pnts::Vector{Vector{Float64}}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+    return add_points!(b, Matrix(hcat(pnts...)'); meth, color, alpha)
 end
 
 @doc raw"""
-    add_points!(b::Bloch, pnts::Matrix{<:Real}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+    add_points!(b::Bloch, pnts::Matrix{Float64}; meth::Symbol = :s, color = nothing, alpha = 1.0)
 
 Add multiple points to the Bloch sphere visualization.
 
 # Arguments
 
 - b::Bloch: The Bloch sphere object to modify
-- pnts::Matrix{<:Real}: 3×N matrix of points (each column is a point)
+- pnts::Matrix{Float64}: 3×N matrix of points (each column is a point)
 - meth::Symbol=:s: Display method (:s for single point, :m for multiple, :l for line)
 - color: Color of the points (defaults to first default color if nothing)
 - alpha=1.0: Transparency (1.0 = opaque, 0.0 = transparent)
 ```
 """
-function add_points!(b::Bloch, pnts::Matrix{<:Real}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+function add_points!(
+    b::Bloch,
+    pnts::Matrix{<:Real};
+    meth::Symbol = :s,
+    color::Union{Nothing,String} = nothing,
+    alpha::Float64 = 1.0,
+)
     if size(pnts, 1) != 3
-        error("Points must be a 3×N matrix where columns are [x;y;z] points")
+        error("Points must be a 3×N matrix where each column is [x; y; z]")
     end
-    if meth ∉ [:s, :m, :l]
-        error("meth must be :s, :m, or :l")
-    end
-    if meth == :s && size(pnts, 2) == 1
-        pnts = hcat(pnts, pnts)
+    if !(meth in (:s, :m, :l))
+        error("`meth` must be :s, :m, or :l")
     end
     push!(b.points, convert(Matrix{Float64}, pnts))
     push!(b.point_style, meth)
     push!(b.point_alpha, alpha)
-    return push!(b.point_color, color === nothing ? b.point_default_color[1] : color)
+    if color === nothing
+        push!(b.point_color, nothing)
+    else
+        push!(b.point_color, color)
+    end
+    return nothing
 end
 
 @doc raw"""
@@ -307,6 +332,9 @@ Clear all graphical elements (points, vectors, lines, arcs) from the given Bloch
 """
 function clear!(b::Bloch)
     empty!(b.points)
+    empty!(b.point_color)
+    empty!(b.point_style)
+    empty!(b.point_alpha)
     empty!(b.vectors)
     empty!(b.lines)
     empty!(b.arcs)
@@ -363,6 +391,25 @@ function plot_bloch(state::QuantumObject{<:Union{Ket,Bra,Operator}}; library::Un
     return plot_bloch(lib_val, state; kwargs...)
 end
 
+@doc raw"""
+    plot_bloch(::Val{T}, state::QuantumObject; kwargs...) where {T}
+
+Fallback implementation for unsupported plotting backends.
+
+# Arguments
+- `::Val{T}`: The unsupported backend specification.
+- `state::QuantumObject`: The quantum state that was attempted to be plotted.
+- `kwargs...`: Ignored keyword arguments.
+
+# Throws
+- `ErrorException`: Always throws an error indicating the backend `T` is unsupported.
+
+# Note
+This function serves as a fallback when an unsupported backend is requested. Currently supported backends include:
+- `:Makie` (using `Makie.jl`)
+
+See the main `plot_bloch` documentation for supported backends.
+"""
 function plot_bloch(::Val{T}, state::QuantumObject; kwargs...) where {T}
     return error("Unsupported backend: $T. Try :Makie or another supported library.")
 end

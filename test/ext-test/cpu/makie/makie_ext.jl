@@ -171,4 +171,16 @@ end
         @test false
         @info "Render threw unexpected error" exception=e
     end
+    b = Bloch()
+    ψ₁ = normalize(basis(2, 0) + basis(2, 1))
+    ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
+    add_line!(b, ψ₁, ψ₂; fmt = "r--")
+    try
+        fig, ax = render(b)
+        @test !isnothing(fig)
+        @test !isnothing(ax)
+    catch e
+        @test false
+        @info "Render threw unexpected error" exception=e
+    end
 end
