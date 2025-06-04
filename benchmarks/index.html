@@ -328,19 +328,16 @@
                 if (activeElems.length === 0) {
                   return;
                 }
-                // XXX: Undocumented. How can we know the index?
-                const index = activeElems[0].datasetIndex;
-                var reqdData = '';
-                var i = 0;
-                for (const [x, data] of dataset.entries()) {
-                  if (i == index) {
-                    reqdData = data;
-                    break;
-                  }
-                  i += 1;
+                const datasetIndex = activeElems[0].datasetIndex;
+                const dataIndex = activeElems[0].index;
+                const label = datasets[datasetIndex].label;
+                const commitId = commitIds[dataIndex];
+                const dataArr = dataset.get(label);
+                if (!dataArr) return;
+                const data = dataArr.find(d => d.commit.id === commitId);
+                if (data && data.commit.url) {
+                  window.open(data.commit.url, '_blank');
                 }
-                const url = reqdData[0].commit.url;
-                window.open(url, '_blank');
               },
             };
 
