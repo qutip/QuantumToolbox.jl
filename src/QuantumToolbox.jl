@@ -106,6 +106,7 @@ include("time_evolution/callback_helpers/mcsolve_callback_helpers.jl")
 include("time_evolution/callback_helpers/ssesolve_callback_helpers.jl")
 include("time_evolution/callback_helpers/smesolve_callback_helpers.jl")
 include("time_evolution/mesolve.jl")
+include("time_evolution/brmesolve.jl")
 include("time_evolution/lr_mesolve.jl")
 include("time_evolution/sesolve.jl")
 include("time_evolution/mcsolve.jl")
@@ -115,7 +116,6 @@ include("time_evolution/time_evolution_dynamical.jl")
 
 # Others
 include("correlations.jl")
-include("spectrum.jl")
 include("wigner.jl")
 include("spin_lattice.jl")
 include("arnoldi.jl")
@@ -123,6 +123,7 @@ include("entropy.jl")
 include("metrics.jl")
 include("negativity.jl")
 include("steadystate.jl")
+include("spectrum.jl")
 include("visualization.jl")
 
 # deprecated functions

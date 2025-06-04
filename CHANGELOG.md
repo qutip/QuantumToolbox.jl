@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Introduce `Lanczos` solver for `spectrum`. ([#476])
+- Add Bloch-Redfield master equation solver. ([#473])
+
 ## [v0.31.1]
 Release date: 2025-05-16
 
@@ -228,3 +231,5 @@ Release date: 2024-11-13
 [#455]: https://github.com/qutip/QuantumToolbox.jl/issues/455
 [#456]: https://github.com/qutip/QuantumToolbox.jl/issues/456
 [#460]: https://github.com/qutip/QuantumToolbox.jl/issues/460
+[#473]: https://github.com/qutip/QuantumToolbox.jl/issues/473
+[#476]: https://github.com/qutip/QuantumToolbox.jl/issues/476

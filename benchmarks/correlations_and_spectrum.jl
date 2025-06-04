@@ -19,6 +19,8 @@ function benchmark_correlations_and_spectrum!(SUITE)
 
     PI_solver = PseudoInverse()
 
+    L_solver = Lanczos()
+
     SUITE["Correlations and Spectrum"]["FFT Correlation"] =
         @benchmarkable _calculate_fft_spectrum($H, $t_l, $c_ops, $(a'), $a)
 
@@ -27,6 +29,9 @@ function benchmark_correlations_and_spectrum!(SUITE)
 
     SUITE["Correlations and Spectrum"]["Spectrum"]["Pseudo Inverse"] =
         @benchmarkable spectrum($H, $ω_l, $c_ops, $(a'), $a, solver = $PI_solver)
+
+    SUITE["Correlations and Spectrum"]["Spectrum"]["Lanczos"] =
+        @benchmarkable spectrum($H, $ω_l, $c_ops, $(a'), $a, solver = $L_solver)
 
     return nothing
 end

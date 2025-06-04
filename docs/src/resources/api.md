@@ -208,6 +208,9 @@ smesolve
 dfd_mesolve
 liouvillian
 liouvillian_generalized
+bloch_redfield_tensor
+brterm
+brmesolve
 ```
 
 ### [Steady State Solvers](@id doc-API:Steady-State-Solvers)
@@ -248,6 +251,7 @@ spectrum_correlation_fft
 spectrum
 ExponentialSeries
 PseudoInverse
+Lanczos
 ```
 
 ## [Entropy and Metrics](@id doc-API:Entropy-and-Metrics)

@@ -1,5 +1,5 @@
 export spectrum, spectrum_correlation_fft
-export SpectrumSolver, ExponentialSeries, PseudoInverse
+export SpectrumSolver, ExponentialSeries, PseudoInverse, Lanczos
 
 abstract type SpectrumSolver end
 
@@ -27,6 +27,20 @@ end
 PseudoInverse(; alg::SciMLLinearSolveAlgorithm = KrylovJL_GMRES()) = PseudoInverse(alg)
 
 @doc raw"""
+    Lanczos(; tol = 1e-8, maxiter = 5000, verbose = 0)
+
+A solver which solves [`spectrum`](@ref) by using a non-symmetric Lanczos variant of the algorithm in [Koch2011](https://www.cond-mat.de/events/correl11/manuscripts/koch.pdf).
+The nonsymmetric Lanczos algorithm is adapted from Algorithm 6.6 in [Saad2011](https://www-users.cse.umn.edu/~saad/eig_book_2ndEd.pdf).
+The running estimate is updated via a [Wallis-Euler recursion](https://en.wikipedia.org/wiki/Continued_fraction).
+"""
+Base.@kwdef struct Lanczos{T<:Real,SS<:Union{Nothing,<:SteadyStateSolver}} <: SpectrumSolver
+    tol::T = 1e-8
+    maxiter::Int = 5000
+    verbose::Int = 0
+    steadystate_solver::SS = nothing
+end
+
+@doc raw"""
     spectrum(H::QuantumObject,
         ωlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple},
@@ -44,6 +58,7 @@ S(\omega) = \int_{-\infty}^\infty \lim_{t \rightarrow \infty} \left\langle \hat{
 See also the following list for `SpectrumSolver` docstrings:
 - [`ExponentialSeries`](@ref)
 - [`PseudoInverse`](@ref)
+- [`Lanczos`](@ref)
 """
 function spectrum(
     H::QuantumObject{HOpType},
@@ -142,6 +157,142 @@ function _spectrum(
     end
 
     return spec
+end
+
+function _spectrum(
+    L::QuantumObject{SuperOperator},
+    ωlist::AbstractVector,
+    A::QuantumObject{Operator},
+    B::QuantumObject{Operator},
+    solver::Lanczos,
+)
+    check_dimensions(L, A, B)
+
+    # Define type shortcuts
+    fT = _FType(L)
+    cT = _CType(L)
+
+    # Calculate |v₁> = B|ρss>
+    ρss =
+        isnothing(solver.steadystate_solver) ? mat2vec(steadystate(L)) :
+        mat2vec(steadystate(L; solver = solver.steadystate_solver))
+    vₖ = (spre(B) * ρss).data
+
+    # Define (possibly GPU) vector type
+    vT = typeof(vₖ)
+
+    # Calculate <w₁| = <I|A
+    D = prod(L.dimensions)
+    Ivec = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(cT, D)) # same as vec(system_identity_matrix)
+    wₖ = spre(A).data' * vT(Ivec)
+
+    # Store the norm of the Green's function before renormalizing |v₁> and <w₁|
+    gfNorm = abs(dot(wₖ, vₖ))
+    vₖ ./= sqrt(gfNorm)
+    wₖ ./= sqrt(gfNorm)
+
+    # Handle input frequency range
+    ωList = vT(convert(Vector{fT}, ωlist))  # Make sure they're real frequencies and potentially on GPU
+    Length = length(ωList)
+
+    # Current and previous estimates of the spectrum
+    lanczosFactor = vT(zeros(cT, Length))
+    lanczosFactor₋₁ = vT(zeros(cT, Length))
+
+    # Tridiagonal matrix elements
+    αₖ = cT(0)
+    βₖ = cT(-1)
+    δₖ = fT(+1)
+
+    # Current and up to second-to-last A and B Euler sequences
+    A₋₂ = vT(ones(cT, Length))
+    A₋₁ = vT(zeros(cT, Length))
+    Aₖ = vT(zeros(cT, Length))
+    B₋₂ = vT(zeros(cT, Length))
+    B₋₁ = vT(ones(cT, Length))
+    Bₖ = vT(zeros(cT, Length))
+
+    # Maximum norm and residue
+    maxNorm = vT(zeros(cT, length(ωList)))
+    maxResidue = fT(0.0)
+
+    # Previous and next left/right Krylov vectors
+    v₋₁ = vT(zeros(cT, D^2))
+    v₊₁ = vT(zeros(cT, D^2))
+    w₋₁ = vT(zeros(cT, D^2))
+    w₊₁ = vT(zeros(cT, D^2))
+
+    # Frequency of renormalization
+    renormFrequency = 1
+
+    # Loop over the Krylov subspace(s)
+    for k in 1:solver.maxiter
+        # k-th diagonal element
+        mul!(w₊₁, L.data', wₖ)
+        αₖ = dot(w₊₁, vₖ)
+
+        # Update A(k), B(k) and continuous fraction; normalization avoids overflow
+        Aₖ .= (-1im .* ωList .+ αₖ) .* A₋₁ .- (βₖ * δₖ) .* A₋₂
+        Bₖ .= (-1im .* ωList .+ αₖ) .* B₋₁ .- (βₖ * δₖ) .* B₋₂
+        lanczosFactor₋₁ .= lanczosFactor
+        lanczosFactor .= Aₖ ./ Bₖ
+
+        # Renormalize Euler sequences to avoid overflow
+        if k % renormFrequency == 0
+            map!((x, y) -> max(abs(x), abs(y)), maxNorm, Aₖ, Bₖ)
+            Aₖ ./= maxNorm
+            Bₖ ./= maxNorm
+            A₋₁ ./= maxNorm
+            B₋₁ ./= maxNorm
+        end
+
+        # Check for convergence
+
+        residueNorm = max(maximum(abs, lanczosFactor), maximum(abs, lanczosFactor₋₁))
+        lanczosFactor₋₁ .-= lanczosFactor
+        maxResidue = maximum(abs, lanczosFactor₋₁) / residueNorm
+        if maxResidue <= solver.tol
+            if solver.verbose > 1
+                println("spectrum(): solver::Lanczos converged after $(k) iterations")
+            end
+            break
+        end
+
+        # (k+1)-th left/right vectors, orthogonal to previous ones
+        mul!(v₊₁, L.data, vₖ)
+        v₊₁ .= v₊₁ .- αₖ .* vₖ .- βₖ .* v₋₁
+        w₊₁ .= w₊₁ .- conj(αₖ) .* wₖ .- conj(δₖ) .* w₋₁
+        v₋₁, vₖ = vₖ, v₋₁
+        vₖ, v₊₁ = v₊₁, vₖ
+        w₋₁, wₖ = wₖ, w₋₁
+        wₖ, w₊₁ = w₊₁, wₖ
+
+        # k-th off-diagonal elements
+        buf = dot(wₖ, vₖ)
+        δₖ = sqrt(abs(buf))
+        βₖ = buf / δₖ
+
+        # Normalize (k+1)-th left/right vectors
+        vₖ ./= δₖ
+        wₖ ./= conj(βₖ)
+
+        # Update everything for the next cycle
+        A₋₂, A₋₁ = A₋₁, A₋₂
+        A₋₁, Aₖ = Aₖ, A₋₁
+        B₋₂, B₋₁ = B₋₁, B₋₂
+        B₋₁, Bₖ = Bₖ, B₋₁
+    end
+
+    if solver.verbose > 0 && maxResidue > solver.tol
+        println("spectrum(): maxiter = $(solver.maxiter) reached before convergence!")
+        println("spectrum(): Max residue = $maxResidue")
+        println("spectrum(): Consider increasing maxiter and/or tol")
+    end
+
+    # Restore the norm
+    lanczosFactor .= gfNorm .* lanczosFactor
+
+    return -2 .* real(lanczosFactor)
 end
 
 @doc raw"""
