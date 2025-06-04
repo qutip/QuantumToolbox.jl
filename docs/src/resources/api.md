@@ -316,3 +316,19 @@ meshgrid
 plot_wigner
 plot_fock_distribution
 ```
+## [Bloch Visualization](@id doc-API:Bloch-Visualization)
+
+```@docs
+Bloch
+set_label_convention!
+clear!
+add_points!
+add_states!
+add_vectors!
+add_annotation!
+add_line!
+add_arc!
+render!
+show!
+save
+```

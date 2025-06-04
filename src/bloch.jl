@@ -1,4 +1,4 @@
-export Bloch, set_label_convention!, clear!, add_points!, add_states!, add_vectors!, add_annotation!, add_line!, add_arc!, render!, show!
+export Bloch, set_label_convention!, clear!, add_points!, add_states!, add_vectors!, add_annotation!, add_line!, add_arc!, render!, show!, save
 
 _state_to_cartesian_coordinates(state::Qobj) = [
     real(expect(sigmax(), state)),
@@ -481,7 +481,7 @@ function add_annotation!(b::Bloch, vec, text::String; kwargs...)
     end
 
     push!(b.annotations, Dict(
-        :position => vec,
+        :position => Point3f(vec),
         :text => text,
         :opts => kwargs
     ))
@@ -701,7 +701,7 @@ end
 
 function plot_annotations!(b::Bloch)
     for annotation in b.annotations
-        opts = Dict(:fontsize => b.font_size, :color => b.font_color)
+        opts = Dict(:fontsize => b.font_size, :color => b.font_color, :transparency => true)
         merge!(opts, annotation[:opts])
         text!(b.axes, annotation[:text], position=annotation[:position], align=(:center, :center); opts...)
     end
@@ -746,7 +746,7 @@ format : String
 dirc : String
     Directory for output images. Defaults to current working directory.
 """
-function save(b::Bloch; name::String=nothing, format::String="png", dirc::String=nothing)
+function save(b::Bloch, name::String=nothing, format::String="png", dirc::String=nothing)
     render!(b)
     # Conditional variable for first argument to savefig
     # that is set in subsequent if-elses
