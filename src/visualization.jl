@@ -88,7 +88,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 ## Style properties
 
 - `font_color::String`: Color of axis labels and text
-- `font_size::Int`: Font size for labels (default: 18)
+- `font_size::Int`: Font size for labels (default: 15)
 - `frame_alpha::Float64`: Transparency of the frame background
 - `frame_color::String`: Background color of the frame
 - `frame_limit::Float64`: Axis limits for the 3D frame (symmetric around origin)
@@ -105,7 +105,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 ## Sphere properties
 
 - `sphere_color::String`: Color of Bloch sphere surface
-- `sphere_alpha::Float64`: Transparency of sphere surface (default: 0.4)
+- `sphere_alpha::Float64`: Transparency of sphere surface (default: 0.2)
 
 # Vector properties
 
@@ -119,11 +119,11 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 ## Label properties
 - `xlabel::Vector{String}}`: Labels for x-axis (default: ["x", ""])
-- `xlpos::Vector{Float64}}`: Positions of x-axis labels (default: [1.2, -1.2])
+- `xlpos::Vector{Float64}}`: Positions of x-axis labels (default: [1.0, -1.0])
 - `ylabel::Vector{String}}`: Labels for y-axis (default: ["y", ""])
-- `ylpos::Vector{Float64}}`: Positions of y-axis labels (default: [1.2, -1.2])
+- `ylpos::Vector{Float64}}`: Positions of y-axis labels (default: [1.0, -1.0])
 - `zlabel::Vector{String}}`: Labels for z-axis (default: ["|0⟩", "|1⟩"])
-- `zlpos::Vector{Float64}}`: Positions of z-axis labels (default: [1.2, -1.2])
+- `zlpos::Vector{Float64}}`: Positions of z-axis labels (default: [1.0, -1.0])
 """
 @kwdef mutable struct Bloch
     points::Vector{Matrix{Float64}} = Vector{Matrix{Float64}}()
@@ -134,7 +134,7 @@ A structure representing a Bloch sphere visualization for quantum states.
     font_size::Int = 15
     frame_alpha::Float64 = 0.0
     frame_color::String = "white"
-    frame_limit::Float64 = 1.13
+    frame_limit::Float64 = 1.14
     point_default_color::Vector{String} = ["blue", "red", "green", "orange"]
     point_color::Vector{Union{Nothing,String}} = Union{Nothing,String}[]
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
