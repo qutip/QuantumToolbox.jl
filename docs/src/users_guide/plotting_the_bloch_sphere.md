@@ -65,7 +65,7 @@ fig
 
 ## Add multiple data
 
-We can also plot multiple points, vectors, and states at the same time by passing arrays instead of individual elements via [`add_points!](@ref), [`add_vectors!](@ref), and [`add_states!](@ref), respectively. Before giving an example, we can use [`clear!`](@ref) to remove the current data from our [`Bloch`](@ref) sphere instead of creating a new instance:
+We can also plot multiple points, vectors, and states at the same time by passing arrays instead of individual elements via [`add_points!`](@ref), [`add_vectors!`](@ref), and [`add_states!`](@ref), respectively. Before giving an example, we can use [`clear!`](@ref) to remove the current data from our [`Bloch`](@ref) sphere instead of creating a new instance:
 
 ```@example Bloch_sphere_rendering
 clear!(b)
@@ -77,7 +77,7 @@ Now on the same [`Bloch`](@ref) sphere, we can plot the three states via [`add_s
 
 ```@example Bloch_sphere_rendering
 x = basis(2, 0) + basis(2, 1)
-y = basis(2, 0) - im * basis(2, 1)
+y = basis(2, 0) + im * basis(2, 1)
 z = basis(2, 0)
 add_states!(b, [x, y, z])
 fig, _ = render(b)
@@ -175,7 +175,7 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.font_size` | Font size for labels | `15` |
 | `b.frame_alpha` | Transparency of the frame background | `0.1` |
 | `b.frame_color` | Background color of the frame | `"gray"` |
-| `b.frame_limit` | Axis limits for the 3D frame (symmetric around origin) | `1.14` |
+| `b.frame_limit` | Axis limits for the 3D frame (symmetric around origin) | `1.2` |
 | `b.point_default_color` | Default color cycle for points | `["blue", "red", "green", "#CC6600"]` |
 | `b.point_color` | List of colors for Bloch point markers to cycle through | `Union{Nothing,String}[]` |
 | `b.point_marker` | List of point marker shapes to cycle through | `[:circle, :rect, :diamond, :utriangle]` |
@@ -186,14 +186,14 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.sphere_alpha` | Transparency of sphere surface | `"#FFDDDD"` |
 | `b.vector_color` | Colors for vectors | `["green", "#CC6600", "blue", "red"]` |
 | `b.vector_width` | Width of vectors | `0.025` |
-| `b.vector_arrowsize` | Arrow size parameters as (head length, head width, stem width) | `(0.07, 0.08, 0.08)` |
-| `b.view` | Azimuthal and elevation viewing angles in degrees | `(-60, 30)` |
-| `b.xlabel` | Labels for x-axis | `(L"x", "")` |
-| `b.xlpos` | Positions of x-axis labels | `(1.0, -1.0)` |
-| `b.ylabel` | Labels for y-axis | `(L"y", "")` |
-| `b.ylpos` | Positions of y-axis labels | `(1.0, -1.0)` |
-| `b.zlabel` | Labels for z-axis | `(L"\|0\rangle", L"\|1\rangle)"` |
-| `b.zlpos` | Positions of z-axis labels | `(1.0, -1.0)` |
+| `b.vector_arrowsize` | Arrow size parameters as (head length, head width, stem width) | `[0.07, 0.08, 0.08]` |
+| `b.view` | Azimuthal and elevation viewing angles in degrees | `[30, 30]` |
+| `b.xlabel` | Labels for x-axis | `[L"x", ""]` (``+x`` and ``-x``) |
+| `b.xlpos` | Positions of x-axis labels | `[1.0, -1.0]` |
+| `b.ylabel` | Labels for y-axis | `[L"y", ""]` (``+y`` and ``-y``) |
+| `b.ylpos` | Positions of y-axis labels | `[1.0, -1.0]` |
+| `b.zlabel` | Labels for z-axis | `[L"\|0\rangle", L"\|1\rangle]"` (``+z`` and ``-z``) |
+| `b.zlpos` | Positions of z-axis labels | `[1.0, -1.0]` |
 
 These properties can also be accessed via the `print` command:
 

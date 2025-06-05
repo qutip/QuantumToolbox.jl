@@ -398,8 +398,10 @@ function _setup_bloch_plot!(b::Bloch, location)
         yspinesvisible = false,
         zspinesvisible = false,
         protrusions = (0, 0, 0, 0),
+        perspectiveness = 0.2,
         viewmode = :fit,
     )
+    length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
     ax.azimuth[] = deg2rad(b.view[1])
     ax.elevation[] = deg2rad(b.view[2])
     return fig, ax
@@ -452,9 +454,9 @@ function _draw_reference_circles!(ax)
     φ = range(0, 2π, length = 100)
     # XY, YZ, XZ circles
     circles = [
-        [Point3f(sin(φi), -cos(φi), 0) for φi in φ],  # XY
-        [Point3f(0, -cos(φi), sin(φi)) for φi in φ],  # YZ
-        [Point3f(sin(φi), 0, cos(φi)) for φi in φ],   # XZ
+        [Point3f(cos(φi), sin(φi), 0) for φi in φ],  # XY
+        [Point3f(0, cos(φi), sin(φi)) for φi in φ],  # YZ
+        [Point3f(cos(φi), 0, sin(φi)) for φi in φ],  # XZ
     ]
     for circle in circles
         lines!(ax, circle; color = wire_color, linewidth = 1.0)
@@ -475,9 +477,9 @@ function _draw_axes!(ax)
     axis_color = RGBAf(0.3, 0.3, 0.3, 0.8)
     axis_width = 0.8
     axes = [
-        ([Point3f(0, -1.0, 0), Point3f(0, 1.0, 0)], "y"),  # Y-axis
-        ([Point3f(-1.0, 0, 0), Point3f(1.0, 0, 0)], "x"),  # X-axis
-        ([Point3f(0, 0, -1.0), Point3f(0, 0, 1.0)], "z"),  # Z-axis
+        ([Point3f(1.0, 0, 0), Point3f(-1.0, 0, 0)], "x"),  # X-axis
+        ([Point3f(0, 1.0, 0), Point3f(0, -1.0, 0)], "y"),  # Y-axis
+        ([Point3f(0, 0, 1.0), Point3f(0, 0, -1.0)], "z"),  # Z-axis
     ]
     for (points, _) in axes
         lines!(ax, points; color = axis_color, linewidth = axis_width)
@@ -503,8 +505,8 @@ function _plot_points!(b::Bloch, ax)
         marker = b.point_marker[mod1(k, length(b.point_marker))]
         N = size(pts, 2)
 
-        raw_x = pts[2, :]
-        raw_y = -pts[1, :]
+        raw_x = pts[1, :]
+        raw_y = pts[2, :]
         raw_z = pts[3, :]
 
         ds = vec(sqrt.(sum(abs2, pts; dims = 1)))
@@ -607,10 +609,10 @@ function _plot_arcs!(b::Bloch, ax)
         θ = acos(clamp(dot(v1, v2), -1.0, 1.0))
         if length(arc_pts) == 3
             vm = normalize(arc_pts[2])
-            dot(cross(v1, vm), n) < 0 && (θ = 2π - θ)
+            dot(cross(v1, vm), n) < 0 && (θ -= 2π)
         end
         t_range = range(0, θ, length = 100)
-        arc_points = [Point3f((v1*cos(t) + cross(n, v1)*sin(t))...) for t in t_range]
+        arc_points = [Point3f((v1 * cos(t) + cross(n, v1) * sin(t))) for t in t_range]
         lines!(ax, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
     end
 end
@@ -632,7 +634,7 @@ function _plot_vectors!(b::Bloch, ax)
     r = 1.0
     for (i, v) in enumerate(b.vectors)
         color = get(b.vector_color, i, RGBAf(0.2, 0.5, 0.8, 0.9))
-        vec = Vec3f(v[2], -v[1], v[3])
+        vec = Vec3f(v...)
         length = norm(vec)
         max_length = r * 0.90
         vec = length > max_length ? (vec/length) * max_length : vec
@@ -660,69 +662,66 @@ Add axis labels and state labels to the Bloch sphere.
 Positions standard labels `(x, y, |0⟩, |1⟩)` at appropriate locations.
 """
 function _add_labels!(b::Bloch, ax)
+    length(b.xlabel) == 2 || throw(ArgumentError("The length of `Bloch.xlabel` must be 2."))
+    length(b.ylabel) == 2 || throw(ArgumentError("The length of `Bloch.ylabel` must be 2."))
+    length(b.zlabel) == 2 || throw(ArgumentError("The length of `Bloch.zlabel` must be 2."))
+    length(b.xlpos) == 2 || throw(ArgumentError("The length of `Bloch.xlpos` must be 2."))
+    length(b.ylpos) == 2 || throw(ArgumentError("The length of `Bloch.ylpos` must be 2."))
+    length(b.zlpos) == 2 || throw(ArgumentError("The length of `Bloch.zlpos` must be 2."))
+
     label_color = parse(RGBf, b.font_color)
     label_size = b.font_size
     offset_scale = b.frame_limit
-    if b.xlabel[1] != ""
-        text!(
-            ax,
-            b.xlabel[1],
-            position = Point3f(0, -offset_scale * b.xlpos[1], 0),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if b.xlabel[2] != ""
-        text!(
-            ax,
-            b.xlabel[2],
-            position = Point3f(0, -offset_scale * b.xlpos[2], 0),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if b.ylabel[1] != ""
-        text!(
-            ax,
-            b.ylabel[1],
-            position = Point3f(offset_scale * b.ylpos[1], 0, 0),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if b.ylabel[2] != ""
-        text!(
-            ax,
-            b.ylabel[2],
-            position = Point3f(offset_scale * b.ylpos[2], 0, 0),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if b.zlabel[1] != ""
-        text!(
-            ax,
-            b.zlabel[1],
-            position = Point3f(0, 0, offset_scale * b.zlpos[1]),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if b.zlabel[2] != ""
-        text!(
-            ax,
-            b.zlabel[2],
-            position = Point3f(0, 0, offset_scale * b.zlpos[2]),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
+
+    (b.xlabel[1] == "") || text!(
+        ax,
+        b.xlabel[1],
+        position = Point3f(offset_scale * b.xlpos[1], 0, 0),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.xlabel[2] == "") || text!(
+        ax,
+        b.xlabel[2],
+        position = Point3f(offset_scale * b.xlpos[2], 0, 0),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.ylabel[1] == "") || text!(
+        ax,
+        b.ylabel[1],
+        position = Point3f(0, offset_scale * b.ylpos[1], 0),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.ylabel[2] == "") || text!(
+        ax,
+        b.ylabel[2],
+        position = Point3f(0, offset_scale * b.ylpos[2], 0),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.zlabel[1] == "") || text!(
+        ax,
+        b.zlabel[1],
+        position = Point3f(0, 0, offset_scale * b.zlpos[1]),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.zlabel[2] == "") || text!(
+        ax,
+        b.zlabel[2],
+        position = Point3f(0, 0, offset_scale * b.zlpos[2]),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    return nothing
 end
 
 @doc raw"""

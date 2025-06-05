@@ -160,15 +160,22 @@ end
         @test false
         @info "Render threw unexpected error" exception=e
     end
+
+    # test `state to Bloch vector` conversion and `add_states!` function
     b = Bloch()
-    add_states!(b, basis(2, 0))
-    x = normalize!(basis(2, 0) + basis(2, 1)) # normalized
-    y = basis(2, 0) - im * basis(2, 1)        # unnormalized Ket
+    Pauli_Ops = [sigmax(), sigmay(), sigmaz()]
+    ψ = rand_ket(2)
+    ρ = rand_dm(2)
+    x = basis(2, 0) + basis(2, 1)             # unnormalized Ket
     ρ1 = 0.3 * rand_dm(2) + 0.4 * rand_dm(2)  # unnormalized density operator
     ρ2 = Qobj(rand(ComplexF64, 2, 2))         # unnormalized and non-Hermitian Operator
-    @test_logs (:warn,) (:warn,) (:warn,) (:warn,) add_states!(b, [x, y, ρ1, ρ2])
+    add_states!(b, [ψ, ρ])
+    @test_logs (:warn,) (:warn,) (:warn,) (:warn,) add_states!(b, [x, ρ1, ρ2])
+    @test all(expect(Pauli_Ops, ψ) .≈ (b.vectors[1]))
+    @test all(expect(Pauli_Ops, ρ) .≈ (b.vectors[2]))
     @test length(b.vectors) == 5
-    th = range(0, 2π; length = 20);
+
+    th = range(0, 2π; length = 20)
     xp = cos.(th);
     yp = sin.(th);
     zp = zeros(20);

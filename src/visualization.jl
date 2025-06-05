@@ -103,19 +103,19 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 - `vector_color`::Vector{String}: Colors for vectors
 - `vector_width`::Float64: Width of vectors
-- `vector_arrowsize`::NTuple{3, Real}: Arrow size parameters as (head length, head width, stem width)
+- `vector_arrowsize`::Vector{Float64}: Arrow size parameters as [head length, head width, stem width]
 
 ## Layout properties
 
-- `view::Tuple{Int,Int}}`: Azimuthal and elevation viewing angles in degrees. Default: `(-60, 30)`
+- `view::Vector{Int}`: Azimuthal and elevation viewing angles in degrees. Default: `[30, 30]`
 
 ## Label properties
-- `xlabel::Tuple{AbstractString,AbstractString}`: Labels for x-axis. Default: `(L"x", "")`
-- `xlpos::Tuple{Float64,Float64}`: Positions of x-axis labels. Default: `(1.0, -1.0)`
-- `ylabel::Tuple{AbstractString,AbstractString}`: Labels for y-axis. Default: `(L"y", "")`
-- `ylpos::Tuple{Float64,Float64}`: Positions of y-axis labels. Default: `(1.0, -1.0)`
-- `zlabel::Tuple{AbstractString,AbstractString}`: Labels for z-axis. Default: `(L"|0\rangle", L"|1\rangle")`
-- `zlpos::Tuple{Float64,Float64}`: Positions of z-axis labels. Default: `(1.0, -1.0)`
+- `xlabel::Vector{AbstractString}`: Labels for x-axis. Default: `[L"x", ""]`
+- `xlpos::Vector{Float64}`: Positions of x-axis labels. Default: `[1.0, -1.0]`
+- `ylabel::Vector{AbstractString}`: Labels for y-axis. Default: `[L"y", ""]`
+- `ylpos::Vector{Float64}`: Positions of y-axis labels. Default: `[1.0, -1.0]`
+- `zlabel::Vector{AbstractString}`: Labels for z-axis. Default: `[L"|0\rangle", L"|1\rangle"]`
+- `zlpos::Vector{Float64}`: Positions of z-axis labels. Default: `[1.0, -1.0]`
 """
 @kwdef mutable struct Bloch
     points::Vector{Matrix{Float64}} = Vector{Matrix{Float64}}()
@@ -126,7 +126,7 @@ A structure representing a Bloch sphere visualization for quantum states.
     font_size::Int = 15
     frame_alpha::Float64 = 0.1
     frame_color::String = "gray"
-    frame_limit::Float64 = 1.14
+    frame_limit::Float64 = 1.2
     point_default_color::Vector{String} = ["blue", "red", "green", "#CC6600"]
     point_color::Vector{Union{Nothing,String}} = Union{Nothing,String}[]
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
@@ -137,14 +137,14 @@ A structure representing a Bloch sphere visualization for quantum states.
     sphere_color::String = "#FFDDDD"
     vector_color::Vector{String} = ["green", "#CC6600", "blue", "red"]
     vector_width::Float64 = 0.025
-    vector_arrowsize::NTuple{3,Real} = (0.07, 0.08, 0.08)
-    view::Tuple{Int,Int} = (-60, 30)
-    xlabel::Tuple{AbstractString,AbstractString} = (L"x", "")
-    xlpos::Tuple{Float64,Float64} = (1.0, -1.0)
-    ylabel::Tuple{AbstractString,AbstractString} = (L"y", "")
-    ylpos::Tuple{Float64,Float64} = (1.0, -1.0)
-    zlabel::Tuple{AbstractString,AbstractString} = (L"|0\rangle", L"|1\rangle")
-    zlpos::Tuple{Float64,Float64} = (1.0, -1.0)
+    vector_arrowsize::Vector{Float64} = [0.07, 0.08, 0.08]
+    view::Vector{Int} = [30, 30]
+    xlabel::Vector{AbstractString} = [L"x", ""]
+    xlpos::Vector{Float64} = [1.0, -1.0]
+    ylabel::Vector{AbstractString} = [L"y", ""]
+    ylpos::Vector{Float64} = [1.0, -1.0]
+    zlabel::Vector{AbstractString} = [L"|0\rangle", L"|1\rangle"]
+    zlpos::Vector{Float64} = [1.0, -1.0]
 end
 
 const BLOCH_DATA_FIELDS = (:points, :vectors, :lines, :arcs)
@@ -260,10 +260,10 @@ Add a line between two points on the Bloch sphere.
 """
 function add_line!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}; fmt = "k")
     (length(p1) != 3 || length(p2) != 3) && throw(ArgumentError("Points must be 3D vectors"))
-    x = [p1[2], p2[2]]
-    y = [-p1[1], -p2[1]]
+    x = [p1[1], p2[1]]
+    y = [p1[2], p2[2]]
     z = [p1[3], p2[3]]
-    push!(b.lines, (([x, y, z]), fmt))
+    push!(b.lines, ([x, y, z], fmt))
     return b
 end
 
@@ -443,8 +443,9 @@ function _ket_to_bloch(state::QuantumObject{Ket})
         ψ = state.data
     end
 
-    x = 2 * real(ψ[1] * conj(ψ[2]))
-    y = 2 * imag(ψ[1] * conj(ψ[2]))
+    c = conj(ψ[1]) * ψ[2]
+    x = 2 * real(c)
+    y = 2 * imag(c)
     z = abs2(ψ[1]) - abs2(ψ[2])
     return [x, y, z]
 end
