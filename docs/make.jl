@@ -18,8 +18,8 @@ end
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, doctest_setup; recursive = true)
 
 # some options for `makedocs`
-const DRAFT = get(ENV, "DRAFT", false) == true     # set `true`  to disable cell evaluation
-const DOCTEST = get(ENV, "DOCTEST", true) == false # set `false` to skip doc tests
+const DRAFT = get(ENV, "DRAFT", false) == "true"     # `DRAFT   = true`  disables cell evaluation
+const DOCTEST = get(ENV, "DOCTEST", true) != "false" # `DOCTEST = false` skips doc tests
 
 # generate bibliography
 bib = CitationBibliography(
