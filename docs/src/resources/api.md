@@ -319,4 +319,13 @@ meshgrid
 ```@docs
 plot_wigner
 plot_fock_distribution
+plot_bloch
+Bloch
+render
+add_points!
+add_vectors!
+add_line!
+add_arc!
+clear!
+add_states!
 ```
