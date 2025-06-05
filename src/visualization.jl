@@ -1,14 +1,6 @@
 export plot_wigner
 export plot_fock_distribution
-export plot_bloch,
-    Bloch,
-    render,
-    add_points!,
-    add_vectors!,
-    add_line!,
-    add_arc!,
-    clear!,
-    add_states!
+export plot_bloch, Bloch, render, add_points!, add_vectors!, add_line!, add_arc!, clear!, add_states!
 
 @doc raw"""
     plot_wigner(
@@ -160,7 +152,7 @@ function Base.show(io::IO, b::Bloch)
     println(io, "Bloch Sphere\n")
     println(io, "data:")
     println(io, "-----")
-    map(n -> println(io, "$n =\t", getfield(b, n)), data_fields)
+    map(n -> println(io, "Number of $n =\t", length(getfield(b, n))), data_fields)
     println(io, "")
     println(io, "properties:")
     println(io, "-----------")
@@ -241,20 +233,13 @@ function add_points!(
     color::Union{Nothing,String} = nothing,
     alpha::Float64 = 1.0,
 )
-    if size(pnts, 1) != 3
-        error("Points must be a 3×N matrix where each column is [x; y; z]")
-    end
-    if !(meth in (:s, :m, :l))
-        error("`meth` must be :s, :m, or :l")
-    end
+    (size(pnts, 1) == 3) || throw(ArgumentError("Points must be a 3×N matrix where each column is [x; y; z]"))
+    (meth in (:s, :m, :l)) || throw(ArgumentError("`meth` must be :s, :m, or :l"))
+
     push!(b.points, convert(Matrix{Float64}, pnts))
     push!(b.point_style, meth)
     push!(b.point_alpha, alpha)
-    if color === nothing
-        push!(b.point_color, nothing)
-    else
-        push!(b.point_color, color)
-    end
+    push!(b.point_color, color)
     return nothing
 end
 
@@ -270,9 +255,7 @@ Add a line between two points on the Bloch sphere.
 - `fmt="k"`: Line format string (matplotlib style)
 """
 function add_line!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}; fmt = "k")
-    if length(p1) != 3 || length(p2) != 3
-        error("Points must be 3D vectors")
-    end
+    (length(p1) != 3 || length(p2) != 3) && throw(ArgumentError("Points must be 3D vectors"))
     x = [p1[2], p2[2]]
     y = [-p1[1], -p2[1]]
     z = [p1[3], p2[3]]
@@ -283,7 +266,7 @@ end
 @doc raw"""
     add_line!(
         b::Bloch,
-        start_point_point::QuantumObject,
+        start_point::QuantumObject,
         end_point::QuantumObject;
         fmt = "k"
     )
@@ -293,8 +276,8 @@ Add a line between two quantum states on the Bloch sphere visualization.
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object to modify.
-- `start_point_point::QuantumObject`: The start_point_pointing quantum state or operator. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
-- `end_point::QuantumObject`: The ending quantum state or operator. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
+- `start_point::QuantumObject`: The starting quantum state. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
+- `end_point::QuantumObject`: The ending quantum state. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
 - `fmt::String="k"`: (optional) A format string specifying the line style and color (default is black `"k"`).
 
 # Description
@@ -310,14 +293,14 @@ b = Bloch()
 add_line!(b, ψ₁, ψ₂; fmt = "r--")
 ```
 """
-function QuantumToolbox.add_line!(
+function add_line!(
     b::Bloch,
-    p1::QuantumObject{OpType1},
-    p2::QuantumObject{OpType2};
+    start_point::QuantumObject{OpType1},
+    end_point::QuantumObject{OpType2};
     fmt = "k",
 ) where {OpType1<:Union{Ket,Bra,Operator},OpType2<:Union{Ket,Bra,Operator}}
-    coords1 = _state_to_bloch(p1)
-    coords2 = _state_to_bloch(p2)
+    coords1 = _state_to_bloch(start_point)
+    coords2 = _state_to_bloch(end_point)
     return add_line!(b, coords1, coords2; fmt = fmt)
 end
 
@@ -344,9 +327,11 @@ julia> add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
 ```
 """
 function add_arc!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real})
+    (length(p1) != 3 || length(p2) != 3) && throw(ArgumentError("Points must be 3D vectors"))
     return push!(b.arcs, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2)])
 end
 function add_arc!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}, p3::Vector{<:Real})
+    (length(p1) != 3 || length(p2) != 3 || length(p3) != 3) && throw(ArgumentError("Points must be 3D vectors"))
     return push!(b.arcs, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2), convert(Vector{Float64}, p3)])
 end
 
@@ -369,7 +354,7 @@ b = Bloch();
 add_states!(b, [x, y, z])
 ```
 """
-function add_states!(b::Bloch, states::Vector{QuantumObject})
+function add_states!(b::Bloch, states::Vector{<:QuantumObject})
     vecs = map(state -> _state_to_bloch(state), states)
     append!(b.vectors, vecs)
     return b.vectors
@@ -401,6 +386,9 @@ A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
 - `ArgumentError` if the state dimension is not 2.
 """
 function _ket_to_bloch(state::QuantumObject{Ket})
+    (size(state) == (2,)) ||
+        throw(ArgumentError("Bloch sphere visualization is only supported for qubit states (2-level systems)"))
+
     state_norm = norm(state)
     if !isapprox(state_norm, 1.0, atol = 1e-6)
         @warn "State is not normalized. Normalizing before Bloch vector conversion."
@@ -408,9 +396,7 @@ function _ket_to_bloch(state::QuantumObject{Ket})
     else
         ψ = state.data
     end
-    if length(ψ) != 2
-        error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
-    end
+
     x = 2 * real(ψ[1] * conj(ψ[2]))
     y = 2 * imag(ψ[1] * conj(ψ[2]))
     z = abs2(ψ[1]) - abs2(ψ[2])
@@ -434,17 +420,15 @@ A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
 - `ArgumentError` if the matrix dimension is not 2.
 """
 function _dm_to_bloch(ρ::QuantumObject{Operator})
-    if !ishermitian(ρ)
-        @warn "Density matrix is not Hermitian. Results may not be meaningful."
-    end
-    if size(ρ, 1) != 2
-        error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
-    end
+    (size(ρ) == (2, 2)) ||
+        throw(ArgumentError("Bloch sphere visualization is only supported for qubit states (2-level systems)"))
 
-    state_norm = norm(state)
+    ishermitian(ρ) || (@warn "Density matrix is not Hermitian. Results may not be meaningful.")
+
+    state_norm = norm(ρ)
     if !isapprox(state_norm, 1.0, atol = 1e-6)
         @warn "State is not normalized. Normalizing before Bloch vector conversion."
-        ρ2 = ρ2 / state_norm
+        ρ2 = ρ / state_norm
     else
         ρ2 = ρ
     end
@@ -519,27 +503,10 @@ The `library` keyword argument specifies the plotting backend to use. The defaul
 !!! warning "Beware of type-stability!"
     For improved performance and type-stability, prefer passing `Val(:Makie)` instead of `:Makie`. See [Performance Tips](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for details.
 """
-plot_bloch(state::QuantumObject{OpType}; library::Union{Symbol,Val} = Val(:Makie), kwargs...) where {OpType<:Union{Ket,Bra,Operator}} = plot_bloch(makeVal(lib_val), state; kwargs...)
-
-@doc raw"""
-    plot_bloch(::Val{T}, state::QuantumObject; kwargs...) where {T}
-
-Fallback implementation for unsupported plotting backends.
-
-# Arguments
-- `::Val{T}`: The unsupported backend specification.
-- `state::QuantumObject`: The quantum state that was attempted to be plotted.
-- `kwargs...`: Ignored keyword arguments.
-
-# Throws
-- `ErrorException`: Always throws an error indicating the backend `T` is unsupported.
-
-# Note
-This function serves as a fallback when an unsupported backend is requested. Currently supported backends include:
-- `:Makie` (using `Makie.jl`)
-
-See the main `plot_bloch` documentation for supported backends.
-"""
-function plot_bloch(::Val{T}, state::QuantumObject{OpType}; kwargs...) where {T,OpType<:Union{Ket,Bra,Operator}}
-    return error("Unsupported backend: $T. Try :Makie or another supported library.")
-end
+plot_bloch(
+    state::QuantumObject{OpType};
+    library::Union{Symbol,Val} = Val(:Makie),
+    kwargs...,
+) where {OpType<:Union{Ket,Bra,Operator}} = plot_bloch(makeVal(library), state; kwargs...)
+plot_bloch(::Val{T}, state::QuantumObject{OpType}; kwargs...) where {T,OpType<:Union{Ket,Bra,Operator}} =
+    throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))

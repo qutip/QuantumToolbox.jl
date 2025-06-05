@@ -736,7 +736,11 @@ Plot a pure quantum state on the Bloch sphere using the `Makie` backend.
 !!! note "Internal function"
     This is the `Makie`-specific implementation called by the main `plot_bloch` function.
 """
-function QuantumToolbox.plot_bloch(::Val{:Makie}, state::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Ket,Bra,Operator}}
+function QuantumToolbox.plot_bloch(
+    ::Val{:Makie},
+    state::QuantumObject{OpType};
+    kwargs...,
+) where {OpType<:Union{Ket,Bra,Operator}}
     bloch_vec = _state_to_bloch(state)
     return _render_bloch_makie(bloch_vec; kwargs...)
 end
