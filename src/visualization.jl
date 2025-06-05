@@ -394,7 +394,7 @@ Add one or more quantum states to the Bloch sphere visualization by converting t
 
 ```julia
 x = basis(2, 0) + basis(2, 1);
-y = basis(2, 0) - im * basis(2, 1);
+y = basis(2, 0) + im * basis(2, 1);
 z = basis(2, 0);
 b = Bloch();
 add_states!(b, [x, y, z])
