@@ -417,7 +417,7 @@ function _draw_bloch_sphere!(b::Bloch, ax)
     base_color = parse(RGBf, b.sphere_color)
     sphere_color = RGBAf(base_color, b.sphere_alpha)
     sphere_mesh = Sphere(Point3f(0), radius)
-    mesh!(ax, sphere_mesh; color = sphere_color, shading = NoShading, transparency = true)
+    mesh!(ax, sphere_mesh; color = sphere_color, shading = NoShading, transparency = true, rasterize = 3)
     θ_vals = range(0.0f0, 2π, length = n_lon + 1)[1:(end-1)]
     φ_curve = range(0.0f0, π, length = 600)
     line_alpha = max(0.05, b.sphere_alpha * 0.5)
@@ -644,6 +644,7 @@ function _plot_vectors!(b::Bloch, ax)
             linewidth = b.vector_width,
             arrowsize = arrowsize_vec,
             arrowcolor = color,
+            rasterize = 3,
         )
     end
 end
