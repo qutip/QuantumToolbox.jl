@@ -24,7 +24,8 @@ b = Bloch();
 which will load an instance of [`Bloch`](@ref). Before getting into the details of these objects, we can simply plot the blank [`Bloch`](@ref) sphere associated with these instances via:
 
 ```@example Bloch_sphere_rendering
-fig, _ = render(b);
+fig = Figure(size = (700, 700), figure_padding = 0)
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -35,7 +36,8 @@ As an example, we can add a single data point via [`add_points!`](@ref):
 ```@example Bloch_sphere_rendering
 pnt = [1 / sqrt(3), 1 / sqrt(3), 1 / sqrt(3)];
 add_points!(b, pnt);
-fig, _ = render(b);
+fig = Figure(size = (700, 700), figure_padding = 0)
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -46,7 +48,7 @@ and then a single vector via  [`add_vectors!`](@ref):
 ```@example Bloch_sphere_rendering
 vec = [0, 1, 0];
 add_vectors!(b, vec)
-fig, _ = render(b)
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -55,7 +57,7 @@ and then add another vector corresponding to the ``|0\rangle`` state:
 ```@example Bloch_sphere_rendering
 x = basis(2, 0)
 add_states!(b, [x])
-fig, _ = render(b)
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -65,7 +67,7 @@ We can also plot multiple points, vectors, and states at the same time by passin
 
 ```@example Bloch_sphere_rendering
 clear!(b)
-fig, _ = render(b)
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -76,8 +78,8 @@ x = basis(2, 0) + basis(2, 1)
 y = basis(2, 0) - im * basis(2, 1)
 z = basis(2, 0)
 b = Bloch()
-add_states!(b, [x, y, z])
-fig, _ = render(b)
+add_states!(b, [x, y, z]);
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -87,7 +89,7 @@ A similar method works for adding vectors:
 clear!(b)
 vecs = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 add_vectors!(b, vecs)
-fig, _ = render(b)
+fig, _ = render(b,location = fig[1,1])
 fig
 ```
 
@@ -101,7 +103,7 @@ vec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 add_vectors!(b, vec);
 add_line!(b, [1,0,0], [0,1,0])
 add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
-fig, _ = render(b)
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -117,7 +119,7 @@ yp = sin.(th);
 zp = zeros(20);
 pnts = [xp, yp, zp];
 add_points!(b, pnts);
-fig, ax = render(b);
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -131,7 +133,7 @@ yz = sin.(th);
 zz = cos.(th);
 pnts = [xz, yz, zz];
 add_points!(b, pnts);
-fig, ax = render(b);
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -146,7 +148,7 @@ yp = sin.(th);
 zp = zeros(20);
 pnts = [xp, yp, zp];
 add_points!(b, pnts, meth=:m);
-fig, ax = render(b);
+fig, _ = render(b, location = fig[1,1])
 fig
 ```
 
@@ -155,6 +157,6 @@ Now, the data points cycle through a variety of predefined colors. Now lets add 
 ```@example Bloch_sphere_rendering
 pnts = [xz, yz, zz] ;
 add_points!(b, pnts);
-fig, ax = render(b);
+fig, _ = render(b, location = fig[1,1])
 fig
 ```

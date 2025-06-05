@@ -1,14 +1,6 @@
 export plot_wigner
 export plot_fock_distribution
-export plot_bloch,
-    Bloch,
-    render,
-    add_points!,
-    add_vectors!,
-    add_line!,
-    add_arc!,
-    clear!,
-    add_states!
+export plot_bloch, Bloch, render, add_points!, add_vectors!, add_line!, add_arc!, clear!, add_states!
 
 @doc raw"""
     plot_wigner(
@@ -519,7 +511,11 @@ The `library` keyword argument specifies the plotting backend to use. The defaul
 !!! warning "Beware of type-stability!"
     For improved performance and type-stability, prefer passing `Val(:Makie)` instead of `:Makie`. See [Performance Tips](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for details.
 """
-plot_bloch(state::QuantumObject{OpType}; library::Union{Symbol,Val} = Val(:Makie), kwargs...) where {OpType<:Union{Ket,Bra,Operator}} = plot_bloch(makeVal(lib_val), state; kwargs...)
+plot_bloch(
+    state::QuantumObject{OpType};
+    library::Union{Symbol,Val} = Val(:Makie),
+    kwargs...,
+) where {OpType<:Union{Ket,Bra,Operator}} = plot_bloch(makeVal(lib_val), state; kwargs...)
 
 @doc raw"""
     plot_bloch(::Val{T}, state::QuantumObject; kwargs...) where {T}
