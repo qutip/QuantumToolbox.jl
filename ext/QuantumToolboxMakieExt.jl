@@ -1,8 +1,10 @@
 module QuantumToolboxMakieExt
 
 using QuantumToolbox
-using LinearAlgebra: cross, deg2rad, normalize, size
-using Makie:
+import QuantumToolbox: _state_to_bloch
+
+import LinearAlgebra: cross, deg2rad, normalize, size
+import Makie:
     Axis,
     Axis3,
     Colorbar,
@@ -315,66 +317,6 @@ raw"""
 """
 _figFromChildren(::Nothing) = throw(ArgumentError("No Figure has been found at the top of the layout hierarchy."))
 
-raw"""
-    _state_to_bloch(state::QuantumObject{<:Ket}) -> Vector{Float64}
-
-Convert a pure qubit state (`Ket`) to its Bloch vector representation.
-
-If the state is not normalized, it is automatically normalized before conversion.
-
-# Arguments
-- `state`: A `Ket` representing a pure quantum state.
-
-# Returns
-A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
-
-# Throws
-- `ArgumentError` if the state dimension is not 2.
-"""
-function _state_to_bloch(state::QuantumObject{<:Ket})
-    if !isapprox(norm(state), 1.0, atol = 1e-6)
-        @warn "State is not normalized. Normalizing before Bloch vector conversion."
-        state = normalize(state)
-    end
-    ψ = state.data
-    if length(ψ) != 2
-        error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
-    end
-    x = 2 * real(ψ[1] * conj(ψ[2]))
-    y = 2 * imag(ψ[1] * conj(ψ[2]))
-    z = abs2(ψ[1]) - abs2(ψ[2])
-    return [x, y, z]
-end
-
-raw"""
-    _dm_to_bloch(ρ::QuantumObject{<:Operator}) -> Vector{Float64}
-
-Convert a qubit density matrix (`Operator`) to its Bloch vector representation.
-
-This function assumes the input is Hermitian. If the density matrix is not Hermitian, a warning is issued.
-
-# Arguments
-- `ρ`: A density matrix (`Operator`) representing a mixed or pure quantum state.
-
-# Returns
-A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
-
-# Throws
-- `ArgumentError` if the matrix dimension is not 2.
-"""
-function _dm_to_bloch(ρ::QuantumObject{<:Operator})
-    if !ishermitian(ρ)
-        @warn "Density matrix is not Hermitian. Results may not be meaningful."
-    end
-    if size(ρ, 1) != 2
-        error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
-    end
-    x = real(ρ[1, 2] + ρ[2, 1])
-    y = imag(ρ[2, 1] - ρ[1, 2])
-    z = real(ρ[1, 1] - ρ[2, 2])
-    return [x, y, z]
-end
-
 function _render_bloch_makie(bloch_vec::Vector{Float64}; location = nothing, kwargs...)
     b = Bloch()
     add_vectors!(b, bloch_vec)
@@ -384,97 +326,21 @@ function _render_bloch_makie(bloch_vec::Vector{Float64}; location = nothing, kwa
 end
 
 @doc raw"""
-    add_line!(
-        b::QuantumToolbox.Bloch,
-        start_point_point::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}},
-        end_point::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}};
-        fmt = "k"
-    )
+    render(b::Bloch; location=nothing)
 
-Add a line between two quantum states or operators on the Bloch sphere visualization.
+Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 
 # Arguments
 
-- `b::Bloch`: The Bloch sphere object to modify.
-- `start_point_point::QuantumObject`: The start_point_pointing quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
-- `end_point::QuantumObject`: The ending quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
-- `fmt::String="k"`: (optional) A format string specifying the line style and color (default is black `"k"`).
-
-# Description
-
-This function converts the given quantum objects (states or operators) into their Bloch vector representations and adds a line between these two points on the Bloch sphere visualization. 
-
-# Example
-
-```julia
-b = Bloch()
-ψ₁ = normalize(basis(2, 0) + basis(2, 1))
-ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
-add_line!(b, ψ₁, ψ₂; fmt = "r--")
-```
-"""
-function QuantumToolbox.add_line!(
-    b::Bloch,
-    p1::QuantumObject{<:Union{Ket,Bra,Operator}},
-    p2::QuantumObject{<:Union{Ket,Bra,Operator}};
-    fmt = "k",
-)
-    coords1 = isket(p1) || isbra(p1) ? _state_to_bloch(p1) : _dm_to_bloch(p1)
-    coords2 = isket(p2) || isbra(p2) ? _state_to_bloch(p2) : _dm_to_bloch(p2)
-    return add_line!(b, coords1, coords2; fmt = fmt)
-end
-
-@doc raw"""
-    QuantumToolbox.add_states!(b::Bloch, states::QuantumObject...)
-
-Add one or more quantum states to the Bloch sphere visualization by converting them into Bloch vectors.
-
-# Arguments
-- `b::Bloch`: The Bloch sphere object to modify
-- `states::QuantumObject...`: One or more quantum states (Ket, Bra, or Operator)
-
-# Example
-
-```julia
-x = basis(2, 0) + basis(2, 1);
-y = basis(2, 0) - im * basis(2, 1);
-z = basis(2, 0);
-b = Bloch();
-add_states!(b, [x, y, z])
-```
-"""
-function QuantumToolbox.add_states!(b::Bloch, states::Vector{<:QuantumObject})
-    vecs = map(states) do state
-        if isket(state) || isbra(state)
-            return _state_to_bloch(state)
-        else
-            return _dm_to_bloch(state)
-        end
-    end
-    append!(b.vectors, [normalize(v) for v in vecs])
-    return b.vectors
-end
-
-@doc raw"""
-    render(b::QuantumToolbox.Bloch; location=nothing)
-
-Render the Bloch sphere visualization from the given `Bloch` object `b`.
-
-# Arguments
-
-- `b::QuantumToolbox.Bloch`
-  The Bloch sphere object containing states, vectors, and settings to visualize.
-
-- `location` (optional)  
-  Specifies where to display or save the rendered figure.
+- `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
+- `location`: Specifies where to display or save the rendered figure.
   - If `nothing` (default), the figure is displayed interactively.
   - If a file path (String), the figure is saved to the specified location.
   - Other values depend on backend support.
 
 # Returns
 
-- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting.
-  These can be further manipulated or saved by the user.
+- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting. These can be further manipulated or saved by the user.
 """
 function QuantumToolbox.render(b::Bloch; location = nothing)
     fig, ax = _setup_bloch_plot!(b, location)
@@ -532,10 +398,12 @@ function _setup_bloch_plot!(b::Bloch, location)
         yspinesvisible = false,
         zspinesvisible = false,
         protrusions = (0, 0, 0, 0),
+        perspectiveness = 0.2,
         viewmode = :fit,
     )
-    ax.azimuth[] = deg2rad(b.view_angles[1])
-    ax.elevation[] = deg2rad(b.view_angles[2])
+    length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
+    ax.azimuth[] = deg2rad(b.view[1])
+    ax.elevation[] = deg2rad(b.view[2])
     return fig, ax
 end
 
@@ -551,7 +419,7 @@ function _draw_bloch_sphere!(b::Bloch, ax)
     base_color = parse(RGBf, b.sphere_color)
     sphere_color = RGBAf(base_color, b.sphere_alpha)
     sphere_mesh = Sphere(Point3f(0), radius)
-    mesh!(ax, sphere_mesh; color = sphere_color, shading = NoShading, transparency = true)
+    mesh!(ax, sphere_mesh; color = sphere_color, shading = NoShading, transparency = true, rasterize = 3)
     θ_vals = range(0.0f0, 2π, length = n_lon + 1)[1:(end-1)]
     φ_curve = range(0.0f0, π, length = 600)
     line_alpha = max(0.05, b.sphere_alpha * 0.5)
@@ -586,9 +454,9 @@ function _draw_reference_circles!(ax)
     φ = range(0, 2π, length = 100)
     # XY, YZ, XZ circles
     circles = [
-        [Point3f(sin(φi), -cos(φi), 0) for φi in φ],  # XY
-        [Point3f(0, -cos(φi), sin(φi)) for φi in φ],  # YZ
-        [Point3f(sin(φi), 0, cos(φi)) for φi in φ],   # XZ
+        [Point3f(cos(φi), sin(φi), 0) for φi in φ],  # XY
+        [Point3f(0, cos(φi), sin(φi)) for φi in φ],  # YZ
+        [Point3f(cos(φi), 0, sin(φi)) for φi in φ],  # XZ
     ]
     for circle in circles
         lines!(ax, circle; color = wire_color, linewidth = 1.0)
@@ -609,9 +477,9 @@ function _draw_axes!(ax)
     axis_color = RGBAf(0.3, 0.3, 0.3, 0.8)
     axis_width = 0.8
     axes = [
-        ([Point3f(0, -1.0, 0), Point3f(0, 1.0, 0)], "y"),  # Y-axis
-        ([Point3f(-1.0, 0, 0), Point3f(1.0, 0, 0)], "x"),  # X-axis
-        ([Point3f(0, 0, -1.0), Point3f(0, 0, 1.0)], "z"),  # Z-axis
+        ([Point3f(1.0, 0, 0), Point3f(-1.0, 0, 0)], "x"),  # X-axis
+        ([Point3f(0, 1.0, 0), Point3f(0, -1.0, 0)], "y"),  # Y-axis
+        ([Point3f(0, 0, 1.0), Point3f(0, 0, -1.0)], "z"),  # Z-axis
     ]
     for (points, _) in axes
         lines!(ax, points; color = axis_color, linewidth = axis_width)
@@ -637,8 +505,8 @@ function _plot_points!(b::Bloch, ax)
         marker = b.point_marker[mod1(k, length(b.point_marker))]
         N = size(pts, 2)
 
-        raw_x = pts[2, :]
-        raw_y = -pts[1, :]
+        raw_x = pts[1, :]
+        raw_y = pts[2, :]
         raw_z = pts[3, :]
 
         ds = vec(sqrt.(sum(abs2, pts; dims = 1)))
@@ -741,10 +609,10 @@ function _plot_arcs!(b::Bloch, ax)
         θ = acos(clamp(dot(v1, v2), -1.0, 1.0))
         if length(arc_pts) == 3
             vm = normalize(arc_pts[2])
-            dot(cross(v1, vm), n) < 0 && (θ = 2π - θ)
+            dot(cross(v1, vm), n) < 0 && (θ -= 2π)
         end
         t_range = range(0, θ, length = 100)
-        arc_points = [Point3f((v1*cos(t) + cross(n, v1)*sin(t))...) for t in t_range]
+        arc_points = [Point3f((v1 * cos(t) + cross(n, v1) * sin(t))) for t in t_range]
         lines!(ax, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
     end
 end
@@ -766,7 +634,7 @@ function _plot_vectors!(b::Bloch, ax)
     r = 1.0
     for (i, v) in enumerate(b.vectors)
         color = get(b.vector_color, i, RGBAf(0.2, 0.5, 0.8, 0.9))
-        vec = Vec3f(v[2], -v[1], v[3])
+        vec = Vec3f(v...)
         length = norm(vec)
         max_length = r * 0.90
         vec = length > max_length ? (vec/length) * max_length : vec
@@ -778,6 +646,7 @@ function _plot_vectors!(b::Bloch, ax)
             linewidth = b.vector_width,
             arrowsize = arrowsize_vec,
             arrowcolor = color,
+            rasterize = 3,
         )
     end
 end
@@ -793,111 +662,86 @@ Add axis labels and state labels to the Bloch sphere.
 Positions standard labels `(x, y, |0⟩, |1⟩)` at appropriate locations.
 """
 function _add_labels!(b::Bloch, ax)
+    length(b.xlabel) == 2 || throw(ArgumentError("The length of `Bloch.xlabel` must be 2."))
+    length(b.ylabel) == 2 || throw(ArgumentError("The length of `Bloch.ylabel` must be 2."))
+    length(b.zlabel) == 2 || throw(ArgumentError("The length of `Bloch.zlabel` must be 2."))
+    length(b.xlpos) == 2 || throw(ArgumentError("The length of `Bloch.xlpos` must be 2."))
+    length(b.ylpos) == 2 || throw(ArgumentError("The length of `Bloch.ylpos` must be 2."))
+    length(b.zlpos) == 2 || throw(ArgumentError("The length of `Bloch.zlpos` must be 2."))
+
     label_color = parse(RGBf, b.font_color)
     label_size = b.font_size
     offset_scale = b.frame_limit
-    if !isempty(b.xlabel) && !isempty(b.xlabel[1])
-        text!(
-            ax,
-            L"\textbf{x}",
-            position = Point3f(0, -offset_scale * b.xlpos[1], 0),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if length(b.xlabel) > 1 && !isempty(b.xlabel[2])
-        text!(
-            ax,
-            L"\textbf{-x}",
-            position = Point3f(0, -offset_scale * b.xlpos[2], 0),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if !isempty(b.ylabel) && !isempty(b.ylabel[1])
-        text!(
-            ax,
-            L"\textbf{y}",
-            position = Point3f(offset_scale * b.ylpos[1], 0, 0),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if length(b.ylabel) > 1 && !isempty(b.ylabel[2])
-        text!(
-            ax,
-            L"\textbf{-y}",
-            position = Point3f(offset_scale * b.ylpos[2], 0, 0),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if !isempty(b.zlabel) && !isempty(b.zlabel[1])
-        text!(
-            ax,
-            L"\mathbf{|0\rangle}",
-            position = Point3f(0, 0, offset_scale * b.zlpos[1]),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
-    if length(b.zlabel) > 1 && !isempty(b.zlabel[2])
-        text!(
-            ax,
-            L"\mathbf{|1\rangle}",
-            position = Point3f(0, 0, offset_scale * b.zlpos[2]),
-            color = label_color,
-            fontsize = label_size,
-            align = (:center, :center),
-        )
-    end
+
+    (b.xlabel[1] == "") || text!(
+        ax,
+        b.xlabel[1],
+        position = Point3f(offset_scale * b.xlpos[1], 0, 0),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.xlabel[2] == "") || text!(
+        ax,
+        b.xlabel[2],
+        position = Point3f(offset_scale * b.xlpos[2], 0, 0),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.ylabel[1] == "") || text!(
+        ax,
+        b.ylabel[1],
+        position = Point3f(0, offset_scale * b.ylpos[1], 0),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.ylabel[2] == "") || text!(
+        ax,
+        b.ylabel[2],
+        position = Point3f(0, offset_scale * b.ylpos[2], 0),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.zlabel[1] == "") || text!(
+        ax,
+        b.zlabel[1],
+        position = Point3f(0, 0, offset_scale * b.zlpos[1]),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    (b.zlabel[2] == "") || text!(
+        ax,
+        b.zlabel[2],
+        position = Point3f(0, 0, offset_scale * b.zlpos[2]),
+        color = label_color,
+        fontsize = label_size,
+        align = (:center, :center),
+    )
+    return nothing
 end
 
 @doc raw"""
-    plot_bloch(::Val{:Makie}, state::QuantumObject{<:Union{Ket,Bra}}; kwargs...)
+    plot_bloch(::Val{:Makie}, state::QuantumObject; kwargs...)
 
 Plot a pure quantum state on the Bloch sphere using the `Makie` backend.
 
 # Arguments
-- `state::QuantumObject{<:Union{Ket,Bra}}`: The quantum state to be visualized (`ket` or `bra`).
+- `state::QuantumObject{<:Union{Ket,Bra}}`: The quantum state ([`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref)) to be visualized.
 - `kwargs...`: Additional keyword arguments passed to `_render_bloch_makie`.
-
-# Details
-
-Converts the state to its Bloch vector representation and renders it on the Bloch sphere.
-If the input is a bra, it is automatically converted to a ket before processing.
 
 !!! note "Internal function"
     This is the `Makie`-specific implementation called by the main `plot_bloch` function.
 """
-function QuantumToolbox.plot_bloch(::Val{:Makie}, state::QuantumObject{<:Union{Ket,Bra}}; kwargs...)
-    state = isbra(state) ? state' : state
+function QuantumToolbox.plot_bloch(
+    ::Val{:Makie},
+    state::QuantumObject{OpType};
+    kwargs...,
+) where {OpType<:Union{Ket,Bra,Operator}}
     bloch_vec = _state_to_bloch(state)
-    return _render_bloch_makie(bloch_vec; kwargs...)
-end
-
-@doc raw"""
-    plot_bloch(::Val{:Makie}, ρ::QuantumObject{<:Operator}; kwargs...)
-
-Plot a density matrix on the Bloch sphere using the Makie backend.
-
-# Arguments
-- `ρ::QuantumObject{<:Operator}`: The density matrix to be visualized.
-- `kwargs...`: Additional keyword arguments passed to `_render_bloch_makie`.
-
-# Details
-Converts the density matrix to its Bloch vector representation and renders it on the Bloch sphere.
-
-!!! note "Internal function"
-    This is the Makie-specific implementation called by the main `plot_bloch` function.
-"""
-function QuantumToolbox.plot_bloch(::Val{:Makie}, ρ::QuantumObject{<:Operator}; kwargs...)
-    bloch_vec = _dm_to_bloch(ρ)
     return _render_bloch_makie(bloch_vec; kwargs...)
 end
 
