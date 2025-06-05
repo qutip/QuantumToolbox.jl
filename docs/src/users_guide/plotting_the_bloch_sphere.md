@@ -188,12 +188,12 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.vector_width` | Width of vectors | `0.025` |
 | `b.vector_arrowsize` | Arrow size parameters as (head length, head width, stem width) | `(0.07, 0.08, 0.08)` |
 | `b.view` | Azimuthal and elevation viewing angles in degrees | `(-60, 30)` |
-| `b.xlabel` | Labels for x-axis | `[L"x", ""]` |
-| `b.xlpos` | Positions of x-axis labels | `[1.0, -1.0]` |
-| `b.ylabel` | Labels for y-axis | `[L"y", ""]` |
-| `b.ylpos` | Positions of y-axis labels | `[1.0, -1.0]` |
-| `b.zlabel` | Labels for z-axis | `[1.0, -1.0]` |
-| `b.zlpos` | Positions of z-axis labels | `[L"\|0\rangle", L"\|1\rangle"]` |
+| `b.xlabel` | Labels for x-axis | `(L"x", "")` |
+| `b.xlpos` | Positions of x-axis labels | `(1.0, -1.0)` |
+| `b.ylabel` | Labels for y-axis | `(L"y", "")` |
+| `b.ylpos` | Positions of y-axis labels | `(1.0, -1.0)` |
+| `b.zlabel` | Labels for z-axis | `(L"\|0\rangle", L"\|1\rangle)"` |
+| `b.zlpos` | Positions of z-axis labels | `(1.0, -1.0)` |
 
 These properties can also be accessed via the `print` command:
 

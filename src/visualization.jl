@@ -80,7 +80,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 ## Style properties
 
 - `font_color::String`: Color of axis labels and text
-- `font_size::Int`: Font size for labels (default: 15)
+- `font_size::Int`: Font size for labels. Default: `15`
 - `frame_alpha::Float64`: Transparency of the frame background
 - `frame_color::String`: Background color of the frame
 - `frame_limit::Float64`: Axis limits for the 3D frame (symmetric around origin)
@@ -89,7 +89,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 - `point_default_color::Vector{String}}`: Default color cycle for points
 - `point_color::Vector{String}}`: List of colors for Bloch point markers to cycle through
-- `point_marker::Vector{Symbol}}`: List of point marker shapes to cycle through (default: [:circle, :rect, :diamond, :utriangle])
+- `point_marker::Vector{Symbol}}`: List of point marker shapes to cycle through. Default: `[:circle, :rect, :diamond, :utriangle]`
 - `point_size::Vector{Int}}`: List of point marker sizes (not all markers look the same size when plotted)
 - `point_style::Vector{Symbol}}`: List of marker styles
 - `point_alpha::Vector{Float64}}`: List of marker transparencies
@@ -97,7 +97,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 ## Sphere properties
 
 - `sphere_color::String`: Color of Bloch sphere surface
-- `sphere_alpha::Float64`: Transparency of sphere surface (default: 0.2)
+- `sphere_alpha::Float64`: Transparency of sphere surface. Default: `0.2`
 
 # Vector properties
 
@@ -107,15 +107,15 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 ## Layout properties
 
-- `view::Tuple{Int,Int}}`: Azimuthal and elevation viewing angles in degrees (default: (-60, 30))
+- `view::Tuple{Int,Int}}`: Azimuthal and elevation viewing angles in degrees. Default: `(-60, 30)`
 
 ## Label properties
-- `xlabel::Vector{String}}`: Labels for x-axis (default: [raw"$x$", ""])
-- `xlpos::Vector{Float64}}`: Positions of x-axis labels (default: [1.0, -1.0])
-- `ylabel::Vector{String}}`: Labels for y-axis (default: [raw"$y$", ""])
-- `ylpos::Vector{Float64}}`: Positions of y-axis labels (default: [1.0, -1.0])
-- `zlabel::Vector{String}}`: Labels for z-axis (default: [raw"$|0\rangle$", raw"$|1\rangle$"])
-- `zlpos::Vector{Float64}}`: Positions of z-axis labels (default: [1.0, -1.0])
+- `xlabel::Tuple{AbstractString,AbstractString}`: Labels for x-axis. Default: `(L"x", "")`
+- `xlpos::Tuple{Float64,Float64}`: Positions of x-axis labels. Default: `(1.0, -1.0)`
+- `ylabel::Tuple{AbstractString,AbstractString}`: Labels for y-axis. Default: `(L"y", "")`
+- `ylpos::Tuple{Float64,Float64}`: Positions of y-axis labels. Default: `(1.0, -1.0)`
+- `zlabel::Tuple{AbstractString,AbstractString}`: Labels for z-axis. Default: `(L"|0\rangle", L"|1\rangle")`
+- `zlpos::Tuple{Float64,Float64}`: Positions of z-axis labels. Default: `(1.0, -1.0)`
 """
 @kwdef mutable struct Bloch
     points::Vector{Matrix{Float64}} = Vector{Matrix{Float64}}()
@@ -139,12 +139,12 @@ A structure representing a Bloch sphere visualization for quantum states.
     vector_width::Float64 = 0.025
     vector_arrowsize::NTuple{3,Real} = (0.07, 0.08, 0.08)
     view::Tuple{Int,Int} = (-60, 30)
-    xlabel::Vector{String} = [raw"$x$", raw""]
-    xlpos::Vector{Float64} = [1.0, -1.0]
-    ylabel::Vector{String} = [raw"$y$", ""]
-    ylpos::Vector{Float64} = [1.0, -1.0]
-    zlabel::Vector{String} = [raw"$|0\rangle$", raw"$|1\rangle$"]
-    zlpos::Vector{Float64} = [1.0, -1.0]
+    xlabel::Tuple{AbstractString,AbstractString} = (L"x", "")
+    xlpos::Tuple{Float64,Float64} = (1.0, -1.0)
+    ylabel::Tuple{AbstractString,AbstractString} = (L"y", "")
+    ylpos::Tuple{Float64,Float64} = (1.0, -1.0)
+    zlabel::Tuple{AbstractString,AbstractString} = (L"|0\rangle", L"|1\rangle")
+    zlpos::Tuple{Float64,Float64} = (1.0, -1.0)
 end
 
 const BLOCH_DATA_FIELDS = (:points, :vectors, :lines, :arcs)

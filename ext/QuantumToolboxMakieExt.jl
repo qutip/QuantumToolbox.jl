@@ -663,60 +663,60 @@ function _add_labels!(b::Bloch, ax)
     label_color = parse(RGBf, b.font_color)
     label_size = b.font_size
     offset_scale = b.frame_limit
-    if !isempty(b.xlabel) && !isempty(b.xlabel[1])
+    if b.xlabel[1] != ""
         text!(
             ax,
-            L"\textbf{x}",
+            b.xlabel[1],
             position = Point3f(0, -offset_scale * b.xlpos[1], 0),
             color = label_color,
             fontsize = label_size,
             align = (:center, :center),
         )
     end
-    if length(b.xlabel) > 1 && !isempty(b.xlabel[2])
+    if b.xlabel[2] != ""
         text!(
             ax,
-            L"\textbf{-x}",
+            b.xlabel[2],
             position = Point3f(0, -offset_scale * b.xlpos[2], 0),
             color = label_color,
             fontsize = label_size,
             align = (:center, :center),
         )
     end
-    if !isempty(b.ylabel) && !isempty(b.ylabel[1])
+    if b.ylabel[1] != ""
         text!(
             ax,
-            L"\textbf{y}",
+            b.ylabel[1],
             position = Point3f(offset_scale * b.ylpos[1], 0, 0),
             color = label_color,
             fontsize = label_size,
             align = (:center, :center),
         )
     end
-    if length(b.ylabel) > 1 && !isempty(b.ylabel[2])
+    if b.ylabel[2] != ""
         text!(
             ax,
-            L"\textbf{-y}",
+            b.ylabel[2],
             position = Point3f(offset_scale * b.ylpos[2], 0, 0),
             color = label_color,
             fontsize = label_size,
             align = (:center, :center),
         )
     end
-    if !isempty(b.zlabel) && !isempty(b.zlabel[1])
+    if b.zlabel[1] != ""
         text!(
             ax,
-            L"\mathbf{|0\rangle}",
+            b.zlabel[1],
             position = Point3f(0, 0, offset_scale * b.zlpos[1]),
             color = label_color,
             fontsize = label_size,
             align = (:center, :center),
         )
     end
-    if length(b.zlabel) > 1 && !isempty(b.zlabel[2])
+    if b.zlabel[2] != ""
         text!(
             ax,
-            L"\mathbf{|1\rangle}",
+            b.zlabel[2],
             position = Point3f(0, 0, offset_scale * b.zlpos[2]),
             color = label_color,
             fontsize = label_size,
