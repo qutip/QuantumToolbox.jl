@@ -400,8 +400,8 @@ function _setup_bloch_plot!(b::Bloch, location)
         protrusions = (0, 0, 0, 0),
         viewmode = :fit,
     )
-    ax.azimuth[] = deg2rad(b.view_angles[1])
-    ax.elevation[] = deg2rad(b.view_angles[2])
+    ax.azimuth[] = deg2rad(b.view[1])
+    ax.elevation[] = deg2rad(b.view[2])
     return fig, ax
 end
 

@@ -51,7 +51,6 @@ const PAGES = [
         ],
         "Manipulating States and Operators" => "users_guide/states_and_operators.md",
         "Tensor Products and Partial Traces" => "users_guide/tensor.md",
-        "Plotting on the Bloch Sphere" => "users_guide/plotting_the_bloch_sphere.md",
         "Time Evolution and Dynamics" => [
             "Introduction" => "users_guide/time_evolution/intro.md",
             "Time Evolution Solutions" => "users_guide/time_evolution/solution.md",
@@ -65,6 +64,7 @@ const PAGES = [
         "Hierarchical Equations of Motion" => "users_guide/HEOM.md",
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
+        "Plotting on the Bloch Sphere" => "users_guide/plotting_the_bloch_sphere.md",
         "QuantumToolbox Settings" => "users_guide/settings.md",
         "Extensions" => [
             "Extension for CUDA.jl" => "users_guide/extensions/cuda.md",
