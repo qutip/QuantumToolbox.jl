@@ -14,7 +14,6 @@ import Makie:
     surface!,
     barplot!,
     GridPosition,
-    @L_str,
     Reverse,
     ylims!,
     RGBAf,
@@ -28,7 +27,8 @@ import Makie:
     RGBf,
     Vec3f,
     Point3f,
-    NoShading
+    NoShading,
+    latexstring
 
 @doc raw"""
     plot_wigner(
@@ -666,7 +666,7 @@ function _add_labels!(b::Bloch, ax)
     if !isempty(b.xlabel) && !isempty(b.xlabel[1])
         text!(
             ax,
-            L"\textbf{x}",
+            latexstring(b.xlabel[1]),
             position = Point3f(0, -offset_scale * b.xlpos[1], 0),
             color = label_color,
             fontsize = label_size,
@@ -676,7 +676,7 @@ function _add_labels!(b::Bloch, ax)
     if length(b.xlabel) > 1 && !isempty(b.xlabel[2])
         text!(
             ax,
-            L"\textbf{-x}",
+            latexstring(b.xlabel[2]),
             position = Point3f(0, -offset_scale * b.xlpos[2], 0),
             color = label_color,
             fontsize = label_size,
@@ -686,7 +686,7 @@ function _add_labels!(b::Bloch, ax)
     if !isempty(b.ylabel) && !isempty(b.ylabel[1])
         text!(
             ax,
-            L"\textbf{y}",
+            latexstring(b.ylabel[1]),
             position = Point3f(offset_scale * b.ylpos[1], 0, 0),
             color = label_color,
             fontsize = label_size,
@@ -696,7 +696,7 @@ function _add_labels!(b::Bloch, ax)
     if length(b.ylabel) > 1 && !isempty(b.ylabel[2])
         text!(
             ax,
-            L"\textbf{-y}",
+            latexstring(b.ylabel[2]),
             position = Point3f(offset_scale * b.ylpos[2], 0, 0),
             color = label_color,
             fontsize = label_size,
@@ -706,7 +706,7 @@ function _add_labels!(b::Bloch, ax)
     if !isempty(b.zlabel) && !isempty(b.zlabel[1])
         text!(
             ax,
-            L"\mathbf{|0\rangle}",
+            latexstring(b.zlabel[1]),
             position = Point3f(0, 0, offset_scale * b.zlpos[1]),
             color = label_color,
             fontsize = label_size,
@@ -716,7 +716,7 @@ function _add_labels!(b::Bloch, ax)
     if length(b.zlabel) > 1 && !isempty(b.zlabel[2])
         text!(
             ax,
-            L"\mathbf{|1\rangle}",
+            latexstring(b.zlabel[2]),
             position = Point3f(0, 0, offset_scale * b.zlpos[2]),
             color = label_color,
             fontsize = label_size,
