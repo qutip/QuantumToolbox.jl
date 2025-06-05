@@ -88,11 +88,11 @@ A structure representing a Bloch sphere visualization for quantum states.
 ## Point properties
 
 - `point_default_color::Vector{String}}`: Default color cycle for points
-- `point_color::Vector{String}}`: Colors for point markers
-- `point_marker::Vector{Symbol}}`: Marker shapes (default: [:circle, :rect, :diamond, :utriangle])
-- `point_size::Vector{Int}}`: Marker sizes
-- `point_style::Vector{Symbol}}`: Marker styles
-- `point_alpha::Vector{Float64}}`: Marker transparencies
+- `point_color::Vector{String}}`: List of colors for Bloch point markers to cycle through
+- `point_marker::Vector{Symbol}}`: List of point marker shapes to cycle through (default: [:circle, :rect, :diamond, :utriangle])
+- `point_size::Vector{Int}}`: List of point marker sizes (not all markers look the same size when plotted)
+- `point_style::Vector{Symbol}}`: List of marker styles
+- `point_alpha::Vector{Float64}}`: List of marker transparencies
 
 ## Sphere properties
 
@@ -107,7 +107,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 ## Layout properties
 
-- `view_angles::Tuple{Int,Int}}`: Azimuthal and elevation viewing angles in degrees (default: (-60, 30))
+- `view::Tuple{Int,Int}}`: Azimuthal and elevation viewing angles in degrees (default: (-60, 30))
 
 ## Label properties
 - `xlabel::Vector{AbstractString}}`: Labels for x-axis (default: [L"x", ""])
@@ -138,7 +138,7 @@ A structure representing a Bloch sphere visualization for quantum states.
     vector_color::Vector{String} = ["green", "#CC6600", "blue", "red"]
     vector_width::Float64 = 0.025
     vector_arrowsize::NTuple{3,Real} = (0.07, 0.08, 0.08)
-    view_angles::Tuple{Int,Int} = (-60, 30)
+    view::Tuple{Int,Int} = (-60, 30)
     xlabel::Vector{AbstractString} = [L"x", ""]
     xlpos::Vector{Float64} = [1.0, -1.0]
     ylabel::Vector{AbstractString} = [L"y", ""]
@@ -147,16 +147,20 @@ A structure representing a Bloch sphere visualization for quantum states.
     zlpos::Vector{Float64} = [1.0, -1.0]
 end
 
+const BLOCH_DATA_FIELDS = (:points, :vectors, :lines, :arcs)
 function Base.show(io::IO, b::Bloch)
-    data_fields = (:points, :vectors, :lines, :arcs)
+    # To align the output and make it easier to read
+    # we use rpad `17` and `19` for Bloch sphere data and properties, respectively
+    # 17 is the length of string: `Number of vectors`
+    # 19 is the length of string: `point_default_color`
     println(io, "Bloch Sphere\n")
     println(io, "data:")
     println(io, "-----")
-    map(n -> println(io, "Number of $n =\t", length(getfield(b, n))), data_fields)
+    map(n -> println(io, rpad("Number of $n", 17, " "), " = ", length(getfield(b, n))), BLOCH_DATA_FIELDS)
     println(io, "")
     println(io, "properties:")
     println(io, "-----------")
-    map(n -> (n ∉ data_fields) && (println(io, "$n =\t", getfield(b, n))), fieldnames(Bloch))
+    map(n -> (n ∉ BLOCH_DATA_FIELDS) && (println(io, rpad("$n", 19, " "), " = ", getfield(b, n))), fieldnames(Bloch))
     return nothing
 end
 
@@ -312,9 +316,9 @@ Add a circular arc through three points on the Bloch sphere.
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object to modify
-- `p1::Vector{<:Real}`: First 3D point
-- `p2::Vector{<:Real}`: Second 3D point (middle point)
-- `p3::Vector{<:Real}`: Third 3D point
+- `p1::Vector{<:Real}`: Starting 3D point
+- `p2::Vector{<:Real}`: [Optional] Middle 3D point
+- `p3::Vector{<:Real}`: Ending 3D point
 
 # Examples
 
@@ -333,6 +337,48 @@ end
 function add_arc!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}, p3::Vector{<:Real})
     (length(p1) != 3 || length(p2) != 3 || length(p3) != 3) && throw(ArgumentError("Points must be 3D vectors"))
     return push!(b.arcs, [convert(Vector{Float64}, p1), convert(Vector{Float64}, p2), convert(Vector{Float64}, p3)])
+end
+
+@doc raw"""
+    add_arc!(
+        b::Bloch,
+        start_point::QuantumObject,
+        middle_point::QuantumObject,
+        end_point::QuantumObject
+    )
+
+Add a circular arc through three points on the Bloch sphere.
+
+# Arguments
+
+- `b::Bloch`: The Bloch sphere object to modify.
+- `start_point::QuantumObject`: The starting quantum state. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
+- `middle_point::QuantumObject`: [Optional] The middle quantum state. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
+- `end_point::QuantumObject`: The ending quantum state. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
+
+# Description
+
+This function converts the given quantum states into their Bloch vector representations and adds a arc between these two (or three) points on the Bloch sphere visualization. 
+"""
+function add_arc!(
+    b::Bloch,
+    start_point::QuantumObject{OpType1},
+    end_point::QuantumObject{OpType2},
+) where {OpType1<:Union{Ket,Bra,Operator},OpType2<:Union{Ket,Bra,Operator}}
+    coords1 = _state_to_bloch(start_point)
+    coords2 = _state_to_bloch(end_point)
+    return add_arc!(b, coords1, coords2)
+end
+function add_arc!(
+    b::Bloch,
+    start_point::QuantumObject{OpType1},
+    middle_point::QuantumObject{OpType2},
+    end_point::QuantumObject{OpType3},
+) where {OpType1<:Union{Ket,Bra,Operator},OpType2<:Union{Ket,Bra,Operator},OpType3<:Union{Ket,Bra,Operator}}
+    coords1 = _state_to_bloch(start_point)
+    coords2 = _state_to_bloch(middle_point)
+    coords3 = _state_to_bloch(end_point)
+    return add_arc!(b, coords1, coords2, coords3)
 end
 
 @doc raw"""
@@ -361,7 +407,7 @@ function add_states!(b::Bloch, states::Vector{<:QuantumObject})
 end
 
 function add_states!(b::Bloch, state::QuantumObject)
-    append!(b.vectors, _state_to_bloch(state))
+    push!(b.vectors, _state_to_bloch(state))
     return b.vectors
 end
 
