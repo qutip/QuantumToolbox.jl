@@ -1,6 +1,6 @@
-export plot_wigner,
-    plot_fock_distribution,
-    plot_bloch,
+export plot_wigner
+export plot_fock_distribution
+export plot_bloch,
     Bloch,
     render,
     add_points!,
@@ -130,12 +130,12 @@ A structure representing a Bloch sphere visualization for quantum states.
     vectors::Vector{Vector{Float64}} = Vector{Vector{Float64}}()
     lines::Vector{Tuple{Vector{Vector{Float64}},String}} = Vector{Tuple{Vector{Vector{Float64}},String}}()
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
-    font_color::String = "#333333"
+    font_color::String = "black"
     font_size::Int = 15
-    frame_alpha::Float64 = 0.0
-    frame_color::String = "white"
+    frame_alpha::Float64 = 0.1
+    frame_color::String = "gray"
     frame_limit::Float64 = 1.14
-    point_default_color::Vector{String} = ["blue", "red", "green", "orange"]
+    point_default_color::Vector{String} = ["blue", "red", "green", "#CC6600"]
     point_color::Vector{Union{Nothing,String}} = Union{Nothing,String}[]
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
     point_size::Vector{Float64} = [5.5, 6.2, 6.5, 7.5]
@@ -143,16 +143,29 @@ A structure representing a Bloch sphere visualization for quantum states.
     point_alpha::Vector{Float64} = Float64[]
     sphere_alpha::Float64 = 0.2
     sphere_color::String = "#FFDDDD"
-    vector_color::Vector{String} = ["green", "orange", "blue", "red"]
+    vector_color::Vector{String} = ["green", "#CC6600", "blue", "red"]
     vector_width::Float64 = 0.025
     vector_arrowsize::NTuple{3,Real} = (0.07, 0.08, 0.08)
     view_angles::Tuple{Int,Int} = (-60, 30)
-    xlabel::Vector{AbstractString} = ["x", ""]
+    xlabel::Vector{AbstractString} = [L"x", ""]
     xlpos::Vector{Float64} = [1.0, -1.0]
-    ylabel::Vector{AbstractString} = ["y", ""]
+    ylabel::Vector{AbstractString} = [L"y", ""]
     ylpos::Vector{Float64} = [1.0, -1.0]
-    zlabel::Vector{AbstractString} = ["|0\rangle", "|1\rangle"]
+    zlabel::Vector{AbstractString} = [L"|0\rangle", L"|1\rangle"]
     zlpos::Vector{Float64} = [1.0, -1.0]
+end
+
+function Base.show(io::IO, b::Bloch)
+    data_fields = (:points, :vectors, :lines, :arcs)
+    println(io, "Bloch Sphere\n")
+    println(io, "data:")
+    println(io, "-----")
+    map(n -> println(io, "$n =\t", getfield(b, n)), data_fields)
+    println(io, "")
+    println(io, "properties:")
+    println(io, "-----------")
+    map(n -> (n ∉ data_fields) && (println(io, "$n =\t", getfield(b, n))), fieldnames(Bloch))
+    return nothing
 end
 
 @doc raw"""
@@ -185,13 +198,8 @@ julia> add_vectors!(b, [[1, 0, 0], [0, 1, 0]])
  [0.0, 1.0, 0.0]
 ```
 """
-function add_vectors!(b::Bloch, vec::Vector{<:Real})
-    normalized_vec = normalize(convert(Vector{Float64}, vec))
-    return push!(b.vectors, normalized_vec)
-end
-function add_vectors!(b::Bloch, vecs::Vector{<:Vector{<:Real}})
-    return append!(b.vectors, [normalize(convert(Vector{Float64}, v)) for v in vecs])
-end
+add_vectors!(b::Bloch, vec::Vector{<:Real}) = push!(b.vectors, convert(Vector{Float64}, vec))
+add_vectors!(b::Bloch, vecs::Vector{<:Vector{<:Real}}) = append!(b.vectors, [convert(Vector{Float64}, v) for v in vecs])
 
 @doc raw"""
     add_points!(b::Bloch, pnt::Vector{<:Real}; meth::Symbol = :s, color = "blue", alpha = 1.0)
@@ -199,11 +207,11 @@ end
 Add a single point to the Bloch sphere visualization.
 
 # Arguments
-- b::Bloch: The Bloch sphere object to modify
-- pnt::Vector{Float64}: A 3D point to add
-- meth::Symbol=:s: Display method (:s for single point, :m for multiple, :l for line)
-- color: Color of the point (defaults to first default color if nothing)
-- alpha=1.0: Transparency (1.0 = opaque, 0.0 = transparent)
+- `b::Bloch`: The Bloch sphere object to modify
+- `pnt::Vector{Float64}`: A 3D point to add
+- `meth::Symbol=:s`: Display method (`:s` for single point, `:m` for multiple, `:l` for line)
+- `color`: Color of the point (defaults to first default color if nothing)
+- `alpha=1.0`: Transparency (`1.0` = opaque, `0.0` = transparent)
 """
 function add_points!(b::Bloch, pnt::Vector{Float64}; meth::Symbol = :s, color = nothing, alpha = 1.0)
     return add_points!(b, reshape(pnt, 3, 1); meth, color, alpha)
@@ -219,11 +227,11 @@ Add multiple points to the Bloch sphere visualization.
 
 # Arguments
 
-- b::Bloch: The Bloch sphere object to modify
-- pnts::Matrix{Float64}: 3×N matrix of points (each column is a point)
-- meth::Symbol=:s: Display method (:s for single point, :m for multiple, :l for line)
-- color: Color of the points (defaults to first default color if nothing)
-- alpha=1.0: Transparency (1.0 = opaque, 0.0 = transparent)
+- `b::Bloch`: The Bloch sphere object to modify
+- `pnts::Matrix{Float64}`: `3×N` matrix of points (each column is a point)
+- `meth::Symbol=:s`: Display method (`:s` for single point, `:m` for multiple, `:l` for line)
+- `color`: Color of the points (defaults to first default color if nothing)
+- `alpha=1.0`: Transparency (`1.0` = opaque, `0.0` = transparent)
 ```
 """
 function add_points!(
@@ -256,10 +264,10 @@ end
 Add a line between two points on the Bloch sphere.
 
 # Arguments
-- b::Bloch: The Bloch sphere object to modify
-- p1::Vector{<:Real}: First 3D point
-- p2::Vector{<:Real}: Second 3D point
-- fmt="k": Line format string (matplotlib style)
+- `b::Bloch`: The Bloch sphere object to modify
+- `p1::Vector{<:Real}`: First 3D point
+- `p2::Vector{<:Real}`: Second 3D point
+- `fmt="k"`: Line format string (matplotlib style)
 """
 function add_line!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}; fmt = "k")
     if length(p1) != 3 || length(p2) != 3
@@ -273,16 +281,57 @@ function add_line!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}; fmt = "k")
 end
 
 @doc raw"""
+    add_line!(
+        b::Bloch,
+        start_point_point::QuantumObject,
+        end_point::QuantumObject;
+        fmt = "k"
+    )
+
+Add a line between two quantum states on the Bloch sphere visualization.
+
+# Arguments
+
+- `b::Bloch`: The Bloch sphere object to modify.
+- `start_point_point::QuantumObject`: The start_point_pointing quantum state or operator. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
+- `end_point::QuantumObject`: The ending quantum state or operator. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
+- `fmt::String="k"`: (optional) A format string specifying the line style and color (default is black `"k"`).
+
+# Description
+
+This function converts the given quantum states into their Bloch vector representations and adds a line between these two points on the Bloch sphere visualization. 
+
+# Example
+
+```julia
+b = Bloch()
+ψ₁ = normalize(basis(2, 0) + basis(2, 1))
+ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
+add_line!(b, ψ₁, ψ₂; fmt = "r--")
+```
+"""
+function QuantumToolbox.add_line!(
+    b::Bloch,
+    p1::QuantumObject{OpType1},
+    p2::QuantumObject{OpType2};
+    fmt = "k",
+) where {OpType1<:Union{Ket,Bra,Operator},OpType2<:Union{Ket,Bra,Operator}}
+    coords1 = _state_to_bloch(p1)
+    coords2 = _state_to_bloch(p2)
+    return add_line!(b, coords1, coords2; fmt = fmt)
+end
+
+@doc raw"""
     add_arc!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}, p3::Vector{<:Real})
 
 Add a circular arc through three points on the Bloch sphere.
 
 # Arguments
 
-- b::Bloch: The Bloch sphere object to modify
-- p1::Vector{<:Real}: First 3D point
-- p2::Vector{<:Real}: Second 3D point (middle point)
-- p3::Vector{<:Real}: Third 3D point
+- `b::Bloch`: The Bloch sphere object to modify
+- `p1::Vector{<:Real}`: First 3D point
+- `p2::Vector{<:Real}`: Second 3D point (middle point)
+- `p3::Vector{<:Real}`: Third 3D point
 
 # Examples
 
@@ -302,27 +351,117 @@ function add_arc!(b::Bloch, p1::Vector{<:Real}, p2::Vector{<:Real}, p3::Vector{<
 end
 
 @doc raw"""
-    QuantumToolbox.add_states!(b::Bloch, states::QuantumObject...)
+    add_states!(b::Bloch, states::Vector{QuantumObject})
 
 Add one or more quantum states to the Bloch sphere visualization by converting them into Bloch vectors.
 
 # Arguments
-
 - `b::Bloch`: The Bloch sphere object to modify
-- `states::QuantumObject...`: One or more quantum states (Ket, Bra, or Operator)
+- `states::Vector{QuantumObject}`: One or more quantum states ([`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref))
 
+# Example
+
+```julia
+x = basis(2, 0) + basis(2, 1);
+y = basis(2, 0) - im * basis(2, 1);
+z = basis(2, 0);
+b = Bloch();
+add_states!(b, [x, y, z])
+```
 """
-function add_states! end
+function add_states!(b::Bloch, states::Vector{QuantumObject})
+    vecs = map(state -> _state_to_bloch(state), states)
+    append!(b.vectors, vecs)
+    return b.vectors
+end
+
+function add_states!(b::Bloch, state::QuantumObject)
+    append!(b.vectors, _state_to_bloch(state))
+    return b.vectors
+end
+
+_state_to_bloch(state::QuantumObject{Ket}) = _ket_to_bloch(state)
+_state_to_bloch(state::QuantumObject{Bra}) = _ket_to_bloch(state')
+_state_to_bloch(state::QuantumObject{Operator}) = _dm_to_bloch(state)
+
+raw"""
+    _ket_to_bloch(state::QuantumObject{Ket}) -> Vector{Float64}
+
+Convert a pure qubit state (`Ket`) to its Bloch vector representation.
+
+If the state is not normalized, it is automatically normalized before conversion.
+
+# Arguments
+- `state`: A `Ket` representing a pure quantum state.
+
+# Returns
+A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
+
+# Throws
+- `ArgumentError` if the state dimension is not 2.
+"""
+function _ket_to_bloch(state::QuantumObject{Ket})
+    state_norm = norm(state)
+    if !isapprox(state_norm, 1.0, atol = 1e-6)
+        @warn "State is not normalized. Normalizing before Bloch vector conversion."
+        ψ = state.data / state_norm
+    else
+        ψ = state.data
+    end
+    if length(ψ) != 2
+        error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
+    end
+    x = 2 * real(ψ[1] * conj(ψ[2]))
+    y = 2 * imag(ψ[1] * conj(ψ[2]))
+    z = abs2(ψ[1]) - abs2(ψ[2])
+    return [x, y, z]
+end
+
+raw"""
+    _dm_to_bloch(ρ::QuantumObject{Operator}) -> Vector{Float64}
+
+Convert a qubit density matrix (`Operator`) to its Bloch vector representation.
+
+This function assumes the input is Hermitian. If the density matrix is not Hermitian, a warning is issued.
+
+# Arguments
+- `ρ`: A density matrix (`Operator`) representing a mixed or pure quantum state.
+
+# Returns
+A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
+
+# Throws
+- `ArgumentError` if the matrix dimension is not 2.
+"""
+function _dm_to_bloch(ρ::QuantumObject{Operator})
+    if !ishermitian(ρ)
+        @warn "Density matrix is not Hermitian. Results may not be meaningful."
+    end
+    if size(ρ, 1) != 2
+        error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
+    end
+
+    state_norm = norm(state)
+    if !isapprox(state_norm, 1.0, atol = 1e-6)
+        @warn "State is not normalized. Normalizing before Bloch vector conversion."
+        ρ2 = ρ2 / state_norm
+    else
+        ρ2 = ρ
+    end
+    x = real(ρ2[1, 2] + ρ2[2, 1])
+    y = imag(ρ2[2, 1] - ρ2[1, 2])
+    z = real(ρ2[1, 1] - ρ2[2, 2])
+    return [x, y, z]
+end
 
 @doc raw"""
     clear!(b::Bloch)
 
-Clear all graphical elements (points, vectors, lines, arcs) from the given Bloch sphere object `b`.
+Clear all graphical elements (points, vectors, lines, arcs) from the given [`Bloch`](@ref) sphere object `b`.
 
 # Arguments
 
-- `b::Bloch`  
-  The Bloch sphere instance whose contents will be cleared.
+- `b::Bloch`: The Bloch sphere instance whose contents will be cleared.
 
 # Returns
 
@@ -340,31 +479,27 @@ function clear!(b::Bloch)
 end
 
 @doc raw"""
-    render(b::QuantumToolbox.Bloch; location=nothing)
+    render(b::Bloch; location=nothing)
 
-Render the Bloch sphere visualization from the given `Bloch` object `b`.
+Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 
 # Arguments
 
-- `b::QuantumToolbox.Bloch`
-  The Bloch sphere object containing states, vectors, and settings to visualize.
-
-- `location` (optional)  
-  Specifies where to display or save the rendered figure.
+- `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
+- `location`: Specifies where to display or save the rendered figure.
   - If `nothing` (default), the figure is displayed interactively.
   - If a file path (String), the figure is saved to the specified location.
   - Other values depend on backend support.
 
 # Returns
 
-- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting.
-  These can be further manipulated or saved by the user.
+- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting. These can be further manipulated or saved by the user.
 """
 function render end
 
 @doc raw"""
     plot_bloch(
-        state::QuantumObject{<:Union{Ket,Bra,Operator}};
+        state::QuantumObject;
         library::Union{Symbol, Val} = :Makie,
         kwargs...
     )
@@ -374,8 +509,8 @@ Plot the state of a two-level quantum system on the Bloch sphere.
 The `library` keyword argument specifies the plotting backend to use. The default is `:Makie`, which uses the [`Makie.jl`](https://github.com/MakieOrg/Makie.jl) plotting library. This function internally dispatches to a type-stable version based on `Val(:Makie)` or other plotting backends.
 
 # Arguments
-- `state::QuantumObject`: The quantum state to be visualized. Can be a ket, bra, or operator.
-- `library::Union{Symbol, Val}`: The plotting backend, either as a `Symbol` (e.g. `:Makie`) or a `Val` (e.g. `Val(:Makie)`). Default is `:Makie`.
+- `state::QuantumObject`: The quantum state to be visualized. Can be a [`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref).
+- `library::Union{Val,Symbol}`: The plotting library to use. Default is `Val(:Makie)`.
 - `kwargs...`: Additional keyword arguments passed to the specific plotting implementation.
 
 !!! note "Import library first"
@@ -384,10 +519,7 @@ The `library` keyword argument specifies the plotting backend to use. The defaul
 !!! warning "Beware of type-stability!"
     For improved performance and type-stability, prefer passing `Val(:Makie)` instead of `:Makie`. See [Performance Tips](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) for details.
 """
-function plot_bloch(state::QuantumObject{<:Union{Ket,Bra,Operator}}; library::Union{Symbol,Val} = :Makie, kwargs...)
-    lib_val = library isa Symbol ? Val(library) : library
-    return plot_bloch(lib_val, state; kwargs...)
-end
+plot_bloch(state::QuantumObject{OpType}; library::Union{Symbol,Val} = Val(:Makie), kwargs...) where {OpType<:Union{Ket,Bra,Operator}} = plot_bloch(makeVal(lib_val), state; kwargs...)
 
 @doc raw"""
     plot_bloch(::Val{T}, state::QuantumObject; kwargs...) where {T}
@@ -408,6 +540,6 @@ This function serves as a fallback when an unsupported backend is requested. Cur
 
 See the main `plot_bloch` documentation for supported backends.
 """
-function plot_bloch(::Val{T}, state::QuantumObject; kwargs...) where {T}
+function plot_bloch(::Val{T}, state::QuantumObject{OpType}; kwargs...) where {T,OpType<:Union{Ket,Bra,Operator}}
     return error("Unsupported backend: $T. Try :Makie or another supported library.")
 end

@@ -1,8 +1,10 @@
 module QuantumToolboxMakieExt
 
 using QuantumToolbox
-using LinearAlgebra: cross, deg2rad, normalize, size
-using Makie:
+import QuantumToolbox: _state_to_bloch
+
+import LinearAlgebra: cross, deg2rad, normalize, size
+import Makie:
     Axis,
     Axis3,
     Colorbar,
@@ -315,66 +317,6 @@ raw"""
 """
 _figFromChildren(::Nothing) = throw(ArgumentError("No Figure has been found at the top of the layout hierarchy."))
 
-raw"""
-    _state_to_bloch(state::QuantumObject{<:Ket}) -> Vector{Float64}
-
-Convert a pure qubit state (`Ket`) to its Bloch vector representation.
-
-If the state is not normalized, it is automatically normalized before conversion.
-
-# Arguments
-- `state`: A `Ket` representing a pure quantum state.
-
-# Returns
-A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
-
-# Throws
-- `ArgumentError` if the state dimension is not 2.
-"""
-function _state_to_bloch(state::QuantumObject{<:Ket})
-    if !isapprox(norm(state), 1.0, atol = 1e-6)
-        @warn "State is not normalized. Normalizing before Bloch vector conversion."
-        state = normalize(state)
-    end
-    ψ = state.data
-    if length(ψ) != 2
-        error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
-    end
-    x = 2 * real(ψ[1] * conj(ψ[2]))
-    y = 2 * imag(ψ[1] * conj(ψ[2]))
-    z = abs2(ψ[1]) - abs2(ψ[2])
-    return [x, y, z]
-end
-
-raw"""
-    _dm_to_bloch(ρ::QuantumObject{<:Operator}) -> Vector{Float64}
-
-Convert a qubit density matrix (`Operator`) to its Bloch vector representation.
-
-This function assumes the input is Hermitian. If the density matrix is not Hermitian, a warning is issued.
-
-# Arguments
-- `ρ`: A density matrix (`Operator`) representing a mixed or pure quantum state.
-
-# Returns
-A 3-element `Vector{Float64}` representing the Bloch vector `[x, y, z]`.
-
-# Throws
-- `ArgumentError` if the matrix dimension is not 2.
-"""
-function _dm_to_bloch(ρ::QuantumObject{<:Operator})
-    if !ishermitian(ρ)
-        @warn "Density matrix is not Hermitian. Results may not be meaningful."
-    end
-    if size(ρ, 1) != 2
-        error("Bloch sphere visualization is only supported for qubit states (2-level systems)")
-    end
-    x = real(ρ[1, 2] + ρ[2, 1])
-    y = imag(ρ[2, 1] - ρ[1, 2])
-    z = real(ρ[1, 1] - ρ[2, 2])
-    return [x, y, z]
-end
-
 function _render_bloch_makie(bloch_vec::Vector{Float64}; location = nothing, kwargs...)
     b = Bloch()
     add_vectors!(b, bloch_vec)
@@ -384,97 +326,21 @@ function _render_bloch_makie(bloch_vec::Vector{Float64}; location = nothing, kwa
 end
 
 @doc raw"""
-    add_line!(
-        b::QuantumToolbox.Bloch,
-        start_point_point::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}},
-        end_point::QuantumToolbox.QuantumObject{<:Union{QuantumToolbox.Ket, QuantumToolbox.Bra, QuantumToolbox.Operator}};
-        fmt = "k"
-    )
+    render(b::Bloch; location=nothing)
 
-Add a line between two quantum states or operators on the Bloch sphere visualization.
+Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 
 # Arguments
 
-- `b::Bloch`: The Bloch sphere object to modify.
-- `start_point_point::QuantumObject`: The start_point_pointing quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
-- `end_point::QuantumObject`: The ending quantum state or operator. Can be a `Ket`, `Bra`, or `Operator`.
-- `fmt::String="k"`: (optional) A format string specifying the line style and color (default is black `"k"`).
-
-# Description
-
-This function converts the given quantum objects (states or operators) into their Bloch vector representations and adds a line between these two points on the Bloch sphere visualization. 
-
-# Example
-
-```julia
-b = Bloch()
-ψ₁ = normalize(basis(2, 0) + basis(2, 1))
-ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
-add_line!(b, ψ₁, ψ₂; fmt = "r--")
-```
-"""
-function QuantumToolbox.add_line!(
-    b::Bloch,
-    p1::QuantumObject{<:Union{Ket,Bra,Operator}},
-    p2::QuantumObject{<:Union{Ket,Bra,Operator}};
-    fmt = "k",
-)
-    coords1 = isket(p1) || isbra(p1) ? _state_to_bloch(p1) : _dm_to_bloch(p1)
-    coords2 = isket(p2) || isbra(p2) ? _state_to_bloch(p2) : _dm_to_bloch(p2)
-    return add_line!(b, coords1, coords2; fmt = fmt)
-end
-
-@doc raw"""
-    QuantumToolbox.add_states!(b::Bloch, states::QuantumObject...)
-
-Add one or more quantum states to the Bloch sphere visualization by converting them into Bloch vectors.
-
-# Arguments
-- `b::Bloch`: The Bloch sphere object to modify
-- `states::QuantumObject...`: One or more quantum states (Ket, Bra, or Operator)
-
-# Example
-
-```julia
-x = basis(2, 0) + basis(2, 1);
-y = basis(2, 0) - im * basis(2, 1);
-z = basis(2, 0);
-b = Bloch();
-add_states!(b, [x, y, z])
-```
-"""
-function QuantumToolbox.add_states!(b::Bloch, states::Vector{<:QuantumObject})
-    vecs = map(states) do state
-        if isket(state) || isbra(state)
-            return _state_to_bloch(state)
-        else
-            return _dm_to_bloch(state)
-        end
-    end
-    append!(b.vectors, [normalize(v) for v in vecs])
-    return b.vectors
-end
-
-@doc raw"""
-    render(b::QuantumToolbox.Bloch; location=nothing)
-
-Render the Bloch sphere visualization from the given `Bloch` object `b`.
-
-# Arguments
-
-- `b::QuantumToolbox.Bloch`
-  The Bloch sphere object containing states, vectors, and settings to visualize.
-
-- `location` (optional)  
-  Specifies where to display or save the rendered figure.
+- `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
+- `location`: Specifies where to display or save the rendered figure.
   - If `nothing` (default), the figure is displayed interactively.
   - If a file path (String), the figure is saved to the specified location.
   - Other values depend on backend support.
 
 # Returns
 
-- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting.
-  These can be further manipulated or saved by the user.
+- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting. These can be further manipulated or saved by the user.
 """
 function QuantumToolbox.render(b::Bloch; location = nothing)
     fig, ax = _setup_bloch_plot!(b, location)
@@ -859,45 +725,19 @@ function _add_labels!(b::Bloch, ax)
 end
 
 @doc raw"""
-    plot_bloch(::Val{:Makie}, state::QuantumObject{<:Union{Ket,Bra}}; kwargs...)
+    plot_bloch(::Val{:Makie}, state::QuantumObject; kwargs...)
 
 Plot a pure quantum state on the Bloch sphere using the `Makie` backend.
 
 # Arguments
-- `state::QuantumObject{<:Union{Ket,Bra}}`: The quantum state to be visualized (`ket` or `bra`).
+- `state::QuantumObject{<:Union{Ket,Bra}}`: The quantum state ([`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref)) to be visualized.
 - `kwargs...`: Additional keyword arguments passed to `_render_bloch_makie`.
-
-# Details
-
-Converts the state to its Bloch vector representation and renders it on the Bloch sphere.
-If the input is a bra, it is automatically converted to a ket before processing.
 
 !!! note "Internal function"
     This is the `Makie`-specific implementation called by the main `plot_bloch` function.
 """
-function QuantumToolbox.plot_bloch(::Val{:Makie}, state::QuantumObject{<:Union{Ket,Bra}}; kwargs...)
-    state = isbra(state) ? state' : state
+function QuantumToolbox.plot_bloch(::Val{:Makie}, state::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Ket,Bra,Operator}}
     bloch_vec = _state_to_bloch(state)
-    return _render_bloch_makie(bloch_vec; kwargs...)
-end
-
-@doc raw"""
-    plot_bloch(::Val{:Makie}, ρ::QuantumObject{<:Operator}; kwargs...)
-
-Plot a density matrix on the Bloch sphere using the Makie backend.
-
-# Arguments
-- `ρ::QuantumObject{<:Operator}`: The density matrix to be visualized.
-- `kwargs...`: Additional keyword arguments passed to `_render_bloch_makie`.
-
-# Details
-Converts the density matrix to its Bloch vector representation and renders it on the Bloch sphere.
-
-!!! note "Internal function"
-    This is the Makie-specific implementation called by the main `plot_bloch` function.
-"""
-function QuantumToolbox.plot_bloch(::Val{:Makie}, ρ::QuantumObject{<:Operator}; kwargs...)
-    bloch_vec = _dm_to_bloch(ρ)
     return _render_bloch_makie(bloch_vec; kwargs...)
 end
 
