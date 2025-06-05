@@ -319,13 +319,18 @@ meshgrid
 ```@docs
 plot_wigner
 plot_fock_distribution
-plot_bloch
+```
+
+### [Bloch Sphere](@id doc-API:Bloch-Sphere)
+
+```@docs
 Bloch
+plot_bloch
 render
 add_points!
 add_vectors!
 add_line!
 add_arc!
-clear!
 add_states!
+clear!
 ```
