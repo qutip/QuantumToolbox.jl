@@ -58,7 +58,6 @@ import Distributed: RemoteChannel
 import FFTW: fft, ifft, fftfreq, fftshift
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
-import LaTeXStrings: @L_str
 import Pkg
 import Random: AbstractRNG, default_rng, seed!
 import SpecialFunctions: loggamma
