@@ -110,11 +110,11 @@ A structure representing a Bloch sphere visualization for quantum states.
 - `view::Tuple{Int,Int}}`: Azimuthal and elevation viewing angles in degrees (default: (-60, 30))
 
 ## Label properties
-- `xlabel::Vector{AbstractString}}`: Labels for x-axis (default: [L"x", ""])
+- `xlabel::Vector{String}}`: Labels for x-axis (default: [raw"$x$", ""])
 - `xlpos::Vector{Float64}}`: Positions of x-axis labels (default: [1.0, -1.0])
-- `ylabel::Vector{AbstractString}}`: Labels for y-axis (default: [L"y", ""])
+- `ylabel::Vector{String}}`: Labels for y-axis (default: [raw"$y$", ""])
 - `ylpos::Vector{Float64}}`: Positions of y-axis labels (default: [1.0, -1.0])
-- `zlabel::Vector{AbstractString}}`: Labels for z-axis (default: [L"|0\rangle", L"|1\rangle"])
+- `zlabel::Vector{String}}`: Labels for z-axis (default: [raw"$|0\rangle$", raw"$|1\rangle$"])
 - `zlpos::Vector{Float64}}`: Positions of z-axis labels (default: [1.0, -1.0])
 """
 @kwdef mutable struct Bloch
@@ -139,11 +139,11 @@ A structure representing a Bloch sphere visualization for quantum states.
     vector_width::Float64 = 0.025
     vector_arrowsize::NTuple{3,Real} = (0.07, 0.08, 0.08)
     view::Tuple{Int,Int} = (-60, 30)
-    xlabel::Vector{AbstractString} = [L"x", ""]
+    xlabel::Vector{String} = [raw"$x$", raw""]
     xlpos::Vector{Float64} = [1.0, -1.0]
-    ylabel::Vector{AbstractString} = [L"y", ""]
+    ylabel::Vector{String} = [raw"$y$", ""]
     ylpos::Vector{Float64} = [1.0, -1.0]
-    zlabel::Vector{AbstractString} = [L"|0\rangle", L"|1\rangle"]
+    zlabel::Vector{String} = [raw"$|0\rangle$", raw"$|1\rangle$"]
     zlpos::Vector{Float64} = [1.0, -1.0]
 end
 
