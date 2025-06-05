@@ -207,7 +207,7 @@ Add a single point to the Bloch sphere visualization.
 - `pnt::Vector{Float64}`: A 3D point to add
 - `meth::Symbol=:s`: Display method (`:s` for single point, `:m` for multiple, `:l` for line)
 - `color`: Color of the point (defaults to first default color if nothing)
-- `alpha=1.0`: Transparency (`1.0` = opaque, `0.0` = transparent)
+- `alpha=1.0`: Transparency (`1.0` means opaque and `0.0` means transparent)
 """
 function add_points!(b::Bloch, pnt::Vector{Float64}; meth::Symbol = :s, color = nothing, alpha = 1.0)
     return add_points!(b, reshape(pnt, 3, 1); meth, color, alpha)
@@ -227,7 +227,7 @@ Add multiple points to the Bloch sphere visualization.
 - `pnts::Matrix{Float64}`: `3×N` matrix of points (each column is a point)
 - `meth::Symbol=:s`: Display method (`:s` for single point, `:m` for multiple, `:l` for line)
 - `color`: Color of the points (defaults to first default color if nothing)
-- `alpha=1.0`: Transparency (`1.0` = opaque, `0.0` = transparent)
+- `alpha=1.0`: Transparency (`1.0` means opaque and `0.0` means transparent)
 ```
 """
 function add_points!(

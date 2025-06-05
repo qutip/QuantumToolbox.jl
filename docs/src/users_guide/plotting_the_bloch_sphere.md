@@ -193,7 +193,7 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.ylabel` | Labels for y-axis | `[L"y", ""]` |
 | `b.ylpos` | Positions of y-axis labels | `[1.0, -1.0]` |
 | `b.zlabel` | Labels for z-axis | `[1.0, -1.0]` |
-| `b.zlpos` | Positions of z-axis labels | `[L"|0\rangle", L"|1\rangle"]` |
+| `b.zlpos` | Positions of z-axis labels | `[L"\|0\rangle", L"\|1\rangle"]` |
 
 These properties can also be accessed via the `print` command:
 
