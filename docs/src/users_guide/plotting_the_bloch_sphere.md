@@ -24,8 +24,8 @@ b = Bloch()
 which will load an instance of [`Bloch`](@ref). Before getting into the details of these objects, we can simply plot the blank [`Bloch`](@ref) sphere associated with these instances via:
 
 ```@example Bloch_sphere_rendering
-fig, _ = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 See the [API documentation for Bloch sphere](@ref doc-API:Bloch-Sphere) for a full list of other available functions.
@@ -37,8 +37,8 @@ As an example, we can add a single data point via [`add_points!`](@ref):
 ```@example Bloch_sphere_rendering
 pnt = [1 / sqrt(3), 1 / sqrt(3), 1 / sqrt(3)]
 add_points!(b, pnt)
-fig, _ = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 ## Add a single vector
@@ -48,8 +48,8 @@ Add a single vector via  [`add_vectors!`](@ref):
 ```@example Bloch_sphere_rendering
 vec = [0, 1, 0]
 add_vectors!(b, vec)
-fig, _ = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 ## Add a single quantum state
@@ -59,8 +59,8 @@ Add another vector corresponding to the ``|0\rangle`` state:
 ```@example Bloch_sphere_rendering
 z0 = basis(2, 0)
 add_states!(b, z0)
-fig, _ = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 ## Add multiple data
@@ -69,8 +69,8 @@ We can also plot multiple points, vectors, and states at the same time by passin
 
 ```@example Bloch_sphere_rendering
 clear!(b)
-fig, _ = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 Now on the same [`Bloch`](@ref) sphere, we can plot the three states via [`add_states!`](@ref) associated with the `x`, `y`, and `z` directions:
@@ -80,8 +80,8 @@ x = basis(2, 0) + basis(2, 1)
 y = basis(2, 0) + im * basis(2, 1)
 z = basis(2, 0)
 add_states!(b, [x, y, z])
-fig, _ = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 !!! note "State normalization"
@@ -93,8 +93,8 @@ A similar method works for adding vectors:
 clear!(b)
 vecs = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 add_vectors!(b, vecs)
-fig, _ = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 # Add lines and arcs
@@ -104,8 +104,8 @@ You can also add lines and arcs via [`add_line!`](@ref) and [`add_arc!`](@ref) r
 ```@example Bloch_sphere_rendering
 add_line!(b, x, y)
 add_arc!(b, y, z)
-fig, _ = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 ## Add multiple points
@@ -121,8 +121,8 @@ yp = sin.(th)
 zp = zeros(20)
 pnts = [xp, yp, zp]
 add_points!(b, pnts)
-fig, ax = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 Notice that, in contrast to states or vectors, each point remains the same color as the initial point. This is because adding multiple data points using [`add_points!`](@ref) is interpreted, by default, to correspond to a single data point (single qubit state) plotted at different times. This is very useful when visualizing the dynamics of a qubit. If we want to plot additional qubit states we can call additional [`add_points!`](@ref) function:
@@ -132,8 +132,8 @@ xz = zeros(20)
 yz = sin.(th)
 zz = cos.(th)
 add_points!(b, [xz, yz, zz])
-fig, ax = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 The color and shape of the data points is varied automatically by [`Bloch`](@ref). Notice how the color and point markers change for each set of data. Again, we have had to call [`add_points!`](@ref) twice because adding more than one set of multiple data points is not supported by the [`add_points!`](@ref) function.
@@ -148,8 +148,8 @@ yp = sin.(th)
 zp = zeros(20)
 pnts = [xp, yp, zp]
 add_points!(b, pnts, meth=:m) # add `meth=:m` to signify 'multi' colored points
-fig, ax = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 Now, the data points cycle through a variety of predefined colors. Now lets add another set of points, but this time we want the set to be a single color, representing say a qubit going from the ``|0\rangle`` state to the ``|1\rangle`` state in the `y-z` plane:
@@ -157,8 +157,8 @@ Now, the data points cycle through a variety of predefined colors. Now lets add 
 ```@example Bloch_sphere_rendering
 pnts = [xz, yz, zz]
 add_points!(b, pnts) # no `meth=:m`
-fig, ax = render(b)
-fig
+scene = render(b)
+scene
 ```
 
 ## [Configuring the Bloch sphere](@id doc:Configuring-the-Bloch-sphere)
@@ -172,7 +172,7 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.lines` | Lines to draw on the sphere (points, style, properties) | `Vector{Tuple{Vector{Vector{Float64}},String}}()` (empty) |
 | `b.arcs` | Arcs to draw on the sphere | `Vector{Vector{Vector{Float64}}}()` (empty) |
 | `b.font_color` | Color of axis labels and text | `"black"` |
-| `b.font_size` | Font size for labels | `15` |
+| `b.font_size` | Font size for labels | `20` |
 | `b.frame_alpha` | Transparency of the frame background | `0.1` |
 | `b.frame_color` | Background color of the frame | `"gray"` |
 | `b.frame_limit` | Axis limits for the 3D frame (symmetric around origin) | `1.2` |

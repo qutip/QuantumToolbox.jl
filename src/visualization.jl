@@ -80,7 +80,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 ## Style properties
 
 - `font_color::String`: Color of axis labels and text
-- `font_size::Int`: Font size for labels. Default: `15`
+- `font_size::Int`: Font size for labels. Default: `20`
 - `frame_alpha::Float64`: Transparency of the frame background
 - `frame_color::String`: Background color of the frame
 - `frame_limit::Float64`: Axis limits for the 3D frame (symmetric around origin)
@@ -123,7 +123,7 @@ A structure representing a Bloch sphere visualization for quantum states.
     lines::Vector{Tuple{Vector{Vector{Float64}},String}} = Vector{Tuple{Vector{Vector{Float64}},String}}()
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
     font_color::String = "black"
-    font_size::Int = 15
+    font_size::Int = 20
     frame_alpha::Float64 = 0.1
     frame_color::String = "gray"
     frame_limit::Float64 = 1.2
@@ -510,21 +510,18 @@ function clear!(b::Bloch)
 end
 
 @doc raw"""
-    render(b::Bloch; location=nothing)
+    render(b::Bloch; kwargs...)
 
 Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
-- `location`: Specifies where to display or save the rendered figure.
-  - If `nothing` (default), the figure is displayed interactively.
-  - If a file path (String), the figure is saved to the specified location.
-  - Other values depend on backend support.
+- `kwargs...`: Other keyword arguments to generate `Scene` object.
 
 # Returns
 
-- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting. These can be further manipulated or saved by the user.
+- A `Scene` object (defined in `Makie.jl`) used for plotting. It can be further manipulated or saved by the user.
 """
 function render end
 

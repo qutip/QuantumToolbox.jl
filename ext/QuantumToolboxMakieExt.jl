@@ -28,7 +28,10 @@ import Makie:
     RGBf,
     Vec3f,
     Point3f,
-    NoShading
+    NoShading,
+    Scene,
+    Camera3D,
+    update_cam!
 
 @doc raw"""
     plot_wigner(
@@ -317,109 +320,98 @@ raw"""
 """
 _figFromChildren(::Nothing) = throw(ArgumentError("No Figure has been found at the top of the layout hierarchy."))
 
-function _render_bloch_makie(bloch_vec::Vector{Float64}; location = nothing, kwargs...)
+function _render_bloch_makie(bloch_vec::Vector{Float64}; kwargs...)
     b = Bloch()
     add_vectors!(b, bloch_vec)
-    fig, location = _getFigAndLocation(location)
-    fig, ax = render(b; location = location, kwargs...)
-    return fig, ax
+    return render(b; kwargs...)
 end
 
 @doc raw"""
-    render(b::Bloch; location=nothing)
+    render(b::Bloch; kwargs...)
 
 Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
-- `location`: Specifies where to display or save the rendered figure.
-  - If `nothing` (default), the figure is displayed interactively.
-  - If a file path (String), the figure is saved to the specified location.
-  - Other values depend on backend support.
+- `kwargs...`: Other keyword arguments to generate `Scene` object.
 
 # Returns
 
-- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting. These can be further manipulated or saved by the user.
+- A `Scene` object (defined in `Makie.jl`) used for plotting. It can be further manipulated or saved by the user.
 """
-function QuantumToolbox.render(b::Bloch; location = nothing)
-    fig, ax = _setup_bloch_plot!(b, location)
-    _draw_bloch_sphere!(b, ax)
-    _draw_reference_circles!(ax)
-    _draw_axes!(ax)
-    _plot_points!(b, ax)
-    _plot_lines!(b, ax)
-    _plot_arcs!(b, ax)
-    _plot_vectors!(b, ax)
-    _add_labels!(b, ax)
-    return fig, ax
+function QuantumToolbox.render(b::Bloch; kwargs...)
+    scene = _setup_bloch_plot!(b; kwargs...)
+    _draw_bloch_sphere!(b, scene)
+    _draw_reference_circles!(scene)
+    _draw_axes!(scene)
+    _plot_points!(b, scene)
+    _plot_lines!(b, scene)
+    _plot_arcs!(b, scene)
+    _plot_vectors!(b, scene)
+    _add_labels!(b, scene)
+    return scene
 end
 
 raw"""
-    _setup_bloch_plot!(b::Bloch, location) -> (fig, ax)
+    _setup_bloch_plot!(b::Bloch) -> scene::Scene
 
-Initialize the figure and `3D` axis for Bloch sphere visualization.
+Initialize the `Scene` object for Bloch sphere visualization.
 
 # Arguments
 - `b::Bloch`: Bloch sphere object containing view parameters
-- `location`: Figure layout position specification
 
 # Returns
-- `fig`: Created Makie figure
-- `ax`: Configured Axis3 object
+- `scene`: Created Makie Scene
 
 Sets up the `3D` coordinate system with appropriate limits and view angles.
 """
-function _setup_bloch_plot!(b::Bloch, location)
-    fig, location = _getFigAndLocation(location)
-    bg_color = parse(RGBf, b.frame_color)
-    frame_color = RGBAf(bg_color, b.frame_alpha)
-    ax = Axis3(
-        location;
-        aspect = :data,
-        limits = (-b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit),
-        xgridvisible = false,
-        ygridvisible = false,
-        zgridvisible = false,
-        xticklabelsvisible = false,
-        yticklabelsvisible = false,
-        zticklabelsvisible = false,
-        xticksvisible = false,
-        yticksvisible = false,
-        zticksvisible = false,
-        xlabel = "",
-        ylabel = "",
-        zlabel = "",
-        backgroundcolor = frame_color,
-        xypanelvisible = false,
-        xzpanelvisible = false,
-        yzpanelvisible = false,
-        xspinesvisible = false,
-        yspinesvisible = false,
-        zspinesvisible = false,
-        protrusions = (0, 0, 0, 0),
-        perspectiveness = 0.2,
-        viewmode = :fit,
+function _setup_bloch_plot!(b::Bloch; kwargs...)
+    _limits = haskey(kwargs, :limits) ? kwargs[:limits] : (-b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit)
+    _protrusions = haskey(kwargs, :protrusions) ? kwargs[:protrusions] : (0, 0, 0, 0)
+    _viewmode = haskey(kwargs, :viewmode) ? kwargs[:viewmode] : :fit
+    if haskey(kwargs, :backgroundcolor)
+        _backgroundcolor = kwargs[:backgroundcolor]
+    else
+        bg_color = parse(RGBf, b.frame_color)
+        _backgroundcolor = RGBAf(bg_color, b.frame_alpha)
+    end
+    scene = Scene(
+        limits = _limits,
+        protrusions = _protrusions,
+        viewmode = _viewmode,
+        backgroundcolor = _backgroundcolor,
     )
+
+    # Camera radius and angles
     length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
-    ax.azimuth[] = deg2rad(b.view[1])
-    ax.elevation[] = deg2rad(b.view[2])
-    return fig, ax
+    rd = 12
+    az = deg2rad(b.view[1])
+    el = deg2rad(b.view[2])
+
+    camera = Camera3D(scene)
+    camera.fov[] = rd
+    update_cam!(scene, camera, az, el, rd)
+    return scene
 end
 
 raw"""
-    _draw_bloch_sphere!(b, ax)
+    _draw_bloch_sphere!(b, scene)
 
 Draw the translucent sphere representing the Bloch sphere surface.
+
+# Arguments
+
+- `scene`: Makie `Scene` object for drawing
 """
-function _draw_bloch_sphere!(b::Bloch, ax)
+function _draw_bloch_sphere!(b::Bloch, scene)
     n_lon = 4
     n_lat = 4
     radius = 1.0f0
     base_color = parse(RGBf, b.sphere_color)
     sphere_color = RGBAf(base_color, b.sphere_alpha)
     sphere_mesh = Sphere(Point3f(0), radius)
-    mesh!(ax, sphere_mesh; color = sphere_color, shading = NoShading, transparency = true, rasterize = 3)
+    mesh!(scene, sphere_mesh; color = sphere_color, shading = NoShading, transparency = true, rasterize = 3)
     θ_vals = range(0.0f0, 2π, length = n_lon + 1)[1:(end-1)]
     φ_curve = range(0.0f0, π, length = 600)
     line_alpha = max(0.05, b.sphere_alpha * 0.5)
@@ -427,7 +419,7 @@ function _draw_bloch_sphere!(b::Bloch, ax)
         x_line = [radius * sin(ϕ) * cos(θi) for ϕ in φ_curve]
         y_line = [radius * sin(ϕ) * sin(θi) for ϕ in φ_curve]
         z_line = [radius * cos(ϕ) for ϕ in φ_curve]
-        lines!(ax, x_line, y_line, z_line; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
+        lines!(scene, x_line, y_line, z_line; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
     end
     φ_vals = range(0.0f0, π, length = n_lat + 2)
     θ_curve = range(0.0f0, 2π, length = 600)
@@ -435,21 +427,21 @@ function _draw_bloch_sphere!(b::Bloch, ax)
         x_ring = [radius * sin(ϕ) * cos(θi) for θi in θ_curve]
         y_ring = [radius * sin(ϕ) * sin(θi) for θi in θ_curve]
         z_ring = fill(radius * cos(ϕ), length(θ_curve))
-        lines!(ax, x_ring, y_ring, z_ring; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
+        lines!(scene, x_ring, y_ring, z_ring; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
     end
 end
 
 raw"""
-    _draw_reference_circles!(ax)
+    _draw_reference_circles!(scene)
 
 Draw the three great circles `(XY, YZ, XZ planes)` on the Bloch sphere.
 
 # Arguments
-- `ax`: Makie Axis3 object for drawing
+- `scene`: Makie `Scene` object for drawing
 
 Adds faint circular guidelines representing the three principal planes.
 """
-function _draw_reference_circles!(ax)
+function _draw_reference_circles!(scene)
     wire_color = RGBAf(0.5, 0.5, 0.5, 0.4)
     φ = range(0, 2π, length = 100)
     # XY, YZ, XZ circles
@@ -459,21 +451,21 @@ function _draw_reference_circles!(ax)
         [Point3f(cos(φi), 0, sin(φi)) for φi in φ],  # XZ
     ]
     for circle in circles
-        lines!(ax, circle; color = wire_color, linewidth = 1.0)
+        lines!(scene, circle; color = wire_color, linewidth = 1.0)
     end
 end
 
 raw"""
-    _draw_axes!(ax)
+    _draw_axes!(scene)
 
 Draw the three principal axes `(x, y, z)` of the Bloch sphere.
 
 # Arguments
-- `ax`: Makie Axis3 object for drawing
+- `scene`: Makie `Scene` object for drawing
 
 Creates visible axis lines extending slightly beyond the unit sphere.
 """
-function _draw_axes!(ax)
+function _draw_axes!(scene)
     axis_color = RGBAf(0.3, 0.3, 0.3, 0.8)
     axis_width = 0.8
     axes = [
@@ -482,22 +474,22 @@ function _draw_axes!(ax)
         ([Point3f(0, 0, 1.0), Point3f(0, 0, -1.0)], "z"),  # Z-axis
     ]
     for (points, _) in axes
-        lines!(ax, points; color = axis_color, linewidth = axis_width)
+        lines!(scene, points; color = axis_color, linewidth = axis_width)
     end
 end
 
 raw"""
-    _plot_points!(b::Bloch, ax)
+    _plot_points!(b::Bloch, scene)
 
 Plot all quantum state points on the Bloch sphere.
 
 # Arguments
 - `b::Bloch`: Contains point data and styling information
-- `ax`: Axis3 object for plotting
+- `scene`: Makie `Scene` object for plotting
 
 Handles both scatter points and line traces based on style specifications.
 """
-function _plot_points!(b::Bloch, ax)
+function _plot_points!(b::Bloch, scene)
     for k in 1:length(b.points)
         pts = b.points[k]
         style = b.point_style[k]
@@ -536,7 +528,7 @@ function _plot_points!(b::Bloch, ax)
             ys = raw_y[indperm]
             zs = raw_z[indperm]
             scatter!(
-                ax,
+                scene,
                 xs,
                 ys,
                 zs;
@@ -553,23 +545,23 @@ function _plot_points!(b::Bloch, ax)
             ys = raw_y
             zs = raw_z
             c = isa(colors, Vector) ? colors[1] : colors
-            lines!(ax, xs, ys, zs; color = c, linewidth = 2.0, transparency = alpha < 1.0, alpha = alpha)
+            lines!(scene, xs, ys, zs; color = c, linewidth = 2.0, transparency = alpha < 1.0, alpha = alpha)
         end
     end
 end
 
 raw"""
-    _plot_lines!(b::Bloch, ax)
+    _plot_lines!(b::Bloch, scene)
 
 Draw all connecting lines between points on the Bloch sphere.
 
 # Arguments
 - `b::Bloch`: Contains line data and formatting
-- `ax`: Axis3 object for drawing
+- `scene`: Makie `Scene` object for drawing
 
 Processes line style specifications and color mappings.
 """
-function _plot_lines!(b::Bloch, ax)
+function _plot_lines!(b::Bloch, scene)
     color_map =
         Dict("k" => :black, "r" => :red, "g" => :green, "b" => :blue, "c" => :cyan, "m" => :magenta, "y" => :yellow)
     for (line, fmt) in b.lines
@@ -585,22 +577,22 @@ function _plot_lines!(b::Bloch, ax)
         else
             :solid
         end
-        lines!(ax, x, y, z; color = color, linewidth = 1.0, linestyle = linestyle)
+        lines!(scene, x, y, z; color = color, linewidth = 1.0, linestyle = linestyle)
     end
 end
 
 raw"""
-    _plot_arcs!(b::Bloch, ax)
+    _plot_arcs!(b::Bloch, scene)
 
 Draw circular arcs connecting points on the Bloch sphere surface.
 
 # Arguments
 - `b::Bloch`: Contains arc data points
-- `ax`: Axis3 object for drawing
+- `scene`: Makie `Scene` object for drawing
 
 Calculates great circle arcs between specified points.
 """
-function _plot_arcs!(b::Bloch, ax)
+function _plot_arcs!(b::Bloch, scene)
     for arc_pts in b.arcs
         length(arc_pts) >= 2 || continue
         v1 = normalize(arc_pts[1])
@@ -613,22 +605,22 @@ function _plot_arcs!(b::Bloch, ax)
         end
         t_range = range(0, θ, length = 100)
         arc_points = [Point3f((v1 * cos(t) + cross(n, v1) * sin(t))) for t in t_range]
-        lines!(ax, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
+        lines!(scene, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
     end
 end
 
 raw"""
-    _plot_vectors!(b::Bloch, ax)
+    _plot_vectors!(b::Bloch, scene)
 
 Draw vectors from origin representing quantum states.
 
 # Arguments
 - `b::Bloch`: Contains vector data
-- `ax`: Axis3 object for drawing
+- `scene`: Makie `Scene` object for drawing
 
 Scales vectors appropriately and adds `3D` arrow markers.
 """
-function _plot_vectors!(b::Bloch, ax)
+function _plot_vectors!(b::Bloch, scene)
     isempty(b.vectors) && return
     arrowsize_vec = Vec3f(b.vector_arrowsize...)
     r = 1.0
@@ -639,7 +631,7 @@ function _plot_vectors!(b::Bloch, ax)
         max_length = r * 0.90
         vec = length > max_length ? (vec/length) * max_length : vec
         arrows!(
-            ax,
+            scene,
             [Point3f(0, 0, 0)],
             [vec],
             color = color,
@@ -652,16 +644,16 @@ function _plot_vectors!(b::Bloch, ax)
 end
 
 raw"""
-    _add_labels!(ax)
+    _add_labels!(scene)
 
-Add axis labels and state labels to the Bloch sphere.
+Add X-, Y-, and Z-axis labels and state labels to the Bloch sphere.
 
 # Arguments
-- `ax`: Axis3 object for text placement
+- `scene`: Makie `Scene` object for text placement
 
 Positions standard labels `(x, y, |0⟩, |1⟩)` at appropriate locations.
 """
-function _add_labels!(b::Bloch, ax)
+function _add_labels!(b::Bloch, scene)
     length(b.xlabel) == 2 || throw(ArgumentError("The length of `Bloch.xlabel` must be 2."))
     length(b.ylabel) == 2 || throw(ArgumentError("The length of `Bloch.ylabel` must be 2."))
     length(b.zlabel) == 2 || throw(ArgumentError("The length of `Bloch.zlabel` must be 2."))
@@ -674,7 +666,7 @@ function _add_labels!(b::Bloch, ax)
     offset_scale = b.frame_limit
 
     (b.xlabel[1] == "") || text!(
-        ax,
+        scene,
         b.xlabel[1],
         position = Point3f(offset_scale * b.xlpos[1], 0, 0),
         color = label_color,
@@ -682,7 +674,7 @@ function _add_labels!(b::Bloch, ax)
         align = (:center, :center),
     )
     (b.xlabel[2] == "") || text!(
-        ax,
+        scene,
         b.xlabel[2],
         position = Point3f(offset_scale * b.xlpos[2], 0, 0),
         color = label_color,
@@ -690,7 +682,7 @@ function _add_labels!(b::Bloch, ax)
         align = (:center, :center),
     )
     (b.ylabel[1] == "") || text!(
-        ax,
+        scene,
         b.ylabel[1],
         position = Point3f(0, offset_scale * b.ylpos[1], 0),
         color = label_color,
@@ -706,7 +698,7 @@ function _add_labels!(b::Bloch, ax)
         align = (:center, :center),
     )
     (b.zlabel[1] == "") || text!(
-        ax,
+        scene,
         b.zlabel[1],
         position = Point3f(0, 0, offset_scale * b.zlpos[1]),
         color = label_color,
@@ -714,7 +706,7 @@ function _add_labels!(b::Bloch, ax)
         align = (:center, :center),
     )
     (b.zlabel[2] == "") || text!(
-        ax,
+        scene,
         b.zlabel[2],
         position = Point3f(0, 0, offset_scale * b.zlpos[2]),
         color = label_color,
@@ -731,7 +723,7 @@ Plot a pure quantum state on the Bloch sphere using the `Makie` backend.
 
 # Arguments
 - `state::QuantumObject{<:Union{Ket,Bra}}`: The quantum state ([`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref)) to be visualized.
-- `kwargs...`: Additional keyword arguments passed to `_render_bloch_makie`.
+- `kwargs...`: Additional keyword arguments passed to the generation of Makie `Scene` object.
 
 !!! note "Internal function"
     This is the `Makie`-specific implementation called by the main `plot_bloch` function.
