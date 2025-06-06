@@ -65,24 +65,16 @@ end
 
 @testset "Makie Bloch sphere" begin
     ρ = 0.7 * ket2dm(basis(2, 0)) + 0.3 * ket2dm(basis(2, 1))
-    fig, ax = plot_bloch(ρ)
-    @test fig isa Figure
-    @test ax isa Axis3
+    scene = plot_bloch(ρ)
+    @test scene isa Scene
 
     ψ = (basis(2, 0) + basis(2, 1)) / √2
-    fig, ax = plot_bloch(ψ)
-    @test fig isa Figure
-    @test ax isa Axis3
+    scene = plot_bloch(ψ)
+    @test scene isa Scene
 
     ϕ = dag(ψ)
-    fig, ax = plot_bloch(ϕ)
-    @test fig isa Figure
-    @test ax isa Axis3
-
-    fig = Figure()
-    pos = fig[1, 1]
-    fig1, ax = plot_bloch(ψ; location = pos)
-    @test fig1 === fig
+    scene = plot_bloch(ϕ)
+    @test scene isa Scene
 
     b = Bloch()
     add_points!(b, [0.0, 0.0, 1.0])
@@ -141,9 +133,8 @@ end
     add_line!(b, [0, 0, 0], [1, 1, 1])
     add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
     try
-        fig, ax = QuantumToolbox.render(b)
-        @test !isnothing(fig)
-        @test !isnothing(ax)
+        scene = render(b)
+        @test !isnothing(scene)
     catch e
         @test false
         @info "Render threw unexpected error" exception=e
@@ -153,9 +144,8 @@ end
     ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
     add_line!(b, ψ₁, ψ₂; fmt = "r--")
     try
-        fig, ax = QuantumToolbox.render(b)
-        @test !isnothing(fig)
-        @test !isnothing(ax)
+        scene = render(b)
+        @test !isnothing(scene)
     catch e
         @test false
         @info "Render threw unexpected error" exception=e
@@ -187,9 +177,8 @@ end
     add_line!(b, [1, 0, 0], [0, 1, 0])
     add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
     try
-        fig, ax = render(b)
-        @test !isnothing(fig)
-        @test !isnothing(ax)
+        scene = render(b)
+        @test !isnothing(scene)
     catch e
         @test false
         @info "Render threw unexpected error" exception=e
@@ -202,9 +191,8 @@ end
     add_arc!(b, ψ₁, ψ₂)
     add_arc!(b, ψ₂, ψ₃, ψ₁)
     try
-        fig, ax = render(b)
-        @test !isnothing(fig)
-        @test !isnothing(ax)
+        scene = render(b)
+        @test !isnothing(scene)
     catch e
         @test false
         @info "Render threw unexpected error" exception=e
