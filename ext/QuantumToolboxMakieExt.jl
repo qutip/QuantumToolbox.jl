@@ -367,7 +367,9 @@ Initialize the `Scene` object for Bloch sphere visualization.
 Sets up the `3D` coordinate system with appropriate limits and view angles.
 """
 function _setup_bloch_plot!(b::Bloch; kwargs...)
-    _limits = haskey(kwargs, :limits) ? kwargs[:limits] : (-b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit)
+    _limits =
+        haskey(kwargs, :limits) ? kwargs[:limits] :
+        (-b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit)
     _protrusions = haskey(kwargs, :protrusions) ? kwargs[:protrusions] : (0, 0, 0, 0)
     _viewmode = haskey(kwargs, :viewmode) ? kwargs[:viewmode] : :fit
     if haskey(kwargs, :backgroundcolor)
@@ -376,12 +378,8 @@ function _setup_bloch_plot!(b::Bloch; kwargs...)
         bg_color = parse(RGBf, b.frame_color)
         _backgroundcolor = RGBAf(bg_color, b.frame_alpha)
     end
-    scene = Scene(
-        limits = _limits,
-        protrusions = _protrusions,
-        viewmode = _viewmode,
-        backgroundcolor = _backgroundcolor,
-    )
+    scene =
+        Scene(limits = _limits, protrusions = _protrusions, viewmode = _viewmode, backgroundcolor = _backgroundcolor)
 
     # Camera radius and angles
     length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
@@ -419,7 +417,15 @@ function _draw_bloch_sphere!(b::Bloch, scene)
         x_line = [radius * sin(ϕ) * cos(θi) for ϕ in φ_curve]
         y_line = [radius * sin(ϕ) * sin(θi) for ϕ in φ_curve]
         z_line = [radius * cos(ϕ) for ϕ in φ_curve]
-        lines!(scene, x_line, y_line, z_line; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
+        lines!(
+            scene,
+            x_line,
+            y_line,
+            z_line;
+            color = RGBAf(0.5, 0.5, 0.5, line_alpha),
+            linewidth = 1,
+            transparency = true,
+        )
     end
     φ_vals = range(0.0f0, π, length = n_lat + 2)
     θ_curve = range(0.0f0, 2π, length = 600)
@@ -427,7 +433,15 @@ function _draw_bloch_sphere!(b::Bloch, scene)
         x_ring = [radius * sin(ϕ) * cos(θi) for θi in θ_curve]
         y_ring = [radius * sin(ϕ) * sin(θi) for θi in θ_curve]
         z_ring = fill(radius * cos(ϕ), length(θ_curve))
-        lines!(scene, x_ring, y_ring, z_ring; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
+        lines!(
+            scene,
+            x_ring,
+            y_ring,
+            z_ring;
+            color = RGBAf(0.5, 0.5, 0.5, line_alpha),
+            linewidth = 1,
+            transparency = true,
+        )
     end
 end
 
