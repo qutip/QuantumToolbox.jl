@@ -381,10 +381,9 @@ function _setup_bloch_plot!(b::Bloch, location)
     lscene = LScene(location, show_axis = false, scenekw = (backgroundcolor = frame_color,))
     length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
     cam3d!(lscene.scene, center = false)
-    update_cam!(lscene.scene, (1, 0, 0), (0, 0, 0))
     cam = cameracontrols(lscene)
-    cam.fov[] = 5
-    update_cam!(lscene.scene, cam, deg2rad(b.view[1]), deg2rad(b.view[2]), 26)
+    cam.fov[] = 12
+    update_cam!(lscene.scene, cam, deg2rad(b.view[1]), deg2rad(b.view[2]), 12)
     return fig, lscene
 end
 
