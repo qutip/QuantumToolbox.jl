@@ -524,7 +524,7 @@ Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 
 # Returns
 
-- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting. These can be further manipulated or saved by the user.
+- A tuple `(fig, lscene)` where `fig` is the figure object and `lscene` is the `LScene` object used for plotting. These can be further manipulated or saved by the user.
 """
 function render end
 
