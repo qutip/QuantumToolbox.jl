@@ -1,6 +1,6 @@
 #=  
 This file defines the AbstractQuantumObject structure, all the type structures for AbstractQuantumObject, and fundamental functions in Julia standard library:  
-    - Base: show, length, size, eltype, getindex, setindex!, isequal, :(==), isapprox  
+    - Base: show, length, size, copy, eltype, getindex, setindex!, isequal, :(==), isapprox  
 =#
 
 export AbstractQuantumObject
@@ -92,6 +92,8 @@ Optionally, you can specify an index (`idx`) to just get the corresponding dimen
 """
 Base.size(A::AbstractQuantumObject) = size(A.data)
 Base.size(A::AbstractQuantumObject, idx::Int) = size(A.data, idx)
+
+Base.copy(A::AbstractQuantumObject) = get_typename_wrapper(A)(copy(A.data), A.type, A.dimensions)
 
 Base.getindex(A::AbstractQuantumObject, inds...) = getindex(A.data, inds...)
 Base.setindex!(A::AbstractQuantumObject, val, inds...) = setindex!(A.data, val, inds...)
