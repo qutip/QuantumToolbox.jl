@@ -382,8 +382,9 @@ function _setup_bloch_plot!(b::Bloch, location)
     length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
     cam3d!(lscene.scene, center = false)
     cam = cameracontrols(lscene)
-    cam.fov[] = 12
-    update_cam!(lscene.scene, cam, deg2rad(b.view[1]), deg2rad(b.view[2]), 12)
+    cam.fov[] = 12 # Set field of view to 12 degrees
+    dist = 12 # Set distance from the camera to the Bloch sphere
+    update_cam!(lscene.scene, cam, deg2rad(b.view[1]), deg2rad(b.view[2]), dist)
     return fig, lscene
 end
 
