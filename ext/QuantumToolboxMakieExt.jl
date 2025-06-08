@@ -6,6 +6,7 @@ import QuantumToolbox: _state_to_bloch
 import LinearAlgebra: cross, deg2rad, normalize, size
 import Makie:
     Axis,
+    Axis3,
     LScene,
     Colorbar,
     Figure,
@@ -151,7 +152,7 @@ function _plot_wigner(
 
     lyt = GridLayout(location)
 
-    ax = LScene(lyt[1, 1], azimuth = 1.775pi, elevation = pi / 16, protrusions = (30, 90, 30, 30), viewmode = :stretch)
+    ax = Axis3(lyt[1, 1], azimuth = 1.775pi, elevation = pi / 16, protrusions = (30, 90, 30, 30), viewmode = :stretch)
 
     wig = wigner(state, xvec, yvec; g = g, method = method)
     wlim = maximum(abs, wig)
