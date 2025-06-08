@@ -65,23 +65,24 @@ end
 
 @testset "Makie Bloch sphere" begin
     ρ = 0.7 * ket2dm(basis(2, 0)) + 0.3 * ket2dm(basis(2, 1))
-    fig, ax = plot_bloch(ρ)
+    fig, lscene = plot_bloch(ρ)
     @test fig isa Figure
-    @test ax isa Axis3
+    @test lscene isa LScene
 
     ψ = (basis(2, 0) + basis(2, 1)) / √2
-    fig, ax = plot_bloch(ψ)
+    fig, lscene = plot_bloch(ψ)
     @test fig isa Figure
-    @test ax isa Axis3
+    @test lscene isa LScene
 
     ϕ = dag(ψ)
-    fig, ax = plot_bloch(ϕ)
+    fig, lscene = plot_bloch(ϕ)
     @test fig isa Figure
-    @test ax isa Axis3
+    @test lscene isa LScene
 
     fig = Figure()
-    pos = fig[1, 1]
-    fig1, ax = plot_bloch(ψ; location = pos)
+    ax = Axis(fig[1, 1])
+    pos = fig[1, 2]
+    fig1, lscene = plot_bloch(ψ; location = pos)
     @test fig1 === fig
 
     b = Bloch()
@@ -141,9 +142,9 @@ end
     add_line!(b, [0, 0, 0], [1, 1, 1])
     add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
     try
-        fig, ax = QuantumToolbox.render(b)
+        fig, lscene = render(b)
         @test !isnothing(fig)
-        @test !isnothing(ax)
+        @test !isnothing(lscene)
     catch e
         @test false
         @info "Render threw unexpected error" exception=e
@@ -153,9 +154,9 @@ end
     ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
     add_line!(b, ψ₁, ψ₂; fmt = "r--")
     try
-        fig, ax = QuantumToolbox.render(b)
+        fig, lscene = render(b)
         @test !isnothing(fig)
-        @test !isnothing(ax)
+        @test !isnothing(lscene)
     catch e
         @test false
         @info "Render threw unexpected error" exception=e
@@ -187,9 +188,9 @@ end
     add_line!(b, [1, 0, 0], [0, 1, 0])
     add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
     try
-        fig, ax = render(b)
+        fig, lscene = render(b)
         @test !isnothing(fig)
-        @test !isnothing(ax)
+        @test !isnothing(lscene)
     catch e
         @test false
         @info "Render threw unexpected error" exception=e
@@ -202,9 +203,9 @@ end
     add_arc!(b, ψ₁, ψ₂)
     add_arc!(b, ψ₂, ψ₃, ψ₁)
     try
-        fig, ax = render(b)
+        fig, lscene = render(b)
         @test !isnothing(fig)
-        @test !isnothing(ax)
+        @test !isnothing(lscene)
     catch e
         @test false
         @info "Render threw unexpected error" exception=e
