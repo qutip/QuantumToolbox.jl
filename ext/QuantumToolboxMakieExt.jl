@@ -377,13 +377,7 @@ function _setup_bloch_plot!(b::Bloch, location)
     fig, location = _getFigAndLocation(location)
     bg_color = parse(RGBf, b.frame_color)
     frame_color = RGBAf(bg_color, b.frame_alpha)
-    lscene = LScene(
-        location,
-        show_axis = false,
-        scenekw = (
-            backgroundcolor = frame_color,
-        )
-    )
+    lscene = LScene(location, show_axis = false, scenekw = (backgroundcolor = frame_color,))
     length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
     cam3d!(lscene.scene, center = false)
     update_cam!(lscene.scene, (1, 0, 0), (0, 0, 0))
@@ -413,7 +407,15 @@ function _draw_bloch_sphere!(b::Bloch, lscene)
         x_line = [radius * sin(ϕ) * cos(θi) for ϕ in φ_curve]
         y_line = [radius * sin(ϕ) * sin(θi) for ϕ in φ_curve]
         z_line = [radius * cos(ϕ) for ϕ in φ_curve]
-        lines!(lscene, x_line, y_line, z_line; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
+        lines!(
+            lscene,
+            x_line,
+            y_line,
+            z_line;
+            color = RGBAf(0.5, 0.5, 0.5, line_alpha),
+            linewidth = 1,
+            transparency = true,
+        )
     end
     φ_vals = range(0.0f0, π, length = n_lat + 2)
     θ_curve = range(0.0f0, 2π, length = 600)
@@ -421,7 +423,15 @@ function _draw_bloch_sphere!(b::Bloch, lscene)
         x_ring = [radius * sin(ϕ) * cos(θi) for θi in θ_curve]
         y_ring = [radius * sin(ϕ) * sin(θi) for θi in θ_curve]
         z_ring = fill(radius * cos(ϕ), length(θ_curve))
-        lines!(lscene, x_ring, y_ring, z_ring; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
+        lines!(
+            lscene,
+            x_ring,
+            y_ring,
+            z_ring;
+            color = RGBAf(0.5, 0.5, 0.5, line_alpha),
+            linewidth = 1,
+            transparency = true,
+        )
     end
 end
 
