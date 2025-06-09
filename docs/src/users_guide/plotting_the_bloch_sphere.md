@@ -166,7 +166,9 @@ fig
 
 ## [Configuring the Bloch sphere](@id doc:Configuring-the-Bloch-sphere)
 
-At the end of the last section we saw that the colors and marker shapes of the data plotted on the Bloch sphere are automatically varied according to the number of points and vectors added. But what if you want a different choice of color, or you want your sphere to be purple with different axes labels? Well then you are in luck as the Bloch class has many attributes which one can control. Assuming `b = Bloch()`:
+At the end of the last section we saw that the colors and marker shapes of the data plotted on the Bloch sphere are automatically varied according to the number of points and vectors added. But what if you want a different choice of color, or you want your sphere to be purple with different axes labels? Well then you are in luck as the [`Bloch`](@ref) structure has many fields which one can control. Assuming `b = Bloch()`:
+
+### Data storage
 
 | **Field** | **Description** | **Default setting** |
 |:----------|:----------------|:--------------------|
@@ -174,11 +176,15 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.vectors` | Vectors to plot on the Bloch sphere | `Vector{Vector{Float64}}()` (empty) |
 | `b.lines` | Lines to draw on the sphere (points, style, properties) | `Vector{Tuple{Vector{Vector{Float64}},String}}()` (empty) |
 | `b.arcs` | Arcs to draw on the sphere | `Vector{Vector{Vector{Float64}}}()` (empty) |
+
+### Properties
+
+| **Field** | **Description** | **Default setting** |
+|:----------|:----------------|:--------------------|
 | `b.font_color` | Color of axis labels and text | `"black"` |
 | `b.font_size` | Font size for labels | `20` |
-| `b.frame_alpha` | Transparency of the frame background | `0.1` |
-| `b.frame_color` | Background color of the frame | `"gray"` |
-| `b.frame_limit` | Axis limits for the 3D frame (symmetric around origin) | `1.2` |
+| `b.frame_alpha` | Transparency of the wire frame | `0.1` |
+| `b.frame_color` | Color of the wire frame | `"gray"` |
 | `b.point_default_color` | Default color cycle for points | `["blue", "red", "green", "#CC6600"]` |
 | `b.point_color` | List of colors for Bloch point markers to cycle through | `Union{Nothing,String}[]` |
 | `b.point_marker` | List of point marker shapes to cycle through | `[:circle, :rect, :diamond, :utriangle]` |
@@ -192,11 +198,11 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.vector_arrowsize` | Arrow size parameters as (head length, head width, stem width) | `[0.07, 0.08, 0.08]` |
 | `b.view` | Azimuthal and elevation viewing angles in degrees | `[30, 30]` |
 | `b.xlabel` | Labels for x-axis | `[L"x", ""]` (``+x`` and ``-x``) |
-| `b.xlpos` | Positions of x-axis labels | `[1.0, -1.0]` |
+| `b.xlpos` | Positions of x-axis labels | `[1.2, -1.2]` |
 | `b.ylabel` | Labels for y-axis | `[L"y", ""]` (``+y`` and ``-y``) |
-| `b.ylpos` | Positions of y-axis labels | `[1.0, -1.0]` |
+| `b.ylpos` | Positions of y-axis labels | `[1.2, -1.2]` |
 | `b.zlabel` | Labels for z-axis | `[L"\|0\rangle", L"\|1\rangle]"` (``+z`` and ``-z``) |
-| `b.zlpos` | Positions of z-axis labels | `[1.0, -1.0]` |
+| `b.zlpos` | Positions of z-axis labels | `[1.2, -1.2]` |
 
 These properties can also be accessed via the `print` command:
 

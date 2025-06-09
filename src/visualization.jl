@@ -65,9 +65,9 @@ plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T,S
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))
 
 @doc raw"""
-    Bloch()
+    Bloch(kwargs...)
 
-A structure representing a Bloch sphere visualization for quantum states.
+A structure representing a Bloch sphere visualization for quantum states. Available keyword arguments are listed in the following fields.
 
 # Fields
 
@@ -81,8 +81,8 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 - `font_color::String`: Color of axis labels and text
 - `font_size::Int`: Font size for labels. Default: `20`
-- `frame_alpha::Float64`: Transparency of the wireframe
-- `frame_color::String`: Color of the wireframe
+- `frame_alpha::Float64`: Transparency of the wire frame
+- `frame_color::String`: Color of the wire frame
 
 ## Point properties
 
@@ -98,7 +98,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 - `sphere_color::String`: Color of Bloch sphere surface
 - `sphere_alpha::Float64`: Transparency of sphere surface. Default: `0.2`
 
-# Vector properties
+## Vector properties
 
 - `vector_color`::Vector{String}: Colors for vectors
 - `vector_width`::Float64: Width of vectors
@@ -109,6 +109,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 - `view::Vector{Int}`: Azimuthal and elevation viewing angles in degrees. Default: `[30, 30]`
 
 ## Label properties
+
 - `xlabel::Vector{AbstractString}`: Labels for x-axis. Default: `[L"x", ""]`
 - `xlpos::Vector{Float64}`: Positions of x-axis labels. Default: `[1.2, -1.2]`
 - `ylabel::Vector{AbstractString}`: Labels for y-axis. Default: `[L"y", ""]`
