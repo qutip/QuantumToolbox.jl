@@ -666,7 +666,11 @@ function _plot_vectors!(b::Bloch, lscene)
     for (i, v) in enumerate(b.vectors)
         color = get(b.vector_color, i, RGBAf(0.2, 0.5, 0.8, 0.9))
         nv = norm(v)
-        (arrow_head_length < nv) || throw(ArgumentError("The length of vector arrow head (Bloch.vector_arrowsize[3]=$arrow_head_length) should be shorter than vector norm: $nv"))
+        (arrow_head_length < nv) || throw(
+            ArgumentError(
+                "The length of vector arrow head (Bloch.vector_arrowsize[3]=$arrow_head_length) should be shorter than vector norm: $nv",
+            ),
+        )
 
         # multiply by the following factor makes the end point of arrow head represent the actual vector position.
         vec = (1 - arrow_head_length / nv) * Vec3f(v...)
