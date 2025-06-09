@@ -136,6 +136,7 @@ end
     @test isempty(b.vectors)
     @test isempty(b.lines)
     @test isempty(b.arcs)
+
     b = Bloch()
     add_points!(b, hcat([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]))
     add_vectors!(b, [[1, 1, 0], [0, 1, 1]])
@@ -149,6 +150,9 @@ end
         @test false
         @info "Render threw unexpected error" exception=e
     end
+    b.vector_arrowsize = [0.7, 0.8, 1.5] # 1.5 is the length of arrow head (too long)
+    @test_throws ArgumentError render(b)
+
     b = Bloch()
     ψ₁ = normalize(basis(2, 0) + basis(2, 1))
     ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
@@ -167,14 +171,20 @@ end
     Pauli_Ops = [sigmax(), sigmay(), sigmaz()]
     ψ = rand_ket(2)
     ρ = rand_dm(2)
+    states = [ψ, ρ]
     x = basis(2, 0) + basis(2, 1)             # unnormalized Ket
     ρ1 = 0.3 * rand_dm(2) + 0.4 * rand_dm(2)  # unnormalized density operator
     ρ2 = Qobj(rand(ComplexF64, 2, 2))         # unnormalized and non-Hermitian Operator
-    add_states!(b, [ψ, ρ])
-    @test_logs (:warn,) (:warn,) (:warn,) (:warn,) add_states!(b, [x, ρ1, ρ2])
+    add_states!(b, states, kind = :vector)
+    add_states!(b, states, kind = :point)
+    @test length(b.vectors) == 2
+    @test length(b.points) == 1
     @test all(expect(Pauli_Ops, ψ) .≈ (b.vectors[1]))
     @test all(expect(Pauli_Ops, ρ) .≈ (b.vectors[2]))
+    @test all([b.vectors[j][k] ≈ b.points[1][k, j] for j in (1, 2) for k in (1, 2, 3)])
+    @test_logs (:warn,) (:warn,) (:warn,) (:warn,) add_states!(b, [x, ρ1, ρ2])
     @test length(b.vectors) == 5
+    @test_throws ArgumentError add_states!(b, states, kind = :wrong)
 
     th = range(0, 2π; length = 20)
     xp = cos.(th);

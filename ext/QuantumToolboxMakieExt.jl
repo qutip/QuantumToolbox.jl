@@ -34,8 +34,6 @@ import Makie:
     update_cam!,
     cam3d!
 
-import Makie.GeometryBasics: Tessellation
-
 @doc raw"""
     plot_wigner(
         library::Val{:Makie},
@@ -339,10 +337,7 @@ Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
-- `location`: Specifies where to display or save the rendered figure.
-  - If `nothing` (default), the figure is displayed interactively.
-  - If a file path (String), the figure is saved to the specified location.
-  - Other values depend on backend support.
+- `location::Union{GridPosition,Nothing}`: The location of the plot in the layout. If `nothing`, the plot is created in a new figure. Default is `nothing`.
 
 # Returns
 
@@ -351,13 +346,14 @@ Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 function QuantumToolbox.render(b::Bloch; location = nothing)
     fig, lscene = _setup_bloch_plot!(b, location)
     _draw_bloch_sphere!(b, lscene)
-    _draw_reference_circles!(b, lscene)
-    _draw_axes!(b, lscene)
-    _plot_points!(b, lscene)
+    _add_labels!(b, lscene)
+
+    # plot data fields in Bloch
+    _plot_vectors!(b, lscene)
     _plot_lines!(b, lscene)
     _plot_arcs!(b, lscene)
-    _plot_vectors!(b, lscene)
-    _add_labels!(b, lscene)
+    _plot_points!(b, lscene) # plot points at the end so that they will be on the very top (front) figure layer.
+
     return fig, lscene
 end
 
@@ -383,15 +379,15 @@ function _setup_bloch_plot!(b::Bloch, location)
     cam3d!(lscene.scene, center = false)
     cam = cameracontrols(lscene)
     cam.fov[] = 12 # Set field of view to 12 degrees
-    dist = 12 # Set distance from the camera to the Bloch sphere
+    dist = 12      # Set distance from the camera to the Bloch sphere
     update_cam!(lscene.scene, cam, deg2rad(b.view[1]), deg2rad(b.view[2]), dist)
     return fig, lscene
 end
 
 raw"""
-    _draw_bloch_sphere!(b, lscene)
+    _draw_bloch_sphere!(b::Bloch, lscene)
 
-Draw the translucent sphere representing the Bloch sphere surface.
+Draw the translucent sphere, axes, and reference circles representing the Bloch sphere surface.
 """
 function _draw_bloch_sphere!(b::Bloch, lscene)
     radius = 1.0f0
@@ -405,15 +401,34 @@ function _draw_bloch_sphere!(b::Bloch, lscene)
         transparency = true,
         rasterize = 3,
     )
-    θ_vals = range(0, π, 5)[1:(end-1)]
+
+    # X, Y, and Z axes
+    axes = [
+        [Point3f(1.0, 0, 0), Point3f(-1.0, 0, 0)],  # X-axis
+        [Point3f(0, 1.0, 0), Point3f(0, -1.0, 0)],  # Y-axis
+        [Point3f(0, 0, 1.0), Point3f(0, 0, -1.0)],  # Z-axis
+    ]
+    for points in axes
+        lines!(lscene, points; color = b.frame_color)
+    end
+
+    # highlight circles for XY and XZ planes
+    φ = range(0, 2π, length = 100)
+    lines!(lscene, [Point3f(cos(φi), sin(φi), 0) for φi in φ]; color = b.frame_color, linewidth = 1.0) # XY
+    lines!(lscene, [Point3f(cos(φi), 0, sin(φi)) for φi in φ]; color = b.frame_color, linewidth = 1.0) # XZ
+
+    # other curves of longitude (with polar angle φ and azimuthal angle θ)
     φ_curve = range(0, 2π, 600)
+    θ_vals = [1, 2, 3] * π / 4
     for θi in θ_vals
         x_line = radius * sin.(φ_curve) .* cos(θi)
         y_line = radius * sin.(φ_curve) .* sin(θi)
         z_line = radius * cos.(φ_curve)
         lines!(lscene, x_line, y_line, z_line; color = b.frame_color, alpha = b.frame_alpha)
     end
-    φ_vals = range(0, π, 6)
+
+    # other curves of latitude (with polar angle φ and azimuthal angle θ)
+    φ_vals = [1, 3] * π / 4  # missing `2` because XY plane has already be handled above
     θ_curve = range(0, 2π, 600)
     for ϕ in φ_vals
         x_ring = radius * sin(ϕ) .* cos.(θ_curve)
@@ -421,222 +436,11 @@ function _draw_bloch_sphere!(b::Bloch, lscene)
         z_ring = fill(radius * cos(ϕ), length(θ_curve))
         lines!(lscene, x_ring, y_ring, z_ring; color = b.frame_color, alpha = b.frame_alpha)
     end
+    return nothing
 end
 
 raw"""
-    _draw_reference_circles!(b::Bloch, lscene)
-
-Draw the three great circles `(XY, XZ planes)` on the Bloch sphere.
-
-# Arguments
-- `b::Bloch`: Bloch sphere object containing frame color
-- `lscene`: Makie LScene object for drawing
-
-Adds faint circular guidelines representing the three principal planes.
-"""
-function _draw_reference_circles!(b::Bloch, lscene)
-    wire_color = b.frame_color
-    φ = range(0, 2π, length = 100)
-    # XY, XZ circles
-    circles = [
-        [Point3f(cos(φi), sin(φi), 0) for φi in φ],  # XY
-        [Point3f(cos(φi), 0, sin(φi)) for φi in φ],  # XZ
-    ]
-    for circle in circles
-        lines!(lscene, circle; color = wire_color, linewidth = 1.0)
-    end
-end
-
-raw"""
-    _draw_axes!(b::Bloch, lscene)
-
-Draw the three principal axes `(x, y, z)` of the Bloch sphere.
-
-# Arguments
-- `b::Bloch`: Bloch sphere object containing axis color
-- `lscene`: Makie LScene object for drawing
-
-Creates visible axis lines extending slightly beyond the unit sphere.
-"""
-function _draw_axes!(b::Bloch, lscene)
-    axis_color = b.frame_color
-    axes = [
-        [Point3f(1.0, 0, 0), Point3f(-1.0, 0, 0)],  # X-axis
-        [Point3f(0, 1.0, 0), Point3f(0, -1.0, 0)],  # Y-axis
-        [Point3f(0, 0, 1.0), Point3f(0, 0, -1.0)],  # Z-axis
-    ]
-    for points in axes
-        lines!(lscene, points; color = axis_color)
-    end
-end
-
-raw"""
-    _plot_points!(b::Bloch, lscene)
-
-Plot all quantum state points on the Bloch sphere.
-
-# Arguments
-- `b::Bloch`: Contains point data and styling information
-- `lscene`: LScene object for plotting
-
-Handles both scatter points and line traces based on style specifications.
-"""
-function _plot_points!(b::Bloch, lscene)
-    for k in 1:length(b.points)
-        pts = b.points[k]
-        style = b.point_style[k]
-        alpha = b.point_alpha[k]
-        marker = b.point_marker[mod1(k, length(b.point_marker))]
-        N = size(pts, 2)
-
-        raw_x = pts[1, :]
-        raw_y = pts[2, :]
-        raw_z = pts[3, :]
-
-        ds = vec(sqrt.(sum(abs2, pts; dims = 1)))
-        if !all(isapprox.(ds, ds[1]; rtol = 1e-12))
-            indperm = sortperm(ds)
-        else
-            indperm = collect(1:N)
-        end
-        this_color = b.point_color[k]
-        if style == :m
-            defaults = b.point_default_color
-            L = length(defaults)
-            times = ceil(Int, N / L)
-            big_colors = repeat(b.point_default_color, times)[1:N]
-            big_colors = big_colors[indperm]
-            colors = big_colors
-        else
-            if this_color === nothing
-                defaults = b.point_default_color
-                colors = defaults[mod1(k, length(defaults))]
-            else
-                colors = this_color
-            end
-        end
-        if style in (:s, :m)
-            xs = raw_x[indperm]
-            ys = raw_y[indperm]
-            zs = raw_z[indperm]
-            scatter!(
-                lscene,
-                xs,
-                ys,
-                zs;
-                color = colors,
-                markersize = b.point_size[mod1(k, length(b.point_size))],
-                marker = marker,
-                transparency = alpha < 1.0,
-                alpha = alpha,
-                strokewidth = 0.0,
-            )
-
-        elseif style == :l
-            xs = raw_x
-            ys = raw_y
-            zs = raw_z
-            c = isa(colors, Vector) ? colors[1] : colors
-            lines!(lscene, xs, ys, zs; color = c, linewidth = 2.0, transparency = alpha < 1.0, alpha = alpha)
-        end
-    end
-end
-
-raw"""
-    _plot_lines!(b::Bloch, lscene)
-
-Draw all connecting lines between points on the Bloch sphere.
-
-# Arguments
-- `b::Bloch`: Contains line data and formatting
-- `lscene`: LScene object for drawing
-
-Processes line style specifications and color mappings.
-"""
-function _plot_lines!(b::Bloch, lscene)
-    color_map =
-        Dict("k" => :black, "r" => :red, "g" => :green, "b" => :blue, "c" => :cyan, "m" => :magenta, "y" => :yellow)
-    for (line, fmt) in b.lines
-        x, y, z = line
-        color_char = first(fmt)
-        color = get(color_map, color_char, :black)
-        linestyle = if occursin("--", fmt)
-            :dash
-        elseif occursin(":", fmt)
-            :dot
-        elseif occursin("-.", fmt)
-            :dashdot
-        else
-            :solid
-        end
-        lines!(lscene, x, y, z; color = color, linewidth = 1.0, linestyle = linestyle)
-    end
-end
-
-raw"""
-    _plot_arcs!(b::Bloch, lscene)
-
-Draw circular arcs connecting points on the Bloch sphere surface.
-
-# Arguments
-- `b::Bloch`: Contains arc data points
-- `lscene`: LScene object for drawing
-
-Calculates great circle arcs between specified points.
-"""
-function _plot_arcs!(b::Bloch, lscene)
-    for arc_pts in b.arcs
-        length(arc_pts) >= 2 || continue
-        v1 = normalize(arc_pts[1])
-        v2 = normalize(arc_pts[end])
-        n = normalize(cross(v1, v2))
-        θ = acos(clamp(dot(v1, v2), -1.0, 1.0))
-        if length(arc_pts) == 3
-            vm = normalize(arc_pts[2])
-            dot(cross(v1, vm), n) < 0 && (θ -= 2π)
-        end
-        t_range = range(0, θ, length = 100)
-        arc_points = [Point3f((v1 * cos(t) + cross(n, v1) * sin(t))) for t in t_range]
-        lines!(lscene, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
-    end
-end
-
-raw"""
-    _plot_vectors!(b::Bloch, lscene)
-
-Draw vectors from origin representing quantum states.
-
-# Arguments
-- `b::Bloch`: Contains vector data
-- `lscene`: LScene object for drawing
-
-Scales vectors appropriately and adds `3D` arrow markers.
-"""
-function _plot_vectors!(b::Bloch, lscene)
-    isempty(b.vectors) && return
-    arrowsize_vec = Vec3f(b.vector_arrowsize...)
-    r = 1.0
-    for (i, v) in enumerate(b.vectors)
-        color = get(b.vector_color, i, RGBAf(0.2, 0.5, 0.8, 0.9))
-        vec = Vec3f(v...)
-        length = norm(vec)
-        max_length = r * 0.90
-        vec = length > max_length ? (vec/length) * max_length : vec
-        arrows!(
-            lscene,
-            [Point3f(0, 0, 0)],
-            [vec],
-            color = color,
-            linewidth = b.vector_width,
-            arrowsize = arrowsize_vec,
-            arrowcolor = color,
-            rasterize = 3,
-        )
-    end
-end
-
-raw"""
-    _add_labels!(lscene)
+    _add_labels!(b::Bloch, lscene)
 
 Add axis labels and state labels to the Bloch sphere.
 
@@ -704,6 +508,183 @@ function _add_labels!(b::Bloch, lscene)
         fontsize = label_size,
         align = (:center, :center),
     )
+    return nothing
+end
+
+raw"""
+    _plot_points!(b::Bloch, lscene)
+
+Plot all quantum state points on the Bloch sphere.
+
+# Arguments
+- `b::Bloch`: Contains point data and styling information
+- `lscene`: LScene object for plotting
+
+Handles both scatter points and line traces based on style specifications.
+"""
+function _plot_points!(b::Bloch, lscene)
+    isempty(b.points) && return nothing
+    for k in 1:length(b.points)
+        pts = b.points[k]
+        style = b.point_style[k]
+        alpha = b.point_alpha[k]
+        marker = b.point_marker[mod1(k, length(b.point_marker))]
+        N = size(pts, 2)
+
+        raw_x = pts[1, :]
+        raw_y = pts[2, :]
+        raw_z = pts[3, :]
+
+        ds = vec(sqrt.(sum(abs2, pts; dims = 1)))
+        if !all(isapprox.(ds, ds[1]; rtol = 1e-12))
+            indperm = sortperm(ds)
+        else
+            indperm = collect(1:N)
+        end
+        this_color = b.point_color[k]
+        if style == :m
+            defaults = b.point_default_color
+            L = length(defaults)
+            times = ceil(Int, N / L)
+            big_colors = repeat(b.point_default_color, times)[1:N]
+            big_colors = big_colors[indperm]
+            colors = big_colors
+        else
+            if this_color === nothing
+                defaults = b.point_default_color
+                colors = defaults[mod1(k, length(defaults))]
+            else
+                colors = this_color
+            end
+        end
+        if style in (:s, :m)
+            xs = raw_x[indperm]
+            ys = raw_y[indperm]
+            zs = raw_z[indperm]
+            scatter!(
+                lscene,
+                xs,
+                ys,
+                zs;
+                color = colors,
+                markersize = b.point_size[mod1(k, length(b.point_size))],
+                marker = marker,
+                transparency = alpha < 1.0,
+                alpha = alpha,
+                strokewidth = 0.0,
+            )
+
+        elseif style == :l
+            xs = raw_x
+            ys = raw_y
+            zs = raw_z
+            c = isa(colors, Vector) ? colors[1] : colors
+            lines!(lscene, xs, ys, zs; color = c, linewidth = 2.0, transparency = alpha < 1.0, alpha = alpha)
+        end
+    end
+    return nothing
+end
+
+raw"""
+    _plot_lines!(b::Bloch, lscene)
+
+Draw all connecting lines between points on the Bloch sphere.
+
+# Arguments
+- `b::Bloch`: Contains line data and formatting
+- `lscene`: LScene object for drawing
+
+Processes line style specifications and color mappings.
+"""
+function _plot_lines!(b::Bloch, lscene)
+    isempty(b.lines) && return nothing
+    color_map =
+        Dict("k" => :black, "r" => :red, "g" => :green, "b" => :blue, "c" => :cyan, "m" => :magenta, "y" => :yellow)
+    for (line, fmt) in b.lines
+        x, y, z = line
+        color_char = first(fmt)
+        color = get(color_map, color_char, :black)
+        linestyle = if occursin("--", fmt)
+            :dash
+        elseif occursin(":", fmt)
+            :dot
+        elseif occursin("-.", fmt)
+            :dashdot
+        else
+            :solid
+        end
+        lines!(lscene, x, y, z; color = color, linewidth = 1.0, linestyle = linestyle)
+    end
+    return nothing
+end
+
+raw"""
+    _plot_arcs!(b::Bloch, lscene)
+
+Draw circular arcs connecting points on the Bloch sphere surface.
+
+# Arguments
+- `b::Bloch`: Contains arc data points
+- `lscene`: LScene object for drawing
+
+Calculates great circle arcs between specified points.
+"""
+function _plot_arcs!(b::Bloch, lscene)
+    isempty(b.arcs) && return nothing
+    for arc_pts in b.arcs
+        length(arc_pts) >= 2 || continue
+        v1 = normalize(arc_pts[1])
+        v2 = normalize(arc_pts[end])
+        n = normalize(cross(v1, v2))
+        θ = acos(clamp(dot(v1, v2), -1.0, 1.0))
+        if length(arc_pts) == 3
+            vm = normalize(arc_pts[2])
+            dot(cross(v1, vm), n) < 0 && (θ -= 2π)
+        end
+        t_range = range(0, θ, length = 100)
+        arc_points = [Point3f((v1 * cos(t) + cross(n, v1) * sin(t))) for t in t_range]
+        lines!(lscene, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
+    end
+    return nothing
+end
+
+raw"""
+    _plot_vectors!(b::Bloch, lscene)
+
+Draw vectors from origin representing quantum states.
+
+# Arguments
+- `b::Bloch`: Contains vector data
+- `lscene`: LScene object for drawing
+
+Scales vectors appropriately and adds `3D` arrow markers.
+"""
+function _plot_vectors!(b::Bloch, lscene)
+    isempty(b.vectors) && return nothing
+
+    arrow_head_length = b.vector_arrowsize[3]
+    for (i, v) in enumerate(b.vectors)
+        color = get(b.vector_color, i, RGBAf(0.2, 0.5, 0.8, 0.9))
+        nv = norm(v)
+        (arrow_head_length < nv) || throw(
+            ArgumentError(
+                "The length of vector arrow head (Bloch.vector_arrowsize[3]=$arrow_head_length) should be shorter than vector norm: $nv",
+            ),
+        )
+
+        # multiply by the following factor makes the end point of arrow head represent the actual vector position.
+        vec = (1 - arrow_head_length / nv) * Vec3f(v...)
+        arrows!(
+            lscene,
+            [Point3f(0, 0, 0)],
+            [vec],
+            color = color,
+            linewidth = b.vector_width,
+            arrowsize = Vec3f(b.vector_arrowsize...),
+            arrowcolor = color,
+            rasterize = 3,
+        )
+    end
     return nothing
 end
 

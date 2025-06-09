@@ -65,24 +65,24 @@ plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T,S
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))
 
 @doc raw"""
-    Bloch()
+    Bloch(kwargs...)
 
-A structure representing a Bloch sphere visualization for quantum states.
+A structure representing a Bloch sphere visualization for quantum states. Available keyword arguments are listed in the following fields.
 
-# Fields
+# Fields:
 
 ## Data storage
 - `points::Vector{Matrix{Float64}}`: Points to plot on the Bloch sphere (3D coordinates)
 - `vectors::Vector{Vector{Float64}}}`: Vectors to plot on the Bloch sphere
-- `lines::Vector{Tuple{Vector{Vector{Float64}},String,Dict{Any,Any}}}`: Lines to draw on the sphere (points, style, properties)
+- `lines::Vector{Tuple{Vector{Vector{Float64}},String}}`: Lines to draw on the sphere with each line given as `([start_pt, end_pt], line_format)`
 - `arcs::Vector{Vector{Vector{Float64}}}}`: Arcs to draw on the sphere
 
 ## Style properties
 
 - `font_color::String`: Color of axis labels and text
-- `font_size::Int`: Font size for labels. Default: `15`
-- `frame_alpha::Float64`: Transparency of the wireframe
-- `frame_color::String`: Color of the wireframe
+- `font_size::Int`: Font size for labels. Default: `20`
+- `frame_alpha::Float64`: Transparency of the wire frame
+- `frame_color::String`: Color of the wire frame
 
 ## Point properties
 
@@ -98,17 +98,18 @@ A structure representing a Bloch sphere visualization for quantum states.
 - `sphere_color::String`: Color of Bloch sphere surface
 - `sphere_alpha::Float64`: Transparency of sphere surface. Default: `0.2`
 
-# Vector properties
+## Vector properties
 
-- `vector_color`::Vector{String}: Colors for vectors
-- `vector_width`::Float64: Width of vectors
-- `vector_arrowsize`::Vector{Float64}: Arrow size parameters as [head length, head width, stem width]
+- `vector_color::Vector{String}`: Colors for vectors
+- `vector_width::Float64`: Width of vectors
+- `vector_arrowsize::Vector{Float64}`: Scales the size of the arrow head. The first two elements scale the radius (in `x/y` direction) and the last one is the length of the cone.
 
 ## Layout properties
 
 - `view::Vector{Int}`: Azimuthal and elevation viewing angles in degrees. Default: `[30, 30]`
 
 ## Label properties
+
 - `xlabel::Vector{AbstractString}`: Labels for x-axis. Default: `[L"x", ""]`
 - `xlpos::Vector{Float64}`: Positions of x-axis labels. Default: `[1.2, -1.2]`
 - `ylabel::Vector{AbstractString}`: Labels for y-axis. Default: `[L"y", ""]`
@@ -122,7 +123,7 @@ A structure representing a Bloch sphere visualization for quantum states.
     lines::Vector{Tuple{Vector{Vector{Float64}},String}} = Vector{Tuple{Vector{Vector{Float64}},String}}()
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
     font_color::String = "black"
-    font_size::Int = 15
+    font_size::Int = 20
     frame_alpha::Float64 = 0.1
     frame_color::String = "gray"
     point_default_color::Vector{String} = ["blue", "red", "green", "#CC6600"]
@@ -202,29 +203,29 @@ Add a single point to the Bloch sphere visualization.
 
 # Arguments
 - `b::Bloch`: The Bloch sphere object to modify
-- `pnt::Vector{Float64}`: A 3D point to add
+- `pnt::Vector{<:Real}`: A 3D point to add
 - `meth::Symbol=:s`: Display method (`:s` for single point, `:m` for multiple, `:l` for line)
 - `color`: Color of the point (defaults to first default color if nothing)
 - `alpha=1.0`: Transparency (`1.0` means opaque and `0.0` means transparent)
 """
-function add_points!(b::Bloch, pnt::Vector{Float64}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+function add_points!(b::Bloch, pnt::Vector{<:Real}; meth::Symbol = :s, color = nothing, alpha = 1.0)
     return add_points!(b, reshape(pnt, 3, 1); meth, color, alpha)
 end
-function add_points!(b::Bloch, pnts::Vector{Vector{Float64}}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+function add_points!(b::Bloch, pnts::Vector{<:Vector{<:Real}}; meth::Symbol = :s, color = nothing, alpha = 1.0)
     return add_points!(b, Matrix(hcat(pnts...)'); meth, color, alpha)
 end
 
 @doc raw"""
-    add_points!(b::Bloch, pnts::Matrix{Float64}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+    add_points!(b::Bloch, pnts::Matrix{<:Real}; meth::Symbol = :s, color = nothing, alpha = 1.0)
 
 Add multiple points to the Bloch sphere visualization.
 
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object to modify
-- `pnts::Matrix{Float64}`: `3×N` matrix of points (each column is a point)
+- `pnts::Matrix{<:Real}`: `3×N` matrix of points (each column is a point)
 - `meth::Symbol=:s`: Display method (`:s` for single point, `:m` for multiple, `:l` for line)
-- `color`: Color of the points (defaults to first default color if nothing)
+- `color`: Color of the points (defaults to first default color if `nothing`)
 - `alpha=1.0`: Transparency (`1.0` means opaque and `0.0` means transparent)
 ```
 """
@@ -380,13 +381,14 @@ function add_arc!(
 end
 
 @doc raw"""
-    add_states!(b::Bloch, states::Vector{QuantumObject})
+    add_states!(b::Bloch, states::Vector{QuantumObject}; kind::Symbol = :vector, kwargs...)
 
 Add one or more quantum states to the Bloch sphere visualization by converting them into Bloch vectors.
 
 # Arguments
 - `b::Bloch`: The Bloch sphere object to modify
 - `states::Vector{QuantumObject}`: One or more quantum states ([`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref))
+- `kind::Symbol`: Type of object to plot (can be either `:vector` or `:point`). Default: `:vector`
 
 # Example
 
@@ -398,16 +400,19 @@ b = Bloch();
 add_states!(b, [x, y, z])
 ```
 """
-function add_states!(b::Bloch, states::Vector{<:QuantumObject})
+function add_states!(b::Bloch, states::Vector{<:QuantumObject}; kind::Symbol = :vector, kwargs...)
     vecs = map(state -> _state_to_bloch(state), states)
-    append!(b.vectors, vecs)
-    return b.vectors
+    if kind == :vector
+        add_vectors!(b, vecs)
+    elseif kind == :point
+        add_points!(b, hcat(vecs...), kwargs...)
+    else
+        throw(ArgumentError("Invalid kind = :$kind"))
+    end
+    return nothing
 end
-
-function add_states!(b::Bloch, state::QuantumObject)
-    push!(b.vectors, _state_to_bloch(state))
-    return b.vectors
-end
+add_states!(b::Bloch, state::QuantumObject; kind::Symbol = :vector, kwargs...) =
+    add_states!(b, [state], kind = kind, kwargs...)
 
 _state_to_bloch(state::QuantumObject{Ket}) = _ket_to_bloch(state)
 _state_to_bloch(state::QuantumObject{Bra}) = _ket_to_bloch(state')
@@ -515,10 +520,7 @@ Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
-- `location`: Specifies where to display or save the rendered figure.
-  - If `nothing` (default), the figure is displayed interactively.
-  - If a file path (String), the figure is saved to the specified location.
-  - Other values depend on backend support.
+- `location::Union{GridPosition,Nothing}`: The location of the plot in the layout. If `nothing`, the plot is created in a new figure. Default is `nothing`.
 
 # Returns
 
