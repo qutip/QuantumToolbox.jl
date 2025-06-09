@@ -121,7 +121,7 @@ yp = sin.(th)
 zp = zeros(20)
 pnts = [xp, yp, zp]
 add_points!(b, pnts)
-fig, ax = render(b)
+fig, lscene = render(b)
 fig
 ```
 
@@ -132,7 +132,7 @@ xz = zeros(20)
 yz = sin.(th)
 zz = cos.(th)
 add_points!(b, [xz, yz, zz])
-fig, ax = render(b)
+fig, lscene = render(b)
 fig
 ```
 
@@ -148,7 +148,7 @@ yp = sin.(th)
 zp = zeros(20)
 pnts = [xp, yp, zp]
 add_points!(b, pnts, meth=:m) # add `meth=:m` to signify 'multi' colored points
-fig, ax = render(b)
+fig, lscene = render(b)
 fig
 ```
 
@@ -157,7 +157,7 @@ Now, the data points cycle through a variety of predefined colors. Now lets add 
 ```@example Bloch_sphere_rendering
 pnts = [xz, yz, zz]
 add_points!(b, pnts) # no `meth=:m`
-fig, ax = render(b)
+fig, lscene = render(b)
 fig
 ```
 

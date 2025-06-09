@@ -81,9 +81,8 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 - `font_color::String`: Color of axis labels and text
 - `font_size::Int`: Font size for labels. Default: `15`
-- `frame_alpha::Float64`: Transparency of the frame background
-- `frame_color::String`: Background color of the frame
-- `frame_limit::Float64`: Axis limits for the 3D frame (symmetric around origin)
+- `frame_alpha::Float64`: Transparency of the wireframe
+- `frame_color::String`: Color of the wireframe
 
 ## Point properties
 
@@ -111,11 +110,11 @@ A structure representing a Bloch sphere visualization for quantum states.
 
 ## Label properties
 - `xlabel::Vector{AbstractString}`: Labels for x-axis. Default: `[L"x", ""]`
-- `xlpos::Vector{Float64}`: Positions of x-axis labels. Default: `[1.0, -1.0]`
+- `xlpos::Vector{Float64}`: Positions of x-axis labels. Default: `[1.2, -1.2]`
 - `ylabel::Vector{AbstractString}`: Labels for y-axis. Default: `[L"y", ""]`
-- `ylpos::Vector{Float64}`: Positions of y-axis labels. Default: `[1.0, -1.0]`
+- `ylpos::Vector{Float64}`: Positions of y-axis labels. Default: `[1.2, -1.2]`
 - `zlabel::Vector{AbstractString}`: Labels for z-axis. Default: `[L"|0\rangle", L"|1\rangle"]`
-- `zlpos::Vector{Float64}`: Positions of z-axis labels. Default: `[1.0, -1.0]`
+- `zlpos::Vector{Float64}`: Positions of z-axis labels. Default: `[1.2, -1.2]`
 """
 @kwdef mutable struct Bloch
     points::Vector{Matrix{Float64}} = Vector{Matrix{Float64}}()
@@ -126,7 +125,6 @@ A structure representing a Bloch sphere visualization for quantum states.
     font_size::Int = 15
     frame_alpha::Float64 = 0.1
     frame_color::String = "gray"
-    frame_limit::Float64 = 1.2
     point_default_color::Vector{String} = ["blue", "red", "green", "#CC6600"]
     point_color::Vector{Union{Nothing,String}} = Union{Nothing,String}[]
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
@@ -140,11 +138,11 @@ A structure representing a Bloch sphere visualization for quantum states.
     vector_arrowsize::Vector{Float64} = [0.07, 0.08, 0.08]
     view::Vector{Int} = [30, 30]
     xlabel::Vector{AbstractString} = [L"x", ""]
-    xlpos::Vector{Float64} = [1.0, -1.0]
+    xlpos::Vector{Float64} = [1.2, -1.2]
     ylabel::Vector{AbstractString} = [L"y", ""]
-    ylpos::Vector{Float64} = [1.0, -1.0]
+    ylpos::Vector{Float64} = [1.2, -1.2]
     zlabel::Vector{AbstractString} = [L"|0\rangle", L"|1\rangle"]
-    zlpos::Vector{Float64} = [1.0, -1.0]
+    zlpos::Vector{Float64} = [1.2, -1.2]
 end
 
 const BLOCH_DATA_FIELDS = (:points, :vectors, :lines, :arcs)
@@ -524,7 +522,7 @@ Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 
 # Returns
 
-- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting. These can be further manipulated or saved by the user.
+- A tuple `(fig, lscene)` where `fig` is the figure object and `lscene` is the `LScene` object used for plotting. These can be further manipulated or saved by the user.
 """
 function render end
 

@@ -7,6 +7,7 @@ import LinearAlgebra: cross, deg2rad, normalize, size
 import Makie:
     Axis,
     Axis3,
+    LScene,
     Colorbar,
     Figure,
     GridLayout,
@@ -28,7 +29,12 @@ import Makie:
     RGBf,
     Vec3f,
     Point3f,
-    NoShading
+    NoShading,
+    cameracontrols,
+    update_cam!,
+    cam3d!
+
+import Makie.GeometryBasics: Tessellation
 
 @doc raw"""
     plot_wigner(
@@ -340,23 +346,23 @@ Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 
 # Returns
 
-- A tuple `(fig, axis)` where `fig` is the figure object and `axis` is the axis object used for plotting. These can be further manipulated or saved by the user.
+- A tuple `(fig, lscene)` where `fig` is the figure object and `lscene` is the LScene object used for plotting. These can be further manipulated or saved by the user.
 """
 function QuantumToolbox.render(b::Bloch; location = nothing)
-    fig, ax = _setup_bloch_plot!(b, location)
-    _draw_bloch_sphere!(b, ax)
-    _draw_reference_circles!(ax)
-    _draw_axes!(ax)
-    _plot_points!(b, ax)
-    _plot_lines!(b, ax)
-    _plot_arcs!(b, ax)
-    _plot_vectors!(b, ax)
-    _add_labels!(b, ax)
-    return fig, ax
+    fig, lscene = _setup_bloch_plot!(b, location)
+    _draw_bloch_sphere!(b, lscene)
+    _draw_reference_circles!(b, lscene)
+    _draw_axes!(b, lscene)
+    _plot_points!(b, lscene)
+    _plot_lines!(b, lscene)
+    _plot_arcs!(b, lscene)
+    _plot_vectors!(b, lscene)
+    _add_labels!(b, lscene)
+    return fig, lscene
 end
 
 raw"""
-    _setup_bloch_plot!(b::Bloch, location) -> (fig, ax)
+    _setup_bloch_plot!(b::Bloch, location) -> (fig, lscene)
 
 Initialize the figure and `3D` axis for Bloch sphere visualization.
 
@@ -366,138 +372,116 @@ Initialize the figure and `3D` axis for Bloch sphere visualization.
 
 # Returns
 - `fig`: Created Makie figure
-- `ax`: Configured Axis3 object
+- `lscene`: Configured LScene object
 
 Sets up the `3D` coordinate system with appropriate limits and view angles.
 """
 function _setup_bloch_plot!(b::Bloch, location)
     fig, location = _getFigAndLocation(location)
-    bg_color = parse(RGBf, b.frame_color)
-    frame_color = RGBAf(bg_color, b.frame_alpha)
-    ax = Axis3(
-        location;
-        aspect = :data,
-        limits = (-b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit, -b.frame_limit, b.frame_limit),
-        xgridvisible = false,
-        ygridvisible = false,
-        zgridvisible = false,
-        xticklabelsvisible = false,
-        yticklabelsvisible = false,
-        zticklabelsvisible = false,
-        xticksvisible = false,
-        yticksvisible = false,
-        zticksvisible = false,
-        xlabel = "",
-        ylabel = "",
-        zlabel = "",
-        backgroundcolor = frame_color,
-        xypanelvisible = false,
-        xzpanelvisible = false,
-        yzpanelvisible = false,
-        xspinesvisible = false,
-        yspinesvisible = false,
-        zspinesvisible = false,
-        protrusions = (0, 0, 0, 0),
-        perspectiveness = 0.2,
-        viewmode = :fit,
-    )
+    lscene = LScene(location, show_axis = false, scenekw = (clear = true,))
     length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
-    ax.azimuth[] = deg2rad(b.view[1])
-    ax.elevation[] = deg2rad(b.view[2])
-    return fig, ax
+    cam3d!(lscene.scene, center = false)
+    cam = cameracontrols(lscene)
+    cam.fov[] = 12 # Set field of view to 12 degrees
+    dist = 12 # Set distance from the camera to the Bloch sphere
+    update_cam!(lscene.scene, cam, deg2rad(b.view[1]), deg2rad(b.view[2]), dist)
+    return fig, lscene
 end
 
 raw"""
-    _draw_bloch_sphere!(b, ax)
+    _draw_bloch_sphere!(b, lscene)
 
 Draw the translucent sphere representing the Bloch sphere surface.
 """
-function _draw_bloch_sphere!(b::Bloch, ax)
-    n_lon = 4
-    n_lat = 4
+function _draw_bloch_sphere!(b::Bloch, lscene)
     radius = 1.0f0
-    base_color = parse(RGBf, b.sphere_color)
-    sphere_color = RGBAf(base_color, b.sphere_alpha)
     sphere_mesh = Sphere(Point3f(0), radius)
-    mesh!(ax, sphere_mesh; color = sphere_color, shading = NoShading, transparency = true, rasterize = 3)
-    θ_vals = range(0.0f0, 2π, length = n_lon + 1)[1:(end-1)]
-    φ_curve = range(0.0f0, π, length = 600)
-    line_alpha = max(0.05, b.sphere_alpha * 0.5)
+    mesh!(
+        lscene,
+        sphere_mesh;
+        color = b.sphere_color,
+        alpha = b.sphere_alpha,
+        shading = NoShading,
+        transparency = true,
+        rasterize = 3,
+    )
+    θ_vals = range(0, π, 5)[1:(end-1)]
+    φ_curve = range(0, 2π, 600)
     for θi in θ_vals
-        x_line = [radius * sin(ϕ) * cos(θi) for ϕ in φ_curve]
-        y_line = [radius * sin(ϕ) * sin(θi) for ϕ in φ_curve]
-        z_line = [radius * cos(ϕ) for ϕ in φ_curve]
-        lines!(ax, x_line, y_line, z_line; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
+        x_line = radius * sin.(φ_curve) .* cos(θi)
+        y_line = radius * sin.(φ_curve) .* sin(θi)
+        z_line = radius * cos.(φ_curve)
+        lines!(lscene, x_line, y_line, z_line; color = b.frame_color, alpha = b.frame_alpha)
     end
-    φ_vals = range(0.0f0, π, length = n_lat + 2)
-    θ_curve = range(0.0f0, 2π, length = 600)
+    φ_vals = range(0, π, 6)
+    θ_curve = range(0, 2π, 600)
     for ϕ in φ_vals
-        x_ring = [radius * sin(ϕ) * cos(θi) for θi in θ_curve]
-        y_ring = [radius * sin(ϕ) * sin(θi) for θi in θ_curve]
+        x_ring = radius * sin(ϕ) .* cos.(θ_curve)
+        y_ring = radius * sin(ϕ) .* sin.(θ_curve)
         z_ring = fill(radius * cos(ϕ), length(θ_curve))
-        lines!(ax, x_ring, y_ring, z_ring; color = RGBAf(0.5, 0.5, 0.5, line_alpha), linewidth = 1, transparency = true)
+        lines!(lscene, x_ring, y_ring, z_ring; color = b.frame_color, alpha = b.frame_alpha)
     end
 end
 
 raw"""
-    _draw_reference_circles!(ax)
+    _draw_reference_circles!(b::Bloch, lscene)
 
-Draw the three great circles `(XY, YZ, XZ planes)` on the Bloch sphere.
+Draw the three great circles `(XY, XZ planes)` on the Bloch sphere.
 
 # Arguments
-- `ax`: Makie Axis3 object for drawing
+- `b::Bloch`: Bloch sphere object containing frame color
+- `lscene`: Makie LScene object for drawing
 
 Adds faint circular guidelines representing the three principal planes.
 """
-function _draw_reference_circles!(ax)
-    wire_color = RGBAf(0.5, 0.5, 0.5, 0.4)
+function _draw_reference_circles!(b::Bloch, lscene)
+    wire_color = b.frame_color
     φ = range(0, 2π, length = 100)
-    # XY, YZ, XZ circles
+    # XY, XZ circles
     circles = [
         [Point3f(cos(φi), sin(φi), 0) for φi in φ],  # XY
-        [Point3f(0, cos(φi), sin(φi)) for φi in φ],  # YZ
         [Point3f(cos(φi), 0, sin(φi)) for φi in φ],  # XZ
     ]
     for circle in circles
-        lines!(ax, circle; color = wire_color, linewidth = 1.0)
+        lines!(lscene, circle; color = wire_color, linewidth = 1.0)
     end
 end
 
 raw"""
-    _draw_axes!(ax)
+    _draw_axes!(b::Bloch, lscene)
 
 Draw the three principal axes `(x, y, z)` of the Bloch sphere.
 
 # Arguments
-- `ax`: Makie Axis3 object for drawing
+- `b::Bloch`: Bloch sphere object containing axis color
+- `lscene`: Makie LScene object for drawing
 
 Creates visible axis lines extending slightly beyond the unit sphere.
 """
-function _draw_axes!(ax)
-    axis_color = RGBAf(0.3, 0.3, 0.3, 0.8)
-    axis_width = 0.8
+function _draw_axes!(b::Bloch, lscene)
+    axis_color = b.frame_color
     axes = [
-        ([Point3f(1.0, 0, 0), Point3f(-1.0, 0, 0)], "x"),  # X-axis
-        ([Point3f(0, 1.0, 0), Point3f(0, -1.0, 0)], "y"),  # Y-axis
-        ([Point3f(0, 0, 1.0), Point3f(0, 0, -1.0)], "z"),  # Z-axis
+        [Point3f(1.0, 0, 0), Point3f(-1.0, 0, 0)],  # X-axis
+        [Point3f(0, 1.0, 0), Point3f(0, -1.0, 0)],  # Y-axis
+        [Point3f(0, 0, 1.0), Point3f(0, 0, -1.0)],  # Z-axis
     ]
-    for (points, _) in axes
-        lines!(ax, points; color = axis_color, linewidth = axis_width)
+    for points in axes
+        lines!(lscene, points; color = axis_color)
     end
 end
 
 raw"""
-    _plot_points!(b::Bloch, ax)
+    _plot_points!(b::Bloch, lscene)
 
 Plot all quantum state points on the Bloch sphere.
 
 # Arguments
 - `b::Bloch`: Contains point data and styling information
-- `ax`: Axis3 object for plotting
+- `lscene`: LScene object for plotting
 
 Handles both scatter points and line traces based on style specifications.
 """
-function _plot_points!(b::Bloch, ax)
+function _plot_points!(b::Bloch, lscene)
     for k in 1:length(b.points)
         pts = b.points[k]
         style = b.point_style[k]
@@ -536,7 +520,7 @@ function _plot_points!(b::Bloch, ax)
             ys = raw_y[indperm]
             zs = raw_z[indperm]
             scatter!(
-                ax,
+                lscene,
                 xs,
                 ys,
                 zs;
@@ -553,23 +537,23 @@ function _plot_points!(b::Bloch, ax)
             ys = raw_y
             zs = raw_z
             c = isa(colors, Vector) ? colors[1] : colors
-            lines!(ax, xs, ys, zs; color = c, linewidth = 2.0, transparency = alpha < 1.0, alpha = alpha)
+            lines!(lscene, xs, ys, zs; color = c, linewidth = 2.0, transparency = alpha < 1.0, alpha = alpha)
         end
     end
 end
 
 raw"""
-    _plot_lines!(b::Bloch, ax)
+    _plot_lines!(b::Bloch, lscene)
 
 Draw all connecting lines between points on the Bloch sphere.
 
 # Arguments
 - `b::Bloch`: Contains line data and formatting
-- `ax`: Axis3 object for drawing
+- `lscene`: LScene object for drawing
 
 Processes line style specifications and color mappings.
 """
-function _plot_lines!(b::Bloch, ax)
+function _plot_lines!(b::Bloch, lscene)
     color_map =
         Dict("k" => :black, "r" => :red, "g" => :green, "b" => :blue, "c" => :cyan, "m" => :magenta, "y" => :yellow)
     for (line, fmt) in b.lines
@@ -585,22 +569,22 @@ function _plot_lines!(b::Bloch, ax)
         else
             :solid
         end
-        lines!(ax, x, y, z; color = color, linewidth = 1.0, linestyle = linestyle)
+        lines!(lscene, x, y, z; color = color, linewidth = 1.0, linestyle = linestyle)
     end
 end
 
 raw"""
-    _plot_arcs!(b::Bloch, ax)
+    _plot_arcs!(b::Bloch, lscene)
 
 Draw circular arcs connecting points on the Bloch sphere surface.
 
 # Arguments
 - `b::Bloch`: Contains arc data points
-- `ax`: Axis3 object for drawing
+- `lscene`: LScene object for drawing
 
 Calculates great circle arcs between specified points.
 """
-function _plot_arcs!(b::Bloch, ax)
+function _plot_arcs!(b::Bloch, lscene)
     for arc_pts in b.arcs
         length(arc_pts) >= 2 || continue
         v1 = normalize(arc_pts[1])
@@ -613,22 +597,22 @@ function _plot_arcs!(b::Bloch, ax)
         end
         t_range = range(0, θ, length = 100)
         arc_points = [Point3f((v1 * cos(t) + cross(n, v1) * sin(t))) for t in t_range]
-        lines!(ax, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
+        lines!(lscene, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
     end
 end
 
 raw"""
-    _plot_vectors!(b::Bloch, ax)
+    _plot_vectors!(b::Bloch, lscene)
 
 Draw vectors from origin representing quantum states.
 
 # Arguments
 - `b::Bloch`: Contains vector data
-- `ax`: Axis3 object for drawing
+- `lscene`: LScene object for drawing
 
 Scales vectors appropriately and adds `3D` arrow markers.
 """
-function _plot_vectors!(b::Bloch, ax)
+function _plot_vectors!(b::Bloch, lscene)
     isempty(b.vectors) && return
     arrowsize_vec = Vec3f(b.vector_arrowsize...)
     r = 1.0
@@ -639,7 +623,7 @@ function _plot_vectors!(b::Bloch, ax)
         max_length = r * 0.90
         vec = length > max_length ? (vec/length) * max_length : vec
         arrows!(
-            ax,
+            lscene,
             [Point3f(0, 0, 0)],
             [vec],
             color = color,
@@ -652,16 +636,16 @@ function _plot_vectors!(b::Bloch, ax)
 end
 
 raw"""
-    _add_labels!(ax)
+    _add_labels!(lscene)
 
 Add axis labels and state labels to the Bloch sphere.
 
 # Arguments
-- `ax`: Axis3 object for text placement
+- `lscene`: LScene object for text placement
 
 Positions standard labels `(x, y, |0⟩, |1⟩)` at appropriate locations.
 """
-function _add_labels!(b::Bloch, ax)
+function _add_labels!(b::Bloch, lscene)
     length(b.xlabel) == 2 || throw(ArgumentError("The length of `Bloch.xlabel` must be 2."))
     length(b.ylabel) == 2 || throw(ArgumentError("The length of `Bloch.ylabel` must be 2."))
     length(b.zlabel) == 2 || throw(ArgumentError("The length of `Bloch.zlabel` must be 2."))
@@ -671,52 +655,51 @@ function _add_labels!(b::Bloch, ax)
 
     label_color = parse(RGBf, b.font_color)
     label_size = b.font_size
-    offset_scale = b.frame_limit
 
     (b.xlabel[1] == "") || text!(
-        ax,
+        lscene,
         b.xlabel[1],
-        position = Point3f(offset_scale * b.xlpos[1], 0, 0),
+        position = Point3f(b.xlpos[1], 0, 0),
         color = label_color,
         fontsize = label_size,
         align = (:center, :center),
     )
     (b.xlabel[2] == "") || text!(
-        ax,
+        lscene,
         b.xlabel[2],
-        position = Point3f(offset_scale * b.xlpos[2], 0, 0),
+        position = Point3f(b.xlpos[2], 0, 0),
         color = label_color,
         fontsize = label_size,
         align = (:center, :center),
     )
     (b.ylabel[1] == "") || text!(
-        ax,
+        lscene,
         b.ylabel[1],
-        position = Point3f(0, offset_scale * b.ylpos[1], 0),
+        position = Point3f(0, b.ylpos[1], 0),
         color = label_color,
         fontsize = label_size,
         align = (:center, :center),
     )
     (b.ylabel[2] == "") || text!(
-        ax,
+        lscene,
         b.ylabel[2],
-        position = Point3f(0, offset_scale * b.ylpos[2], 0),
+        position = Point3f(0, b.ylpos[2], 0),
         color = label_color,
         fontsize = label_size,
         align = (:center, :center),
     )
     (b.zlabel[1] == "") || text!(
-        ax,
+        lscene,
         b.zlabel[1],
-        position = Point3f(0, 0, offset_scale * b.zlpos[1]),
+        position = Point3f(0, 0, b.zlpos[1]),
         color = label_color,
         fontsize = label_size,
         align = (:center, :center),
     )
     (b.zlabel[2] == "") || text!(
-        ax,
+        lscene,
         b.zlabel[2],
-        position = Point3f(0, 0, offset_scale * b.zlpos[2]),
+        position = Point3f(0, 0, b.zlpos[2]),
         color = label_color,
         fontsize = label_size,
         align = (:center, :center),
