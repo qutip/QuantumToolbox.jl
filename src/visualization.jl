@@ -69,7 +69,7 @@ plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T,S
 
 A structure representing a Bloch sphere visualization for quantum states. Available keyword arguments are listed in the following fields.
 
-# Fields
+# Fields:
 
 ## Data storage
 - `points::Vector{Matrix{Float64}}`: Points to plot on the Bloch sphere (3D coordinates)
