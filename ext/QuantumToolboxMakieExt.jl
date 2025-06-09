@@ -349,10 +349,10 @@ function QuantumToolbox.render(b::Bloch; location = nothing)
     _add_labels!(b, lscene)
 
     # plot data fields in Bloch
-    _plot_points!(b, lscene)
+    _plot_vectors!(b, lscene)
     _plot_lines!(b, lscene)
     _plot_arcs!(b, lscene)
-    _plot_vectors!(b, lscene)
+    _plot_points!(b, lscene) # plot points at the end so that they will be on the very top (front) figure layer.
 
     return fig, lscene
 end
@@ -523,6 +523,7 @@ Plot all quantum state points on the Bloch sphere.
 Handles both scatter points and line traces based on style specifications.
 """
 function _plot_points!(b::Bloch, lscene)
+    isempty(b.points) && return nothing
     for k in 1:length(b.points)
         pts = b.points[k]
         style = b.point_style[k]
@@ -596,6 +597,7 @@ Draw all connecting lines between points on the Bloch sphere.
 Processes line style specifications and color mappings.
 """
 function _plot_lines!(b::Bloch, lscene)
+    isempty(b.lines) && return nothing
     color_map =
         Dict("k" => :black, "r" => :red, "g" => :green, "b" => :blue, "c" => :cyan, "m" => :magenta, "y" => :yellow)
     for (line, fmt) in b.lines
@@ -628,6 +630,7 @@ Draw circular arcs connecting points on the Bloch sphere surface.
 Calculates great circle arcs between specified points.
 """
 function _plot_arcs!(b::Bloch, lscene)
+    isempty(b.arcs) && return nothing
     for arc_pts in b.arcs
         length(arc_pts) >= 2 || continue
         v1 = normalize(arc_pts[1])
@@ -657,22 +660,17 @@ Draw vectors from origin representing quantum states.
 Scales vectors appropriately and adds `3D` arrow markers.
 """
 function _plot_vectors!(b::Bloch, lscene)
-    isempty(b.vectors) && return
-    arrowsize_vec = Vec3f(b.vector_arrowsize...)
-    r = 1.0
+    isempty(b.vectors) && return nothing
     for (i, v) in enumerate(b.vectors)
         color = get(b.vector_color, i, RGBAf(0.2, 0.5, 0.8, 0.9))
-        vec = Vec3f(v...)
-        length = norm(vec)
-        max_length = r * 0.90
-        vec = length > max_length ? (vec/length) * max_length : vec
+        vec = 0.92 * Vec3f(v...) # multiply by 0.92 so that the point edge of the arrow represents the actual position
         arrows!(
             lscene,
             [Point3f(0, 0, 0)],
             [vec],
             color = color,
             linewidth = b.vector_width,
-            arrowsize = arrowsize_vec,
+            arrowsize = Vec3f(b.vector_arrowsize...),
             arrowcolor = color,
             rasterize = 3,
         )

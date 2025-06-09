@@ -74,7 +74,7 @@ A structure representing a Bloch sphere visualization for quantum states. Availa
 ## Data storage
 - `points::Vector{Matrix{Float64}}`: Points to plot on the Bloch sphere (3D coordinates)
 - `vectors::Vector{Vector{Float64}}}`: Vectors to plot on the Bloch sphere
-- `lines::Vector{Tuple{Vector{Vector{Float64}},String,Dict{Any,Any}}}`: Lines to draw on the sphere (points, style, properties)
+- `lines::Vector{Tuple{Vector{Vector{Float64}},String}}`: Lines to draw on the sphere with each line given as `([start_pt, end_pt], line_format)`
 - `arcs::Vector{Vector{Vector{Float64}}}}`: Arcs to draw on the sphere
 
 ## Style properties
@@ -100,9 +100,9 @@ A structure representing a Bloch sphere visualization for quantum states. Availa
 
 ## Vector properties
 
-- `vector_color`::Vector{String}: Colors for vectors
-- `vector_width`::Float64: Width of vectors
-- `vector_arrowsize`::Vector{Float64}: Arrow size parameters as [head length, head width, stem width]
+- `vector_color::Vector{String}`: Colors for vectors
+- `vector_width::Float64`: Width of vectors
+- `vector_arrowsize::Vector{Float64}`: Arrow size parameters as `[head_length, head_width, stem_width]`
 
 ## Layout properties
 
@@ -203,29 +203,29 @@ Add a single point to the Bloch sphere visualization.
 
 # Arguments
 - `b::Bloch`: The Bloch sphere object to modify
-- `pnt::Vector{Float64}`: A 3D point to add
+- `pnt::Vector{<:Real}`: A 3D point to add
 - `meth::Symbol=:s`: Display method (`:s` for single point, `:m` for multiple, `:l` for line)
 - `color`: Color of the point (defaults to first default color if nothing)
 - `alpha=1.0`: Transparency (`1.0` means opaque and `0.0` means transparent)
 """
-function add_points!(b::Bloch, pnt::Vector{Float64}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+function add_points!(b::Bloch, pnt::Vector{<:Real}; meth::Symbol = :s, color = nothing, alpha = 1.0)
     return add_points!(b, reshape(pnt, 3, 1); meth, color, alpha)
 end
-function add_points!(b::Bloch, pnts::Vector{Vector{Float64}}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+function add_points!(b::Bloch, pnts::Vector{Vector{<:Real}}; meth::Symbol = :s, color = nothing, alpha = 1.0)
     return add_points!(b, Matrix(hcat(pnts...)'); meth, color, alpha)
 end
 
 @doc raw"""
-    add_points!(b::Bloch, pnts::Matrix{Float64}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+    add_points!(b::Bloch, pnts::Matrix{<:Real}; meth::Symbol = :s, color = nothing, alpha = 1.0)
 
 Add multiple points to the Bloch sphere visualization.
 
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object to modify
-- `pnts::Matrix{Float64}`: `3×N` matrix of points (each column is a point)
+- `pnts::Matrix{<:Real}`: `3×N` matrix of points (each column is a point)
 - `meth::Symbol=:s`: Display method (`:s` for single point, `:m` for multiple, `:l` for line)
-- `color`: Color of the points (defaults to first default color if nothing)
+- `color`: Color of the points (defaults to first default color if `nothing`)
 - `alpha=1.0`: Transparency (`1.0` means opaque and `0.0` means transparent)
 ```
 """

@@ -174,7 +174,7 @@ At the end of the last section we saw that the colors and marker shapes of the d
 |:----------|:----------------|:--------------------|
 | `b.points` | Points to plot on the Bloch sphere (3D coordinates) | `Vector{Matrix{Float64}}()` (empty) |
 | `b.vectors` | Vectors to plot on the Bloch sphere | `Vector{Vector{Float64}}()` (empty) |
-| `b.lines` | Lines to draw on the sphere (points, style, properties) | `Vector{Tuple{Vector{Vector{Float64}},String}}()` (empty) |
+| `b.lines` | Lines to draw on the sphere with each line given as `([start_pt, end_pt], line_format)` | `Vector{Tuple{Vector{Vector{Float64}},String}}()` (empty) |
 | `b.arcs` | Arcs to draw on the sphere | `Vector{Vector{Vector{Float64}}}()` (empty) |
 
 ### Properties
@@ -195,7 +195,7 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.sphere_alpha` | Transparency of sphere surface | `"#FFDDDD"` |
 | `b.vector_color` | Colors for vectors | `["green", "#CC6600", "blue", "red"]` |
 | `b.vector_width` | Width of vectors | `0.025` |
-| `b.vector_arrowsize` | Arrow size parameters as (head length, head width, stem width) | `[0.07, 0.08, 0.08]` |
+| `b.vector_arrowsize` | Arrow size parameters as `[head_length, head_width, stem_width]` | `[0.07, 0.08, 0.08]` |
 | `b.view` | Azimuthal and elevation viewing angles in degrees | `[30, 30]` |
 | `b.xlabel` | Labels for x-axis | `[L"x", ""]` (``+x`` and ``-x``) |
 | `b.xlpos` | Positions of x-axis labels | `[1.2, -1.2]` |
