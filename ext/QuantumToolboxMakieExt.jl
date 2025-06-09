@@ -661,9 +661,15 @@ Scales vectors appropriately and adds `3D` arrow markers.
 """
 function _plot_vectors!(b::Bloch, lscene)
     isempty(b.vectors) && return nothing
+
+    arrow_head_length = b.vector_arrowsize[3]
     for (i, v) in enumerate(b.vectors)
         color = get(b.vector_color, i, RGBAf(0.2, 0.5, 0.8, 0.9))
-        vec = 0.92 * Vec3f(v...) # multiply by 0.92 so that the point edge of the arrow represents the actual position
+        nv = norm(v)
+        (arrow_head_length < nv) || throw(ArgumentError("The length of vector arrow head (Bloch.vector_arrowsize[3]=$arrow_head_length) should be shorter than vector norm: $nv"))
+
+        # multiply by the following factor makes the end point of arrow head represent the actual vector position.
+        vec = (1 - arrow_head_length / nv) * Vec3f(v...)
         arrows!(
             lscene,
             [Point3f(0, 0, 0)],

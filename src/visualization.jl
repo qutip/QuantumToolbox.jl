@@ -102,7 +102,7 @@ A structure representing a Bloch sphere visualization for quantum states. Availa
 
 - `vector_color::Vector{String}`: Colors for vectors
 - `vector_width::Float64`: Width of vectors
-- `vector_arrowsize::Vector{Float64}`: Arrow size parameters as `[head_length, head_width, stem_width]`
+- `vector_arrowsize::Vector{Float64}`: Scales the size of the arrow head. The first two elements scale the radius (in `x/y` direction) and the last one is the length of the cone.
 
 ## Layout properties
 

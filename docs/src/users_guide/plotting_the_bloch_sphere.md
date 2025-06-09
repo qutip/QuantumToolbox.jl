@@ -195,7 +195,7 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.sphere_alpha` | Transparency of sphere surface | `"#FFDDDD"` |
 | `b.vector_color` | Colors for vectors | `["green", "#CC6600", "blue", "red"]` |
 | `b.vector_width` | Width of vectors | `0.025` |
-| `b.vector_arrowsize` | Arrow size parameters as `[head_length, head_width, stem_width]` | `[0.07, 0.08, 0.08]` |
+| `b.vector_arrowsize` | Scales the size of the arrow head. The first two elements scale the radius (in `x/y` direction) and the last one is the length of the cone. | `[0.07, 0.08, 0.08]` |
 | `b.view` | Azimuthal and elevation viewing angles in degrees | `[30, 30]` |
 | `b.xlabel` | Labels for x-axis | `[L"x", ""]` (``+x`` and ``-x``) |
 | `b.xlpos` | Positions of x-axis labels | `[1.2, -1.2]` |
