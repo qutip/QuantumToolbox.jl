@@ -181,7 +181,7 @@ end
     @test length(b.points) == 1
     @test all(expect(Pauli_Ops, ψ) .≈ (b.vectors[1]))
     @test all(expect(Pauli_Ops, ρ) .≈ (b.vectors[2]))
-    @test all([b.vectors[j][k] ≈ b.points[1][k,j] for j in (1, 2) for k in (1, 2, 3)])
+    @test all([b.vectors[j][k] ≈ b.points[1][k, j] for j in (1, 2) for k in (1, 2, 3)])
     @test_logs (:warn,) (:warn,) (:warn,) (:warn,) add_states!(b, [x, ρ1, ρ2])
     @test length(b.vectors) == 5
     @test_throws ArgumentError add_states!(b, states, kind = :wrong)

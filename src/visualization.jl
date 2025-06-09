@@ -411,7 +411,8 @@ function add_states!(b::Bloch, states::Vector{<:QuantumObject}; kind::Symbol = :
     end
     return nothing
 end
-add_states!(b::Bloch, state::QuantumObject; kind::Symbol = :vector, kwargs...) = add_states!(b, [state], kind = kind, kwargs...)
+add_states!(b::Bloch, state::QuantumObject; kind::Symbol = :vector, kwargs...) =
+    add_states!(b, [state], kind = kind, kwargs...)
 
 _state_to_bloch(state::QuantumObject{Ket}) = _ket_to_bloch(state)
 _state_to_bloch(state::QuantumObject{Bra}) = _ket_to_bloch(state')
