@@ -80,7 +80,7 @@ A structure representing a Bloch sphere visualization for quantum states.
 ## Style properties
 
 - `font_color::String`: Color of axis labels and text
-- `font_size::Int`: Font size for labels. Default: `15`
+- `font_size::Int`: Font size for labels. Default: `20`
 - `frame_alpha::Float64`: Transparency of the wireframe
 - `frame_color::String`: Color of the wireframe
 
@@ -122,7 +122,7 @@ A structure representing a Bloch sphere visualization for quantum states.
     lines::Vector{Tuple{Vector{Vector{Float64}},String}} = Vector{Tuple{Vector{Vector{Float64}},String}}()
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
     font_color::String = "black"
-    font_size::Int = 15
+    font_size::Int = 20
     frame_alpha::Float64 = 0.1
     frame_color::String = "gray"
     point_default_color::Vector{String} = ["blue", "red", "green", "#CC6600"]
@@ -515,10 +515,7 @@ Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
-- `location`: Specifies where to display or save the rendered figure.
-  - If `nothing` (default), the figure is displayed interactively.
-  - If a file path (String), the figure is saved to the specified location.
-  - Other values depend on backend support.
+- `location::Union{GridPosition,Nothing}`: The location of the plot in the layout. If `nothing`, the plot is created in a new figure. Default is `nothing`.
 
 # Returns
 

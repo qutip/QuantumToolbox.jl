@@ -17,6 +17,9 @@ In [`QuantumToolbox`](https://qutip.org/QuantumToolbox.jl/), this can be done us
 
 In [`QuantumToolbox`](https://qutip.org/QuantumToolbox.jl/), creating a [`Bloch`](@ref) sphere is accomplished by calling either:
 
+!!! note "Import plotting libraries"
+    Remember to import plotting libraries first. Here, we demonstrate the functionalities with [`CairoMakie.jl`](https://docs.makie.org/stable/explanations/backends/cairomakie.html).
+
 ```@example Bloch_sphere_rendering
 b = Bloch()
 ```
@@ -172,7 +175,7 @@ At the end of the last section we saw that the colors and marker shapes of the d
 | `b.lines` | Lines to draw on the sphere (points, style, properties) | `Vector{Tuple{Vector{Vector{Float64}},String}}()` (empty) |
 | `b.arcs` | Arcs to draw on the sphere | `Vector{Vector{Vector{Float64}}}()` (empty) |
 | `b.font_color` | Color of axis labels and text | `"black"` |
-| `b.font_size` | Font size for labels | `15` |
+| `b.font_size` | Font size for labels | `20` |
 | `b.frame_alpha` | Transparency of the frame background | `0.1` |
 | `b.frame_color` | Background color of the frame | `"gray"` |
 | `b.frame_limit` | Axis limits for the 3D frame (symmetric around origin) | `1.2` |
