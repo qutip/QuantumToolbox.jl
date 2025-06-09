@@ -381,13 +381,14 @@ function add_arc!(
 end
 
 @doc raw"""
-    add_states!(b::Bloch, states::Vector{QuantumObject})
+    add_states!(b::Bloch, states::Vector{QuantumObject}; kind::Symbol = :vector, kwargs...)
 
 Add one or more quantum states to the Bloch sphere visualization by converting them into Bloch vectors.
 
 # Arguments
 - `b::Bloch`: The Bloch sphere object to modify
 - `states::Vector{QuantumObject}`: One or more quantum states ([`Ket`](@ref), [`Bra`](@ref), or [`Operator`](@ref))
+- `kind::Symbol`: Type of object to plot (can be either `:vector` or `:point`). Default: `:vector`
 
 # Example
 
@@ -399,16 +400,18 @@ b = Bloch();
 add_states!(b, [x, y, z])
 ```
 """
-function add_states!(b::Bloch, states::Vector{<:QuantumObject})
+function add_states!(b::Bloch, states::Vector{<:QuantumObject}; kind::Symbol = :vector, kwargs...)
     vecs = map(state -> _state_to_bloch(state), states)
-    append!(b.vectors, vecs)
-    return b.vectors
+    if kind == :vector
+        add_vectors!(b, vecs)
+    elseif kind == :point
+        add_points!(b, hcat(vecs...), kwargs...)
+    else
+        throw(ArgumentError("Invalid kind = :$kind"))
+    end
+    return nothing
 end
-
-function add_states!(b::Bloch, state::QuantumObject)
-    push!(b.vectors, _state_to_bloch(state))
-    return b.vectors
-end
+add_states!(b::Bloch, state::QuantumObject; kind::Symbol = :vector, kwargs...) = add_states!(b, [state], kind = kind, kwargs...)
 
 _state_to_bloch(state::QuantumObject{Ket}) = _ket_to_bloch(state)
 _state_to_bloch(state::QuantumObject{Bra}) = _ket_to_bloch(state')
