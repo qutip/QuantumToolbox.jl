@@ -186,9 +186,12 @@
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator())
         a4 = to_sparse(a2)
+        a4_copy = copy(a4)
+        a4_copy[1] = rand(ComplexF64)
         @test isequal(a4, a2) == true
         @test isequal(a4, a3) == false
         @test a4 ≈ a2
+        @test a4 != a4_copy
 
         @test real(a2).data == real(a)
         @test imag(a2).data == imag(a)
