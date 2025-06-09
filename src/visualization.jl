@@ -211,7 +211,7 @@ Add a single point to the Bloch sphere visualization.
 function add_points!(b::Bloch, pnt::Vector{<:Real}; meth::Symbol = :s, color = nothing, alpha = 1.0)
     return add_points!(b, reshape(pnt, 3, 1); meth, color, alpha)
 end
-function add_points!(b::Bloch, pnts::Vector{Vector{<:Real}}; meth::Symbol = :s, color = nothing, alpha = 1.0)
+function add_points!(b::Bloch, pnts::Vector{<:Vector{<:Real}}; meth::Symbol = :s, color = nothing, alpha = 1.0)
     return add_points!(b, Matrix(hcat(pnts...)'); meth, color, alpha)
 end
 
