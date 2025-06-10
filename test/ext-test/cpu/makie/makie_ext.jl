@@ -205,6 +205,7 @@ end
         @test false
         @info "Render threw unexpected error" exception=e
     end
+
     b = Bloch()
     ψ₁ = normalize(basis(2, 0) + basis(2, 1))
     ψ₂ = normalize(basis(2, 0) - im * basis(2, 1))
@@ -212,6 +213,7 @@ end
     add_line!(b, ψ₁, ψ₂; fmt = "r--")
     add_arc!(b, ψ₁, ψ₂)
     add_arc!(b, ψ₂, ψ₃, ψ₁)
+    add_states!(b, [ψ₂, ψ₃], kind = :point, meth = :l)    
     try
         fig, lscene = render(b)
         @test !isnothing(fig)

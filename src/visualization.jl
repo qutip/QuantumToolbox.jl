@@ -407,7 +407,7 @@ function add_states!(b::Bloch, states::Vector{<:QuantumObject}; kind::Symbol = :
     if kind == :vector
         add_vectors!(b, vecs)
     elseif kind == :point
-        add_points!(b, hcat(vecs...), kwargs...)
+        add_points!(b, hcat(vecs...); kwargs...)
     else
         throw(ArgumentError("Invalid kind = :$kind"))
     end
