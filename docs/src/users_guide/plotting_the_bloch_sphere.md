@@ -183,8 +183,9 @@ At the end of the last section we saw that the colors and marker shapes of the d
 |:----------|:----------------|:--------------------|
 | `b.font_color` | Color of axis labels and text | `"black"` |
 | `b.font_size` | Font size for labels | `20` |
-| `b.frame_alpha` | Transparency of the wire frame | `0.1` |
+| `b.frame_alpha` | Transparency of the wire frame | `0.2` |
 | `b.frame_color` | Color of the wire frame | `"gray"` |
+| `b.frame_width` | Width of wire frame | `1.0` |
 | `b.point_default_color` | Default color cycle for points | `["blue", "red", "green", "#CC6600"]` |
 | `b.point_color` | List of colors for Bloch point markers to cycle through | `Union{Nothing,String}[]` |
 | `b.point_marker` | List of point marker shapes to cycle through | `[:circle, :rect, :diamond, :utriangle]` |
