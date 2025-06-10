@@ -213,7 +213,7 @@ end
     add_line!(b, ψ₁, ψ₂; fmt = "r--")
     add_arc!(b, ψ₁, ψ₂)
     add_arc!(b, ψ₂, ψ₃, ψ₁)
-    add_states!(b, [ψ₂, ψ₃], kind = :point, meth = :l)    
+    add_states!(b, [ψ₂, ψ₃], kind = :point, meth = :l)
     try
         fig, lscene = render(b)
         @test !isnothing(fig)
