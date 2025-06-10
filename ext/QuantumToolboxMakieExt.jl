@@ -434,7 +434,7 @@ function _draw_bloch_sphere!(b::Bloch, lscene)
         x_ring = radius * sin(ϕ) .* cos.(θ_curve)
         y_ring = radius * sin(ϕ) .* sin.(θ_curve)
         z_ring = fill(radius * cos(ϕ), length(θ_curve))
-        lines!(lscene, x_ring, y_ring, z_ring; color = b.frame_color, alpha = b.frame_alpha)
+        lines!(lscene, x_ring, y_ring, z_ring; color = b.frame_color, alpha = b.frame_alpha, linewidth = b.frame_width)
     end
     return nothing
 end
