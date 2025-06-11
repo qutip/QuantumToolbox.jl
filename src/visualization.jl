@@ -79,30 +79,31 @@ A structure representing a Bloch sphere visualization for quantum states. Availa
 
 ## Style properties
 
-- `font_color::String`: Color of axis labels and text
+- `font_color::String`: Color of axis labels and text. Default: `"black"`
 - `font_size::Int`: Font size for labels. Default: `20`
-- `frame_alpha::Float64`: Transparency of the wire frame
-- `frame_color::String`: Color of the wire frame
+- `frame_alpha::Float64`: Transparency of the wire frame. Default: `0.2`
+- `frame_color::String`: Color of the wire frame. Default: `"gray"`
+- `frame_width::Float64` : Width of wire frame. Default: `1.0`
 
 ## Point properties
 
-- `point_default_color::Vector{String}}`: Default color cycle for points
-- `point_color::Vector{String}}`: List of colors for Bloch point markers to cycle through
+- `point_default_color::Vector{String}}`: Default color cycle for points. Default: `["blue", "red", "green", "#CC6600"]`
+- `point_color::Vector{String}}`: List of colors for Bloch point markers to cycle through. Default: `Union{Nothing,String}[]`
 - `point_marker::Vector{Symbol}}`: List of point marker shapes to cycle through. Default: `[:circle, :rect, :diamond, :utriangle]`
-- `point_size::Vector{Int}}`: List of point marker sizes (not all markers look the same size when plotted)
-- `point_style::Vector{Symbol}}`: List of marker styles
-- `point_alpha::Vector{Float64}}`: List of marker transparencies
+- `point_size::Vector{Int}}`: List of point marker sizes (not all markers look the same size when plotted). Default: `[5.5, 6.2, 6.5, 7.5]`
+- `point_style::Vector{Symbol}}`: List of marker styles. Default: `Symbol[]`
+- `point_alpha::Vector{Float64}}`: List of marker transparencies. Default: `Float64[]`
 
 ## Sphere properties
 
-- `sphere_color::String`: Color of Bloch sphere surface
+- `sphere_color::String`: Color of Bloch sphere surface. Default: `"#FFDDDD"`
 - `sphere_alpha::Float64`: Transparency of sphere surface. Default: `0.2`
 
 ## Vector properties
 
-- `vector_color::Vector{String}`: Colors for vectors
-- `vector_width::Float64`: Width of vectors
-- `vector_arrowsize::Vector{Float64}`: Scales the size of the arrow head. The first two elements scale the radius (in `x/y` direction) and the last one is the length of the cone.
+- `vector_color::Vector{String}`: Colors for vectors. Default: `["green", "#CC6600", "blue", "red"]`
+- `vector_width::Float64`: Width of vectors. Default: `0.025`
+- `vector_arrowsize::Vector{Float64}`: Scales the size of the arrow head. The first two elements scale the radius (in `x/y` direction) and the last one is the length of the cone. Default: `[0.07, 0.08, 0.08]`
 
 ## Layout properties
 
@@ -124,8 +125,9 @@ A structure representing a Bloch sphere visualization for quantum states. Availa
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
     font_color::String = "black"
     font_size::Int = 20
-    frame_alpha::Float64 = 0.1
+    frame_alpha::Float64 = 0.2
     frame_color::String = "gray"
+    frame_width::Float64 = 1.0
     point_default_color::Vector{String} = ["blue", "red", "green", "#CC6600"]
     point_color::Vector{Union{Nothing,String}} = Union{Nothing,String}[]
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
@@ -405,7 +407,7 @@ function add_states!(b::Bloch, states::Vector{<:QuantumObject}; kind::Symbol = :
     if kind == :vector
         add_vectors!(b, vecs)
     elseif kind == :point
-        add_points!(b, hcat(vecs...), kwargs...)
+        add_points!(b, hcat(vecs...); kwargs...)
     else
         throw(ArgumentError("Invalid kind = :$kind"))
     end

@@ -414,8 +414,8 @@ function _draw_bloch_sphere!(b::Bloch, lscene)
 
     # highlight circles for XY and XZ planes
     φ = range(0, 2π, length = 100)
-    lines!(lscene, [Point3f(cos(φi), sin(φi), 0) for φi in φ]; color = b.frame_color, linewidth = 1.0) # XY
-    lines!(lscene, [Point3f(cos(φi), 0, sin(φi)) for φi in φ]; color = b.frame_color, linewidth = 1.0) # XZ
+    lines!(lscene, [Point3f(cos(φi), sin(φi), 0) for φi in φ]; color = b.frame_color, linewidth = b.frame_width) # XY
+    lines!(lscene, [Point3f(cos(φi), 0, sin(φi)) for φi in φ]; color = b.frame_color, linewidth = b.frame_width) # XZ
 
     # other curves of longitude (with polar angle φ and azimuthal angle θ)
     φ_curve = range(0, 2π, 600)
@@ -424,7 +424,7 @@ function _draw_bloch_sphere!(b::Bloch, lscene)
         x_line = radius * sin.(φ_curve) .* cos(θi)
         y_line = radius * sin.(φ_curve) .* sin(θi)
         z_line = radius * cos.(φ_curve)
-        lines!(lscene, x_line, y_line, z_line; color = b.frame_color, alpha = b.frame_alpha)
+        lines!(lscene, x_line, y_line, z_line; color = b.frame_color, alpha = b.frame_alpha, linewidth = b.frame_width)
     end
 
     # other curves of latitude (with polar angle φ and azimuthal angle θ)
@@ -434,7 +434,7 @@ function _draw_bloch_sphere!(b::Bloch, lscene)
         x_ring = radius * sin(ϕ) .* cos.(θ_curve)
         y_ring = radius * sin(ϕ) .* sin.(θ_curve)
         z_ring = fill(radius * cos(ϕ), length(θ_curve))
-        lines!(lscene, x_ring, y_ring, z_ring; color = b.frame_color, alpha = b.frame_alpha)
+        lines!(lscene, x_ring, y_ring, z_ring; color = b.frame_color, alpha = b.frame_alpha, linewidth = b.frame_width)
     end
     return nothing
 end
@@ -558,14 +558,11 @@ function _plot_points!(b::Bloch, lscene)
             end
         end
         if style in (:s, :m)
-            xs = raw_x[indperm]
-            ys = raw_y[indperm]
-            zs = raw_z[indperm]
             scatter!(
                 lscene,
-                xs,
-                ys,
-                zs;
+                raw_x[indperm],
+                raw_y[indperm],
+                raw_z[indperm];
                 color = colors,
                 markersize = b.point_size[mod1(k, length(b.point_size))],
                 marker = marker,
@@ -575,11 +572,8 @@ function _plot_points!(b::Bloch, lscene)
             )
 
         elseif style == :l
-            xs = raw_x
-            ys = raw_y
-            zs = raw_z
             c = isa(colors, Vector) ? colors[1] : colors
-            lines!(lscene, xs, ys, zs; color = c, linewidth = 2.0, transparency = alpha < 1.0, alpha = alpha)
+            lines!(lscene, raw_x, raw_y, raw_z; color = c, transparency = alpha < 1.0, alpha = alpha)
         end
     end
     return nothing
@@ -613,7 +607,7 @@ function _plot_lines!(b::Bloch, lscene)
         else
             :solid
         end
-        lines!(lscene, x, y, z; color = color, linewidth = 1.0, linestyle = linestyle)
+        lines!(lscene, x, y, z; color = color, linestyle = linestyle)
     end
     return nothing
 end
@@ -643,7 +637,7 @@ function _plot_arcs!(b::Bloch, lscene)
         end
         t_range = range(0, θ, length = 100)
         arc_points = [Point3f((v1 * cos(t) + cross(n, v1) * sin(t))) for t in t_range]
-        lines!(lscene, arc_points; color = RGBAf(0.8, 0.4, 0.1, 0.9), linewidth = 2.0, linestyle = :solid)
+        lines!(lscene, arc_points; color = "blue", linestyle = :solid)
     end
     return nothing
 end

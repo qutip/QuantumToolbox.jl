@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Introduce `Lanczos` solver for `spectrum`. ([#476])
 - Add Bloch-Redfield master equation solver. ([#473])
-- Implement Bloch Sphere rendering and align style with qutip. ([#472], [#480], [#485], [#487])
+- Implement Bloch Sphere rendering and align style with qutip. ([#472], [#480], [#485], [#487], [#489])
 - Add `Base.copy` method for `AbstractQuantumObject`. ([#486])
 
 ## [v0.31.1]
@@ -240,3 +240,4 @@ Release date: 2024-11-13
 [#485]: https://github.com/qutip/QuantumToolbox.jl/issues/485
 [#486]: https://github.com/qutip/QuantumToolbox.jl/issues/486
 [#487]: https://github.com/qutip/QuantumToolbox.jl/issues/487
+[#489]: https://github.com/qutip/QuantumToolbox.jl/issues/489
