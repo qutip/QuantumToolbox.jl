@@ -4,9 +4,11 @@ Base.@kwdef mutable struct Settings
 end
 
 function Base.show(io::IO, s::Settings)
+    # To align the output and make it easier to read
+    # we use rpad `11`, which is the length of string: `auto_tidyup`
     println(io, "QuantumToolbox.jl Settings")
     println(io, "--------------------------")
-    map(x -> println(io, "$x = ", getfield(s, x)), fieldnames(Settings))
+    map(n -> println(io, rpad("$n", 11, " "), " = ", getfield(s, n)), fieldnames(Settings))
     return nothing
 end
 

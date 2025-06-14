@@ -154,6 +154,29 @@ end
     @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csr.data) atol = 1e-8 * length(ρ_ss_cpu)
 end
 
+@testset "CUDA spectrum" begin
+    N = 10
+    a = cu(destroy(N))
+    H = a' * a
+    c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
+    solver = Lanczos(steadystate_solver = SteadyStateLinearSolver())
+
+    ω_l = range(0, 3, length = 1000)
+    spec = spectrum(H, ω_l, c_ops, a', a; solver = solver)
+
+    spec = collect(spec)
+    spec = spec ./ maximum(spec)
+
+    test_func = maximum(real.(spec)) * (0.1 / 2)^2 ./ ((ω_l .- 1) .^ 2 .+ (0.1 / 2)^2)
+    idxs = test_func .> 0.05
+    @test sum(abs2.(spec[idxs] .- test_func[idxs])) / sum(abs2.(test_func[idxs])) < 0.01
+
+    # TODO: Fix this
+    # @testset "Type Inference spectrum" begin
+    #     @inferred spectrum(H, ω_l, c_ops, a', a; solver = solver)
+    # end
+end
+
 @testset "CUDA ptrace" begin
     g = fock(2, 1)
     e = fock(2, 0)

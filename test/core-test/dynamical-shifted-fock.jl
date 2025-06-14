@@ -1,4 +1,4 @@
-@testset "Dynamical Shifted Fock" begin
+@testitem "Dynamical Shifted Fock" begin
     F = 3
     Δ = 0.25
     κ = 1

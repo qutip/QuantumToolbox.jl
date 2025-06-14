@@ -1,4 +1,6 @@
-@testset "Low Rank Dynamics" begin
+@testitem "Low Rank Dynamics" begin
+    using LinearAlgebra
+
     # Define lattice
     Nx, Ny = 2, 3
     latt = Lattice(Nx = Nx, Ny = Ny)
@@ -14,12 +16,12 @@
 
     i = 1
     for j in 1:N_modes
-        i += 1
+        global i += 1
         i <= M && (ϕ[i] = multisite_operator(latt, j => sigmap()) * ϕ[1])
     end
     for k in 1:(N_modes-1)
         for l in (k+1):N_modes
-            i += 1
+            global i += 1
             i <= M && (ϕ[i] = multisite_operator(latt, k => sigmap(), l => sigmap()) * ϕ[1])
         end
     end

@@ -208,6 +208,9 @@ smesolve
 dfd_mesolve
 liouvillian
 liouvillian_generalized
+bloch_redfield_tensor
+brterm
+brmesolve
 ```
 
 ### [Steady State Solvers](@id doc-API:Steady-State-Solvers)
@@ -248,6 +251,7 @@ spectrum_correlation_fft
 spectrum
 ExponentialSeries
 PseudoInverse
+Lanczos
 ```
 
 ## [Entropy and Metrics](@id doc-API:Entropy-and-Metrics)
@@ -315,4 +319,18 @@ meshgrid
 ```@docs
 plot_wigner
 plot_fock_distribution
+```
+
+### [Bloch Sphere](@id doc-API:Bloch-Sphere)
+
+```@docs
+Bloch
+plot_bloch
+render
+add_points!
+add_vectors!
+add_line!
+add_arc!
+add_states!
+clear!
 ```

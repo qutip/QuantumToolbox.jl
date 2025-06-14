@@ -18,8 +18,8 @@ end
 DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, doctest_setup; recursive = true)
 
 # some options for `makedocs`
-const DRAFT = false  # set `true`  to disable cell evaluation
-const DOCTEST = true # set `false` to skip doc tests
+const DRAFT = get(ENV, "DRAFT", false) == "true"  # `DRAFT   = true`  disables cell evaluation
+const DOCTEST = get(ENV, "DOCTEST", true) == true # `DOCTEST = false` skips doc tests
 
 # generate bibliography
 bib = CitationBibliography(
@@ -64,6 +64,7 @@ const PAGES = [
         "Hierarchical Equations of Motion" => "users_guide/HEOM.md",
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
+        "Plotting on the Bloch Sphere" => "users_guide/plotting_the_bloch_sphere.md",
         "QuantumToolbox Settings" => "users_guide/settings.md",
         "Extensions" => [
             "Extension for CUDA.jl" => "users_guide/extensions/cuda.md",

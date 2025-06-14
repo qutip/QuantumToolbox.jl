@@ -76,12 +76,7 @@ function sesolveProblem(
 
     tspan = (tlist[1], tlist[end])
 
-    # TODO: Remove this when https://github.com/SciML/SciMLSensitivity.jl/issues/1181 is fixed
-    if haskey(kwargs3, :sensealg)
-        prob = ODEProblem{getVal(inplace)}(U, ψ0, tspan, params; kwargs3...)
-    else
-        prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, params; kwargs3...)
-    end
+    prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, params; kwargs3...)
 
     return TimeEvolutionProblem(prob, tlist, H_evo.dimensions)
 end

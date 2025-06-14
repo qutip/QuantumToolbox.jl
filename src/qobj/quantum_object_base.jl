@@ -1,6 +1,6 @@
 #=  
 This file defines the AbstractQuantumObject structure, all the type structures for AbstractQuantumObject, and fundamental functions in Julia standard library:  
-    - Base: show, length, size, eltype, getindex, setindex!, isequal, :(==), isapprox  
+    - Base: show, length, size, copy, eltype, getindex, setindex!, isequal, :(==), isapprox  
 =#
 
 export AbstractQuantumObject
@@ -30,12 +30,16 @@ Constructor representing a bra state ``\langle\psi|``.
 """
 struct Bra <: QuantumObjectType end
 
+Base.show(io::IO, ::Bra) = print(io, "Bra()")
+
 @doc raw"""
     Ket <: QuantumObjectType
 
 Constructor representing a ket state ``|\psi\rangle``.
 """
 struct Ket <: QuantumObjectType end
+
+Base.show(io::IO, ::Ket) = print(io, "Ket()")
 
 @doc raw"""
     Operator <: QuantumObjectType
@@ -44,12 +48,16 @@ Constructor representing an operator ``\hat{O}``.
 """
 struct Operator <: QuantumObjectType end
 
+Base.show(io::IO, ::Operator) = print(io, "Operator()")
+
 @doc raw"""
     SuperOperator <: SuperOperatorType
 
 Constructor representing a super-operator ``\hat{\mathcal{O}}`` acting on vectorized density operator matrices.
 """
 struct SuperOperator <: SuperOperatorType end
+
+Base.show(io::IO, ::SuperOperator) = print(io, "SuperOperator()")
 
 @doc raw"""
     OperatorBra <: QuantumObjectType
@@ -58,12 +66,16 @@ Constructor representing a bra state in the [`SuperOperator`](@ref) formalism ``
 """
 struct OperatorBra <: QuantumObjectType end
 
+Base.show(io::IO, ::OperatorBra) = print(io, "OperatorBra()")
+
 @doc raw"""
     OperatorKet <: QuantumObjectType
 
 Constructor representing a ket state in the [`SuperOperator`](@ref) formalism ``|\rho\rangle\rangle``.
 """
 struct OperatorKet <: QuantumObjectType end
+
+Base.show(io::IO, ::OperatorKet) = print(io, "OperatorKet()")
 
 @doc raw"""
     size(A::AbstractQuantumObject)
@@ -80,6 +92,8 @@ Optionally, you can specify an index (`idx`) to just get the corresponding dimen
 """
 Base.size(A::AbstractQuantumObject) = size(A.data)
 Base.size(A::AbstractQuantumObject, idx::Int) = size(A.data, idx)
+
+Base.copy(A::AbstractQuantumObject) = get_typename_wrapper(A)(copy(A.data), A.type, A.dimensions)
 
 Base.getindex(A::AbstractQuantumObject, inds...) = getindex(A.data, inds...)
 Base.setindex!(A::AbstractQuantumObject, val, inds...) = setindex!(A.data, val, inds...)

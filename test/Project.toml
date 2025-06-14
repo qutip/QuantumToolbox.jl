@@ -1,0 +1,14 @@
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SciMLOperators = "c0aeaf25-5076-4817-a8d5-81caf7dfa961"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
+
+[compat]
+Pkg = "1"
+Test = "1"
+TestItemRunner = "1"

@@ -1,4 +1,4 @@
-@testset "Steady State" begin
+@testitem "Steady State" begin
     N = 10
     a = destroy(N)
     a_d = a'

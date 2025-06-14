@@ -440,17 +440,8 @@ end
 
 _promote_to_scimloperator(data::AbstractMatrix) = MatrixOperator(data)
 _promote_to_scimloperator(data::AbstractSciMLOperator) = data
-# TODO: The following special cases can be simplified after
-# https://github.com/SciML/SciMLOperators.jl/pull/264 is merged
 _promote_to_scimloperator(α::Number, data::AbstractMatrix) = MatrixOperator(α * data)
-function _promote_to_scimloperator(α::Number, data::MatrixOperator)
-    isconstant(data) && return MatrixOperator(α * data.A)
-    return ScaledOperator(α, data) # Going back to the generic case
-end
-function _promote_to_scimloperator(α::Number, data::ScaledOperator)
-    isconstant(data.λ) && return ScaledOperator(α * data.λ, data.L)
-    return ScaledOperator(data.λ, _promote_to_scimloperator(α, data.L)) # Try to propagate the rule
-end
+# We still have to define this for AddedOperator, as it is not present in SciMLOperators.jl
 function _promote_to_scimloperator(α::Number, data::AddedOperator)
     return AddedOperator(_promote_to_scimloperator.(α, data.ops)) # Try to propagate the rule
 end

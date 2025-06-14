@@ -38,6 +38,12 @@ The tests are divided into several test groups, where the group names are define
 make GROUP=Core test
 ```
 
+### [Test Item Framework for Core tests](@id doc-Contribute:Test-Item-Framework-for-Core-tests)
+
+The tests in `GROUP=Core` are provided using the [Test Item Framework](https://www.julia-vscode.org/docs/stable/userguide/testitems/), which structures the test codes into `@testitems` and makes it easier to run individually.
+
+The [VS Code](https://code.visualstudio.com/) and its [Julia extension](https://www.julia-vscode.org/) provides us with options to run individual `@testitems`. It is much easier to find the specific core test that failed since the [Julia extension](https://www.julia-vscode.org/) in [VS Code](https://code.visualstudio.com/) will collect all core test failures and then display them in a structured way, directly at the place in the code where a specific core test failed. See [here](https://www.julia-vscode.org/docs/stable/userguide/testitems/) for more details.
+
 ## [Julia Code Format](@id doc-Contribute:Julia-Code-Format)
 
 We use [`JuliaFormatter.jl`](https://github.com/domluna/JuliaFormatter.jl) to format all the source codes. The code style and extra formatting options is defined in the file `.JuliaFormatter.toml` in the repository.
