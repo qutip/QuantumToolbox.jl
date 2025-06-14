@@ -512,7 +512,8 @@ function (A::QuantumObjectEvolution)(
         )
     end
 
-    A.data(ψout.data, ψin.data, p, t)
+    # We put `nothing` in the place of `u` because the time-dependence doesn't depend on the state
+    A.data(ψout.data, ψin.data, nothing, p, t)
 
     return ψout
 end
