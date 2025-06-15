@@ -24,7 +24,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [license-img]: https://img.shields.io/badge/license-New%20BSD-blue.svg
 [license-url]: https://opensource.org/licenses/BSD-3-Clause
 
-[cite-img]: https://img.shields.io/badge/cite-arXiv%3A2504.21440_(2023)-blue
+[cite-img]: https://img.shields.io/badge/cite-arXiv%3A2504.21440_(2025)-blue
 [cite-url]: https://doi.org/10.48550/arXiv.2504.21440
 
 [download-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuantumToolbox&query=total_requests&label=Downloads
