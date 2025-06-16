@@ -15,8 +15,11 @@ _sprepost(A::AbstractMatrix, B::AbstractSparseMatrix) = kron(transpose(B), spars
 _sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), A)
 _sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(transpose(B), A)
 function _sprepost(A, B) # for any other input types
-    Id_cache = I(size(A, 1))
-    return _spre(A, Id_cache) * _spost(B, Id_cache)
+    # TODO: use the commented code (since it is optimized for certain types of SciMLOperators, and was able to give correct results before `SciMLOperators v1.0.0`)
+    # Id_cache = I(size(A, 1))
+    # return _spre(A, Id_cache) * _spost(B, Id_cache)
+
+    return kron(transpose(B), A)
 end
 
 ## if input is AbstractSciMLOperator 
