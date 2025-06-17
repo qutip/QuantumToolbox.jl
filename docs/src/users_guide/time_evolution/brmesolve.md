@@ -20,39 +20,38 @@ Here we present only a brief version of the derivation, with the intention of in
 
 ## Brief Derivation and Definitions
 
-The starting point of the Bloch-Redfield formalism is the total Hamiltonian for the system and the environment (bath): $H = H_{\rm S} + H_{\rm B} + H_{\rm I}$, where $H$ is the total system+bath Hamiltonian, $H_{\rm S}$ and $H_{\rm B}$ are the system and bath Hamiltonians, respectively, and $H_{\rm I}$ is the interaction Hamiltonian.
+The starting point of the Bloch-Redfield formalism is the total Hamiltonian for the system and the environment (bath): ``H = H_{\rm S} + H_{\rm B} + H_{\rm I}``, where ``H`` is the total system+bath Hamiltonian, ``H_{\rm S}`` and ``H_{\rm B}`` are the system and bath Hamiltonians, respectively, and ``H_{\rm I}`` is the interaction Hamiltonian.
 
-The most general form of a master equation for the system dynamics is obtained by tracing out the bath from the von-Neumann equation of motion for the combined system ($\dot\rho = -i\hbar^{-1}[H, \rho]$). In the interaction picture the result is
+The most general form of a master equation for the system dynamics is obtained by tracing out the bath from the von-Neumann equation of motion for the combined system (``\dot\rho = -i\hbar^{-1}[H, \rho]``). In the interaction picture the result is
 
-$$
-
+```math
     \frac{d}{dt}\rho_S(t) = - \hbar^{-2}\int_0^t d\tau\;  {\rm Tr}_B [H_I(t), [H_I(\tau), \rho_S(\tau)\otimes\rho_B]],
-$$
+```
 
-where the additional assumption that the total system-bath density matrix can be factorized as $\rho(t) \approx \rho_S(t) \otimes \rho_B$.
+where the additional assumption that the total system-bath density matrix can be factorized as ``\rho(t) \approx \rho_S(t) \otimes \rho_B``.
 This assumption is known as the Born approximation, and it implies that there never is any entanglement between the system and the bath, neither in the initial state nor at any time during the evolution.
 *It is justified for weak system-bath interaction.*
 
-The master equation above is non-Markovian, i.e., the change in the density matrix at a time $t$ depends on states at all times $\tau < t$, making it intractable to solve both theoretically and numerically.
-To make progress towards a manageable master equation, we now introduce the Markovian approximation, in which $\rho_S(\tau)$ is replaced by $\rho_S(t)$.
+The master equation above is non-Markovian, i.e., the change in the density matrix at a time ``t`` depends on states at all times ``\tau < t``, making it intractable to solve both theoretically and numerically.
+To make progress towards a manageable master equation, we now introduce the Markovian approximation, in which ``\rho_S(\tau)`` is replaced by ``\rho_S(t)``.
 The result is the Redfield equation
 
-$$
+```math
     \frac{d}{dt}\rho_S(t) = - \hbar^{-2}\int_0^t d\tau\; {\rm Tr}_B [H_I(t), [H_I(\tau), \rho_S(t)\otimes\rho_B]],
-$$
-which is local in time with respect the density matrix, but still not Markovian since it contains an implicit dependence on the initial state. By extending the integration to infinity and substituting $\tau \rightarrow t-\tau$, a fully Markovian master equation is obtained:
+```
 
-$$
+which is local in time with respect the density matrix, but still not Markovian since it contains an implicit dependence on the initial state. By extending the integration to infinity and substituting ``\tau \rightarrow t-\tau``, a fully Markovian master equation is obtained:
+
+```math
     \frac{d}{dt}\rho_S(t) = - \hbar^{-2}\int_0^\infty d\tau\; {\rm Tr}_B [H_I(t), [H_I(t-\tau), \rho_S(t)\otimes\rho_B]].
-$$
+```
 
 The two Markovian approximations introduced above are valid if the time-scale with which the system dynamics changes is large compared to the time-scale with which correlations in the bath decays (corresponding to a "short-memory" bath, which results in Markovian system dynamics).
 
-The Markovian master equation above is still on a too general form to be suitable for numerical implementation. We therefore assume that the system-bath interaction takes the form $H_I = \sum_\alpha A_\alpha \otimes B_\alpha$ and where $A_\alpha$ are system operators and $B_\alpha$ are bath operators.
+The Markovian master equation above is still on a too general form to be suitable for numerical implementation. We therefore assume that the system-bath interaction takes the form ``H_I = \sum_\alpha A_\alpha \otimes B_\alpha`` and where ``A_\alpha`` are system operators and ``B_\alpha`` are bath operators.
 This allows us to write master equation in terms of system operators and bath correlation functions:
 
-$$
-
+```math
     \frac{d}{dt}\rho_S(t) =
     -\hbar^{-2}
     \sum_{\alpha\beta}
@@ -63,15 +62,16 @@ $$
     \left.
     g_{\alpha\beta}(-\tau) \left[\rho_S(t)A_\alpha(t-\tau)A_\beta(t) - A_\beta(t)\rho_S(t)A_\beta(t-\alpha)\right]
     \right\},
-$$
-where $g_{\alpha\beta}(\tau) = {\rm Tr}_B\left[B_\alpha(t)B_\beta(t-\tau)\rho_B\right] = \left<B_\alpha(\tau)B_\beta(0)\right>$,
-since the bath state $\rho_B$ is a steady state.
+```
 
-In the eigenbasis of the system Hamiltonian, where $A_{mn}(t) = A_{mn} e^{i\omega_{mn}t}$,
-$\omega_{mn} = \omega_m - \omega_n$ and $\omega_m$ are the eigenfrequencies
-corresponding the eigenstate $\left|m\right>$, we obtain in matrix form in the Schrödinger picture
+where ``g_{\alpha\beta}(\tau) = {\rm Tr}_B\left[B_\alpha(t)B_\beta(t-\tau)\rho_B\right] = \left<B_\alpha(\tau)B_\beta(0)\right>``,
+since the bath state ``\rho_B`` is a steady state.
 
-$$
+In the eigenbasis of the system Hamiltonian, where ``A_{mn}(t) = A_{mn} e^{i\omega_{mn}t}``,
+``\omega_{mn} = \omega_m - \omega_n`` and ``\omega_m`` are the eigenfrequencies
+corresponding the eigenstate ``\left|m\right>``, we obtain in matrix form in the Schrödinger picture
+
+```math
 \begin{aligned}
     \frac{d}{dt} \rho_{ab}(t) = & -i\omega_{ab}\rho_{ab}(t)\\
     &-\hbar^{-2} \sum_{\alpha,\beta} \sum_{c,d}^{\rm sec} \int_0^\infty d\tau\;
@@ -91,26 +91,29 @@ $$
     \right]
     \right\} \rho_{cd}(t),
 \end{aligned}
-$$
-where the "sec" above the summation symbol indicate summation of the secular terms which satisfy $|\omega_{ab}-\omega_{cd}| \ll \tau_ {\rm decay}$.
-This is an almost-useful form of the master equation. The final step before arriving at the form of the Bloch-Redfield master equation that is implemented in QuTiP, involves rewriting the bath correlation function $g(\tau)$ in terms of the noise-power spectrum of the environment $S(\omega) = \int_{-\infty}^\infty d\tau e^{i\omega\tau} g(\tau)$:
+```
 
-$$
+where the "sec" above the summation symbol indicate summation of the secular terms which satisfy ``|\omega_{ab}-\omega_{cd}| \ll \tau_ {\rm decay}``.
+This is an almost-useful form of the master equation. The final step before arriving at the form of the Bloch-Redfield master equation that is implemented in QuTiP, involves rewriting the bath correlation function ``g(\tau)`` in terms of the noise-power spectrum of the environment ``S(\omega) = \int_{-\infty}^\infty d\tau e^{i\omega\tau} g(\tau)``:
+
+```math
     \int_0^\infty d\tau\; g_{\alpha\beta}(\tau) e^{i\omega\tau} = \frac{1}{2}S_{\alpha\beta}(\omega) + i\lambda_{\alpha\beta}(\omega),
-$$
-where $\lambda_{ab}(\omega)$ is an energy shift that is neglected here. The final form of the Bloch-Redfield master equation is
+```
+
+where ``\lambda_{ab}(\omega)`` is an energy shift that is neglected here. The final form of the Bloch-Redfield master equation is
 
 
-$$
+```math
     \frac{d}{dt}\rho_{ab}(t)
     =
     -i\omega_{ab}\rho_{ab}(t)
     +
     \sum_{c,d}^{\rm sec}R_{abcd}\rho_{cd}(t),
-$$
+```
+
 where
 
-$$
+```math
     R_{abcd} =  -\frac{\hbar^{-2}}{2} \sum_{\alpha,\beta}
     \left\{
     \delta_{bd}\sum_nA^\alpha_{an}A^\beta_{nc}S_{\alpha\beta}(\omega_{cn})
@@ -123,14 +126,15 @@ $$
     -
     A^\beta_{ac}A^\alpha_{db} S_{\alpha\beta}(\omega_{db})
     \right\},
-$$
+```
+
 is the Bloch-Redfield tensor.
 
-The Bloch-Redfield master equation in this form is suitable for numerical implementation. The input parameters are the system Hamiltonian $H$, the system operators through which the environment couples to the system $A_\alpha$, and the noise-power spectrum $S_{\alpha\beta}(\omega)$ associated with each system-environment interaction term.
+The Bloch-Redfield master equation in this form is suitable for numerical implementation. The input parameters are the system Hamiltonian ``H``, the system operators through which the environment couples to the system ``A_\alpha``, and the noise-power spectrum ``S_{\alpha\beta}(\omega)`` associated with each system-environment interaction term.
 
-To simplify the numerical implementation we often assume that $A_\alpha$ are Hermitian and that cross-correlations between different environment operators vanish, resulting in
+To simplify the numerical implementation we often assume that ``A_\alpha`` are Hermitian and that cross-correlations between different environment operators vanish, resulting in
 
-$$
+```math
     R_{abcd} =  -\frac{\hbar^{-2}}{2} \sum_{\alpha}
     \left\{
     \delta_{bd}\sum_nA^\alpha_{an}A^\alpha_{nc}S_{\alpha}(\omega_{cn})
@@ -143,5 +147,8 @@ $$
     -
     A^\alpha_{ac}A^\alpha_{db} S_{\alpha}(\omega_{db})
     \right\}.
-$$
+```
+
+## Bloch-Redfield master equation in `QuantumToolbox.jl`
+
 
