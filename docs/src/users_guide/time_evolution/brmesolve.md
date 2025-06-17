@@ -52,16 +52,16 @@ The Markovian master equation above is still on a too general form to be suitabl
 This allows us to write master equation in terms of system operators and bath correlation functions:
 
 ```math
-    \frac{d}{dt}\rho_S(t) =
-    -\hbar^{-2}
-    \sum_{\alpha\beta}
-    \int_0^\infty d\tau\;
-    \left\{
-    g_{\alpha\beta}(\tau) \left[A_\alpha(t)A_\beta(t-\tau)\rho_S(t) - A_\beta(t-\tau)\rho_S(t)A_\alpha(t)\right]
-    \right. \nonumber\\
-    \left.
-    g_{\alpha\beta}(-\tau) \left[\rho_S(t)A_\alpha(t-\tau)A_\beta(t) - A_\beta(t)\rho_S(t)A_\beta(t-\alpha)\right]
-    \right\},
+\begin{split}\frac{d}{dt}\rho_S(t) =
+-\hbar^{-2}
+\sum_{\alpha\beta}
+\int_0^\infty d\tau\;
+\left\{
+g_{\alpha\beta}(\tau) \left[A_\alpha(t)A_\beta(t-\tau)\rho_S(t) - A_\beta(t-\tau)\rho_S(t)A_\alpha(t)\right]
+\right. \nonumber\\
+\left.
++ g_{\alpha\beta}(-\tau) \left[\rho_S(t)A_\alpha(t-\tau)A_\beta(t) - A_\beta(t)\rho_S(t)A_\beta(t-\alpha)\right]
+\right\},\end{split}
 ```
 
 where ``g_{\alpha\beta}(\tau) = {\rm Tr}_B\left[B_\alpha(t)B_\beta(t-\tau)\rho_B\right] = \left<B_\alpha(\tau)B_\beta(0)\right>``,
