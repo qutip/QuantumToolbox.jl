@@ -50,7 +50,7 @@ g_{\alpha\beta}(\tau) \left[\hat{A}_\alpha(t)\hat{A}_\beta(t-\tau)\hat{\rho}_{\t
 
 where ``g_{\alpha\beta}(\tau) = \textrm{Tr}_{\textrm{B}}\left[\hat{B}_\alpha(t)\hat{B}_\beta(t-\tau)\hat{\rho}_{\textrm{B}}\right] = \langle\hat{B}_\alpha(\tau)\hat{B}_\beta(0)\rangle``, since the bath state ``\hat{\rho}_{\textrm{B}}`` is a steady state.
 
-In the eigenbasis of the system Hamiltonian, where ``A_{mn}(t) = A_{mn} e^{i\omega_{mn}t}``, ``\omega_{mn} = \omega_m - \omega_n`` and ``\omega_m`` are the eigenfrequencies corresponding the eigenstate ``\left|m\rangle``, we obtain in matrix form in the Schrödinger picture
+In the eigenbasis of the system Hamiltonian, where ``A_{mn}(t) = A_{mn} e^{i\omega_{mn}t}``, ``\omega_{mn} = \omega_m - \omega_n`` and ``\omega_m`` are the eigenfrequencies corresponding to the eigenstate ``|m\rangle``, we obtain in matrix form in the Schrödinger picture
 
 ```math
 \begin{aligned}
