@@ -14,7 +14,7 @@ One advantage of this approach is that the dissipation processes and rates are o
 On the downside, it does not intrinsically guarantee that the resulting master equation unconditionally preserves the physical properties of the density matrix (because it is a perturbative method).
 The Bloch-Redfield master equation must therefore be used with care, and the assumptions made in the derivation must be honored.
 (The Lindblad master equation is in a sense more robust -- it always results in a physical density matrix -- although some collapse operators might not be physically justified).
-For a full derivation of the Bloch Redfield master equation, see e.g. [C. Cohen-Tannoudji, 1992]() or [H.-P. Breuer, 2002]().
+For a full derivation of the Bloch Redfield master equation, see e.g. [Cohen_Tannoudji_atomphoton](@citet) or [breuer2002](@citet).
 Here we present only a brief version of the derivation, with the intention of introducing the notation and how it relates to the implementation in `QuantumToolbox.jl`.
 
 
@@ -237,3 +237,15 @@ add_vectors!(sphere, [Δ, 0, ϵ0] / √(Δ^2 + ϵ0^2))
 fig, _ = render(sphere)
 fig
 ```
+
+The two steps of calculating the Bloch-Redfield tensor and evolving according to
+the corresponding master equation can be combined into one by using the function
+[`brmesolve`](@ref), in addition to the same arguments as [`mesolve`](@ref) and
+[`mcsolve`](@ref), the nested list of operator-spectrum
+tuple should be given under `a_ops`.
+
+```@example brmesolve
+    output = brmesolve(H, psi0, tlist, a_ops=[[sigmax(),ohmic_spectrum]], e_ops=e_ops)
+```
+
+The resulting `output` is of the `struct` [`TimeEvolutionSol`](@ref) like as from [`mesolve`](@ref).
