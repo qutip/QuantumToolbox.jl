@@ -1,19 +1,10 @@
 # [Bloch-Redfield master equation](@id doc-TE:Bloch-Redfield-master-equation)
 
-The [Lindblad master equation](@ref doc-TE:Lindblad-Master-Equation-Solver) introduced earlier is constructed so that it describes a physical evolution of the density matrix (i.e., trace and positivity preserving), but it does not provide a connection to any underlying microscopic physical model.
-The Lindblad operators (collapse operators) describe phenomenological processes, such as for example dephasing and spin flips, and the rates of these processes are arbitrary parameters in the model.
-In many situations the collapse operators and their corresponding rates have clear physical interpretation, such as dephasing and relaxation rates, and in those cases the Lindblad master equation is usually the method of choice.
+The [Lindblad master equation](@ref doc-TE:Lindblad-Master-Equation-Solver) introduced earlier is constructed so that it describes a physical evolution of the density matrix (i.e., trace and positivity preserving), but it does not provide a connection to any underlying microscopic physical model. The Lindblad operators (collapse operators) describe phenomenological processes, such as for example dephasing and spin flips, and the rates of these processes are arbitrary parameters in the model. In many situations the collapse operators and their corresponding rates have clear physical interpretation, such as dephasing and relaxation rates, and in those cases the Lindblad master equation is usually the method of choice.
 
 However, in some cases, for example systems with varying energy biases and eigenstates and that couple to an environment in some well-defined manner (through a physically motivated system-environment interaction operator), it is often desirable to derive the master equation from more fundamental physical principles, and relate it to for example the noise-power spectrum of the environment.
 
-The Bloch-Redfield formalism is one such approach to derive a master equation from a microscopic system.
-It starts from a combined system-environment perspective, and derives a perturbative master equation for the system alone, under the assumption of weak system-environment coupling.
-One advantage of this approach is that the dissipation processes and rates are obtained directly from the properties of the environment.
-On the downside, it does not intrinsically guarantee that the resulting master equation unconditionally preserves the physical properties of the density matrix (because it is a perturbative method).
-The Bloch-Redfield master equation must therefore be used with care, and the assumptions made in the derivation must be honored.
-(The Lindblad master equation is in a sense more robust -- it always results in a physical density matrix -- although some collapse operators might not be physically justified).
-For a full derivation of the Bloch Redfield master equation, see e.g. [Cohen_Tannoudji_atomphoton](@citet) or [breuer2002](@citet).
-Here we present only a brief version of the derivation, with the intention of introducing the notation and how it relates to the implementation in `QuantumToolbox.jl`.
+The Bloch-Redfield formalism is one such approach to derive a master equation from a microscopic system. It starts from a combined system-environment perspective, and derives a perturbative master equation for the system alone, under the assumption of weak system-environment coupling. One advantage of this approach is that the dissipation processes and rates are obtained directly from the properties of the environment. On the downside, it does not intrinsically guarantee that the resulting master equation unconditionally preserves the physical properties of the density matrix (because it is a perturbative method). The Bloch-Redfield master equation must therefore be used with care, and the assumptions made in the derivation must be honored. (The Lindblad master equation is in a sense more robust -- it always results in a physical density matrix -- although some collapse operators might not be physically justified). For a full derivation of the Bloch Redfield master equation, see e.g. [Cohen_Tannoudji_atomphoton](@citet) or [breuer2002](@citet). Here we present only a brief version of the derivation, with the intention of introducing the notation and how it relates to the implementation in `QuantumToolbox.jl`.
 
 
 ## [Brief Derivation and Definitions](@id doc-TE:Brief-Derivation-and-Definitions)
@@ -26,13 +17,9 @@ The most general form of a master equation for the system dynamics is obtained b
     \frac{d}{dt}\hat{\rho}_{\textrm{S}}(t) = - \hbar^{-2}\int_0^t d\tau\;  \textrm{Tr}_{\textrm{B}} [\hat{H}_{\textrm{I}}(t), [\hat{H}_{\textrm{I}}(\tau), \hat{\rho}_{\textrm{S}}(\tau)\otimes\hat{\rho}_{\textrm{B}}]],
 ```
 
-where the additional assumption that the total system-bath density matrix can be factorized as ``\hat{\rho}(t) \approx \hat{\rho}_{\textrm{S}}(t) \otimes \hat{\rho}_{\textrm{B}}``.
-This assumption is known as the Born approximation, and it implies that there never is any entanglement between the system and the bath, neither in the initial state nor at any time during the evolution.
-*It is justified for weak system-bath interaction.*
+where the additional assumption that the total system-bath density matrix can be factorized as ``\hat{\rho}(t) \approx \hat{\rho}_{\textrm{S}}(t) \otimes \hat{\rho}_{\textrm{B}}``. This assumption is known as the Born approximation, and it implies that there never is any entanglement between the system and the bath, neither in the initial state nor at any time during the evolution. *It is justified for weak system-bath interaction.*
 
-The master equation above is non-Markovian, i.e., the change in the density matrix at a time ``t`` depends on states at all times ``\tau < t``, making it intractable to solve both theoretically and numerically.
-To make progress towards a manageable master equation, we now introduce the Markovian approximation, in which ``\hat{\rho}_{\textrm{S}}(\tau)`` is replaced by ``\hat{\rho}_{\textrm{S}}(t)``.
-The result is the Redfield equation
+The master equation above is non-Markovian, i.e., the change in the density matrix at a time ``t`` depends on states at all times ``\tau < t``, making it intractable to solve both theoretically and numerically. To make progress towards a manageable master equation, we now introduce the Markovian approximation, in which ``\hat{\rho}_{\textrm{S}}(\tau)`` is replaced by ``\hat{\rho}_{\textrm{S}}(t)``. The result is the Redfield equation
 
 ```math
     \frac{d}{dt}\hat{\rho}_{\textrm{S}}(t) = - \hbar^{-2}\int_0^t d\tau\; \textrm{Tr}_{\textrm{B}} [\hat{H}_{\textrm{I}}(t), [\hat{H}_{\textrm{I}}(\tau), \hat{\rho}_{\textrm{S}}(t)\otimes\hat{\rho}_{\textrm{B}}]],
@@ -46,8 +33,7 @@ which is local in time with respect the density matrix, but still not Markovian 
 
 The two Markovian approximations introduced above are valid if the time-scale with which the system dynamics changes is large compared to the time-scale with which correlations in the bath decays (corresponding to a "short-memory" bath, which results in Markovian system dynamics).
 
-The Markovian master equation above is still on a too general form to be suitable for numerical implementation. We therefore assume that the system-bath interaction takes the form ``\hat{H}_{\textrm{I}} = \sum_\alpha \hat{A}_\alpha \otimes \hat{B}_\alpha`` and where ``\hat{A}_\alpha`` are system operators and ``\hat{B}_\alpha`` are bath operators.
-This allows us to write master equation in terms of system operators and bath correlation functions:
+The Markovian master equation above is still on a too general form to be suitable for numerical implementation. We therefore assume that the system-bath interaction takes the form ``\hat{H}_{\textrm{I}} = \sum_\alpha \hat{A}_\alpha \otimes \hat{B}_\alpha`` and where ``\hat{A}_\alpha`` are system operators and ``\hat{B}_\alpha`` are bath operators. This allows us to write master equation in terms of system operators and bath correlation functions:
 
 ```math
 \begin{split}\frac{d}{dt}\hat{\rho}_{\textrm{S}}(t) =
@@ -62,12 +48,9 @@ g_{\alpha\beta}(\tau) \left[\hat{A}_\alpha(t)\hat{A}_\beta(t-\tau)\hat{\rho}_{\t
 \right\},\end{split}
 ```
 
-where ``g_{\alpha\beta}(\tau) = \textrm{Tr}_{\textrm{B}}\left[\hat{B}_\alpha(t)\hat{B}_\beta(t-\tau)\hat{\rho}_{\textrm{B}}\right] = \langle\hat{B}_\alpha(\tau)\hat{B}_\beta(0)\rangle``,
-since the bath state ``\hat{\rho}_{\textrm{B}}`` is a steady state.
+where ``g_{\alpha\beta}(\tau) = \textrm{Tr}_{\textrm{B}}\left[\hat{B}_\alpha(t)\hat{B}_\beta(t-\tau)\hat{\rho}_{\textrm{B}}\right] = \langle\hat{B}_\alpha(\tau)\hat{B}_\beta(0)\rangle``, since the bath state ``\hat{\rho}_{\textrm{B}}`` is a steady state.
 
-In the eigenbasis of the system Hamiltonian, where ``A_{mn}(t) = A_{mn} e^{i\omega_{mn}t}``,
-``\omega_{mn} = \omega_m - \omega_n`` and ``\omega_m`` are the eigenfrequencies
-corresponding the eigenstate ``\left|m\rangle``, we obtain in matrix form in the Schrödinger picture
+In the eigenbasis of the system Hamiltonian, where ``A_{mn}(t) = A_{mn} e^{i\omega_{mn}t}``, ``\omega_{mn} = \omega_m - \omega_n`` and ``\omega_m`` are the eigenfrequencies corresponding the eigenstate ``\left|m\rangle``, we obtain in matrix form in the Schrödinger picture
 
 ```math
 \begin{aligned}
@@ -91,15 +74,13 @@ corresponding the eigenstate ``\left|m\rangle``, we obtain in matrix form in the
 \end{aligned}
 ```
 
-where the "sec" above the summation symbol indicate summation of the secular terms which satisfy ``|\omega_{ab}-\omega_{cd}| \ll \tau_ {\rm decay}``.
-This is an almost-useful form of the master equation. The final step before arriving at the form of the Bloch-Redfield master equation that is implemented in `QuantumToolbox.jl`, involves rewriting the bath correlation function ``g(\tau)`` in terms of the noise-power spectrum of the environment ``S(\omega) = \int_{-\infty}^\infty d\tau e^{i\omega\tau} g(\tau)``:
+where the "sec" above the summation symbol indicate summation of the secular terms which satisfy ``|\omega_{ab}-\omega_{cd}| \ll \tau_ {\rm decay}``. This is an almost-useful form of the master equation. The final step before arriving at the form of the Bloch-Redfield master equation that is implemented in `QuantumToolbox.jl`, involves rewriting the bath correlation function ``g(\tau)`` in terms of the noise-power spectrum of the environment ``S(\omega) = \int_{-\infty}^\infty d\tau e^{i\omega\tau} g(\tau)``:
 
 ```math
     \int_0^\infty d\tau\; g_{\alpha\beta}(\tau) e^{i\omega\tau} = \frac{1}{2}S_{\alpha\beta}(\omega) + i\lambda_{\alpha\beta}(\omega),
 ```
 
 where ``\lambda_{ab}(\omega)`` is an energy shift that is neglected here. The final form of the Bloch-Redfield master equation is
-
 
 ```math
     \frac{d}{dt}\rho_{ab}(t)
@@ -155,9 +136,7 @@ To simplify the numerical implementation we often assume that ``\hat{A}_\alpha``
 
 ### Preparing the Bloch-Redfield tensor
 
-In `QuantumToolbox.jl`, the Bloch-redfield master equation can be calculated using the function [`bloch_redfield_tensor`](@ref). 
-It takes two mandatory arguments: The system Hamiltonian ``\hat{H}`` and a nested list `a_ops` consist of tuples as `(A, spec)` 
-with `A::QuantumObject` being the [`Operator`](@ref) ``\hat{A}_\alpha`` and `spec::Function` being the spectral density function ``S_\alpha(\omega)``.
+In `QuantumToolbox.jl`, the Bloch-redfield master equation can be calculated using the function [`bloch_redfield_tensor`](@ref). It takes two mandatory arguments: The system Hamiltonian ``\hat{H}`` and a nested list `a_ops` consist of tuples as `(A, spec)` with `A::QuantumObject` being the [`Operator`](@ref) ``\hat{A}_\alpha`` and `spec::Function` being the spectral density function ``S_\alpha(\omega)``.
 
 It is possible to also get the ``\alpha``-th term for the bath directly using [`brterm`](@ref). This function takes only one Hermitian coupling operator ``\hat{A}_\alpha`` and spectral response function ``S_\alpha(\omega)``.
 
@@ -188,23 +167,11 @@ R, U = bloch_redfield_tensor(H, [(sigmax(), ohmic_spectrum)])
 R
 ```
 
-Note that it is also possible to add Lindblad dissipation superoperators in the
-Bloch-Refield tensor by passing the operators via the third argument `c_ops`
-like you would in the [`mesolve`](@ref) or [`mcsolve`](@ref) functions.
-For convenience, when the keyword argument `fock_basis = false`, the function [`bloch_redfield_tensor`](@ref) also returns the basis
-transformation operator `U`, the eigen vector matrix, since they are calculated in the
-process of generating the Bloch-Redfield tensor `R`, and the `U` are usually
-needed again later when transforming operators between the laboratory basis and the eigen basis.
-The tensor can be obtained in the laboratory basis by setting `fock_basis = true`,
-in that case, the transformation operator `U` is not returned.
+Note that it is also possible to add Lindblad dissipation superoperators in the Bloch-Refield tensor by passing the operators via the third argument `c_ops` like you would in the [`mesolve`](@ref) or [`mcsolve`](@ref) functions. For convenience, when the keyword argument `fock_basis = false`, the function [`bloch_redfield_tensor`](@ref) also returns the basis transformation operator `U`, the eigen vector matrix, since they are calculated in the process of generating the Bloch-Redfield tensor `R`, and the `U` are usually needed again later when transforming operators between the laboratory basis and the eigen basis. The tensor can be obtained in the laboratory basis by setting `fock_basis = true`, in that case, the transformation operator `U` is not returned.
 
 ### Time evolution
 
-The evolution of a wave function or density matrix, according to the Bloch-Redfield
-master equation, can be calculated using the function [`mesolve`](@ref)
-with Bloch-Refield tensor `R` in the laboratory basis instead of a [`liouvillian`](@ref).
-For example, to evaluate the expectation values of the ``\hat{\sigma}_x``,
-``\hat{\sigma}_y``, and ``\hat{\sigma}_z`` operators for the example above, we can use the following code:
+The evolution of a wave function or density matrix, according to the Bloch-Redfield master equation, can be calculated using the function [`mesolve`](@ref) with Bloch-Refield tensor `R` in the laboratory basis instead of a [`liouvillian`](@ref). For example, to evaluate the expectation values of the ``\hat{\sigma}_x``, ``\hat{\sigma}_y``, and ``\hat{\sigma}_z`` operators for the example above, we can use the following code:
 
 ```@example brmesolve
 Δ = 0.2 * 2 * π
@@ -239,11 +206,7 @@ fig, _ = render(sphere)
 fig
 ```
 
-The two steps of calculating the Bloch-Redfield tensor `R` and evolving according to
-the corresponding master equation can be combined into one by using the function
-[`brmesolve`](@ref), in addition to the same arguments as [`mesolve`](@ref) and
-[`mcsolve`](@ref), the nested list of operator-spectrum
-tuple should be given under `a_ops`.
+The two steps of calculating the Bloch-Redfield tensor `R` and evolving according to the corresponding master equation can be combined into one by using the function [`brmesolve`](@ref), in addition to the same arguments as [`mesolve`](@ref) and [`mcsolve`](@ref), the nested list of operator-spectrum tuple should be given under `a_ops`.
 
 ```@example brmesolve
 sol = brmesolve(H, ψ0, tlist, ((sigmax(),ohmic_spectrum),); e_ops=e_ops)
