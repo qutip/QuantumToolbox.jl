@@ -55,7 +55,7 @@ In the eigenbasis of the system Hamiltonian, where ``A_{mn}(t) = A_{mn} e^{i\ome
 ```math
 \begin{aligned}
     \frac{d}{dt} \rho_{ab}(t) = & -i\omega_{ab}\rho_{ab}(t)\\
-    &-\hbar^{-2} \sum_{\alpha,\beta} \sum_{c,d}^{\rm sec} \int_0^\infty d\tau\;
+    &-\hbar^{-2} \sum_{\alpha,\beta} \sum_{c,d}^{\textrm{sec}} \int_0^\infty d\tau\;
     \left\{
     g_{\alpha\beta}(\tau)
     \left[\delta_{bd}\sum_nA^\alpha_{an}A^\beta_{nc}e^{i\omega_{cn}\tau}
@@ -87,7 +87,7 @@ where ``\lambda_{ab}(\omega)`` is an energy shift that is neglected here. The fi
     =
     -i\omega_{ab}\rho_{ab}(t)
     +
-    \sum_{c,d}^{\rm sec}R_{abcd}\rho_{cd}(t),
+    \sum_{c,d}^{\textrm{sec}}R_{abcd}\rho_{cd}(t),
 ```
 
 where
@@ -213,3 +213,17 @@ sol = brmesolve(H, ψ0, tlist, ((sigmax(),ohmic_spectrum),); e_ops=e_ops)
 ```
 
 The resulting `sol` is of the `struct` [`TimeEvolutionSol`](@ref) as [`mesolve`](@ref).
+
+!!! note "Secular cutoff"
+    While the code example simulates the Bloch-Redfield equation in the secular approximation, `QuantumToolbox`'s implementation allows the user to simulate the non-secular version of the Bloch-Redfield equation by setting `sec_cutoff=-1`, as well as do a partial secular approximation by setting it to a `Float64` , this float number will become the cutoff for the summation (``\sum_{c,d}^{\textrm{sec}}``) in the previous equations, meaning that terms with ``\omega_{ab} - \omega_{cd}`` greater than the `sec_cutoff` will be neglected. Its default value is `0.1` which corresponds to the secular approximation. 
+    
+For example, the command
+
+```julia
+sol = brmesolve(H, ψ0, tlist, ((sigmax(),ohmic_spectrum),); e_ops=e_ops, sec_cutoff=-1)
+```
+
+will simulate the same example as above without the secular approximation.
+
+!!! warning "Secular cutoff"
+    Using the non-secular version may lead to negativity issues.
