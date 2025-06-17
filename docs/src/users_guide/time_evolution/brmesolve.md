@@ -14,7 +14,7 @@ One advantage of this approach is that the dissipation processes and rates are o
 On the downside, it does not intrinsically guarantee that the resulting master equation unconditionally preserves the physical properties of the density matrix (because it is a perturbative method).
 The Bloch-Redfield master equation must therefore be used with care, and the assumptions made in the derivation must be honored.
 (The Lindblad master equation is in a sense more robust -- it always results in a physical density matrix -- although some collapse operators might not be physically justified).
-For a full derivation of the Bloch Redfield master equation, see e.g. [Coh92]() or [Bre02]().
+For a full derivation of the Bloch Redfield master equation, see e.g. [C. Cohen-Tannoudji, 1992]() or [H.-P. Breuer, 2002]().
 Here we present only a brief version of the derivation, with the intention of introducing the notation and how it relates to the implementation in `QuantumToolbox.jl`.
 
 
@@ -151,4 +151,89 @@ To simplify the numerical implementation we often assume that ``A_\alpha`` are H
 
 ## Bloch-Redfield master equation in `QuantumToolbox.jl`
 
+### Preparing the Bloch-Redfield tensor
 
+In `QuantumToolbox.jl`, the Bloch-redfield master equation can be calculated using the function [`bloch_redfield_tensor`](@ref). 
+It takes two mandatory arguments: The system Hamiltonian ``H`` and a nested list `a_ops` consist of tuples as `(A, spec)` 
+with `A::QuantumObject{Operator}` being the operator ``A_\alpha`` and `spec::Function` being the spectral density functions ``S_\alpha(\omega)``.
+
+It is possible to also get the term for a bath `\alpha` directly using [`brterm`](@ref). This function takes only one hermitian coupling operator ``A_\alpha`` and spectral response function ``S_\alpha(\omega)``.
+
+To illustrate how to calculate the Bloch-Redfield tensor, let's consider a two-level atom
+
+```math
+    H = -\frac{1}{2}\Delta\sigma_x - \frac{1}{2}\varepsilon_0\sigma_z
+```
+
+```@example brmesolve
+Δ  = 0.2 * 2π
+ε0 = 1.0 * 2π
+γ1 = 0.5
+
+H = -Δ/2.0 * sigmax() - ε0/2 * sigmaz()
+
+function ohmic_spectrum(ω)
+    if ω == 0.   # dephasing noise
+        return γ1
+    elseif ω > 0 # relaxing noise  
+        return γ1 / 2 * ω / (2π)
+    else
+        return o
+    end
+end
+
+R, U = bloch_redfield_tensor(H, [(sigmax(), ohmic_spectrum)])
+
+R
+```
+
+Note that it is also possible to add Lindblad dissipation superoperators in the
+Bloch-Refield tensor by passing the operators via the third argument `c_ops`
+like you would in the [`mesolve`](@ref) or [`mcsolve`](@ref) functions.
+For convenience, when the keyword argument `fock_basis = false`, the function [`bloch_redfield_tensor`](@ref) also returns the basis
+transformation operator `U`, the eigen vector matrix, since they are calculated in the
+process of calculating the Bloch-Redfield tensor `R`, and the `U` are usually
+needed again later when transforming operators between the laboratory basis and the eigen basis.
+The tensor can be obtained in the laboratory basis by setting `fock_basis = true`,
+in that case, the transformation operator is not returned.
+
+### Time evolution
+
+The evolution of a wave function or density matrix, according to the Bloch-Redfield
+master equation, can be calculated using the function [`mesolve`](@ref)
+using Bloch-Refield tensor in the laboratory basis instead of a liouvillian.
+For example, to evaluate the expectation values of the ``\sigma_x``,
+``\sigma_y``, and ``\sigma_z`` operators for the example above, we can use the following code:
+
+```@example brmesolve
+Δ = 0.2 * 2 * π
+ϵ0 = 1.0 * 2 * π
+γ1 = 0.5
+
+H = - Δ/2.0 * sigmax() - ϵ0/2.0 * sigmaz()
+
+ohmic_spectrum(ω) = (ω == 0.0) ? γ1 : γ1 / 2 * (ω / (2 * π)) * (ω > 0.0)
+
+a_ops = ((sigmax(), ohmic_spectrum),)
+e_ops = [sigmax(), sigmay(), sigmaz()]
+
+# same initial random ket state in QuTiP doc 
+ψ0 = Qobj([
+    0.05014193+0.66000276im,
+    0.67231376+0.33147603im
+])
+
+tlist = LinRange(0, 15.0, 1000)
+sol = brmesolve(H, ψ0, tlist, a_ops, e_ops=e_ops)
+expt_list = real(sol.expect)
+
+# plot the evolution of state on Bloch sphere
+sphere = Bloch()
+add_points!(sphere, [expt_list[1,:], expt_list[2,:], expt_list[3,:]])
+sphere.vector_color = ["red"]
+
+add_vectors!(sphere, [Δ, 0, ϵ0] / √(Δ^2 + ϵ0^2))
+
+fig, _ = render(sphere)
+fig
+```
