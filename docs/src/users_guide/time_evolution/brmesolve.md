@@ -165,6 +165,13 @@ To illustrate how to calculate the Bloch-Redfield tensor, let's consider a two-l
     H = -\frac{1}{2}\Delta\sigma_x - \frac{1}{2}\varepsilon_0\sigma_z
 ```
 
+```@setup brmesolve
+using QuantumToolbox
+
+using CairoMakie
+CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
+```
+
 ```@example brmesolve
 Δ  = 0.2 * 2π
 ε0 = 1.0 * 2π
@@ -178,7 +185,7 @@ function ohmic_spectrum(ω)
     elseif ω > 0 # relaxing noise  
         return γ1 / 2 * ω / (2π)
     else
-        return o
+        return 0
     end
 end
 
@@ -245,7 +252,7 @@ the corresponding master equation can be combined into one by using the function
 tuple should be given under `a_ops`.
 
 ```@example brmesolve
-    output = brmesolve(H, psi0, tlist, a_ops=[[sigmax(),ohmic_spectrum]], e_ops=e_ops)
+    output = brmesolve(H, ψ0, tlist, ((sigmax(),ohmic_spectrum),); e_ops=e_ops)
 ```
 
-The resulting `output` is of the `struct` [`TimeEvolutionSol`](@ref) like as from [`mesolve`](@ref).
+The resulting `output` is of the `struct` [`TimeEvolutionSol`](@ref) as [`mesolve`](@ref).
