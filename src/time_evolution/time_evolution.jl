@@ -14,7 +14,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 # Fields (Attributes)
 
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
-- `times::Abstractvector`: The time list of the evolution.
+- `times::AbstractVector`: The time list of the evolution.
 - `dimensions::AbstractDimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
 

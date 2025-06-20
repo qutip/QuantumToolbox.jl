@@ -34,7 +34,7 @@ const trans = transpose
 const dag = adjoint
 
 @doc raw"""
-    matrix_element(i::QuantumObject, A::QuantumObject j::QuantumObject)
+    matrix_element(i::QuantumObject, A::QuantumObject, j::QuantumObject)
 
 Compute the generalized dot product `dot(i, A*j)` between three [`QuantumObject`](@ref): ``\langle i | \hat{A} | j \rangle``
 
@@ -61,7 +61,7 @@ const operator_to_vector = mat2vec
 
 Matrix square root of [`Operator`](@ref) type of [`QuantumObject`](@ref)
 
-Note that for other types of [`QuantumObject`](@ref) use `sprt(A)` instead.
+Note that for other types of [`QuantumObject`](@ref) use `sqrt(A)` instead.
 """
 sqrtm(A::QuantumObject{Operator}) = sqrt(A)
 
