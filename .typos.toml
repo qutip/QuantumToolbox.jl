@@ -1,3 +1,4 @@
 [default.extend-words]
 ket = "ket"
 sme = "sme"
+nd  = "nd"

@@ -28,6 +28,10 @@
     - [Generate QobjEvo](@ref doc-TE:Generate-QobjEvo)
     - [QobjEvo fields (attributes)](@ref doc-TE:QobjEvo-fields-(attributes))
     - [Using parameters](@ref doc-TE:Using-parameters)
+- [Bloch-Redfield master equation](@ref doc-TE:Bloch-Redfield-master-equation)
+    - [Brief Derivation and Definitions](@ref doc-TE:Brief-Derivation-and-Definitions)
+    - [Bloch-Redfield master equation in `QuantumToolbox.jl`](@ref Bloch-Redfield-master-equation-in-QuantumToolbox-jl)
+
 
 # [Introduction](@id doc-TE:Introduction)
 
@@ -44,6 +48,7 @@ The following table lists the solvers provided by `QuantumToolbox` for dynamic q
 | Monte Carlo evolution | [`mcsolve`](@ref) | [`mcsolveProblem`](@ref) [`mcsolveEnsembleProblem`](@ref) | [`TimeEvolutionMCSol`](@ref) |
 | Stochastic Schrödinger equation | [`ssesolve`](@ref) | [`ssesolveProblem`](@ref) [`ssesolveEnsembleProblem`](@ref) | [`TimeEvolutionStochasticSol`](@ref) |
 | Stochastic master equation | [`smesolve`](@ref) | [`smesolveProblem`](@ref) [`smesolveEnsembleProblem`](@ref) | [`TimeEvolutionStochasticSol`](@ref) |
+| Bloch-Redfield master equation | [`brmesolve`](@ref) | - | [`TimeEvolutionSol`](@ref) |
 
 !!! note "Solving dynamics with pre-defined problems"
     `QuantumToolbox` provides two different methods to solve the dynamics. One can use the function calls listed above by either taking all the operators (like Hamiltonian and collapse operators, etc.) as inputs directly, or generating the `prob`lems by yourself and take it as an input of the function call, e.g., `sesolve(prob)`.
