@@ -78,6 +78,7 @@ dimensions_to_dims(dimensions::GeneralDimensions) =
     SVector{2}(dimensions_to_dims(dimensions.to), dimensions_to_dims(dimensions.from))
 
 dimensions_to_dims(::Nothing) = nothing # for EigsolveResult.dimensions = nothing
+dimensions_to_dims(s_enr::EnrSpace) = s_enr.dims
 
 Base.length(::AbstractDimensions{N}) where {N} = N
 
