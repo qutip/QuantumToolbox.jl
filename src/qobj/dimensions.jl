@@ -17,7 +17,7 @@ struct Dimensions{N,T<:Tuple} <: AbstractDimensions{N,N}
     to::T
 
     # make sure the elements in the tuple are all AbstractSpace
-    Dimensions(to::NTuple{N,T}) where {N,T<:AbstractSpace} = new{N,typeof(to)}(to)
+    Dimensions(to::NTuple{N,AbstractSpace}) where {N} = new{N,typeof(to)}(to)
 end
 function Dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N}
     _non_static_array_warning("dims", dims)
@@ -48,7 +48,7 @@ struct GeneralDimensions{M,N,T1<:Tuple,T2<:Tuple} <: AbstractDimensions{M,N}
     from::T2 # space acting on the right
 
     # make sure the elements in the tuple are all AbstractSpace
-    GeneralDimensions(to::NTuple{M,T1}, from::NTuple{N,T2}) where {M,N,T1<:AbstractSpace,T2<:AbstractSpace} =
+    GeneralDimensions(to::NTuple{M,AbstractSpace}, from::NTuple{N,AbstractSpace}) where {M,N} =
         new{M,N,typeof(to),typeof(from)}(to, from)
 end
 function GeneralDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N}
