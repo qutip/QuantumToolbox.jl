@@ -5,21 +5,54 @@ This file defines the energy restricted space structure.
 export EnrSpace, enr_state_dictionaries
 export enr_identity, enr_fock, enr_destroy, enr_thermal_dm
 
+@doc raw"""
+    struct EnrSpace{N} <: AbstractSpace
+        size::Int
+        dims::NTuple{N,Int}
+        n_excitations::Int
+        n_subspace::Int
+        state2idx::Dict{SVector{N,Int},Int}
+        idx2state::Dict{Int,SVector{N,Int}}
+    end
+
+A structure that describes an excitation-number restricted (ENR) state space.
+
+# Fields
+
+- `size`: Number of states in the excitation-number restricted state space
+- `dims`: A list of the number of states in each sub-system
+- `n_excitations`: Maximum number of excitations
+- `n_subspace`: The number of sub-systems
+- `state2idx`: A dictionary for looking up a state index from a state (`SVector`)
+- `idx2state`: A dictionary for looking up state (`SVector`) from a state index
+
+# Example
+
+To construct an `EnrSpace`, we only need to specify the `dims` and `n_excitations`, namely
+
+```jldoctest
+julia> dims = (2, 2, 3);
+
+julia> n_excitations = 3;
+
+julia> EnrSpace(dims, n_excitations)
+EnrSpace((2, 2, 3), 3)
+```
+"""
 struct EnrSpace{N} <: AbstractSpace
     size::Int
-    dims::NTuple{N,Int}
+    dims::SVector{N,Int}
     n_excitations::Int
+    n_subspace::Int
     state2idx::Dict{SVector{N,Int},Int}
     idx2state::Dict{Int,SVector{N,Int}}
 
-    function EnrSpace(dims::Union{Tuple,AbstractVector}, excitations::Int)
-        _non_static_array_warning("dims", dims)
-        dim_len = length(dims)
-        dims_T = NTuple{dim_len}(dims)
-
+    function EnrSpace(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
+        # all arguments will be checked in `enr_state_dictionaries`
         size, state2idx, idx2state = enr_state_dictionaries(dims, excitations)
 
-        return new{dim_len}(size, dims_T, excitations, state2idx, idx2state)
+        L = length(dims)
+        return new{L}(size, SVector{L}(dims), excitations, L, state2idx, idx2state)
     end
 end
 
@@ -28,26 +61,46 @@ function Base.show(io::IO, s::EnrSpace)
     return nothing
 end
 
-Base.:(==)(s_enr1::EnrSpace, s_enr2::EnrSpace) = (all([s_enr1.size, s_enr1.dims] .== [s_enr2.size, s_enr2.dims]))
+Base.:(==)(s_enr1::EnrSpace, s_enr2::EnrSpace) = (s_enr1.size == s_enr2.size) && (s_enr1.dims == s_enr2.dims)
 
 dimensions_to_dims(s_enr::EnrSpace) = s_enr.dims
 
-function enr_state_dictionaries(dims::Union{Tuple,AbstractVector}, excitations::Int)
-    len = length(dims)
-    nvec = zeros(Int, len)
-    result = SVector{len,Int}[nvec] # in the following, all nvec will first be converted (copied) to SVector and then push to result 
+@doc raw"""
+    enr_state_dictionaries(dims, excitations)
+
+Return the number of states, and lookup-dictionaries for translating a state (`SVector`) to a state index, and vice versa, for a system with a given number of components and maximum number of excitations.
+
+# Arguments
+- `dims::Union{AbstractVector,Tuple}`: A list of the number of states in each sub-system
+- `excitations::Int`: Maximum number of excitations
+
+# Returns
+- `nstates`: Number of states
+- `state2idx`: A dictionary for looking up a state index from a state (`SVector`)
+- `idx2state`: A dictionary for looking up state (`SVector`) from a state index
+"""
+function enr_state_dictionaries(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
+    # argument checks
+    _non_static_array_warning("dims", dims)
+    L = length(dims)
+    (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
+    all(>=(1), dims) || throw(DomainError(dims, "All the elements of dims must be non-zero integers (≥ 1)"))
+    (excitations > 0) || throw(DomainError(excitations, "The argument excitations must be a non-zero integer (≥ 1)"))
+
+    nvec = zeros(Int, L) # Vector
     nexc = 0
 
+    # in the following, all `nvec` (Vector) will first be converted (copied) to SVector and then push to `result` 
+    result = SVector{L,Int}[nvec]
     while true
-        idx = len
+        idx = L
         nvec[end] += 1
         nexc += 1
-        if nvec[idx] < dims[idx]
-            push!(result, nvec)
-        end
+        (nvec[idx] < dims[idx]) && push!(result, nvec)
         while (nexc == excitations) || (nvec[idx] == dims[idx])
-            #nvec[idx] = 0
             idx -= 1
+
+            # if idx < 1, break while-loop and return
             if idx < 1
                 enr_size = length(result)
                 return (enr_size, Dict(zip(result, 1:enr_size)), Dict(zip(1:enr_size, result)))
@@ -56,46 +109,40 @@ function enr_state_dictionaries(dims::Union{Tuple,AbstractVector}, excitations::
             nexc -= nvec[idx+1] - 1
             nvec[idx+1] = 0
             nvec[idx] += 1
-            if nvec[idx] < dims[idx]
-                push!(result, nvec)
-            end
+            (nvec[idx] < dims[idx]) && push!(result, nvec)
         end
     end
 end
 
-function enr_identity(dims::Union{Tuple,AbstractVector}, excitations::Int)
+function enr_identity(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
     s_enr = EnrSpace(dims, excitations)
     return QuantumObject(Diagonal(ones(ComplexF64, s_enr.size)), Operator(), Dimensions(s_enr))
 end
 
 function enr_fock(
-    dims::Union{Tuple,AbstractVector},
+    dims::Union{AbstractVector{T},NTuple{N,T}}, 
     excitations::Int,
-    state::AbstractVector;
+    state::AbstractVector{T};
     sparse::Union{Bool,Val} = Val(false),
-)
+) where {T<:Integer,N}
     s_enr = EnrSpace(dims, excitations)
     if getVal(sparse)
         array = sparsevec([s_enr.state2idx[[state...]]], [1.0 + 0im], s_enr.size)
     else
         j = s_enr.state2idx[state]
         array = [i == j ? 1.0 + 0im : 0.0 + 0im for i in 1:(s_enr.size)]
-
-        # s = zeros(ComplexF64, s_enr.size)
-        # s[s_enr.state2idx[state]] += 1
-        # s
     end
 
     return QuantumObject(array, Ket(), s_enr)
 end
 
-function enr_destroy(dims::Union{Tuple,AbstractVector}, excitations::Int)
+function enr_destroy(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
     s_enr = EnrSpace(dims, excitations)
-    N = s_enr.size
+    D = s_enr.size
     idx2state = s_enr.idx2state
     state2idx = s_enr.state2idx
 
-    a_ops = ntuple(i -> QuantumObject(spzeros(ComplexF64, N, N), Operator(), s_enr), length(dims))
+    a_ops = ntuple(i -> QuantumObject(spzeros(ComplexF64, D, D), Operator(), s_enr), s_enr.n_subspace)
 
     for (n1, state1) in idx2state
         for (idx, s) in pairs(state1)
@@ -113,19 +160,20 @@ function enr_destroy(dims::Union{Tuple,AbstractVector}, excitations::Int)
     return a_ops
 end
 
-function enr_thermal_dm(dims::Union{Tuple,AbstractVector}, excitations::Int, n::Union{Int,AbstractVector})
-    if n isa Number
-        nvec = Vector{typeof(n)}(n, length(dims))
+function enr_thermal_dm(dims::Union{AbstractVector{T1},NTuple{N,T1}}, excitations::Int, n::Union{T2,AbstractVector{T2}}) where {T1<:Integer,T2<:Real,N}
+    s_enr = EnrSpace(dims, excitations)
+
+    if n isa Real
+        nvec = fill(n, s_enr.n_subspace)
     else
-        length(n) == length(dims) || throw(ArgumentError("The Vector `n` has different length to `dims`."))
+        (length(n) == s_enr.n_subspace) || throw(ArgumentError("The length of the vector `n` should be the same as `dims`."))
         nvec = n
     end
 
-    s_enr = EnrSpace(dims, excitations)
-    N = s_enr.size
+    D = s_enr.size
     idx2state = s_enr.idx2state
 
-    diags = [prod((nvec ./ (1 .+ nvec)) .^ idx2state[idx]) for idx in 1:N]
+    diags = ComplexF64[prod((nvec ./ (1 .+ nvec)) .^ idx2state[idx]) for idx in 1:D]
 
     diags /= sum(diags)
 
