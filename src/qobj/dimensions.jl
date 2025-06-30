@@ -98,7 +98,7 @@ function _get_dims_string(dimensions::GeneralDimensions)
 end
 _get_dims_string(::Nothing) = "nothing" # for EigsolveResult.dimensions = nothing
 
-Base.:(==)(dim1::Dimensions, dim2::Dimensions) = (dim1.to == dim2.to)
+Base.:(==)(dim1::Dimensions, dim2::Dimensions) = dim1.to == dim2.to
 Base.:(==)(dim1::GeneralDimensions, dim2::GeneralDimensions) = (dim1.to == dim2.to) && (dim1.from == dim2.from)
 Base.:(==)(dim1::Dimensions, dim2::GeneralDimensions) = false
 Base.:(==)(dim1::GeneralDimensions, dim2::Dimensions) = false

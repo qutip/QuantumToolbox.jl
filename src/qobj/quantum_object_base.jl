@@ -239,7 +239,8 @@ get_dimensions_from(
 ) where {ObjType<:Union{SuperOperator,OperatorBra,OperatorKet}} = A.dimensions.to
 
 # this creates a list of Space(1), it is used to generate `from` for Ket, and `to` for Bra
-space_one_list(dimensions::NTuple{N,AbstractSpace}) where {N} = ntuple(i -> Space(1), Val(sum(_get_dims_length, dimensions)))
+space_one_list(dimensions::NTuple{N,AbstractSpace}) where {N} =
+    ntuple(i -> Space(1), Val(sum(_get_dims_length, dimensions)))
 _get_dims_length(::Space) = 1
 _get_dims_length(::EnrSpace{N}) where {N} = N
 

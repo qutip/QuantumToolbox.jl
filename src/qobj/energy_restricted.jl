@@ -118,7 +118,7 @@ end
 enr_identity(s_enr::EnrSpace) = QuantumObject(Diagonal(ones(ComplexF64, s_enr.size)), Operator(), Dimensions(s_enr))
 
 function enr_fock(
-    dims::Union{AbstractVector{T},NTuple{N,T}}, 
+    dims::Union{AbstractVector{T},NTuple{N,T}},
     excitations::Int,
     state::AbstractVector{T};
     sparse::Union{Bool,Val} = Val(false),
@@ -126,11 +126,7 @@ function enr_fock(
     s_enr = EnrSpace(dims, excitations)
     return enr_fock(s_enr, state, sparse = sparse)
 end
-function enr_fock(
-    s_enr::EnrSpace,
-    state::AbstractVector{T};
-    sparse::Union{Bool,Val} = Val(false),
-) where {T<:Integer}
+function enr_fock(s_enr::EnrSpace, state::AbstractVector{T}; sparse::Union{Bool,Val} = Val(false)) where {T<:Integer}
     if getVal(sparse)
         array = sparsevec([s_enr.state2idx[[state...]]], [1.0 + 0im], s_enr.size)
     else
@@ -141,10 +137,7 @@ function enr_fock(
     return QuantumObject(array, Ket(), s_enr)
 end
 
-function enr_destroy(
-    dims::Union{AbstractVector{T},NTuple{N,T}}, 
-    excitations::Int
-) where {T<:Integer,N}
+function enr_destroy(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
     s_enr = EnrSpace(dims, excitations)
     return enr_destroy(s_enr)
 end
@@ -171,7 +164,11 @@ function enr_destroy(s_enr::EnrSpace{N}) where {N}
     return a_ops
 end
 
-function enr_thermal_dm(dims::Union{AbstractVector{T1},NTuple{N,T1}}, excitations::Int, n::Union{T2,AbstractVector{T2}}) where {T1<:Integer,T2<:Real,N}
+function enr_thermal_dm(
+    dims::Union{AbstractVector{T1},NTuple{N,T1}},
+    excitations::Int,
+    n::Union{T2,AbstractVector{T2}},
+) where {T1<:Integer,T2<:Real,N}
     s_enr = EnrSpace(dims, excitations)
     return enr_thermal_dm(s_enr, n)
 end
