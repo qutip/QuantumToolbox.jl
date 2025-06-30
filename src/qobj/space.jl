@@ -23,6 +23,3 @@ struct Space <: AbstractSpace
 end
 
 dimensions_to_dims(s::Space) = SVector{1,Int}(s.size)
-
-# this creates a list of Space(1), it is used to generate `from` for Ket, and `to` for Bra)
-space_one_list(N::Int) = ntuple(i -> Space(1), Val(N))

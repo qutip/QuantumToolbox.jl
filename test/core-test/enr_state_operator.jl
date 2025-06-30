@@ -1,4 +1,49 @@
 @testitem "Excitation number restricted state space" begin
+    @testset "kron" begin
+        # normal Space
+        D1 = 4
+        D2 = 5
+        dims_s = (D1, D2)
+        ρ_s = rand_dm(dims_s)
+        I_s = qeye(D1) ⊗ qeye(D2)
+        size_s = prod(dims_s)
+        space_s = (Space(D1), Space(D2))
+        
+        # EnrSpace
+        dims_enr = (2, 2, 3)
+        excitations = 3
+        space_enr = EnrSpace(dims_enr, excitations)
+        ρ_enr = enr_thermal_dm(space_enr, rand(3))
+        I_enr = enr_identity(space_enr)
+        size_enr = space_enr.size
+
+        # tensor between normal and ENR space
+        ρ_tot = tensor(ρ_s, ρ_enr)
+        opstring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot)
+        datastring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot.data)
+        ρ_tot_dims = [dims_s..., dims_enr...]
+        ρ_tot_size = size_s * size_enr
+        ρ_tot_isherm = isherm(ρ_tot)
+        @test opstring ==
+              "\nQuantum Object:   type=Operator()   dims=$ρ_tot_dims   size=$((ρ_tot_size, ρ_tot_size))   ishermitian=$ρ_tot_isherm\n$datastring"
+
+        # use GeneralDimensions to do partial trace
+        new_dims1 = GeneralDimensions((Space(1), Space(1), space_enr), (Space(1), Space(1), space_enr))
+        ρ_enr_compound = Qobj(zeros(ComplexF64, size_enr, size_enr), dims = new_dims1)
+        basis_list = [tensor(basis(D1, i), basis(D2, j)) for i in 0:(D1-1) for j in 0:(D2-1)]
+        for b in basis_list
+            ρ_enr_compound += tensor(b', I_enr) * ρ_tot * tensor(b, I_enr)
+        end
+        new_dims2 = GeneralDimensions((space_s..., Space(1), Space(1), Space(1)), (space_s..., Space(1), Space(1), Space(1)))
+        ρ_s_compound = Qobj(zeros(ComplexF64, size_s, size_s), dims = new_dims2)
+        basis_list = [enr_fock(space_enr, space_enr.idx2state[idx]) for idx in 1:space_enr.size]
+        for b in basis_list
+            ρ_s_compound += tensor(I_s, b') * ρ_tot * tensor(I_s, b)
+        end
+        @test ρ_enr.data ≈ ρ_enr_compound.data
+        @test ρ_s.data ≈ ρ_s_compound.data
+    end
+
     @testset "mesolve, steadystate, and eigenstates" begin
         ε = 2π
         ωc = 2π
@@ -37,7 +82,15 @@
         # check eigenstates
         λ, v = eigenstates(H_enr)
         @test all([H_enr * v[k] ≈ λ[k] * v[k] for k in eachindex(λ)])
+    end
 
-        qeye(3) ⊗ H_enr
+    @testset "Type Inference" begin
+        N = 3
+        dims = (2, 2, 3)
+        excitations = 3
+        @inferred enr_identity(dims, excitations)
+        @inferred enr_fock(dims, excitations, zeros(Int, N))
+        @inferred enr_destroy(dims, excitations)
+        @inferred enr_thermal_dm(dims, excitations, rand(N))
     end
 end

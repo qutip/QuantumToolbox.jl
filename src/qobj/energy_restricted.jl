@@ -10,19 +10,17 @@ export enr_identity, enr_fock, enr_destroy, enr_thermal_dm
         size::Int
         dims::NTuple{N,Int}
         n_excitations::Int
-        n_subspace::Int
         state2idx::Dict{SVector{N,Int},Int}
         idx2state::Dict{Int,SVector{N,Int}}
     end
 
-A structure that describes an excitation-number restricted (ENR) state space.
+A structure that describes an excitation-number restricted (ENR) state space, where `N` is the number of sub-systems.
 
 # Fields
 
 - `size`: Number of states in the excitation-number restricted state space
 - `dims`: A list of the number of states in each sub-system
 - `n_excitations`: Maximum number of excitations
-- `n_subspace`: The number of sub-systems
 - `state2idx`: A dictionary for looking up a state index from a state (`SVector`)
 - `idx2state`: A dictionary for looking up state (`SVector`) from a state index
 
@@ -43,7 +41,6 @@ struct EnrSpace{N} <: AbstractSpace
     size::Int
     dims::SVector{N,Int}
     n_excitations::Int
-    n_subspace::Int
     state2idx::Dict{SVector{N,Int},Int}
     idx2state::Dict{Int,SVector{N,Int}}
 
@@ -52,7 +49,7 @@ struct EnrSpace{N} <: AbstractSpace
         size, state2idx, idx2state = enr_state_dictionaries(dims, excitations)
 
         L = length(dims)
-        return new{L}(size, SVector{L}(dims), excitations, L, state2idx, idx2state)
+        return new{L}(size, SVector{L}(dims), excitations, state2idx, idx2state)
     end
 end
 
@@ -116,8 +113,9 @@ end
 
 function enr_identity(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
     s_enr = EnrSpace(dims, excitations)
-    return QuantumObject(Diagonal(ones(ComplexF64, s_enr.size)), Operator(), Dimensions(s_enr))
+    return enr_identity(s_enr)
 end
+enr_identity(s_enr::EnrSpace) = QuantumObject(Diagonal(ones(ComplexF64, s_enr.size)), Operator(), Dimensions(s_enr))
 
 function enr_fock(
     dims::Union{AbstractVector{T},NTuple{N,T}}, 
@@ -126,6 +124,13 @@ function enr_fock(
     sparse::Union{Bool,Val} = Val(false),
 ) where {T<:Integer,N}
     s_enr = EnrSpace(dims, excitations)
+    return enr_fock(s_enr, state, sparse = sparse)
+end
+function enr_fock(
+    s_enr::EnrSpace,
+    state::AbstractVector{T};
+    sparse::Union{Bool,Val} = Val(false),
+) where {T<:Integer}
     if getVal(sparse)
         array = sparsevec([s_enr.state2idx[[state...]]], [1.0 + 0im], s_enr.size)
     else
@@ -136,13 +141,19 @@ function enr_fock(
     return QuantumObject(array, Ket(), s_enr)
 end
 
-function enr_destroy(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
+function enr_destroy(
+    dims::Union{AbstractVector{T},NTuple{N,T}}, 
+    excitations::Int
+) where {T<:Integer,N}
     s_enr = EnrSpace(dims, excitations)
+    return enr_destroy(s_enr)
+end
+function enr_destroy(s_enr::EnrSpace{N}) where {N}
     D = s_enr.size
     idx2state = s_enr.idx2state
     state2idx = s_enr.state2idx
 
-    a_ops = ntuple(i -> QuantumObject(spzeros(ComplexF64, D, D), Operator(), s_enr), s_enr.n_subspace)
+    a_ops = ntuple(i -> QuantumObject(spzeros(ComplexF64, D, D), Operator(), s_enr), N)
 
     for (n1, state1) in idx2state
         for (idx, s) in pairs(state1)
@@ -162,11 +173,13 @@ end
 
 function enr_thermal_dm(dims::Union{AbstractVector{T1},NTuple{N,T1}}, excitations::Int, n::Union{T2,AbstractVector{T2}}) where {T1<:Integer,T2<:Real,N}
     s_enr = EnrSpace(dims, excitations)
-
+    return enr_thermal_dm(s_enr, n)
+end
+function enr_thermal_dm(s_enr::EnrSpace{N}, n::Union{T,AbstractVector{T}}) where {N,T<:Real}
     if n isa Real
-        nvec = fill(n, s_enr.n_subspace)
+        nvec = fill(n, N)
     else
-        (length(n) == s_enr.n_subspace) || throw(ArgumentError("The length of the vector `n` should be the same as `dims`."))
+        (length(n) == N) || throw(ArgumentError("The length of the vector `n` should be the same as `dims`."))
         nvec = n
     end
 

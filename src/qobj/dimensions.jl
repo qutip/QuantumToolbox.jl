@@ -43,7 +43,6 @@ Dimensions(dims::Any) = throw(
 A structure that describes the left-hand side (`to`) and right-hand side (`from`) Hilbert [`Space`](@ref) of an [`Operator`](@ref).
 """
 struct GeneralDimensions{M,N,T1<:Tuple,T2<:Tuple} <: AbstractDimensions{M,N}
-    # note that the number `N` should be the same for both `to` and `from`
     to::T1   # space acting on the left
     from::T2 # space acting on the right
 
