@@ -43,7 +43,7 @@ julia> dims = (2, 2, 3);
 julia> n_excitations = 3;
 
 julia> EnrSpace(dims, n_excitations)
-EnrSpace((2, 2, 3), 3)
+EnrSpace([2, 2, 3], 3)
 ```
 
 !!! warning "Beware of type-stability!"
