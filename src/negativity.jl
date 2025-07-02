@@ -71,18 +71,19 @@ Return the partial transpose of a density matrix ``\rho``, where `mask` is an ar
 - `ρ_pt::QuantumObject`: The density matrix with the selected subsystems transposed.
 """
 function partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
-    if length(mask) != length(ρ.dimensions)
-        throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
-    end
+    any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("partial_transpose does not support EnrSpace"))
+    
+    (length(mask) != length(ρ.dimensions)) && throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
+
+    isa(ρ.dimensions, GeneralDimensions) &&
+        (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
+        throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
+
     return _partial_transpose(ρ, mask)
 end
 
 # for dense matrices
 function _partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
-    isa(ρ.dimensions, GeneralDimensions) &&
-        (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
-        throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
-
     mask2 = [1 + Int(i) for i in mask]
     # mask2 has elements with values equal to 1 or 2
     #   1 - the subsystem don't need to be transposed
@@ -107,10 +108,6 @@ function _partial_transpose(
     ρ::QuantumObject{Operator,DimsType,<:AbstractSparseArray},
     mask::Vector{Bool},
 ) where {DimsType<:AbstractDimensions}
-    isa(ρ.dimensions, GeneralDimensions) &&
-        (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
-        throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
-
     M, N = size(ρ)
     dimsTuple = Tuple(dimensions_to_dims(get_dimensions_to(ρ)))
     colptr = ρ.data.colptr
