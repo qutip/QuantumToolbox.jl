@@ -3,7 +3,7 @@ This file defines the energy restricted space structure.
 =#
 
 export EnrSpace, enr_state_dictionaries
-export enr_identity, enr_fock, enr_destroy, enr_thermal_dm
+export enr_fock, enr_thermal_dm, enr_destroy, enr_identity
 
 @doc raw"""
     struct EnrSpace{N} <: AbstractSpace
@@ -14,15 +14,24 @@ export enr_identity, enr_fock, enr_destroy, enr_thermal_dm
         idx2state::Dict{Int,SVector{N,Int}}
     end
 
-A structure that describes an excitation-number restricted (ENR) state space, where `N` is the number of sub-systems.
+A structure that describes an excitation number restricted (ENR) state space, where `N` is the number of sub-systems.
 
 # Fields
 
-- `size`: Number of states in the excitation-number restricted state space
+- `size`: Number of states in the excitation number restricted state space
 - `dims`: A list of the number of states in each sub-system
 - `n_excitations`: Maximum number of excitations
 - `state2idx`: A dictionary for looking up a state index from a state (`SVector`)
 - `idx2state`: A dictionary for looking up state (`SVector`) from a state index
+
+# Functions
+
+With this `EnrSpace`, one can use the following functions to construct states or operators in the excitation number restricted (ENR) space:
+
+- [`enr_fock`](@ref)
+- [`enr_thermal_dm`](@ref)
+- [`enr_destroy`](@ref)
+- [`enr_identity`](@ref)
 
 # Example
 
@@ -36,6 +45,9 @@ julia> n_excitations = 3;
 julia> EnrSpace(dims, n_excitations)
 EnrSpace((2, 2, 3), 3)
 ```
+
+!!! warning "Beware of type-stability!"
+    It is highly recommended to use `EnrSpace(dims, n_excitations)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 struct EnrSpace{N} <: AbstractSpace
     size::Int
@@ -111,12 +123,19 @@ function enr_state_dictionaries(dims::Union{AbstractVector{T},NTuple{N,T}}, exci
     end
 end
 
-function enr_identity(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
-    s_enr = EnrSpace(dims, excitations)
-    return enr_identity(s_enr)
-end
-enr_identity(s_enr::EnrSpace) = QuantumObject(Diagonal(ones(ComplexF64, s_enr.size)), Operator(), Dimensions(s_enr))
+@doc raw"""
+    enr_fock(dims::Union{AbstractVector,Tuple}, excitations::Int, state::AbstractVector; sparse::Union{Bool,Val}=Val(false))
+    enr_fock(s_enr::EnrSpace, state::AbstractVector; sparse::Union{Bool,Val}=Val(false))
 
+Generate the Fock state representation ([`Ket`](@ref)) in an excitation number restricted state space ([`EnrSpace`](@ref)).
+
+The arguments `dims` and `excitations` are used to generate [`EnrSpace`](@ref).
+
+The `state` argument is a list of integers that specifies the state (in the number basis representation) for which to generate the Fock state representation.
+
+!!! warning "Beware of type-stability!"
+    It is highly recommended to use `enr_fock(dims, excitations, state)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+"""
 function enr_fock(
     dims::Union{AbstractVector{T},NTuple{N,T}},
     excitations::Int,
@@ -137,6 +156,64 @@ function enr_fock(s_enr::EnrSpace, state::AbstractVector{T}; sparse::Union{Bool,
     return QuantumObject(array, Ket(), s_enr)
 end
 
+@doc raw"""
+    enr_thermal_dm(dims::Union{AbstractVector,Tuple}, excitations::Int, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false))
+    enr_thermal_dm(s_enr::EnrSpace, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false))
+
+Generate the thermal state (density [`Operator`](@ref)) in an excitation number restricted state space ([`EnrSpace`](@ref)).
+
+The arguments `dims` and `excitations` are used to generate [`EnrSpace`](@ref).
+
+The argument `n` is a list that specifies the expectation values for number of particles in each sub-system. If `n` is specified as a real number, it will apply to each sub-system.
+
+!!! warning "Beware of type-stability!"
+    It is highly recommended to use `enr_thermal_dm(dims, excitations, n)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+"""
+function enr_thermal_dm(
+    dims::Union{AbstractVector{T1},NTuple{N,T1}},
+    excitations::Int,
+    n::Union{T2,AbstractVector{T2}};
+    sparse::Union{Bool,Val} = Val(false),
+) where {T1<:Integer,T2<:Real,N}
+    s_enr = EnrSpace(dims, excitations)
+    return enr_thermal_dm(s_enr, n; sparse = sparse)
+end
+function enr_thermal_dm(
+    s_enr::EnrSpace{N},
+    n::Union{T,AbstractVector{T}};
+    sparse::Union{Bool,Val} = Val(false),
+) where {N,T<:Real}
+    if n isa Real
+        nvec = fill(n, N)
+    else
+        (length(n) == N) || throw(ArgumentError("The length of the vector `n` should be the same as `dims`."))
+        nvec = n
+    end
+
+    D = s_enr.size
+    idx2state = s_enr.idx2state
+
+    diags = ComplexF64[prod((nvec ./ (1 .+ nvec)) .^ idx2state[idx]) for idx in 1:D]
+    diags /= sum(diags)
+
+    if getVal(sparse)
+        return QuantumObject(spdiagm(0 => diags), Operator(), s_enr)
+    else
+        return QuantumObject(diagm(0 => diags), Operator(), s_enr)
+    end
+end
+
+@doc raw"""
+    enr_destroy(dims::Union{AbstractVector,Tuple}, excitations::Int)
+    enr_destroy(s_enr::EnrSpace)
+
+Generate a `Tuple` of annihilation operators for each sub-system in an excitation number restricted state space ([`EnrSpace`](@ref)). Thus, the return `Tuple` will have the same length as `dims`.
+
+The arguments `dims` and `excitations` are used to generate [`EnrSpace`](@ref).
+
+!!! warning "Beware of type-stability!"
+    It is highly recommended to use `enr_destroy(dims, excitations)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+"""
 function enr_destroy(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
     s_enr = EnrSpace(dims, excitations)
     return enr_destroy(s_enr)
@@ -164,28 +241,19 @@ function enr_destroy(s_enr::EnrSpace{N}) where {N}
     return a_ops
 end
 
-function enr_thermal_dm(
-    dims::Union{AbstractVector{T1},NTuple{N,T1}},
-    excitations::Int,
-    n::Union{T2,AbstractVector{T2}},
-) where {T1<:Integer,T2<:Real,N}
+@doc raw"""
+    enr_identity(dims::Union{AbstractVector,Tuple}, excitations::Int)
+    enr_identity(s_enr::EnrSpace)
+
+Generate the identity operator in an excitation number restricted state space ([`EnrSpace`](@ref)).
+
+The arguments `dims` and `excitations` are used to generate [`EnrSpace`](@ref).
+
+!!! warning "Beware of type-stability!"
+    It is highly recommended to use `enr_identity(dims, excitations)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+"""
+function enr_identity(dims::Union{AbstractVector{T},NTuple{N,T}}, excitations::Int) where {T<:Integer,N}
     s_enr = EnrSpace(dims, excitations)
-    return enr_thermal_dm(s_enr, n)
+    return enr_identity(s_enr)
 end
-function enr_thermal_dm(s_enr::EnrSpace{N}, n::Union{T,AbstractVector{T}}) where {N,T<:Real}
-    if n isa Real
-        nvec = fill(n, N)
-    else
-        (length(n) == N) || throw(ArgumentError("The length of the vector `n` should be the same as `dims`."))
-        nvec = n
-    end
-
-    D = s_enr.size
-    idx2state = s_enr.idx2state
-
-    diags = ComplexF64[prod((nvec ./ (1 .+ nvec)) .^ idx2state[idx]) for idx in 1:D]
-
-    diags /= sum(diags)
-
-    return QuantumObject(Diagonal(diags), Operator(), s_enr)
-end
+enr_identity(s_enr::EnrSpace) = QuantumObject(Diagonal(ones(ComplexF64, s_enr.size)), Operator(), s_enr)
