@@ -94,7 +94,8 @@ function enr_state_dictionaries(dims::Union{AbstractVector{T},NTuple{N,T}}, n_ex
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
     all(>=(1), dims) || throw(DomainError(dims, "All the elements of dims must be non-zero integers (≥ 1)"))
-    (n_excitations > 0) || throw(DomainError(n_excitations, "The argument n_excitations must be a non-zero integer (≥ 1)"))
+    (n_excitations > 0) ||
+        throw(DomainError(n_excitations, "The argument n_excitations must be a non-zero integer (≥ 1)"))
 
     nvec = zeros(Int, L) # Vector
     nexc = 0

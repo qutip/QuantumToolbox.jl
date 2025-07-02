@@ -72,8 +72,9 @@ Return the partial transpose of a density matrix ``\rho``, where `mask` is an ar
 """
 function partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("partial_transpose does not support EnrSpace"))
-    
-    (length(mask) != length(ρ.dimensions)) && throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
+
+    (length(mask) != length(ρ.dimensions)) &&
+        throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
 
     isa(ρ.dimensions, GeneralDimensions) &&
         (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
