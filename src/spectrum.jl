@@ -186,10 +186,14 @@ function _spectrum(
     Ivec = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(cT, D)) # same as vec(system_identity_matrix)
     wₖ = spre(A).data' * vT(Ivec)
 
-    # Store the norm of the Green's function before renormalizing |v₁> and <w₁|
-    gfNorm = abs(dot(wₖ, vₖ))
-    vₖ ./= sqrt(gfNorm)
-    wₖ ./= sqrt(gfNorm)
+    # Store the normalization factor for the Green's function before renormalizing |v₁> and <w₁|
+    gfNorm = dot(wₖ, vₖ)
+    if gfNorm ≈ 0.0
+        throw(AssertionError("⟨w₀|v₀⟩ = 0, please check your A and B operators."))
+    end
+    scalingF = sqrt(abs(gfNorm))
+    vₖ ./= scalingF
+    wₖ ./= conj(gfNorm/scalingF)
 
     # Handle input frequency range
     ωList = vT(convert(Vector{fT}, ωlist))  # Make sure they're real frequencies and potentially on GPU
@@ -203,6 +207,7 @@ function _spectrum(
     αₖ = cT(0)
     βₖ = cT(-1)
     δₖ = fT(+1)
+    βₖδₖ = βₖ * δₖ
 
     # Current and up to second-to-last A and B Euler sequences
     A₋₂ = vT(ones(cT, Length))
@@ -232,8 +237,8 @@ function _spectrum(
         αₖ = dot(w₊₁, vₖ)
 
         # Update A(k), B(k) and continuous fraction; normalization avoids overflow
-        Aₖ .= (-1im .* ωList .+ αₖ) .* A₋₁ .- (βₖ * δₖ) .* A₋₂
-        Bₖ .= (-1im .* ωList .+ αₖ) .* B₋₁ .- (βₖ * δₖ) .* B₋₂
+        Aₖ .= (-1im .* ωList .+ αₖ) .* A₋₁ .- βₖδₖ .* A₋₂
+        Bₖ .= (-1im .* ωList .+ αₖ) .* B₋₁ .- βₖδₖ .* B₋₂
         lanczosFactor₋₁ .= lanczosFactor
         lanczosFactor .= Aₖ ./ Bₖ
 
@@ -268,9 +273,16 @@ function _spectrum(
         wₖ, w₊₁ = w₊₁, wₖ
 
         # k-th off-diagonal elements
-        buf = dot(wₖ, vₖ)
-        δₖ = sqrt(abs(buf))
-        βₖ = buf / δₖ
+        βₖδₖ = dot(wₖ, vₖ)
+        if βₖδₖ ≈ 0.0
+            if solver.verbose > 0
+                warn("spectrum(): solver::Lanczos experienced orthogonality breakdown after $(k) iterations")
+                warn("spectrum(): βₖδₖ = $(βₖδₖ)")
+            end
+            break
+        end
+        δₖ = sqrt(abs(βₖδₖ))
+        βₖ = βₖδₖ / δₖ
 
         # Normalize (k+1)-th left/right vectors
         vₖ ./= δₖ
