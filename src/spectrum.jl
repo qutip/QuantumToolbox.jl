@@ -276,8 +276,8 @@ function _spectrum(
         βₖδₖ = dot(wₖ, vₖ)
         if βₖδₖ ≈ 0.0
             if solver.verbose > 0
-                warn("spectrum(): solver::Lanczos experienced orthogonality breakdown after $(k) iterations")
-                warn("spectrum(): βₖδₖ = $(βₖδₖ)")
+                @warn "spectrum(): solver::Lanczos experienced orthogonality breakdown after $(k) iterations"
+                @warn "spectrum(): βₖδₖ = $(βₖδₖ)"
             end
             break
         end
