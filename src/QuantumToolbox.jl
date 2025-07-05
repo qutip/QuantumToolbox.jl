@@ -84,6 +84,7 @@ include("linear_maps.jl")
 
 # Quantum Object
 include("qobj/space.jl")
+include("qobj/energy_restricted.jl")
 include("qobj/dimensions.jl")
 include("qobj/quantum_object_base.jl")
 include("qobj/quantum_object.jl")

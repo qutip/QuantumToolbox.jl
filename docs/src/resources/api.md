@@ -18,6 +18,7 @@ end
 
 ```@docs
 Space
+EnrSpace
 Dimensions
 GeneralDimensions
 AbstractQuantumObject
@@ -122,6 +123,8 @@ coherent_dm
 thermal_dm
 maximally_mixed_dm
 rand_dm
+enr_fock
+enr_thermal_dm
 spin_state
 spin_coherent
 bell_state
@@ -152,6 +155,8 @@ QuantumToolbox.momentum
 phase
 fdestroy
 fcreate
+enr_destroy
+enr_identity
 tunneling
 qft
 eye
@@ -312,6 +317,7 @@ PhysicalConstants
 convert_unit
 row_major_reshape
 meshgrid
+enr_state_dictionaries
 ```
 
 ## [Visualization](@id doc-API:Visualization)

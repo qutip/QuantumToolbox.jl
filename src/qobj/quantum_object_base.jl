@@ -222,7 +222,7 @@ end
 
 # this returns `to` in GeneralDimensions representation
 get_dimensions_to(A::AbstractQuantumObject{Ket,<:Dimensions}) = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{Bra,<:Dimensions{N}}) where {N} = space_one_list(N)
+get_dimensions_to(A::AbstractQuantumObject{Bra,<:Dimensions}) = space_one_list(A.dimensions.to)
 get_dimensions_to(A::AbstractQuantumObject{Operator,<:Dimensions}) = A.dimensions.to
 get_dimensions_to(A::AbstractQuantumObject{Operator,<:GeneralDimensions}) = A.dimensions.to
 get_dimensions_to(
@@ -230,13 +230,19 @@ get_dimensions_to(
 ) where {ObjType<:Union{SuperOperator,OperatorBra,OperatorKet}} = A.dimensions.to
 
 # this returns `from` in GeneralDimensions representation
-get_dimensions_from(A::AbstractQuantumObject{Ket,<:Dimensions{N}}) where {N} = space_one_list(N)
+get_dimensions_from(A::AbstractQuantumObject{Ket,<:Dimensions}) = space_one_list(A.dimensions.to)
 get_dimensions_from(A::AbstractQuantumObject{Bra,<:Dimensions}) = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject{Operator,<:Dimensions}) = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject{Operator,<:GeneralDimensions}) = A.dimensions.from
 get_dimensions_from(
     A::AbstractQuantumObject{ObjType,<:Dimensions},
 ) where {ObjType<:Union{SuperOperator,OperatorBra,OperatorKet}} = A.dimensions.to
+
+# this creates a list of Space(1), it is used to generate `from` for Ket, and `to` for Bra
+space_one_list(dimensions::NTuple{N,AbstractSpace}) where {N} =
+    ntuple(i -> Space(1), Val(sum(_get_dims_length, dimensions)))
+_get_dims_length(::Space) = 1
+_get_dims_length(::EnrSpace{N}) where {N} = N
 
 # functions for getting Float or Complex element type
 _FType(A::AbstractQuantumObject) = _FType(eltype(A))

@@ -23,19 +23,3 @@ struct Space <: AbstractSpace
 end
 
 dimensions_to_dims(s::Space) = SVector{1,Int}(s.size)
-
-# this creates a list of Space(1), it is used to generate `from` for Ket, and `to` for Bra)
-space_one_list(N::Int) = ntuple(i -> Space(1), Val(N))
-
-# TODO: introduce energy restricted space
-#=
-struct EnrSpace{N} <: AbstractSpace
-    size::Int
-    dims::SVector{N,Int}
-    n_excitations::Int
-    state2idx
-    idx2state
-end
-
-dimensions_to_dims(s::EnrSpace) = s.dims
-=#
