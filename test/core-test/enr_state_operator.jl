@@ -1,4 +1,26 @@
 @testitem "Excitation number restricted state space" begin
+    using StaticArraysCore
+
+    @testset "EnrSpace" begin
+        s_enr = EnrSpace((2, 2, 3), 3)
+
+        # check if the idx2state is the same as qutip
+        qutip_idx2state = Dict(
+            1 => SVector{3}(0, 0, 0),
+            2 => SVector{3}(0, 0, 1),
+            3 => SVector{3}(0, 0, 2),
+            4 => SVector{3}(0, 1, 0),
+            5 => SVector{3}(0, 1, 1),
+            6 => SVector{3}(0, 1, 2),
+            7 => SVector{3}(1, 0, 0),
+            8 => SVector{3}(1, 0, 1),
+            9 => SVector{3}(1, 0, 2),
+            10 => SVector{3}(1, 1, 0),
+            11 => SVector{3}(1, 1, 1)
+        )
+        @test s_enr.idx2state == qutip_idx2state
+    end
+
     @testset "kron" begin
         # normal Space
         D1 = 4
