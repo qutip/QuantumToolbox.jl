@@ -16,7 +16,7 @@
             8 => SVector{3}(1, 0, 1),
             9 => SVector{3}(1, 0, 2),
             10 => SVector{3}(1, 1, 0),
-            11 => SVector{3}(1, 1, 1)
+            11 => SVector{3}(1, 1, 1),
         )
         @test s_enr.idx2state == qutip_idx2state
     end
