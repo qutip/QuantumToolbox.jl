@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Implement `EnrSpace` and corresponding functionality. ([#500]) 
+- Implement `EnrSpace` and corresponding functionality. ([#500])
+- Check for orthogonality breakdown in `Lanczos` solver for `spectrum`. ([#501])
 
 ## [v0.32.1]
 Release date: 2025-06-24
@@ -256,3 +257,4 @@ Release date: 2024-11-13
 [#489]: https://github.com/qutip/QuantumToolbox.jl/issues/489
 [#494]: https://github.com/qutip/QuantumToolbox.jl/issues/494
 [#500]: https://github.com/qutip/QuantumToolbox.jl/issues/500
+[#501]: https://github.com/qutip/QuantumToolbox.jl/issues/501

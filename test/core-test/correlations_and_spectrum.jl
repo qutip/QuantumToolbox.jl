@@ -50,6 +50,10 @@
         @test last(outlines) == "spectrum(): Consider increasing maxiter and/or tol"
     end
 
+    @testset "Orthogonal input vectors Lanczos" begin
+        @test_throws AssertionError spectrum(H, ω_l2, [c_ops[1]], a', a; solver = Lanczos())
+    end
+
     # tlist and τlist checks
     t_fft_wrong = [0, 1, 10]
     t_wrong1 = [1, 2, 3]
