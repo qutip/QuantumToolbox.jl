@@ -17,7 +17,7 @@ struct Dimensions{N,T<:Tuple} <: AbstractDimensions{N,N}
     to::T
 
     # make sure the elements in the tuple are all AbstractSpace
-    Dimensions(to::NTuple{N,T}) where {N,T<:AbstractSpace} = new{N,typeof(to)}(to)
+    Dimensions(to::NTuple{N,AbstractSpace}) where {N} = new{N,typeof(to)}(to)
 end
 function Dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N}
     _non_static_array_warning("dims", dims)
@@ -43,12 +43,11 @@ Dimensions(dims::Any) = throw(
 A structure that describes the left-hand side (`to`) and right-hand side (`from`) Hilbert [`Space`](@ref) of an [`Operator`](@ref).
 """
 struct GeneralDimensions{M,N,T1<:Tuple,T2<:Tuple} <: AbstractDimensions{M,N}
-    # note that the number `N` should be the same for both `to` and `from`
     to::T1   # space acting on the left
     from::T2 # space acting on the right
 
     # make sure the elements in the tuple are all AbstractSpace
-    GeneralDimensions(to::NTuple{M,T1}, from::NTuple{N,T2}) where {M,N,T1<:AbstractSpace,T2<:AbstractSpace} =
+    GeneralDimensions(to::NTuple{M,AbstractSpace}, from::NTuple{N,AbstractSpace}) where {M,N} =
         new{M,N,typeof(to),typeof(from)}(to, from)
 end
 function GeneralDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N}
@@ -98,3 +97,8 @@ function _get_dims_string(dimensions::GeneralDimensions)
     return "[$(string(dims[1])), $(string(dims[2]))]"
 end
 _get_dims_string(::Nothing) = "nothing" # for EigsolveResult.dimensions = nothing
+
+Base.:(==)(dim1::Dimensions, dim2::Dimensions) = dim1.to == dim2.to
+Base.:(==)(dim1::GeneralDimensions, dim2::GeneralDimensions) = (dim1.to == dim2.to) && (dim1.from == dim2.from)
+Base.:(==)(dim1::Dimensions, dim2::GeneralDimensions) = false
+Base.:(==)(dim1::GeneralDimensions, dim2::Dimensions) = false

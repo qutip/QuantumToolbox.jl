@@ -66,14 +66,16 @@ Manually specifying the data for each quantum object is inefficient. Even more s
 
 ### States
 - [`zero_ket`](@ref): zero ket vector
-- [`fock`](@ref) or [`basis`](@ref): fock state ket vector
-- [`fock_dm`](@ref): density matrix of a fock state
+- [`fock`](@ref) or [`basis`](@ref): Fock state ket vector
+- [`fock_dm`](@ref): density matrix of a Fock state
 - [`coherent`](@ref): coherent state ket vector 
 - [`rand_ket`](@ref): random ket vector
 - [`coherent_dm`](@ref): density matrix of a coherent state
 - [`thermal_dm`](@ref): density matrix of a thermal state
 - [`maximally_mixed_dm`](@ref): density matrix of a maximally mixed state
 - [`rand_dm`](@ref): random density matrix
+- [`enr_fock`](@ref): Fock state in the excitation number restricted (ENR) space
+- [`enr_thermal_dm`](@ref): thermal state in the excitation number restricted (ENR) space
 - [`spin_state`](@ref): spin state
 - [`spin_coherent`](@ref): coherent spin state
 - [`bell_state`](@ref): Bell state
@@ -108,6 +110,8 @@ Manually specifying the data for each quantum object is inefficient. Even more s
 - [`spin_J_set`](@ref): a set of Spin-`j` operators ``(S_x, S_y, S_z)``
 - [`fdestroy`](@ref): fermion destruction operator
 - [`fcreate`](@ref): fermion creation operator
+- [`enr_destroy`](@ref): destruction operator in the excitation number restricted (ENR) space
+- [`enr_identity`](@ref): identity operator in the excitation number restricted (ENR) space
 - [`commutator`](@ref): commutator or anti-commutator
 - [`tunneling`](@ref): tunneling operator
 - [`qft`](@ref): discrete quantum Fourier transform matrix

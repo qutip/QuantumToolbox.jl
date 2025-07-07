@@ -505,6 +505,8 @@ Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
 ```
 """
 function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int},Tuple})
+    any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("ptrace does not support EnrSpace"))
+
     _non_static_array_warning("sel", sel)
 
     if length(sel) == 0 # return full trace for empty sel
@@ -527,6 +529,8 @@ end
 ptrace(QO::QuantumObject{Bra}, sel::Union{AbstractVector{Int},Tuple}) = ptrace(QO', sel)
 
 function ptrace(QO::QuantumObject{Operator}, sel::Union{AbstractVector{Int},Tuple})
+    any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("ptrace does not support EnrSpace"))
+
     # TODO: support for special cases when some of the subsystems have same `to` and `from` space
     isa(QO.dimensions, GeneralDimensions) &&
         (get_dimensions_to(QO) != get_dimensions_from(QO)) &&
@@ -714,6 +718,8 @@ function SparseArrays.permute(
     A::QuantumObject{ObjType},
     order::Union{AbstractVector{Int},Tuple},
 ) where {ObjType<:Union{Ket,Bra,Operator}}
+    any(s -> s isa EnrSpace, A.dimensions.to) && throw(ArgumentError("permute does not support EnrSpace"))
+
     (length(order) != length(A.dimensions)) &&
         throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
 
