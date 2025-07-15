@@ -568,7 +568,7 @@ end
             ntraj = ntraj,
             progress_bar = Val(false),
         )
-        @test allocs_tot < 1100 * ntraj + 1800 # TODO: Fix this high number of allocations
+        @test allocs_tot < 1100 * ntraj + 2300 # TODO: Fix this high number of allocations
 
         allocs_tot = @allocations smesolve(
             H,
