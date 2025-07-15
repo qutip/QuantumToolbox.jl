@@ -14,7 +14,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 # Fields (Attributes)
 
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
-- `times::AbstractVector`: The time list of the evolution.
+- `tlist::AbstractVector`: The time list of the evolution.
 - `dimensions::AbstractDimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
 
@@ -23,7 +23,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 """
 struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractDimensions,KWT}
     prob::PT
-    times::TT
+    tlist::TT
     dimensions::DT
     kwargs::KWT
 end
@@ -37,7 +37,7 @@ function Base.getproperty(prob::TimeEvolutionProblem, key::Symbol)
     end
 end
 
-TimeEvolutionProblem(prob, times, dims) = TimeEvolutionProblem(prob, times, dims, nothing)
+TimeEvolutionProblem(prob, tlist, dims) = TimeEvolutionProblem(prob, tlist, dims, nothing)
 
 @doc raw"""
     struct TimeEvolutionSol
@@ -46,16 +46,18 @@ A structure storing the results and some information from solving time evolution
 
 # Fields (Attributes)
 
-- `times::AbstractVector`: The time list of the evolution.
-- `states::Vector{QuantumObject}`: The list of result states.
-- `expect::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each time point in `times`.
+- `times::AbstractVector`: The list of time points at which the states are stored during the evolution.
+- `tlist::AbstractVector`: The list of time points at which the expectation values are stored during the evolution.
+- `states::Vector{QuantumObject}`: The list of result states corresponding to each time point in `times`.
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each time point in `tlist`.
 - `retcode`: The return code from the solver.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionSol{
-    TT<:AbstractVector{<:Real},
+    TT1<:AbstractVector{<:Real},
+    TT2<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Union{AbstractMatrix,Nothing},
     RETT<:Enum,
@@ -63,7 +65,8 @@ struct TimeEvolutionSol{
     AT<:Real,
     RT<:Real,
 }
-    times::TT
+    times::TT1
+    tlist::TT2
     states::TS
     expect::TE
     retcode::RETT
@@ -96,11 +99,12 @@ A structure storing the results and some information from solving quantum trajec
 # Fields (Attributes)
 
 - `ntraj::Int`: Number of trajectories
-- `times::AbstractVector`: The time list of the evolution.
-- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
-- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `times::AbstractVector`: The list of time points at which the states are stored during the evolution.
+- `tlist::AbstractVector`: The list of time points at which the expectation values are stored during the evolution.
+- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `tlist`.
+- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `tlist`.
+- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `tlist`
 - `col_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
 - `col_which::Vector{Vector{Int}}`: The indices of which collapse operator was responsible for each quantum jump in `col_times`.
 - `converged::Bool`: Whether the solution is converged or not.
@@ -109,7 +113,8 @@ A structure storing the results and some information from solving quantum trajec
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionMCSol{
-    TT<:AbstractVector{<:Real},
+    TT1<:AbstractVector{<:Real},
+    TT2<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Union{AbstractMatrix,Nothing},
     TEA<:Union{AbstractArray,Nothing},
@@ -120,7 +125,8 @@ struct TimeEvolutionMCSol{
     RT<:Real,
 }
     ntraj::Int
-    times::TT
+    times::TT1
+    tlist::TT2
     states::TS
     expect::TE
     average_expect::TE # Currently just a synonym for `expect`
@@ -158,18 +164,20 @@ A structure storing the results and some information from solving trajectories o
 # Fields (Attributes)
 
 - `ntraj::Int`: Number of trajectories
-- `times::AbstractVector`: The time list of the evolution.
-- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory.
-- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `times::AbstractVector`: The list of time points at which the states are stored during the evolution.
+- `tlist::AbstractVector`: The list of time points at which the expectation values are stored during the evolution.
+- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
+- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `tlist`.
+- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `tlist`.
+- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `tlist`
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionStochasticSol{
-    TT<:AbstractVector{<:Real},
+    TT1<:AbstractVector{<:Real},
+    TT2<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Union{AbstractMatrix,Nothing},
     TEA<:Union{AbstractArray,Nothing},
@@ -179,7 +187,8 @@ struct TimeEvolutionStochasticSol{
     RT<:Real,
 }
     ntraj::Int
-    times::TT
+    times::TT1
+    tlist::TT2
     states::TS
     expect::TE
     average_expect::TE # Currently just a synonym for `expect`

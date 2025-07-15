@@ -34,7 +34,7 @@ where
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
@@ -132,7 +132,7 @@ where
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm for the ODE solver. The default value is `Tsit5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
@@ -205,7 +205,8 @@ function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
     end
 
     return TimeEvolutionSol(
-        prob.times,
+        sol.t,
+        prob.tlist,
         ρt,
         _get_expvals(sol, SaveFuncMESolve),
         sol.retcode,

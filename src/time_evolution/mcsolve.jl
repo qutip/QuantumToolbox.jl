@@ -89,7 +89,7 @@ If the environmental measurements register a quantum jump, the wave function und
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
@@ -195,7 +195,7 @@ If the environmental measurements register a quantum jump, the wave function und
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
@@ -254,7 +254,7 @@ function mcsolveEnsembleProblem(
 
     ensemble_prob = TimeEvolutionProblem(
         EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
-        prob_mc.times,
+        prob_mc.tlist,
         prob_mc.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
@@ -320,7 +320,7 @@ If the environmental measurements register a quantum jump, the wave function und
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm to use for the ODE solver. Default to `Tsit5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
@@ -411,7 +411,8 @@ function mcsolve(
 
     return TimeEvolutionMCSol(
         ntraj,
-        ens_prob_mc.times,
+        _sol_1.t,
+        ens_prob_mc.tlist,
         states,
         expvals,
         expvals, # This is average_expect

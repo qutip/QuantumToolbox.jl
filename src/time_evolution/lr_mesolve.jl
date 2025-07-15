@@ -7,10 +7,11 @@ A structure storing the results and some information from solving low-rank maste
 
 # Fields (Attributes)
 
-- `times::AbstractVector`: The time list of the evolution.
-- `states::Vector{QuantumObject}`: The list of result states.
-- `expect::Matrix`: The expectation values corresponding to each time point in `times`.
-- `fexpect::Matrix`: The function values at each time point.
+- `times::AbstractVector`: The list of time points at which the states are stored during the evolution.
+- `tlist::AbstractVector`: The list of time points at which the expectation values are stored during the evolution.
+- `states::Vector{QuantumObject}`: The list of result states corresponding to each time point in `times`.
+- `expect::Matrix`: The expectation values corresponding to each time point in `tlist`.
+- `fexpect::Matrix`: The function values corresponding to each time point in `tlist`.
 - `retcode`: The return code from the solver.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -19,7 +20,8 @@ A structure storing the results and some information from solving low-rank maste
 - `B::Vector{QuantumObject}`: The `B` matrix of the low-rank algorithm at each time point.
 """
 struct TimeEvolutionLRSol{
-    TT<:AbstractVector{<:Real},
+    TT1<:AbstractVector{<:Real},
+    TT2<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Matrix{ComplexF64},
     RetT<:Enum,
@@ -29,7 +31,8 @@ struct TimeEvolutionLRSol{
     TSZB<:AbstractVector,
     TM<:Vector{<:Integer},
 }
-    times::TT
+    times::TT1
+    tlist::TT2
     states::TS
     expect::TE
     fexpect::TE
@@ -144,19 +147,19 @@ function _periodicsave_func(integrator)
     return u_modified!(integrator, false)
 end
 
-_save_control_lr_mesolve(u, t, integrator) = t in integrator.p.times
+_save_control_lr_mesolve(u, t, integrator) = t in integrator.p.tlist
 
 function _save_affect_lr_mesolve!(integrator)
     ip = integrator.p
     N, M = ip.N, ip.M
-    idx = select(integrator.t, ip.times)
+    idx = select(integrator.t, ip.tlist)
 
     @views z = reshape(integrator.u[1:(N*M)], N, M)
     @views B = reshape(integrator.u[(N*M+1):end], M, M)
     _calculate_expectation!(ip, z, B, idx)
 
     if integrator.p.opt.progress
-        print("\rProgress: $(round(Int, 100*idx/length(ip.times)))%")
+        print("\rProgress: $(round(Int, 100*idx/length(ip.tlist)))%")
         flush(stdout)
     end
     return u_modified!(integrator, false)
@@ -430,7 +433,7 @@ function lr_mesolveProblem(
         e_ops = e_ops,
         f_ops = f_ops,
         opt = opt,
-        times = t_l,
+        tlist = t_l,
         expvals = expvals,
         funvals = funvals,
         Ml = Ml,
@@ -537,7 +540,7 @@ function lr_mesolve(
 end
 
 function lr_mesolve(prob::ODEProblem; kwargs...)
-    sol = solve(prob, prob.p.opt.alg, tstops = prob.p.times)
+    sol = solve(prob, prob.p.opt.alg, tstops = prob.p.tlist)
     prob.p.opt.progress && print("\n")
 
     N = prob.p.N
@@ -550,6 +553,7 @@ function lr_mesolve(prob::ODEProblem; kwargs...)
 
     return TimeEvolutionLRSol(
         sol.t,
+        prob.p.tlist,
         ρt,
         prob.p.expvals,
         prob.p.funvals,

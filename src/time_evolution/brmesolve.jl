@@ -158,7 +158,7 @@ Solves for the dynamics of a system using the Bloch-Redfield master equation, gi
 
 - `H`: The system Hamiltonian. Must be an [`Operator`](@ref)
 - `ψ0`:  Initial state of the system $|\psi(0)\rangle$. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `a_ops`: Nested list with each element is a `Tuple` of operator-function pairs `(a_op, spectra)`, and the coupling [`Operator`](@ref) `a_op` must be hermitian with corresponding `spectra` being a `Function` of transition energy
 - `c_ops`: List of collapse operators corresponding to Lindblad dissipators
 - `sec_cutoff`: Cutoff for secular approximation. Use `-1` if secular approximation is not used when evaluating bath-coupling terms.

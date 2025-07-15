@@ -12,9 +12,10 @@ CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 
 | **Fields (Attributes)** | **Description** |
 |:------------------------|:----------------|
-| `sol.times` | The time list of the evolution. |
-| `sol.states` | The list of result states. |
-| `sol.expect` | The expectation values corresponding to each time point in `sol.times`. |
+| `sol.times` | The list of time points at which the states are stored during the evolution. |
+| `sol.tlist` | The list of time points at which the expectation values are stored during the evolution. |
+| `sol.states` | The list of result states corresponding to each time point in `times`. |
+| `sol.expect` | The expectation values corresponding to each time point in `sol.tlist`. |
 | `sol.alg` | The algorithm which is used during the solving process. |
 | `sol.abstol` | The absolute tolerance which is used during the solving process. |
 | `sol.reltol` | The relative tolerance which is used during the solving process. |
@@ -54,10 +55,10 @@ nothing # hide
 
 Recall that `Julia` uses `Fortran`-style indexing that begins with one (i.e., `[1,:]` represents the 1-st observable, where `:` represents all values corresponding to `tlist`).
 
-Together with the array of times at which these expectation values are calculated:
+Together with the list of time points at which these expectation values are calculated:
 
 ```@example TE-solution
-times = sol.times
+tlist = sol.tlist
 nothing # hide
 ```
 
@@ -67,9 +68,9 @@ we can plot the resulting expectation values:
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = L"t")
-lines!(ax, times, expt1, label = L"\langle 0 | \rho(t) | 0 \rangle")
-lines!(ax, times, expt2, label = L"\langle 1 | \rho(t) | 1 \rangle")
-lines!(ax, times, expt3, label = L"\langle 0 | \rho(t) | 1 \rangle")
+lines!(ax, tlist, expt1, label = L"\langle 0 | \rho(t) | 0 \rangle")
+lines!(ax, tlist, expt2, label = L"\langle 1 | \rho(t) | 1 \rangle")
+lines!(ax, tlist, expt3, label = L"\langle 0 | \rho(t) | 1 \rangle")
 
 ylims!(ax, (-0.5, 1.0))
 axislegend(ax, position = :lb)
@@ -81,6 +82,13 @@ State vectors, or density matrices, are accessed in a similar manner:
 
 ```@example TE-solution
 sol.states
+```
+
+Together with the list of time points at which these states are stored:
+
+```@example TE-solution
+times = sol.times
+nothing # hide
 ```
 
 Here, the solution contains only one (final) state. Because the `states` will be saved depend on the keyword argument `saveat` in `kwargs`. If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). One can also specify `e_ops` and `saveat` separately.
