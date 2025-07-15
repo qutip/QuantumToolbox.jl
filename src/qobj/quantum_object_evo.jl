@@ -381,7 +381,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
 
             op = :(op_func_list[$i][1])
             dims_expr = (dims_expr..., :($op.dimensions))
-            func_methods_expr = (func_methods_expr..., :(methods(op_func_list[$i][2], [Any, Real]))) # [Any, Real] means each func must accept 2 arguments
+            func_methods_expr = (func_methods_expr..., :(methods(op_func_list[$i][2], [Any, Real]).ms)) # [Any, Real] means each func must accept 2 arguments
             if i == 1
                 first_op = :($op)
             end
@@ -406,10 +406,10 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
 
         # check if each func accepts 2 arguments
         func_methods = tuple($(func_methods_expr...))
-        for f_method in func_methods
-            length(f_method.mt) == 0 && throw(
+        for i in eachindex(func_methods)
+            length(func_methods[i]) == 0 && throw(
                 ArgumentError(
-                    "The following function must accept two arguments: `$(f_method.mt.name)(p, t)` with t<:Real",
+                    "The following function must only accept two arguments: `$(nameof(op_func_list[i][2]))(p, t)` with t<:Real",
                 ),
             )
         end
