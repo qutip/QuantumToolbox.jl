@@ -190,7 +190,7 @@ end
 
 function _check_br_spectra(f::Function)
     meths = methods(f, [Real])
-    length(meths.ms) == 0 &&
+    length(meths.mt) == 0 &&
         throw(ArgumentError("The following function must accept one argument: `$(meths.mt.name)(ω)` with ω<:Real"))
     return nothing
 end
