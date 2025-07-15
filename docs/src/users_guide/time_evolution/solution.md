@@ -13,7 +13,7 @@ CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 | **Fields (Attributes)** | **Description** |
 |:------------------------|:----------------|
 | `sol.times` | The list of time points at which the states are stored during the evolution. |
-| `sol.tlist` | The list of time points at which the expectation values are stored during the evolution. |
+| `sol.tlist` | The list of time points at which the expectation values are calculated during the evolution. |
 | `sol.states` | The list of result states corresponding to each time point in `times`. |
 | `sol.expect` | The expectation values corresponding to each time point in `sol.tlist`. |
 | `sol.alg` | The algorithm which is used during the solving process. |

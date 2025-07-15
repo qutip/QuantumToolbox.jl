@@ -8,7 +8,7 @@ A structure storing the results and some information from solving low-rank maste
 # Fields (Attributes)
 
 - `times::AbstractVector`: The list of time points at which the states are stored during the evolution.
-- `tlist::AbstractVector`: The list of time points at which the expectation values are stored during the evolution.
+- `tlist::AbstractVector`: The list of time points at which the expectation values are calculated during the evolution.
 - `states::Vector{QuantumObject}`: The list of result states corresponding to each time point in `times`.
 - `expect::Matrix`: The expectation values corresponding to each time point in `tlist`.
 - `fexpect::Matrix`: The function values corresponding to each time point in `tlist`.

@@ -47,7 +47,7 @@ A structure storing the results and some information from solving time evolution
 # Fields (Attributes)
 
 - `times::AbstractVector`: The list of time points at which the states are stored during the evolution.
-- `tlist::AbstractVector`: The list of time points at which the expectation values are stored during the evolution.
+- `tlist::AbstractVector`: The list of time points at which the expectation values are calculated during the evolution.
 - `states::Vector{QuantumObject}`: The list of result states corresponding to each time point in `times`.
 - `expect::Union{AbstractMatrix,Nothing}`: The expectation values corresponding to each time point in `tlist`.
 - `retcode`: The return code from the solver.
@@ -100,7 +100,7 @@ A structure storing the results and some information from solving quantum trajec
 
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The list of time points at which the states are stored during the evolution.
-- `tlist::AbstractVector`: The list of time points at which the expectation values are stored during the evolution.
+- `tlist::AbstractVector`: The list of time points at which the expectation values are calculated during the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
 - `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `tlist`.
 - `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `tlist`.
@@ -165,7 +165,7 @@ A structure storing the results and some information from solving trajectories o
 
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The list of time points at which the states are stored during the evolution.
-- `tlist::AbstractVector`: The list of time points at which the expectation values are stored during the evolution.
+- `tlist::AbstractVector`: The list of time points at which the expectation values are calculated during the evolution.
 - `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times`.
 - `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `tlist`.
 - `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `tlist`.
