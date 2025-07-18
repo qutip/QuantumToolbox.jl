@@ -128,15 +128,14 @@ sol = mesolve(H, ψ0, tlist, c_ops, e_ops = [sigmaz(), sigmay()])
 We can therefore plot the expectation values:
 
 ```@example mesolve
-times = sol.times
 expt_z = real(sol.expect[1,:])
 expt_y = real(sol.expect[2,:])
 
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = "Time", ylabel = "Expectation values")
-lines!(ax, times, expt_z, label = L"\langle\hat{\sigma}_z\rangle", linestyle = :solid)
-lines!(ax, times, expt_y, label = L"\langle\hat{\sigma}_y\rangle", linestyle = :dash)
+lines!(ax, tlist, expt_z, label = L"\langle\hat{\sigma}_z\rangle", linestyle = :solid)
+lines!(ax, tlist, expt_y, label = L"\langle\hat{\sigma}_y\rangle", linestyle = :dash)
 
 axislegend(ax, position = :rt)
 
@@ -210,8 +209,6 @@ tlist = LinRange(0.0, 10.0, 200)
 L = liouvillian(H_a + H_c + H_I, c_ops)
 sol = mesolve(L, ψ0, tlist, e_ops=[σm' * σm, a' * a])
 
-times = sol.times
-
 # expectation value of Number operator
 N_atom   = real(sol.expect[1,:])
 N_cavity = real(sol.expect[2,:])
@@ -219,8 +216,8 @@ N_cavity = real(sol.expect[2,:])
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = "Time", ylabel = "Expectation values")
-lines!(ax, times, N_atom, label = "atom excitation probability", linestyle = :solid)
-lines!(ax, times, N_cavity, label = "cavity photon number", linestyle = :dash)
+lines!(ax, tlist, N_atom, label = "atom excitation probability", linestyle = :solid)
+lines!(ax, tlist, N_cavity, label = "cavity photon number", linestyle = :dash)
 
 axislegend(ax, position = :rt)
 

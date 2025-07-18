@@ -59,8 +59,8 @@ sol = sesolve(H, ψ0, tlist, e_ops = [sigmaz(), sigmay()])
     Here, we call [`sesolve`](@ref) directly instead of pre-defining [`sesolveProblem`](@ref) first (as shown previously).
 
 ```@example sesolve
-times = sol.times
-print(size(times))
+println(size(sol.tlist)) # time points corresponds to stored expectation values 
+println(size(sol.times)) # time points corresponds to stored states
 ```
 
 ```@example sesolve
@@ -77,8 +77,8 @@ expt_y = real(expt[2,:])
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
 ax = Axis(fig[1, 1], xlabel = "Time", ylabel = "Expectation values")
-lines!(ax, times, expt_z, label = L"\langle\hat{\sigma}_z\rangle", linestyle = :solid)
-lines!(ax, times, expt_y, label = L"\langle\hat{\sigma}_y\rangle", linestyle = :dash)
+lines!(ax, tlist, expt_z, label = L"\langle\hat{\sigma}_z\rangle", linestyle = :solid)
+lines!(ax, tlist, expt_y, label = L"\langle\hat{\sigma}_y\rangle", linestyle = :dash)
 
 axislegend(ax, position = :rb)
 
@@ -90,6 +90,9 @@ If the keyword argument `e_ops` is not specified (or given as an empty `Vector`)
 ```@example sesolve
 tlist = [0, 10]
 sol = sesolve(H, ψ0, tlist) # or specify: e_ops = []
+
+println(size(sol.tlist))
+println(size(sol.times))
 
 sol.states
 ```
@@ -104,9 +107,11 @@ sol = sesolve(H, ψ0, tlist, e_ops = [sigmay()], saveat = tlist)
 ```
 
 ```@example sesolve
+println(size(sol.tlist))
 sol.expect
 ```
 
 ```@example sesolve
+println(size(sol.times))
 sol.states
 ```

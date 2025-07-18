@@ -313,7 +313,7 @@ end
 Calculate the power spectrum corresponding to a two-time correlation function using fast Fourier transform (FFT).
 
 # Parameters
-- `tlist::AbstractVector`: List of times at which the two-time correlation function is given.
+- `tlist::AbstractVector`: List of time points at which the two-time correlation function is given.
 - `corr::AbstractVector`: List of two-time correlations corresponding to the given time point in `tlist`.
 - `inverse::Bool`: Whether to use the inverse Fourier transform or not. Default to `false`.
 

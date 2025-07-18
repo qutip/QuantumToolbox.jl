@@ -243,7 +243,8 @@ function dfd_mesolve(
     end
 
     return TimeEvolutionSol(
-        dfd_prob.times,
+        sol.t,
+        dfd_prob.tlist,
         ρt,
         _get_expvals(sol, SaveFuncMESolve),
         sol.retcode,
