@@ -58,3 +58,4 @@ jobs:
       - uses: julia-actions/julia-runtest@v1
         env:
           GROUP: ${{ matrix.group }}
+          JULIA_NUM_THREADS: auto
