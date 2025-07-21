@@ -269,7 +269,7 @@ function smesolveEnsembleProblem(
 
     ensemble_prob = TimeEvolutionProblem(
         EnsembleProblem(prob_sme, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
-        prob_sme.tlist,
+        prob_sme.times,
         prob_sme.dimensions,
         merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3])),
     )
@@ -424,8 +424,8 @@ function smesolve(
 
     return TimeEvolutionStochasticSol(
         ntraj,
+        ens_prob.times,
         _sol_1.t,
-        ens_prob.tlist,
         states,
         expvals,
         expvals, # This is average_expect

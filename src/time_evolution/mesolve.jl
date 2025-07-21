@@ -205,8 +205,8 @@ function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
     end
 
     return TimeEvolutionSol(
+        prob.times,
         sol.t,
-        prob.tlist,
         ρt,
         _get_expvals(sol, SaveFuncMESolve),
         sol.retcode,

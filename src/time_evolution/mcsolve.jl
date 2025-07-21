@@ -254,7 +254,7 @@ function mcsolveEnsembleProblem(
 
     ensemble_prob = TimeEvolutionProblem(
         EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
-        prob_mc.tlist,
+        prob_mc.times,
         prob_mc.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
@@ -411,8 +411,8 @@ function mcsolve(
 
     return TimeEvolutionMCSol(
         ntraj,
+        ens_prob_mc.times,
         _sol_1.t,
-        ens_prob_mc.tlist,
         states,
         expvals,
         expvals, # This is average_expect

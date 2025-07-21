@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Implement `EnrSpace` and corresponding functionality. ([#500])
 - Check for orthogonality breakdown in `Lanczos` solver for `spectrum`. ([#501])
-- Store both `tlist` and `times` in time evolution solutions. ([#506], [#504])
+- Store both `times` and `times_states` in time evolution solutions. ([#506], [#504])
 - Fix errors in `Julia v1.12`. ([#507])
 
 ## [v0.32.1]

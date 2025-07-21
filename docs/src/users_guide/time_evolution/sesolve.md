@@ -59,8 +59,8 @@ sol = sesolve(H, ψ0, tlist, e_ops = [sigmaz(), sigmay()])
     Here, we call [`sesolve`](@ref) directly instead of pre-defining [`sesolveProblem`](@ref) first (as shown previously).
 
 ```@example sesolve
-println(size(sol.tlist)) # time points corresponds to stored expectation values 
-println(size(sol.times)) # time points corresponds to stored states
+println(size(sol.times)) # time points corresponds to stored expectation values 
+println(size(sol.times_states)) # time points corresponds to stored states
 ```
 
 ```@example sesolve
@@ -91,8 +91,8 @@ If the keyword argument `e_ops` is not specified (or given as an empty `Vector`)
 tlist = [0, 10]
 sol = sesolve(H, ψ0, tlist) # or specify: e_ops = []
 
-println(size(sol.tlist))
 println(size(sol.times))
+println(size(sol.times_states))
 
 sol.states
 ```
@@ -107,11 +107,11 @@ sol = sesolve(H, ψ0, tlist, e_ops = [sigmay()], saveat = tlist)
 ```
 
 ```@example sesolve
-println(size(sol.tlist))
+println(size(sol.times))
 sol.expect
 ```
 
 ```@example sesolve
-println(size(sol.times))
+println(size(sol.times_states))
 sol.states
 ```

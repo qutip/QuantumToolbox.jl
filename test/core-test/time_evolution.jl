@@ -84,16 +84,16 @@ end
 
     @test prob.prob.f.f isa MatrixOperator
     @test sum(abs.(sol.expect[1, :] .- amp_rabi .* sin.(Ω_rabi * tlist) .^ 2)) / length(tlist) < 0.1
-    @test length(sol.times) == 1
-    @test length(sol.tlist) == length(tlist)
+    @test length(sol.times) == length(tlist)
+    @test length(sol.times_states) == 1
     @test length(sol.states) == 1
     @test size(sol.expect) == (length(e_ops), length(tlist))
     @test length(sol2.times) == length(tlist)
-    @test length(sol2.tlist) == length(tlist)
+    @test length(sol2.times_states) == length(tlist)
     @test length(sol2.states) == length(tlist)
     @test sol2.expect === nothing
-    @test length(sol3.times) == length(saveat)
-    @test length(sol3.tlist) == length(tlist)
+    @test length(sol3.times) == length(tlist)
+    @test length(sol3.times_states) == length(saveat)
     @test length(sol3.states) == length(saveat)
     @test size(sol3.expect) == (length(e_ops), length(tlist))
     @test sol.expect[1, saveat_idxs] ≈ expect(e_ops[1], sol3.states) atol = 1e-6
@@ -170,16 +170,16 @@ end
 
     @test TESetup.prob_me.prob.f.f isa MatrixOperator
     @test isket(sol_me5.states[1])
-    @test length(sol_me.times) == 1
-    @test length(sol_me.tlist) == length(tlist)
+    @test length(sol_me.times) == length(tlist)
+    @test length(sol_me.times_states) == 1
     @test length(sol_me.states) == 1
     @test size(sol_me.expect) == (length(e_ops), length(tlist))
     @test length(sol_me2.times) == length(tlist)
-    @test length(sol_me2.tlist) == length(tlist)
+    @test length(sol_me2.times_states) == length(tlist)
     @test length(sol_me2.states) == length(tlist)
     @test sol_me2.expect === nothing
-    @test length(sol_me3.times) == length(saveat)
-    @test length(sol_me3.tlist) == length(tlist)
+    @test length(sol_me3.times) == length(tlist)
+    @test length(sol_me3.times_states) == length(saveat)
     @test length(sol_me3.states) == length(saveat)
     @test size(sol_me3.expect) == (length(e_ops), length(tlist))
     @test sol_me3.expect[1, TESetup.saveat_idxs] ≈ expect(e_ops[1], sol_me3.states) atol = 1e-6
@@ -294,11 +294,11 @@ end
     @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, vec(expect_mc_states_mean) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
     @test sum(abs, vec(expect_mc_states_mean2) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
-    @test length(sol_mc.times) == 1
-    @test length(sol_mc.tlist) == length(tlist)
+    @test length(sol_mc.times) == length(tlist)
+    @test length(sol_mc.times_states) == 1
     @test size(sol_mc.expect) == (length(e_ops), length(tlist))
-    @test length(sol_mc_states.times) == length(saveat)
-    @test length(sol_mc_states.tlist) == length(tlist)
+    @test length(sol_mc_states.times) == length(tlist)
+    @test length(sol_mc_states.times_states) == length(saveat)
     @test sol_mc_states.expect === nothing
 
     sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
@@ -398,8 +398,8 @@ end
     )
 
     @test sum(abs, sol_sse.expect .- sol_me.expect) / length(tlist) < 0.1
-    @test length(sol_sse.times) == 1
-    @test length(sol_sse.tlist) == length(tlist)
+    @test length(sol_sse.times) == length(tlist)
+    @test length(sol_sse.times_states) == 1
     @test size(sol_sse.expect) == (length(e_ops), length(tlist))
     @test isnothing(sol_sse.measurement)
     @test size(sol_sse2.measurement) == (length(c_ops), 20, length(tlist) - 1)
@@ -533,8 +533,8 @@ end
 
     @test sum(abs, sol_sme.expect .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, sol_sme3.expect .- sol_me.expect) / length(tlist) < 0.1
-    @test length(sol_sme.times) == 1
-    @test length(sol_sme.tlist) == length(tlist)
+    @test length(sol_sme.times) == length(tlist)
+    @test length(sol_sme.times_states) == 1
     @test size(sol_sme.expect) == (length(e_ops), length(tlist))
     @test isnothing(sol_sme.measurement)
     @test size(sol_sme2.measurement) == (length(sc_ops_sme), 20, length(tlist) - 1)
