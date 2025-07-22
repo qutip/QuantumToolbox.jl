@@ -12,8 +12,9 @@ CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 
 | **Fields (Attributes)** | **Description** |
 |:------------------------|:----------------|
-| `sol.times` | The time list of the evolution. |
-| `sol.states` | The list of result states. |
+| `sol.times` | The list of time points at which the expectation values are calculated during the evolution. |
+| `sol.times_states` | The list of time points at which the states are stored during the evolution. |
+| `sol.states` | The list of result states corresponding to each time point in `sol.times_states`. |
 | `sol.expect` | The expectation values corresponding to each time point in `sol.times`. |
 | `sol.alg` | The algorithm which is used during the solving process. |
 | `sol.abstol` | The absolute tolerance which is used during the solving process. |
@@ -54,7 +55,7 @@ nothing # hide
 
 Recall that `Julia` uses `Fortran`-style indexing that begins with one (i.e., `[1,:]` represents the 1-st observable, where `:` represents all values corresponding to `tlist`).
 
-Together with the array of times at which these expectation values are calculated:
+Together with the list of time points at which these expectation values are calculated:
 
 ```@example TE-solution
 times = sol.times
@@ -81,6 +82,13 @@ State vectors, or density matrices, are accessed in a similar manner:
 
 ```@example TE-solution
 sol.states
+```
+
+Together with the list of time points at which these states are stored:
+
+```@example TE-solution
+times = sol.times_states
+nothing # hide
 ```
 
 Here, the solution contains only one (final) state. Because the `states` will be saved depend on the keyword argument `saveat` in `kwargs`. If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). One can also specify `e_ops` and `saveat` separately.

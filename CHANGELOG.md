@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Implement `EnrSpace` and corresponding functionality. ([#500])
 - Check for orthogonality breakdown in `Lanczos` solver for `spectrum`. ([#501])
+- Store both `times` and `times_states` in time evolution solutions. ([#506], [#504])
 - Fix errors in `Julia v1.12`. ([#507])
 
 ## [v0.32.1]
@@ -259,4 +260,6 @@ Release date: 2024-11-13
 [#494]: https://github.com/qutip/QuantumToolbox.jl/issues/494
 [#500]: https://github.com/qutip/QuantumToolbox.jl/issues/500
 [#501]: https://github.com/qutip/QuantumToolbox.jl/issues/501
+[#504]: https://github.com/qutip/QuantumToolbox.jl/issues/504
+[#506]: https://github.com/qutip/QuantumToolbox.jl/issues/506
 [#507]: https://github.com/qutip/QuantumToolbox.jl/issues/507

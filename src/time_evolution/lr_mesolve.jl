@@ -7,10 +7,11 @@ A structure storing the results and some information from solving low-rank maste
 
 # Fields (Attributes)
 
-- `times::AbstractVector`: The time list of the evolution.
-- `states::Vector{QuantumObject}`: The list of result states.
+- `times::AbstractVector`: The list of time points at which the expectation values are calculated during the evolution.
+- `times_states::AbstractVector`: The list of time points at which the states are stored during the evolution.
+- `states::Vector{QuantumObject}`: The list of result states corresponding to each time point in `times_states`.
 - `expect::Matrix`: The expectation values corresponding to each time point in `times`.
-- `fexpect::Matrix`: The function values at each time point.
+- `fexpect::Matrix`: The function values corresponding to each time point in `times`.
 - `retcode`: The return code from the solver.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
@@ -19,7 +20,8 @@ A structure storing the results and some information from solving low-rank maste
 - `B::Vector{QuantumObject}`: The `B` matrix of the low-rank algorithm at each time point.
 """
 struct TimeEvolutionLRSol{
-    TT<:AbstractVector{<:Real},
+    TT1<:AbstractVector{<:Real},
+    TT2<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Matrix{ComplexF64},
     RetT<:Enum,
@@ -29,7 +31,8 @@ struct TimeEvolutionLRSol{
     TSZB<:AbstractVector,
     TM<:Vector{<:Integer},
 }
-    times::TT
+    times::TT1
+    times_states::TT2
     states::TS
     expect::TE
     fexpect::TE
@@ -549,6 +552,7 @@ function lr_mesolve(prob::ODEProblem; kwargs...)
     ρt = map(x -> Qobj(x[1] * x[2] * x[1]', type = Operator(), dims = prob.p.Hdims), zip(zt, Bt))
 
     return TimeEvolutionLRSol(
+        prob.p.times,
         sol.t,
         ρt,
         prob.p.expvals,

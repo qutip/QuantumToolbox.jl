@@ -51,7 +51,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
@@ -189,7 +189,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: `NullParameters` of parameters to pass to the solver.
@@ -317,7 +317,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `sc_ops`: List of stochastic collapse operators ``\{\hat{S}_n\}_n``. It can be either a `Vector`, a `Tuple` or a [`AbstractQuantumObject`](@ref). It is recommended to use the last case when only one operator is provided.
 - `alg`: The algorithm to use for the stochastic differential equation. Default is `SRIW1()` if `sc_ops` is an [`AbstractQuantumObject`](@ref) (diagonal noise), and `SRA2()` otherwise (non-diagonal noise).
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
@@ -419,6 +419,7 @@ function ssesolve(
     return TimeEvolutionStochasticSol(
         ntraj,
         ens_prob.times,
+        _sol_1.t,
         states,
         expvals,
         expvals, # This is average_expect

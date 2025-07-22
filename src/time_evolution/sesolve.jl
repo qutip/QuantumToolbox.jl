@@ -30,7 +30,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -104,7 +104,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
-- `tlist`: List of times at which to save either the state or the expectation values of the system.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `alg`: The algorithm for the ODE solver. The default is `Tsit5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
@@ -156,6 +156,7 @@ function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
 
     return TimeEvolutionSol(
         prob.times,
+        sol.t,
         ψt,
         _get_expvals(sol, SaveFuncSESolve),
         sol.retcode,

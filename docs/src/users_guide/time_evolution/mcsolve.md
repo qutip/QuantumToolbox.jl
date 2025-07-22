@@ -59,7 +59,7 @@ CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 ```
 
 ```@example mcsolve
-times = LinRange(0.0, 10.0, 200)
+tlist = LinRange(0.0, 10.0, 200)
 
 ψ0 = tensor(fock(2, 0), fock(10, 8))
 a  = tensor(qeye(2), destroy(10))
@@ -69,7 +69,7 @@ H = 2 * π * a' * a + 2 * π * σm' * σm + 2 * π * 0.25 * (σm * a' + σm' * a
 c_ops = [sqrt(0.1) * a]
 e_ops = [a' * a, σm' * σm]
 
-sol_500 = mcsolve(H, ψ0, times, c_ops, e_ops=e_ops)
+sol_500 = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops)
 
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
@@ -78,8 +78,8 @@ ax = Axis(fig[1, 1],
     ylabel = "Expectation values",
     title = "Monte Carlo time evolution (500 trajectories)",
 )
-lines!(ax, times, real(sol_500.expect[1,:]), label = "cavity photon number", linestyle = :solid)
-lines!(ax, times, real(sol_500.expect[2,:]), label = "atom excitation probability", linestyle = :dash)
+lines!(ax, tlist, real(sol_500.expect[1,:]), label = "cavity photon number", linestyle = :solid)
+lines!(ax, tlist, real(sol_500.expect[2,:]), label = "atom excitation probability", linestyle = :dash)
 
 axislegend(ax, position = :rt)
 
@@ -93,9 +93,9 @@ We can also change the number of trajectories (`ntraj`). This can be used to exp
 ```@example mcsolve
 e_ops = [a' * a]
 
-sol_1   = mcsolve(H, ψ0, times, c_ops, e_ops=e_ops, ntraj = 1)
-sol_10  = mcsolve(H, ψ0, times, c_ops, e_ops=e_ops, ntraj = 10)
-sol_100 = mcsolve(H, ψ0, times, c_ops, e_ops=e_ops, ntraj = 100)
+sol_1   = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ntraj = 1)
+sol_10  = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ntraj = 10)
+sol_100 = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ntraj = 100)
 
 # plot by CairoMakie.jl
 fig = Figure(size = (500, 350))
@@ -104,9 +104,9 @@ ax = Axis(fig[1, 1],
     ylabel = "Expectation values",
     title = "Monte Carlo time evolution",
 )
-lines!(ax, times, real(sol_1.expect[1,:]), label = "1 trajectory", linestyle = :dashdot)
-lines!(ax, times, real(sol_10.expect[1,:]), label = "10 trajectories", linestyle = :dash)
-lines!(ax, times, real(sol_100.expect[1,:]), label = "100 trajectories", linestyle = :solid)
+lines!(ax, tlist, real(sol_1.expect[1,:]), label = "1 trajectory", linestyle = :dashdot)
+lines!(ax, tlist, real(sol_10.expect[1,:]), label = "10 trajectories", linestyle = :dash)
+lines!(ax, tlist, real(sol_100.expect[1,:]), label = "100 trajectories", linestyle = :solid)
 
 axislegend(ax, position = :rt)
 
@@ -126,8 +126,8 @@ Monte Carlo evolutions often need hundreds of trajectories to obtain sufficient 
     See the [documentation of `DifferentialEquations.jl`](https://docs.sciml.ai/DiffEqDocs/stable/features/ensemble/) for more details. Also, see Julia's documentation for more details about multithreading and adding more processes.
 
 ```julia
-sol_serial   = mcsolve(H, ψ0, times, c_ops, e_ops=e_ops, ensemblealg=EnsembleSerial())
-sol_parallel = mcsolve(H, ψ0, times, c_ops, e_ops=e_ops, ensemblealg=EnsembleThreads());
+sol_serial   = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ensemblealg=EnsembleSerial())
+sol_parallel = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ensemblealg=EnsembleThreads());
 ```
 
 !!! tip "Parallelization on a Cluster"
