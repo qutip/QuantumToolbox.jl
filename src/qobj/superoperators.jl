@@ -14,6 +14,10 @@ _sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), spa
 _sprepost(A::AbstractMatrix, B::AbstractSparseMatrix) = kron(transpose(B), sparse(A))
 _sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), A)
 _sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(transpose(B), A)
+function _sprepost(A, B) # for any other input types
+    Id_cache = I(size(A, 1))
+    return _spre(A, Id_cache) * _spost(B, Id_cache)
+end
 
 ## if input is AbstractSciMLOperator 
 ## some of them are optimized to speed things up
@@ -21,7 +25,7 @@ _sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(transpose(B),
 _spre(A::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spre(A.A, Id))
 _spre(A::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(A.λ, _spre(A.L, Id))
 _spre(A::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _spre(op, Id), A.ops))
-function _spre(A::AbstractSciMLOperator, Id::Union{AbstractMatrix,AbstractSciMLOperator})
+function _spre(A::AbstractSciMLOperator, Id::AbstractMatrix)
     _lazy_tensor_warning(Id, A)
     return kron(Id, A)
 end
@@ -29,15 +33,10 @@ end
 _spost(B::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spost(B.A, Id))
 _spost(B::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(B.λ, _spost(B.L, Id))
 _spost(B::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _spost(op, Id), B.ops))
-function _spost(B::AbstractSciMLOperator, Id::Union{AbstractMatrix,AbstractSciMLOperator})
+function _spost(B::AbstractSciMLOperator, Id::AbstractMatrix)
     B_T = transpose(B)
     _lazy_tensor_warning(B_T, Id)
     return kron(B_T, Id)
-end
-
-function _sprepost(A::AbstractSciMLOperator, B::AbstractSciMLOperator)
-    Id_cache = IdentityOperator(size(A, 1))
-    return _spre(A, Id_cache) * _spost(B, Id_cache)
 end
 
 ## intrinsic liouvillian 

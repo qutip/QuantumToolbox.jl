@@ -513,7 +513,11 @@ function (A::QuantumObjectEvolution)(
     end
 
     # We put `nothing` in the place of `u` because the time-dependence doesn't depend on the state
-    A.data(ψout.data, ψin.data, nothing, p, t)
+    ## TODO: should use SciMLOperators v1 API: A.data(ψout.data, ψin.data, nothing, p, t)
+    ## But somehow that doesn't work for some specific cases in our runtests.
+    ## Therefore, we use the most basic way to do it for now
+    update_coefficients!(A.data, nothing, p, t)
+    mul!(ψout.data, A.data, ψin.data)
 
     return ψout
 end
