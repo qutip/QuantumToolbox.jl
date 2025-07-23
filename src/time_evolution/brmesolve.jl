@@ -112,6 +112,13 @@ function _brterm(
     ac_term = (A_mat .* spectrum) * A_mat
     bd_term = A_mat * (A_mat .* trans(spectrum))
 
+    # Remove small values before passing in the Liouville space
+    if settings.auto_tidyup
+        tidyup!(A_mat)
+        tidyup!(ac_term)
+        tidyup!(bd_term)
+    end
+
     if sec_cutoff != -1
         m_cut = similar(skew)
         map!(x -> abs(x) < sec_cutoff, m_cut, skew)
