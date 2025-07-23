@@ -97,7 +97,7 @@ function _brterm(
     a_op::T,
     spectra::F,
     sec_cutoff::Real,
-    fock_basis::Union{Val{true},Val{false}},
+    fock_basis::Union{Bool,Val},
 ) where {T<:QuantumObject{Operator},F<:Function}
     _check_br_spectra(spectra)
 
