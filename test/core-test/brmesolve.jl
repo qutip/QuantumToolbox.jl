@@ -5,8 +5,8 @@
     A_op = a+a'
     spectra(x) = (x>0) * 0.5
     for sec_cutoff in [0, 0.1, 1, 3, -1]
-        R = bloch_redfield_tensor(H, [(A_op, spectra)], [a^2], sec_cutoff = sec_cutoff, fock_basis = true)
-        R_eig, evecs = bloch_redfield_tensor(H, [(A_op, spectra)], [a^2], sec_cutoff = sec_cutoff, fock_basis = false)
+        R = bloch_redfield_tensor(H, ((A_op, spectra), ), [a^2], sec_cutoff = sec_cutoff, fock_basis = Val(true))
+        R_eig, evecs = bloch_redfield_tensor(H, ((A_op, spectra), ), [a^2], sec_cutoff = sec_cutoff, fock_basis = Val(false))
         @test isa(R, QuantumObject)
         @test isa(R_eig, QuantumObject)
         @test isa(evecs, QuantumObject)
@@ -27,7 +27,7 @@ end
 
     # this test applies for limited cutoff
     lindblad = lindblad_dissipator(a)
-    computation = brterm(H, A_op, spectra, sec_cutoff = 1.5, fock_basis = true)
+    computation = brterm(H, A_op, spectra, sec_cutoff = 1.5, fock_basis = Val(true))
     @test isapprox(lindblad, computation, atol = 1e-15)
 end
 
@@ -38,8 +38,8 @@ end
     A_op = a+a'
     spectra(x) = x>0
     for sec_cutoff in [0, 0.1, 1, 3, -1]
-        R = brterm(H, A_op, spectra, sec_cutoff = sec_cutoff, fock_basis = true)
-        R_eig, evecs = brterm(H, A_op, spectra, sec_cutoff = sec_cutoff, fock_basis = false)
+        R = brterm(H, A_op, spectra, sec_cutoff = sec_cutoff, fock_basis = Val(true))
+        R_eig, evecs = brterm(H, A_op, spectra, sec_cutoff = sec_cutoff, fock_basis = Val(false))
         @test isa(R, QuantumObject)
         @test isa(R_eig, QuantumObject)
         @test isa(evecs, QuantumObject)
@@ -76,8 +76,8 @@ end
     a = destroy(N) + destroy(N)^2/2
     A_op = a+a'
     for spectra in spectra_list
-        R = brterm(H, A_op, spectra, sec_cutoff = 0.1, fock_basis = true)
-        R_eig, evecs = brterm(H, A_op, spectra, sec_cutoff = 0.1, fock_basis = false)
+        R = brterm(H, A_op, spectra, sec_cutoff = 0.1, fock_basis = Val(true))
+        R_eig, evecs = brterm(H, A_op, spectra, sec_cutoff = 0.1, fock_basis = Val(false))
         @test isa(R, QuantumObject)
         @test isa(R_eig, QuantumObject)
         @test isa(evecs, QuantumObject)
@@ -112,4 +112,4 @@ end
 
         @test all(me.expect .== brme.expect)
     end
-end;
+end

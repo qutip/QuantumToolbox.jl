@@ -37,18 +37,16 @@ function bloch_redfield_tensor(
     U = QuantumObject(rst.vectors, Operator(), H.dimensions)
     sec_cutoff = float(sec_cutoff)
 
-    # in fock basis
-    R0 = liouvillian(H, c_ops)
+    H_new = getVal(fock_basis) ? H : QuantumObject(Diagonal(real.(rst.values)), Operator(), H.dimensions)
+    c_ops_new = isnothing(c_ops) ? nothing : map(x -> getVal(fock_basis) ? x : U' * x * U, c_ops)
+    R = liouvillian(H_new, c_ops_new)
 
-    # set fock_basis=Val(false) and change basis together at the end
-    R1 = 0
-    isempty(a_ops) || (R1 += mapreduce(x -> _brterm(rst, x[1], x[2], sec_cutoff, Val(false)), +, a_ops))
+    isempty(a_ops) || (R += sum(x -> _brterm(rst, x[1], x[2], sec_cutoff, fock_basis), a_ops))
 
-    SU = sprepost(U, U') # transformation matrix from eigen basis back to fock basis
     if getVal(fock_basis)
-        return R0 + SU * R1 * SU'
+        return R
     else
-        return SU' * R0 * SU + R1, U
+        return R, U
     end
 end
 
