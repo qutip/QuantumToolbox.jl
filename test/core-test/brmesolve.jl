@@ -5,8 +5,9 @@
     A_op = a+a'
     spectra(x) = (x>0) * 0.5
     for sec_cutoff in [0, 0.1, 1, 3, -1]
-        R = bloch_redfield_tensor(H, ((A_op, spectra), ), [a^2], sec_cutoff = sec_cutoff, fock_basis = Val(true))
-        R_eig, evecs = bloch_redfield_tensor(H, ((A_op, spectra), ), [a^2], sec_cutoff = sec_cutoff, fock_basis = Val(false))
+        R = bloch_redfield_tensor(H, ((A_op, spectra),), [a^2], sec_cutoff = sec_cutoff, fock_basis = Val(true))
+        R_eig, evecs =
+            bloch_redfield_tensor(H, ((A_op, spectra),), [a^2], sec_cutoff = sec_cutoff, fock_basis = Val(false))
         @test isa(R, QuantumObject)
         @test isa(R_eig, QuantumObject)
         @test isa(evecs, QuantumObject)
