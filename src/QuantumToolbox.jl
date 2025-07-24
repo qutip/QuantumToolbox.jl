@@ -16,6 +16,7 @@ import SciMLBase:
     u_modified!,
     NullParameters,
     ODEFunction,
+    SDEFunction,
     ODEProblem,
     SDEProblem,
     EnsembleProblem,

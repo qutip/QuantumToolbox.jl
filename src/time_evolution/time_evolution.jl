@@ -395,7 +395,7 @@ end
 
 A struct to represent the diffusion operator. This is used to perform the diffusion process on N different Wiener processes.
 =#
-struct DiffusionOperator{T,OpType<:Tuple{Vararg{AbstractSciMLOperator}}} <: AbstractSciMLOperator{T}
+struct DiffusionOperator{T,OpType<:Tuple{Vararg{AbstractSciMLOperator}}}
     ops::OpType
     function DiffusionOperator(ops::OpType) where {OpType}
         T = mapreduce(eltype, promote_type, ops)
@@ -403,29 +403,29 @@ struct DiffusionOperator{T,OpType<:Tuple{Vararg{AbstractSciMLOperator}}} <: Abst
     end
 end
 
-@generated function update_coefficients!(L::DiffusionOperator, u, p, t)
-    ops_types = L.parameters[2].parameters
-    N = length(ops_types)
-    return quote
-        Base.@nexprs $N i -> begin
-            update_coefficients!(L.ops[i], u, p, t)
-        end
-
-        nothing
-    end
-end
-
-@generated function LinearAlgebra.mul!(v::AbstractVecOrMat, L::DiffusionOperator, u::AbstractVecOrMat)
+@generated function (L::DiffusionOperator)(w, v, p, t)
     ops_types = L.parameters[2].parameters
     N = length(ops_types)
     quote
-        M = length(u)
-        S = (size(v, 1), size(v, 2)) # This supports also `v` as a `Vector`
+        M = length(v)
+        S = (size(w, 1), size(w, 2)) # This supports also `w` as a `Vector`
         (S[1] == M && S[2] == $N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
         Base.@nexprs $N i -> begin
-            mul!(@view(v[:, i]), L.ops[i], u)
+            # update_coefficients!(L.ops[i], v, p, t)
+            # mul!(@view(w[:, i]), L.ops[i], v)
+            op = L.ops[i]
+            op(@view(w[:, i]), v, v, p, t)
         end
-        return v
+        return w
+    end
+end
+
+#TODO: Remove when https://github.com/SciML/StochasticDiffEq.jl/issues/615 is fixed.
+function (f::SDEFunction)(du, u, p, t)
+    if f.f isa AbstractSciMLOperator
+        f.f(du, u, u, p, t)
+    else
+        f.f(du, u, p, t)
     end
 end
 
