@@ -37,7 +37,7 @@ function bloch_redfield_tensor(
     U = QuantumObject(rst.vectors, Operator(), H.dimensions)
     sec_cutoff = float(sec_cutoff)
 
-    H_new = getVal(fock_basis) ? H : QuantumObject(Diagonal(real.(rst.values)), Operator(), H.dimensions)
+    H_new = getVal(fock_basis) ? H : QuantumObject(Diagonal(rst.values), Operator(), H.dimensions)
     c_ops_new = isnothing(c_ops) ? nothing : map(x -> getVal(fock_basis) ? x : U' * x * U, c_ops)
     R = liouvillian(H_new, c_ops_new)
 
@@ -112,13 +112,6 @@ function _brterm(
     ac_term = (A_mat .* spectrum) * A_mat
     bd_term = A_mat * (A_mat .* trans(spectrum))
 
-    # Remove small values before passing in the Liouville space
-    if settings.auto_tidyup
-        tidyup!(A_mat)
-        tidyup!(ac_term)
-        tidyup!(bd_term)
-    end
-
     if sec_cutoff != -1
         m_cut = similar(skew)
         map!(x -> abs(x) < sec_cutoff, m_cut, skew)
@@ -127,6 +120,13 @@ function _brterm(
 
         vec_skew = vec(skew)
         M_cut = @. abs(vec_skew - vec_skew') < sec_cutoff
+    end
+
+    # Remove small values before passing in the Liouville space
+    if settings.auto_tidyup
+        tidyup!(A_mat)
+        tidyup!(ac_term)
+        tidyup!(bd_term)
     end
 
     out =
