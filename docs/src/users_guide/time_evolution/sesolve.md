@@ -93,7 +93,9 @@ sol = sesolve(H, ψ0, tlist) # or specify: e_ops = []
 
 println(size(sol.times))
 println(size(sol.times_states))
+```
 
+```@example sesolve
 sol.states
 ```
 
@@ -107,11 +109,17 @@ sol = sesolve(H, ψ0, tlist, e_ops = [sigmay()], saveat = tlist)
 ```
 
 ```@example sesolve
-println(size(sol.times))
+print(size(sol.times))
+```
+
+```@example sesolve
 sol.expect
 ```
 
 ```@example sesolve
-println(size(sol.times_states))
+print(size(sol.times_states))
+```
+
+```@example sesolve
 sol.states
 ```
