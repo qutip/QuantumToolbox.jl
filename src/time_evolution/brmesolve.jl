@@ -39,14 +39,26 @@ function bloch_redfield_tensor(
 
     H_new = getVal(fock_basis) ? H : QuantumObject(Diagonal(rst.values), Operator(), H.dimensions)
     c_ops_new = isnothing(c_ops) ? nothing : map(x -> getVal(fock_basis) ? x : U' * x * U, c_ops)
-    R = liouvillian(H_new, c_ops_new)
+    L0 = liouvillian(H_new, c_ops_new)
 
-    isempty(a_ops) || (R += sum(x -> _brterm(rst, x[1], x[2], sec_cutoff, fock_basis), a_ops))
+    # Check whether we can rotate the terms to the eigenbasis directly in the Hamiltonian space
+    fock_basis_hamiltonian = getVal(fock_basis) && sec_cutoff == -1
 
+    R = isempty(a_ops) ? 0 : sum(x -> _brterm(rst, x[1], x[2], sec_cutoff, fock_basis_hamiltonian), a_ops)
+
+    # If in fock basis, we need to transform the terms back to the fock basis
+    # Note: we can transform the terms in the Hamiltonian space only if sec_cutoff is -1
+    # otherwise, we need to use the SU superoperator below to transform the entire Liouvillian
+    # at the end, due to the action of M_cut
     if getVal(fock_basis)
-        return R
+        if fock_basis_hamiltonian
+            return L0 + R # Already rotated in the Hamiltonian space
+        else
+            SU = sprepost(U, U')
+            return L0 + SU * R * SU'
+        end
     else
-        return R, U
+        return L0 + R, U
     end
 end
 
@@ -84,11 +96,21 @@ function brterm(
     fock_basis::Union{Bool,Val} = Val(false),
 )
     rst = eigenstates(H)
-    term = _brterm(rst, a_op, spectra, sec_cutoff, makeVal(fock_basis))
+    U = QuantumObject(rst.vectors, Operator(), H.dimensions)
+
+    # Check whether we can rotate the terms to the eigenbasis directly in the Hamiltonian space
+    fock_basis_hamiltonian = getVal(fock_basis) && sec_cutoff == -1
+
+    term = _brterm(rst, a_op, spectra, sec_cutoff, fock_basis_hamiltonian)
     if getVal(fock_basis)
-        return term
+        if fock_basis_hamiltonian
+            return term # Already rotated in the Hamiltonian space
+        else
+            SU = sprepost(U, U')
+            return SU * term * SU'
+        end
     else
-        return term, Qobj(rst.vectors, Operator(), rst.dimensions)
+        return term, U
     end
 end
 
@@ -97,7 +119,7 @@ function _brterm(
     a_op::T,
     spectra::F,
     sec_cutoff::Real,
-    fock_basis::Union{Bool,Val},
+    fock_basis_hamiltonian::Union{Bool,Val},
 ) where {T<:QuantumObject{Operator},F<:Function}
     _check_br_spectra(spectra)
 
@@ -124,11 +146,8 @@ function _brterm(
         M_cut = @. abs(vec_skew - vec_skew') < sec_cutoff
     end
 
-    # If in fock basis, we need to transform the terms back to the fock basis
-    # Note: we can transform the terms in the Hamiltonian space only if sec_cutoff is -1
-    # otherwise, we need to use the SU superoperator below to transform the entire Liouvillian
-    # due to the action of M_cut
-    if getVal(fock_basis) && sec_cutoff == -1
+    # Rotate the terms to the eigenbasis if possible
+    if getVal(fock_basis_hamiltonian)
         A_mat = U * A_mat * U'
         A_mat_spec = U * A_mat_spec * U'
         A_mat_spec_t = U * A_mat_spec_t * U'
@@ -149,13 +168,7 @@ function _brterm(
 
     (sec_cutoff != -1) && (out .*= M_cut)
 
-    # If sec_cutoff is not -1, we need to transform in the Liouville space
-    if getVal(fock_basis) && sec_cutoff != -1
-        SU = _sprepost(U, U')
-        return QuantumObject(SU * out * SU', SuperOperator(), rst.dimensions)
-    else
-        return QuantumObject(out, SuperOperator(), rst.dimensions)
-    end
+    return QuantumObject(out, SuperOperator(), rst.dimensions)
 end
 
 @doc raw"""
