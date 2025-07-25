@@ -270,7 +270,7 @@ end
         progress_bar = Val(false),
         jump_callback = DiscreteLindbladJumpCallback(),
     )
-    sol_mc_states = mcsolve(H, ψ0, tlist, c_ops, saveat = saveat, progress_bar = Val(false))
+    sol_mc_states = mcsolve(H, ψ0, tlist, c_ops, saveat = saveat, progress_bar = Val(false), keep_runs_results = Val(true))
     sol_mc_states2 = mcsolve(
         H,
         ψ0,
@@ -279,26 +279,26 @@ end
         saveat = saveat,
         progress_bar = Val(false),
         jump_callback = DiscreteLindbladJumpCallback(),
+        keep_runs_results = Val(true),
     )
 
-    ρt_mc = [ket2dm.(normalize.(states)) for states in sol_mc_states.states]
-    expect_mc_states = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc)
-    expect_mc_states_mean = sum(expect_mc_states, dims = 2) / size(expect_mc_states, 2)
-
-    ρt_mc2 = [ket2dm.(normalize.(states)) for states in sol_mc_states2.states]
-    expect_mc_states2 = mapreduce(states -> expect.(Ref(e_ops[1]), states), hcat, ρt_mc2)
-    expect_mc_states_mean2 = sum(expect_mc_states2, dims = 2) / size(expect_mc_states2, 2)
+    # also test function average_states
+    # average the states from all trajectories, and then calculate the expectation value
+    expect_mc_states_mean = expect.(Ref(e_ops[1]), average_states(sol_mc_states))
+    expect_mc_states_mean2 = expect.(Ref(e_ops[1]), average_states(sol_mc_states2))
 
     @test prob_mc.prob.f.f isa MatrixOperator
     @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
-    @test sum(abs, vec(expect_mc_states_mean) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
-    @test sum(abs, vec(expect_mc_states_mean2) .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
+    @test sum(abs, expect_mc_states_mean .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
+    @test sum(abs, expect_mc_states_mean2 .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
     @test length(sol_mc.times) == length(tlist)
     @test length(sol_mc.times_states) == 1
     @test size(sol_mc.expect) == (length(e_ops), length(tlist))
+    @test size(sol_mc.states) == (1,)
     @test length(sol_mc_states.times) == length(tlist)
     @test length(sol_mc_states.times_states) == length(saveat)
+    @test size(sol_mc_states.states) == (500, length(saveat)) # ntraj = 500
     @test sol_mc_states.expect === nothing
 
     sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
@@ -308,7 +308,7 @@ end
           "(converged: $(sol_mc.converged))\n" *
           "--------------------------------\n" *
           "num_trajectories = $(sol_mc.ntraj)\n" *
-          "num_states = $(length(sol_mc.states[1]))\n" *
+          "num_states = $(size(sol_mc.states, ndims(sol_mc.states)))\n" *
           "num_expect = $(size(sol_mc.expect, 1))\n" *
           "ODE alg.: $(sol_mc.alg)\n" *
           "abstol = $(sol_mc.abstol)\n" *
@@ -318,7 +318,7 @@ end
           "(converged: $(sol_mc_states.converged))\n" *
           "--------------------------------\n" *
           "num_trajectories = $(sol_mc_states.ntraj)\n" *
-          "num_states = $(length(sol_mc_states.states[1]))\n" *
+          "num_states = $(size(sol_mc_states.states, ndims(sol_mc_states.states)))\n" *
           "num_expect = 0\n" *
           "ODE alg.: $(sol_mc_states.alg)\n" *
           "abstol = $(sol_mc_states.abstol)\n" *

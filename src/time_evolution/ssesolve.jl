@@ -285,6 +285,7 @@ end
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
         progress_bar::Union{Val,Bool} = Val(true),
+        keep_runs_results::Union{Val,Bool} = Val(false),
         store_measurement::Union{Val,Bool} = Val(false),
         kwargs...,
     )
@@ -328,6 +329,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `store_measurement`: Whether to store the measurement results. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
@@ -360,6 +362,7 @@ function ssesolve(
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
+    keep_runs_results::Union{Val,Bool} = Val(false),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
 )
@@ -386,7 +389,7 @@ function ssesolve(
         alg = sc_ops_isa_Qobj ? SRIW1() : SRA2()
     end
 
-    return ssesolve(ens_prob, alg, ntraj, ensemblealg)
+    return ssesolve(ens_prob, alg, ntraj, ensemblealg, makeVal(keep_runs_results))
 end
 
 function ssesolve(
@@ -394,6 +397,7 @@ function ssesolve(
     alg::StochasticDiffEqAlgorithm = SRA2(),
     ntraj::Int = 500,
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+    keep_runs_results = Val(false),
 )
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
@@ -406,24 +410,20 @@ function ssesolve(
     _expvals_all =
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
-    states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
+    
+    # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
+    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol)), dims = 1)
 
     _m_expvals =
         _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
     m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2)
 
-    expvals =
-        _get_expvals(_sol_1, SaveFuncSSESolve) isa Nothing ? nothing :
-        dropdims(sum(expvals_all, dims = 2), dims = 2) ./ length(sol)
-
     return TimeEvolutionStochasticSol(
         ntraj,
         ens_prob.times,
         _sol_1.t,
-        states,
-        expvals,
-        expvals, # This is average_expect
-        expvals_all,
+        _store_multitraj_states(states_all, keep_runs_results),
+        _store_multitraj_expect(expvals_all, keep_runs_results),
         m_expvals, # Measurement expectation values
         sol.converged,
         _sol_1.alg,
