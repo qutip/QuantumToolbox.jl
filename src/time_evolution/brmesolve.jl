@@ -108,9 +108,11 @@ function _brterm(
     spectrum = spectra.(skew)
 
     A_mat = U' * a_op.data * U
+    A_mat_spec = A_mat .* spectrum
+    A_mat_spec_t = A_mat .* transpose(spectrum)
 
-    ac_term = (A_mat .* spectrum) * A_mat
-    bd_term = A_mat * (A_mat .* trans(spectrum))
+    ac_term = A_mat_spec * A_mat
+    bd_term = A_mat * A_mat_spec_t
 
     if sec_cutoff != -1
         m_cut = similar(skew)
@@ -122,22 +124,33 @@ function _brterm(
         M_cut = @. abs(vec_skew - vec_skew') < sec_cutoff
     end
 
+    # If in fock basis, we need to transform the terms back to the fock basis
+    # Note: we can transform the terms in the Hamiltonian space only if sec_cutoff is -1
+    # otherwise, we need to use the SU superoperator below to transform the entire Liouvillian
+    # due to the action of M_cut
+    if getVal(fock_basis) && sec_cutoff == -1
+        A_mat = U * A_mat * U'
+        A_mat_spec = U * A_mat_spec * U'
+        A_mat_spec_t = U * A_mat_spec_t * U'
+        ac_term = U * ac_term * U'
+        bd_term = U * bd_term * U'
+    end
+
     # Remove small values before passing in the Liouville space
     if settings.auto_tidyup
         tidyup!(A_mat)
+        tidyup!(A_mat_spec)
+        tidyup!(A_mat_spec_t)
         tidyup!(ac_term)
         tidyup!(bd_term)
     end
 
-    out =
-        0.5 * (
-            + _sprepost(A_mat .* trans(spectrum), A_mat) + _sprepost(A_mat, A_mat .* spectrum) - _spost(ac_term, Id) -
-            _spre(bd_term, Id)
-        )
+    out = (_sprepost(A_mat_spec_t, A_mat) + _sprepost(A_mat, A_mat_spec) - _spost(ac_term, Id) - _spre(bd_term, Id)) / 2
 
     (sec_cutoff != -1) && (out .*= M_cut)
 
-    if getVal(fock_basis)
+    # If sec_cutoff is not -1, we need to transform in the Liouville space
+    if getVal(fock_basis) && sec_cutoff != -1
         SU = _sprepost(U, U')
         return QuantumObject(SU * out * SU', SuperOperator(), rst.dimensions)
     else
