@@ -411,8 +411,6 @@ end
         S = (size(w, 1), size(w, 2)) # This supports also `w` as a `Vector`
         (S[1] == M && S[2] == $N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
         Base.@nexprs $N i -> begin
-            # update_coefficients!(L.ops[i], v, p, t)
-            # mul!(@view(w[:, i]), L.ops[i], v)
             op = L.ops[i]
             op(@view(w[:, i]), v, v, p, t)
         end
@@ -420,7 +418,7 @@ end
     end
 end
 
-#TODO: Remove when https://github.com/SciML/StochasticDiffEq.jl/issues/615 is fixed.
+#TODO: Remove when a new release of SciMLBase.jl >2.104.0 is available
 function (f::SDEFunction)(du, u, p, t)
     if f.f isa AbstractSciMLOperator
         f.f(du, u, u, p, t)
