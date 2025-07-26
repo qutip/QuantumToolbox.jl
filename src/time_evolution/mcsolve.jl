@@ -395,7 +395,7 @@ function mcsolve(
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     ntraj::Int = 500,
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    keep_runs_results::Val = Val(false),
+    keep_runs_results = Val(false),
     normalize_states = Val(true),
 )
     sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj)

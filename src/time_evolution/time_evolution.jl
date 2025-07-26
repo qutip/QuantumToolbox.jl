@@ -118,13 +118,13 @@ A structure storing the results and some information from solving quantum trajec
 
 When the keyword argument `keep_runs_results` is passed as `Val(false)` to a multi-trajectory solver, the `states` and `expect` fields store only the average results (averaged over all trajectories). The results can be accessed by the following index-order:
 
-- `sol.states[time]`
-- `sol.expect[e_op,time]`
+- `sol.states[time_idx]`
+- `sol.expect[e_op,time_idx]`
 
 If the keyword argument `keep_runs_results = Val(true)`, the results for each trajectory and each time are stored, and the index-order of the elements in fields `states` and `expect` are:
 
-- `sol.states[trajectory,time]`
-- `sol.expect[e_op,trajectory,time]`
+- `sol.states[trajectory,time_idx]`
+- `sol.expect[e_op,trajectory,time_idx]`
 
 We also provide the following functions for statistical analysis of multi-trajectory solutions:
 
@@ -194,13 +194,13 @@ A structure storing the results and some information from solving trajectories o
 
 When the keyword argument `keep_runs_results` is passed as `Val(false)` to a multi-trajectory solver, the `states` and `expect` fields store only the average results (averaged over all trajectories). The results can be accessed by the following index-order:
 
-- `sol.states[time]`
-- `sol.expect[e_op,time]`
+- `sol.states[time_idx]`
+- `sol.expect[e_op,time_idx]`
 
 If the keyword argument `keep_runs_results = Val(true)`, the results for each trajectory and each time are stored, and the index-order of the elements in fields `states` and `expect` are:
 
-- `sol.states[trajectory,time]`
-- `sol.expect[e_op,trajectory,time]`
+- `sol.states[trajectory,time_idx]`
+- `sol.expect[e_op,trajectory,time_idx]`
 
 We also provide the following functions for statistical analysis of multi-trajectory solutions:
 
@@ -257,7 +257,7 @@ average_states(sol::TimeEvolutionMultiTrajSol{<:Vector{<:QuantumObject}}) = sol.
 
 _average_traj_states(states::Matrix{<:QuantumObject{Ket}}) = dropdims(mean(ket2dm, states, dims = 1), dims = 1)
 _average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType<:Union{Operator,OperatorKet}} =
-    mean(states)
+    dropdims(mean(states, dims = 1), dims = 1)
 
 @doc raw"""
     average_expect(sol::TimeEvolutionMultiTrajSol)
@@ -276,8 +276,7 @@ _store_multitraj_states(states::Matrix{<:QuantumObject}, keep_runs_results::Val{
 _store_multitraj_expect(expvals::Array{T,3}, keep_runs_results::Val{false}) where {T<:Number} =
     _average_traj_expect(expvals)
 _store_multitraj_expect(expvals::Array{T,3}, keep_runs_results::Val{true}) where {T<:Number} = expvals
-_store_multitraj_expect(expvals::Nothing, keep_runs_results::Val{false}) = nothing
-_store_multitraj_expect(expvals::Nothing, keep_runs_results::Val{true}) = nothing
+_store_multitraj_expect(expvals::Nothing, keep_runs_results) = nothing
 
 @doc raw"""
     std_expect(sol::TimeEvolutionMultiTrajSol)
@@ -285,15 +284,9 @@ _store_multitraj_expect(expvals::Nothing, keep_runs_results::Val{true}) = nothin
 Return the trajectory-wise standard deviation of the expectation values at each time point.
 """
 function std_expect(sol::TimeEvolutionMultiTrajSol{TS,Array{T,3}}) where {TS,T<:Number}
-    # the following standard deviation (std) is defined as the square-root of variance instead of pseudo-variance
-    # i.e., it is equivalent to (even for complex expectation values):
-    #    dropdims(
-    #        sqrt.(mean(abs2.(sol.expect), dims = 2) .- abs2.(mean(sol.expect, dims = 2))),
-    #        dims = 2
-    #    )
     return dropdims(std(sol.expect, corrected = false, dims = 2), dims = 2)
 end
-std_expect(::TimeEvolutionMultiTrajSol{Nothing}) = nothing
+std_expect(::TimeEvolutionMultiTrajSol{TS,Nothing}) where {TS} = nothing
 
 #######################################
 #=
