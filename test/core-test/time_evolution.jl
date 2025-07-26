@@ -400,6 +400,7 @@ end
     @test sum(abs, sol_sse.expect .- sol_me.expect) / length(tlist) < 0.1
     @test length(sol_sse.times) == length(tlist)
     @test length(sol_sse.times_states) == 1
+    @test size(sol_sse.states) == (1,) # ntraj = 500 but keep_runs_results = Val(false)
     @test size(sol_sse.expect) == (length(e_ops), length(tlist))
     @test isnothing(sol_sse.measurement)
     @test size(sol_sse2.measurement) == (length(c_ops), 20, length(tlist) - 1)
@@ -410,7 +411,7 @@ end
           "(converged: $(sol_sse.converged))\n" *
           "--------------------------------\n" *
           "num_trajectories = $(sol_sse.ntraj)\n" *
-          "num_states = $(length(sol_sse.states[1]))\n" *
+          "num_states = $(size(sol_sse.states, ndims(sol_sse.states)))\n" *
           "num_expect = $(size(sol_sse.expect, 1))\n" *
           "SDE alg.: $(sol_sse.alg)\n" *
           "abstol = $(sol_sse.abstol)\n" *
@@ -535,6 +536,7 @@ end
     @test sum(abs, sol_sme3.expect .- sol_me.expect) / length(tlist) < 0.1
     @test length(sol_sme.times) == length(tlist)
     @test length(sol_sme.times_states) == 1
+    @test size(sol_sme.states) == (1,) # ntraj = 500 but keep_runs_results = Val(false)
     @test size(sol_sme.expect) == (length(e_ops), length(tlist))
     @test isnothing(sol_sme.measurement)
     @test size(sol_sme2.measurement) == (length(sc_ops_sme), 20, length(tlist) - 1)
@@ -546,7 +548,7 @@ end
           "(converged: $(sol_sme.converged))\n" *
           "--------------------------------\n" *
           "num_trajectories = $(sol_sme.ntraj)\n" *
-          "num_states = $(length(sol_sme.states[1]))\n" *
+          "num_states = $(size(sol_sme.states, ndims(sol_sme.states)))\n" *
           "num_expect = $(size(sol_sme.expect, 1))\n" *
           "SDE alg.: $(sol_sme.alg)\n" *
           "abstol = $(sol_sme.abstol)\n" *

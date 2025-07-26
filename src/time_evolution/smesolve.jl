@@ -421,7 +421,7 @@ function smesolve(
 
     _m_expvals =
         _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSMESolve), eachindex(sol))
-    m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2)
+    m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     return TimeEvolutionStochasticSol(
         ntraj,
