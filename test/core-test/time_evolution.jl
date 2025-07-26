@@ -484,7 +484,6 @@ end
     H = TESetup.H
     ψ0 = TESetup.ψ0
     tlist = TESetup.tlist
-    c_ops = TESetup.c_ops
     c_ops_sme = TESetup.c_ops_sme
     sc_ops_sme = TESetup.sc_ops_sme
     c_ops_sme2 = TESetup.c_ops_sme2
