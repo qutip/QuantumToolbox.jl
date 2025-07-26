@@ -270,7 +270,8 @@ end
         progress_bar = Val(false),
         jump_callback = DiscreteLindbladJumpCallback(),
     )
-    sol_mc_states = mcsolve(H, ψ0, tlist, c_ops, saveat = saveat, progress_bar = Val(false), keep_runs_results = Val(true))
+    sol_mc_states =
+        mcsolve(H, ψ0, tlist, c_ops, saveat = saveat, progress_bar = Val(false), keep_runs_results = Val(true))
     sol_mc_states2 = mcsolve(
         H,
         ψ0,

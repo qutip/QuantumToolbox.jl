@@ -256,7 +256,8 @@ average_states(sol::TimeEvolutionMultiTrajSol{<:Matrix{<:QuantumObject}}) = _ave
 average_states(sol::TimeEvolutionMultiTrajSol{<:Vector{<:QuantumObject}}) = sol.states  # this case should already be averaged over all trajectories
 
 _average_traj_states(states::Matrix{<:QuantumObject{Ket}}) = dropdims(mean(ket2dm, states, dims = 1), dims = 1)
-_average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType<:Union{Operator,OperatorKet}} = mean(states)
+_average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType<:Union{Operator,OperatorKet}} =
+    mean(states)
 
 @doc raw"""
     average_expect(sol::TimeEvolutionMultiTrajSol)
@@ -272,7 +273,8 @@ _average_traj_expect(expvals::Array{T,3}) where {T<:Number} = dropdims(mean(expv
 # these are used in multi-trajectory solvers before returning solutions
 _store_multitraj_states(states::Matrix{<:QuantumObject}, keep_runs_results::Val{false}) = _average_traj_states(states)
 _store_multitraj_states(states::Matrix{<:QuantumObject}, keep_runs_results::Val{true}) = states
-_store_multitraj_expect(expvals::Array{T,3}, keep_runs_results::Val{false}) where {T<:Number} = _average_traj_expect(expvals)
+_store_multitraj_expect(expvals::Array{T,3}, keep_runs_results::Val{false}) where {T<:Number} =
+    _average_traj_expect(expvals)
 _store_multitraj_expect(expvals::Array{T,3}, keep_runs_results::Val{true}) where {T<:Number} = expvals
 _store_multitraj_expect(expvals::Nothing, keep_runs_results::Val{false}) = nothing
 _store_multitraj_expect(expvals::Nothing, keep_runs_results::Val{true}) = nothing
