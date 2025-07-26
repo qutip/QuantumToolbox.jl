@@ -105,7 +105,7 @@ A structure storing the results and some information from solving quantum trajec
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The list of time points at which the expectation values are calculated during the evolution.
 - `times_states::AbstractVector`: The list of time points at which the states are stored during the evolution.
-- `states::AbstractArray`: The list of result states in each trajectory and each time point in `times_states`.
+- `states::AbstractVecOrMat`: The list of result states in each trajectory and each time point in `times_states`.
 - `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
 - `col_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
 - `col_which::Vector{Vector{Int}}`: The indices of which collapse operator was responsible for each quantum jump in `col_times`.
@@ -135,7 +135,7 @@ We also provide the following functions for statistical analysis of multi-trajec
 struct TimeEvolutionMCSol{
     TT1<:AbstractVector{<:Real},
     TT2<:AbstractVector{<:Real},
-    TS<:AbstractArray,
+    TS<:AbstractVecOrMat,
     TE<:Union{AbstractArray,Nothing},
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
@@ -183,7 +183,7 @@ A structure storing the results and some information from solving trajectories o
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The list of time points at which the expectation values are calculated during the evolution.
 - `times_states::AbstractVector`: The list of time points at which the states are stored during the evolution.
-- `states::AbstractArray`: The list of result states in each trajectory and each time point in `times_states`.
+- `states::AbstractVecOrMat`: The list of result states in each trajectory and each time point in `times_states`.
 - `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
@@ -211,7 +211,7 @@ We also provide the following functions for statistical analysis of multi-trajec
 struct TimeEvolutionStochasticSol{
     TT1<:AbstractVector{<:Real},
     TT2<:AbstractVector{<:Real},
-    TS<:AbstractArray,
+    TS<:AbstractVecOrMat,
     TE<:Union{AbstractArray,Nothing},
     TEM<:Union{AbstractArray,Nothing},
     AlgT<:StochasticDiffEqAlgorithm,
