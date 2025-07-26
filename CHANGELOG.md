@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Improve efficiency of `bloch_redfield_tensor` by avoiding unnecessary conversions. ([#509])
+
 ## [v0.33.0]
 Release date: 2025-07-22
 
@@ -267,3 +269,4 @@ Release date: 2024-11-13
 [#504]: https://github.com/qutip/QuantumToolbox.jl/issues/504
 [#506]: https://github.com/qutip/QuantumToolbox.jl/issues/506
 [#507]: https://github.com/qutip/QuantumToolbox.jl/issues/507
+[#509]: https://github.com/qutip/QuantumToolbox.jl/issues/509

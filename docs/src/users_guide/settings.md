@@ -13,7 +13,8 @@ Here, we list out each setting along with the specific functions that will use i
 
 - `tidyup_tol::Float64 = 1e-14` : tolerance for [`tidyup`](@ref) and [`tidyup!`](@ref).
 - `auto_tidyup::Bool = true` : Automatically tidyup during the following situations:
-    * Solving for eigenstates, including [`eigenstates`](@ref), [`eigsolve`](@ref), and [`eigsolve_al`](@ref).
+    * Solving for eigenstates, including [`eigenstates`](@ref), [`eigsolve`](@ref), [`eigsolve_al`](@ref)
+    * Creating [`bloch_redfield_tensor`](@ref) or [`brterm`](@ref), and solving [`brmesolve`](@ref).
 - (to be announced)
 
 ## Change default settings

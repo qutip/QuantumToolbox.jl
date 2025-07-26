@@ -37,18 +37,28 @@ function bloch_redfield_tensor(
     U = QuantumObject(rst.vectors, Operator(), H.dimensions)
     sec_cutoff = float(sec_cutoff)
 
-    # in fock basis
-    R0 = liouvillian(H, c_ops)
+    H_new = getVal(fock_basis) ? H : QuantumObject(Diagonal(rst.values), Operator(), H.dimensions)
+    c_ops_new = isnothing(c_ops) ? nothing : map(x -> getVal(fock_basis) ? x : U' * x * U, c_ops)
+    L0 = liouvillian(H_new, c_ops_new)
 
-    # set fock_basis=Val(false) and change basis together at the end
-    R1 = 0
-    isempty(a_ops) || (R1 += mapreduce(x -> _brterm(rst, x[1], x[2], sec_cutoff, Val(false)), +, a_ops))
+    # Check whether we can rotate the terms to the eigenbasis directly in the Hamiltonian space
+    fock_basis_hamiltonian = getVal(fock_basis) && sec_cutoff == -1
 
-    SU = sprepost(U, U') # transformation matrix from eigen basis back to fock basis
+    R = isempty(a_ops) ? 0 : sum(x -> _brterm(rst, x[1], x[2], sec_cutoff, fock_basis_hamiltonian), a_ops)
+
+    # If in fock basis, we need to transform the terms back to the fock basis
+    # Note: we can transform the terms in the Hamiltonian space only if sec_cutoff is -1
+    # otherwise, we need to use the SU superoperator below to transform the entire Liouvillian
+    # at the end, due to the action of M_cut
     if getVal(fock_basis)
-        return R0 + SU * R1 * SU'
+        if fock_basis_hamiltonian
+            return L0 + R # Already rotated in the Hamiltonian space
+        else
+            SU = sprepost(U, U')
+            return L0 + SU * R * SU'
+        end
     else
-        return SU' * R0 * SU + R1, U
+        return L0 + R, U
     end
 end
 
@@ -86,11 +96,21 @@ function brterm(
     fock_basis::Union{Bool,Val} = Val(false),
 )
     rst = eigenstates(H)
-    term = _brterm(rst, a_op, spectra, sec_cutoff, makeVal(fock_basis))
+    U = QuantumObject(rst.vectors, Operator(), H.dimensions)
+
+    # Check whether we can rotate the terms to the eigenbasis directly in the Hamiltonian space
+    fock_basis_hamiltonian = getVal(fock_basis) && sec_cutoff == -1
+
+    term = _brterm(rst, a_op, spectra, sec_cutoff, fock_basis_hamiltonian)
     if getVal(fock_basis)
-        return term
+        if fock_basis_hamiltonian
+            return term # Already rotated in the Hamiltonian space
+        else
+            SU = sprepost(U, U')
+            return SU * term * SU'
+        end
     else
-        return term, Qobj(rst.vectors, Operator(), rst.dimensions)
+        return term, U
     end
 end
 
@@ -99,7 +119,7 @@ function _brterm(
     a_op::T,
     spectra::F,
     sec_cutoff::Real,
-    fock_basis::Union{Val{true},Val{false}},
+    fock_basis_hamiltonian::Union{Bool,Val},
 ) where {T<:QuantumObject{Operator},F<:Function}
     _check_br_spectra(spectra)
 
@@ -110,9 +130,11 @@ function _brterm(
     spectrum = spectra.(skew)
 
     A_mat = U' * a_op.data * U
+    A_mat_spec = A_mat .* spectrum
+    A_mat_spec_t = A_mat .* transpose(spectrum)
 
-    ac_term = (A_mat .* spectrum) * A_mat
-    bd_term = A_mat * (A_mat .* trans(spectrum))
+    ac_term = A_mat_spec * A_mat
+    bd_term = A_mat * A_mat_spec_t
 
     if sec_cutoff != -1
         m_cut = similar(skew)
@@ -124,20 +146,29 @@ function _brterm(
         M_cut = @. abs(vec_skew - vec_skew') < sec_cutoff
     end
 
-    out =
-        0.5 * (
-            + _sprepost(A_mat .* trans(spectrum), A_mat) + _sprepost(A_mat, A_mat .* spectrum) - _spost(ac_term, Id) -
-            _spre(bd_term, Id)
-        )
+    # Rotate the terms to the eigenbasis if possible
+    if getVal(fock_basis_hamiltonian)
+        A_mat = U * A_mat * U'
+        A_mat_spec = U * A_mat_spec * U'
+        A_mat_spec_t = U * A_mat_spec_t * U'
+        ac_term = U * ac_term * U'
+        bd_term = U * bd_term * U'
+    end
+
+    # Remove small values before passing in the Liouville space
+    if settings.auto_tidyup
+        tidyup!(A_mat)
+        tidyup!(A_mat_spec)
+        tidyup!(A_mat_spec_t)
+        tidyup!(ac_term)
+        tidyup!(bd_term)
+    end
+
+    out = (_sprepost(A_mat_spec_t, A_mat) + _sprepost(A_mat, A_mat_spec) - _spost(ac_term, Id) - _spre(bd_term, Id)) / 2
 
     (sec_cutoff != -1) && (out .*= M_cut)
 
-    if getVal(fock_basis)
-        SU = _sprepost(U, U')
-        return QuantumObject(SU * out * SU', SuperOperator(), rst.dimensions)
-    else
-        return QuantumObject(out, SuperOperator(), rst.dimensions)
-    end
+    return QuantumObject(out, SuperOperator(), rst.dimensions)
 end
 
 @doc raw"""

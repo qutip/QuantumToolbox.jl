@@ -162,7 +162,7 @@ H = -Δ/2.0 * sigmax() - ε0/2 * sigmaz()
 
 ohmic_spectrum(ω) = (ω == 0.0) ? γ1 : γ1 / 2 * (ω / (2 * π)) * (ω > 0.0)
 
-R, U = bloch_redfield_tensor(H, [(sigmax(), ohmic_spectrum)])
+R, U = bloch_redfield_tensor(H, ((sigmax(), ohmic_spectrum), ))
 
 R
 ```
@@ -183,6 +183,8 @@ H = - Δ/2.0 * sigmax() - ϵ0/2.0 * sigmaz()
 ohmic_spectrum(ω) = (ω == 0.0) ? γ1 : γ1 / 2 * (ω / (2 * π)) * (ω > 0.0)
 
 a_ops = ((sigmax(), ohmic_spectrum),)
+R = bloch_redfield_tensor(H, a_ops; fock_basis = Val(true))
+
 e_ops = [sigmax(), sigmay(), sigmaz()]
 
 # same initial random ket state in QuTiP doc 
@@ -192,7 +194,7 @@ e_ops = [sigmax(), sigmay(), sigmaz()]
 ])
 
 tlist = LinRange(0, 15.0, 1000)
-sol = brmesolve(H, ψ0, tlist, a_ops, e_ops=e_ops)
+sol = mesolve(R, ψ0, tlist, e_ops=e_ops)
 expt_list = real(sol.expect)
 
 # plot the evolution of state on Bloch sphere
