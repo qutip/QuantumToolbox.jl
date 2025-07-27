@@ -206,7 +206,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateODESol
     abstol = haskey(kwargs, :abstol) ? kwargs[:abstol] : DEFAULT_ODE_SOLVER_OPTIONS.abstol
     reltol = haskey(kwargs, :reltol) ? kwargs[:reltol] : DEFAULT_ODE_SOLVER_OPTIONS.reltol
 
-    ftype = _FType(ψ0)
+    ftype = _float_type(ψ0)
     _terminate_func = SteadyStateODECondition(similar(mat2vec(ket2dm(ψ0)).data))
     cb = TerminateSteadyState(abstol, reltol, _terminate_func)
     sol = mesolve(

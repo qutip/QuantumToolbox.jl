@@ -125,7 +125,7 @@ function mcsolveProblem(
     c_ops isa Nothing &&
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
-    tlist = _check_tlist(tlist, _FType(ψ0))
+    tlist = _check_tlist(tlist, _float_type(ψ0))
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
 

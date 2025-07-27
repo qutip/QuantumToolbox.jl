@@ -79,16 +79,16 @@ function mesolveProblem(
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    tlist = _check_tlist(tlist, _FType(ψ0))
+    tlist = _check_tlist(tlist, _float_type(ψ0))
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     check_dimensions(L_evo, ψ0)
 
     T = Base.promote_eltype(L_evo, ψ0)
     ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
-        to_dense(_CType(T), copy(ψ0.data))
+        to_dense(_complex_float_type(T), copy(ψ0.data))
     else
-        to_dense(_CType(T), mat2vec(ket2dm(ψ0).data))
+        to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
     end
     L = L_evo.data
 

@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `average_states`
     - `average_expect`
     - `std_expect`
+- Add support to ForwardDiff.jl for `sesolve` and `mesolve`. ([#515])
 
 ## [v0.33.0]
 Release date: 2025-07-22
@@ -284,3 +285,4 @@ Release date: 2024-11-13
 [#509]: https://github.com/qutip/QuantumToolbox.jl/issues/509
 [#512]: https://github.com/qutip/QuantumToolbox.jl/issues/512
 [#513]: https://github.com/qutip/QuantumToolbox.jl/issues/513
+[#515]: https://github.com/qutip/QuantumToolbox.jl/issues/515

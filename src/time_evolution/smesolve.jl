@@ -94,7 +94,7 @@ function smesolveProblem(
     sc_ops_list = _make_c_ops_list(sc_ops) # If it is an AbstractQuantumObject but we need to iterate
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
-    tlist = _check_tlist(tlist, _FType(ψ0))
+    tlist = _check_tlist(tlist, _float_type(ψ0))
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
     check_dimensions(L_evo, ψ0)
@@ -102,9 +102,9 @@ function smesolveProblem(
 
     T = Base.promote_eltype(L_evo, ψ0)
     ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
-        to_dense(_CType(T), copy(ψ0.data))
+        to_dense(_complex_float_type(T), copy(ψ0.data))
     else
-        to_dense(_CType(T), mat2vec(ket2dm(ψ0).data))
+        to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
     end
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))

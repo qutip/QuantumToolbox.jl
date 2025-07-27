@@ -94,14 +94,14 @@ function ssesolveProblem(
     sc_ops_list = _make_c_ops_list(sc_ops) # If it is an AbstractQuantumObject but we need to iterate
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
-    tlist = _check_tlist(tlist, _FType(ψ0))
+    tlist = _check_tlist(tlist, _float_type(ψ0))
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
     check_dimensions(H_eff_evo, ψ0)
     dims = H_eff_evo.dimensions
 
-    ψ0 = to_dense(_CType(ψ0), get_data(ψ0))
+    ψ0 = to_dense(_complex_float_type(ψ0), get_data(ψ0))
 
     progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
 
