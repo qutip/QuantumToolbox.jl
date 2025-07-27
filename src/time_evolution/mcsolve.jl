@@ -22,7 +22,7 @@ end
 
 function _normalize_state!(u, dims, normalize_states)
     getVal(normalize_states) && normalize!(u)
-    return QuantumObject(u, type = Ket(), dims = dims)
+    return QuantumObject(u, Ket(), dims)
 end
 
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)

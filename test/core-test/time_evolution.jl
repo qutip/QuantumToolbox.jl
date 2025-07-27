@@ -463,15 +463,54 @@ end
 
     @testset "Memory Allocations (ssesolve)" begin
         ntraj = 100
-        allocs_tot = @allocations ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, ntraj = ntraj, progress_bar = Val(false)) # Warm-up
-        allocs_tot = @allocations ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, ntraj = ntraj, progress_bar = Val(false))
-        @test allocs_tot < 1100 * ntraj + 400 # TODO: Fix this high number of allocations
+        for keep_runs_results in (Val(false), Val(true))
+            n1 = QuantumToolbox.getVal(keep_runs_results) ? 1100 : 1120
+            n2 = QuantumToolbox.getVal(keep_runs_results) ? 1000 : 1020
 
-        allocs_tot =
-            @allocations ssesolve(H, ψ0, tlist, c_ops, ntraj = ntraj, saveat = [tlist[end]], progress_bar = Val(false)) # Warm-up
-        allocs_tot =
-            @allocations ssesolve(H, ψ0, tlist, c_ops, ntraj = ntraj, saveat = [tlist[end]], progress_bar = Val(false))
-        @test allocs_tot < 1000 * ntraj + 300 # TODO: Fix this high number of allocations
+            allocs_tot = @allocations ssesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops,
+                e_ops = e_ops,
+                ntraj = ntraj,
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            ) # Warm-up
+            allocs_tot = @allocations ssesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops,
+                e_ops = e_ops,
+                ntraj = ntraj,
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            )
+            @test allocs_tot < n1 * ntraj + 400 # TODO: Fix this high number of allocations
+
+            allocs_tot = @allocations ssesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops,
+                ntraj = ntraj,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            ) # Warm-up
+            allocs_tot = @allocations ssesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops,
+                ntraj = ntraj,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            )
+            @test allocs_tot < n2 * ntraj + 300 # TODO: Fix this high number of allocations
+        end
     end
 
     @testset "Type Inference (ssesolve)" begin
@@ -580,7 +619,7 @@ end
     @test size(sol_sme.expect) == (length(e_ops), length(tlist))
     @test isnothing(sol_sme.measurement)
     @test size(sol_sme2.measurement) == (length(sc_ops_sme), 20, length(tlist) - 1)
-    @test all([sol_sme4.states[j][i] ≈ vector_to_operator(sol_sme5.states[j][i]) for i in eachindex(saveat), j in 1:10])
+    @test all([sol_sme4.states[i] ≈ vector_to_operator(sol_sme5.states[i]) for i in eachindex(saveat)])
 
     sol_sme_string = sprint((t, s) -> show(t, "text/plain", s), sol_sme)
     @test sol_sme_string ==
@@ -600,94 +639,109 @@ end
 
     @testset "Memory Allocations (smesolve)" begin
         ntraj = 100
-        allocs_tot = @allocations smesolve(
-            H,
-            ψ0,
-            tlist,
-            c_ops_sme,
-            sc_ops_sme,
-            e_ops = e_ops,
-            ntraj = ntraj,
-            progress_bar = Val(false),
-        ) # Warm-up
-        allocs_tot = @allocations smesolve(
-            H,
-            ψ0,
-            tlist,
-            c_ops_sme,
-            sc_ops_sme,
-            e_ops = e_ops,
-            ntraj = ntraj,
-            progress_bar = Val(false),
-        )
-        @test allocs_tot < 1100 * ntraj + 2300 # TODO: Fix this high number of allocations
+        for keep_runs_results in (Val(false), Val(true))
+            n1 = QuantumToolbox.getVal(keep_runs_results) ? 1100 : 1120
+            n2 = QuantumToolbox.getVal(keep_runs_results) ? 1000 : 1020
+            n3 = QuantumToolbox.getVal(keep_runs_results) ? 600 : 620
+            n4 = QuantumToolbox.getVal(keep_runs_results) ? 550 : 570
 
-        allocs_tot = @allocations smesolve(
-            H,
-            ψ0,
-            tlist,
-            c_ops_sme,
-            sc_ops_sme,
-            ntraj = ntraj,
-            saveat = [tlist[end]],
-            progress_bar = Val(false),
-        ) # Warm-up
-        allocs_tot = @allocations smesolve(
-            H,
-            ψ0,
-            tlist,
-            c_ops_sme,
-            sc_ops_sme,
-            ntraj = ntraj,
-            saveat = [tlist[end]],
-            progress_bar = Val(false),
-        )
-        @test allocs_tot < 1000 * ntraj + 1500 # TODO: Fix this high number of allocations
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                e_ops = e_ops,
+                ntraj = ntraj,
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            ) # Warm-up
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                e_ops = e_ops,
+                ntraj = ntraj,
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            )
+            @test allocs_tot < n1 * ntraj + 2300 # TODO: Fix this high number of allocations
 
-        # Diagonal Noise Case
-        allocs_tot = @allocations smesolve(
-            H,
-            ψ0,
-            tlist,
-            c_ops_sme2,
-            sc_ops_sme2,
-            e_ops = e_ops,
-            ntraj = ntraj,
-            progress_bar = Val(false),
-        ) # Warm-up
-        allocs_tot = @allocations smesolve(
-            H,
-            ψ0,
-            tlist,
-            c_ops_sme2,
-            sc_ops_sme2,
-            e_ops = e_ops,
-            ntraj = 1,
-            progress_bar = Val(false),
-        )
-        @test allocs_tot < 600 * ntraj + 1400 # TODO: Fix this high number of allocations
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                ntraj = ntraj,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            ) # Warm-up
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme,
+                sc_ops_sme,
+                ntraj = ntraj,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            )
+            @test allocs_tot < n2 * ntraj + 1500 # TODO: Fix this high number of allocations
 
-        allocs_tot = @allocations smesolve(
-            H,
-            ψ0,
-            tlist,
-            c_ops_sme2,
-            sc_ops_sme2,
-            ntraj = ntraj,
-            saveat = [tlist[end]],
-            progress_bar = Val(false),
-        ) # Warm-up
-        allocs_tot = @allocations smesolve(
-            H,
-            ψ0,
-            tlist,
-            c_ops_sme2,
-            sc_ops_sme2,
-            ntraj = 1,
-            saveat = [tlist[end]],
-            progress_bar = Val(false),
-        )
-        @test allocs_tot < 550 * ntraj + 1000 # TODO: Fix this high number of allocations
+            # Diagonal Noise Case
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme2,
+                sc_ops_sme2,
+                e_ops = e_ops,
+                ntraj = ntraj,
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            ) # Warm-up
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme2,
+                sc_ops_sme2,
+                e_ops = e_ops,
+                ntraj = 1,
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            )
+            @test allocs_tot < n3 * ntraj + 1400 # TODO: Fix this high number of allocations
+
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme2,
+                sc_ops_sme2,
+                ntraj = ntraj,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            ) # Warm-up
+            allocs_tot = @allocations smesolve(
+                H,
+                ψ0,
+                tlist,
+                c_ops_sme2,
+                sc_ops_sme2,
+                ntraj = 1,
+                saveat = [tlist[end]],
+                progress_bar = Val(false),
+                keep_runs_results = keep_runs_results,
+            )
+            @test allocs_tot < n4 * ntraj + 1000 # TODO: Fix this high number of allocations
+        end
     end
 
     @testset "Type Inference (smesolve)" begin
@@ -843,45 +897,114 @@ end
     rng = TESetup.rng
 
     rng = MersenneTwister(1234)
-    sol_mc1 = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+    sol_mc1 =
+        mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng, keep_runs_results = Val(true))
     rng = MersenneTwister(1234)
-    sol_sse1 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+    sol_sse1 = ssesolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops,
+        ntraj = 50,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        rng = rng,
+        keep_runs_results = Val(true),
+    )
     rng = MersenneTwister(1234)
-    sol_sme1 =
-        smesolve(H, ψ0, tlist, c_ops_sme, sc_ops_sme, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+    sol_sme1 = smesolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops_sme,
+        sc_ops_sme,
+        ntraj = 50,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        rng = rng,
+        keep_runs_results = Val(true),
+    )
 
     rng = MersenneTwister(1234)
-    sol_mc2 = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+    sol_mc2 =
+        mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), rng = rng, keep_runs_results = Val(true))
     rng = MersenneTwister(1234)
-    sol_sse2 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+    sol_sse2 = ssesolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops,
+        ntraj = 50,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        rng = rng,
+        keep_runs_results = Val(true),
+    )
     rng = MersenneTwister(1234)
-    sol_sme2 =
-        smesolve(H, ψ0, tlist, c_ops_sme, sc_ops_sme, ntraj = 50, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+    sol_sme2 = smesolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops_sme,
+        sc_ops_sme,
+        ntraj = 50,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        rng = rng,
+        keep_runs_results = Val(true),
+    )
 
     rng = MersenneTwister(1234)
-    sol_mc3 = mcsolve(H, ψ0, tlist, c_ops, ntraj = 510, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+    sol_mc3 = mcsolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops,
+        ntraj = 510,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        rng = rng,
+        keep_runs_results = Val(true),
+    )
     rng = MersenneTwister(1234)
-    sol_sse3 = ssesolve(H, ψ0, tlist, c_ops, ntraj = 60, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+    sol_sse3 = ssesolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops,
+        ntraj = 60,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        rng = rng,
+        keep_runs_results = Val(true),
+    )
     rng = MersenneTwister(1234)
-    sol_sme3 =
-        smesolve(H, ψ0, tlist, c_ops_sme, sc_ops_sme, ntraj = 60, e_ops = e_ops, progress_bar = Val(false), rng = rng)
+    sol_sme3 = smesolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops_sme,
+        sc_ops_sme,
+        ntraj = 60,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        rng = rng,
+        keep_runs_results = Val(true),
+    )
 
     @test sol_mc1.expect ≈ sol_mc2.expect atol = 1e-10
-    @test sol_mc1.runs_expect ≈ sol_mc2.runs_expect atol = 1e-10
     @test sol_mc1.col_times ≈ sol_mc2.col_times atol = 1e-10
     @test sol_mc1.col_which ≈ sol_mc2.col_which atol = 1e-10
 
-    @test sol_mc1.runs_expect ≈ sol_mc3.runs_expect[:, 1:500, :] atol = 1e-10
+    @test sol_mc1.expect ≈ sol_mc3.expect[:, 1:500, :] atol = 1e-10
 
     @test sol_sse1.expect ≈ sol_sse2.expect atol = 1e-10
-    @test sol_sse1.runs_expect ≈ sol_sse2.runs_expect atol = 1e-10
 
-    @test sol_sse1.runs_expect ≈ sol_sse3.runs_expect[:, 1:50, :] atol = 1e-10
+    @test sol_sse1.expect ≈ sol_sse3.expect[:, 1:50, :] atol = 1e-10
 
     @test sol_sme1.expect ≈ sol_sme2.expect atol = 1e-10
-    @test sol_sme1.runs_expect ≈ sol_sme2.runs_expect atol = 1e-10
 
-    @test sol_sme1.runs_expect ≈ sol_sme3.runs_expect[:, 1:50, :] atol = 1e-10
+    @test sol_sme1.expect ≈ sol_sme3.expect[:, 1:50, :] atol = 1e-10
 end
 
 @testitem "example" begin
