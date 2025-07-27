@@ -1,10 +1,14 @@
-export TimeEvolutionSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
+export TimeEvolutionSol
+export TimeEvolutionMultiTrajSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
+export average_states, average_expect, std_expect
 
 export liouvillian_floquet, liouvillian_generalized
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
 const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-3, reltol = 2e-3, save_everystep = false, save_end = true)
 const COL_TIMES_WHICH_INIT_SIZE = 200
+
+abstract type TimeEvolutionMultiTrajSol{Tstates,Texpect} end
 
 @doc raw"""
     struct TimeEvolutionProblem
@@ -92,7 +96,7 @@ function Base.show(io::IO, sol::TimeEvolutionSol)
 end
 
 @doc raw"""
-    struct TimeEvolutionMCSol
+    struct TimeEvolutionMCSol <: TimeEvolutionMultiTrajSol
 
 A structure storing the results and some information from solving quantum trajectories of the Monte Carlo wave function time evolution.
 
@@ -101,36 +105,49 @@ A structure storing the results and some information from solving quantum trajec
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The list of time points at which the expectation values are calculated during the evolution.
 - `times_states::AbstractVector`: The list of time points at which the states are stored during the evolution.
-- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times_states`.
-- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `states::AbstractVecOrMat`: The list of result states in each trajectory and each time point in `times_states`.
+- `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
 - `col_times::Vector{Vector{Real}}`: The time records of every quantum jump occurred in each trajectory.
 - `col_which::Vector{Vector{Int}}`: The indices of which collapse operator was responsible for each quantum jump in `col_times`.
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
+
+# Notes
+
+When the keyword argument `keep_runs_results` is passed as `Val(false)` to a multi-trajectory solver, the `states` and `expect` fields store only the average results (averaged over all trajectories). The results can be accessed by the following index-order:
+
+- `sol.states[time_idx]`
+- `sol.expect[e_op,time_idx]`
+
+If the keyword argument `keep_runs_results = Val(true)`, the results for each trajectory and each time are stored, and the index-order of the elements in fields `states` and `expect` are:
+
+- `sol.states[trajectory,time_idx]`
+- `sol.expect[e_op,trajectory,time_idx]`
+
+We also provide the following functions for statistical analysis of multi-trajectory solutions:
+
+- [`average_states`](@ref)
+- [`average_expect`](@ref)
+- [`std_expect`](@ref)
 """
 struct TimeEvolutionMCSol{
     TT1<:AbstractVector{<:Real},
     TT2<:AbstractVector{<:Real},
-    TS<:AbstractVector,
-    TE<:Union{AbstractMatrix,Nothing},
-    TEA<:Union{AbstractArray,Nothing},
+    TS<:AbstractVecOrMat,
+    TE<:Union{AbstractArray,Nothing},
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
     AlgT<:OrdinaryDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
-}
+} <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
     times::TT1
     times_states::TT2
     states::TS
     expect::TE
-    average_expect::TE # Currently just a synonym for `expect`
-    runs_expect::TEA
     col_times::TJT
     col_which::TJW
     converged::Bool
@@ -144,11 +161,11 @@ function Base.show(io::IO, sol::TimeEvolutionMCSol)
     print(io, "(converged: $(sol.converged))\n")
     print(io, "--------------------------------\n")
     print(io, "num_trajectories = $(sol.ntraj)\n")
-    print(io, "num_states = $(length(sol.states[1]))\n")
+    print(io, "num_states = $(size(sol.states, ndims(sol.states)))\n") # get the size of last dimension
     if sol.expect isa Nothing
         print(io, "num_expect = 0\n")
     else
-        print(io, "num_expect = $(size(sol.average_expect, 1))\n")
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
     end
     print(io, "ODE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
@@ -166,33 +183,46 @@ A structure storing the results and some information from solving trajectories o
 - `ntraj::Int`: Number of trajectories
 - `times::AbstractVector`: The list of time points at which the expectation values are calculated during the evolution.
 - `times_states::AbstractVector`: The list of time points at which the states are stored during the evolution.
-- `states::Vector{Vector{QuantumObject}}`: The list of result states in each trajectory and each time point in `times_states`.
-- `expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `average_expect::Union{AbstractMatrix,Nothing}`: The expectation values (averaging all trajectories) corresponding to each time point in `times`.
-- `runs_expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`
+- `states::AbstractVecOrMat`: The list of result states in each trajectory and each time point in `times_states`.
+- `expect::Union{AbstractArray,Nothing}`: The expectation values corresponding to each trajectory and each time point in `times`.
 - `converged::Bool`: Whether the solution is converged or not.
 - `alg`: The algorithm which is used during the solving process.
 - `abstol::Real`: The absolute tolerance which is used during the solving process.
 - `reltol::Real`: The relative tolerance which is used during the solving process.
+
+# Notes
+
+When the keyword argument `keep_runs_results` is passed as `Val(false)` to a multi-trajectory solver, the `states` and `expect` fields store only the average results (averaged over all trajectories). The results can be accessed by the following index-order:
+
+- `sol.states[time_idx]`
+- `sol.expect[e_op,time_idx]`
+
+If the keyword argument `keep_runs_results = Val(true)`, the results for each trajectory and each time are stored, and the index-order of the elements in fields `states` and `expect` are:
+
+- `sol.states[trajectory,time_idx]`
+- `sol.expect[e_op,trajectory,time_idx]`
+
+We also provide the following functions for statistical analysis of multi-trajectory solutions:
+
+- [`average_states`](@ref)
+- [`average_expect`](@ref)
+- [`std_expect`](@ref)
 """
 struct TimeEvolutionStochasticSol{
     TT1<:AbstractVector{<:Real},
     TT2<:AbstractVector{<:Real},
-    TS<:AbstractVector,
-    TE<:Union{AbstractMatrix,Nothing},
-    TEA<:Union{AbstractArray,Nothing},
+    TS<:AbstractVecOrMat,
+    TE<:Union{AbstractArray,Nothing},
     TEM<:Union{AbstractArray,Nothing},
     AlgT<:StochasticDiffEqAlgorithm,
     AT<:Real,
     RT<:Real,
-}
+} <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
     times::TT1
     times_states::TT2
     states::TS
     expect::TE
-    average_expect::TE # Currently just a synonym for `expect`
-    runs_expect::TEA
     measurement::TEM
     converged::Bool
     alg::AlgT
@@ -205,17 +235,73 @@ function Base.show(io::IO, sol::TimeEvolutionStochasticSol)
     print(io, "(converged: $(sol.converged))\n")
     print(io, "--------------------------------\n")
     print(io, "num_trajectories = $(sol.ntraj)\n")
-    print(io, "num_states = $(length(sol.states[1]))\n")
+    print(io, "num_states = $(size(sol.states, ndims(sol.states)))\n") # get the size of last dimension
     if sol.expect isa Nothing
         print(io, "num_expect = 0\n")
     else
-        print(io, "num_expect = $(size(sol.average_expect, 1))\n")
+        print(io, "num_expect = $(size(sol.expect, 1))\n")
     end
     print(io, "SDE alg.: $(sol.alg)\n")
     print(io, "abstol = $(sol.abstol)\n")
     print(io, "reltol = $(sol.reltol)\n")
     return nothing
 end
+
+@doc raw"""
+    average_states(sol::TimeEvolutionMultiTrajSol)
+
+Return the trajectory-averaged result states (as density [`Operator`](@ref)) at each time point.
+"""
+average_states(sol::TimeEvolutionMultiTrajSol{<:Matrix{<:QuantumObject}}) = _average_traj_states(sol.states)
+average_states(sol::TimeEvolutionMultiTrajSol{<:Vector{<:QuantumObject}}) = sol.states  # this case should already be averaged over all trajectories
+
+# TODO: Check if broadcasting division ./ size(states, 1) is type stable
+_average_traj_states(states::Matrix{<:QuantumObject{Ket}}) =
+    map(x -> x / size(states, 1), dropdims(sum(ket2dm, states, dims = 1), dims = 1))
+_average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType<:Union{Operator,OperatorKet}} =
+    map(x -> x / size(states, 1), dropdims(sum(states, dims = 1), dims = 1))
+
+@doc raw"""
+    average_expect(sol::TimeEvolutionMultiTrajSol)
+
+Return the trajectory-averaged expectation values at each time point.
+"""
+average_expect(sol::TimeEvolutionMultiTrajSol{TS,Array{T,3}}) where {TS,T<:Number} = _average_traj_expect(sol.expect)
+average_expect(sol::TimeEvolutionMultiTrajSol{TS,Matrix{T}}) where {TS,T<:Number} = sol.expect  # this case should already be averaged over all trajectories
+average_expect(::TimeEvolutionMultiTrajSol{TS,Nothing}) where {TS} = nothing
+
+_average_traj_expect(expvals::Array{T,3}) where {T<:Number} =
+    dropdims(sum(expvals, dims = 2), dims = 2) ./ size(expvals, 2)
+
+# these are used in multi-trajectory solvers before returning solutions
+_store_multitraj_states(states::Matrix{<:QuantumObject}, keep_runs_results::Val{false}) = _average_traj_states(states)
+_store_multitraj_states(states::Matrix{<:QuantumObject}, keep_runs_results::Val{true}) = states
+_store_multitraj_expect(expvals::Array{T,3}, keep_runs_results::Val{false}) where {T<:Number} =
+    _average_traj_expect(expvals)
+_store_multitraj_expect(expvals::Array{T,3}, keep_runs_results::Val{true}) where {T<:Number} = expvals
+_store_multitraj_expect(expvals::Nothing, keep_runs_results) = nothing
+
+@doc raw"""
+    std_expect(sol::TimeEvolutionMultiTrajSol)
+
+Return the trajectory-wise standard deviation of the expectation values at each time point.
+"""
+function std_expect(sol::TimeEvolutionMultiTrajSol{TS,Array{T,3}}) where {TS,T<:Number}
+    # the following standard deviation (std) is defined as the square-root of variance instead of pseudo-variance
+    # i.e., it is equivalent to (even for complex expectation values):
+    #    dropdims(
+    #        sqrt.(mean(abs2.(sol.expect), dims = 2) .- abs2.(mean(sol.expect, dims = 2))),
+    #        dims = 2
+    #    )
+    # [this should be included in the runtest]
+    return dropdims(std(sol.expect, corrected = false, dims = 2), dims = 2)
+end
+std_expect(::TimeEvolutionMultiTrajSol{TS,Matrix{T}}) where {TS,T<:Number} = throw(
+    ArgumentError(
+        "Can not compute the standard deviation without the expectation values of each trajectory. Try to specify keyword argument `keep_runs_results=Val(true)` to the solver.",
+    ),
+)
+std_expect(::TimeEvolutionMultiTrajSol{TS,Nothing}) where {TS} = nothing
 
 #######################################
 #=

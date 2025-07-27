@@ -97,7 +97,47 @@ Some other solvers can have other output.
 
 ## [Multiple trajectories solution](@id doc-TE:Multiple-trajectories-solution)
 
-This part is still under construction, please read the docstrings for the following functions first:
+The solutions are different for solvers which compute multiple trajectories, such as the [`TimeEvolutionMCSol`](@ref) (Monte Carlo) or the [`TimeEvolutionStochasticSol`](@ref) (stochastic methods). The storage of expectation values and states depends on the keyword argument `keep_runs_results`, which determines whether the results of all trajectories are stored in the solution.
 
-- [`TimeEvolutionMCSol`](@ref)
-- [`TimeEvolutionStochasticSol`](@ref)
+When the keyword argument `keep_runs_results` is passed as `Val(false)` to a multi-trajectory solver, the `states` and `expect` fields store only the average results (averaged over all trajectories). The results can be accessed by the following index-order:
+
+```julia
+sol.states[time_idx]
+sol.expect[e_op,time_idx]
+```
+
+For example:
+
+```@example TE-solution
+tlist = LinRange(0, 1, 11)
+c_ops = (destroy(2),)
+e_ops = (num(2),)
+
+sol_mc1 = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ntraj=25, keep_runs_results=Val(false), progress_bar=Val(false))
+
+size(sol_mc1.expect)
+```
+
+If the keyword argument `keep_runs_results = Val(true)`, the results for each trajectory and each time are stored, and the index-order of the elements in fields `states` and `expect` are:
+
+
+```julia
+sol.states[trajectory,time_idx]
+sol.expect[e_op,trajectory,time_idx]
+```
+
+For example:
+
+```@example TE-solution
+sol_mc2 = mcsolve(H, ψ0, tlist, c_ops, e_ops=e_ops, ntraj=25, keep_runs_results=Val(true), progress_bar=Val(false))
+
+size(sol_mc2.expect)
+```
+
+We also provide the following functions for statistical analysis of multi-trajectory `sol`utions:
+
+| **Functions** | **Description** |
+|:------------|:----------------|
+| [`average_states(sol)`](@ref average_states) | Return the trajectory-averaged result states (as density [`Operator`](@ref)) at each time point. |
+| [`average_expect(sol)`](@ref average_expect) | Return the trajectory-averaged expectation values at each time point. |
+| [`std_expect(sol)`](@ref std_expect) | Return the trajectory-wise standard deviation of the expectation values at each time point. |

@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve efficiency of `bloch_redfield_tensor` by avoiding unnecessary conversions. ([#509])
 - Support `SciMLOperators v1.4+`. ([#470])
 - Fix compatibility with `Makie v0.24+`. ([#513])
+- Add `keep_runs_results` option for multi-trajectory solvers to align with `QuTiP`. ([#512])
+  - Breaking changes for multi-trajectory solutions:
+    - the original fields `expect` and `states` now store the results depend on keyword argument `keep_runs_results` (decide whether to store all trajectories results or not).
+    - remove field `average_expect`
+    - remove field `runs_expect`
+  - New statistical analysis functions:
+    - `average_states`
+    - `average_expect`
+    - `std_expect`
 
 ## [v0.33.0]
 Release date: 2025-07-22
@@ -273,4 +282,5 @@ Release date: 2024-11-13
 [#506]: https://github.com/qutip/QuantumToolbox.jl/issues/506
 [#507]: https://github.com/qutip/QuantumToolbox.jl/issues/507
 [#509]: https://github.com/qutip/QuantumToolbox.jl/issues/509
+[#512]: https://github.com/qutip/QuantumToolbox.jl/issues/512
 [#513]: https://github.com/qutip/QuantumToolbox.jl/issues/513

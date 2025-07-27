@@ -22,7 +22,7 @@ end
 
 function _normalize_state!(u, dims, normalize_states)
     getVal(normalize_states) && normalize!(u)
-    return QuantumObject(u, type = Ket(), dims = dims)
+    return QuantumObject(u, Ket(), dims)
 end
 
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
@@ -278,6 +278,7 @@ end
         progress_bar::Union{Val,Bool} = Val(true),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
+        keep_runs_results::Union{Val,Bool} = Val(false),
         normalize_states::Union{Val,Bool} = Val(true),
         kwargs...,
     )
@@ -332,6 +333,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `normalize_states`: Whether to normalize the states. Default to `Val(true)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
@@ -363,6 +365,7 @@ function mcsolve(
     progress_bar::Union{Val,Bool} = Val(true),
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
+    keep_runs_results::Union{Val,Bool} = Val(false),
     normalize_states::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {TJC<:LindbladJumpCallbackType}
@@ -384,7 +387,7 @@ function mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc, alg, ntraj, ensemblealg, normalize_states)
+    return mcsolve(ens_prob_mc, alg, ntraj, ensemblealg, makeVal(keep_runs_results), normalize_states)
 end
 
 function mcsolve(
@@ -392,6 +395,7 @@ function mcsolve(
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     ntraj::Int = 500,
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+    keep_runs_results = Val(false),
     normalize_states = Val(true),
 )
     sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj)
@@ -403,25 +407,24 @@ function mcsolve(
     _expvals_all =
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMCSolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
-    states = map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol))
+
+    # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
+    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol)), dims = 1)
+
     col_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_times, eachindex(sol))
     col_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_which, eachindex(sol))
-
-    expvals = _expvals_sol_1 isa Nothing ? nothing : dropdims(sum(expvals_all, dims = 2), dims = 2) ./ length(sol)
 
     return TimeEvolutionMCSol(
         ntraj,
         ens_prob_mc.times,
         _sol_1.t,
-        states,
-        expvals,
-        expvals, # This is average_expect
-        expvals_all,
+        _store_multitraj_states(states_all, keep_runs_results),
+        _store_multitraj_expect(expvals_all, keep_runs_results),
         col_times,
         col_which,
         sol.converged,
         _sol_1.alg,
-        NamedTuple(_sol_1.prob.kwargs).abstol,
-        NamedTuple(_sol_1.prob.kwargs).reltol,
+        _sol_1.prob.kwargs[:abstol],
+        _sol_1.prob.kwargs[:reltol],
     )
 end
