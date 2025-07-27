@@ -42,13 +42,14 @@ if (GROUP == "AutoDiff_Ext")
     Pkg.instantiate()
 
     using QuantumToolbox
+    using ForwardDiff
     using Zygote
     using Enzyme
     using SciMLSensitivity
 
     QuantumToolbox.about()
 
-    include(joinpath(testdir, "ext-test", "cpu", "autodiff", "zygote.jl"))
+    include(joinpath(testdir, "ext-test", "cpu", "autodiff", "autodiff.jl"))
 end
 
 if (GROUP == "Makie_Ext")
