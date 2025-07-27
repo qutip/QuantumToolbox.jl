@@ -504,14 +504,6 @@ end
     end
 end
 
-#TODO: Remove when a new release of SciMLBase.jl >2.104.0 is available
-(f::SDEFunction)(du, u, p, t) =
-    if f.f isa AbstractSciMLOperator
-        f.f(du, u, u, p, t)
-    else
-        f.f(du, u, p, t)
-    end
-
 #######################################
 
 function liouvillian_floquet(
