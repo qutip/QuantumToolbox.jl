@@ -102,8 +102,9 @@ A structure representing a Bloch sphere visualization for quantum states. Availa
 ## Vector properties
 
 - `vector_color::Vector{String}`: Colors for vectors. Default: `["green", "#CC6600", "blue", "red"]`
-- `vector_width::Float64`: Width of vectors. Default: `0.025`
-- `vector_arrowsize::Vector{Float64}`: Scales the size of the arrow head. The first two elements scale the radius (in `x/y` direction) and the last one is the length of the cone. Default: `[0.07, 0.08, 0.08]`
+- `vector_width::Float64`: Width of vectors. Default: `0.02`
+- `vector_tiplength::Float64`: Length of vector arrow head. Default: `0.08`
+- `vector_tipradius::Float64`: Radius of vector arrow head. Default: `0.05`
 
 ## Layout properties
 
@@ -137,8 +138,9 @@ A structure representing a Bloch sphere visualization for quantum states. Availa
     sphere_alpha::Float64 = 0.2
     sphere_color::String = "#FFDDDD"
     vector_color::Vector{String} = ["green", "#CC6600", "blue", "red"]
-    vector_width::Float64 = 0.025
-    vector_arrowsize::Vector{Float64} = [0.07, 0.08, 0.08]
+    vector_width::Float64 = 0.02
+    vector_tiplength::Float64 = 0.08
+    vector_tipradius::Float64 = 0.05
     view::Vector{Int} = [30, 30]
     xlabel::Vector{AbstractString} = [L"x", ""]
     xlpos::Vector{Float64} = [1.2, -1.2]
