@@ -22,7 +22,7 @@ import Makie:
     Sphere,
     lines!,
     scatter!,
-    arrows!,
+    arrows3d!,
     text!,
     Point3f,
     mesh!,
@@ -656,26 +656,17 @@ Scales vectors appropriately and adds `3D` arrow markers.
 function _plot_vectors!(b::Bloch, lscene)
     isempty(b.vectors) && return nothing
 
-    arrow_head_length = b.vector_arrowsize[3]
     for (i, v) in enumerate(b.vectors)
         color = get(b.vector_color, i, RGBAf(0.2, 0.5, 0.8, 0.9))
-        nv = norm(v)
-        (arrow_head_length < nv) || throw(
-            ArgumentError(
-                "The length of vector arrow head (Bloch.vector_arrowsize[3]=$arrow_head_length) should be shorter than vector norm: $nv",
-            ),
-        )
 
-        # multiply by the following factor makes the end point of arrow head represent the actual vector position.
-        vec = (1 - arrow_head_length / nv) * Vec3f(v...)
-        arrows!(
+        arrows3d!(
             lscene,
             [Point3f(0, 0, 0)],
-            [vec],
+            [v],
             color = color,
-            linewidth = b.vector_width,
-            arrowsize = Vec3f(b.vector_arrowsize...),
-            arrowcolor = color,
+            shaftradius = b.vector_width,
+            tiplength = b.vector_tiplength,
+            tipradius = b.vector_tipradius,
             rasterize = 3,
         )
     end

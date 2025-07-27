@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Improve efficiency of `bloch_redfield_tensor` by avoiding unnecessary conversions. ([#509])
+- Support `SciMLOperators v1.4+`. ([#470])
+- Fix compatibility with `Makie v0.24+`. ([#513])
 - Add `keep_runs_results` option for multi-trajectory solvers to align with `QuTiP`. ([#512])
   - Breaking changes for multi-trajectory solutions:
     - the original fields `expect` and `states` now store the results depend on keyword argument `keep_runs_results` (decide whether to store all trajectories results or not).
@@ -263,6 +266,7 @@ Release date: 2024-11-13
 [#455]: https://github.com/qutip/QuantumToolbox.jl/issues/455
 [#456]: https://github.com/qutip/QuantumToolbox.jl/issues/456
 [#460]: https://github.com/qutip/QuantumToolbox.jl/issues/460
+[#470]: https://github.com/qutip/QuantumToolbox.jl/issues/470
 [#472]: https://github.com/qutip/QuantumToolbox.jl/issues/472
 [#473]: https://github.com/qutip/QuantumToolbox.jl/issues/473
 [#476]: https://github.com/qutip/QuantumToolbox.jl/issues/476
@@ -277,4 +281,6 @@ Release date: 2024-11-13
 [#504]: https://github.com/qutip/QuantumToolbox.jl/issues/504
 [#506]: https://github.com/qutip/QuantumToolbox.jl/issues/506
 [#507]: https://github.com/qutip/QuantumToolbox.jl/issues/507
+[#509]: https://github.com/qutip/QuantumToolbox.jl/issues/509
 [#512]: https://github.com/qutip/QuantumToolbox.jl/issues/512
+[#513]: https://github.com/qutip/QuantumToolbox.jl/issues/513

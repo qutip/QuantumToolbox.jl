@@ -512,7 +512,7 @@ function (A::QuantumObjectEvolution)(
         )
     end
 
-    A.data(ψout.data, ψin.data, p, t)
+    A.data(ψout.data, ψin.data, nothing, p, t)
 
     return ψout
 end
