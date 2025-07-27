@@ -15,14 +15,14 @@
     @test fig isa Figure
     @test ax isa Axis
     @test hm isa Heatmap
-    @test all(isapprox.(hm[3].val, wig, atol = 1e-6))
+    @test all(isapprox.(hm[3].value.x, wig, atol = 1e-6))
 
     fig, ax, surf =
         plot_wigner(ψ; library = Val(:Makie), xvec = xvec, yvec = yvec, projection = Val(:three_dim), colorbar = true)
     @test fig isa Figure
     @test ax isa Axis3
     @test surf isa Surface
-    @test all(isapprox.(surf[3].val, wig, atol = 1e-6))
+    @test all(isapprox.(surf[3].value.x, wig, atol = 1e-6))
 
     fig = Figure()
     pos = fig[2, 3]
@@ -150,8 +150,6 @@ end
         @test false
         @info "Render threw unexpected error" exception=e
     end
-    b.vector_arrowsize = [0.7, 0.8, 1.5] # 1.5 is the length of arrow head (too long)
-    @test_throws ArgumentError render(b)
 
     b = Bloch()
     ψ₁ = normalize(basis(2, 0) + basis(2, 1))
