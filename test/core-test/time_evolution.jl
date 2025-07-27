@@ -248,6 +248,7 @@ end
 
 @testitem "mcsolve" setup=[TESetup] begin
     using SciMLOperators
+    using Statistics
 
     # Get parameters from TESetup to simplify the code
     H = TESetup.H
@@ -270,6 +271,7 @@ end
         progress_bar = Val(false),
         jump_callback = DiscreteLindbladJumpCallback(),
     )
+    sol_mc3 = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), keep_runs_results = Val(true))
     sol_mc_states =
         mcsolve(H, ψ0, tlist, c_ops, saveat = saveat, progress_bar = Val(false), keep_runs_results = Val(true))
     sol_mc_states2 = mcsolve(
@@ -291,12 +293,17 @@ end
     @test prob_mc.prob.f.f isa MatrixOperator
     @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
+    @test sum(abs, average_expect(sol_mc3) .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, expect_mc_states_mean .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
     @test sum(abs, expect_mc_states_mean2 .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
     @test length(sol_mc.times) == length(tlist)
     @test length(sol_mc.times_states) == 1
     @test size(sol_mc.expect) == (length(e_ops), length(tlist))
     @test size(sol_mc.states) == (1,)
+    @test length(sol_mc3.times) == length(tlist)
+    @test length(sol_mc3.times_states) == 1
+    @test size(sol_mc3.expect) == (length(e_ops), 500, length(tlist)) # ntraj = 500
+    @test size(sol_mc3.states) == (500, 1) # ntraj = 500
     @test length(sol_mc_states.times) == length(tlist)
     @test length(sol_mc_states.times_states) == length(saveat)
     @test size(sol_mc_states.states) == (500, length(saveat)) # ntraj = 500
@@ -330,6 +337,23 @@ end
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist3, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError mcsolve(H, ψ0, tlist, c_ops, save_idxs = [1, 2], progress_bar = Val(false))
     @test_throws DimensionMismatch mcsolve(H, TESetup.ψ_wrong, tlist, c_ops, progress_bar = Val(false))
+
+    # test average_states, average_expect, and std_expect
+    expvals_all = sol_mc3.expect[:, :, 2:end] # ignore testing initial time point since its standard deviation is a very small value (basically zero)
+    stdvals = std_expect(sol_mc3)
+    @test average_states(sol_mc) == sol_mc.states
+    @test average_expect(sol_mc) == sol_mc.expect
+    @test size(stdvals) == (length(e_ops), length(tlist))
+    @test all(
+        isapprox.(
+            stdvals[:, 2:end], # ignore testing initial time point since its standard deviation is a very small value (basically zero)
+            dropdims(sqrt.(mean(abs2.(expvals_all), dims = 2) .- abs2.(mean(expvals_all, dims = 2))), dims = 2);
+            atol = 1e-6,
+        ),
+    )
+    @test average_expect(sol_mc_states) === nothing
+    @test std_expect(sol_mc_states) === nothing
+    @test_throws ArgumentError std_expect(sol_mc)
 
     @testset "Memory Allocations (mcsolve)" begin
         ntraj = 100

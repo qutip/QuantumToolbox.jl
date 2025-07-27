@@ -287,8 +287,20 @@ _store_multitraj_expect(expvals::Nothing, keep_runs_results) = nothing
 Return the trajectory-wise standard deviation of the expectation values at each time point.
 """
 function std_expect(sol::TimeEvolutionMultiTrajSol{TS,Array{T,3}}) where {TS,T<:Number}
+    # the following standard deviation (std) is defined as the square-root of variance instead of pseudo-variance
+    # i.e., it is equivalent to (even for complex expectation values):
+    #    dropdims(
+    #        sqrt.(mean(abs2.(sol.expect), dims = 2) .- abs2.(mean(sol.expect, dims = 2))),
+    #        dims = 2
+    #    )
+    # [this should be included in the runtest]
     return dropdims(std(sol.expect, corrected = false, dims = 2), dims = 2)
 end
+std_expect(::TimeEvolutionMultiTrajSol{TS,Matrix{T}}) where {TS,T<:Number} = throw(
+    ArgumentError(
+        "Can not compute the standard deviation without the expectation values of each trajectory. Try to specify keyword argument `keep_runs_results=Val(true)` to the solver.",
+    ),
+)
 std_expect(::TimeEvolutionMultiTrajSol{TS,Nothing}) where {TS} = nothing
 
 #######################################
