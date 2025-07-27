@@ -46,7 +46,7 @@ where ``\hbar`` is the reduced Planck constant, and ``k_B`` is the Boltzmann con
 function n_thermal(ω::T1, ω_th::T2) where {T1<:Real,T2<:Real}
     x = exp(ω / ω_th)
     n = ((x != 1) && (ω_th > 0)) ? 1 / (x - 1) : 0
-    return _FType(promote_type(T1, T2))(n)
+    return _float_type(promote_type(T1, T2))(n)
 end
 
 @doc raw"""
@@ -125,7 +125,7 @@ julia> round(convert_unit(1, :meV, :mK), digits=4)
 function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T<:Real}
     !haskey(_energy_units, unit1) && throw(ArgumentError("Invalid unit :$(unit1)"))
     !haskey(_energy_units, unit2) && throw(ArgumentError("Invalid unit :$(unit2)"))
-    return _FType(T)(value * (_energy_units[unit1] / _energy_units[unit2]))
+    return _float_type(T)(value * (_energy_units[unit1] / _energy_units[unit2]))
 end
 
 get_typename_wrapper(A) = Base.typename(typeof(A)).wrapper
@@ -174,24 +174,26 @@ for AType in (:AbstractArray, :AbstractSciMLOperator)
 end
 
 # functions for getting Float or Complex element type
-_FType(::AbstractArray{T}) where {T<:Number} = _FType(T)
-_FType(::Type{Int32}) = Float32
-_FType(::Type{Int64}) = Float64
-_FType(::Type{Float32}) = Float32
-_FType(::Type{Float64}) = Float64
-_FType(::Type{Complex{Int32}}) = Float32
-_FType(::Type{Complex{Int64}}) = Float64
-_FType(::Type{Complex{Float32}}) = Float32
-_FType(::Type{Complex{Float64}}) = Float64
-_CType(::AbstractArray{T}) where {T<:Number} = _CType(T)
-_CType(::Type{Int32}) = ComplexF32
-_CType(::Type{Int64}) = ComplexF64
-_CType(::Type{Float32}) = ComplexF32
-_CType(::Type{Float64}) = ComplexF64
-_CType(::Type{Complex{Int32}}) = ComplexF32
-_CType(::Type{Complex{Int64}}) = ComplexF64
-_CType(::Type{Complex{Float32}}) = ComplexF32
-_CType(::Type{Complex{Float64}}) = ComplexF64
+_float_type(::AbstractArray{T}) where {T<:Number} = _float_type(T)
+_float_type(::Type{Int32}) = Float32
+_float_type(::Type{Int64}) = Float64
+_float_type(::Type{Float32}) = Float32
+_float_type(::Type{Float64}) = Float64
+_float_type(::Type{Complex{Int32}}) = Float32
+_float_type(::Type{Complex{Int64}}) = Float64
+_float_type(::Type{Complex{Float32}}) = Float32
+_float_type(::Type{Complex{Float64}}) = Float64
+_float_type(T::Type{<:Real}) = T # Allow other untracked Real types, like ForwardDiff.Dual
+_complex_float_type(::AbstractArray{T}) where {T<:Number} = _complex_float_type(T)
+_complex_float_type(::Type{Int32}) = ComplexF32
+_complex_float_type(::Type{Int64}) = ComplexF64
+_complex_float_type(::Type{Float32}) = ComplexF32
+_complex_float_type(::Type{Float64}) = ComplexF64
+_complex_float_type(::Type{Complex{Int32}}) = ComplexF32
+_complex_float_type(::Type{Complex{Int64}}) = ComplexF64
+_complex_float_type(::Type{Complex{Float32}}) = ComplexF32
+_complex_float_type(::Type{Complex{Float64}}) = ComplexF64
+_complex_float_type(T::Type{<:Complex}) = T # Allow other untracked Complex types, like ForwardDiff.Dual
 
 _convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:Int} = Int64
 _convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:Int} = Int32

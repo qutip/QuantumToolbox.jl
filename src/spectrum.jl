@@ -127,9 +127,9 @@ function _spectrum(
 )
     check_dimensions(L, A, B)
 
-    ωList = convert(Vector{_FType(L)}, ωlist) # Convert it to support GPUs and avoid type instabilities
+    ωList = convert(Vector{_float_type(L)}, ωlist) # Convert it to support GPUs and avoid type instabilities
     Length = length(ωList)
-    spec = Vector{_FType(L)}(undef, Length)
+    spec = Vector{_float_type(L)}(undef, Length)
 
     # calculate vectorized steadystate, multiply by operator B on the left (spre)
     ρss = mat2vec(steadystate(L))
@@ -137,7 +137,7 @@ function _spectrum(
 
     # multiply by operator A on the left (spre) and then perform trace operation
     D = prod(L.dimensions)
-    _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(_CType(L), D)) # same as vec(system_identity_matrix)
+    _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(_complex_float_type(L), D)) # same as vec(system_identity_matrix)
     _tr_A = transpose(_tr) * spre(A).data
 
     Id = I(D^2)
@@ -169,8 +169,8 @@ function _spectrum(
     check_dimensions(L, A, B)
 
     # Define type shortcuts
-    fT = _FType(L)
-    cT = _CType(L)
+    fT = _float_type(L)
+    cT = _complex_float_type(L)
 
     # Calculate |v₁> = B|ρss>
     ρss =

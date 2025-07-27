@@ -61,14 +61,14 @@ function sesolveProblem(
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    tlist = _check_tlist(tlist, _FType(ψ0))
+    tlist = _check_tlist(tlist, _float_type(ψ0))
 
     H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
     check_dimensions(H_evo, ψ0)
 
     T = Base.promote_eltype(H_evo, ψ0)
-    ψ0 = to_dense(_CType(T), get_data(ψ0)) # Convert it to dense vector with complex element type
+    ψ0 = to_dense(_complex_float_type(T), get_data(ψ0)) # Convert it to dense vector with complex element type
     U = H_evo.data
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)

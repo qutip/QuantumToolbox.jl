@@ -245,5 +245,5 @@ _get_dims_length(::Space) = 1
 _get_dims_length(::EnrSpace{N}) where {N} = N
 
 # functions for getting Float or Complex element type
-_FType(A::AbstractQuantumObject) = _FType(eltype(A))
-_CType(A::AbstractQuantumObject) = _CType(eltype(A))
+_float_type(A::AbstractQuantumObject) = _float_type(eltype(A))
+_complex_float_type(A::AbstractQuantumObject) = _complex_float_type(eltype(A))
