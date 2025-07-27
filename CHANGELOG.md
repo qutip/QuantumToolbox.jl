@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Add `keep_runs_results` option for multi-trajectory solvers to align with `QuTiP`. ([#512])
+  - Breaking changes for multi-trajectory solutions:
+    - the original fields `expect` and `states` now store the results depend on keyword argument `keep_runs_results` (decide whether to store all trajectories results or not).
+    - remove field `average_expect`
+    - remove field `runs_expect`
+  - New statistical analysis functions:
+    - `average_states`
+    - `average_expect`
+    - `std_expect`
+
 ## [v0.33.0]
 Release date: 2025-07-22
 
@@ -267,3 +277,4 @@ Release date: 2024-11-13
 [#504]: https://github.com/qutip/QuantumToolbox.jl/issues/504
 [#506]: https://github.com/qutip/QuantumToolbox.jl/issues/506
 [#507]: https://github.com/qutip/QuantumToolbox.jl/issues/507
+[#512]: https://github.com/qutip/QuantumToolbox.jl/issues/512
