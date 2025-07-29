@@ -46,6 +46,10 @@ features:
     title: Distributed Computing
     details: Distribute the computation over multiple nodes (e.g., a cluster). Simulate hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case.
     link: /users_guide/cluster
+  - icon: <img width="64" height="64" src="https://raw.githubusercontent.com/JuliaDiff/DifferentiationInterface.jl/main/DifferentiationInterface/docs/src/assets/logo.svg" />
+    title: Differentiable Programming
+    details: Enable gradient-based optimization for quantum algorithms. Compute gradients of quantum dynamics with respect to their parameters using automatic differentiation.
+    link: /users_guide/autodiff
 ---
 ```
 
