@@ -61,6 +61,7 @@ const PAGES = [
             "Solving Problems with Time-dependent Hamiltonians" => "users_guide/time_evolution/time_dependent.md",
             "Bloch-Redfield master equation" => "users_guide/time_evolution/brmesolve.md",
         ],
+        "Automatic Differentiation" => "users_guide/autodiff.md",
         "Intensive parallelization on a Cluster" => "users_guide/cluster.md",
         "Hierarchical Equations of Motion" => "users_guide/HEOM.md",
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
