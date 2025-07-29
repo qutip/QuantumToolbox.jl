@@ -148,7 +148,7 @@ isapprox(grad_exact, grad_fd; atol = 1e-5)
 
 Reverse-mode differentiation is significantly more challenging than forward-mode when dealing ODEs, as the complexity arises from the need to propagate gradients backward through the entire time evolution of the quantum state.
 
-`QuantumToolbox.jl` leverages the advanced capabilities of [`SciMLSensitivity.jl`](https://github.com/SciML/SciMLSensitivity.jl) to handle this complexity. `SciMLSensitivity.jl` implements sophisticated methods for computing gradients of ODE solutions, such as the adjoint method, which computes gradients by solving an additional "adjoint" ODE backward in time. For more details on the adjoint method and other sensitivity analysis techniques, please refer to the [`SciMLSensitivity.jl` documentation](https://docs.sciml.ai/SciMLSensitivity/stable/).
+`QuantumToolbox.jl` leverages the advanced capabilities of [`SciMLSensitivity.jl`](https://github.com/SciML/SciMLSensitivity.jl) to handle this complexity. [`SciMLSensitivity.jl`](https://github.com/SciML/SciMLSensitivity.jl) implements sophisticated methods for computing gradients of ODE solutions, such as the adjoint method, which computes gradients by solving an additional "adjoint" ODE backward in time. For more details on the adjoint method and other sensitivity analysis techniques, please refer to the [`SciMLSensitivity.jl` documentation](https://docs.sciml.ai/SciMLSensitivity/stable/).
 
 In order to reverse-differentiate the master equation, we need to define the operators as [`QuantumObjectEvolution`](@ref) objects, which use [`SciMLOperators.jl`](https://github.com/SciML/SciMLOperators.jl) to represent parameter-dependent operators.
 
