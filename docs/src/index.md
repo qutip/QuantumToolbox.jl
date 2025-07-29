@@ -99,6 +99,11 @@ In order to get a better experience and take full advantage of `QuantumToolbox`
   - [`SlurmClusterManager.jl`](https://github.com/JuliaParallel/SlurmClusterManager.jl)
 - Plotting Libraries:
   - [`Makie.jl`](https://github.com/MakieOrg/Makie.jl)
+- Automatic Differentiation
+  - [`SciMLSensitivity.jl`](https://github.com/SciML/SciMLSensitivity.jl)
+  - [`Zygote.jl`](https://github.com/FluxML/Zygote.jl)
+  - [`Enzyme.jl`](https://github.com/EnzymeAD/Enzyme.jl)
+  - [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl)
 - Packages for other advanced usage:
   - [`StaticArrays.jl`](https://github.com/JuliaArrays/StaticArrays.jl)
   - [`SciMLOperators.jl`](https://github.com/SciML/SciMLOperators.jl)
