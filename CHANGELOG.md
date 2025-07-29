@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+## [v0.34.0]
+Release date: 2025-07-29
+
 - Improve efficiency of `bloch_redfield_tensor` by avoiding unnecessary conversions. ([#509])
 - Support `SciMLOperators v1.4+`. ([#470])
 - Fix compatibility with `Makie v0.24+`. ([#513])
@@ -202,6 +205,7 @@ Release date: 2024-11-13
 [v0.32.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.32.0
 [v0.32.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.32.1
 [v0.33.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.33.0
+[v0.34.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.34.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
