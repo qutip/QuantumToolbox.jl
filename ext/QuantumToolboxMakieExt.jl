@@ -370,16 +370,14 @@ end
 raw"""
     _setup_bloch_plot!(location) -> (fig, lscene)
 
-Initialize the figure and `3D` axis for Bloch sphere visualization.
+Initialize the Figure and LScene for Bloch sphere visualization.
 
 # Arguments
-- `location`: Figure layout position specification, or directly `Makie.LScene` for update
+- `location`: Figure layout position specification, or directly `Makie.LScene` for updating Bloch sphere.
 
 # Returns
 - `fig`: Created Makie figure
 - `lscene`: Configured LScene object
-
-Sets up the `3D` coordinate system with appropriate limits and view angles.
 """
 function _setup_bloch_plot!(location)
     fig, location = _getFigAndLocation(location)
@@ -398,7 +396,7 @@ end
 raw"""
     _setup_bloch_camara!(b::Bloch, lscene)
 
-Setup the distance and viewing angle of the camara.
+Setup the distance and view angle of the camara.
 """
 function _setup_bloch_camara!(b::Bloch, lscene)
     length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
