@@ -212,3 +212,65 @@ These properties can also be accessed via the `print` command:
 b = Bloch()
 print(b)
 ```
+
+## Animating with the Bloch sphere
+
+The [`Bloch`](@ref) structure was designed from the outset to generate animations. To animate a set of vectors or data points, the basic idea is: plot the data at time ``t_1``, save the sphere, clear the sphere, plot data at ``t_2``, and so on. The easiest way to animate data on the Bloch sphere is to use the `record` function provided by [`Makie.jl`](https://docs.makie.org/stable/). We will demonstrate this functionality with the following example: the decay of a qubit on the Bloch sphere.
+
+```@example Bloch_sphere_rendering
+# system parameters
+ω = 2π
+θ = 0.2π
+n_th = 0.5 # temperature
+γ1 = 0.5
+γ2 = 0.2
+
+# operators and the Hamiltonian
+sx = sigmax()
+sy = sigmay()
+sz = sigmaz()
+sm = sigmam()
+H = ω * (cos(θ) * sz + sin(θ) * sx)
+
+# collapse operators
+c_op_list = (
+    √(γ1 * (n_th + 1)) * sm,
+    √(γ1 * n_th) * sm',
+    √γ2 * sz
+)
+
+# solving evolution
+ψ0 = basis(2, 0)
+tlist = LinRange(0, 4, 250)
+sol = mesolve(H, ψ0, tlist, c_op_list, e_ops = (sx, sy, sz), progress_bar = Val(false))
+```
+
+To animate a set of vectors or data points, we use the `record` function provided by [`Makie.jl`](https://docs.makie.org/stable/):
+
+```@example Bloch_sphere_rendering
+# expectation values
+x = real(sol.expect[1,:])
+y = real(sol.expect[2,:])
+z = real(sol.expect[3,:])
+
+# create Bloch sphere
+b = Bloch()
+b.view = [50,30]
+fig, lscene = render(b)
+
+# save animation
+record(fig, "qubit_decay.mp4", eachindex(tlist), framerate = 20) do idx
+    clear!(b)
+    add_vectors!(b, [sin(θ), 0, cos(θ)])
+    add_points!(b, [x[1:idx], y[1:idx], z[1:idx]])
+    render(b, location = lscene)
+end
+nothing # hide
+```
+
+```@raw html
+<video autoplay loop muted playsinline controls src="./qubit_decay.mp4" />
+```
+
+!!! note
+    Here, we set the keyword argument `location = lscene` in the last `render` function to update the existing Bloch sphere without creating new `Figure` and `LScene`. This is efficient when drawing animations.

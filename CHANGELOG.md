@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Improve Bloch sphere rendering for animation. ([#520])
+
 ## [v0.34.0]
 Release date: 2025-07-29
 
@@ -292,3 +294,4 @@ Release date: 2024-11-13
 [#513]: https://github.com/qutip/QuantumToolbox.jl/issues/513
 [#515]: https://github.com/qutip/QuantumToolbox.jl/issues/515
 [#517]: https://github.com/qutip/QuantumToolbox.jl/issues/517
+[#520]: https://github.com/qutip/QuantumToolbox.jl/issues/520

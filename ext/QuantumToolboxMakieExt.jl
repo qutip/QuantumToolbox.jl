@@ -337,14 +337,24 @@ Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
-- `location::Union{GridPosition,Nothing}`: The location of the plot in the layout. If `nothing`, the plot is created in a new figure. Default is `nothing`.
+- `location::Union{GridPosition,LScene,Nothing}`: The location of the plot in the layout, or `Makie.LScene`. Default is `nothing`.
+
 
 # Returns
 
 - A tuple `(fig, lscene)` where `fig` is the figure object and `lscene` is the LScene object used for plotting. These can be further manipulated or saved by the user.
+
+# Notes
+
+The keyword argument `location` can be in the either type: 
+
+- `Nothing` (default): Create a new figure and plot the Bloch sphere.
+- `GridPosition`: Plot the Bloch sphere in the specified location of the plot in the layout.
+- `LScene`: Update the existing Bloch sphere using new data and settings in `b::Bloch` without creating new `Figure` and `LScene` (efficient for drawing animation).
 """
 function QuantumToolbox.render(b::Bloch; location = nothing)
-    fig, lscene = _setup_bloch_plot!(b, location)
+    fig, lscene = _setup_bloch_plot!(location)
+    _setup_bloch_camara!(b, lscene)
     _draw_bloch_sphere!(b, lscene)
     _add_labels!(b, lscene)
 
@@ -358,30 +368,44 @@ function QuantumToolbox.render(b::Bloch; location = nothing)
 end
 
 raw"""
-    _setup_bloch_plot!(b::Bloch, location) -> (fig, lscene)
+    _setup_bloch_plot!(location) -> (fig, lscene)
 
-Initialize the figure and `3D` axis for Bloch sphere visualization.
+Initialize the Figure and LScene for Bloch sphere visualization.
 
 # Arguments
-- `b::Bloch`: Bloch sphere object containing view parameters
-- `location`: Figure layout position specification
+- `location`: Figure layout position specification, or directly `Makie.LScene` for updating Bloch sphere.
 
 # Returns
 - `fig`: Created Makie figure
 - `lscene`: Configured LScene object
-
-Sets up the `3D` coordinate system with appropriate limits and view angles.
 """
-function _setup_bloch_plot!(b::Bloch, location)
+function _setup_bloch_plot!(location)
     fig, location = _getFigAndLocation(location)
     lscene = LScene(location, show_axis = false, scenekw = (clear = true,))
+    return fig, lscene
+end
+
+function _setup_bloch_plot!(lscene::LScene)
+    # this function only removes all existing Plots in lscene
+    # it is useful for users to just update Bloch sphere without creating new figure and lscene (efficient for drawing animation)
+    fig = lscene.parent
+    empty!(lscene.scene.plots)
+    return fig, lscene
+end
+
+raw"""
+    _setup_bloch_camara!(b::Bloch, lscene)
+
+Setup the distance and view angle of the camara.
+"""
+function _setup_bloch_camara!(b::Bloch, lscene)
     length(b.view) == 2 || throw(ArgumentError("The length of `Bloch.view` must be 2."))
     cam3d!(lscene.scene, center = false)
     cam = cameracontrols(lscene)
     cam.fov[] = 12 # Set field of view to 12 degrees
     dist = 12      # Set distance from the camera to the Bloch sphere
     update_cam!(lscene.scene, cam, deg2rad(b.view[1]), deg2rad(b.view[2]), dist)
-    return fig, lscene
+    return nothing
 end
 
 raw"""
