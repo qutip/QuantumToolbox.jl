@@ -337,7 +337,7 @@ Render the Bloch sphere visualization from the given [`Bloch`](@ref) object `b`.
 # Arguments
 
 - `b::Bloch`: The Bloch sphere object containing states, vectors, and settings to visualize.
-- `location::Union{GridPosition,LScene,Nothing}`: The location of the plot in the layout or `Makie.LScene`
+- `location::Union{GridPosition,LScene,Nothing}`: The location of the plot in the layout, or `Makie.LScene`. Default is `nothing`.
 
 
 # Returns
