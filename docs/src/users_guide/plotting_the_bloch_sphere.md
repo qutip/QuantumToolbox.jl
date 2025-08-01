@@ -243,19 +243,22 @@ c_op_list = (
 ψ0 = basis(2, 0)
 tlist = LinRange(0, 4, 250)
 sol = mesolve(H, ψ0, tlist, c_op_list, e_ops = (sx, sy, sz), progress_bar = Val(false))
-x = real(sol.expect[1,:])
-y = real(sol.expect[2,:])
-z = real(sol.expect[3,:])
 ```
 
 To animate a set of vectors or data points, we use the `record` function provided by [`Makie.jl`](https://docs.makie.org/stable/):
 
 ```@example Bloch_sphere_rendering
+# expectation values
+x = real(sol.expect[1,:])
+y = real(sol.expect[2,:])
+z = real(sol.expect[3,:])
+
+# create Bloch sphere
 b = Bloch()
 b.view = [50,30]
-
 fig, lscene = render(b)
 
+# save animation
 record(fig, "qubit_decay.mp4", eachindex(tlist), framerate = 20) do idx
     clear!(b)
     add_vectors!(b, [sin(θ), 0, cos(θ)])
