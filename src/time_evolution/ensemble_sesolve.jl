@@ -27,11 +27,29 @@ Example:
     res = sesolve(H, ψs, tlist; params = params, iterate_params = true, alg = Tsit5(), progress_bar=false);
 ```
 """
-struct EnsembleTimeEvolutionProblem{PT<:TimeEvolutionProblem,PF<:Function}
+struct EnsembleTimeEvolutionProblem{PT<:TimeEvolutionProblem,PF<:Function, X<:Vector{T} where T<:QuantumObject{Ket}, Y<:AbstractArray}
     prob::PT
     func::PF
-    full_iterator::AbstractArray 
+    states::X
+    params::Y
+    problem_dims::Tuple
     trajectories::Int
+end
+function EnsembleTimeEvolutionProblem(
+    prob::PT,
+    states::Vector{T},
+    params::AbstractArray = [NullParameters()]
+    ) where {PT<:TimeEvolutionProblem, T<:QuantumObject{Ket}}
+    
+    problem_dims = (length(states), length(params))
+
+    function ensemble_func(prob, i, repeat)
+        state_id = mod1(i, problem_dims[1])
+        param_id = div(i - 1, problem_dims[1]) + 1
+        return remake(prob, u0 = states[state_id].data, p = params[param_id])
+    end
+    trajectories = prod(problem_dims)
+    return EnsembleTimeEvolutionProblem(prob, ensemble_func, states, params, problem_dims, trajectories)
 end
 
 
@@ -39,7 +57,7 @@ function sesolve(prob::EnsembleTimeEvolutionProblem, alg::OrdinaryDiffEqAlgorith
    ensemble_prob = EnsembleProblem(prob.prob.prob, prob_func = prob.func)
    sols = solve(ensemble_prob, alg, backend, trajectories = prob.trajectories)
    
-   to_return = Array{TimeEvolutionSol}(undef, size(prob.full_iterator))
+   to_return = Array{TimeEvolutionSol}(undef, prob.problem_dims)
     for i in 1:length(sols)
         ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.prob.dimensions), sols[i].u)
         sol = TimeEvolutionSol(
@@ -83,10 +101,15 @@ function sesolve(
     
     trajectories = length(ψ0s)
 
-    function ensemble_func(prob, i, repeat)
-        return remake(prob, u0 = ψ0s[i].data)
-    end
+    # function ensemble_func(prob, i, repeat)
+    #     return remake(prob, u0 = ψ0s[i].data)
+    # end
 
-    ensemble_prob = EnsembleTimeEvolutionProblem(prob_init, ensemble_func, ψ0s, trajectories)
+    # ensemble_prob = EnsembleTimeEvolutionProblem(prob_init, ensemble_func, ψ0s, trajectories)
+    ensemble_prob = EnsembleTimeEvolutionProblem(
+        prob_init,
+        ψ0s,
+        [params]
+    )
     return sesolve(ensemble_prob, alg; backend = backend)
 end
