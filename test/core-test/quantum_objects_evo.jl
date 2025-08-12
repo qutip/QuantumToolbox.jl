@@ -70,15 +70,18 @@
     end
 
     @testset "arithmetic" begin
-        a = MatrixOperator(sprand(ComplexF64, 100, 100, 0.1))
+        m = sprand(ComplexF64, 100, 100, 0.1)
+        a = MatrixOperator(m)
         a2 = QobjEvo(a)
         a3 = QobjEvo(a, type = SuperOperator())
+        a4 = QobjEvo(Qobj(m), (p, t) -> 1)
 
         @test +a2 == a2
         @test -(-a2) == a2
         @test a2 + 2 == 2 + a2
         @test (a2 + 2).data == a2.data + 2 * I
         @test a2 * 2 == 2 * a2
+        @test 1*a*a*1 == 1*(a*a) == (a*a)*1 == 1*(a*a)*1 # to check QobjEvo multiplication with Number is correct
 
         zero_like = zero(a2)
         iden_like = one(a3)

@@ -42,11 +42,22 @@ for op in (:(+), :(-), :(*))
             return QType($(op)(A.data, B.data), A.type, A.dimensions)
         end
         Base.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dimensions)
+    end
 
-        Base.$op(n::T, A::AbstractQuantumObject) where {T<:Number} =
-            get_typename_wrapper(A)($(op)(n * I, A.data), A.type, A.dimensions)
-        Base.$op(A::AbstractQuantumObject, n::T) where {T<:Number} =
-            get_typename_wrapper(A)($(op)(A.data, n * I), A.type, A.dimensions)
+    if op == :(*)
+        @eval begin
+            Base.$op(n::T, A::AbstractQuantumObject) where {T<:Number} =
+                get_typename_wrapper(A)($(op)(n, A.data), A.type, A.dimensions)
+            Base.$op(A::AbstractQuantumObject, n::T) where {T<:Number} =
+                get_typename_wrapper(A)($(op)(A.data, n), A.type, A.dimensions)
+        end
+    else
+        @eval begin
+            Base.$op(n::T, A::AbstractQuantumObject) where {T<:Number} =
+                get_typename_wrapper(A)($(op)(n * I, A.data), A.type, A.dimensions)
+            Base.$op(A::AbstractQuantumObject, n::T) where {T<:Number} =
+                get_typename_wrapper(A)($(op)(A.data, n * I), A.type, A.dimensions)
+        end
     end
 end
 
