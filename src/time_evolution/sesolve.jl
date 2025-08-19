@@ -154,6 +154,8 @@ function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
 
     ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.dimensions), sol.u)
 
+    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
+
     return TimeEvolutionSol(
         prob.times,
         sol.t,
@@ -161,7 +163,7 @@ function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
         _get_expvals(sol, SaveFuncSESolve),
         sol.retcode,
         sol.alg,
-        sol.prob.kwargs[:abstol],
-        sol.prob.kwargs[:reltol],
+        kwargs.abstol,
+        kwargs.reltol,
     )
 end
