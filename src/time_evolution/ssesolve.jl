@@ -418,6 +418,8 @@ function ssesolve(
         _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
     m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2)
 
+    kwargs = NamedTuple(_sol_1.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
+
     return TimeEvolutionStochasticSol(
         ntraj,
         ens_prob.times,
@@ -427,7 +429,7 @@ function ssesolve(
         m_expvals, # Measurement expectation values
         sol.converged,
         _sol_1.alg,
-        _sol_1.prob.kwargs[:abstol],
-        _sol_1.prob.kwargs[:reltol],
+        kwargs.abstol,
+        kwargs.reltol,
     )
 end
