@@ -135,6 +135,12 @@ function sesolve(
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 )
+
+    # Move sensealg argument to solve for Enzyme.jl support.
+    # TODO: Remove it when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed.
+    sensealg = get(kwargs, :sensealg, nothing)
+    kwargs_filtered = isnothing(sensealg) ? kwargs : Base.structdiff((; kwargs...), (sensealg = sensealg,))
+
     prob = sesolveProblem(
         H,
         ψ0,
@@ -143,14 +149,19 @@ function sesolve(
         params = params,
         progress_bar = progress_bar,
         inplace = inplace,
-        kwargs...,
+        kwargs_filtered...,
     )
 
-    return sesolve(prob, alg)
+    # TODO: Remove it when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed.
+    if isnothing(sensealg)
+        return sesolve(prob, alg)
+    else
+        return sesolve(prob, alg; sensealg = sensealg)
+    end
 end
 
-function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
-    sol = solve(prob.prob, alg)
+function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5(); kwargs...)
+    sol = solve(prob.prob, alg; kwargs...)
 
     ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.dimensions), sol.u)
 
