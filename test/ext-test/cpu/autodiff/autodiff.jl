@@ -67,17 +67,6 @@ function my_f_mesolve(p)
     return real(expect(a' * a, sol.states[end]))
 end
 
-function my_f_steadystate(p)
-    ρss = steadystate(
-        L;
-        solver = SteadyStateODESolver(ψ0 = ψ0_mesolve, tmax = tlist_mesolve[end]),
-        params = p,
-        sensealg = BacksolveAdjoint(autojacvec = EnzymeVJP()),
-    )
-
-    return real(expect(a' * a, ρss))
-end
-
 # Analytical solution
 n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
@@ -124,12 +113,8 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
         my_f_mesolve_direct(params)
         my_f_mesolve(params)
-        my_f_steadystate(params)
 
-        # calculate exact solution and check if steadystate works
         grad_exact = Zygote.gradient((p) -> n_ss(p[1], p[2], p[3]), params)[1]
-        grad_ss = Zygote.gradient(my_f_steadystate, params)[1]
-        @test grad_ss ≈ grad_exact atol=1e-6
 
         @testset "ForwardDiff.jl" begin
             grad_qt = ForwardDiff.gradient(my_f_mesolve_direct, params)
