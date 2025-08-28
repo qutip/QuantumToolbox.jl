@@ -96,7 +96,7 @@ end
 
 @doc raw"""
     steadystate(
-        H::QuantumObject{OpType},
+        H::AbstractQuantumObject{OpType},
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         solver::SteadyStateSolver = SteadyStateDirectSolver(),
         kwargs...,
@@ -111,7 +111,7 @@ Solve the stationary state based on different solvers.
 - `kwargs`: The keyword arguments for the solver.
 """
 function steadystate(
-    H::QuantumObject{OpType},
+    H::AbstractQuantumObject{OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
@@ -199,7 +199,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirect
     return QuantumObject(ρss, Operator(), L.dimensions)
 end
 
-function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
+function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
     tmax = solver.tmax
 
     ψ0 = isnothing(solver.ψ0) ? rand_ket(L.dimensions) : solver.ψ0
@@ -223,6 +223,9 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateODESol
     ρss = sol.states[end]
     return ρss
 end
+
+_steadystate(L::QuantumObjectEvolution{SuperOperator}, solver::SteadyStateSolver; kwargs...) =
+    throw(ArgumentError("$(get_typename_wrapper(solver)) does not support QobjEvo."))
 
 struct SteadyStateODECondition{CT<:AbstractArray}
     cache::CT
