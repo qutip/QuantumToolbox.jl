@@ -69,8 +69,8 @@ end
 
 function my_f_steadystate(p)
     ρss = steadystate(
-        L,
-        SteadyStateODESolver(ψ0 = ψ0_mesolve, tmax = tlist_mesolve[end]);
+        L;
+        solver = SteadyStateODESolver(ψ0 = ψ0_mesolve, tmax = tlist_mesolve[end]),
         params = p,
         sensealg = BacksolveAdjoint(autojacvec = EnzymeVJP()),
     )
