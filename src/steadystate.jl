@@ -212,7 +212,8 @@ function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadySta
     sol = mesolve(
         L,
         ψ0,
-        [ftype(0), ftype(tmax)],
+        [ftype(0), ftype(tmax)];
+        alg = solver.alg,
         progress_bar = Val(false),
         save_everystep = false,
         saveat = ftype[],
@@ -224,7 +225,11 @@ function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadySta
     return ρss
 end
 
-_steadystate(L::QuantumObjectEvolution{SuperOperator}, solver::SteadyStateSolver; kwargs...) =
+_steadystate(
+    L::QuantumObjectEvolution{SuperOperator},
+    solver::T;
+    kwargs...,
+) where {T<:Union{SteadyStateDirectSolver,SteadyStateEigenSolver,SteadyStateLinearSolver}} =
     throw(ArgumentError("$(get_typename_wrapper(solver)) does not support QobjEvo."))
 
 struct SteadyStateODECondition{CT<:AbstractArray}
