@@ -217,6 +217,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateODESol
         save_everystep = false,
         saveat = ftype[],
         callback = cb,
+        kwargs...,
     )
 
     ρss = sol.states[end]
