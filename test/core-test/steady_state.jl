@@ -3,6 +3,7 @@
     a = destroy(N)
     a_d = a'
     H = a_d * a + 0.1 * (a + a_d)
+    Ht = QobjEvo(H, (p, t) -> 1) # for test throw
     c_ops = [sqrt(0.1) * a]
     e_ops = [a_d * a]
     psi0 = fock(N, 3)
@@ -17,18 +18,17 @@
     solver = SteadyStateDirectSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
+    @test_throws ArgumentError steadystate(Ht, c_ops, solver = solver)
 
     solver = SteadyStateLinearSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
-
-    solver = SteadyStateLinearSolver()
-    ρ_ss = steadystate(H, c_ops, solver = solver)
-    @test tracedist(rho_me, ρ_ss) < 1e-4
+    @test_throws ArgumentError steadystate(Ht, c_ops, solver = solver)
 
     solver = SteadyStateEigenSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1e-4
+    @test_throws ArgumentError steadystate(Ht, c_ops, solver = solver)
 
     @testset "Type Inference (steadystate)" begin
         L = liouvillian(H, c_ops)
