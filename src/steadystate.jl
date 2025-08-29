@@ -77,13 +77,18 @@ or
 
 For more details about the solving `alg`orithms, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/).
 """
-Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm,ST<:Union{Nothing,QuantumObject},T<:Real} <:
-                   SteadyStateSolver
+Base.@kwdef struct SteadyStateODESolver{
+    MT<:OrdinaryDiffEqAlgorithm,
+    ST<:Union{Nothing,QuantumObject},
+    T1<:Real,
+    T2<:Real,
+    T3<:Real,
+} <: SteadyStateSolver
     alg::MT = Tsit5()
     ψ0::ST = nothing
-    tmax::T = Inf
-    terminate_reltol::Real = 10 * DEFAULT_ODE_SOLVER_OPTIONS.reltol
-    terminate_abstol::Real = 10 * DEFAULT_ODE_SOLVER_OPTIONS.abstol
+    tmax::T1 = Inf
+    terminate_reltol::T2 = 10 * DEFAULT_ODE_SOLVER_OPTIONS.reltol
+    terminate_abstol::T3 = 10 * DEFAULT_ODE_SOLVER_OPTIONS.abstol
 end
 
 @doc raw"""
