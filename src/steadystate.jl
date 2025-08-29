@@ -215,7 +215,10 @@ function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadySta
     haskey(kwargs, :progress_bar) && @warn "Ignore keyword argument 'progress_bar' for SteadyStateODESolver"
     haskey(kwargs, :save_everystep) && @warn "Ignore keyword argument 'save_everystep' for SteadyStateODESolver"
     haskey(kwargs, :saveat) && @warn "Ignore keyword argument 'saveat' for SteadyStateODESolver"
-    kwargs2 = merge(kwargs, (progress_bar = Val(false), save_everystep = false, saveat = ftype[]))
+    kwargs2 = merge(
+        NamedTuple(kwargs), # we convert to NamedTuple just in case if kwargs is empty
+        (progress_bar = Val(false), save_everystep = false, saveat = ftype[]),
+    )
 
     # add terminate condition (callback)
     cb = TerminateSteadyState(
