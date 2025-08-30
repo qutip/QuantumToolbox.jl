@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Add support of `QobjEvo` for `steadystate` (ODE solver only). ([#536])
+- Changes to `SteadyStateODESolver`. ([#537])
+  - Introduce the tolerances for `steadystate` terminate condition (two new fields: `terminate_reltol = 1e-5` and `terminate_abstol = 1e-7`)
+  - Fix keyword argument handling for `SteadyStateODESolver` before passing to `mesolve`.
 
 ## [v0.34.1]
 Release date: 2025-08-23
@@ -304,3 +307,4 @@ Release date: 2024-11-13
 [#520]: https://github.com/qutip/QuantumToolbox.jl/issues/520
 [#531]: https://github.com/qutip/QuantumToolbox.jl/issues/531
 [#536]: https://github.com/qutip/QuantumToolbox.jl/issues/536
+[#537]: https://github.com/qutip/QuantumToolbox.jl/issues/537
