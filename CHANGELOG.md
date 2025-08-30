@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support of `QobjEvo` for `steadystate` (ODE solver only). ([#536])
 - Changes to `SteadyStateODESolver`. ([#537])
-  - Introduce the terminate tolerances for calculating `steadystate` (two new fields: `terminate_abstol = 1e-5` and `terminate_abstol = 1e-7`)
+  - Introduce the terminate tolerances for `steadystate` terminate condition (two new fields: `terminate_reltol = 1e-5` and `terminate_abstol = 1e-7`)
   - Fix keyword argument handling for `SteadyStateODESolver`.
 
 ## [v0.34.1]
