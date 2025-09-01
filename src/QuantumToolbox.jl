@@ -100,7 +100,7 @@ include("qobj/operators.jl")
 include("qobj/superoperators.jl")
 include("qobj/synonyms.jl")
 include("qobj/block_diagonal_form.jl")
-
+include("qobj/qeye_like.jl")
 # time evolution
 include("time_evolution/time_evolution.jl")
 include("time_evolution/callback_helpers/callback_helpers.jl")
@@ -118,6 +118,7 @@ include("time_evolution/ssesolve.jl")
 include("time_evolution/smesolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 include("time_evolution/ensemble_sesolve.jl")
+include("time_evolution/propagator.jl")
 
 # Others
 include("correlations.jl")
