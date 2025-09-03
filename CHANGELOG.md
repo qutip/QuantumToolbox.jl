@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changes to `SteadyStateODESolver`. ([#537])
   - Introduce the tolerances for `steadystate` terminate condition (two new fields: `terminate_reltol = 1e-5` and `terminate_abstol = 1e-7`)
   - Fix keyword argument handling for `SteadyStateODESolver` before passing to `mesolve`.
-- Fix incorrect `negativity` and `partial_transpose`. ([#539])
+- Fix incorrect `negativity` and `partial_transpose` for arbitrary subsystem dimension. ([#539])
 
 ## [v0.34.1]
 Release date: 2025-08-23
