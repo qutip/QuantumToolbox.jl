@@ -1,6 +1,6 @@
 @testitem "Negativity and Partial Transpose" begin
     @testset "negativity" begin
-        rho = (1 / 40) * Qobj(
+        rho1 = (1 / 40) * Qobj(
             [
                 15 1 1 15
                 1 5 -3 1
@@ -9,15 +9,26 @@
             ];
             dims = (2, 2),
         )
-        Neg = negativity(rho, 1)
-        @test Neg ≈ 0.25
-        @test negativity(rho, 2) ≈ Neg
-        @test negativity(rho, 1; logarithmic = true) ≈ log2(2 * Neg + 1)
-        @test_throws ArgumentError negativity(rho, 3)
+        Neg1 = negativity(rho1, 1)
+        @test Neg1 ≈ 0.25
+        @test negativity(rho1, 2) ≈ Neg1
+        @test negativity(rho1, 1; logarithmic = true) ≈ log2(2 * Neg1 + 1)
+        @test_throws ArgumentError negativity(rho1, 3)
+
+        # a maximally entanglment state with subsystem dimension (3, 2):
+        # (|1,0⟩ - i|2,1⟩) / √2
+        rho2 = ket2dm((tensor(basis(3, 1), basis(2, 0)) - 1im * tensor(basis(3, 2), basis(2, 1))) / √2)
+        @test negativity(rho2, 1) ≈ 0.5
+        @test negativity(rho2, 2) ≈ 0.5
+
+        # a separable state with subsystem dimension (3, 2)
+        rho3 = tensor(rand_dm(3), rand_dm(2))
+        @test abs(negativity(rho3, 1)) < 1e-10
+        @test abs(negativity(rho3, 2)) < 1e-10
 
         @testset "Type Inference (negativity)" begin
-            @inferred negativity(rho, 1)
-            @inferred negativity(rho, 1; logarithmic = true)
+            @inferred negativity(rho1, 1)
+            @inferred negativity(rho1, 1; logarithmic = true)
         end
     end
 
