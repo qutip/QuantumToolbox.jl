@@ -17,14 +17,20 @@
 
         # a maximally entanglment state with subsystem dimension (3, 2):
         # (|1,0⟩ - i|2,1⟩) / √2
-        rho2 = ket2dm((tensor(basis(3, 1), basis(2, 0)) - 1im * tensor(basis(3, 2), basis(2, 1))) / √2)
-        @test negativity(rho2, 1) ≈ 0.5
-        @test negativity(rho2, 2) ≈ 0.5
+        rho2_d = ket2dm((tensor(basis(3, 1), basis(2, 0)) - 1im * tensor(basis(3, 2), basis(2, 1))) / √2)
+        rho2_s = to_sparse(rho2_d)
+        @test negativity(rho2_d, 1) ≈ 0.5
+        @test negativity(rho2_d, 2) ≈ 0.5
+        @test negativity(rho2_s, 1) ≈ 0.5
+        @test negativity(rho2_s, 2) ≈ 0.5
 
         # a separable state with subsystem dimension (3, 2)
-        rho3 = tensor(rand_dm(3), rand_dm(2))
-        @test abs(negativity(rho3, 1)) < 1e-10
-        @test abs(negativity(rho3, 2)) < 1e-10
+        rho3_d = tensor(rand_dm(3), rand_dm(2))
+        rho3_s = to_sparse(rho3_d)
+        @test abs(negativity(rho3_d, 1)) < 1e-10
+        @test abs(negativity(rho3_d, 2)) < 1e-10
+        @test abs(negativity(rho3_s, 1)) < 1e-10
+        @test abs(negativity(rho3_s, 2)) < 1e-10
 
         @testset "Type Inference (negativity)" begin
             @inferred negativity(rho1, 1)

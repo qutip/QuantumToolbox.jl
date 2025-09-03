@@ -111,6 +111,7 @@ function _partial_transpose(
 ) where {DimsType<:AbstractDimensions}
     M, N = size(ρ)
     dims_rev = reverse(Tuple(dimensions_to_dims(get_dimensions_to(ρ))))
+    mask_rev = reverse(mask)
     colptr = ρ.data.colptr
     rowval = ρ.data.rowval
     nzval = ρ.data.nzval
@@ -130,13 +131,13 @@ function _partial_transpose(
                 I_pt[n] = i
                 J_pt[n] = j
             else
-                ket_pt = [reverse(Base._ind2sub(dims_rev, i))...]
-                bra_pt = [reverse(Base._ind2sub(dims_rev, j))...]
-                for sys in findall(m -> m, mask)
+                ket_pt = [Base._ind2sub(dims_rev, i)...]
+                bra_pt = [Base._ind2sub(dims_rev, j)...]
+                for sys in findall(m -> m, mask_rev)
                     @inbounds ket_pt[sys], bra_pt[sys] = bra_pt[sys], ket_pt[sys]
                 end
-                I_pt[n] = Base._sub2ind(dims_rev, reverse(ket_pt)...)
-                J_pt[n] = Base._sub2ind(dims_rev, reverse(bra_pt)...)
+                I_pt[n] = Base._sub2ind(dims_rev, ket_pt...)
+                J_pt[n] = Base._sub2ind(dims_rev, bra_pt...)
             end
             V_pt[n] = nzval[p]
         end
