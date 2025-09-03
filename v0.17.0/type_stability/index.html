@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>The Importance of Type-Stability · QuantumToolbox.jl</title><meta name="title" content="The Importance of Type-Stability · QuantumToolbox.jl"/><meta property="og:title" content="The Importance of Type-Stability · QuantumToolbox.jl"/><meta property="twitter:title" content="The Importance of Type-Stability · QuantumToolbox.jl"/><meta name="description" content="Documentation for QuantumToolbox.jl."/><meta property="og:description" content="Documentation for QuantumToolbox.jl."/><meta property="twitter:description" content="Documentation for QuantumToolbox.jl."/><meta property="og:url" content="https://qutip.github.io/QuantumToolbox.jl/type_stability/"/><meta property="twitter:url" content="https://qutip.github.io/QuantumToolbox.jl/type_stability/"/><link rel="canonical" href="https://qutip.github.io/QuantumToolbox.jl/type_stability/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="QuantumToolbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">QuantumToolbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Getting Started</span><ul><li><a class="tocitem" href="../">Introduction</a></li><li><a class="tocitem" href="../qutip_differences/">Key differences from QuTiP</a></li><li class="is-active"><a class="tocitem" href>The Importance of Type-Stability</a><ul class="internal"><li><a class="tocitem" href="#Basics-of-type-stability"><span>Basics of type stability</span></a></li><li><a class="tocitem" href="#Global-variables"><span>Global variables</span></a></li><li><a class="tocitem" href="#Vectors-vs-Tuples-vs-StaticArrays"><span>Vectors vs Tuples vs StaticArrays</span></a></li><li><a class="tocitem" href="#The-[QuantumObject](@ref)-internal-structure"><span>The <code>QuantumObject</code> internal structure</span></a></li><li><a class="tocitem" href="#The-use-of-Val-in-some-QuantumToolbox.jl-functions"><span>The use of <code>Val</code> in some <code>QuantumToolbox.jl</code> functions</span></a></li><li><a class="tocitem" href="#Conclusions"><span>Conclusions</span></a></li></ul></li></ul></li><li><span class="tocitem">Users Guide</span><ul><li><input class="collapse-toggle" id="menuitem-2-1" type="checkbox"/><label class="tocitem" for="menuitem-2-1"><span class="docs-label">Basic Operations on Quantum Objects</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../users_guide/QuantumObject/QuantumObject/">Quantum Objects (Qobj)</a></li><li><a class="tocitem" href="../users_guide/QuantumObject/QuantumObject_functions/">Functions operating on Qobj</a></li></ul></li><li><a class="tocitem" href="../users_guide/states_and_operators/">Manipulating States and Operators</a></li><li><a class="tocitem" href="../users_guide/tensor/">Tensor Products and Partial Traces</a></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">Time Evolution and Dynamics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../users_guide/time_evolution/intro/">Introduction</a></li><li><a class="tocitem" href="../users_guide/time_evolution/solution/">Time Evolution Solutions</a></li><li><a class="tocitem" href="../users_guide/time_evolution/sesolve/">Schrödinger Equation Solver</a></li><li><a class="tocitem" href="../users_guide/time_evolution/mesolve/">Lindblad Master Equation Solver</a></li><li><a class="tocitem" href="../users_guide/time_evolution/mcsolve/">Monte-Carlo Solver</a></li><li><a class="tocitem" href="../users_guide/time_evolution/stochastic/">Stochastic Solver</a></li><li><a class="tocitem" href="../users_guide/time_evolution/time_dependent/">Solving Problems with Time-dependent Hamiltonians</a></li></ul></li><li><a class="tocitem" href="../users_guide/steadystate/">Solving for Steady-State Solutions</a></li><li><span class="tocitem">Symmetries</span></li><li><span class="tocitem">Two-time correlation functions</span></li><li><input class="collapse-toggle" id="menuitem-2-8" type="checkbox"/><label class="tocitem" for="menuitem-2-8"><span class="docs-label">Extensions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../users_guide/extensions/cuda/">Extension for CUDA.jl</a></li></ul></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Time Evolution</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../tutorials/lowrank/">Low Rank Master Equation</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Miscellaneous Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../tutorials/logo/">Create QuantumToolbox.jl logo</a></li></ul></li></ul></li><li><a class="tocitem" href="../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Getting Started</a></li><li class="is-active"><a href>The Importance of Type-Stability</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>The Importance of Type-Stability</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/qutip/QuantumToolbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/qutip/QuantumToolbox.jl/blob/main/docs/src/type_stability.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="doc:Type-Stability"><a class="docs-heading-anchor" href="#doc:Type-Stability">The Importance of Type-Stability</a><a id="doc:Type-Stability-1"></a><a class="docs-heading-anchor-permalink" href="#doc:Type-Stability" title="Permalink"></a></h1><p>You are here because you have probably heard about the excellent performance of Julia compared to other common programming languages like Python. One of the reasons is the Just-In-Time (JIT) compiler of Julia, which is able to generate highly optimized machine code. However, the JIT compiler can only do its job if the code type can be inferred. You can also read the <a href="https://docs.julialang.org/en/v1/manual/performance-tips/">Performance Tips</a> section in Julia&#39;s documentation for more details. Here, we try to explain it briefly, with a focus on the <code>QuantumToolbox.jl</code> package.</p><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>This page is not a tutorial on <code>QuantumToolbox.jl</code>, but rather a general guide to writing Julia code for simulating quantum systems efficiently. If you don&#39;t care about the performance of your code, you can skip this page.</p></div></div><h2 id="Basics-of-type-stability"><a class="docs-heading-anchor" href="#Basics-of-type-stability">Basics of type stability</a><a id="Basics-of-type-stability-1"></a><a class="docs-heading-anchor-permalink" href="#Basics-of-type-stability" title="Permalink"></a></h2><p>Let&#39;s have a look at the following example:</p><pre><code class="language-julia hljs">function foo(x)
+    if x &gt; 0
+        return 1
+    else
+        return -1.0
+    end
+end</code></pre><p>The function <code>foo</code> apparently seems to be innocent. It takes an argument <code>x</code> and returns either <code>1</code> or <code>-1.0</code> depending on the sign of <code>x</code>. However, the return type of <code>foo</code> is not clear. If <code>x</code> is positive, the return type is <code>Int</code>, otherwise it is <code>Float64</code>. This is a problem for the JIT compiler, because it has to determine the return type of <code>foo</code> at runtime. This is called type instability (even though it is a weak form) and may lead to a significant performance penalty. To avoid this, always aim for type-stable code. This means that the return type of a function should be clear from the types of its arguments. We can check the inferred return type of <code>foo</code> using the <code>@code_warntype</code> macro:</p><pre><code class="language-julia hljs">@code_warntype foo(1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MethodInstance for Main.var&quot;Main&quot;.foo(::Int64)
+  from foo(<span class="sgr90">x</span>)<span class="sgr90"> @</span> <span class="sgr90">Main.var&quot;Main&quot;</span> <span class="sgr90"><span class="sgr4">type_stability.md:18</span></span>
+Arguments
+  #self#<span class="sgr36">::Core.Const(Main.var&quot;Main&quot;.foo)</span>
+  x<span class="sgr36">::Int64</span>
+Body<span class="sgr33"><span class="sgr1">::Union{Float64, Int64}</span></span>
+<span class="sgr90">1 ─</span> %1 = (x &gt; 0)<span class="sgr36">::Bool</span>
+<span class="sgr90">└──</span>      goto #3 if not %1
+<span class="sgr90">2 ─</span>      return 1
+<span class="sgr90">3 ─</span>      return -1.0</code></pre><p>The key point is to ensure the return type of a function is clear from the types of its arguments. There are several ways to achieve this, and the best approach depends on the specific problem. For example, one can use the same return type:</p><pre><code class="language-julia hljs">function foo(x)
+    if x &gt; 0
+        return 1.0
+    else
+        return -1.0
+    end
+end</code></pre><p>Or you can ensure the return type matches the type of the argument:</p><pre><code class="language-julia hljs">function foo(x::T) where T
+    if x &gt; 0
+        return T(1)
+    else
+        return -T(1)
+    end
+end</code></pre><p>The latter example is very important because it takes advantage of Julia&#39;s multiple dispatch, which is one of the most powerful features of the language. Depending on the type <code>T</code> of the argument <code>x</code>, the Julia compiler generates a specialized version of <code>foo</code> that is optimized for this type. If the input type is an <code>Int64</code>, the return type is <code>Int64</code>, if <code>x</code> is a <code>Float64</code>, the return type is <code>Float64</code>, and so on.</p><pre><code class="language-julia hljs">@show foo(1)
+@show foo(-4.4)
+@show foo(1//2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">foo(1) = 1
+foo(-4.4) = -1.0
+foo(1 // 2) = 1//1</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>If you didn&#39;t know how to make this function type-stable, it is probably a good idea to read the official Julia documentation, and in particular its <a href="https://docs.julialang.org/en/v1/manual/performance-tips/">Performance Tips</a> section.</p></div></div><h2 id="Global-variables"><a class="docs-heading-anchor" href="#Global-variables">Global variables</a><a id="Global-variables-1"></a><a class="docs-heading-anchor-permalink" href="#Global-variables" title="Permalink"></a></h2><p>Another source of type instability is the use of global variables. In general, it is a good idea to declare global variables as <code>const</code> to ensure their type is fixed for the entire program. For example, consider the following function that internally takes a global variable <code>y</code>:</p><pre><code class="language-julia hljs">y = 2.4
+
+function bar(x)
+    res = zero(x) # this returns the zero of the same type of x
+    for i in 1:1000
+        res += y * x
+    end
+    return res
+end</code></pre><p>The Julia compiler cannot infer the type of <code>res</code> because it depends on the type of <code>y</code>, which is a global variable that can change at any time of the program. We can check it using the <code>@code_warntype</code> macro:</p><pre><code class="language-julia hljs">@code_warntype bar(3.2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MethodInstance for Main.var&quot;Main&quot;.bar(::Float64)
+  from bar(<span class="sgr90">x</span>)<span class="sgr90"> @</span> <span class="sgr90">Main.var&quot;Main&quot;</span> <span class="sgr90"><span class="sgr4">type_stability.md:79</span></span>
+Arguments
+  #self#<span class="sgr36">::Core.Const(Main.var&quot;Main&quot;.bar)</span>
+  x<span class="sgr36">::Float64</span>
+Locals
+  @_3<span class="sgr33"><span class="sgr1">::Union{Nothing, Tuple{Int64, Int64}}</span></span>
+  res<span class="sgr91"><span class="sgr1">::Any</span></span>
+  i<span class="sgr36">::Int64</span>
+Body<span class="sgr91"><span class="sgr1">::Any</span></span>
+<span class="sgr90">1 ─</span>       (res = Main.var&quot;Main&quot;.zero(x))
+<span class="sgr90">│  </span> %2  = (1:1000)<span class="sgr36">::Core.Const(1:1000)</span>
+<span class="sgr90">│  </span>       (@_3 = Base.iterate(%2))
+<span class="sgr90">│  </span> %4  = (@_3::Core.Const((1, 1)) === nothing)<span class="sgr36">::Core.Const(false)</span>
+<span class="sgr90">│  </span> %5  = Base.not_int(%4)<span class="sgr36">::Core.Const(true)</span>
+<span class="sgr90">└──</span>       goto #4 if not %5
+<span class="sgr90">2 ┄</span> %7  = @_3<span class="sgr36">::Tuple{Int64, Int64}</span>
+<span class="sgr90">│  </span>       (i = Core.getfield(%7, 1))
+<span class="sgr90">│  </span> %9  = Core.getfield(%7, 2)<span class="sgr36">::Int64</span>
+<span class="sgr90">│  </span> %10 = res<span class="sgr91"><span class="sgr1">::Any</span></span>
+<span class="sgr90">│  </span> %11 = (Main.var&quot;Main&quot;.y * x)<span class="sgr91"><span class="sgr1">::Any</span></span>
+<span class="sgr90">│  </span>       (res = %10 + %11)
+<span class="sgr90">│  </span>       (@_3 = Base.iterate(%2, %9))
+<span class="sgr90">│  </span> %14 = (@_3 === nothing)<span class="sgr36">::Bool</span>
+<span class="sgr90">│  </span> %15 = Base.not_int(%14)<span class="sgr36">::Bool</span>
+<span class="sgr90">└──</span>       goto #4 if not %15
+<span class="sgr90">3 ─</span>       goto #2
+<span class="sgr90">4 ┄</span>       return res</code></pre><p>While in the last example of the <code>foo</code> function we got a weak form of type instability, returning a <code>Union{Int, Float64}</code>, in this case the return type of <code>bar</code> is <code>Any</code>, meaning that the compiler doesn&#39;t know anything about the return type. Thus, this function has nothing different from a dynamically typed language like Python. We can benchmark the performance of <code>bar</code> using the <a href="https://github.com/JuliaCI/BenchmarkTools.jl">BenchmarkTools.jl</a> package:</p><pre><code class="language-julia hljs">using BenchmarkTools
+
+@benchmark bar(3.2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">39.824 μs</span></span> … <span class="sgr35">318.734 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span>0.00% … 0.00%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">61.845 μs               </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span>0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">60.653 μs</span></span> ± <span class="sgr32"> 12.126 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>0.00% ± 0.00%
+
+                              ▂<span class="sgr32"> </span>█<span class="sgr34">▃</span>                              
+  ▃▂▂▂▇▇▂▂▂▂▂▃▂▂▁▁▂▂▂▂▂▂▂▂▂▂▄▃█<span class="sgr32">▆</span>█<span class="sgr34">█</span>▄▃▃▃▃▃▃▃▃▃▄▃▃▂▃▃▃▃▂▂▂▂▂▂▂▂▂▂ ▃
+  39.8 μs<span class="sgr90">         Histogram: frequency by time</span>         82.9 μs <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">46.88 KiB</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">3000</span>.</code></pre><p>Here we see a lot of memory allocations and low performances in general. To fix this, we can declare a <code>const</code> (constant) variable instead:</p><pre><code class="language-julia hljs">const z = 2.4
+
+function bar(x)
+    res = zero(x) # this returns the zero of the same type of x
+    for i in 1:1000
+        res += z * x
+    end
+    return res
+end
+
+@benchmark bar(3.2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 10000 samples with 57 evaluations.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">868.807 ns</span></span> … <span class="sgr35"> 1.178 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span>0.00% … 0.00%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">869.684 ns              </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span>0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">876.722 ns</span></span> ± <span class="sgr32">29.261 ns</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>0.00% ± 0.00%
+
+  <span class="sgr34">█</span>   <span class="sgr32"> </span> ▂                                                 ▁▁▁  ▁
+  <span class="sgr34">█</span>▄▄▃<span class="sgr32">▄</span>▄█▃▄▄▁▄▅▆▇▆▄▄▄▄▃▁▁▁▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▃▅▅▆█████ █
+  869 ns<span class="sgr90">        Histogram: <span class="sgr1">log(</span>frequency<span class="sgr1">)</span> by time</span>         1 μs <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">0 bytes</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">0</span>.</code></pre><p>And we can see that the performance has improved significantly. Hence, we highly recommend using global variables as <code>const</code>, but only when truly necessary. This choice is problem-dependent, but in the case of <code>QuantumToolbox.jl</code>, this can be applied for example in the case of defining the Hilbert space dimensions, static parameters, or the system operators.</p><p>Although it is always a good practice to avoid such kind of type instabilities, in the actual implementation of <code>QuantumToolbox.jl</code> (where we mainly deal with linear algebra operations), the compiler may perform only a few runtime dispatches, and the performance penalty may be negligible compared to the heavy linear algebra operations.</p><h2 id="Vectors-vs-Tuples-vs-StaticArrays"><a class="docs-heading-anchor" href="#Vectors-vs-Tuples-vs-StaticArrays">Vectors vs Tuples vs StaticArrays</a><a id="Vectors-vs-Tuples-vs-StaticArrays-1"></a><a class="docs-heading-anchor-permalink" href="#Vectors-vs-Tuples-vs-StaticArrays" title="Permalink"></a></h2><p>Julia has many ways to represent arrays or lists of general objects. The most common are <code>Vector</code>s and <code>Tuple</code>s. The former is a dynamic array that can change its size at runtime, while the latter is a fixed-size array that is immutable, and where the type of each element is already known at compile time. For example:</p><pre><code class="language-julia hljs">v1 = [1, 2, 3] # Vector of Int64
+v2 = [1.0 + 2.0im, 3.0 + 4.0im] # Vector of ComplexF64
+v3 = [1, &quot;ciao&quot;, 3.0] # Vector of Any
+
+t1 = (1, 2, 3) # Tuple of {Int64, Int64, Int64}
+t2 = (1.0 + 2.0im, 3.0 + 4.0im) # Tuple of {ComplexF64, ComplexF64}
+t3 = (1, &quot;ciao&quot;, 3.0) # Tuple of {Int64, String, Float64}
+
+@show typeof(v1)
+@show typeof(v2)
+@show typeof(v3)
+@show typeof(t1)
+@show typeof(t2)
+@show typeof(t3)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">typeof(v1) = Vector{Int64}
+typeof(v2) = Vector{ComplexF64}
+typeof(v3) = Vector{Any}
+typeof(t1) = Tuple{Int64, Int64, Int64}
+typeof(t2) = Tuple{ComplexF64, ComplexF64}
+typeof(t3) = Tuple{Int64, String, Float64}</code></pre><p>Thus, we highly recommend using <code>Vector</code> only when we are sure that it contains elements of the same type, and only when we don&#39;t need to know its size at compile time. On the other hand, <code>Tuple</code>s are less flexible but more efficient in terms of performance. A third option is to use the <code>SVector</code> type from the <a href="https://github.com/JuliaArrays/StaticArrays.jl">StaticArrays.jl</a> package. This is similar to <code>Vector</code>, where the elements should have the same type, but it is fixed-size and immutable. One may ask when it is necessary to know the array size at compile time. A practical example is the case of <a href="../api/#QuantumToolbox.ptrace"><code>ptrace</code></a>, where it internally reshapes the quantum state into a tensor whose dimensions depend on the number of subsystems. We will see this in more detail in the next section.</p><h2 id="The-[QuantumObject](@ref)-internal-structure"><a class="docs-heading-anchor" href="#The-[QuantumObject](@ref)-internal-structure">The <a href="../api/#QuantumToolbox.QuantumObject"><code>QuantumObject</code></a> internal structure</a><a id="The-[QuantumObject](@ref)-internal-structure-1"></a><a class="docs-heading-anchor-permalink" href="#The-[QuantumObject](@ref)-internal-structure" title="Permalink"></a></h2><p>Before making a practical example, let&#39;s see the internal structure of the <a href="../api/#QuantumToolbox.QuantumObject"><code>QuantumObject</code></a> type. As an example, we consider the case of three qubits, and we study the internal structure of the <span>$\hat{\sigma}_x^{(2)}$</span> operator:</p><pre><code class="language-julia hljs">σx_2 = tensor(qeye(2), sigmax(), qeye(2))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[2, 2, 2]   size=(8, 8)   ishermitian=true
+8×8 SparseMatrixCSC{ComplexF64, Int64} with 8 stored entries:
+     ⋅          ⋅      1.0+0.0im  …      ⋅          ⋅          ⋅    
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅    
+ 1.0+0.0im      ⋅          ⋅             ⋅          ⋅          ⋅    
+     ⋅      1.0+0.0im      ⋅             ⋅          ⋅          ⋅    
+     ⋅          ⋅          ⋅             ⋅      1.0+0.0im      ⋅    
+     ⋅          ⋅          ⋅      …      ⋅          ⋅      1.0+0.0im
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅    
+     ⋅          ⋅          ⋅         1.0+0.0im      ⋅          ⋅    </code></pre><p>and its type is</p><pre><code class="language-julia hljs">obj_type = typeof(σx_2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">QuantumObject{SparseMatrixCSC{ComplexF64, Int64}, OperatorQuantumObject, 3}</code></pre><p>This is exactly what the Julia compiler sees: it is a <a href="../api/#QuantumToolbox.QuantumObject"><code>QuantumObject</code></a>, composed by a field of type <code>SparseMatrixCSC{ComplexF64, Int64}</code> (i.e., the 8x8 matrix containing the Pauli matrix, tensored with the identity matrices of the other two qubits). Then, we can also see that it is a <a href="../api/#QuantumToolbox.OperatorQuantumObject"><code>OperatorQuantumObject</code></a>, with <code>3</code> subsystems in total. Hence, just looking at the type of the object, the compiler has all the information it needs to generate a specialized version of the functions.</p><p>Let&#39;s see more in the details all the internal fields of the <a href="../api/#QuantumToolbox.QuantumObject"><code>QuantumObject</code></a> type:</p><pre><code class="language-julia hljs">fieldnames(obj_type)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(:data, :type, :dims)</code></pre><pre><code class="language-julia hljs">σx_2.data</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">8×8 SparseMatrixCSC{ComplexF64, Int64} with 8 stored entries:
+     ⋅          ⋅      1.0+0.0im  …      ⋅          ⋅          ⋅    
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅    
+ 1.0+0.0im      ⋅          ⋅             ⋅          ⋅          ⋅    
+     ⋅      1.0+0.0im      ⋅             ⋅          ⋅          ⋅    
+     ⋅          ⋅          ⋅             ⋅      1.0+0.0im      ⋅    
+     ⋅          ⋅          ⋅      …      ⋅          ⋅      1.0+0.0im
+     ⋅          ⋅          ⋅             ⋅          ⋅          ⋅    
+     ⋅          ⋅          ⋅         1.0+0.0im      ⋅          ⋅    </code></pre><pre><code class="language-julia hljs">σx_2.type</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Operator</code></pre><p><a href="../api/#QuantumToolbox.Operator"><code>Operator</code></a> is a synonym for <a href="../api/#QuantumToolbox.OperatorQuantumObject"><code>OperatorQuantumObject</code></a>.</p><pre><code class="language-julia hljs">σx_2.dims</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element SVector{3, Int64} with indices SOneTo(3):
+ 2
+ 2
+ 2</code></pre><p>The <code>dims</code> field contains the dimensions of the subsystems (in this case, three subsystems with dimension <code>2</code> each). We can see that the type of <code>dims</code> is <code>SVector</code> instead of <code>Vector</code>. As we mentioned before, this is very useful in functions like <a href="../api/#QuantumToolbox.ptrace"><code>ptrace</code></a>. Let&#39;s do a simple example of reshaping an operator internally generated from some <code>dims</code> input:</p><pre><code class="language-julia hljs">function reshape_operator_data(dims)
+    op = Qobj(randn(prod(dims), prod(dims)), type=Operator, dims=dims)
+    op_dims = op.dims
+    op_data = op.data
+    return reshape(op_data, vcat(op_dims, op_dims)...)
+end
+
+typeof(reshape_operator_data([2, 2, 2]))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Array{Float64, 6}</code></pre><p>Which returns a tensor of size <code>2x2x2x2x2x2</code>. Let&#39;s check the <code>@code_warntype</code>:</p><pre><code class="language-julia hljs">@code_warntype reshape_operator_data([2, 2, 2])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MethodInstance for Main.var&quot;Main&quot;.reshape_operator_data(::Vector{Int64})
+  from reshape_operator_data(<span class="sgr90">dims</span>)<span class="sgr90"> @</span> <span class="sgr90">Main.var&quot;Main&quot;</span> <span class="sgr90"><span class="sgr4">type_stability.md:186</span></span>
+Arguments
+  #self#<span class="sgr36">::Core.Const(Main.var&quot;Main&quot;.reshape_operator_data)</span>
+  dims<span class="sgr36">::Vector{Int64}</span>
+Locals
+  op_data<span class="sgr36">::Matrix{Float64}</span>
+  op_dims<span class="sgr91"><span class="sgr1">::SVector{_A, Int64} where _A</span></span>
+  op<span class="sgr91"><span class="sgr1">::QuantumObject{Matrix{Float64}, OperatorQuantumObject}</span></span>
+Body<span class="sgr91"><span class="sgr1">::Any</span></span>
+<span class="sgr90">1 ─</span> %1  = Main.var&quot;Main&quot;.prod(dims)<span class="sgr36">::Int64</span>
+<span class="sgr90">│  </span> %2  = Main.var&quot;Main&quot;.prod(dims)<span class="sgr36">::Int64</span>
+<span class="sgr90">│  </span> %3  = Main.var&quot;Main&quot;.randn(%1, %2)<span class="sgr36">::Matrix{Float64}</span>
+<span class="sgr90">│  </span> %4  = (:type, :dims)<span class="sgr36">::Core.Const((:type, :dims))</span>
+<span class="sgr90">│  </span> %5  = Core.apply_type(Core.NamedTuple, %4)<span class="sgr36">::Core.Const(NamedTuple{(:type, :dims)})</span>
+<span class="sgr90">│  </span> %6  = Core.tuple(Main.var&quot;Main&quot;.Operator, dims)<span class="sgr36">::Tuple{OperatorQuantumObject, Vector{Int64}}</span>
+<span class="sgr90">│  </span> %7  = (%5)(%6)<span class="sgr36">::@NamedTuple{type::OperatorQuantumObject, dims::Vector{Int64}}</span>
+<span class="sgr90">│  </span>       (op = Core.kwcall(%7, Main.var&quot;Main&quot;.Qobj, %3))
+<span class="sgr90">│  </span>       (op_dims = Base.getproperty(op, :dims))
+<span class="sgr90">│  </span>       (op_data = Base.getproperty(op, :data))
+<span class="sgr90">│  </span> %11 = Main.var&quot;Main&quot;.reshape<span class="sgr36">::Core.Const(reshape)</span>
+<span class="sgr90">│  </span> %12 = Core.tuple(op_data)<span class="sgr36">::Tuple{Matrix{Float64}}</span>
+<span class="sgr90">│  </span> %13 = Main.var&quot;Main&quot;.vcat(op_dims, op_dims)<span class="sgr91"><span class="sgr1">::Any</span></span>
+<span class="sgr90">│  </span> %14 = Core._apply_iterate(Base.iterate, %11, %12, %13)<span class="sgr91"><span class="sgr1">::Any</span></span>
+<span class="sgr90">└──</span>       return %14</code></pre><p>We got a <code>Any</code> type, because the compiler doesn&#39;t know the size of the <code>dims</code> vector. We can fix this by using a <code>Tuple</code> (or <code>SVector</code>):</p><pre><code class="language-julia hljs">typeof(reshape_operator_data((2, 2, 2)))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Array{Float64, 6}</code></pre><pre><code class="language-julia hljs">@code_warntype reshape_operator_data((2, 2, 2))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MethodInstance for Main.var&quot;Main&quot;.reshape_operator_data(::Tuple{Int64, Int64, Int64})
+  from reshape_operator_data(<span class="sgr90">dims</span>)<span class="sgr90"> @</span> <span class="sgr90">Main.var&quot;Main&quot;</span> <span class="sgr90"><span class="sgr4">type_stability.md:186</span></span>
+Arguments
+  #self#<span class="sgr36">::Core.Const(Main.var&quot;Main&quot;.reshape_operator_data)</span>
+  dims<span class="sgr36">::Tuple{Int64, Int64, Int64}</span>
+Locals
+  op_data<span class="sgr36">::Matrix{Float64}</span>
+  op_dims<span class="sgr36">::SVector{3, Int64}</span>
+  op<span class="sgr36">::QuantumObject{Matrix{Float64}, OperatorQuantumObject, 3}</span>
+Body<span class="sgr36">::Array{Float64, 6}</span>
+<span class="sgr90">1 ─</span> %1  = Main.var&quot;Main&quot;.prod(dims)<span class="sgr36">::Int64</span>
+<span class="sgr90">│  </span> %2  = Main.var&quot;Main&quot;.prod(dims)<span class="sgr36">::Int64</span>
+<span class="sgr90">│  </span> %3  = Main.var&quot;Main&quot;.randn(%1, %2)<span class="sgr36">::Matrix{Float64}</span>
+<span class="sgr90">│  </span> %4  = (:type, :dims)<span class="sgr36">::Core.Const((:type, :dims))</span>
+<span class="sgr90">│  </span> %5  = Core.apply_type(Core.NamedTuple, %4)<span class="sgr36">::Core.Const(NamedTuple{(:type, :dims)})</span>
+<span class="sgr90">│  </span> %6  = Core.tuple(Main.var&quot;Main&quot;.Operator, dims)<span class="sgr36">::Tuple{OperatorQuantumObject, Tuple{Int64, Int64, Int64}}</span>
+<span class="sgr90">│  </span> %7  = (%5)(%6)<span class="sgr36">::@NamedTuple{type::OperatorQuantumObject, dims::Tuple{Int64, Int64, Int64}}</span>
+<span class="sgr90">│  </span>       (op = Core.kwcall(%7, Main.var&quot;Main&quot;.Qobj, %3))
+<span class="sgr90">│  </span>       (op_dims = Base.getproperty(op, :dims))
+<span class="sgr90">│  </span>       (op_data = Base.getproperty(op, :data))
+<span class="sgr90">│  </span> %11 = Main.var&quot;Main&quot;.reshape<span class="sgr36">::Core.Const(reshape)</span>
+<span class="sgr90">│  </span> %12 = Core.tuple(op_data)<span class="sgr36">::Tuple{Matrix{Float64}}</span>
+<span class="sgr90">│  </span> %13 = Main.var&quot;Main&quot;.vcat(op_dims, op_dims)<span class="sgr36">::SVector{6, Int64}</span>
+<span class="sgr90">│  </span> %14 = Core._apply_iterate(Base.iterate, %11, %12, %13)<span class="sgr36">::Array{Float64, 6}</span>
+<span class="sgr90">└──</span>       return %14</code></pre><p>Finally, let&#39;s look at the benchmarks</p><pre><code class="language-julia hljs">@benchmark reshape_operator_data($[2, 2, 2])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 10000 samples with 9 evaluations.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">2.436 μs</span></span> … <span class="sgr35"> 10.321 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span>0.00% … 0.00%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">2.614 μs               </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span>0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">2.773 μs</span></span> ± <span class="sgr32">488.206 ns</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>0.00% ± 0.00%
+
+   ▇█ <span class="sgr34"> </span> ▁ <span class="sgr32"> </span>                                                    
+  ▃███<span class="sgr34">▄</span>▄█▇<span class="sgr32">▄</span>▂▃▅▄▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁ ▂
+  2.44 μs<span class="sgr90">         Histogram: frequency by time</span>        4.88 μs <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">1.69 KiB</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">30</span>.</code></pre><pre><code class="language-julia hljs">@benchmark reshape_operator_data($((2, 2, 2)))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 10000 samples with 413 evaluations.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">232.782 ns</span></span> … <span class="sgr35"> 1.116 ms</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span> 0.00% … 99.95%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">271.622 ns              </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span> 0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">518.885 ns</span></span> ± <span class="sgr32">11.181 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>28.44% ±  5.09%
+
+  ▂█▇▄▄<span class="sgr34">▄</span>▁ ▂▁                      ▅▆▄▄▅▅<span class="sgr32">▄</span>▃▄▃▂▂▂                ▂
+  █████<span class="sgr34">█</span>████▇▇▇▇▆▆▆▆▅▅▇▇▇▅▄▅▄▃▃▁▃▆██████<span class="sgr32">█</span>████████▆▆▇▇▆▅▆▄▅▅▇▇▇ █
+  233 ns<span class="sgr90">        Histogram: <span class="sgr1">log(</span>frequency<span class="sgr1">)</span> by time</span>       688 ns <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">736 bytes</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">3</span>.</code></pre><p>Which is an innocuous but huge difference in terms of performance. Hence, we highly recommend using <code>Tuple</code> or <code>SVector</code> when defining the dimensions of a user-defined <a href="../api/#QuantumToolbox.QuantumObject"><code>QuantumObject</code></a>.</p><h2 id="The-use-of-Val-in-some-QuantumToolbox.jl-functions"><a class="docs-heading-anchor" href="#The-use-of-Val-in-some-QuantumToolbox.jl-functions">The use of <code>Val</code> in some <code>QuantumToolbox.jl</code> functions</a><a id="The-use-of-Val-in-some-QuantumToolbox.jl-functions-1"></a><a class="docs-heading-anchor-permalink" href="#The-use-of-Val-in-some-QuantumToolbox.jl-functions" title="Permalink"></a></h2><p>In some functions of <code>QuantumToolbox.jl</code>, you may find the use of the <a href="https://docs.julialang.org/en/v1/base/base/#Base.Val"><code>Val</code></a> type in the arguments. This is a trick to pass a value at compile time, and it is very useful to avoid type instabilities. Let&#39;s make a very simple example, where we want to create a Fock state <span>$|j\rangle$</span> of a given dimension <code>N</code>, and we give the possibility to create it as a sparse or dense vector. At first, we can write the function without using <code>Val</code>:</p><pre><code class="language-julia hljs">function my_fock(N::Int, j::Int = 0; sparse::Bool = false)
+    if sparse
+        array = sparsevec([j + 1], [1.0 + 0im], N)
+    else
+        array = zeros(ComplexF64, N)
+        array[j+1] = 1
+    end
+    return QuantumObject(array; type = Ket)
+end
+@show my_fock(2, 1)
+@show my_fock(2, 1; sparse = true)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">my_fock(2, 1) = Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 1.0 + 0.0im
+my_fock(2, 1; sparse = true) = Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element SparseVector{ComplexF64, Int64} with 1 stored entry:
+  [2]  =  1.0+0.0im</code></pre><p>But it is immediately clear that the return type of this function is not clear, because it depends on the value of the <code>sparse</code> argument. We can check it using the <code>@code_warntype</code> macro:</p><pre><code class="language-julia hljs">@code_warntype my_fock(2, 1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MethodInstance for Main.var&quot;Main&quot;.my_fock(::Int64, ::Int64)
+  from my_fock(<span class="sgr90">N</span>::<span class="sgr1">Int64</span>, <span class="sgr90">j</span>::<span class="sgr1">Int64</span>; sparse)<span class="sgr90"> @</span> <span class="sgr90">Main.var&quot;Main&quot;</span> <span class="sgr90"><span class="sgr4">type_stability.md:229</span></span>
+Arguments
+  #self#<span class="sgr36">::Core.Const(Main.var&quot;Main&quot;.my_fock)</span>
+  N<span class="sgr36">::Int64</span>
+  j<span class="sgr36">::Int64</span>
+Body<span class="sgr33"><span class="sgr1">::Union{QuantumObject{Vector{ComplexF64}, KetQuantumObject, 1}, QuantumObject{SparseVector{ComplexF64, Int64}, KetQuantumObject, 1}}</span></span>
+<span class="sgr90">1 ─</span> %1 = Main.var&quot;Main&quot;.:(var&quot;#my_fock#1&quot;)(false, #self#, N, j)<span class="sgr33"><span class="sgr1">::Union{QuantumObject{Vector{ComplexF64}, KetQuantumObject, 1}, QuantumObject{SparseVector{ComplexF64, Int64}, KetQuantumObject, 1}}</span></span>
+<span class="sgr90">└──</span>      return %1</code></pre><pre><code class="language-julia hljs">@code_warntype my_fock(2, 1; sparse = true)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MethodInstance for Core.kwcall(::@NamedTuple{sparse::Bool}, ::typeof(Main.var&quot;Main&quot;.my_fock), ::Int64, ::Int64)
+  from kwcall(::<span class="sgr1">NamedTuple</span>, ::<span class="sgr1">typeof(Main.var&quot;Main&quot;.my_fock)</span>, <span class="sgr90">N</span>::<span class="sgr1">Int64</span>, <span class="sgr90">j</span>::<span class="sgr1">Int64</span>)<span class="sgr90"> @</span> <span class="sgr90">Main.var&quot;Main&quot;</span> <span class="sgr90"><span class="sgr4">type_stability.md:229</span></span>
+Arguments
+  #s218<span class="sgr36">::Core.Const(Core.kwcall)</span>
+  @_2<span class="sgr36">::@NamedTuple{sparse::Bool}</span>
+  @_3<span class="sgr36">::Core.Const(Main.var&quot;Main&quot;.my_fock)</span>
+  N<span class="sgr36">::Int64</span>
+  j<span class="sgr36">::Int64</span>
+Locals
+  sparse<span class="sgr36">::Union{}</span>
+  @_7<span class="sgr36">::Bool</span>
+Body<span class="sgr33"><span class="sgr1">::Union{QuantumObject{Vector{ComplexF64}, KetQuantumObject, 1}, QuantumObject{SparseVector{ComplexF64, Int64}, KetQuantumObject, 1}}</span></span>
+<span class="sgr90">1 ──</span>       Core.NewvarNode(:(sparse))
+<span class="sgr90">│   </span>       Core.NewvarNode(:(@_7))
+<span class="sgr90">│   </span> %3  = Core.isdefined(@_2, :sparse)<span class="sgr36">::Core.Const(true)</span>
+<span class="sgr90">└───</span>       goto #6 if not %3
+<span class="sgr90">2 ──</span> %5  = Core.getfield(@_2, :sparse)<span class="sgr36">::Bool</span>
+<span class="sgr90">│   </span> %6  = (%5 isa Main.var&quot;Main&quot;.Bool)<span class="sgr36">::Core.Const(true)</span>
+<span class="sgr90">└───</span>       goto #4 if not %6
+<span class="sgr90">3 ──</span>       goto #5
+<span class="sgr90">4 ──</span>       Core.Const(:(%new(Core.TypeError, Symbol(&quot;keyword argument&quot;), :sparse, Main.var&quot;Main&quot;.Bool, %5)))
+<span class="sgr90">└───</span>       Core.Const(:(Core.throw(%9)))
+<span class="sgr90">5 ┄─</span>       (@_7 = %5)
+<span class="sgr90">└───</span>       goto #7
+<span class="sgr90">6 ──</span>       Core.Const(:(@_7 = false))
+<span class="sgr90">7 ┄─</span> %14 = @_7<span class="sgr36">::Bool</span>
+<span class="sgr90">│   </span> %15 = (:sparse,)<span class="sgr36">::Core.Const((:sparse,))</span>
+<span class="sgr90">│   </span> %16 = Core.apply_type(Core.NamedTuple, %15)<span class="sgr36">::Core.Const(NamedTuple{(:sparse,)})</span>
+<span class="sgr90">│   </span> %17 = Base.structdiff(@_2, %16)<span class="sgr36">::Core.Const(NamedTuple())</span>
+<span class="sgr90">│   </span> %18 = Base.pairs(%17)<span class="sgr36">::Core.Const(Base.Pairs{Symbol, Union{}, Tuple{}, @NamedTuple{}}())</span>
+<span class="sgr90">│   </span> %19 = Base.isempty(%18)<span class="sgr36">::Core.Const(true)</span>
+<span class="sgr90">└───</span>       goto #9 if not %19
+<span class="sgr90">8 ──</span>       goto #10
+<span class="sgr90">9 ──</span>       Core.Const(:(Base.kwerr(@_2, @_3, N, j)))
+<span class="sgr90">10 ┄</span> %23 = Main.var&quot;Main&quot;.:(var&quot;#my_fock#1&quot;)(%14, @_3, N, j)<span class="sgr33"><span class="sgr1">::Union{QuantumObject{Vector{ComplexF64}, KetQuantumObject, 1}, QuantumObject{SparseVector{ComplexF64, Int64}, KetQuantumObject, 1}}</span></span>
+<span class="sgr90">└───</span>       return %23</code></pre><p>We can fix this by using the <code>Val</code> type, where we enable the multiple dispatch of the function:</p><pre><code class="language-julia hljs">getVal(::Val{N}) where N = N
+function my_fock_good(N::Int, j::Int = 0; sparse::Val = Val(false))
+    if getVal(sparse)
+        array = zeros(ComplexF64, N)
+        array[j+1] = 1
+    else
+        array = sparsevec([j + 1], [1.0 + 0im], N)
+    end
+    return QuantumObject(array; type = Ket)
+end
+@show my_fock_good(2, 1)
+@show my_fock_good(2, 1; sparse = Val(true))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">my_fock_good(2, 1) = Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element SparseVector{ComplexF64, Int64} with 1 stored entry:
+  [2]  =  1.0+0.0im
+my_fock_good(2, 1; sparse = Val(true)) = Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 1.0 + 0.0im</code></pre><p>And now the return type of the function is clear:</p><pre><code class="language-julia hljs">@code_warntype my_fock_good(2, 1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MethodInstance for Main.var&quot;Main&quot;.my_fock_good(::Int64, ::Int64)
+  from my_fock_good(<span class="sgr90">N</span>::<span class="sgr1">Int64</span>, <span class="sgr90">j</span>::<span class="sgr1">Int64</span>; sparse)<span class="sgr90"> @</span> <span class="sgr90">Main.var&quot;Main&quot;</span> <span class="sgr90"><span class="sgr4">type_stability.md:257</span></span>
+Arguments
+  #self#<span class="sgr36">::Core.Const(Main.var&quot;Main&quot;.my_fock_good)</span>
+  N<span class="sgr36">::Int64</span>
+  j<span class="sgr36">::Int64</span>
+Body<span class="sgr36">::QuantumObject{SparseVector{ComplexF64, Int64}, KetQuantumObject, 1}</span>
+<span class="sgr90">1 ─</span> %1 = Main.var&quot;Main&quot;.Val(false)<span class="sgr36">::Core.Const(Val{false}())</span>
+<span class="sgr90">│  </span> %2 = Main.var&quot;Main&quot;.:(var&quot;#my_fock_good#2&quot;)(%1, #self#, N, j)<span class="sgr36">::QuantumObject{SparseVector{ComplexF64, Int64}, KetQuantumObject, 1}</span>
+<span class="sgr90">└──</span>      return %2</code></pre><pre><code class="language-julia hljs">@code_warntype my_fock_good(2, 1; sparse = Val(true))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MethodInstance for Core.kwcall(::@NamedTuple{sparse::Val{true}}, ::typeof(Main.var&quot;Main&quot;.my_fock_good), ::Int64, ::Int64)
+  from kwcall(::<span class="sgr1">NamedTuple</span>, ::<span class="sgr1">typeof(Main.var&quot;Main&quot;.my_fock_good)</span>, <span class="sgr90">N</span>::<span class="sgr1">Int64</span>, <span class="sgr90">j</span>::<span class="sgr1">Int64</span>)<span class="sgr90"> @</span> <span class="sgr90">Main.var&quot;Main&quot;</span> <span class="sgr90"><span class="sgr4">type_stability.md:257</span></span>
+Arguments
+  #s218<span class="sgr36">::Core.Const(Core.kwcall)</span>
+  @_2<span class="sgr36">::Core.Const((sparse = Val{true}(),))</span>
+  @_3<span class="sgr36">::Core.Const(Main.var&quot;Main&quot;.my_fock_good)</span>
+  N<span class="sgr36">::Int64</span>
+  j<span class="sgr36">::Int64</span>
+Locals
+  sparse<span class="sgr36">::Union{}</span>
+  @_7<span class="sgr36">::Val{true}</span>
+Body<span class="sgr36">::QuantumObject{Vector{ComplexF64}, KetQuantumObject, 1}</span>
+<span class="sgr90">1 ──</span>       Core.NewvarNode(:(sparse))
+<span class="sgr90">│   </span>       Core.NewvarNode(:(@_7))
+<span class="sgr90">│   </span> %3  = Core.isdefined(@_2, :sparse)<span class="sgr36">::Core.Const(true)</span>
+<span class="sgr90">└───</span>       goto #6 if not %3
+<span class="sgr90">2 ──</span> %5  = Core.getfield(@_2, :sparse)<span class="sgr36">::Core.Const(Val{true}())</span>
+<span class="sgr90">│   </span> %6  = (%5 isa Main.var&quot;Main&quot;.Val)<span class="sgr36">::Core.Const(true)</span>
+<span class="sgr90">└───</span>       goto #4 if not %6
+<span class="sgr90">3 ──</span>       goto #5
+<span class="sgr90">4 ──</span>       Core.Const(:(%new(Core.TypeError, Symbol(&quot;keyword argument&quot;), :sparse, Main.var&quot;Main&quot;.Val, %5)))
+<span class="sgr90">└───</span>       Core.Const(:(Core.throw(%9)))
+<span class="sgr90">5 ┄─</span>       (@_7 = %5)
+<span class="sgr90">└───</span>       goto #7
+<span class="sgr90">6 ──</span>       Core.Const(:(@_7 = Main.var&quot;Main&quot;.Val(false)))
+<span class="sgr90">7 ┄─</span> %14 = @_7<span class="sgr36">::Core.Const(Val{true}())</span>
+<span class="sgr90">│   </span> %15 = (:sparse,)<span class="sgr36">::Core.Const((:sparse,))</span>
+<span class="sgr90">│   </span> %16 = Core.apply_type(Core.NamedTuple, %15)<span class="sgr36">::Core.Const(NamedTuple{(:sparse,)})</span>
+<span class="sgr90">│   </span> %17 = Base.structdiff(@_2, %16)<span class="sgr36">::Core.Const(NamedTuple())</span>
+<span class="sgr90">│   </span> %18 = Base.pairs(%17)<span class="sgr36">::Core.Const(Base.Pairs{Symbol, Union{}, Tuple{}, @NamedTuple{}}())</span>
+<span class="sgr90">│   </span> %19 = Base.isempty(%18)<span class="sgr36">::Core.Const(true)</span>
+<span class="sgr90">└───</span>       goto #9 if not %19
+<span class="sgr90">8 ──</span>       goto #10
+<span class="sgr90">9 ──</span>       Core.Const(:(Base.kwerr(@_2, @_3, N, j)))
+<span class="sgr90">10 ┄</span> %23 = Main.var&quot;Main&quot;.:(var&quot;#my_fock_good#2&quot;)(%14, @_3, N, j)<span class="sgr36">::QuantumObject{Vector{ComplexF64}, KetQuantumObject, 1}</span>
+<span class="sgr90">└───</span>       return %23</code></pre><p>This is exactly how the current <a href="../api/#QuantumToolbox.fock"><code>fock</code></a> function is implemented in <code>QuantumToolbox.jl</code>. There are many other functions that support this feature, and we highly recommend using it when necessary.</p><h2 id="Conclusions"><a class="docs-heading-anchor" href="#Conclusions">Conclusions</a><a id="Conclusions-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusions" title="Permalink"></a></h2><p>In this page, we have seen the importance of type stability in Julia, and how to write efficient code in the context of <code>QuantumToolbox.jl</code>. We have seen that the internal structure of the <a href="../api/#QuantumToolbox.QuantumObject"><code>QuantumObject</code></a> type is already optimized for the compiler, and we have seen some practical examples of how to write efficient code. We have seen that the use of <code>Vector</code> should be avoided when the elements don&#39;t have the same type, and that the use of <code>Tuple</code> or <code>SVector</code> is highly recommended when the size of the array is known at compile time. Finally, we have seen the use of <code>Val</code> to pass values at compile time, to avoid type instabilities in some functions. ```</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../qutip_differences/">« Key differences from QuTiP</a><a class="docs-footer-nextpage" href="../users_guide/QuantumObject/QuantumObject/">Quantum Objects (Qobj) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Friday 4 October 2024 14:38">Friday 4 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
