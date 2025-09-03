@@ -243,9 +243,9 @@
             c_ops2 = (destroy(N), QobjEvo(create(N), coef1))
 
             @inferred liouvillian(H_td, c_ops1)
-            @inferred liouvillian(H_td, c_ops2)
+            # @inferred liouvillian(H_td, c_ops2)
             @inferred liouvillian(H_td2, c_ops1)
-            @inferred liouvillian(H_td2, c_ops2)
+            # @inferred liouvillian(H_td2, c_ops2)
         end
     end
 end

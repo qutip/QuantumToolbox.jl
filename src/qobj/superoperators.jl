@@ -41,9 +41,8 @@ end
 
 ## intrinsic liouvillian 
 _liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}} =
-    -1im * (_spre(H, Id) - _spost(H, Id))
+    -1im * _spre(H, Id) + 1im * _spost(H', Id) # without extracting the prefactor -1im seems to be better for AbstractSciMLOperator
 _liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
-_liouvillian(H::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(H.λ, _liouvillian(H.L, Id))
 _liouvillian(H::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _liouvillian(op, Id), H.ops))
 
 # intrinsic lindblad_dissipator
@@ -144,7 +143,7 @@ lindblad_dissipator(O::AbstractQuantumObject{SuperOperator}, Id_cache = nothing)
 Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
 
 ```math
-\mathcal{L} [\cdot] = -i[\hat{H}, \cdot] + \sum_n \mathcal{D}(\hat{C}_n) [\cdot]
+\mathcal{L} [\cdot] = -i\left(\hat{H}[\cdot] - [\cdot]\hat{H}^\dagger\right) + \sum_n \mathcal{D}(\hat{C}_n) [\cdot]
 ```
 
 where 
