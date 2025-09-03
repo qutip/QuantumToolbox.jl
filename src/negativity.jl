@@ -85,20 +85,20 @@ end
 
 # for dense matrices
 function _partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
-    mask2 = [1 + Int(i) for i in mask]
+    nsys = length(mask)
+    mask2 = reverse([mask[s] ? 2 : 1 for s in 1:nsys])
     # mask2 has elements with values equal to 1 or 2
-    #   1 - the subsystem don't need to be transposed
-    #   2 - the subsystem need be transposed
+    #   1 - the subsystem (in reversed order) don't need to be transposed
+    #   2 - the subsystem (in reversed order) need to be transposed
 
-    nsys = length(mask2)
-    dims = dimensions_to_dims(get_dimensions_to(ρ))
+    dims_rev = reverse(dimensions_to_dims(get_dimensions_to(ρ)))
     pt_dims = reshape(Vector(1:(2*nsys)), (nsys, 2))
     pt_idx = [
         [pt_dims[n, mask2[n]] for n in 1:nsys]   # origin   value in mask2
         [pt_dims[n, 3-mask2[n]] for n in 1:nsys] # opposite value in mask2 (1 -> 2, and 2 -> 1)
     ]
     return QuantumObject(
-        reshape(permutedims(reshape(ρ.data, (dims..., dims...)), pt_idx), size(ρ)),
+        reshape(permutedims(reshape(ρ.data, (dims_rev..., dims_rev...)), pt_idx), size(ρ)),
         Operator(),
         Dimensions(ρ.dimensions.to),
     )
@@ -110,7 +110,8 @@ function _partial_transpose(
     mask::Vector{Bool},
 ) where {DimsType<:AbstractDimensions}
     M, N = size(ρ)
-    dimsTuple = Tuple(dimensions_to_dims(get_dimensions_to(ρ)))
+    dims_rev = reverse(Tuple(dimensions_to_dims(get_dimensions_to(ρ))))
+    mask_rev = reverse(mask)
     colptr = ρ.data.colptr
     rowval = ρ.data.rowval
     nzval = ρ.data.nzval
@@ -130,13 +131,13 @@ function _partial_transpose(
                 I_pt[n] = i
                 J_pt[n] = j
             else
-                ket_pt = [Base._ind2sub(dimsTuple, i)...]
-                bra_pt = [Base._ind2sub(dimsTuple, j)...]
-                for sys in findall(m -> m, mask)
+                ket_pt = [Base._ind2sub(dims_rev, i)...]
+                bra_pt = [Base._ind2sub(dims_rev, j)...]
+                for sys in findall(m -> m, mask_rev)
                     @inbounds ket_pt[sys], bra_pt[sys] = bra_pt[sys], ket_pt[sys]
                 end
-                I_pt[n] = Base._sub2ind(dimsTuple, ket_pt...)
-                J_pt[n] = Base._sub2ind(dimsTuple, bra_pt...)
+                I_pt[n] = Base._sub2ind(dims_rev, ket_pt...)
+                J_pt[n] = Base._sub2ind(dims_rev, bra_pt...)
             end
             V_pt[n] = nzval[p]
         end
