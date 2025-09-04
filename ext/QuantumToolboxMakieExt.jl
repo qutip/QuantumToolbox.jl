@@ -24,10 +24,8 @@ import Makie:
     scatter!,
     arrows3d!,
     text!,
-    Point3f,
     mesh!,
     RGBf,
-    Vec3f,
     Point3f,
     NoShading,
     cameracontrols,
@@ -660,7 +658,7 @@ function _plot_arcs!(b::Bloch, lscene)
             dot(cross(v1, vm), n) < 0 && (θ -= 2π)
         end
         t_range = range(0, θ, length = 100)
-        arc_points = [Point3f((v1 * cos(t) + cross(n, v1) * sin(t))) for t in t_range]
+        arc_points = [Point3f(v1 * cos(t) + cross(n, v1) * sin(t)) for t in t_range]
         lines!(lscene, arc_points; color = "blue", linestyle = :solid)
     end
     return nothing
@@ -685,8 +683,8 @@ function _plot_vectors!(b::Bloch, lscene)
 
         arrows3d!(
             lscene,
-            [Point3f(0, 0, 0)],
-            [v],
+            Point3f(0),
+            Point3f(v),
             color = color,
             shaftradius = b.vector_width,
             tiplength = b.vector_tiplength,
