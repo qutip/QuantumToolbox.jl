@@ -11,7 +11,7 @@ function propagatorProblem(
 )
     H_evo = QobjEvo(H)
 
-    p0 = qeye(H).data
+    p0 = one(H).data
     U = -1im*H_evo.data
 
     kwargs2 = _merge_saveat(tspan, nothing, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
@@ -30,7 +30,7 @@ function propagatorProblem(
 )
     H_evo = QobjEvo(H)
 
-    p0 = qeye(H).data
+    p0 = one(H).data
     U = H_evo.data
 
     kwargs2 = _merge_saveat(tspan, nothing, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
@@ -39,6 +39,54 @@ function propagatorProblem(
     return ODEProblem{getVal(inplace),FullSpecialize}(U, p0, tspan, params; kwargs3...)
 end
 
+@doc raw"""
+Propagator{T}
+
+Container for time-evolution propagators built from `H` (a Hamiltonian or a Louivillian superoperator).
+This immutable struct groups the generator, time list and solver settings together with any cached
+propagators so that previous results can be reused where applicable.
+
+# Parameters
+- `H::T`
+    The generator of dynamics. `T` is typically an `AbstractQuantumObject{Operator}` for closed,
+    unitary dynamics (Hamiltonian) or an `AbstractQuantumObject{SuperOperator}` for open-system
+    dynamics (Liouvillian or other superoperator).
+- `times::AbstractArray{Float64}`
+    A monotonic array of time points at which propagators are requested or saved. Values are
+    interpreted in the same time units used to build `H`.
+- `props::AbstractArray{A} where A <: AbstractQuantumObject`
+    An array holding computed propagators corresponding to `times`. Elements are quantum objects
+    (operators or superoperators) matching the expected output of propagating with `H`. Both `times` and `props` are initialized with the identity operator/superoperator at t=0.
+- `tol::Float64`
+    This is the time tolerance used to determine if a previous result should be reused. If \$t - t_{\text{cached}} < \text{tol}\$, where $t_\text{cached}\$ is the closed cached
+    time to \$t\$, then the propagator at \$t_\text{cached}\$ will be reused.
+- `solver_kwargs::Base.Pairs`
+    Additional keyword arguments forwarded to the ODE integrator (for example `abstol`, `reltol`,
+    `saveat`, or solver-specific options). Stored as a `Base.Pairs` collection for convenient
+    dispatch into solver APIs.
+- `dims::Union{AbstractArray, Tuple}`
+    Dimension metadata of `H`.
+- `solver::OrdinaryDiffEqAlgorithm`
+    The chosen ODE algorithm (a concrete algorithm type from OrdinaryDiffEq, the default is `Tsit5`) that will be used to integrate the generator to obtain
+    time-ordered evolution.
+- `type`
+    Whether the propagator is an operator or superoperator. 
+
+# Initialization
+A propagator is initialized by calling the `propagator` function.
+
+# Calling
+If `U` is a propagator object, to get the propagator between t0 and t, call `U(t, t0=t0; just_interval::Bool=false)`.
+    - t0 is optional, if left out then t0=0.0. 
+    - `just_interval` determines how the propagator from t0 to t is calculated. 
+        - if `just_interval = false`, then the propagator is calculated by getting U1(t0,0.0) and U2(t, 0.0) and setting
+        ```math
+        U = U2U1^{-1}
+        ```
+        This is useful if U1 is alread cached or one plans to reuse U1 or U2. 
+        - if `just_interval=true` then the propagator is calulated by directly integrating from t0 to t. This approach does't save 
+        anything but is useful if t-t0 >> t0 as it avoids the long integration required to get t0. 
+"""
 struct Propagator{T<:Union{AbstractQuantumObject{Operator}, AbstractQuantumObject{SuperOperator}}}
     H::T
     times::AbstractArray{Float64}
@@ -58,13 +106,54 @@ function Base.show(io::IO, p::Propagator)
     println("   Number of Saved Times: $(length(p.times))")
 end
 
+@doc raw"""
+propagator(H::Union{QobjEvo, QuantumObject}; tol=1e-6, solver=Tsit5(), kwargs...)
+
+Construct and return a Propagator object prepared for time evolution using the
+given Hamiltonian or time-dependent operator.
+
+# Arguments
+- H::Union{QobjEvo, QuantumObject}
+    The Hamiltonian or generator for the dynamics. Can be a time-independent
+    QuantumObject or a time-dependent QobjEvo describing H(t).
+- c_ops::Union{AbstractArray, Tuple} (Optional)
+    - if no c_ops are given, then this is treated as a lossless propagator and the propagator itself will be of type `AbstractQuantumObject{Operator}`. If c_ops are given, 
+    then the propagator will be of type `AbstractQuantumObject{SuperOperator}` and the save `H` will be the Louivillian.
+- tol::Real=1e-6
+    Absolute/relative tolerance used by the ODE integrator. This value is
+    forwarded to the integrator/Propagator to control numerical accuracy.
+- solver
+    The ODE solver algorithm to use (default: `Tsit5()`); any solver object
+    compatible with the underlying ODE interface is accepted.
+- kwargs...
+    Additional keyword arguments are forwarded to the Propagator constructor
+    (e.g., options for step control, callback functions, or integration
+    settings supported by the backend).
+
+# Notes
+- The function does not perform propagation itself; it only constructs and
+  configures the Propagator object which can then be used to evolve states or
+  operators.
+- For time-dependent `H` provide a `QobjEvo` with an appropriate time
+  dependence. For time-independent dynamics provide a `QuantumObject`.
+
+# Returns
+- `Propagator`
+    An initialized Propagator instance set up with
+    - initial time [0.0],
+    - initial operator equal to the identity on the Hilbert space of `H`
+      (created with `one(H)`),
+    - the requested tolerance and solver,
+    - dimensions inferred from `H`, and
+    - any extra options passed via `kwargs`.
+"""
 function propagator(
     H::Union{QobjEvo, QuantumObject};
     tol = 1e-6,
     solver = Tsit5(),
     kwargs...
     )
-    return Propagator(H, [0.0], [qeye_like(H)], tol, kwargs, H.dims, solver, Operator())
+    return Propagator(H, [0.0], [one(H)], tol, kwargs, H.dims, solver, Operator())
 end
 
 function propagator(
@@ -75,7 +164,7 @@ function propagator(
     kwargs...
     )
     L = liouvillian(H, c_ops)
-    return Propagator(L, [0.0], [L], tol, kwargs, L.dims, solver, SuperOperator())
+    return Propagator(L, [0.0], [one(L)], tol, kwargs, L.dims, solver, SuperOperator())
 end
 
 function _lookup_or_compute(p::Propagator, t::Real)
@@ -110,21 +199,7 @@ function _compute_propagator(p::Propagator,
 end
 
 
-"""
-    (p::Propagator)(t; t0=0.0, just_interval=false)
-
-Evaluate the propagator at time t.
-
-- t: target time.
-- t0: initial time. If nonzero:
-  - when just_interval == true, integrate directly on [t0, t] to obtain U(t, t0).
-  - otherwise, compute U(t) * inv(U(t0)) using cached values when available.
-- just_interval: force a fresh integration on [t0, t] instead of composing from cache. This is useful if both t0 and t are large but t-t0 is small. 
-
-Returns a QuantumObject with the same dims/type as p.H. Results are cached at requested
-times (within tolerance p.tol) to avoid recomputation.
-"""
-function (p::Propagator)(t::Real; t0 = 0.0, just_interval = false)
+function (p::Propagator)(t::Real, t0 = 0.0; just_interval = false)
     if just_interval
         return _compute_propagator(p, t; t0 = t0)
     end

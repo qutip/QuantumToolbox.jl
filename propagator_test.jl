@@ -1,3 +1,4 @@
+using Pkg
 Pkg.activate(".")
 include("src/QuantumToolbox.jl")
 using .QuantumToolbox
@@ -11,4 +12,4 @@ p_me = propagator(sigmax(), [sigmaz()])
 
 println(p_se(1.0))
 println("-------------------")
-println(p_me(2, t0 = 1))
+println(p_me(2, 0.1))
