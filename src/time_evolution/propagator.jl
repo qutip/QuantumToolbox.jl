@@ -9,10 +9,10 @@ function propagatorProblem(
     inplace::Union{Val, Bool} = Val(true),
     kwargs...
 )
-    H_evo = QobjEvo(H)
+    H_evo = _sesolve_make_U_QobjEvo(H)
+    U = H_evo.data
 
-    p0 = one(H).data
-    U = -1im*H_evo.data
+    p0 = one(H_evo(0)).data
 
     kwargs2 = _merge_saveat(tspan, nothing, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_se_me_kwargs(nothing, makeVal(progress_bar), tspan, kwargs2, SaveFuncSESolve)
@@ -28,10 +28,10 @@ function propagatorProblem(
     inplace::Union{Val, Bool} = Val(true),
     kwargs...
 )
-    H_evo = QobjEvo(H)
+    L_evo = _mesolve_make_L_QobjEvo(H, [])
+    U = L_evo.data
 
-    p0 = one(H).data
-    U = H_evo.data
+    p0 = one(L_evo(0)).data
 
     kwargs2 = _merge_saveat(tspan, nothing, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_se_me_kwargs(nothing, makeVal(progress_bar), tspan, kwargs2, SaveFuncMESolve)
@@ -153,7 +153,8 @@ function propagator(
     solver = Tsit5(),
     kwargs...
     )
-    return Propagator(H, [0.0], [one(H)], tol, kwargs, H.dims, solver, Operator())
+    H_evo = QobjEvo(H)
+    return Propagator(H, [0.0], [one(H_evo(0))], tol, kwargs, H.dims, solver, Operator())
 end
 
 function propagator(
@@ -164,7 +165,8 @@ function propagator(
     kwargs...
     )
     L = liouvillian(H, c_ops)
-    return Propagator(L, [0.0], [one(L)], tol, kwargs, L.dims, solver, SuperOperator())
+    L_evo = QobjEvo(L)
+    return Propagator(L, [0.0], [one(L_evo(0))], tol, kwargs, L.dims, solver, SuperOperator())
 end
 
 function _lookup_or_compute(p::Propagator, t::Real)
