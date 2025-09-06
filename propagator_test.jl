@@ -3,7 +3,6 @@ using LinearAlgebra
 
 using Revise
 
-
 # p_se = propagator(QobjEvo(sigmax()))
 # p_me = propagator(sigmax(), [sigmaz()])
 
@@ -16,7 +15,7 @@ sy = sigmay()
 sz = sigmaz()
 I = one(sz)
 
-H = sz + QobjEvo((0.1*sx, (p,t) -> sin(2*t)))
+H = sz + QobjEvo((0.1*sx, (p, t) -> sin(2*t)))
 
 p_se = propagator(H, progress_bar = false)
 
@@ -33,7 +32,7 @@ for i in 0:1
     push!(sesolve_res, sesolve(H, psi, [t0, t], progress_bar = false))
 end
 
-sup_psi_base = mat2vec(fock(2,0)*fock(2,0)')
+sup_psi_base = mat2vec(fock(2, 0)*fock(2, 0)')
 for i in 1:4
     sup_psi = 0 * sup_psi_base
     sup_psi[i] = 1
@@ -42,7 +41,6 @@ end
 
 U_se = p_se(t)
 U_me = p_me(t)
-
 
 U_sesolve = QuantumObject(hcat([sesolve_res[i].states[end].data for i in 1:2]...))
 U_mesolve = QuantumObject(hcat([mat2vec(mesolve_res[i].states[end]).data for i in 1:4]...), type = SuperOperator())

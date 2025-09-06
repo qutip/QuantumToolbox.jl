@@ -5,9 +5,9 @@ function propagatorProblem(
     H::AbstractQuantumObject{Operator},
     tspan::AbstractVector;
     params = NullParameters(),
-    progress_bar::Union{Val, Bool} = Val(true),
-    inplace::Union{Val, Bool} = Val(true),
-    kwargs...
+    progress_bar::Union{Val,Bool} = Val(true),
+    inplace::Union{Val,Bool} = Val(true),
+    kwargs...,
 )
     H_evo = _sesolve_make_U_QobjEvo(H)
     U = H_evo.data
@@ -16,7 +16,7 @@ function propagatorProblem(
 
     kwargs2 = _merge_saveat(tspan, nothing, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_se_me_kwargs(nothing, makeVal(progress_bar), tspan, kwargs2, SaveFuncSESolve)
-    
+
     return ODEProblem{getVal(inplace),FullSpecialize}(U, p0, tspan, params; kwargs3...)
 end
 
@@ -24,9 +24,9 @@ function propagatorProblem(
     H::AbstractQuantumObject{SuperOperator},
     tspan::AbstractVector;
     params = NullParameters(),
-    progress_bar::Union{Val, Bool} = Val(true),
-    inplace::Union{Val, Bool} = Val(true),
-    kwargs...
+    progress_bar::Union{Val,Bool} = Val(true),
+    inplace::Union{Val,Bool} = Val(true),
+    kwargs...,
 )
     L_evo = _mesolve_make_L_QobjEvo(H, [])
     U = L_evo.data
@@ -35,7 +35,7 @@ function propagatorProblem(
 
     kwargs2 = _merge_saveat(tspan, nothing, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _generate_se_me_kwargs(nothing, makeVal(progress_bar), tspan, kwargs2, SaveFuncMESolve)
-    
+
     return ODEProblem{getVal(inplace),FullSpecialize}(U, p0, tspan, params; kwargs3...)
 end
 
@@ -87,15 +87,15 @@ If `U` is a propagator object, to get the propagator between t0 and t, call `U(t
         - if `just_interval=true` then the propagator is calulated by directly integrating from t0 to t. This approach does't save 
         anything but is useful if t-t0 >> t0 as it avoids the long integration required to get t0. 
 """
-struct Propagator{T<:Union{AbstractQuantumObject{Operator}, AbstractQuantumObject{SuperOperator}}}
+struct Propagator{T<:Union{AbstractQuantumObject{Operator},AbstractQuantumObject{SuperOperator}}}
     H::T
     times::AbstractArray{Float64}
-    props::AbstractArray{A} where A <: AbstractQuantumObject
+    props::AbstractArray{A} where {A<:AbstractQuantumObject}
     tol::Float64
     solver_kwargs::Base.Pairs
-    dims::Union{AbstractArray, Tuple}
+    dims::Union{AbstractArray,Tuple}
     solver::OrdinaryDiffEqAlgorithm
-    type 
+    type::Any
 end
 
 function Base.show(io::IO, p::Propagator)
@@ -103,7 +103,7 @@ function Base.show(io::IO, p::Propagator)
     println("   dims: $(p.dims)")
     println("   issuper: $(issuper(p.H))")
     println("   size: $(size(p.H))")
-    println("   Number of Saved Times: $(length(p.times))")
+    return println("   Number of Saved Times: $(length(p.times))")
 end
 
 @doc raw"""
@@ -147,23 +147,18 @@ given Hamiltonian or time-dependent operator.
     - dimensions inferred from `H`, and
     - any extra options passed via `kwargs`.
 """
-function propagator(
-    H::Union{QobjEvo, QuantumObject};
-    tol = 1e-6,
-    solver = Tsit5(),
-    kwargs...
-    )
+function propagator(H::Union{QobjEvo,QuantumObject}; tol = 1e-6, solver = Tsit5(), kwargs...)
     H_evo = QobjEvo(H)
     return Propagator(H, [0.0], [one(H_evo(0))], tol, kwargs, H.dims, solver, Operator())
 end
 
 function propagator(
-    H::Union{QobjEvo, QuantumObject},
-    c_ops :: Union{AbstractArray, Tuple};
+    H::Union{QobjEvo,QuantumObject},
+    c_ops::Union{AbstractArray,Tuple};
     tol = 1e-6,
     solver = Tsit5(),
-    kwargs...
-    )
+    kwargs...,
+)
     L = liouvillian(H, c_ops)
     L_evo = QobjEvo(L)
     return Propagator(L, [0.0], [one(L_evo(0))], tol, kwargs, L.dims, solver, SuperOperator())
@@ -178,10 +173,10 @@ function _lookup_or_compute(p::Propagator, t::Real)
     # Check if we found an exact match or close enough within tolerance
     if (idx.start <= length(p.times)) && (abs(t - p.times[idx.start]) <= p.tol)
         U = p.props[idx.start]
-    elseif (idx.start > 1) && (abs(t - p.times[idx.start - 1]) <= p.tol)
-        U = p.props[idx.start - 1]
+    elseif (idx.start > 1) && (abs(t - p.times[idx.start-1]) <= p.tol)
+        U = p.props[idx.start-1]
     else
-        t0 = (idx.start > 1) ? p.times[idx.start - 1] : 0.0
+        t0 = (idx.start > 1) ? p.times[idx.start-1] : 0.0
         U = _compute_propagator(p, t)
         insert!(p.props, idx.start, U)
         insert!(p.times, idx.start, t)
@@ -190,16 +185,12 @@ function _lookup_or_compute(p::Propagator, t::Real)
     return U
 end
 
-function _compute_propagator(p::Propagator,
-    t::Real;
-    t0 = 0.0
-    )
+function _compute_propagator(p::Propagator, t::Real; t0 = 0.0)
     prob = propagatorProblem(p.H, [t0, t]; p.solver_kwargs...)
     res = solve(prob, p.solver)
     U = QuantumObject(res.u[end], dims = p.dims, type = p.type)
     return U
 end
-
 
 function (p::Propagator)(t::Real, t0 = 0.0; just_interval = false)
     if just_interval
@@ -218,7 +209,4 @@ function (p::Propagator)(t::Real, t0 = 0.0; just_interval = false)
     return U
 end
 
-function Base.size(p::Propagator)
-    return size(p.H)
-end
-
+Base.size(p::Propagator) = size(p.H)
