@@ -414,6 +414,8 @@ function mcsolve(
     col_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_times, eachindex(sol))
     col_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_which, eachindex(sol))
 
+    kwargs = NamedTuple(_sol_1.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
+
     return TimeEvolutionMCSol(
         ntraj,
         ens_prob_mc.times,
@@ -424,7 +426,7 @@ function mcsolve(
         col_which,
         sol.converged,
         _sol_1.alg,
-        _sol_1.prob.kwargs[:abstol],
-        _sol_1.prob.kwargs[:reltol],
+        kwargs.abstol,
+        kwargs.reltol,
     )
 end

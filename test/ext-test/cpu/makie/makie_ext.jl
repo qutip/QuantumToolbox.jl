@@ -220,4 +220,12 @@ end
         @test false
         @info "Render threw unexpected error" exception=e
     end
+
+    # if render location is given as lscene, should return the same Figure and LScene
+    b = Bloch()
+    fig1, lscene1 = render(b)
+    add_states!(b, ψ₁)
+    fig2, lscene2 = render(b, location = lscene1)
+    @test fig2 === fig1
+    @test lscene2 === lscene1
 end

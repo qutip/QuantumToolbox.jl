@@ -67,6 +67,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 - **Dynamical Evolution:** Advanced solvers for time evolution of quantum systems, thanks to the powerful [`DifferentialEquations.jl`](https://github.com/SciML/DifferentialEquations.jl) package.
 - **GPU Computing:** Leverage GPU resources for high-performance computing. Simulate quantum dynamics directly on the GPU with the same syntax as the CPU case.
 - **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case. See [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/cluster) for more information.
+- **Differentiable Programming:** Enable gradient-based optimization for quantum algorithms. Compute gradients of quantum dynamics with respect to their parameters using automatic differentiation. See [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/autodiff) for more information.
 - **Easy Extension:** Easily extend the package, taking advantage of the `Julia` language features, like multiple dispatch and metaprogramming.
 
 ## Installation

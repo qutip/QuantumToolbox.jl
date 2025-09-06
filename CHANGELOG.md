@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+## [v0.35.0]
+Release date: 2025-09-03
+
+- Add support of `QobjEvo` for `steadystate` (ODE solver only). ([#536])
+- Changes to `SteadyStateODESolver`. ([#537])
+  - Introduce the tolerances for `steadystate` terminate condition (two new fields: `terminate_reltol = 1e-5` and `terminate_abstol = 1e-7`)
+  - Fix keyword argument handling for `SteadyStateODESolver` before passing to `mesolve`.
+- Fix incorrect `negativity` and `partial_transpose` for arbitrary subsystem dimension. ([#539])
+
+## [v0.34.1]
+Release date: 2025-08-23
+
+- Improve Bloch sphere rendering for animation. ([#520])
+- Add support to `Enzyme.jl` for `sesolve` and `mesolve`. ([#531])
+
 ## [v0.34.0]
 Release date: 2025-07-29
 
@@ -206,6 +221,8 @@ Release date: 2024-11-13
 [v0.32.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.32.1
 [v0.33.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.33.0
 [v0.34.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.34.0
+[v0.34.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.34.1
+[v0.35.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.35.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -292,3 +309,8 @@ Release date: 2024-11-13
 [#513]: https://github.com/qutip/QuantumToolbox.jl/issues/513
 [#515]: https://github.com/qutip/QuantumToolbox.jl/issues/515
 [#517]: https://github.com/qutip/QuantumToolbox.jl/issues/517
+[#520]: https://github.com/qutip/QuantumToolbox.jl/issues/520
+[#531]: https://github.com/qutip/QuantumToolbox.jl/issues/531
+[#536]: https://github.com/qutip/QuantumToolbox.jl/issues/536
+[#537]: https://github.com/qutip/QuantumToolbox.jl/issues/537
+[#539]: https://github.com/qutip/QuantumToolbox.jl/issues/539
