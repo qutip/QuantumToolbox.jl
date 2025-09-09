@@ -41,7 +41,7 @@ end
 
 ## intrinsic liouvillian 
 _liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}} =
-    -1im * _spre(H, Id) + 1im * _spost(H', Id) # without extracting the prefactor -1im seems to be better for AbstractSciMLOperator
+    -1im * (_spre(H, Id) - _spost(H', Id))
 _liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
 _liouvillian(H::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _liouvillian(op, Id), H.ops))
 
@@ -178,19 +178,4 @@ liouvillian(H::AbstractQuantumObject{Operator}, Id_cache::Diagonal = I(prod(H.di
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal) = H
 
-function _sum_lindblad_dissipators(c_ops, Id_cache::Diagonal)
-    D = 0
-    # sum all the (time-independent) c_ops first
-    c_ops_ti = filter(op -> isa(op, QuantumObject), c_ops)
-    if !isempty(c_ops_ti)
-        D += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_ti)
-    end
-
-    # sum rest of the QobjEvo together
-    c_ops_td = filter(op -> isa(op, QuantumObjectEvolution), c_ops)
-    if !isempty(c_ops_td)
-        D += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_td)
-    end
-
-    return D
-end
+_sum_lindblad_dissipators(c_ops, Id_cache::Diagonal) = sum(op -> lindblad_dissipator(op, Id_cache), c_ops)
