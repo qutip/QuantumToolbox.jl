@@ -178,4 +178,4 @@ liouvillian(H::AbstractQuantumObject{Operator}, Id_cache::Diagonal = I(prod(H.di
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal) = H
 
-_sum_lindblad_dissipators(c_ops, Id_cache::Diagonal) = sum(op -> lindblad_dissipator(op, Id_cache), c_ops)
+_sum_lindblad_dissipators(c_ops, Id_cache::Diagonal) = sum(op -> lindblad_dissipator(op, Id_cache), c_ops; init = 0)
