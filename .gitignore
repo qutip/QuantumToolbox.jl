@@ -12,3 +12,6 @@ benchmarks/benchmarks_output.json
 .ipynb_checkpoints
 *.ipynb
 .devcontainer
+package-lock.json
+package.json
+/node_modules
