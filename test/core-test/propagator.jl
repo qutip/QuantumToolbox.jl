@@ -36,4 +36,13 @@
 
     @test norm(U_se-U_sesolve) < 1e-8
     @test norm(U_me-U_mesolve) < 1e-8
+
+    U_se = p_se(t, 3.0)
+    U_se_JI = p_se(t, 3.0; just_interval = true)
+    U_me = p_me(t, 3.0)
+    U_me_JI = p_me(t, 3.0; just_interval = true)
+
+    @test norm(U_se-U_se_JI)<1e-6
+    @test norm(U_me-U_me_JI) < 1e-6
+
 end
