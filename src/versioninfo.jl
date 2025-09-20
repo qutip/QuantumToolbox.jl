@@ -2,7 +2,7 @@
 Command line output of information on QuantumToolbox, dependencies, and system information
 =#
 
-"""
+@doc raw"""
     QuantumToolbox.versioninfo(io::IO=stdout)
 
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.about`](@ref).
@@ -61,7 +61,7 @@ function versioninfo(io::IO = stdout)
     return nothing
 end
 
-"""
+@doc raw"""
     QuantumToolbox.about(io::IO=stdout)
 
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.versioninfo`](@ref).
@@ -98,6 +98,5 @@ function cite(io::IO = stdout)
       year = {2025}
     }
     """
-
     return println(io, citation)
 end
