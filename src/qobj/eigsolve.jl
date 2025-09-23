@@ -149,12 +149,12 @@ function _permuteschur!(
     return T, Q
 end
 
-function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals)
+function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals, by, rev)
     F = hessenberg!(Hₘ)
     copyto!(Uₘ, Hₘ)
     LAPACK.orghr!(1, m, Uₘ, F.τ)
     Tₘ, Uₘ, values = hseqr!(Hₘ, Uₘ)
-    sortperm!(sorted_vals, values, by = abs, rev = true)
+    sortperm!(sorted_vals, values, by = by, rev = rev)
     _permuteschur!(Tₘ, Uₘ, sorted_vals)
     mul!(f, Uₘᵥ, β)
 
@@ -170,6 +170,8 @@ function _eigsolve(
     m::Int = max(20, 2 * k + 1);
     tol::Real = 1e-8,
     maxiter::Int = 200,
+    by = abs2,
+    rev = true,
 ) where {T<:BlasFloat,ObjType<:Union{Nothing,Operator,SuperOperator}}
     n = size(A, 2)
     V = similar(b, n, m + 1)
@@ -209,7 +211,7 @@ function _eigsolve(
 
     M = typeof(cache0)
 
-    Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals)
+    Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals, by, rev)
 
     numops = m
     iter = 0
@@ -235,7 +237,7 @@ function _eigsolve(
 
         # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
 
-        Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals)
+        Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals, by, rev)
 
         numops += m - k - 1
         iter += 1
@@ -263,6 +265,8 @@ end
         tol::Real = 1e-8,
         maxiter::Int = 200,
         solver::Union{Nothing, SciMLLinearSolveAlgorithm} = nothing,
+        by::Function = abs2,
+        rev::Bool = true,
         kwargs...)
 
 Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi method.
@@ -276,6 +280,8 @@ Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi met
 - `tol::Real`: the tolerance for the Arnoldi method. Default is `1e-8`.
 - `maxiter::Int`: the maximum number of iterations for the Arnoldi method. Default is `200`.
 - `solver::Union{Nothing, SciMLLinearSolveAlgorithm}`: the linear solver algorithm. Default is `nothing`.
+- `by::Function`: the function to sort eigenvalues. Default is `abs2`.
+- `rev::Bool`: whether to sort in descending order. Default is `true`.
 - `kwargs`: Additional keyword arguments passed to the solver.
 
 # Notes
@@ -293,6 +299,8 @@ function eigsolve(
     tol::Real = 1e-8,
     maxiter::Int = 200,
     solver::Union{Nothing,SciMLLinearSolveAlgorithm} = nothing,
+    by::Function = abs2,
+    rev::Bool = true,
     kwargs...,
 )
     return eigsolve(
@@ -306,6 +314,8 @@ function eigsolve(
         tol = tol,
         maxiter = maxiter,
         solver = solver,
+        by = by,
+        rev = rev,
         kwargs...,
     )
 end
@@ -321,6 +331,8 @@ function eigsolve(
     tol::Real = 1e-8,
     maxiter::Int = 200,
     solver::Union{Nothing,SciMLLinearSolveAlgorithm} = nothing,
+    by::Function = abs2,
+    rev::Bool = true,
     kwargs...,
 )
     T = eltype(A)
@@ -328,7 +340,7 @@ function eigsolve(
     v0 === nothing && (v0 = normalize!(rand(T, size(A, 1))))
 
     if sigma === nothing
-        res = _eigsolve(A, v0, type, dimensions, eigvals, krylovdim, tol = tol, maxiter = maxiter)
+        res = _eigsolve(A, v0, type, dimensions, eigvals, krylovdim, tol = tol, maxiter = maxiter, by = by, rev = rev)
         vals = res.values
     else
         Aₛ = A - sigma * I
@@ -346,7 +358,7 @@ function eigsolve(
 
         Amap = EigsolveInverseMap(T, size(A), linsolve)
 
-        res = _eigsolve(Amap, v0, type, dimensions, eigvals, krylovdim, tol = tol, maxiter = maxiter)
+        res = _eigsolve(Amap, v0, type, dimensions, eigvals, krylovdim, tol = tol, maxiter = maxiter, by = by, rev = rev)
         vals = @. (1 + sigma * res.values) / res.values
     end
 
@@ -368,6 +380,8 @@ end
         krylovdim::Int = min(10, size(H, 1)),
         maxiter::Int = 200,
         eigstol::Real = 1e-6,
+        by::Function = abs2,
+        rev::Bool = true,
         kwargs...,
     )
 
@@ -384,6 +398,8 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - `krylovdim`: The dimension of the Krylov subspace.
 - `maxiter`: The maximum number of iterations for the eigsolver.
 - `eigstol`: The tolerance for the eigsolver.
+- `by::Function`: the function to sort eigenvalues. Default is `abs2`.
+- `rev::Bool`: whether to sort in descending order. Default is `true`.
 - `kwargs`: Additional keyword arguments passed to the differential equation solver.
 
 # Notes
@@ -407,6 +423,8 @@ function eigsolve_al(
     krylovdim::Int = min(10, size(H, 1)),
     maxiter::Int = 200,
     eigstol::Real = 1e-6,
+    by::Function = abs2,
+    rev::Bool = true,
     kwargs...,
 ) where {HOpType<:Union{Operator,SuperOperator}}
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
@@ -423,7 +441,7 @@ function eigsolve_al(
     Lmap = ArnoldiLindbladIntegratorMap(eltype(H), size(L_evo), integrator)
 
     res =
-        _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo.dimensions, eigvals, krylovdim, maxiter = maxiter, tol = eigstol)
+        _eigsolve(Lmap, mat2vec(ρ0), L_evo.type, L_evo.dimensions, eigvals, krylovdim, maxiter = maxiter, tol = eigstol, by = by, rev = rev)
 
     vals = similar(res.values)
     vecs = similar(res.vectors)
