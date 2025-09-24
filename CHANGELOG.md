@@ -21,6 +21,7 @@ Release date: 2025-08-23
 
 - Improve Bloch sphere rendering for animation. ([#520])
 - Add support to `Enzyme.jl` for `sesolve` and `mesolve`. ([#531])
+- Add `sortby` and `rev` keyword arguments to eigensolvers. ([#546])
 
 ## [v0.34.0]
 Release date: 2025-07-29
@@ -314,3 +315,4 @@ Release date: 2024-11-13
 [#536]: https://github.com/qutip/QuantumToolbox.jl/issues/536
 [#537]: https://github.com/qutip/QuantumToolbox.jl/issues/537
 [#539]: https://github.com/qutip/QuantumToolbox.jl/issues/539
+[#546]: https://github.com/qutip/QuantumToolbox.jl/issues/546
