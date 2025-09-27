@@ -349,71 +349,134 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
 # Arguments
 - `op_func_list::Tuple`: A tuple of tuples or operators.
 =#
-@generated function _QobjEvo_generate_data(op_func_list::Tuple)
-    op_func_list_types = op_func_list.parameters
-    N = length(op_func_list_types)
+# @generated function _QobjEvo_generate_data(op_func_list::Tuple)
+#     op_func_list_types = op_func_list.parameters
+#     N = length(op_func_list_types)
 
-    dims_expr = ()
-    func_methods_expr = ()
-    first_op = nothing
-    data_expr = :(0)
-    qobj_expr_const = :(0)
+#     dims_expr = ()
+#     func_methods_expr = ()
+#     first_op = nothing
+#     data_expr = :(0)
+#     qobj_expr_const = :(0)
 
-    for i in 1:N
-        op_func_type = op_func_list_types[i]
-        if op_func_type <: Tuple
-            # check the structure of the tuple
-            length(op_func_type.parameters) == 2 || throw(ArgumentError("The tuple must have two elements."))
-            op_type = op_func_type.parameters[1]
-            func_type = op_func_type.parameters[2]
-            ((isoper(op_type) || issuper(op_type)) && func_type <: Function) || throw(
-                ArgumentError(
-                    "The first element must be a Operator or SuperOperator, and the second element must be a function.",
-                ),
-            )
+#     for i in 1:N
+#         op_func_type = op_func_list_types[i]
+#         if op_func_type <: Tuple
+#             # check the structure of the tuple
+#             length(op_func_type.parameters) == 2 || throw(ArgumentError("The tuple must have two elements."))
+#             op_type = op_func_type.parameters[1]
+#             func_type = op_func_type.parameters[2]
+#             ((isoper(op_type) || issuper(op_type)) && func_type <: Function) || throw(
+#                 ArgumentError(
+#                     "The first element must be a Operator or SuperOperator, and the second element must be a function.",
+#                 ),
+#             )
 
-            op = :(op_func_list[$i][1])
-            dims_expr = (dims_expr..., :($op.dimensions))
-            func_methods_expr = (func_methods_expr..., :(methods(op_func_list[$i][2], [Any, Real]).ms)) # [Any, Real] means each func must accept 2 arguments
-            if i == 1
-                first_op = :($op)
-            end
-            data_expr = :($data_expr + _make_SciMLOperator(op_func_list[$i]))
+#             op = :(op_func_list[$i][1])
+#             dims_expr = (dims_expr..., :($op.dimensions))
+#             func_methods_expr = (func_methods_expr..., :(methods(op_func_list[$i][2], [Any, Real]).ms)) # [Any, Real] means each func must accept 2 arguments
+#             if i == 1
+#                 first_op = :($op)
+#             end
+#             data_expr = :($data_expr + _make_SciMLOperator(op_func_list[$i]))
+#         else
+#             op_type = op_func_type
+#             (isoper(op_type) || issuper(op_type)) ||
+#                 throw(ArgumentError("The element must be a Operator or SuperOperator."))
+
+#             dims_expr = (dims_expr..., :(op_func_list[$i].dimensions))
+#             if i == 1
+#                 first_op = :(op_func_list[$i])
+#             end
+#             qobj_expr_const = :($qobj_expr_const + op_func_list[$i])
+#         end
+#     end
+
+#     quote
+#         # check the dims of the operators
+#         dims = tuple($(dims_expr...))
+#         allequal(dims) || throw(ArgumentError("The dimensions of the operators must be the same."))
+
+#         # check if each func accepts 2 arguments
+#         func_methods = tuple($(func_methods_expr...))
+#         for i in eachindex(func_methods)
+#             length(func_methods[i]) == 0 && throw(
+#                 ArgumentError(
+#                     "The following function must only accept two arguments: `$(nameof(op_func_list[i][2]))(p, t)` with t<:Real",
+#                 ),
+#             )
+#         end
+
+#         data_expr_const = $qobj_expr_const isa Integer ? $qobj_expr_const : _make_SciMLOperator($qobj_expr_const)
+
+#         data_expr = data_expr_const + $data_expr
+
+#         return $first_op, data_expr
+#     end
+# end
+
+Base.@constprop :aggressive function _QobjEvo_generate_data(op_func_list::Tuple)
+    first_op = _QobjEvo_get_first_op(op_func_list[1])
+
+    ops_constant = filter(op_func_list) do x
+        if x isa AbstractQuantumObject
+            x.type == first_op.type || throw(ArgumentError("The types of the operators must be the same."))
+            x.dimensions == first_op.dimensions ||
+                throw(ArgumentError("The dimensions of the operators must be the same."))
+            return true
+        elseif x isa Tuple
+            return false
         else
-            op_type = op_func_type
-            (isoper(op_type) || issuper(op_type)) ||
-                throw(ArgumentError("The element must be a Operator or SuperOperator."))
-
-            dims_expr = (dims_expr..., :(op_func_list[$i].dimensions))
-            if i == 1
-                first_op = :(op_func_list[$i])
-            end
-            qobj_expr_const = :($qobj_expr_const + op_func_list[$i])
+            throw(ArgumentError("Each element of the tuple must be either a QuantumObject or a Tuple."))
         end
     end
 
-    quote
-        # check the dims of the operators
-        dims = tuple($(dims_expr...))
-        allequal(dims) || throw(ArgumentError("The dimensions of the operators must be the same."))
-
-        # check if each func accepts 2 arguments
-        func_methods = tuple($(func_methods_expr...))
-        for i in eachindex(func_methods)
-            length(func_methods[i]) == 0 && throw(
-                ArgumentError(
-                    "The following function must only accept two arguments: `$(nameof(op_func_list[i][2]))(p, t)` with t<:Real",
-                ),
-            )
+    ops_time_dep = filter(op_func_list) do x
+        if x isa Tuple
+            _QobjEvo_check_op_func(x)
+            op = x[1]
+            _QobjEvo_check_op(op)
+            op.type == first_op.type || throw(ArgumentError("The types of the operators must be the same."))
+            op.dimensions == first_op.dimensions ||
+                throw(ArgumentError("The dimensions of the operators must be the same."))
+            return true
+        elseif x isa AbstractQuantumObject
+            return false
+        else
+            throw(ArgumentError("Each element of the tuple must be either a QuantumObject or a Tuple."))
         end
-
-        data_expr_const = $qobj_expr_const isa Integer ? $qobj_expr_const : _make_SciMLOperator($qobj_expr_const)
-
-        data_expr = data_expr_const + $data_expr
-
-        return $first_op, data_expr
     end
+
+    data = _make_SciMLOperator(sum(ops_constant; init = zero(eltype(first_op)))) + sum(_make_SciMLOperator, ops_time_dep; init = zero(eltype(first_op)))
+
+    return first_op, data
 end
+
+function _QobjEvo_check_op(op::AbstractQuantumObject)
+    (isoper(op) || issuper(op)) || throw(ArgumentError("The element must be a Operator or SuperOperator."))
+    return nothing
+end
+
+function _QobjEvo_check_op_func(op_func::Tuple)
+    length(op_func) == 2 || throw(ArgumentError("The tuple must have two elements."))
+    _QobjEvo_check_op(op_func[1])
+    (op_func[2] isa Function) || throw(ArgumentError("The second element must be a function."))
+    methods(op_func[2], (Any, Real)) |> length == 0 &&
+        throw(ArgumentError("The following function must only accept two arguments: `$(nameof(op_func[2]))(p, t)` with t<:Real"))
+    return nothing
+end
+
+_QobjEvo_get_first_op(op_func_list_1::Union{Tuple,AbstractQuantumObject}) =
+    if op_func_list_1 isa Tuple
+        _QobjEvo_check_op_func(op_func_list_1)
+        op = op_func_list_1[1]
+        _QobjEvo_check_op(op)
+        return op
+    else
+        op = op_func_list_1
+        _QobjEvo_check_op(op)
+        return op
+    end
 
 function _make_SciMLOperator(op_func::Tuple)
     T = eltype(op_func[1])
@@ -422,6 +485,7 @@ function _make_SciMLOperator(op_func::Tuple)
 end
 
 _make_SciMLOperator(op::AbstractQuantumObject) = _promote_to_scimloperator(op.data)
+_make_SciMLOperator(op::Number) = op
 
 _promote_to_scimloperator(data::AbstractMatrix) = MatrixOperator(data)
 _promote_to_scimloperator(data::AbstractSciMLOperator) = data
