@@ -1,4 +1,4 @@
-@testitem "Eigenvalues and Operators" begin
+@testitem "Eigenvalues" begin
     σx = sigmax()
     result = eigenstates(σx, sparse = false)
     λd, ψd, Td = result
@@ -33,12 +33,10 @@
 
     vals_d, vecs_d, mat_d = eigenstates(H_d)
     vals_c, vecs_c, mat_c = eigenstates(H_c)
-    vals2, vecs2, mat2 = eigenstates(H_d, sparse = true, sigma = -0.9, eigvals = 10, krylovdim = 30)
-    sort!(vals_c, by = real)
-    sort!(vals2, by = real)
+    vals2, vecs2, mat2 = eigenstates(H_d, sparse = true, sigma = -0.9, eigvals = 10, krylovdim = 30, by = real)
 
-    @test sum(real.(vals_d[1:20]) .- real.(vals_c[1:20])) / 20 < 1e-3
-    @test sum(real.(vals_d[1:10]) .- real.(vals2[1:10])) / 20 < 1e-3
+    @test real.(vals_d[1:20]) ≈ real.(vals_c[1:20])
+    @test real.(vals_d[1:10]) ≈ real.(vals2[1:10])
 
     N = 5
     a = kron(destroy(N), qeye(N))
@@ -58,16 +56,15 @@
 
     # eigen solve for general matrices
     vals, _, vecs = eigsolve(L.data, sigma = 0.01, eigvals = 10, krylovdim = 50)
-    vals2, _, vecs2 = eigenstates(L)
+    vals2, _, vecs2 = eigenstates(L; sortby = abs)
     vals3, state3, vecs3 = eigsolve_al(L, 1 \ (40 * κ), eigvals = 10, krylovdim = 50)
-    idxs = sortperm(vals2, by = abs)
-    vals2 = vals2[idxs][1:10]
-    vecs2 = vecs2[:, idxs][:, 1:10]
+    vals2 = vals2[1:10]
+    vecs2 = vecs2[:, 1:10]
 
-    @test isapprox(sum(abs2, vals), sum(abs2, vals2), atol = 1e-7)
-    @test isapprox(abs2(vals2[1]), abs2(vals3[1]), atol = 1e-7)
-    @test isapprox(vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])), vec2mat(vecs2[:, 1]), atol = 1e-7)
-    @test isapprox(vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])), vec2mat(vecs3[:, 1]), atol = 1e-5)
+    @test sum(abs2, vals) ≈ sum(abs2, vals2)
+    @test abs2(vals2[1]) ≈ abs2(vals3[1]) atol=1e-7
+    @test vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])) ≈ vec2mat(vecs2[:, 1]) atol=1e-7
+    @test vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])) ≈ vec2mat(vecs3[:, 1]) atol=1e-5
 
     # eigen solve for QuantumObject
     result = eigenstates(L, sparse = true, sigma = 0.01, eigvals = 10, krylovdim = 50)
@@ -78,19 +75,18 @@
     @test resstring ==
           "EigsolveResult:   type=$(SuperOperator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
-    vals2, vecs2 = eigenstates(L, sparse = false)
-    idxs = sortperm(vals2, by = abs)
-    vals2 = vals2[idxs][1:10]
-    vecs2 = vecs2[idxs][1:10]
+    vals2, vecs2 = eigenstates(L, sortby = abs)
+    vals2 = vals2[1:10]
+    vecs2 = vecs2[1:10]
 
     @test result.type isa SuperOperator
     @test result.dims == L.dims
     @test all([v.type isa OperatorKet for v in vecs])
     @test typeof(result.vectors) <: AbstractMatrix
-    @test isapprox(sum(abs2, vals), sum(abs2, vals2), atol = 1e-7)
-    @test isapprox(abs2(vals2[1]), abs2(vals3[1]), atol = 1e-7)
-    @test isapprox(vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])), vec2mat(vecs2[1]).data, atol = 1e-7)
-    @test isapprox(vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])), vec2mat(state3[1]).data, atol = 1e-5)
+    @test sum(abs2, vals) ≈ sum(abs2, vals2)
+    @test abs2(vals2[1]) ≈ abs2(vals3[1]) atol=1e-7
+    @test vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])) ≈ vec2mat(vecs2[1]).data
+    @test vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])) ≈ vec2mat(state3[1]).data atol=1e-5
 
     @testset "Type Inference (eigen)" begin
         N = 5
