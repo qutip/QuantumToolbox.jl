@@ -447,7 +447,11 @@ Base.@constprop :aggressive function _QobjEvo_generate_data(op_func_list::Tuple)
         end
     end
 
-    data = _make_SciMLOperator(sum(ops_constant; init = zero(eltype(first_op)))) + sum(_make_SciMLOperator, ops_time_dep; init = zero(eltype(first_op)))
+    data_const = sum(_make_SciMLOperator, ops_constant; init = zero(eltype(first_op))*I)
+    data_td =
+        length(ops_time_dep) == 1 ? _make_SciMLOperator(ops_time_dep[1]) :
+        AddedOperator(map(_make_SciMLOperator, ops_time_dep))
+    data = isempty(ops_constant) ? data_td : data_const + data_td
 
     return first_op, data
 end
@@ -461,8 +465,11 @@ function _QobjEvo_check_op_func(op_func::Tuple)
     length(op_func) == 2 || throw(ArgumentError("The tuple must have two elements."))
     _QobjEvo_check_op(op_func[1])
     (op_func[2] isa Function) || throw(ArgumentError("The second element must be a function."))
-    methods(op_func[2], (Any, Real)) |> length == 0 &&
-        throw(ArgumentError("The following function must only accept two arguments: `$(nameof(op_func[2]))(p, t)` with t<:Real"))
+    methods(op_func[2], (Any, Real)) |> length == 0 && throw(
+        ArgumentError(
+            "The following function must only accept two arguments: `$(nameof(op_func[2]))(p, t)` with t<:Real",
+        ),
+    )
     return nothing
 end
 
@@ -479,13 +486,12 @@ _QobjEvo_get_first_op(op_func_list_1::Union{Tuple,AbstractQuantumObject}) =
     end
 
 function _make_SciMLOperator(op_func::Tuple)
-    T = eltype(op_func[1])
-    update_func = (a, u, p, t) -> op_func[2](p, t)
-    return ScalarOperator(zero(T), update_func) * _promote_to_scimloperator(op_func[1].data)
+    op, coef = op_func
+    T = eltype(op)
+    update_func = (a, u, p, t) -> coef(p, t)
+    return ScalarOperator(zero(T), update_func) * _promote_to_scimloperator(op.data)
 end
-
 _make_SciMLOperator(op::AbstractQuantumObject) = _promote_to_scimloperator(op.data)
-_make_SciMLOperator(op::Number) = op
 
 _promote_to_scimloperator(data::AbstractMatrix) = MatrixOperator(data)
 _promote_to_scimloperator(data::AbstractSciMLOperator) = data
