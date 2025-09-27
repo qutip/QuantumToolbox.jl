@@ -175,19 +175,18 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type = Operator(), 
 end
 
 @doc raw"""
-    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type=nothing)
-    QuantumObjectEvolution(op_func_list::Union{Tuple,AbstractQuantumObject}, α::Union{Nothing,Number}=nothing; type=nothing)
+    QobjEvo(op_func_list::Union{Tuple,AbstractQuantumObject}; type=nothing)
+    QuantumObjectEvolution(op_func_list::Union{Tuple,AbstractQuantumObject}; type=nothing)
 
 Generate [`QuantumObjectEvolution`](@ref).
 
 # Arguments
 - `op_func_list::Union{Tuple,AbstractQuantumObject}`: A tuple of tuples or operators.
-- `α::Union{Nothing,Number}=nothing`: A scalar to pre-multiply the operators.
 
 !!! warning "Beware of type-stability!"
     Please note that, unlike QuTiP, this function doesn't support `op_func_list` as `Vector` type. This is related to the type-stability issue. See the Section [The Importance of Type-Stability](@ref doc:Type-Stability) for more details.
 
-Note that if `α` is provided, all the operators in `op_func_list` will be pre-multiplied by `α`. The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`. The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators.
+The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`.
 
 !!! note
     `QobjEvo` is a synonym of `QuantumObjectEvolution`.
@@ -267,8 +266,8 @@ Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=f
 ⎣⠀⠀⠀⠀⠀⠀⠀⠀⠂⡑⎦
 ```
 """
-function QuantumObjectEvolution(op_func_list::Tuple, α::Union{Nothing,Number} = nothing; type = nothing)
-    op, data = _QobjEvo_generate_data(op_func_list, α)
+function QuantumObjectEvolution(op_func_list::Tuple; type = nothing)
+    op, data = _QobjEvo_generate_data(op_func_list)
     dims = op.dimensions
     _check_type(type)
 
@@ -284,17 +283,17 @@ function QuantumObjectEvolution(op_func_list::Tuple, α::Union{Nothing,Number} =
 end
 
 # this is a extra method if user accidentally specify `QuantumObjectEvolution( (op, func) )` or `QuantumObjectEvolution( ((op, func)) )`
-QuantumObjectEvolution(op_func::Tuple{QuantumObject,Function}, α::Union{Nothing,Number} = nothing; type = nothing) =
-    QuantumObjectEvolution((op_func,), α; type = type)
+QuantumObjectEvolution(op_func::Tuple{<:QuantumObject,<:Function}; type = nothing) =
+    QuantumObjectEvolution((op_func,); type = type)
 
 @doc raw"""
-    QuantumObjectEvolution(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type = nothing)
-    QobjEvo(op::QuantumObject, f::Function, α::Union{Nothing,Number}=nothing; type = nothing)
+    QuantumObjectEvolution(op::QuantumObject, f::Function; type = nothing)
+    QobjEvo(op::QuantumObject, f::Function; type = nothing)
 
 Generate [`QuantumObjectEvolution`](@ref).
 
 # Notes
-- The `f` parameter is used to pre-apply a function to the operators before converting them to SciML operators. The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`.
+- The `f` parameter is time-dependent coefficient that multiplies the operator. The `type` parameter is used to specify the type of the [`QuantumObject`](@ref), either `Operator` or `SuperOperator`.
 - `QobjEvo` is a synonym of `QuantumObjectEvolution`.
 
 # Examples
@@ -318,18 +317,17 @@ Quantum Object Evo.:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermit
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 """
-QuantumObjectEvolution(op::QuantumObject, f::Function, α::Union{Nothing,Number} = nothing; type = nothing) =
-    QuantumObjectEvolution(((op, f),), α; type = type)
+QuantumObjectEvolution(op::QuantumObject, f::Function; type = nothing) = QuantumObjectEvolution(((op, f),); type = type)
 
-function QuantumObjectEvolution(op::QuantumObject, α::Union{Nothing,Number} = nothing; type = nothing)
+function QuantumObjectEvolution(op::QuantumObject; type = nothing)
     _check_type(type)
     if type isa Nothing
         type = op.type
     end
-    return QuantumObjectEvolution(_make_SciMLOperator(op, α), type, op.dimensions)
+    return QuantumObjectEvolution(_make_SciMLOperator(op), type, op.dimensions)
 end
 
-function QuantumObjectEvolution(op::QuantumObjectEvolution, α::Union{Nothing,Number} = nothing; type = nothing)
+function QuantumObjectEvolution(op::QuantumObjectEvolution; type = nothing)
     _check_type(type)
     if type isa Nothing
         type = op.type
@@ -340,23 +338,18 @@ function QuantumObjectEvolution(op::QuantumObjectEvolution, α::Union{Nothing,Nu
             ),
         )
     end
-    if α isa Nothing
-        return QuantumObjectEvolution(op.data, type, op.dimensions)
-    end
-    return QuantumObjectEvolution(_promote_to_scimloperator(α, op.data), type, op.dimensions)
+    return QuantumObjectEvolution(op.data, type, op.dimensions)
 end
 
 #=
-    _QobjEvo_generate_data(op_func_list::Tuple, α; f::Function=identity)
+    _QobjEvo_generate_data(op_func_list::Tuple)
 
-Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` object. The `op_func_list` is a tuple of tuples or operators. Each element of the tuple can be a tuple with two elements (operator, function) or an operator. The function is used to generate the time-dependent coefficients for the operators. The `α` parameter is used to pre-multiply the operators by a scalar. The `f` parameter is used to pre-applying a function to the operators before converting them to SciML operators. During the parsing, the dimensions of the operators are checked to be the same, and all the constant operators are summed together.
+Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` object. The `op_func_list` is a tuple of tuples or operators. Each element of the tuple can be a tuple with two elements (operator, function) or an operator. The function is used to generate the time-dependent coefficients for the operators. During the parsing, the dimensions of the operators are checked to be the same, and all the constant operators are summed together.
 
 # Arguments
 - `op_func_list::Tuple`: A tuple of tuples or operators.
-- `α`: A scalar to pre-multiply the operators.
-- `f::Function=identity`: A function to pre-apply to the operators.
 =#
-@generated function _QobjEvo_generate_data(op_func_list::Tuple, α)
+@generated function _QobjEvo_generate_data(op_func_list::Tuple)
     op_func_list_types = op_func_list.parameters
     N = length(op_func_list_types)
 
@@ -385,7 +378,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
             if i == 1
                 first_op = :($op)
             end
-            data_expr = :($data_expr + _make_SciMLOperator(op_func_list[$i], α))
+            data_expr = :($data_expr + _make_SciMLOperator(op_func_list[$i]))
         else
             op_type = op_func_type
             (isoper(op_type) || issuper(op_type)) ||
@@ -414,7 +407,7 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
             )
         end
 
-        data_expr_const = $qobj_expr_const isa Integer ? $qobj_expr_const : _make_SciMLOperator($qobj_expr_const, α)
+        data_expr_const = $qobj_expr_const isa Integer ? $qobj_expr_const : _make_SciMLOperator($qobj_expr_const)
 
         data_expr = data_expr_const + $data_expr
 
@@ -422,32 +415,16 @@ Parse the `op_func_list` and generate the data for the `QuantumObjectEvolution` 
     end
 end
 
-function _make_SciMLOperator(op_func::Tuple, α)
+function _make_SciMLOperator(op_func::Tuple)
     T = eltype(op_func[1])
     update_func = (a, u, p, t) -> op_func[2](p, t)
-    if α isa Nothing
-        return ScalarOperator(zero(T), update_func) * _promote_to_scimloperator(op_func[1].data)
-    end
-    return ScalarOperator(zero(T), update_func) * _promote_to_scimloperator(α, op_func[1].data)
+    return ScalarOperator(zero(T), update_func) * _promote_to_scimloperator(op_func[1].data)
 end
 
-function _make_SciMLOperator(op::AbstractQuantumObject, α)
-    if α isa Nothing
-        return _promote_to_scimloperator(op.data)
-    end
-    return _promote_to_scimloperator(α, op.data)
-end
+_make_SciMLOperator(op::AbstractQuantumObject) = _promote_to_scimloperator(op.data)
 
 _promote_to_scimloperator(data::AbstractMatrix) = MatrixOperator(data)
 _promote_to_scimloperator(data::AbstractSciMLOperator) = data
-_promote_to_scimloperator(α::Number, data::AbstractMatrix) = MatrixOperator(α * data)
-# We still have to define this for AddedOperator, as it is not present in SciMLOperators.jl
-function _promote_to_scimloperator(α::Number, data::AddedOperator)
-    return AddedOperator(_promote_to_scimloperator.(α, data.ops)) # Try to propagate the rule
-end
-function _promote_to_scimloperator(α::Number, data::AbstractSciMLOperator)
-    return α * data # Going back to the generic case
-end
 
 @doc raw"""
     (A::QuantumObjectEvolution)(ψout, ψin, p, t)

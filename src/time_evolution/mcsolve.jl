@@ -31,11 +31,11 @@ function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
 end
 function _mcsolve_make_Heff_QobjEvo(H::Tuple, c_ops)
     c_ops isa Nothing && return QobjEvo(H)
-    return QobjEvo((H..., -1im * mapreduce(op -> op' * op, +, c_ops) / 2))
+    return QobjEvo((H..., -1im * sum(op -> op' * op, c_ops) / 2))
 end
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObjectEvolution, c_ops)
     c_ops isa Nothing && return H
-    return H + QobjEvo(mapreduce(op -> op' * op, +, c_ops), -1im / 2)
+    return H + QobjEvo(sum(op -> -1im * op' * op / 2, c_ops))
 end
 
 @doc raw"""
