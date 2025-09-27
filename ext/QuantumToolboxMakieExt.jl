@@ -689,7 +689,7 @@ function _plot_vectors!(b::Bloch, lscene)
             shaftradius = b.vector_width,
             tiplength = b.vector_tiplength,
             tipradius = b.vector_tipradius,
-            rasterize = 3,
+            # rasterize = 3, #TODO: maybe uncomment this after https://github.com/MakieOrg/Makie.jl/issues/5259 is fixed
         )
     end
     return nothing
