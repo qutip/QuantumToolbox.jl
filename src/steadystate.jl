@@ -47,11 +47,11 @@ end
         alg = Tsit5(),
         ψ0 = nothing,
         tmax = Inf,
-        )
+        terminate_reltol = 1e-5,
+        terminate_abstol = 1e-7
+    )
 
-An ordinary differential equation (ODE) solver for solving [`steadystate`](@ref).
-
-Solve the stationary state based on time evolution (ordinary differential equations; `OrdinaryDiffEq.jl`) with a given initial state.
+An ordinary differential equation (ODE) solver for solving [`steadystate`](@ref). It solves the stationary state based on [`mesolve`](@ref) with a termination condition.
 
 The termination condition of the stationary state ``|\rho\rangle\rangle`` is that either the following condition is `true`:
 
@@ -69,14 +69,26 @@ or
 - `alg::OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm to solve the ODE.
 - `ψ0::Union{Nothing,QuantumObject}=nothing`: The initial state of the system. If not specified, a random pure state will be generated.
 - `tmax::Real=Inf`: The final time step for the steady state problem.
+- `terminate_reltol` = The relative tolerance for stationary state terminate condition. Default to `1e-5`.
+- `terminate_abstol` = The absolute tolerance for stationary state terminate condition. Default to `1e-7`.
 
-For more details about the solvers, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/).
+!!! warning "Tolerances for terminate condition"
+    The terminate condition tolerances `terminate_reltol` and `terminate_abstol` should be larger than `reltol` and `abstol` of [`mesolve`](@ref), respectively.
+
+For more details about the solving `alg`orithms, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/).
 """
-Base.@kwdef struct SteadyStateODESolver{MT<:OrdinaryDiffEqAlgorithm,ST<:Union{Nothing,QuantumObject},T<:Real} <:
-                   SteadyStateSolver
+Base.@kwdef struct SteadyStateODESolver{
+    MT<:OrdinaryDiffEqAlgorithm,
+    ST<:Union{Nothing,QuantumObject},
+    TT<:Real,
+    RT<:Real,
+    AT<:Real,
+} <: SteadyStateSolver
     alg::MT = Tsit5()
     ψ0::ST = nothing
-    tmax::T = Inf
+    tmax::TT = Inf
+    terminate_reltol::RT = 10 * DEFAULT_ODE_SOLVER_OPTIONS.reltol
+    terminate_abstol::AT = 10 * DEFAULT_ODE_SOLVER_OPTIONS.abstol
 end
 
 @doc raw"""
@@ -96,7 +108,7 @@ end
 
 @doc raw"""
     steadystate(
-        H::QuantumObject{OpType},
+        H::AbstractQuantumObject{OpType},
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         solver::SteadyStateSolver = SteadyStateDirectSolver(),
         kwargs...,
@@ -111,7 +123,7 @@ Solve the stationary state based on different solvers.
 - `kwargs`: The keyword arguments for the solver.
 """
 function steadystate(
-    H::QuantumObject{OpType},
+    H::AbstractQuantumObject{OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     solver::SteadyStateSolver = SteadyStateDirectSolver(),
     kwargs...,
@@ -199,29 +211,39 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirect
     return QuantumObject(ρss, Operator(), L.dimensions)
 end
 
-function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
-    tmax = solver.tmax
-
+function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
     ψ0 = isnothing(solver.ψ0) ? rand_ket(L.dimensions) : solver.ψ0
-    abstol = haskey(kwargs, :abstol) ? kwargs[:abstol] : DEFAULT_ODE_SOLVER_OPTIONS.abstol
-    reltol = haskey(kwargs, :reltol) ? kwargs[:reltol] : DEFAULT_ODE_SOLVER_OPTIONS.reltol
-
     ftype = _float_type(ψ0)
-    _terminate_func = SteadyStateODECondition(similar(mat2vec(ket2dm(ψ0)).data))
-    cb = TerminateSteadyState(abstol, reltol, _terminate_func)
-    sol = mesolve(
-        L,
-        ψ0,
-        [ftype(0), ftype(tmax)],
-        progress_bar = Val(false),
-        save_everystep = false,
-        saveat = ftype[],
-        callback = cb,
+    tlist = [ftype(0), ftype(solver.tmax)]
+
+    # overwrite some kwargs and throw warning message to tell the users that we are ignoring these settings
+    haskey(kwargs, :progress_bar) && @warn "Ignore keyword argument 'progress_bar' for SteadyStateODESolver"
+    haskey(kwargs, :save_everystep) && @warn "Ignore keyword argument 'save_everystep' for SteadyStateODESolver"
+    haskey(kwargs, :saveat) && @warn "Ignore keyword argument 'saveat' for SteadyStateODESolver"
+    kwargs2 = merge(
+        NamedTuple(kwargs), # we convert to NamedTuple just in case if kwargs is empty
+        (progress_bar = Val(false), save_everystep = false, saveat = ftype[]),
     )
 
+    # add terminate condition (callback)
+    cb = TerminateSteadyState(
+        solver.terminate_abstol,
+        solver.terminate_reltol,
+        SteadyStateODECondition(similar(mat2vec(ket2dm(ψ0)).data)),
+    )
+    kwargs3 = _merge_kwargs_with_callback(kwargs2, cb)
+
+    sol = mesolve(L, ψ0, tlist; kwargs3...)
     ρss = sol.states[end]
     return ρss
 end
+
+_steadystate(
+    L::QuantumObjectEvolution{SuperOperator},
+    solver::T;
+    kwargs...,
+) where {T<:Union{SteadyStateDirectSolver,SteadyStateEigenSolver,SteadyStateLinearSolver}} =
+    throw(ArgumentError("$(get_typename_wrapper(solver)) does not support QobjEvo."))
 
 struct SteadyStateODECondition{CT<:AbstractArray}
     cache::CT

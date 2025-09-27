@@ -178,6 +178,11 @@ function mesolve(
         kwargs...,
     )
 
+    # Move sensealg argument to solve for Enzyme.jl support.
+    # TODO: Remove it when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed.
+    sensealg = get(kwargs, :sensealg, nothing)
+    kwargs_filtered = isnothing(sensealg) ? kwargs : Base.structdiff((; kwargs...), (sensealg = sensealg,))
+
     prob = mesolveProblem(
         H,
         ψ0,
@@ -188,14 +193,19 @@ function mesolve(
         params = params,
         progress_bar = progress_bar,
         inplace = inplace,
-        kwargs...,
+        kwargs_filtered...,
     )
 
-    return mesolve(prob, alg)
+    # TODO: Remove sensealg when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed
+    if isnothing(sensealg)
+        return mesolve(prob, alg)
+    else
+        return mesolve(prob, alg; sensealg = sensealg)
+    end
 end
 
-function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5())
-    sol = solve(prob.prob, alg)
+function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5(); kwargs...)
+    sol = solve(prob.prob, alg; kwargs...)
 
     # No type instabilities since `isoperket` is a Val, and so it is known at compile time
     if getVal(prob.kwargs.isoperket)
@@ -204,6 +214,8 @@ function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
         ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator(), dims = prob.dimensions), sol.u)
     end
 
+    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
+
     return TimeEvolutionSol(
         prob.times,
         sol.t,
@@ -211,7 +223,7 @@ function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
         _get_expvals(sol, SaveFuncMESolve),
         sol.retcode,
         sol.alg,
-        sol.prob.kwargs[:abstol],
-        sol.prob.kwargs[:reltol],
+        kwargs.abstol,
+        kwargs.reltol,
     )
 end
