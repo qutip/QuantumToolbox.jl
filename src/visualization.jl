@@ -235,7 +235,7 @@ Add multiple points to the Bloch sphere visualization.
 """
 function add_points!(
     b::Bloch,
-    pnts::Matrix{<:Real};
+    pnts::AbstractMatrix{<:Real};
     meth::Symbol = :s,
     color::Union{Nothing,String} = nothing,
     alpha::Float64 = 1.0,
