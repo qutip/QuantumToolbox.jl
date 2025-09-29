@@ -96,7 +96,7 @@ function cite(io::IO = stdout)
       year = {2025},
       doi = {10.22331/q-2025-09-29-1866},
       url = {https://doi.org/10.22331/q-2025-09-29-1866}
-}
+    }
     """
     return println(io, citation)
 end
