@@ -24,8 +24,8 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [license-img]: https://img.shields.io/badge/license-New%20BSD-blue.svg
 [license-url]: https://opensource.org/licenses/BSD-3-Clause
 
-[cite-img]: https://img.shields.io/badge/cite-arXiv%3A2504.21440_(2025)-blue
-[cite-url]: https://doi.org/10.48550/arXiv.2504.21440
+[cite-img]: https://img.shields.io/badge/cite-Quantum_9%2C_1866_(2025)-blue
+[cite-url]: https://doi.org/10.22331/q-2025-09-29-1866
 
 [download-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuantumToolbox&query=total_requests&label=Downloads
 [download-url]: https://juliapkgstats.com/pkg/QuantumToolbox
@@ -179,19 +179,21 @@ You are most welcome to contribute to `QuantumToolbox.jl` development by forking
 For more information about contribution, including technical advice, please see the [Contributing to Quantum Toolbox in Julia](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing).
 
 ## Cite `QuantumToolbox.jl`
-If you like `QuantumToolbox.jl`, we would appreciate it if you starred the repository in order to help us increase its visibility. Furthermore, if you find the framework useful in your research, we would be grateful if you could cite our arXiv preprint [ [arXiv:2504.21440 (2025)](https://doi.org/10.48550/arXiv.2504.21440)  ] using the following bibtex entry:
+If you like `QuantumToolbox.jl`, we would appreciate it if you starred the repository in order to help us increase its visibility. Furthermore, if you find the framework useful in your research, we would be grateful if you could cite our publication [ [Quantum 9, 1866 (2025)](https://doi.org/10.22331/q-2025-09-29-1866)  ] using the following bibtex entry:
 
 ```bib
-@article{QuantumToolbox-jl2025,
-    title={{QuantumToolbox.jl}: An efficient {Julia} framework for simulating open quantum systems},
-    author={Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
-    journal={arXiv preprint arXiv:2504.21440},
-    year={2025},
-    publisher = {arXiv},
-    eprint={2504.21440},
-    archivePrefix={arXiv},
-    primaryClass={quant-ph},
-    doi = {10.48550/arXiv.2504.21440}
+@article{QuantumToolbox.jl2025,
+  doi = {10.22331/q-2025-09-29-1866},
+  url = {https://doi.org/10.22331/q-2025-09-29-1866},
+  title = {Quantum{T}oolbox.jl: {A}n efficient {J}ulia framework for simulating open quantum systems},
+  author = {Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
+  journal = {{Quantum}},
+  issn = {2521-327X},
+  publisher = {{Verein zur F{\"{o}}rderung des Open Access Publizierens in den Quantenwissenschaften}},
+  volume = {9},
+  pages = {1866},
+  month = sep,
+  year = {2025}
 }
 ```
 

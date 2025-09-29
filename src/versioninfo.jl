@@ -56,7 +56,7 @@ function versioninfo(io::IO = stdout)
         "+---------------------------------------------------+\n",
         "| Please cite QuantumToolbox.jl in your publication |\n",
         "+---------------------------------------------------+\n",
-        "For your convenience, a bibtex reference can be easily generated using `QuantumToolbox.cite()`.\n"
+        "For your convenience, a bibtex reference can be easily generated using `QuantumToolbox.cite()`.\n",
     )
     return nothing
 end
@@ -84,16 +84,16 @@ Command line output of citation information and bibtex generator for `QuantumToo
 """
 function cite(io::IO = stdout)
     citation = raw"""
-    @article{QuantumToolbox-jl2025,
-      doi = {},
-      url = {},
-      title = {{QuantumToolbox.jl}: {A}n efficient {J}ulia framework for simulating open quantum systems},
+    @article{QuantumToolbox.jl2025,
+      doi = {10.22331/q-2025-09-29-1866},
+      url = {https://doi.org/10.22331/q-2025-09-29-1866},
+      title = {Quantum{T}oolbox.jl: {A}n efficient {J}ulia framework for simulating open quantum systems},
       author = {Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
       journal = {{Quantum}},
       issn = {2521-327X},
       publisher = {{Verein zur F{\"{o}}rderung des Open Access Publizierens in den Quantenwissenschaften}},
-      volume = {},
-      pages = {},
+      volume = {9},
+      pages = {1866},
       month = sep,
       year = {2025}
     }
