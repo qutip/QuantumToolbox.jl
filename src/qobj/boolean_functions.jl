@@ -10,8 +10,7 @@ export isunitary
 
 Checks if the [`QuantumObject`](@ref) `A` is a [`Bra`](@ref). Default case returns `false` for any other inputs.
 """
-isbra(A::QuantumObject) = isbra(typeof(A))
-isbra(::Type{<:QuantumObject{Bra,N}}) where {N} = true
+isbra(A::QuantumObject{Bra}) = true
 isbra(A) = false # default case
 
 @doc raw"""
@@ -19,8 +18,7 @@ isbra(A) = false # default case
 
 Checks if the [`QuantumObject`](@ref) `A` is a [`Ket`](@ref). Default case returns `false` for any other inputs.
 """
-isket(A::QuantumObject) = isket(typeof(A))
-isket(::Type{<:QuantumObject{Ket,N}}) where {N} = true
+isket(A::QuantumObject{Ket}) = true
 isket(A) = false # default case
 
 @doc raw"""
@@ -28,8 +26,7 @@ isket(A) = false # default case
 
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`Operator`](@ref). Default case returns `false` for any other inputs.
 """
-isoper(A::AbstractQuantumObject) = isoper(typeof(A))
-isoper(::Type{<:AbstractQuantumObject{Operator,N}}) where {N} = true
+isoper(A::AbstractQuantumObject{Operator}) = true
 isoper(A) = false # default case
 
 @doc raw"""
@@ -37,8 +34,7 @@ isoper(A) = false # default case
 
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorBra`](@ref). Default case returns `false` for any other inputs.
 """
-isoperbra(A::QuantumObject) = isoperbra(typeof(A))
-isoperbra(::Type{<:QuantumObject{OperatorBra,N}}) where {N} = true
+isoperbra(A::QuantumObject{OperatorBra}) = true
 isoperbra(A) = false # default case
 
 @doc raw"""
@@ -46,8 +42,7 @@ isoperbra(A) = false # default case
 
 Checks if the [`QuantumObject`](@ref) `A` is a [`OperatorKet`](@ref). Default case returns `false` for any other inputs.
 """
-isoperket(A::QuantumObject) = isoperket(typeof(A))
-isoperket(::Type{<:QuantumObject{OperatorKet,N}}) where {N} = true
+isoperket(A::QuantumObject{OperatorKet}) = true
 isoperket(A) = false # default case
 
 @doc raw"""
@@ -55,8 +50,7 @@ isoperket(A) = false # default case
 
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperator`](@ref). Default case returns `false` for any other inputs.
 """
-issuper(A::AbstractQuantumObject) = issuper(typeof(A))
-issuper(::Type{<:AbstractQuantumObject{<:SuperOperatorType,N}}) where {N} = true
+issuper(A::AbstractQuantumObject{<:SuperOperatorType}) = true
 issuper(A) = false # default case
 
 @doc raw"""

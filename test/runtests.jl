@@ -26,7 +26,7 @@ const testdir = dirname(@__FILE__)
 if (GROUP == "All") || (GROUP == "Code-Quality")
     Pkg.activate("core-test/code-quality")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.instantiate()
+    Pkg.update()
 
     using QuantumToolbox
     using Aqua, JET
@@ -39,7 +39,7 @@ end
 if (GROUP == "AutoDiff_Ext")
     Pkg.activate("ext-test/cpu/autodiff")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.instantiate()
+    Pkg.update()
 
     using QuantumToolbox
     using ForwardDiff
@@ -55,7 +55,7 @@ end
 if (GROUP == "Makie_Ext")
     Pkg.activate("ext-test/cpu/makie")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.instantiate()
+    Pkg.update()
 
     using QuantumToolbox
     QuantumToolbox.about()
@@ -67,7 +67,7 @@ end
 if (GROUP == "CUDA_Ext")
     Pkg.activate("ext-test/gpu")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.instantiate()
+    Pkg.update()
 
     using QuantumToolbox
     import LinearAlgebra: Diagonal

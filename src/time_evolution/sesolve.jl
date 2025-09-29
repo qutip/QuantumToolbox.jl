@@ -1,12 +1,6 @@
 export sesolveProblem, sesolve
 
-_sesolve_make_U_QobjEvo(
-    H::QuantumObjectEvolution{Operator,DimsType,<:MatrixOperator},
-) where {DimsType<:AbstractDimensions} =
-    QobjEvo(MatrixOperator(-1im * H.data.A), dims = H.dimensions, type = Operator())
-_sesolve_make_U_QobjEvo(H::QuantumObject) =
-    QobjEvo(MatrixOperator(-1im * H.data), dims = H.dimensions, type = Operator())
-_sesolve_make_U_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}) = QobjEvo(H, -1im)
+_sesolve_make_U_QobjEvo(H) = -1im * QuantumObjectEvolution(H, type = Operator())
 
 @doc raw"""
     sesolveProblem(
