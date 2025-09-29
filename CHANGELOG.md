@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Add `QuantumToolbox.cite()` for bibtex generator of `QuantumToolbox.jl`. ([#544])
+- Add `sortby` and `rev` keyword arguments to eigensolvers. ([#546])
+
 ## [v0.35.0]
 Release date: 2025-09-03
 
@@ -21,7 +24,6 @@ Release date: 2025-08-23
 
 - Improve Bloch sphere rendering for animation. ([#520])
 - Add support to `Enzyme.jl` for `sesolve` and `mesolve`. ([#531])
-- Add `sortby` and `rev` keyword arguments to eigensolvers. ([#546])
 
 ## [v0.34.0]
 Release date: 2025-07-29
@@ -315,4 +317,5 @@ Release date: 2024-11-13
 [#536]: https://github.com/qutip/QuantumToolbox.jl/issues/536
 [#537]: https://github.com/qutip/QuantumToolbox.jl/issues/537
 [#539]: https://github.com/qutip/QuantumToolbox.jl/issues/539
+[#544]: https://github.com/qutip/QuantumToolbox.jl/issues/544
 [#546]: https://github.com/qutip/QuantumToolbox.jl/issues/546
