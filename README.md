@@ -183,8 +183,6 @@ If you like `QuantumToolbox.jl`, we would appreciate it if you starred the repos
 
 ```bib
 @article{QuantumToolbox.jl2025,
-  doi = {10.22331/q-2025-09-29-1866},
-  url = {https://doi.org/10.22331/q-2025-09-29-1866},
   title = {Quantum{T}oolbox.jl: {A}n efficient {J}ulia framework for simulating open quantum systems},
   author = {Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
   journal = {{Quantum}},
@@ -193,7 +191,9 @@ If you like `QuantumToolbox.jl`, we would appreciate it if you starred the repos
   volume = {9},
   pages = {1866},
   month = sep,
-  year = {2025}
+  year = {2025},
+  doi = {10.22331/q-2025-09-29-1866},
+  url = {https://doi.org/10.22331/q-2025-09-29-1866}
 }
 ```
 
