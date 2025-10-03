@@ -314,6 +314,7 @@ AbstractLinearMap
 QuantumToolbox.settings
 QuantumToolbox.versioninfo
 QuantumToolbox.about
+QuantumToolbox.cite
 gaussian
 n_thermal
 PhysicalConstants

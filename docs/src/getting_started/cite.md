@@ -1,17 +1,19 @@
 # [Cite QuantumToolbox.jl](@id doc:Cite)
 
-If you like `QuantumToolbox.jl`, we would appreciate it if you could cite our arXiv preprint [ [arXiv:2504.21440 (2025)](https://doi.org/10.48550/arXiv.2504.21440)  ] using the following bibtex entry:
+If you like `QuantumToolbox.jl`, we would appreciate it if you could cite our publication [ [Quantum 9, 1866 (2025)](https://doi.org/10.22331/q-2025-09-29-1866)  ] using the following bibtex entry:
 
 ```bib
-@article{QuantumToolbox-jl2025,
-    title={{QuantumToolbox.jl}: An efficient {Julia} framework for simulating open quantum systems},
-    author={Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
-    journal={arXiv preprint arXiv:2504.21440},
-    year={2025},
-    publisher = {arXiv},
-    eprint={2504.21440},
-    archivePrefix={arXiv},
-    primaryClass={quant-ph},
-    doi = {10.48550/arXiv.2504.21440}
+@article{QuantumToolbox.jl2025,
+  title = {Quantum{T}oolbox.jl: {A}n efficient {J}ulia framework for simulating open quantum systems},
+  author = {Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
+  journal = {{Quantum}},
+  issn = {2521-327X},
+  publisher = {{Verein zur F{\"{o}}rderung des Open Access Publizierens in den Quantenwissenschaften}},
+  volume = {9},
+  pages = {1866},
+  month = sep,
+  year = {2025},
+  doi = {10.22331/q-2025-09-29-1866},
+  url = {https://doi.org/10.22331/q-2025-09-29-1866}
 }
 ```

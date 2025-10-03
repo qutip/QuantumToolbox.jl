@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Generalize the definition of `liouvillian`. It no longer expects the Hamiltonian to be Hermitian. ([#541])
 
+## [v0.36.0]
+Release date: 2025-09-29
+
+- Add `QuantumToolbox.cite()` for bibtex generator of `QuantumToolbox.jl`. ([#544])
+- Add `sortby` and `rev` keyword arguments to eigensolvers. ([#546])
+
 ## [v0.35.0]
 Release date: 2025-09-03
 
@@ -23,7 +29,6 @@ Release date: 2025-08-23
 
 - Improve Bloch sphere rendering for animation. ([#520])
 - Add support to `Enzyme.jl` for `sesolve` and `mesolve`. ([#531])
-- Add `sortby` and `rev` keyword arguments to eigensolvers. ([#546])
 
 ## [v0.34.0]
 Release date: 2025-07-29
@@ -226,6 +231,7 @@ Release date: 2024-11-13
 [v0.34.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.34.0
 [v0.34.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.34.1
 [v0.35.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.35.0
+[v0.36.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.36.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -318,4 +324,5 @@ Release date: 2024-11-13
 [#537]: https://github.com/qutip/QuantumToolbox.jl/issues/537
 [#539]: https://github.com/qutip/QuantumToolbox.jl/issues/539
 [#541]: https://github.com/qutip/QuantumToolbox.jl/issues/541
+[#544]: https://github.com/qutip/QuantumToolbox.jl/issues/544
 [#546]: https://github.com/qutip/QuantumToolbox.jl/issues/546

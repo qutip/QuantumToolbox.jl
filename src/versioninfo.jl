@@ -2,7 +2,7 @@
 Command line output of information on QuantumToolbox, dependencies, and system information
 =#
 
-"""
+@doc raw"""
     QuantumToolbox.versioninfo(io::IO=stdout)
 
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.about`](@ref).
@@ -36,20 +36,32 @@ function versioninfo(io::IO = stdout)
     )
 
     # print System information
-    println(io, "System information:")
-    println(io, "====================================")
-    println(io, """OS       : $(OS_name) ($(Sys.MACHINE))""")
-    println(io, """CPU      : $(length(cpu)) × $(cpu[1].model)""")
-    println(io, """Memory   : $(round(Sys.total_memory() / 2 ^ 30, digits=3)) GB""")
-    println(io, """WORD_SIZE: $(Sys.WORD_SIZE)""")
-    println(io, """LIBM     : $(Base.libm_name)""")
-    println(io, """LLVM     : libLLVM-$(Base.libllvm_version) ($(Sys.JIT), $(Sys.CPU_NAME))""")
-    println(io, """BLAS     : $(basename(BLAS_info.libname)) ($(BLAS_info.interface))""")
-    println(io, """Threads  : $(Threads.nthreads()) (on $(Sys.CPU_THREADS) virtual cores)""")
-    return print(io, "\n")
+    println(
+        io,
+        "System information:\n",
+        "====================================\n",
+        """OS       : $(OS_name) ($(Sys.MACHINE))\n""",
+        """CPU      : $(length(cpu)) × $(cpu[1].model)\n""",
+        """Memory   : $(round(Sys.total_memory() / 2 ^ 30, digits=3)) GB\n""",
+        """WORD_SIZE: $(Sys.WORD_SIZE)\n""",
+        """LIBM     : $(Base.libm_name)\n""",
+        """LLVM     : libLLVM-$(Base.libllvm_version) ($(Sys.JIT), $(Sys.CPU_NAME))\n""",
+        """BLAS     : $(basename(BLAS_info.libname)) ($(BLAS_info.interface))\n""",
+        """Threads  : $(Threads.nthreads()) (on $(Sys.CPU_THREADS) virtual cores)\n""",
+    )
+
+    # print citation information
+    println(
+        io,
+        "+---------------------------------------------------+\n",
+        "| Please cite QuantumToolbox.jl in your publication |\n",
+        "+---------------------------------------------------+\n",
+        "For your convenience, a bibtex reference can be easily generated using `QuantumToolbox.cite()`.\n",
+    )
+    return nothing
 end
 
-"""
+@doc raw"""
     QuantumToolbox.about(io::IO=stdout)
 
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.versioninfo`](@ref).
@@ -63,4 +75,28 @@ function _get_pkg_version(pkg_name::String)
             return D[uuid].version
         end
     end
+end
+
+@doc raw"""
+    QuantumToolbox.cite(io::IO = stdout)
+
+Command line output of citation information and bibtex generator for `QuantumToolbox.jl`.
+"""
+function cite(io::IO = stdout)
+    citation = raw"""
+    @article{QuantumToolbox.jl2025,
+      title = {Quantum{T}oolbox.jl: {A}n efficient {J}ulia framework for simulating open quantum systems},
+      author = {Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
+      journal = {{Quantum}},
+      issn = {2521-327X},
+      publisher = {{Verein zur F{\"{o}}rderung des Open Access Publizierens in den Quantenwissenschaften}},
+      volume = {9},
+      pages = {1866},
+      month = sep,
+      year = {2025},
+      doi = {10.22331/q-2025-09-29-1866},
+      url = {https://doi.org/10.22331/q-2025-09-29-1866}
+    }
+    """
+    return println(io, citation)
 end
