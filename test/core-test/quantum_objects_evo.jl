@@ -207,7 +207,7 @@
         X = a * a'
         c_op1 = QobjEvo(a', coef1)
         c_op2 = QobjEvo(((a, coef2), (X, coef3)))
-        c_ops = [c_op1, c_op2]
+        c_ops = (c_op1, c_op2)
         D1_ti = abs2(coef1(p, t)) * lindblad_dissipator(a')
         D2_ti =
             abs2(coef2(p, t)) * lindblad_dissipator(a) + # normal dissipator for first  element in c_op2
@@ -237,10 +237,9 @@
         @test_throws ArgumentError cache_operator(L_td, ψ)
 
         @testset "Type Inference" begin
-            # we use destroy and create here because they somehow causes type instability before
-            H_td2 = H_td + QobjEvo(destroy(N) + create(N), coef3)
-            c_ops1 = (destroy(N), create(N))
-            c_ops2 = (destroy(N), QobjEvo(create(N), coef1))
+            H_td2 = H_td + QobjEvo(a + a', coef3)
+            c_ops1 = (a, a')
+            c_ops2 = (a, QobjEvo(a', coef1))
 
             @inferred liouvillian(H_td, c_ops1)
             @inferred liouvillian(H_td, c_ops2)
