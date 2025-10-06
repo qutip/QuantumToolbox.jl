@@ -95,7 +95,7 @@ In order to get a better experience and take full advantage of `QuantumToolbox`
 - GPU support:
   - [`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl)
 - Distributed Computing support:
-  - [`Disributed.jl`](https://github.com/JuliaLang/Distributed.jl)
+  - [`Distributed.jl`](https://github.com/JuliaLang/Distributed.jl)
   - [`SlurmClusterManager.jl`](https://github.com/JuliaParallel/SlurmClusterManager.jl)
 - Plotting Libraries:
   - [`Makie.jl`](https://github.com/MakieOrg/Makie.jl)
