@@ -1,4 +1,4 @@
-export sesolveProblem, sesolve
+export sesolveProblem, sesolve, sesolve_map
 
 _sesolve_make_U_QobjEvo(H) = -1im * QuantumObjectEvolution(H, type = Operator())
 
@@ -157,12 +157,16 @@ end
 function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5(); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
-    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.dimensions), sol.u)
+    return _gen_sesolve_solution(sol, prob.times, prob.dimensions)
+end
+
+function _gen_sesolve_solution(sol, times, dimensions)
+    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = dimensions), sol.u)
 
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
 
     return TimeEvolutionSol(
-        prob.times,
+        times,
         sol.t,
         ψt,
         _get_expvals(sol, SaveFuncSESolve),
@@ -172,3 +176,55 @@ function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
         kwargs.reltol,
     )
 end
+
+@doc raw"""
+    sesolve_map
+
+(TBA)
+"""
+function sesolve_map(
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::Vector{<:QuantumObject{Ket}},
+    tlist::AbstractVector;
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+    params = [NullParameters()],
+    progress_bar::Union{Val,Bool} = Val(true),
+    kwargs...,
+)
+    # mapping initial states and parameters
+    ψ0_iter = map(get_data, ψ0)
+    iter = collect(Iterators.product(ψ0_iter, params...))
+    ntraj = length(iter)
+
+    # we disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
+    prob = sesolveProblem(
+        H,
+        first(ψ0),
+        tlist;
+        e_ops = e_ops,
+        params = first(iter)[2:end],
+        progress_bar = Val(false),
+        kwargs...,
+    )
+
+    # generate and solve ensemble problem
+    _output_func = _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj) # setup global progress bar
+    ens_prob = TimeEvolutionProblem(
+        EnsembleProblem(
+            prob.prob,
+            prob_func = (prob, i, repeat) -> remake(prob, u0 = iter[i][1], p = iter[i][2:end]),
+            safetycopy = false,
+        ),
+        prob.times,
+        prob.dimensions,
+        (progr = _output_func[2], channel = _output_func[3]),
+    )
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
+
+    # handle solution and make it become an Array of TimeEvolutionSol
+    return reshape(map(i -> _gen_sesolve_solution(sol[:, i], prob.times, prob.dimensions), eachindex(sol)), size(iter))
+end
+sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{Ket}, tlist::AbstractVector; kwargs...) =
+    sesolve_map(H, [ψ0], tlist; kwargs...)

@@ -147,6 +147,48 @@ end
     end
 end
 
+@testitem "sesolve_map" setup=[TESetup] begin
+
+    # Get parameters from TESetup to simplify the code
+    a = TESetup.a
+    σz = TESetup.σz
+    σm = TESetup.σm
+    ψ0 = TESetup.ψ0
+    e_ops = TESetup.e_ops
+
+    g = 0.01
+    ωc_list = [1, 1.01, 1.02]
+    ωq_list = [0.96, 0.97, 0.98, 0.99]
+    tlist = range(0, 20 * 2π / g, 1000)
+
+    ωc(p, t) = p[1]
+    ωq(p, t) = p[2]
+    H = g * (a' * σm + a * σm') + QobjEvo(a' * a, ωc) + QobjEvo(σz / 2, ωq)
+
+    sols1 = sesolve_map(H, ψ0, tlist; e_ops = e_ops, params = [ωc_list, ωq_list])
+    sols2 = sesolve_map(H, [ψ0, ψ0], tlist; e_ops = e_ops, params = [ωc_list, ωq_list], progress_bar = Val(false))
+
+    @test size(sols1) == (1, 3, 4)
+    @test typeof(sols1) isa Array{<:TimeEvolutionSol}
+    @test size(sols2) == (2, 3, 4)
+    @test typeof(sols2) isa Array{<:TimeEvolutionSol}
+    for (i, ωc) in enumerate(ωc_list)
+        for (j, ωq) in enumerate(ωq_list)
+            sol = sols1[1, i, j]
+
+            ## Analytical solution for the expectation value of a' * a
+            Ω_rabi = sqrt(g^2 + ((ωc - ωq) / 2)^2)
+            amp_rabi = g^2 / Ω_rabi^2
+
+            @test sum(abs.(sol.expect[1, :] .- amp_rabi .* sin.(Ω_rabi * tlist) .^ 2)) / length(tlist) < 0.1
+        end
+    end
+
+    @testset "Type Inference sesolve_map" begin
+        @inferred sesolve_map(H, [ψ0, ψ0], tlist; e_ops = e_ops, params = [ωc_list, ωq_list], progress_bar = Val(false))
+    end
+end
+
 @testitem "mesolve" setup=[TESetup] begin
     using SciMLOperators
 

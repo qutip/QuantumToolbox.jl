@@ -358,12 +358,14 @@ This is very useful especially for dispatching which method to use to update the
 =#
 
 # Output function with progress bar update
+_ensemble_output_func_progress(sol, i, progr, ::Nothing) = next!(progr)
 function _ensemble_output_func_progress(sol, i, progr, output_func)
     next!(progr)
     return output_func(sol, i)
 end
 
 # Output function with distributed channel update for progress bar
+_ensemble_output_func_distributed(sol, i, channel, ::Nothing) = put!(channel, true)
 function _ensemble_output_func_distributed(sol, i, channel, output_func)
     put!(channel, true)
     return output_func(sol, i)
@@ -373,7 +375,7 @@ function _ensemble_dispatch_output_func(
     ::ET,
     progress_bar,
     ntraj,
-    output_func,
+    output_func = nothing,
 ) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
     if getVal(progress_bar)
         progr = ProgressBar(ntraj, enable = getVal(progress_bar))
@@ -387,7 +389,7 @@ function _ensemble_dispatch_output_func(
     ::ET,
     progress_bar,
     ntraj,
-    output_func,
+    output_func = nothing,
 ) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
     if getVal(progress_bar)
         progr = ProgressBar(ntraj, enable = getVal(progress_bar))
