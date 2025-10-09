@@ -357,9 +357,6 @@ Helpers for handling output of ensemble problems.
 This is very useful especially for dispatching which method to use to update the progress bar.
 =#
 
-# a dummy output function which does nothing
-_dummy_output_func(sol, i) = (sol, false)
-
 # Output function with progress bar update
 function _ensemble_output_func_progress(sol, i, progr, output_func)
     next!(progr)
@@ -454,6 +451,9 @@ function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
 
     return remake(prob.prob, noise = noise, seed = seed)
 end
+
+# a dummy output function which does nothing (used for mapped and stochastic solvers)
+_dummy_output_func(sol, i) = (sol, false)
 
 #= 
     Define diagonal or non-diagonal noise depending on the type of `sc_ops`.

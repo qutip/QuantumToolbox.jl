@@ -250,8 +250,8 @@ function smesolveEnsembleProblem(
             store_measurement = makeVal(store_measurement),
         ) : prob_func
     _output_func =
-        output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _dummy_output_func) : output_func
+        output_func isa Nothing ? _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _dummy_output_func) :
+        output_func
 
     prob_sme = smesolveProblem(
         H,
