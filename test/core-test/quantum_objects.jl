@@ -202,7 +202,7 @@
         @test (a2 + 2).data == a2.data + 2 * I
         @test a2 * 2 == 2 * a2
 
-        zero_like = zero(a2)
+        zero_like = qzero_like(a2)
         iden_like = qeye_like(a3)
         zero_array = spzeros(ComplexF64, 100, 100)
         iden_array = sparse(1:100, 1:100, ones(ComplexF64, 100))

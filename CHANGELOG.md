@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Fix `cite()` bibtex output. ([#552])
-- Add `qeye_like`, which is a synonym of `one`. ([#555])
+- Add `qeye_like` and `qzero_like`, which are synonyms of `one` and `zero`. ([#555])
 
 ## [v0.36.0]
 Release date: 2025-09-29

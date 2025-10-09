@@ -5,7 +5,7 @@ Synonyms of the functions for QuantumObject
 export Qobj, QobjEvo, shape, isherm
 export trans, dag, matrix_element, unit
 export tensor, ⊗
-export qeye, qeye_like
+export qeye, qeye_like, qzero_like
 export vector_to_operator, operator_to_vector
 export sqrtm, logm, expm, sinm, cosm
 
@@ -113,3 +113,12 @@ Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same
 Note that this function is same as `one(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 qeye_like(A::AbstractQuantumObject{OpType}) where {OpType<:Union{Operator,SuperOperator}} = one(A)
+
+@doc raw"""
+    qzero_like(A::AbstractQuantumObject)
+
+Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same as `A`, but `data` is a zero-array.
+
+Note that this function is same as `zero(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
+"""
+qzero_like(A::AbstractQuantumObject{OpType}) where {OpType<:Union{Operator,SuperOperator}} = zero(A)
