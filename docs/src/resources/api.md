@@ -189,6 +189,7 @@ expm
 sinm
 cosm
 qeye_like
+qzero_like
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)
