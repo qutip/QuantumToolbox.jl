@@ -5,7 +5,7 @@ Synonyms of the functions for QuantumObject
 export Qobj, QobjEvo, shape, isherm
 export trans, dag, matrix_element, unit
 export tensor, ⊗
-export qeye
+export qeye, qeye_like
 export vector_to_operator, operator_to_vector
 export sqrtm, logm, expm, sinm, cosm
 
@@ -104,3 +104,12 @@ Matrix cosine of [`QuantumObject`](@ref), defined as
 Note that this function is same as `cos(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
 cosm(A::QuantumObject{ObjType}) where {ObjType<:Union{Operator,SuperOperator}} = cos(A)
+
+@doc raw"""
+    qeye_like(A::AbstractQuantumObject)
+
+Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same as `A`, but `data` is an identity matrix.
+
+Note that this function is same as `one(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
+"""
+qeye_like(A::AbstractQuantumObject{OpType}) where {OpType<:Union{Operator,SuperOperator}} = one(A)

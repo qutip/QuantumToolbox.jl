@@ -203,7 +203,7 @@
         @test a2 * 2 == 2 * a2
 
         zero_like = zero(a2)
-        iden_like = one(a3)
+        iden_like = qeye_like(a3)
         zero_array = spzeros(ComplexF64, 100, 100)
         iden_array = sparse(1:100, 1:100, ones(ComplexF64, 100))
         @test zero_like == Qobj(zero_array, type = a2.type, dims = a2.dims)
