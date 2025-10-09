@@ -261,6 +261,7 @@ function sesolve_map(
                 p = iter[i][2:end],
                 callback = haskey(prob.kwargs, :callback) ? deepcopy(prob.kwargs[:callback]) : nothing,
             ),
+            output_func = _output_func[1],
             safetycopy = false,
         ),
         prob.times,
@@ -270,8 +271,7 @@ function sesolve_map(
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     # handle solution and make it become an Array of TimeEvolutionSol
-    sol_vec = map(i -> _gen_sesolve_solution(sol[:, i], prob.times, prob.dimensions), eachindex(sol))
-    # sol_vec = _gen_sesolve_solution.(sol[:], Ref(prob.times), Ref(prob.dimensions))
+    sol_vec = [_gen_sesolve_solution(sol[:, i], prob.times, prob.dimensions) for i in eachindex(sol)]
     return reshape(sol_vec, size(iter))
 end
 sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{Ket}, tlist::AbstractVector; kwargs...) =
