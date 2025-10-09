@@ -1,9 +1,30 @@
-export mesolveProblem, mesolve
+export mesolveProblem, mesolve, mesolve_map
 
 _mesolve_make_L_QobjEvo(H::Union{QuantumObject,Nothing}, c_ops) = QobjEvo(liouvillian(H, c_ops); type = SuperOperator())
 _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
 _mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both H and
 c_ops are Nothing. You are probably running the wrong function."))
+
+function _gen_mesolve_solution(sol, times, dimensions, isoperket::Val)
+    if getVal(isoperket)
+        ρt = map(ϕ -> QuantumObject(ϕ, type = OperatorKet(), dims = dimensions), sol.u)
+    else
+        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator(), dims = dimensions), sol.u)
+    end
+
+    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
+
+    return TimeEvolutionSol(
+        times,
+        sol.t,
+        ρt,
+        _get_expvals(sol, SaveFuncMESolve),
+        sol.retcode,
+        sol.alg,
+        kwargs.abstol,
+        kwargs.reltol,
+    )
+end
 
 @doc raw"""
     mesolveProblem(
@@ -207,23 +228,143 @@ end
 function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5(); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
-    # No type instabilities since `isoperket` is a Val, and so it is known at compile time
-    if getVal(prob.kwargs.isoperket)
-        ρt = map(ϕ -> QuantumObject(ϕ, type = OperatorKet(), dims = prob.dimensions), sol.u)
-    else
-        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator(), dims = prob.dimensions), sol.u)
+    return _gen_mesolve_solution(sol, prob.times, prob.dimensions, prob.kwargs.isoperket)
+end
+
+@doc raw"""
+    mesolve_map(
+        H::Union{AbstractQuantumObject,Tuple},
+        ψ0::Union{QuantumObject,AbstractVector{<:QuantumObject}},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        params::Tuple = (NullParameters(),),
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
+
+Solve the master equation for multiple initial states and parameter sets using ensemble simulation.
+
+This function computes the time evolution for all combinations (Cartesian product) of initial states and parameter sets, solving the Lindblad master equation (see [`mesolve`](@ref)):
+
+```math
+\frac{\partial \hat{\rho}(t)}{\partial t} = -i[\hat{H}, \hat{\rho}(t)] + \sum_n \mathcal{D}(\hat{C}_n) [\hat{\rho}(t)]
+```
+
+where
+
+```math
+\mathcal{D}(\hat{C}_n) [\hat{\rho}(t)] = \hat{C}_n \hat{\rho}(t) \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n \hat{\rho}(t) - \frac{1}{2} \hat{\rho}(t) \hat{C}_n^\dagger \hat{C}_n
+```
+
+for each combination in the ensemble.
+
+# Arguments
+
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state(s) of the system. Can be a single [`QuantumObject`](@ref) or a `Vector` of initial states. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `alg`: The algorithm for the ODE solver. The default is `Tsit5()`.
+- `ensemblealg`: Ensemble algorithm to use for parallel computation. Default is `EnsembleThreads()`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: A `Tuple` of parameter sets. Each element should be an `AbstractVector` representing the sweep range for that parameter. The function will solve for all combinations of initial states and parameter sets.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
+
+# Notes
+
+- The function returns an array of solutions with dimensions matching the Cartesian product of initial states and parameter sets.
+- If `ψ0` is a vector of `m` states and `params = (p1, p2, ...)` where `p1` has length `n1`, `p2` has length `n2`, etc., the output will be of size `(m, n1, n2, ...)`.
+- If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolve_map`](@ref) instead.
+- See [`mesolve`](@ref) for more details.
+
+# Returns
+
+- An array of [`TimeEvolutionSol`](@ref) objects with dimensions `(length(ψ0), length(params[1]), length(params[2]), ...)`.
+"""
+function mesolve_map(
+    H::Union{AbstractQuantumObject{HOpType},Tuple},
+    ψ0::AbstractVector{<:QuantumObject{StateOpType}},
+    tlist::AbstractVector,
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+    params::Tuple = (NullParameters(),),
+    progress_bar::Union{Val,Bool} = Val(true),
+    kwargs...,
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet}}
+    (isoper(H) && all(isket, ψ0) && isnothing(c_ops)) && return sesolve_map(
+        H,
+        ψ0,
+        tlist;
+        alg = alg,
+        ensemblealg = ensemblealg,
+        e_ops = e_ops,
+        params = params,
+        progress_bar = progress_bar,
+        kwargs...,
+    )
+
+    # mapping initial states and parameters
+    # Convert to appropriate format based on state type
+    ψ0_iter = map(ψ0) do state
+        T = _complex_float_type(eltype(state))
+        if isoperket(state)
+            to_dense(T, copy(state.data))
+        else
+            to_dense(T, mat2vec(ket2dm(state).data))
+        end
     end
+    iter = collect(Iterators.product(ψ0_iter, params...))
+    ntraj = length(iter)
 
-    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
+    # we disable the progress bar of the mesolveProblem because we use a global progress bar for all the trajectories
+    prob = mesolveProblem(
+        H,
+        first(ψ0),
+        tlist,
+        c_ops;
+        e_ops = e_ops,
+        params = first(iter)[2:end],
+        progress_bar = Val(false),
+        kwargs...,
+    )
 
-    return TimeEvolutionSol(
+    # generate and solve ensemble problem
+    _output_func = _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _standard_output_func) # setup global progress bar
+    ens_prob = TimeEvolutionProblem(
+        EnsembleProblem(
+            prob.prob,
+            prob_func = (prob, i, repeat) -> remake(
+                prob,
+                f = deepcopy(prob.f.f),
+                u0 = iter[i][1],
+                p = iter[i][2:end],
+                callback = haskey(prob.kwargs, :callback) ? deepcopy(prob.kwargs[:callback]) : nothing,
+            ),
+            safetycopy = false,
+        ),
         prob.times,
-        sol.t,
-        ρt,
-        _get_expvals(sol, SaveFuncMESolve),
-        sol.retcode,
-        sol.alg,
-        kwargs.abstol,
-        kwargs.reltol,
+        prob.dimensions,
+        (progr = _output_func[2], channel = _output_func[3], isoperket = prob.kwargs.isoperket),
+    )
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
+
+    # handle solution and make it become an Array of TimeEvolutionSol
+    return reshape(
+        map(i -> _gen_mesolve_solution(sol[:, i], prob.times, prob.dimensions, prob.kwargs.isoperket), eachindex(sol)),
+        size(iter),
     )
 end
+mesolve_map(
+    H::Union{AbstractQuantumObject{HOpType},Tuple},
+    ψ0::QuantumObject{StateOpType},
+    tlist::AbstractVector,
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+    kwargs...,
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet}} =
+    mesolve_map(H, [ψ0], tlist, c_ops; kwargs...)
