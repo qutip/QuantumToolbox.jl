@@ -245,7 +245,7 @@ function ssesolveEnsembleProblem(
         ) : prob_func
     _output_func =
         output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _stochastic_output_func) : output_func
+        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _dummy_output_func) : output_func
 
     prob_sme = ssesolveProblem(
         H,

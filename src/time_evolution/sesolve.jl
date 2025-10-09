@@ -210,7 +210,7 @@ function sesolve_map(
     )
 
     # generate and solve ensemble problem
-    _output_func = _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj) # setup global progress bar
+    _output_func = _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _dummy_output_func) # setup global progress bar
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(
             prob.prob,
