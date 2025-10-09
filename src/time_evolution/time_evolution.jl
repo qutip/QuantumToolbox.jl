@@ -452,8 +452,8 @@ function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
     return remake(prob.prob, noise = noise, seed = seed)
 end
 
-# a dummy output function which does nothing (used for mapped and stochastic solvers)
-_dummy_output_func(sol, i) = (sol, false)
+# Standard output function which does nothing (used for mapped and stochastic solvers)
+_standard_output_func(sol, i) = (sol, false)
 
 #= 
     Define diagonal or non-diagonal noise depending on the type of `sc_ops`.
