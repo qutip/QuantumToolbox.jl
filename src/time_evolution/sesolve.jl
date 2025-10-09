@@ -2,6 +2,23 @@ export sesolveProblem, sesolve, sesolve_map
 
 _sesolve_make_U_QobjEvo(H) = -1im * QuantumObjectEvolution(H, type = Operator())
 
+function _gen_sesolve_solution(sol, times, dimensions)
+    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = dimensions), sol.u)
+
+    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
+
+    return TimeEvolutionSol(
+        times,
+        sol.t,
+        ψt,
+        _get_expvals(sol, SaveFuncSESolve),
+        sol.retcode,
+        sol.alg,
+        kwargs.abstol,
+        kwargs.reltol,
+    )
+end
+
 @doc raw"""
     sesolveProblem(
         H::Union{AbstractQuantumObject{Operator},Tuple},
@@ -160,23 +177,6 @@ function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit
     return _gen_sesolve_solution(sol, prob.times, prob.dimensions)
 end
 
-function _gen_sesolve_solution(sol, times, dimensions)
-    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = dimensions), sol.u)
-
-    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
-
-    return TimeEvolutionSol(
-        times,
-        sol.t,
-        ψt,
-        _get_expvals(sol, SaveFuncSESolve),
-        sol.retcode,
-        sol.alg,
-        kwargs.abstol,
-        kwargs.reltol,
-    )
-end
-
 @doc raw"""
     sesolve_map(
         H::Union{AbstractQuantumObject{Operator},Tuple},
@@ -254,13 +254,7 @@ function sesolve_map(
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(
             prob.prob,
-            prob_func = (prob, i, repeat) -> remake(
-                prob,
-                f = deepcopy(prob.f.f),
-                u0 = iter[i][1],
-                p = iter[i][2:end],
-                callback = haskey(prob.kwargs, :callback) ? deepcopy(prob.kwargs[:callback]) : nothing,
-            ),
+            prob_func = (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter),
             output_func = _output_func[1],
             safetycopy = false,
         ),
@@ -271,7 +265,7 @@ function sesolve_map(
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     # handle solution and make it become an Array of TimeEvolutionSol
-    sol_vec = [_gen_sesolve_solution(sol[:, i], prob.times, prob.dimensions) for i in eachindex(sol)]
+    sol_vec = [_gen_sesolve_solution(sol[:, i], prob.times, prob.dimensions) for i in eachindex(sol)] # map is type unstable
     return reshape(sol_vec, size(iter))
 end
 sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{Ket}, tlist::AbstractVector; kwargs...) =

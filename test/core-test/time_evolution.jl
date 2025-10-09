@@ -154,7 +154,6 @@ end
     a = TESetup.a
     σz = TESetup.σz
     σm = TESetup.σm
-    ψ0 = TESetup.ψ0
     e_ops = TESetup.e_ops
 
     g = 0.01

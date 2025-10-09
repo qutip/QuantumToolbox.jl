@@ -339,13 +339,7 @@ function mesolve_map(
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(
             prob.prob,
-            prob_func = (prob, i, repeat) -> remake(
-                prob,
-                f = deepcopy(prob.f.f),
-                u0 = iter[i][1],
-                p = iter[i][2:end],
-                callback = haskey(prob.kwargs, :callback) ? deepcopy(prob.kwargs[:callback]) : nothing,
-            ),
+            prob_func = (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter),
             output_func = _output_func[1],
             safetycopy = false,
         ),
@@ -357,7 +351,7 @@ function mesolve_map(
 
     # handle solution and make it become an Array of TimeEvolutionSol
     sol_vec =
-        [_gen_mesolve_solution(sol[:, i], prob.times, prob.dimensions, prob.kwargs.isoperket) for i in eachindex(sol)]
+        [_gen_mesolve_solution(sol[:, i], prob.times, prob.dimensions, prob.kwargs.isoperket) for i in eachindex(sol)] # map is type unstable
     return reshape(sol_vec, size(iter))
 end
 mesolve_map(
