@@ -183,13 +183,13 @@ end
 (TBA)
 """
 function sesolve_map(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::Vector{<:QuantumObject{Ket}},
+    H::Union{QuantumObjectEvolution{Operator},Tuple},
+    ψ0::AbstractVector{<:QuantumObject{Ket}},
     tlist::AbstractVector;
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = [NullParameters()],
+    params::Tuple = (NullParameters(),),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 )
@@ -214,7 +214,13 @@ function sesolve_map(
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(
             prob.prob,
-            prob_func = (prob, i, repeat) -> remake(prob, u0 = iter[i][1], p = iter[i][2:end]),
+            prob_func = (prob, i, repeat) -> remake(
+                prob,
+                f = deepcopy(prob.f.f),
+                u0 = iter[i][1],
+                p = iter[i][2:end],
+                callback = haskey(prob.kwargs, :callback) ? deepcopy(prob.kwargs[:callback]) : nothing,
+            ),
             safetycopy = false,
         ),
         prob.times,
