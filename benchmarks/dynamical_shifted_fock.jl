@@ -38,41 +38,41 @@ function benchmark_dsf!(SUITE)
     dsf_params = (Δ = Δ, F = F, κ = κ, U = U, J = J)
 
     SUITE["Time Evolution"]["Dynamical Shifted Fock"]["mesolve"] = @benchmarkable dsf_mesolve(
-        H_dsf,
+        $H_dsf,
         $ψ0,
         $tlist,
-        c_ops_dsf,
+        $c_ops_dsf,
         $op_list,
         $α0_l,
         $dsf_params,
-        e_ops = e_ops_dsf,
+        e_ops = $e_ops_dsf,
         progress_bar = Val(false),
     )
 
     SUITE["Time Evolution"]["Dynamical Shifted Fock"]["mcsolve"]["Serial"] = @benchmarkable dsf_mcsolve(
-        H_dsf,
+        $H_dsf,
         $ψ0,
         $tlist,
-        c_ops_dsf,
+        $c_ops_dsf,
         $op_list,
         $α0_l,
         $dsf_params,
         ntraj = 100,
-        e_ops = e_ops_dsf,
+        e_ops = $e_ops_dsf,
         progress_bar = Val(false),
         ensemblealg = EnsembleSerial(),
     )
 
     SUITE["Time Evolution"]["Dynamical Shifted Fock"]["mcsolve"]["Multithreaded"] = @benchmarkable dsf_mcsolve(
-        H_dsf,
+        $H_dsf,
         $ψ0,
         $tlist,
-        c_ops_dsf,
+        $c_ops_dsf,
         $op_list,
         $α0_l,
         $dsf_params,
         ntraj = 100,
-        e_ops = e_ops_dsf,
+        e_ops = $e_ops_dsf,
         progress_bar = Val(false),
         ensemblealg = EnsembleThreads(),
     )
