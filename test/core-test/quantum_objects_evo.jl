@@ -80,8 +80,8 @@
         @test (a2 + 2).data == a2.data + 2 * I
         @test a2 * 2 == 2 * a2
 
-        zero_like = zero(a2)
-        iden_like = one(a3)
+        zero_like = qzero_like(a2)
+        iden_like = qeye_like(a3)
         zero_array = NullOperator(100)
         iden_array = IdentityOperator(100)
         @test zero_like == QobjEvo(zero_array, type = a2.type, dims = a2.dims)

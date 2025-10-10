@@ -10,8 +10,8 @@ Here is a table that summarizes all the supported linear algebra functions and a
 
 | **Description** | **Function call** | **Synonyms** |
 |:----------------|:------------------|:-------------|
-| zero-like array | [`zero(Q)`](@ref zero) | - |
-| identity-like matrix | [`one(Q)`](@ref one) | - |
+| zero-like array | [`zero(Q)`](@ref zero) | [`qzero_like(Q)`](@ref qzero_like) |
+| identity-like matrix | [`one(Q)`](@ref one) | [`qeye_like(Q)`](@ref qeye_like) |
 | conjugate | [`conj(Q)`](@ref conj) | - |
 | transpose | [`transpose(Q)`](@ref transpose) | [`trans(Q)`](@ref trans) |
 | conjugate transposition | [`adjoint(Q)`](@ref adjoint) | [`Q'`](@ref adjoint), [`dag(Q)`](@ref dag) |
