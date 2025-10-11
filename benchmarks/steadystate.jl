@@ -11,5 +11,9 @@ function benchmark_steadystate!(SUITE)
 
     SUITE["Steadystate"]["Direct"] = @benchmarkable steadystate($H, $c_ops)
 
+    SUITE["Steadystate"]["Iterative"] = @benchmarkable steadystate($H, $c_ops; solver = SteadyStateLinearSolver())
+
+    SUITE["Steadystate"]["ODE"] = @benchmarkable steadystate($H, $c_ops; solver = SteadyStateODESolver())
+
     return nothing
 end
