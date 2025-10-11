@@ -139,7 +139,7 @@ Return the Callback that is responsible for saving the expectation values of the
 =#
 function _get_save_callback(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
-    if hasproperty(kwargs, :callback)
+    if hasproperty(kwargs, :callback) && !isnothing(kwargs.callback)
         return _get_save_callback(kwargs.callback, method)
     else
         return nothing

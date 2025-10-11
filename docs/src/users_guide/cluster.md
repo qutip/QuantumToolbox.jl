@@ -193,72 +193,35 @@ flush(stdout)
 end
 
 @everywhere begin
-    const Nc = 20
-    const ωc = 1.0
-    const g = 0.05
-    const γ = 0.01
-    const F = 0.01
+    Nc = 20
+    ωc = 1.0
+    g = 0.05
+    γ = 0.01
+    F = 0.01
 
-    const a = tensor(destroy(Nc), qeye(2))
+    a = tensor(destroy(Nc), qeye(2))
 
-    const σm = tensor(qeye(Nc), sigmam())
-    const σp = tensor(qeye(Nc), sigmap())
+    σm = tensor(qeye(Nc), sigmam())
+    σp = tensor(qeye(Nc), sigmap())
+    σz = tensor(qeye(Nc), sigmaz())
 
-    H(ωq) = ωc * a' * a + ωq * tensor(num(Nc), qeye(2)) + g * (a' * σm + a * σp)
+    ωq_fun(p, t) = p[1] # ωq
+    drive_fun(p, t) = p[3] * cos(p[2] * t) # F cos(ωd t)
 
-    coef(p, t) = p.F * cos(p.ωd * t) # coefficient for the time-dependent term
+    H = ωc * a' * a + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σp) + QobjEvo(a + a', drive_fun)
 
-    const c_ops = [sqrt(γ) * a, sqrt(γ) * σm]
-    const e_ops = [a' * a]
+    c_ops = [sqrt(γ) * a, sqrt(γ) * σm]
+    e_ops = [a' * a]
 end
 
-# Define the ODE problem and the EnsembleProblem generation function
+ωq_list = range(ωc - 3*g, ωc + 3*g, 100)
+ωd_list = range(ωc - 3*g, ωc + 3*g, 100)
+F_list = [F]
 
-@everywhere begin
-    ωq_list = range(ωc - 3*g, ωc + 3*g, 100)
-    ωd_list = range(ωc - 3*g, ωc + 3*g, 100)
-
-    const iter = collect(Iterators.product(ωq_list, ωd_list))
-
-    function my_prob_func(prob, i, repeat, channel)
-        ωq, ωd = iter[i]
-        H_i = H(ωq)
-        H_d_i = H_i + QobjEvo(a + a', coef) # Hamiltonian with a driving term
-
-        L = liouvillian(H_d_i, c_ops).data # Make the Liouvillian
-
-        put!(channel, true) # Update the progress bar channel
-
-        remake(prob, f=L, p=(F = F, ωd = ωd))
-    end
-end
-
-ωq, ωd = iter[1]
-H0 = H(ωq) + QobjEvo(a + a', coef)
-ψ0 = tensor(fock(Nc, 0), basis(2, 1)) # Ground State
+ψ0 = tensor(fock(Nc, 0), basis(2, 1))
 tlist = range(0, 20 / γ, 1000)
 
-prob = mesolveProblem(H0, ψ0, tlist, c_ops, e_ops=e_ops, progress_bar=Val(false), params=(F = F, ωd = ωd))
-
-### Just to print the progress bar
-progr = ProgressBar(length(iter))
-progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
-###
-ens_prob = EnsembleProblem(prob.prob, prob_func=(prob, i, repeat) -> my_prob_func(prob, i, repeat, progr_channel))
-
-
-@sync begin
-    @async while take!(progr_channel)
-        next!(progr)
-    end
-
-    @async begin
-        sol = solve(ens_prob, Tsit5(), EnsembleSplitThreads(), trajectories = length(iter))
-        put!(progr_channel, false)
-    end
-end
+sol = mesolve_map(H, ψ0, tlist, c_ops; e_ops = e_ops, params = (ωq_list, ωd_list, F_list), ensemblealg = EnsembleSplitThreads())
 ```
 
-We are using the [`mesolveProblem`](@ref) function to define the master equation problem. We added some code to manage the progress bar, which is updated through a `RemoteChannel`. The `prob_func` argument of the `EnsembleProblem` function is used to define the function that generates the problem for each iteration. The `iter` variable contains the product of the `ωq_list` and `ωd_list` lists, which are used to sweep over the parameters. The `sol = solve(ens_prob, Tsit5(), EnsembleDistributed(), trajectories=length(iter))` command is used to solve the problem with the distributed ensemble method. The output of the script will be printed in the `output.out` file, which contains an output similar to the previous example.
-
-
+Notice that we are using the [`mesolve_map`](@ref) function, which internally uses the `EnsembleProblem` function to parallelize the computation. The result is an array of `TimeEvolutionSol` objects, where each element corresponds to a specific combination of parameters. One can access the solution for a specific combination of parameters using indexing. For example, `sol[1, 1, 1].expect` will give the expectation values for the first combination of `ωq`, `ωd`, and `F`.

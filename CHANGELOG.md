@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Fix `cite()` bibtex output. ([#552])
+- Implement `sesolve_map` and `mesolve_map` for solving multiple initial states and parameter sets in parallel. ([#554])
 - Add `qeye_like` and `qzero_like`, which are synonyms of `one` and `zero`. ([#555])
 
 ## [v0.36.0]
@@ -327,4 +328,5 @@ Release date: 2024-11-13
 [#544]: https://github.com/qutip/QuantumToolbox.jl/issues/544
 [#546]: https://github.com/qutip/QuantumToolbox.jl/issues/546
 [#552]: https://github.com/qutip/QuantumToolbox.jl/issues/552
+[#554]: https://github.com/qutip/QuantumToolbox.jl/issues/554
 [#555]: https://github.com/qutip/QuantumToolbox.jl/issues/555

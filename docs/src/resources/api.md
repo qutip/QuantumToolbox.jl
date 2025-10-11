@@ -215,6 +215,8 @@ mesolve
 mcsolve
 ssesolve
 smesolve
+sesolve_map
+mesolve_map
 dfd_mesolve
 liouvillian
 liouvillian_generalized

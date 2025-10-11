@@ -98,7 +98,8 @@ end
     _z_c_op = √γ * sigmaz()
     _x_a_op = (sigmax(), spectra)
 
-    arg_sets = [[[_m_c_op], [], [_x_a_op]], [[_m_c_op], [_m_c_op], []], [[_m_c_op, _z_c_op], [_z_c_op], [_x_a_op]]]
+    arg_sets =
+        (([_m_c_op], nothing, [_x_a_op]), ([_m_c_op], [_m_c_op], nothing), ([_m_c_op, _z_c_op], [_z_c_op], [_x_a_op]))
 
     δ = 0
     ϵ = 0.5 * 2π
