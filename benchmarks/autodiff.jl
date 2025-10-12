@@ -60,10 +60,6 @@ function benchmark_autodiff!(SUITE)
     params_sesolve = [1.0, 1.0]
     params_mesolve = [1.0, 1.0, 1.0]
 
-    # Pre-allocate gradient arrays for Enzyme
-    dparams_sesolve = Enzyme.make_zero(params_sesolve)
-    dparams_mesolve = Enzyme.make_zero(params_mesolve)
-
     # Benchmark sesolve - Forward
     SUITE["Autodiff"]["sesolve"]["Forward"] = @benchmarkable ForwardDiff.gradient($my_f_sesolve_direct, $params_sesolve)
 
@@ -75,8 +71,8 @@ function benchmark_autodiff!(SUITE)
         Enzyme.set_runtime_activity(Enzyme.Reverse),
         Const($my_f_sesolve),
         Active,
-        Duplicated($params_sesolve, $dparams_sesolve),
-    )
+        Duplicated($params_sesolve, dparams_sesolve),
+    ) setup=(dparams_sesolve = Enzyme.make_zero($params_sesolve))
 
     # Benchmark mesolve - Forward
     SUITE["Autodiff"]["mesolve"]["Forward"] = @benchmarkable ForwardDiff.gradient($my_f_mesolve_direct, $params_mesolve)
@@ -89,8 +85,8 @@ function benchmark_autodiff!(SUITE)
         Enzyme.set_runtime_activity(Enzyme.Reverse),
         Const($my_f_mesolve),
         Active,
-        Duplicated($params_mesolve, $dparams_mesolve),
-    )
+        Duplicated($params_mesolve, dparams_mesolve),
+    ) setup=(dparams_mesolve = Enzyme.make_zero($params_mesolve))
 
     return nothing
 end
