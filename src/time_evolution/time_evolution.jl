@@ -436,6 +436,18 @@ function _ensemble_dispatch_solve(
     return sol
 end
 
+# For mapped solvers
+function _se_me_map_prob_func(prob, i, repeat, iter)
+    f = deepcopy(prob.f.f)
+    u0 = iter[i][1]
+    p = iter[i][2:end]
+    if haskey(prob.kwargs, :callback)
+        return remake(prob, f = f, u0 = u0, p = p, callback = deepcopy(prob.kwargs[:callback]))
+    else
+        return remake(prob, f = f, u0 = u0, p = p)
+    end
+end
+
 #######################################
 #=
  Stochastic funcs
@@ -452,8 +464,8 @@ function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
     return remake(prob.prob, noise = noise, seed = seed)
 end
 
-# Standard output function
-_stochastic_output_func(sol, i) = (sol, false)
+# Standard output function which does nothing (used for mapped and stochastic solvers)
+_standard_output_func(sol, i) = (sol, false)
 
 #= 
     Define diagonal or non-diagonal noise depending on the type of `sc_ops`.

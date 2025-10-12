@@ -1,6 +1,23 @@
-export sesolveProblem, sesolve
+export sesolveProblem, sesolve, sesolve_map
 
 _sesolve_make_U_QobjEvo(H) = -1im * QuantumObjectEvolution(H, type = Operator())
+
+function _gen_sesolve_solution(sol, times, dimensions)
+    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = dimensions), sol.u)
+
+    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
+
+    return TimeEvolutionSol(
+        times,
+        sol.t,
+        ψt,
+        _get_expvals(sol, SaveFuncSESolve),
+        sol.retcode,
+        sol.alg,
+        kwargs.abstol,
+        kwargs.reltol,
+    )
+end
 
 @doc raw"""
     sesolveProblem(
@@ -157,18 +174,105 @@ end
 function sesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5(); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
-    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = prob.dimensions), sol.u)
-
-    kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
-
-    return TimeEvolutionSol(
-        prob.times,
-        sol.t,
-        ψt,
-        _get_expvals(sol, SaveFuncSESolve),
-        sol.retcode,
-        sol.alg,
-        kwargs.abstol,
-        kwargs.reltol,
-    )
+    return _gen_sesolve_solution(sol, prob.times, prob.dimensions)
 end
+
+@doc raw"""
+    sesolve_map(
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::Union{QuantumObject{Ket},AbstractVector{<:QuantumObject{Ket}}},
+        tlist::AbstractVector;
+        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        params::Union{NullParameters,Tuple} = NullParameters(),
+        progress_bar::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
+
+Solve the Schrödinger equation for multiple initial states and parameter sets using ensemble simulation.
+
+This function computes the time evolution for all combinations (Cartesian product) of initial states and parameter sets, solving the Schrödinger equation (see [`sesolve`](@ref)):
+
+```math
+\frac{\partial}{\partial t} |\psi(t)\rangle = -i \hat{H} |\psi(t)\rangle
+```
+
+for each combination in the ensemble.
+
+# Arguments
+
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state(s) of the system. Can be a single [`QuantumObject`](@ref) or a `Vector` of initial states.
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
+- `alg`: The algorithm for the ODE solver. The default is `Tsit5()`.
+- `ensemblealg`: Ensemble algorithm to use for parallel computation. Default is `EnsembleThreads()`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: A `Tuple` of parameter sets. Each element should be an `AbstractVector` representing the sweep range for that parameter. The function will solve for all combinations of initial states and parameter sets.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `kwargs`: The keyword arguments for the ODEProblem.
+
+# Notes
+
+- The function returns an array of solutions with dimensions matching the Cartesian product of initial states and parameter sets.
+- If `ψ0` is a vector of `m` states and `params = (p1, p2, ...)` where `p1` has length `n1`, `p2` has length `n2`, etc., the output will be of size `(m, n1, n2, ...)`.
+- See [`sesolve`](@ref) for more details.
+
+# Returns
+
+- An array of [`TimeEvolutionSol`](@ref) objects with dimensions `(length(ψ0), length(params[1]), length(params[2]), ...)`.
+"""
+function sesolve_map(
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::AbstractVector{<:QuantumObject{Ket}},
+    tlist::AbstractVector;
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+    params::Union{NullParameters,Tuple} = NullParameters(),
+    progress_bar::Union{Val,Bool} = Val(true),
+    kwargs...,
+)
+    # mapping initial states and parameters
+    ψ0_iter = map(get_data, ψ0)
+    iter =
+        params isa NullParameters ? collect(Iterators.product(ψ0_iter, [params])) :
+        collect(Iterators.product(ψ0_iter, params...))
+    ntraj = length(iter)
+
+    # we disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
+    prob = sesolveProblem(
+        H,
+        first(ψ0),
+        tlist;
+        e_ops = e_ops,
+        params = first(iter)[2:end],
+        progress_bar = Val(false),
+        kwargs...,
+    )
+
+    # generate and solve ensemble problem
+    _output_func = _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _standard_output_func) # setup global progress bar
+    ens_prob = TimeEvolutionProblem(
+        EnsembleProblem(
+            prob.prob,
+            prob_func = (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter),
+            output_func = _output_func[1],
+            safetycopy = false,
+        ),
+        prob.times,
+        prob.dimensions,
+        (progr = _output_func[2], channel = _output_func[3]),
+    )
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
+
+    # handle solution and make it become an Array of TimeEvolutionSol
+    sol_vec = [_gen_sesolve_solution(sol[:, i], prob.times, prob.dimensions) for i in eachindex(sol)] # map is type unstable
+    if params isa NullParameters # if no parameters specified, just return a Vector
+        return sol_vec
+    else
+        return reshape(sol_vec, size(iter))
+    end
+end
+sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{Ket}, tlist::AbstractVector; kwargs...) =
+    sesolve_map(H, [ψ0], tlist; kwargs...)

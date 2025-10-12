@@ -147,6 +147,59 @@ end
     end
 end
 
+@testitem "sesolve_map" setup=[TESetup] begin
+
+    # Get parameters from TESetup to simplify the code
+    N = TESetup.N
+    a = TESetup.a
+    σz = TESetup.σz
+    σm = TESetup.σm
+    e_ops = TESetup.e_ops
+
+    g = 0.01
+
+    ψ_0_e = tensor(fock(N, 0), basis(2, 0))
+    ψ_1_g = tensor(fock(N, 1), basis(2, 1))
+
+    ψ0_list = [ψ_0_e, ψ_1_g]
+    ωc_list = [1, 1.01, 1.02]
+    ωq_list = [0.96, 0.97, 0.98, 0.99]
+
+    tlist = range(0, 20 * 2π / g, 1000)
+
+    ωc_fun(p, t) = p[1]
+    ωq_fun(p, t) = p[2]
+    H = QobjEvo(a' * a, ωc_fun) + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σm')
+
+    sols0 = sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops) # no params, but test progress_bar
+    sols1 = sesolve_map(H, ψ_0_e, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+    sols2 = sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+    @test size(sols0) == (2,)
+    @test sols0 isa Vector{<:TimeEvolutionSol}
+    @test size(sols1) == (1, 3, 4)
+    @test sols1 isa Array{<:TimeEvolutionSol}
+    @test size(sols2) == (2, 3, 4)
+    @test sols2 isa Array{<:TimeEvolutionSol}
+    for (i, ωc) in enumerate(ωc_list)
+        for (j, ωq) in enumerate(ωq_list)
+            sol_0_e = sols2[1, i, j]
+            sol_1_g = sols2[2, i, j]
+
+            ## Analytical solution for the expectation value of a' * a
+            Ω_rabi = sqrt(g^2 + ((ωc - ωq) / 2)^2)
+            amp_rabi = g^2 / Ω_rabi^2
+
+            @test sol_0_e.expect[1, :] ≈ amp_rabi .* sin.(Ω_rabi * tlist) .^ 2 atol = 1e-2
+            @test sol_1_g.expect[1, :] ≈ 1 .- amp_rabi .* sin.(Ω_rabi * tlist) .^ 2 atol = 1e-2
+        end
+    end
+
+    @testset "Type Inference sesolve_map" begin
+        @inferred sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(false)) # no params
+        @inferred sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+    end
+end
+
 @testitem "mesolve" setup=[TESetup] begin
     using SciMLOperators
 
@@ -243,6 +296,95 @@ end
         @inferred mesolve(TESetup.H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
         @inferred mesolve(TESetup.H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
         @inferred mesolve(TESetup.L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+    end
+end
+
+@testitem "mesolve_map" setup=[TESetup] begin
+
+    # Get parameters from TESetup to simplify the code
+    N = TESetup.N
+    a = TESetup.a
+    σz = TESetup.σz
+    σm = TESetup.σm
+    ψ0 = TESetup.ψ0
+    c_ops = TESetup.c_ops
+    e_ops = TESetup.e_ops
+    γ = TESetup.γ
+    nth = TESetup.nth
+
+    g = 0.01
+
+    ψ_0_e = tensor(fock(N, 0), basis(2, 0))
+    ψ_1_g = tensor(fock(N, 1), basis(2, 1))
+
+    ψ0_list = [ψ_0_e, ψ_1_g]
+    ωc_list = [1, 1.01, 1.02]
+    ωq_list = [0.96, 0.97, 0.98, 0.99]
+
+    tlist = range(0, 10 / γ, 100)
+
+    ωc_fun(p, t) = p[1]
+    ωq_fun(p, t) = p[2]
+    H = QobjEvo(a' * a, ωc_fun) + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σm')
+
+    # Test with multiple initial states but no params (this also tests progress_bar)
+    sols0 = mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops)
+    # Test with single initial state
+    sols1 = mesolve_map(H, ψ_0_e, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+    # Test with multiple initial states
+    sols2 = mesolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+
+    # Test redirect to sesolve_map when c_ops is nothing
+    sols3 = mesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+
+    @test size(sols0) == (2,)
+    @test sols0 isa Vector{<:TimeEvolutionSol}
+    @test size(sols1) == (1, 3, 4)
+    @test sols1 isa Array{<:TimeEvolutionSol}
+    @test size(sols2) == (2, 3, 4)
+    @test sols2 isa Array{<:TimeEvolutionSol}
+    @test size(sols3) == (2, 3, 4)
+    @test sols3 isa Array{<:TimeEvolutionSol}
+
+    # Verify that solutions make physical sense
+    for (i, ωc) in enumerate(ωc_list)
+        for (j, ωq) in enumerate(ωq_list)
+            sol_0_e = sols2[1, i, j]
+            sol_1_g = sols2[2, i, j]
+
+            # Check that expectation values are bounded and physical (take real part for physical observables)
+            @test all(x -> real(x) >= -1e-4, sol_0_e.expect[1, :]) # a'a should be non-negative (with small tolerance)
+            @test all(x -> real(x) >= -1e-4, sol_1_g.expect[1, :])
+        end
+    end
+
+    # Test with OperatorKet input
+    ρ0 = operator_to_vector(ket2dm(ψ_0_e))
+    ρ0_list = [operator_to_vector(ket2dm(ψ_0_e)), operator_to_vector(ket2dm(ψ_1_g))]
+    sols4 = mesolve_map(H, ρ0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+
+    @test size(sols4) == (2, 3, 4)
+    @test all(isoperket.(getfield.(sols4, :states) .|> first))
+
+    # Test with Operator input (density matrix)
+    dm0_list = [ket2dm(ψ_0_e), ket2dm(ψ_1_g)]
+    sols5 =
+        mesolve_map(H, dm0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+
+    @test size(sols5) == (2, 3, 4)
+    @test sols5 isa Array{<:TimeEvolutionSol}
+
+    @testset "Type Inference mesolve_map" begin
+        @inferred mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops, progress_bar = Val(false)) # no params
+        @inferred mesolve_map(
+            H,
+            ψ0_list,
+            tlist,
+            c_ops;
+            e_ops = e_ops,
+            params = (ωc_list, ωq_list),
+            progress_bar = Val(false),
+        )
     end
 end
 
