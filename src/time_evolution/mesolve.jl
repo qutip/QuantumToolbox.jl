@@ -240,7 +240,7 @@ end
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::Tuple = (NullParameters(),),
+        params::Union{NullParameters,Tuple} = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
         kwargs...,
     )
@@ -293,7 +293,7 @@ function mesolve_map(
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::Tuple = (NullParameters(),),
+    params::Union{NullParameters,Tuple} = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet}}
@@ -319,7 +319,9 @@ function mesolve_map(
             to_dense(T, mat2vec(ket2dm(state).data))
         end
     end
-    iter = collect(Iterators.product(ψ0_iter, params...))
+    iter =
+        params isa NullParameters ? collect(Iterators.product(ψ0_iter, [params])) :
+        collect(Iterators.product(ψ0_iter, params...))
     ntraj = length(iter)
 
     # we disable the progress bar of the mesolveProblem because we use a global progress bar for all the trajectories
@@ -352,7 +354,11 @@ function mesolve_map(
     # handle solution and make it become an Array of TimeEvolutionSol
     sol_vec =
         [_gen_mesolve_solution(sol[:, i], prob.times, prob.dimensions, prob.kwargs.isoperket) for i in eachindex(sol)] # map is type unstable
-    return reshape(sol_vec, size(iter))
+    if params isa NullParameters # if no parameters specified, just return a Vector
+        return sol_vec
+    else
+        return reshape(sol_vec, size(iter))
+    end
 end
 mesolve_map(
     H::Union{AbstractQuantumObject{HOpType},Tuple},

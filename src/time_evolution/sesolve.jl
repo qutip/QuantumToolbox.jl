@@ -185,7 +185,7 @@ end
         alg::OrdinaryDiffEqAlgorithm = Tsit5(),
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-        params::Tuple = (NullParameters(),),
+        params::Union{NullParameters,Tuple} = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
         kwargs...,
     )
@@ -229,13 +229,15 @@ function sesolve_map(
     alg::OrdinaryDiffEqAlgorithm = Tsit5(),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::Tuple = (NullParameters(),),
+    params::Union{NullParameters,Tuple} = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 )
     # mapping initial states and parameters
     ψ0_iter = map(get_data, ψ0)
-    iter = collect(Iterators.product(ψ0_iter, params...))
+    iter =
+        params isa NullParameters ? collect(Iterators.product(ψ0_iter, [params])) :
+        collect(Iterators.product(ψ0_iter, params...))
     ntraj = length(iter)
 
     # we disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
@@ -266,7 +268,11 @@ function sesolve_map(
 
     # handle solution and make it become an Array of TimeEvolutionSol
     sol_vec = [_gen_sesolve_solution(sol[:, i], prob.times, prob.dimensions) for i in eachindex(sol)] # map is type unstable
-    return reshape(sol_vec, size(iter))
+    if params isa NullParameters # if no parameters specified, just return a Vector
+        return sol_vec
+    else
+        return reshape(sol_vec, size(iter))
+    end
 end
 sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{Ket}, tlist::AbstractVector; kwargs...) =
     sesolve_map(H, [ψ0], tlist; kwargs...)

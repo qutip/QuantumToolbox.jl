@@ -171,9 +171,11 @@ end
     ωq_fun(p, t) = p[2]
     H = QobjEvo(a' * a, ωc_fun) + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σm')
 
-    sols1 = sesolve_map(H, ψ_0_e, tlist; e_ops = e_ops, params = (ωc_list, ωq_list))
+    sols0 = sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops) # no params, but test progress_bar
+    sols1 = sesolve_map(H, ψ_0_e, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     sols2 = sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
-
+    @test size(sols0) == (2,)
+    @test sols0 isa Vector{<:TimeEvolutionSol}
     @test size(sols1) == (1, 3, 4)
     @test sols1 isa Array{<:TimeEvolutionSol}
     @test size(sols2) == (2, 3, 4)
@@ -193,6 +195,7 @@ end
     end
 
     @testset "Type Inference sesolve_map" begin
+        @inferred sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(false)) # no params
         @inferred sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     end
 end
@@ -324,14 +327,18 @@ end
     ωq_fun(p, t) = p[2]
     H = QobjEvo(a' * a, ωc_fun) + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σm')
 
+    # Test with multiple initial states but no params (this also tests progress_bar)
+    sols0 = mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops)
     # Test with single initial state
-    sols1 = mesolve_map(H, ψ_0_e, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list))
+    sols1 = mesolve_map(H, ψ_0_e, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     # Test with multiple initial states
     sols2 = mesolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
 
     # Test redirect to sesolve_map when c_ops is nothing
     sols3 = mesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
 
+    @test size(sols0) == (2,)
+    @test sols0 isa Vector{<:TimeEvolutionSol}
     @test size(sols1) == (1, 3, 4)
     @test sols1 isa Array{<:TimeEvolutionSol}
     @test size(sols2) == (2, 3, 4)
@@ -368,6 +375,7 @@ end
     @test sols5 isa Array{<:TimeEvolutionSol}
 
     @testset "Type Inference mesolve_map" begin
+        @inferred mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops, progress_bar = Val(false)) # no params
         @inferred mesolve_map(
             H,
             ψ0_list,

@@ -5,7 +5,7 @@ using Pkg
 const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext"]
 
 const GROUP = get(ENV, "GROUP", "All")
-(GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP"))
+(GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nThe allowed groups are: $GROUP_LIST\n"))
 
 # Core tests
 if (GROUP == "All") || (GROUP == "Core")
