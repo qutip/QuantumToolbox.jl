@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `cite()` bibtex output. ([#552])
 - Implement `sesolve_map` and `mesolve_map` for solving multiple initial states and parameter sets in parallel. ([#554])
 - Add `qeye_like` and `qzero_like`, which are synonyms of `one` and `zero`. ([#555])
+- Add steadystate and DSF benchmarks. The `SteadyStateODESOlver` tolerances are lowered to `terminate_reltol=1e-4` and `terminate_abstol=1e-6` to improve speed at the cost of accuracy. ([#557])
 
 ## [v0.36.0]
 Release date: 2025-09-29
@@ -330,3 +331,4 @@ Release date: 2024-11-13
 [#552]: https://github.com/qutip/QuantumToolbox.jl/issues/552
 [#554]: https://github.com/qutip/QuantumToolbox.jl/issues/554
 [#555]: https://github.com/qutip/QuantumToolbox.jl/issues/555
+[#557]: https://github.com/qutip/QuantumToolbox.jl/issues/557

@@ -160,7 +160,7 @@ See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 function liouvillian(
     H::AbstractQuantumObject{OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    Id_cache = I(prod(H.dimensions)),
+    Id_cache::Diagonal = I(prod(H.dimensions)),
 ) where {OpType<:Union{Operator,SuperOperator}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
