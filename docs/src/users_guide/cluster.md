@@ -218,10 +218,13 @@ end
 ωd_list = range(ωc - 3*g, ωc + 3*g, 100)
 F_list = [F]
 
-ψ0 = tensor(fock(Nc, 0), basis(2, 1))
+ψ_list = [
+    tensor(fock(Nc, 0), basis(2, 0)),
+    tensor(fock(Nc, 0), basis(2, 1))
+]
 tlist = range(0, 20 / γ, 1000)
 
-sol = mesolve_map(H, ψ0, tlist, c_ops; e_ops = e_ops, params = (ωq_list, ωd_list, F_list), ensemblealg = EnsembleSplitThreads())
+sol = mesolve_map(H, ψ_list, tlist, c_ops; e_ops = e_ops, params = (ωq_list, ωd_list, F_list), ensemblealg = EnsembleSplitThreads())
 ```
 
-Notice that we are using the [`mesolve_map`](@ref) function, which internally uses the `EnsembleProblem` function to parallelize the computation. The result is an array of `TimeEvolutionSol` objects, where each element corresponds to a specific combination of parameters. One can access the solution for a specific combination of parameters using indexing. For example, `sol[1, 1, 1].expect` will give the expectation values for the first combination of `ωq`, `ωd`, and `F`.
+Notice that we are using the [`mesolve_map`](@ref) function, which internally uses the `SciMLBase.EnsembleProblem` function to parallelize the computation of [`mesolveProblem`](@ref). The result is an array of `TimeEvolutionSol` objects, where each element corresponds to a specific combination of initial states and parameters. One can access the solution for a specific combination of initial states and parameters using indexing. For example, `sol[i,j,k,l].expect` will give the expectation values for the case of `ψ_list[i]`, `ωq_list[j]`, `ωd_list[k]`, and `F_list[l]`.
