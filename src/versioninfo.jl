@@ -89,7 +89,7 @@ function cite(io::IO = stdout)
       author = {Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},
       journal = {{Quantum}},
       issn = {2521-327X},
-      publisher = {{Verein zur F{\"{o}}rderung des Open Access Publizierens in den Quantenwissenschaften}},
+      publisher = {{Verein zur F{\\"{o}}rderung des Open Access Publizierens in den Quantenwissenschaften}},
       volume = {9},
       pages = {1866},
       month = sep,
@@ -98,5 +98,5 @@ function cite(io::IO = stdout)
       url = {https://doi.org/10.22331/q-2025-09-29-1866}
     }
     """
-    return println(io, citation)
+    return print(io, citation)
 end

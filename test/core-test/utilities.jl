@@ -10,14 +10,14 @@
           """  author = {Mercurio, Alberto and Huang, Yi-Te and Cai, Li-Xun and Chen, Yueh-Nan and Savona, Vincenzo and Nori, Franco},\n""" *
           """  journal = {{Quantum}},\n""" *
           """  issn = {2521-327X},\n""" *
-          """  publisher = {{Verein zur F{\"{o}}rderung des Open Access Publizierens in den Quantenwissenschaften}},\n""" *
+          """  publisher = {{Verein zur F{\\"{o}}rderung des Open Access Publizierens in den Quantenwissenschaften}},\n""" *
           """  volume = {9},\n""" *
           """  pages = {1866},\n""" *
           """  month = sep,\n""" *
           """  year = {2025},\n""" *
           """  doi = {10.22331/q-2025-09-29-1866},\n""" *
           """  url = {https://doi.org/10.22331/q-2025-09-29-1866}\n""" *
-          """}\n\n"""
+          """}\n"""
 
     @testset "n_thermal" begin
         ω1 = rand(Float64)

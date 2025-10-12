@@ -161,7 +161,7 @@ See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 function liouvillian(
     H::AbstractQuantumObject{OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    Id_cache = I(prod(H.dimensions)),
+    Id_cache::Diagonal = I(prod(H.dimensions)),
 ) where {OpType<:Union{Operator,SuperOperator}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
@@ -180,4 +180,6 @@ liouvillian(H::AbstractQuantumObject{Operator}, Id_cache::Diagonal = I(prod(H.di
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal) = H
 
-_sum_lindblad_dissipators(c_ops, Id_cache::Diagonal) = sum(op -> lindblad_dissipator(op, Id_cache), c_ops; init = 0)
+function _sum_lindblad_dissipators(c_ops, Id_cache::Diagonal)
+    return sum(op -> lindblad_dissipator(op, Id_cache), c_ops; init = zero(spre(first(c_ops), Id_cache)))
+end

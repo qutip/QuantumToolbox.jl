@@ -188,6 +188,8 @@ logm
 expm
 sinm
 cosm
+qeye_like
+qzero_like
 ```
 
 ## [Time evolution](@id doc-API:Time-evolution)
@@ -213,6 +215,8 @@ mesolve
 mcsolve
 ssesolve
 smesolve
+sesolve_map
+mesolve_map
 dfd_mesolve
 liouvillian
 liouvillian_generalized
