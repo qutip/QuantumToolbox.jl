@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Introduce new methods of `sesolve_map` and `mesolve_map` for advanced usage. Users can now customize their own `iter`ator structure, `prob_func` and `output_func`. ([#565])
+
 ## [v0.37.0]
 Release date: 2025-10-12
 
@@ -336,3 +338,4 @@ Release date: 2024-11-13
 [#554]: https://github.com/qutip/QuantumToolbox.jl/issues/554
 [#555]: https://github.com/qutip/QuantumToolbox.jl/issues/555
 [#557]: https://github.com/qutip/QuantumToolbox.jl/issues/557
+[#565]: https://github.com/qutip/QuantumToolbox.jl/issues/565
