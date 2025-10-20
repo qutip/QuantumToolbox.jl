@@ -1,4 +1,8 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 QuantumToolbox = "6c2fb7c5-b903-41d2-bc5e-5a7c320b9fab"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
+SciMLSensitivity = "1ed8b502-d754-442c-8d5d-10ac956f44a1"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"

@@ -3,7 +3,7 @@ export bloch_redfield_tensor, brterm, brmesolve
 @doc raw"""
     bloch_redfield_tensor(
         H::QuantumObject{Operator},
-        a_ops::Union{AbstractVector, Tuple},
+        a_ops::Union{AbstractVector, Tuple, Nothing},
         c_ops::Union{AbstractVector, Tuple, Nothing}=nothing;
         sec_cutoff::Real=0.1,
         fock_basis::Union{Val,Bool}=Val(false)
@@ -28,7 +28,7 @@ The return depends on `fock_basis`.
 """
 function bloch_redfield_tensor(
     H::QuantumObject{Operator},
-    a_ops::Union{AbstractVector,Tuple},
+    a_ops::Union{AbstractVector,Tuple,Nothing},
     c_ops::Union{AbstractVector,Tuple,Nothing} = nothing;
     sec_cutoff::Real = 0.1,
     fock_basis::Union{Val,Bool} = Val(false),
@@ -44,7 +44,9 @@ function bloch_redfield_tensor(
     # Check whether we can rotate the terms to the eigenbasis directly in the Hamiltonian space
     fock_basis_hamiltonian = getVal(fock_basis) && sec_cutoff == -1
 
-    R = isempty(a_ops) ? 0 : sum(x -> _brterm(rst, x[1], x[2], sec_cutoff, fock_basis_hamiltonian), a_ops)
+    R =
+        (isnothing(a_ops) || isempty(a_ops)) ? 0 :
+        sum(x -> _brterm(rst, x[1], x[2], sec_cutoff, fock_basis_hamiltonian), a_ops)
 
     # If in fock basis, we need to transform the terms back to the fock basis
     # Note: we can transform the terms in the Hamiltonian space only if sec_cutoff is -1
