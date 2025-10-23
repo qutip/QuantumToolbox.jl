@@ -260,7 +260,7 @@ sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{
 # this method is for advanced usage
 # User can define their own iterator structure, prob_func and output_func
 #   - `prob_func`: Function to use for generating the ODEProblem.
-#   - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+#   - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function sesolve_map(

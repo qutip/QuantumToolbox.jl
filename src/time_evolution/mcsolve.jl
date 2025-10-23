@@ -205,7 +205,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -332,7 +332,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `normalize_states`: Whether to normalize the states. Default to `Val(true)`.
 - `kwargs`: The keyword arguments for the ODEProblem.

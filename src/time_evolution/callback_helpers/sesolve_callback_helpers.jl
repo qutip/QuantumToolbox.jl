@@ -2,7 +2,7 @@
 Helper functions for the sesolve callbacks.
 =#
 
-struct SaveFuncSESolve{TE,PT<:Union{Nothing,ProgressBar},IT,TEXPV<:Union{Nothing,AbstractMatrix}} <: AbstractSaveFunc
+struct SaveFuncSESolve{TE,PT<:Union{Nothing,Progress},IT,TEXPV<:Union{Nothing,AbstractMatrix}} <: AbstractSaveFunc
     e_ops::TE
     progr::PT
     iter::IT

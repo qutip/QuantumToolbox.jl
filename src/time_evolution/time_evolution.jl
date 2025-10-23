@@ -376,7 +376,7 @@ function _ensemble_dispatch_output_func(
     output_func,
 ) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
     if getVal(progress_bar)
-        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        progr = Progress(ntraj, showspeed=true, enabled = getVal(progress_bar))
         f = (sol, i) -> _ensemble_output_func_progress(sol, i, progr, output_func)
         return (f, progr, nothing)
     else
@@ -390,7 +390,7 @@ function _ensemble_dispatch_output_func(
     output_func,
 ) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
     if getVal(progress_bar)
-        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        progr = Progress(ntraj, showspeed=true, enabled = getVal(progress_bar))
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
 
         f = (sol, i) -> _ensemble_output_func_distributed(sol, i, progr_channel, output_func)

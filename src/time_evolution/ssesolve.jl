@@ -103,7 +103,7 @@ function ssesolveProblem(
 
     ψ0 = to_dense(_complex_float_type(ψ0), get_data(ψ0))
 
-    progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
+    progr = Progress(length(tlist), showspeed=true, enabled = getVal(progress_bar))
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
@@ -198,7 +198,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 - `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `prob_func`: Function to use for generating the SDEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `store_measurement`: Whether to store the measurement results. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -327,7 +327,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `ntraj`: Number of trajectories to use. Default is `500`.
 - `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `prob_func`: Function to use for generating the SDEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `store_measurement`: Whether to store the measurement results. Default is `Val(false)`.
