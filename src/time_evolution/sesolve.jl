@@ -235,10 +235,11 @@ function sesolve_map(
 )
     # mapping initial states and parameters
     ψ0_iter = map(get_data, ψ0)
-    iter =
-        params isa NullParameters ? collect(Iterators.product(ψ0_iter, [params])) :
-        collect(Iterators.product(ψ0_iter, params...))
-    ntraj = length(iter)
+    if params isa NullParameters
+        iter = collect(Iterators.product(ψ0_iter, [params])) |> vec # convert nx1 Matrix into Vector
+    else
+        iter = collect(Iterators.product(ψ0_iter, params...))
+    end
 
     # we disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
     prob = sesolveProblem(
@@ -251,28 +252,42 @@ function sesolve_map(
         kwargs...,
     )
 
-    # generate and solve ensemble problem
-    _output_func = _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _standard_output_func) # setup global progress bar
+    return sesolve_map(prob, iter, alg, ensemblealg; progress_bar = progress_bar)
+end
+sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{Ket}, tlist::AbstractVector; kwargs...) =
+    sesolve_map(H, [ψ0], tlist; kwargs...)
+
+# this method is for advanced usage
+# User can define their own iterator structure, prob_func and output_func
+#   - `prob_func`: Function to use for generating the ODEProblem.
+#   - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+#
+# Return: An array of TimeEvolutionSol objects with the size same as the given iter.
+function sesolve_map(
+    prob::TimeEvolutionProblem{<:ODEProblem},
+    iter::AbstractArray,
+    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    ensemblealg::EnsembleAlgorithm = EnsembleThreads();
+    prob_func::Union{Function,Nothing} = nothing,
+    output_func::Union{Tuple,Nothing} = nothing,
+    progress_bar::Union{Val,Bool} = Val(true),
+)
+    # generate ensemble problem
+    ntraj = length(iter)
+    _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func
+    _output_func =
+        isnothing(output_func) ?
+        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _standard_output_func) : output_func
     ens_prob = TimeEvolutionProblem(
-        EnsembleProblem(
-            prob.prob,
-            prob_func = (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter),
-            output_func = _output_func[1],
-            safetycopy = false,
-        ),
+        EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob.times,
         prob.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
+
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     # handle solution and make it become an Array of TimeEvolutionSol
     sol_vec = [_gen_sesolve_solution(sol[:, i], prob.times, prob.dimensions) for i in eachindex(sol)] # map is type unstable
-    if params isa NullParameters # if no parameters specified, just return a Vector
-        return sol_vec
-    else
-        return reshape(sol_vec, size(iter))
-    end
+    return reshape(sol_vec, size(iter))
 end
-sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{Ket}, tlist::AbstractVector; kwargs...) =
-    sesolve_map(H, [ψ0], tlist; kwargs...)
