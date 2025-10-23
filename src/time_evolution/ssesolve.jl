@@ -103,7 +103,7 @@ function ssesolveProblem(
 
     ψ0 = to_dense(_complex_float_type(ψ0), get_data(ψ0))
 
-    progr = Progress(length(tlist), showspeed=true, enabled = getVal(progress_bar))
+    progr = Progress(length(tlist), showspeed = true, enabled = getVal(progress_bar))
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
