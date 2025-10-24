@@ -68,12 +68,13 @@
     @test_throws ArgumentError correlation_3op_2t(H, nothing, t_wrong2, t_wrong1, c_ops, Id, a', a)
     @test_throws ArgumentError correlation_3op_2t(H, nothing, t_wrong2, t_wrong2, c_ops, Id, a', a)
 
-    @testset "Deprecated Errors" begin
+    @testset "Deprecated Errors and Warnings" begin
         ρ0 = rand_dm(N)
+        t_l = [0.0, 1.0] # make time list shorter
         @test_throws ErrorException FFTCorrelation()
-        @test_throws ErrorException correlation_3op_2t(H, ρ0, t_l, t_l, a, a', a, c_ops)
-        @test_throws ErrorException correlation_3op_1t(H, ρ0, t_l, a, a', a, c_ops)
-        @test_throws ErrorException correlation_2op_2t(H, ρ0, t_l, t_l, a', a, c_ops)
-        @test_throws ErrorException correlation_2op_1t(H, ρ0, t_l, a', a, c_ops)
+        @test_logs (:warn,) correlation_3op_2t(H, ρ0, t_l, t_l, a, a', a, c_ops; progress_bar = Val(false))
+        @test_logs (:warn,) correlation_3op_1t(H, ρ0, t_l, a, a', a, c_ops; progress_bar = Val(false))
+        @test_logs (:warn,) correlation_2op_2t(H, ρ0, t_l, t_l, a', a, c_ops; progress_bar = Val(false))
+        @test_logs (:warn,) correlation_2op_1t(H, ρ0, t_l, a', a, c_ops; progress_bar = Val(false))
     end
 end

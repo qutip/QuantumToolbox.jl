@@ -60,7 +60,7 @@
     tl = range(0, 10, 100)
 
     # Full solution
-    sol_me = mesolve(H, ρ, tl, c_ops; e_ops = [e_ops...])
+    sol_me = mesolve(H, ρ, tl, c_ops; e_ops = [e_ops...], progress_bar = Val(false))
     Strue = entropy_vn(sol_me.states[end], base = 2) / latt.N
 
     # Low rank solution
@@ -82,4 +82,6 @@
 
     @test real(sol_me.expect[1, :]) ≈ real(sol_lr.expect[1, :]) atol = 1e-1
     @test S_lr ≈ Strue atol = 1e-1
+
+    @test_logs (:warn,) MultiSiteOperator(latt, 1 => sigmax()) # deprecated warning
 end
