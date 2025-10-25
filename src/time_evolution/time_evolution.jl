@@ -400,7 +400,7 @@ function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
-    ens_prob_mc::TimeEvolutionProblem,
+    ens_prob::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
     ensemblealg::ET,
     ntraj::Int,
@@ -408,25 +408,25 @@ function _ensemble_dispatch_solve(
     sol = nothing
 
     @sync begin
-        @async while take!(ens_prob_mc.kwargs.channel)
-            next!(ens_prob_mc.kwargs.progr)
+        @async while take!(ens_prob.kwargs.channel)
+            next!(ens_prob.kwargs.progr)
         end
 
         @async begin
-            sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
-            put!(ens_prob_mc.kwargs.channel, false)
+            sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
+            put!(ens_prob.kwargs.channel, false)
         end
     end
 
     return sol
 end
 function _ensemble_dispatch_solve(
-    ens_prob_mc::TimeEvolutionProblem,
+    ens_prob::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
     ensemblealg,
     ntraj::Int,
 )
-    sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
+    sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
     return sol
 end
 
