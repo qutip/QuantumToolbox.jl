@@ -104,6 +104,8 @@ In order to get a better experience and take full advantage of `QuantumToolbox`
   - [`Zygote.jl`](https://github.com/FluxML/Zygote.jl)
   - [`Enzyme.jl`](https://github.com/EnzymeAD/Enzyme.jl)
   - [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl)
+- Progress Bars:
+  - [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl)
 - Packages for other advanced usage:
   - [`StaticArrays.jl`](https://github.com/JuliaArrays/StaticArrays.jl)
   - [`SciMLOperators.jl`](https://github.com/SciML/SciMLOperators.jl)
