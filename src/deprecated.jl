@@ -130,3 +130,9 @@ function MultiSiteOperator(args...)
     )
     return multisite_operator(args...)
 end
+
+export ProgressBar
+function ProgressBar(args...)
+    # Use error instead of depwarn, since ProgressBar and Progress have different arguments
+    error("`ProgressBar` is deprecated and will be removed in next major release. Use `Progress` from `ProgressMeter.jl` instead.")
+end
