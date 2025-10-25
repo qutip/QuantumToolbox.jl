@@ -351,9 +351,9 @@
         @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64,Int64}
         @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
 
-        @testset "Deprecated Errors" begin
-            @test_throws ErrorException sparse_to_dense(vs)
-            @test_throws ErrorException dense_to_sparse(vd)
+        @testset "Deprecated Warnings" begin
+            @test_logs (:warn,) sparse_to_dense(vs)
+            @test_logs (:warn,) dense_to_sparse(vd)
         end
     end
 
