@@ -66,8 +66,7 @@ struct TimeEvolutionSol{
     TE<:Union{AbstractMatrix,Nothing},
     RETT<:Enum,
     AlgT<:OrdinaryDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
 }
     times::TT1
     times_states::TT2
@@ -75,8 +74,8 @@ struct TimeEvolutionSol{
     expect::TE
     retcode::RETT
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionSol)
@@ -140,8 +139,7 @@ struct TimeEvolutionMCSol{
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
     AlgT<:OrdinaryDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
 } <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
     times::TT1
@@ -152,8 +150,8 @@ struct TimeEvolutionMCSol{
     col_which::TJW
     converged::Bool
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionMCSol)
@@ -215,8 +213,7 @@ struct TimeEvolutionStochasticSol{
     TE<:Union{AbstractArray,Nothing},
     TEM<:Union{AbstractArray,Nothing},
     AlgT<:StochasticDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
 } <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
     times::TT1
@@ -226,8 +223,8 @@ struct TimeEvolutionStochasticSol{
     measurement::TEM
     converged::Bool
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionStochasticSol)
@@ -408,7 +405,7 @@ function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
-    ens_prob_mc::TimeEvolutionProblem,
+    ens_prob::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
     ensemblealg::ET,
     ntraj::Int,
@@ -416,25 +413,25 @@ function _ensemble_dispatch_solve(
     sol = nothing
 
     @sync begin
-        @async while take!(ens_prob_mc.kwargs.channel)
-            next!(ens_prob_mc.kwargs.progr)
+        @async while take!(ens_prob.kwargs.channel)
+            next!(ens_prob.kwargs.progr)
         end
 
         @async begin
-            sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
-            put!(ens_prob_mc.kwargs.channel, false)
+            sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
+            put!(ens_prob.kwargs.channel, false)
         end
     end
 
     return sol
 end
 function _ensemble_dispatch_solve(
-    ens_prob_mc::TimeEvolutionProblem,
+    ens_prob::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
     ensemblealg,
     ntraj::Int,
 )
-    sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
+    sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
     return sol
 end
 

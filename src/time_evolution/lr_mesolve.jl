@@ -26,8 +26,7 @@ struct TimeEvolutionLRSol{
     TE<:Matrix{ComplexF64},
     RetT<:Enum,
     AlgT<:OrdinaryDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
     TSZB<:AbstractVector,
     TM<:Vector{<:Integer},
 }
@@ -38,8 +37,8 @@ struct TimeEvolutionLRSol{
     fexpect::TE
     retcode::RetT
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
     z::TSZB
     B::TSZB
     M::TM
