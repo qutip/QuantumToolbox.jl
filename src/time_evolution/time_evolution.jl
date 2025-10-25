@@ -60,15 +60,16 @@ A structure storing the results and some information from solving time evolution
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionSol{
-    TT<:AbstractVector{<:Real},
+    TT1<:AbstractVector{<:Real},
+    TT2<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Union{AbstractMatrix,Nothing},
     RETT<:Enum,
     AlgT<:OrdinaryDiffEqAlgorithm,
     TolT<:Real,
 }
-    times::TT
-    times_states::TT
+    times::TT1
+    times_states::TT2
     states::TS
     expect::TE
     retcode::RETT
@@ -131,7 +132,8 @@ We also provide the following functions for statistical analysis of multi-trajec
 - [`std_expect`](@ref)
 """
 struct TimeEvolutionMCSol{
-    TT<:AbstractVector{<:Real},
+    TT1<:AbstractVector{<:Real},
+    TT2<:AbstractVector{<:Real},
     TS<:AbstractVecOrMat,
     TE<:Union{AbstractArray,Nothing},
     TJT<:Vector{<:Vector{<:Real}},
@@ -140,8 +142,8 @@ struct TimeEvolutionMCSol{
     TolT<:Real,
 } <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
-    times::TT
-    times_states::TT
+    times::TT1
+    times_states::TT2
     states::TS
     expect::TE
     col_times::TJT
@@ -205,7 +207,8 @@ We also provide the following functions for statistical analysis of multi-trajec
 - [`std_expect`](@ref)
 """
 struct TimeEvolutionStochasticSol{
-    TT<:AbstractVector{<:Real},
+    TT1<:AbstractVector{<:Real},
+    TT2<:AbstractVector{<:Real},
     TS<:AbstractVecOrMat,
     TE<:Union{AbstractArray,Nothing},
     TEM<:Union{AbstractArray,Nothing},
@@ -213,8 +216,8 @@ struct TimeEvolutionStochasticSol{
     TolT<:Real,
 } <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
-    times::TT
-    times_states::TT
+    times::TT1
+    times_states::TT2
     states::TS
     expect::TE
     measurement::TEM
