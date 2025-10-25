@@ -60,23 +60,21 @@ A structure storing the results and some information from solving time evolution
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionSol{
-    TT1<:AbstractVector{<:Real},
-    TT2<:AbstractVector{<:Real},
+    TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Union{AbstractMatrix,Nothing},
     RETT<:Enum,
     AlgT<:OrdinaryDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
 }
-    times::TT1
-    times_states::TT2
+    times::TT
+    times_states::TT
     states::TS
     expect::TE
     retcode::RETT
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionSol)
@@ -133,27 +131,25 @@ We also provide the following functions for statistical analysis of multi-trajec
 - [`std_expect`](@ref)
 """
 struct TimeEvolutionMCSol{
-    TT1<:AbstractVector{<:Real},
-    TT2<:AbstractVector{<:Real},
+    TT<:AbstractVector{<:Real},
     TS<:AbstractVecOrMat,
     TE<:Union{AbstractArray,Nothing},
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
     AlgT<:OrdinaryDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
 } <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
-    times::TT1
-    times_states::TT2
+    times::TT
+    times_states::TT
     states::TS
     expect::TE
     col_times::TJT
     col_which::TJW
     converged::Bool
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionMCSol)
@@ -209,25 +205,23 @@ We also provide the following functions for statistical analysis of multi-trajec
 - [`std_expect`](@ref)
 """
 struct TimeEvolutionStochasticSol{
-    TT1<:AbstractVector{<:Real},
-    TT2<:AbstractVector{<:Real},
+    TT<:AbstractVector{<:Real},
     TS<:AbstractVecOrMat,
     TE<:Union{AbstractArray,Nothing},
     TEM<:Union{AbstractArray,Nothing},
     AlgT<:StochasticDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
 } <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
-    times::TT1
-    times_states::TT2
+    times::TT
+    times_states::TT
     states::TS
     expect::TE
     measurement::TEM
     converged::Bool
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionStochasticSol)

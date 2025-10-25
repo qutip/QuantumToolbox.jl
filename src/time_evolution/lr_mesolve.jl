@@ -20,26 +20,24 @@ A structure storing the results and some information from solving low-rank maste
 - `B::Vector{QuantumObject}`: The `B` matrix of the low-rank algorithm at each time point.
 """
 struct TimeEvolutionLRSol{
-    TT1<:AbstractVector{<:Real},
-    TT2<:AbstractVector{<:Real},
+    TT<:AbstractVector{<:Real},
     TS<:AbstractVector,
     TE<:Matrix{ComplexF64},
     RetT<:Enum,
     AlgT<:OrdinaryDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
     TSZB<:AbstractVector,
     TM<:Vector{<:Integer},
 }
-    times::TT1
-    times_states::TT2
+    times::TT
+    times_states::TT
     states::TS
     expect::TE
     fexpect::TE
     retcode::RetT
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
     z::TSZB
     B::TSZB
     M::TM
