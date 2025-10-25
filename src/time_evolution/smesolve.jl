@@ -249,7 +249,13 @@ function smesolveEnsembleProblem(
         ) : prob_func
     _output_func =
         output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _standard_output_func) : output_func
+        _ensemble_dispatch_output_func(
+            ensemblealg,
+            progress_bar,
+            ntraj,
+            _standard_output_func;
+            progr_desc = "(smesolve) ",
+        ) : output_func
 
     prob_sme = smesolveProblem(
         H,

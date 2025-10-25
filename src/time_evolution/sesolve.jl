@@ -277,7 +277,13 @@ function sesolve_map(
     _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func
     _output_func =
         isnothing(output_func) ?
-        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _standard_output_func) : output_func
+        _ensemble_dispatch_output_func(
+            ensemblealg,
+            progress_bar,
+            ntraj,
+            _standard_output_func;
+            progr_desc = "(sesolve_map) ",
+        ) : output_func
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob.times,

@@ -238,7 +238,13 @@ function mcsolveEnsembleProblem(
     _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _mcsolve_output_func) : output_func
+        _ensemble_dispatch_output_func(
+            ensemblealg,
+            progress_bar,
+            ntraj,
+            _mcsolve_output_func;
+            progr_desc = "(mcsolve) ",
+        ) : output_func
 
     prob_mc = mcsolveProblem(
         H,

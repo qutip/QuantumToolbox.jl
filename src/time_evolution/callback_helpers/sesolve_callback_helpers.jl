@@ -14,6 +14,8 @@ end
 
 _get_e_ops_data(e_ops, ::Type{SaveFuncSESolve}) = get_data.(e_ops)
 
+_get_progress_desc(::Type{SaveFuncSESolve}) = "(sesolve) "
+
 ##
 
 # When e_ops is a list of operators
