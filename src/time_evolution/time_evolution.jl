@@ -374,7 +374,7 @@ function _ensemble_dispatch_output_func(
     progress_bar,
     ntraj,
     output_func;
-    progr_desc = "Progress... ",
+    progr_desc = "Progress: ",
 ) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
     if getVal(progress_bar)
         progr = Progress(ntraj, showspeed = true, enabled = getVal(progress_bar), desc = progr_desc)

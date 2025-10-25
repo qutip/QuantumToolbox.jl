@@ -132,7 +132,7 @@ function MultiSiteOperator(args...)
 end
 
 export ProgressBar
-function ProgressBar(args...)
+function ProgressBar(args...; kwargs...)
     # Use error instead of depwarn, since ProgressBar and Progress have different arguments
     return error(
         "`ProgressBar` is deprecated and will be removed in next major release. Use `Progress` from `ProgressMeter.jl` instead.",
