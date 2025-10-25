@@ -2,7 +2,7 @@ module QuantumToolbox
 
 # Standard Julia libraries
 using LinearAlgebra
-import LinearAlgebra: BlasInt, BlasFloat, checksquare
+import LinearAlgebra: checksquare
 import LinearAlgebra.LAPACK: hseqr!
 using SparseArrays
 import Statistics: mean, std

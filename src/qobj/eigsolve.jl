@@ -133,12 +133,12 @@ function _permuteschur!(
     T::AbstractMatrix{S},
     Q::AbstractMatrix{S},
     order::AbstractVector{<:Integer},
-) where {S<:BlasFloat}
+) where {S<:Number}
     n = checksquare(T)
     p = collect(order) # makes copy cause will be overwritten
     @inbounds for i in eachindex(p)
-        ifirst::BlasInt = p[i]
-        ilast::BlasInt = i
+        ifirst::Integer = p[i]
+        ilast::Integer = i
         LAPACK.trexc!(ifirst, ilast, T, Q)
         for k in (i+1):length(p)
             if p[k] < p[i]
@@ -172,7 +172,7 @@ function _eigsolve(
     maxiter::Int = 200,
     sortby::Function = abs2,
     rev = true,
-) where {T<:BlasFloat,ObjType<:Union{Nothing,Operator,SuperOperator}}
+) where {T<:Number,ObjType<:Union{Nothing,Operator,SuperOperator}}
     n = size(A, 2)
     V = similar(b, n, m + 1)
     H = zeros(T, m + 1, m)
@@ -244,7 +244,7 @@ function _eigsolve(
     end
 
     vals = diag(view(Tₘ, 1:k, 1:k))
-    select = Vector{BlasInt}(undef, 0)
+    select = Vector{Integer}(undef, 0)
     VR = LAPACK.trevc!('R', 'A', select, Tₘ)
     @inbounds for i in 1:size(VR, 2)
         normalize!(view(VR, :, i))
