@@ -6,7 +6,7 @@ struct SaveFuncSSESolve{
     SM,
     TE,
     TE2,
-    PT<:Union{Nothing,ProgressBar},
+    PT<:Union{Nothing,Progress},
     IT,
     TEXPV<:Union{Nothing,AbstractMatrix},
     TMEXPV<:Union{Nothing,AbstractMatrix},

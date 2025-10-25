@@ -2,7 +2,7 @@
 Helper functions for the mesolve callbacks.
 =#
 
-struct SaveFuncMESolve{TE,PT<:Union{Nothing,ProgressBar},IT,TEXPV<:Union{Nothing,AbstractMatrix}} <: AbstractSaveFunc
+struct SaveFuncMESolve{TE,PT<:Union{Nothing,Progress},IT,TEXPV<:Union{Nothing,AbstractMatrix}} <: AbstractSaveFunc
     e_ops::TE
     progr::PT
     iter::IT
@@ -13,6 +13,8 @@ end
 (f::SaveFuncMESolve{Nothing})(u, t, integrator) = _save_func(integrator, f.progr)
 
 _get_e_ops_data(e_ops, ::Type{SaveFuncMESolve}) = [_generate_mesolve_e_op(op) for op in e_ops] # Broadcasting generates type instabilities on Julia v1.10
+
+_get_progress_desc(::Type{SaveFuncMESolve}) = "(mesolve) "
 
 ##
 

@@ -106,7 +106,7 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rn
     end
 
     if e_ops isa Nothing
-        # We are implicitly saying that we don't have a `ProgressBar`
+        # We are implicitly saying that we don't have a `Progress`
         kwargs2 =
             haskey(kwargs, :callback) ? merge(kwargs, (callback = CallbackSet(cb1, kwargs.callback),)) :
             merge(kwargs, (callback = cb1,))

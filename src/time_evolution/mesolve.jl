@@ -351,7 +351,7 @@ mesolve_map(
 # this method is for advanced usage
 # User can define their own iterator structure, prob_func and output_func
 #   - `prob_func`: Function to use for generating the ODEProblem.
-#   - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+#   - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function mesolve_map(
@@ -368,7 +368,13 @@ function mesolve_map(
     _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func
     _output_func =
         isnothing(output_func) ?
-        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _standard_output_func) : output_func
+        _ensemble_dispatch_output_func(
+            ensemblealg,
+            progress_bar,
+            ntraj,
+            _standard_output_func;
+            progr_desc = "(mesolve_map) ",
+        ) : output_func
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob.times,

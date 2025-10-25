@@ -107,8 +107,6 @@ function smesolveProblem(
         to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
     end
 
-    progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
-
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
     K = get_data(L_evo)
@@ -203,7 +201,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `ntraj`: Number of trajectories to use. Default is `500`.
 - `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `prob_func`: Function to use for generating the SDEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -251,7 +249,13 @@ function smesolveEnsembleProblem(
         ) : prob_func
     _output_func =
         output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _standard_output_func) : output_func
+        _ensemble_dispatch_output_func(
+            ensemblealg,
+            progress_bar,
+            ntraj,
+            _standard_output_func;
+            progr_desc = "(smesolve) ",
+        ) : output_func
 
     prob_sme = smesolveProblem(
         H,
@@ -332,7 +336,7 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `ntraj`: Number of trajectories to use. Default is `500`.
 - `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `prob_func`: Function to use for generating the SDEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
