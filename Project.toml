@@ -43,7 +43,7 @@ QuantumToolboxMakieExt = "Makie"
 
 [compat]
 ArrayInterface = "6, 7"
-CUDA = "<5.9"
+CUDA = "5.0 - 5.8"
 ChainRulesCore = "1"
 DiffEqBase = "6"
 DiffEqCallbacks = "4.2.1 - 4"
