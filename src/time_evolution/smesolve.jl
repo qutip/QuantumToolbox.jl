@@ -254,7 +254,7 @@ function smesolveEnsembleProblem(
             progress_bar,
             ntraj,
             _standard_output_func;
-            progr_desc = "(smesolve) ",
+            progr_desc = "[smesolve] ",
         ) : output_func
 
     prob_sme = smesolveProblem(

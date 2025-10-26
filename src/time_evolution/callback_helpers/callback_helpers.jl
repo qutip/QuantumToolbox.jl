@@ -57,10 +57,10 @@ end
 function _generate_save_callback(e_ops, tlist, progress_bar, method)
     e_ops_data = e_ops isa Nothing ? nothing : _get_e_ops_data(e_ops, method)
 
-    progr_desc = _get_progress_desc(method)
     progr =
         getVal(progress_bar) ?
-        Progress(length(tlist), showspeed = true, enabled = getVal(progress_bar), desc = progr_desc) : nothing
+        Progress(length(tlist), showspeed = true, enabled = getVal(progress_bar), desc = _get_progress_desc(method)) :
+        nothing
 
     expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
 

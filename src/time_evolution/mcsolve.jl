@@ -243,7 +243,7 @@ function mcsolveEnsembleProblem(
             progress_bar,
             ntraj,
             _mcsolve_output_func;
-            progr_desc = "(mcsolve) ",
+            progr_desc = "[mcsolve] ",
         ) : output_func
 
     prob_mc = mcsolveProblem(

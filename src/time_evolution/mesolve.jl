@@ -373,7 +373,7 @@ function mesolve_map(
             progress_bar,
             ntraj,
             _standard_output_func;
-            progr_desc = "(mesolve_map) ",
+            progr_desc = "[mesolve_map] ",
         ) : output_func
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
