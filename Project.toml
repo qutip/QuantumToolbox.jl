@@ -1,7 +1,7 @@
 name = "QuantumToolbox"
 uuid = "6c2fb7c5-b903-41d2-bc5e-5a7c320b9fab"
-version = "0.37.0"
 authors = ["Alberto Mercurio", "Yi-Te Huang"]
+version = "0.37.0"
 
 [deps]
 ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
@@ -43,7 +43,7 @@ QuantumToolboxMakieExt = "Makie"
 
 [compat]
 ArrayInterface = "6, 7"
-CUDA = "<5.9"
+CUDA = "<5.9, 5"
 ChainRulesCore = "1"
 DiffEqBase = "6"
 DiffEqCallbacks = "4.2.1 - 4"
