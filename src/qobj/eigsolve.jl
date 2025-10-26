@@ -137,8 +137,8 @@ function _permuteschur!(
     n = checksquare(T)
     p = collect(order) # makes copy cause will be overwritten
     @inbounds for i in eachindex(p)
-        ifirst::Integer = p[i]
-        ilast::Integer = i
+        ifirst = p[i]
+        ilast = i
         LAPACK.trexc!(ifirst, ilast, T, Q)
         for k in (i+1):length(p)
             if p[k] < p[i]
@@ -149,7 +149,7 @@ function _permuteschur!(
     return T, Q
 end
 
-function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals, sortby, rev)
+function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
     F = hessenberg!(Hₘ)
     copyto!(Uₘ, Hₘ)
     LAPACK.orghr!(1, m, Uₘ, F.τ)
@@ -201,7 +201,7 @@ function _eigsolve(
     cache0 = similar(b, m, m)
     cache1 = similar(b, size(V, 1), m)
     cache2 = similar(H, m)
-    sorted_vals = Array{Int16}(undef, m)
+    sorted_vals = Array{Int}(undef, m)
 
     V₁ₖ = view(V, :, 1:k)
     Vₖ₊₁ = view(V, :, k + 1)
@@ -211,7 +211,7 @@ function _eigsolve(
 
     M = typeof(cache0)
 
-    Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals, sortby, rev)
+    Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
 
     numops = m
     iter = 0
@@ -237,14 +237,14 @@ function _eigsolve(
 
         # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
 
-        Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals, sortby, rev)
+        Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
 
         numops += m - k - 1
         iter += 1
     end
 
     vals = diag(view(Tₘ, 1:k, 1:k))
-    select = Vector{Integer}(undef, 0)
+    select = Vector{Int}(undef, 0)
     VR = LAPACK.trevc!('R', 'A', select, Tₘ)
     @inbounds for i in 1:size(VR, 2)
         normalize!(view(VR, :, i))
