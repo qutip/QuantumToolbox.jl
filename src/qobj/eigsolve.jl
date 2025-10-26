@@ -144,11 +144,44 @@ function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sort
     ordschur!(F, select)
 
     copyto!(Hₘ, F.T)
-    Tₘ = Hₘ
     copyto!(Uₘ, F.Z)
     mul!(f, Uₘᵥ, β)
 
-    return Tₘ, Uₘ
+    return nothing
+end
+
+# Pure Julia implementation of computing right eigenvectors from Schur form
+# Instead of using LAPACK.trevc!('R', 'A', select, Tₘ)
+function _schur_right_eigenvectors(Tₘ, k)
+    n = size(Tₘ, 1)
+    vecs = zeros(eltype(Tₘ), n, k)
+    k == 0 && return vecs
+
+    value_tol(λ) = eps(typeof(abs(λ))) * max(one(typeof(abs(λ))), abs(λ))
+
+    @inbounds for col in 1:k
+        vec = view(vecs, :, col)
+        fill!(vec, zero(eltype(Tₘ)))
+        vec[col] = one(eltype(Tₘ))
+        λ = Tₘ[col, col]
+
+        for row in (col-1):-1:1
+            acc = zero(eltype(Tₘ))
+            for inner in (row + 1):col
+                acc += Tₘ[row, inner] * vec[inner]
+            end
+            denom = Tₘ[row, row] - λ
+            if abs(denom) <= value_tol(λ)
+                vec[row] = zero(eltype(Tₘ))
+            else
+                vec[row] = -acc / denom
+            end
+        end
+
+        LinearAlgebra.normalize!(vec)
+    end
+
+    return vecs
 end
 
 function _eigsolve(
@@ -196,12 +229,13 @@ function _eigsolve(
     V₁ₖ = view(V, :, 1:k)
     Vₖ₊₁ = view(V, :, k + 1)
     Hₖ₊₁₁ₖ = view(H, k + 1, 1:k)
+    cache0₁ₖ = view(cache0, :, 1:k)
     cache1₁ₖ = view(cache1, :, 1:k)
     cache2₁ₖ = view(cache2, 1:k)
 
     M = typeof(cache0)
 
-    Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
+    _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
 
     numops = m
     iter = 0
@@ -227,20 +261,18 @@ function _eigsolve(
 
         # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
 
-        Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
+        _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
 
         numops += m - k - 1
         iter += 1
     end
 
+    Tₘ = Hₘ
     vals = diag(view(Tₘ, 1:k, 1:k))
-    select = Vector{Int}(undef, 0)
-    VR = LAPACK.trevc!('R', 'A', select, Tₘ)
-    @inbounds for i in 1:size(VR, 2)
-        normalize!(view(VR, :, i))
-    end
-    mul!(cache1, Vₘ, M(Uₘ * VR))
-    vecs = cache1[:, 1:k]
+    VR = _schur_right_eigenvectors(Tₘ, k)
+    mul!(cache0₁ₖ, Uₘ, VR)
+    mul!(cache1₁ₖ, Vₘ, cache0₁ₖ)
+    vecs = copy(cache1₁ₖ)
     settings.auto_tidyup && tidyup!(vecs)
 
     return EigsolveResult(vals, vecs, type, dimensions, iter, numops, (iter < maxiter))
