@@ -114,12 +114,7 @@ function expv!(
     return expv!(x, AS, t, b)
 end
 
-function expv(
-    A,
-    t::T1,
-    b::AbstractVector{T2};
-    m::Int = min(30, cld(2 * length(b), 3)),
-) where {T1<:Number,T2<:Number}
+function expv(A, t::T1, b::AbstractVector{T2}; m::Int = min(30, cld(2 * length(b), 3))) where {T1<:Number,T2<:Number}
     x = similar(b)
     return expv!(x, A, t, b, m = m)
 end

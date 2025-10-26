@@ -316,9 +316,7 @@ function mat2vec(::Type{M}) where {M<:SparseMatrixCSC}
     return SparseVector{par[1],par[2]}
 end
 
-function mat2vec(
-    ::Type{M},
-) where {M<:Union{Adjoint{<:Number,<:SparseMatrixCSC},Transpose{<:Number,<:SparseMatrixCSC}}}
+function mat2vec(::Type{M}) where {M<:Union{Adjoint{<:Number,<:SparseMatrixCSC},Transpose{<:Number,<:SparseMatrixCSC}}}
     T = M.parameters[2]
     par = T.parameters
     npar = length(par)

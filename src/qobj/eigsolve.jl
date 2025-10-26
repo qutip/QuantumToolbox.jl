@@ -155,30 +155,26 @@ end
 function _schur_right_eigenvectors(Tₘ, k)
     n = size(Tₘ, 1)
     vecs = zeros(eltype(Tₘ), n, k)
-    k == 0 && return vecs
-
-    value_tol(λ) = eps(typeof(abs(λ))) * max(one(typeof(abs(λ))), abs(λ))
 
     @inbounds for col in 1:k
         vec = view(vecs, :, col)
-        fill!(vec, zero(eltype(Tₘ)))
         vec[col] = one(eltype(Tₘ))
         λ = Tₘ[col, col]
 
         for row in (col-1):-1:1
             acc = zero(eltype(Tₘ))
-            for inner in (row + 1):col
+            for inner in (row+1):col
                 acc += Tₘ[row, inner] * vec[inner]
             end
             denom = Tₘ[row, row] - λ
-            if abs(denom) <= value_tol(λ)
-                vec[row] = zero(eltype(Tₘ))
+            vec[row] = if abs(denom) <= eps(typeof(abs(λ))) * max(one(typeof(abs(λ))), abs(λ))
+                zero(eltype(Tₘ))
             else
-                vec[row] = -acc / denom
+                -acc / denom
             end
         end
 
-        LinearAlgebra.normalize!(vec)
+        normalize!(vec)
     end
 
     return vecs
@@ -229,7 +225,6 @@ function _eigsolve(
     V₁ₖ = view(V, :, 1:k)
     Vₖ₊₁ = view(V, :, k + 1)
     Hₖ₊₁₁ₖ = view(H, k + 1, 1:k)
-    cache0₁ₖ = view(cache0, :, 1:k)
     cache1₁ₖ = view(cache1, :, 1:k)
     cache2₁ₖ = view(cache2, 1:k)
 
@@ -270,8 +265,7 @@ function _eigsolve(
     Tₘ = Hₘ
     vals = diag(view(Tₘ, 1:k, 1:k))
     VR = _schur_right_eigenvectors(Tₘ, k)
-    mul!(cache0₁ₖ, Uₘ, VR)
-    mul!(cache1₁ₖ, Vₘ, cache0₁ₖ)
+    mul!(cache1₁ₖ, Vₘ, M(Uₘ * VR))
     vecs = copy(cache1₁ₖ)
     settings.auto_tidyup && tidyup!(vecs)
 
