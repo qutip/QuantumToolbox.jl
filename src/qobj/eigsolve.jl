@@ -129,7 +129,7 @@ function LinearAlgebra.mul!(y::AbstractVector, A::EigsolveInverseMap, x::Abstrac
     return copyto!(y, solve!(A.linsolve).u)
 end
 
-function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
+function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
     copyto!(Uₘ, Hₘ)
     F = schur!(Uₘ)
 
@@ -230,7 +230,7 @@ function _eigsolve(
 
     M = typeof(cache0)
 
-    _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
+    _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
 
     numops = m
     iter = 0
@@ -256,7 +256,7 @@ function _eigsolve(
 
         # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
 
-        _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
+        _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
 
         numops += m - k - 1
         iter += 1
