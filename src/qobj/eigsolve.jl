@@ -152,7 +152,7 @@ end
 
 # Pure Julia implementation of computing right eigenvectors from Schur form
 # Instead of using LAPACK.trevc!('R', 'A', select, Tₘ)
-function _schur_right_eigenvectors(Tₘ, k)
+function _schur_right_eigenvectors(Tₘ::AbstractMatrix, k::Integer)
     n = size(Tₘ, 1)
     vecs = zeros(eltype(Tₘ), n, k)
 
