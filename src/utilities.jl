@@ -198,7 +198,7 @@ _complex_float_type(T::Type{<:Complex}) = T # Allow other untracked Complex type
 
 _convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:Int} = Int64
 _convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:Int} = Int32
-_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:Number} = Float64
-_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:Number} = Float32
-_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{64}) where {T<:Union{Int,Number}} = ComplexF64
-_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{32}) where {T<:Union{Int,Number}} = ComplexF32
+_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:AbstractFloat} = Float64
+_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:AbstractFloat} = Float32
+_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{64}) where {T<:Union{Int,AbstractFloat}} = ComplexF64
+_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{32}) where {T<:Union{Int,AbstractFloat}} = ComplexF32
