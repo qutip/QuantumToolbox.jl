@@ -129,33 +129,23 @@ function LinearAlgebra.mul!(y::AbstractVector, A::EigsolveInverseMap, x::Abstrac
     return copyto!(y, solve!(A.linsolve).u)
 end
 
-function _permuteschur!(
-    T::AbstractMatrix{S},
-    Q::AbstractMatrix{S},
-    order::AbstractVector{<:Integer},
-) where {S<:Number}
-    n = checksquare(T)
-    p = collect(order) # makes copy cause will be overwritten
-    @inbounds for i in eachindex(p)
-        ifirst = p[i]
-        ilast = i
-        LAPACK.trexc!(ifirst, ilast, T, Q)
-        for k in (i+1):length(p)
-            if p[k] < p[i]
-                p[k] += 1
-            end
-        end
-    end
-    return T, Q
-end
-
 function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, m, β, sorted_vals, sortby, rev)
-    F = hessenberg!(Hₘ)
     copyto!(Uₘ, Hₘ)
-    LAPACK.orghr!(1, m, Uₘ, F.τ)
-    Tₘ, Uₘ, values = hseqr!(Hₘ, Uₘ)
+    F = schur!(Uₘ)
+
+    values = F.values
     sortperm!(sorted_vals, values, by = sortby, rev = rev)
-    _permuteschur!(Tₘ, Uₘ, sorted_vals)
+
+    select = fill(false, length(values))
+    @inbounds for j in 1:k
+        select[sorted_vals[j]] = true
+    end
+
+    ordschur!(F, select)
+
+    copyto!(Hₘ, F.T)
+    Tₘ = Hₘ
+    copyto!(Uₘ, F.Z)
     mul!(f, Uₘᵥ, β)
 
     return Tₘ, Uₘ
