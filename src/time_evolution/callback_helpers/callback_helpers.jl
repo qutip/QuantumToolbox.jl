@@ -57,7 +57,14 @@ end
 function _generate_save_callback(e_ops, tlist, progress_bar, method)
     e_ops_data = e_ops isa Nothing ? nothing : _get_e_ops_data(e_ops, method)
 
-    progr = getVal(progress_bar) ? ProgressBar(length(tlist), enable = getVal(progress_bar)) : nothing
+    progr =
+        getVal(progress_bar) ?
+        Progress(
+            length(tlist);
+            enabled = getVal(progress_bar),
+            desc = _get_progress_desc(method),
+            settings.ProgressMeterKWARGS...,
+        ) : nothing
 
     expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
 
@@ -69,7 +76,9 @@ function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurem
     e_ops_data = e_ops isa Nothing ? nothing : _get_e_ops_data(e_ops, method)
     m_ops_data = _get_m_ops_data(sc_ops, method)
 
-    progr = getVal(progress_bar) ? ProgressBar(length(tlist), enable = getVal(progress_bar)) : nothing
+    progr =
+        getVal(progress_bar) ?
+        Progress(length(tlist); enabled = getVal(progress_bar), settings.ProgressMeterKWARGS...) : nothing
 
     expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
     m_expvals = getVal(store_measurement) ? Array{Float64}(undef, length(sc_ops), length(tlist) - 1) : nothing
@@ -139,7 +148,7 @@ Return the Callback that is responsible for saving the expectation values of the
 =#
 function _get_save_callback(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
-    if hasproperty(kwargs, :callback)
+    if hasproperty(kwargs, :callback) && !isnothing(kwargs.callback)
         return _get_save_callback(kwargs.callback, method)
     else
         return nothing

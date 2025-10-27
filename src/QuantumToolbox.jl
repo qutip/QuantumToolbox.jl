@@ -2,8 +2,7 @@ module QuantumToolbox
 
 # Standard Julia libraries
 using LinearAlgebra
-import LinearAlgebra: BlasInt, BlasFloat, checksquare
-import LinearAlgebra.LAPACK: hseqr!
+import LinearAlgebra: checksquare
 using SparseArrays
 import Statistics: mean, std
 
@@ -62,6 +61,7 @@ import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import LaTeXStrings: @L_str
 import Pkg
+import ProgressMeter: Progress, next!
 import Random: AbstractRNG, default_rng, seed!
 import SpecialFunctions: loggamma
 import StaticArraysCore: SVector, MVector
@@ -81,7 +81,6 @@ export cache_operator, iscached, isconstant
 include("settings.jl")
 include("utilities.jl")
 include("versioninfo.jl")
-include("progress_bar.jl")
 include("linear_maps.jl")
 
 # Quantum Object

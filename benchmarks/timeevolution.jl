@@ -63,5 +63,95 @@ function benchmark_timeevolution!(SUITE)
         ensemblealg = EnsembleThreads(),
     )
 
+    ## Time-dependent evolutions ##
+
+    # Hamiltonian in the lab frame (without drive frame transformation)
+    H_lab = ωc * a' * a + ωq / 2 * σz + g * (a' * σm + a * σm')
+
+    # Define time-dependent drive terms
+    coef1(p, t) = p.F * exp(1im * p.ωd * t)
+    coef2(p, t) = p.F * exp(-1im * p.ωd * t)
+    p = (F = F, ωd = ωd)
+
+    # Time-dependent Hamiltonian as tuple (lab frame with drive)
+    H_td = (H_lab, (a, coef1), (a', coef2))
+
+    # Time-dependent Hamiltonian as QobjEvo
+    H_td2 = QobjEvo(H_td)
+
+    # Time-dependent Liouvillian
+    L_td = liouvillian(H_td2)
+
+    tlist_td = range(0, 10 / γ, 100)
+
+    ## sesolve (time-dependent) ##
+
+    SUITE["Time Evolution"]["time-dependent"]["sesolve"]["Tuple"] =
+        @benchmarkable sesolve($H_td, $ψ0, $tlist_td, e_ops = $e_ops, progress_bar = Val(false), params = $p)
+
+    SUITE["Time Evolution"]["time-dependent"]["sesolve"]["QobjEvo"] =
+        @benchmarkable sesolve($H_td2, $ψ0, $tlist_td, e_ops = $e_ops, progress_bar = Val(false), params = $p)
+
+    ## mesolve (time-dependent) ##
+
+    SUITE["Time Evolution"]["time-dependent"]["mesolve"]["Tuple"] =
+        @benchmarkable mesolve($H_td, $ψ0, $tlist_td, $c_ops, e_ops = $e_ops, progress_bar = Val(false), params = $p)
+
+    SUITE["Time Evolution"]["time-dependent"]["mesolve"]["QobjEvo"] =
+        @benchmarkable mesolve($H_td2, $ψ0, $tlist_td, $c_ops, e_ops = $e_ops, progress_bar = Val(false), params = $p)
+
+    SUITE["Time Evolution"]["time-dependent"]["mesolve"]["Liouvillian"] =
+        @benchmarkable mesolve($L_td, $ψ0, $tlist_td, $c_ops, e_ops = $e_ops, progress_bar = Val(false), params = $p)
+
+    ## mcsolve (time-dependent) ##
+
+    SUITE["Time Evolution"]["time-dependent"]["mcsolve"]["Tuple"]["Serial"] = @benchmarkable mcsolve(
+        $H_td,
+        $ψ0,
+        $tlist_td,
+        $c_ops,
+        ntraj = 100,
+        e_ops = $e_ops,
+        progress_bar = Val(false),
+        params = $p,
+        ensemblealg = EnsembleSerial(),
+    )
+
+    SUITE["Time Evolution"]["time-dependent"]["mcsolve"]["Tuple"]["Multithreaded"] = @benchmarkable mcsolve(
+        $H_td,
+        $ψ0,
+        $tlist_td,
+        $c_ops,
+        ntraj = 100,
+        e_ops = $e_ops,
+        progress_bar = Val(false),
+        params = $p,
+        ensemblealg = EnsembleThreads(),
+    )
+
+    SUITE["Time Evolution"]["time-dependent"]["mcsolve"]["QobjEvo"]["Serial"] = @benchmarkable mcsolve(
+        $H_td2,
+        $ψ0,
+        $tlist_td,
+        $c_ops,
+        ntraj = 100,
+        e_ops = $e_ops,
+        progress_bar = Val(false),
+        params = $p,
+        ensemblealg = EnsembleSerial(),
+    )
+
+    SUITE["Time Evolution"]["time-dependent"]["mcsolve"]["QobjEvo"]["Multithreaded"] = @benchmarkable mcsolve(
+        $H_td2,
+        $ψ0,
+        $tlist_td,
+        $c_ops,
+        ntraj = 100,
+        e_ops = $e_ops,
+        progress_bar = Val(false),
+        params = $p,
+        ensemblealg = EnsembleThreads(),
+    )
+
     return nothing
 end

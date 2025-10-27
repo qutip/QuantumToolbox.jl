@@ -152,10 +152,12 @@ end
 
 const BLOCH_DATA_FIELDS = (:points, :vectors, :lines, :arcs)
 function Base.show(io::IO, b::Bloch)
-    # To align the output and make it easier to read
-    # we use rpad `17` and `19` for Bloch sphere data and properties, respectively
+    # Align the output and make it easier to read
+    # we use rpad `17` and `maxLen` for Bloch sphere data and properties, respectively
     # 17 is the length of string: `Number of vectors`
-    # 19 is the length of string: `point_default_color`
+    # maxLen is the maximum length among all field names
+    maxLen = maximum(length ∘ String, fieldnames(Bloch))
+
     println(io, "Bloch Sphere\n")
     println(io, "data:")
     println(io, "-----")
@@ -163,7 +165,10 @@ function Base.show(io::IO, b::Bloch)
     println(io, "")
     println(io, "properties:")
     println(io, "-----------")
-    map(n -> (n ∉ BLOCH_DATA_FIELDS) && (println(io, rpad("$n", 19, " "), " = ", getfield(b, n))), fieldnames(Bloch))
+    map(
+        n -> (n ∉ BLOCH_DATA_FIELDS) && (println(io, rpad("$n", maxLen, " "), " = ", getfield(b, n))),
+        fieldnames(Bloch),
+    )
     return nothing
 end
 
@@ -235,7 +240,7 @@ Add multiple points to the Bloch sphere visualization.
 """
 function add_points!(
     b::Bloch,
-    pnts::Matrix{<:Real};
+    pnts::AbstractMatrix{<:Real};
     meth::Symbol = :s,
     color::Union{Nothing,String} = nothing,
     alpha::Float64 = 1.0,

@@ -103,8 +103,6 @@ function ssesolveProblem(
 
     ψ0 = to_dense(_complex_float_type(ψ0), get_data(ψ0))
 
-    progr = ProgressBar(length(tlist), enable = getVal(progress_bar))
-
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
     # Here the coefficients depend on the state, so this is a non-linear operator, which should be implemented with FunctionOperator instead. However, the nonlinearity is only on the coefficients, and it should be safe.
@@ -113,7 +111,7 @@ function ssesolveProblem(
         sc_ops_evo_data,
     )
 
-    K = get_data(QobjEvo(H_eff_evo, -1im)) + K_l
+    K = get_data(-1im * QuantumObjectEvolution(H_eff_evo)) + K_l
 
     D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(prod(dims)), sc_ops_evo_data)
     D = DiffusionOperator(D_l)
@@ -198,7 +196,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 - `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `prob_func`: Function to use for generating the SDEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `store_measurement`: Whether to store the measurement results. Default is `Val(false)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
@@ -245,7 +243,13 @@ function ssesolveEnsembleProblem(
         ) : prob_func
     _output_func =
         output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _stochastic_output_func) : output_func
+        _ensemble_dispatch_output_func(
+            ensemblealg,
+            progress_bar,
+            ntraj,
+            _standard_output_func;
+            progr_desc = "[ssesolve] ",
+        ) : output_func
 
     prob_sme = ssesolveProblem(
         H,
@@ -327,7 +331,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `ntraj`: Number of trajectories to use. Default is `500`.
 - `ensemblealg`: Ensemble method to use. Default to `EnsembleThreads()`.
 - `prob_func`: Function to use for generating the SDEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `store_measurement`: Whether to store the measurement results. Default is `Val(false)`.

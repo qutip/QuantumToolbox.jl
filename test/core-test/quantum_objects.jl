@@ -202,8 +202,8 @@
         @test (a2 + 2).data == a2.data + 2 * I
         @test a2 * 2 == 2 * a2
 
-        zero_like = zero(a2)
-        iden_like = one(a3)
+        zero_like = qzero_like(a2)
+        iden_like = qeye_like(a3)
         zero_array = spzeros(ComplexF64, 100, 100)
         iden_array = sparse(1:100, 1:100, ones(ComplexF64, 100))
         @test zero_like == Qobj(zero_array, type = a2.type, dims = a2.dims)
@@ -351,9 +351,9 @@
         @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64,Int64}
         @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
 
-        @testset "Deprecated Errors" begin
-            @test_throws ErrorException sparse_to_dense(vs)
-            @test_throws ErrorException dense_to_sparse(vd)
+        @testset "Deprecated Warnings" begin
+            @test_logs (:warn,) sparse_to_dense(vs)
+            @test_logs (:warn,) dense_to_sparse(vd)
         end
     end
 

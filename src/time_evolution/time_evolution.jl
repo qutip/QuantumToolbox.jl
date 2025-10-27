@@ -66,8 +66,7 @@ struct TimeEvolutionSol{
     TE<:Union{AbstractMatrix,Nothing},
     RETT<:Enum,
     AlgT<:OrdinaryDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
 }
     times::TT1
     times_states::TT2
@@ -75,8 +74,8 @@ struct TimeEvolutionSol{
     expect::TE
     retcode::RETT
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionSol)
@@ -140,8 +139,7 @@ struct TimeEvolutionMCSol{
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
     AlgT<:OrdinaryDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
 } <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
     times::TT1
@@ -152,8 +150,8 @@ struct TimeEvolutionMCSol{
     col_which::TJW
     converged::Bool
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionMCSol)
@@ -215,8 +213,7 @@ struct TimeEvolutionStochasticSol{
     TE<:Union{AbstractArray,Nothing},
     TEM<:Union{AbstractArray,Nothing},
     AlgT<:StochasticDiffEqAlgorithm,
-    AT<:Real,
-    RT<:Real,
+    TolT<:Real,
 } <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
     times::TT1
@@ -226,8 +223,8 @@ struct TimeEvolutionStochasticSol{
     measurement::TEM
     converged::Bool
     alg::AlgT
-    abstol::AT
-    reltol::RT
+    abstol::TolT
+    reltol::TolT
 end
 
 function Base.show(io::IO, sol::TimeEvolutionStochasticSol)
@@ -373,10 +370,11 @@ function _ensemble_dispatch_output_func(
     ::ET,
     progress_bar,
     ntraj,
-    output_func,
+    output_func;
+    progr_desc = "Progress: ",
 ) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
     if getVal(progress_bar)
-        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
         f = (sol, i) -> _ensemble_output_func_progress(sol, i, progr, output_func)
         return (f, progr, nothing)
     else
@@ -387,10 +385,11 @@ function _ensemble_dispatch_output_func(
     ::ET,
     progress_bar,
     ntraj,
-    output_func,
+    output_func;
+    progr_desc = "Progress... ",
 ) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
     if getVal(progress_bar)
-        progr = ProgressBar(ntraj, enable = getVal(progress_bar))
+        progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
 
         f = (sol, i) -> _ensemble_output_func_distributed(sol, i, progr_channel, output_func)
@@ -406,7 +405,7 @@ function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
-    ens_prob_mc::TimeEvolutionProblem,
+    ens_prob::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
     ensemblealg::ET,
     ntraj::Int,
@@ -414,26 +413,38 @@ function _ensemble_dispatch_solve(
     sol = nothing
 
     @sync begin
-        @async while take!(ens_prob_mc.kwargs.channel)
-            next!(ens_prob_mc.kwargs.progr)
+        @async while take!(ens_prob.kwargs.channel)
+            next!(ens_prob.kwargs.progr)
         end
 
         @async begin
-            sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
-            put!(ens_prob_mc.kwargs.channel, false)
+            sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
+            put!(ens_prob.kwargs.channel, false)
         end
     end
 
     return sol
 end
 function _ensemble_dispatch_solve(
-    ens_prob_mc::TimeEvolutionProblem,
+    ens_prob::TimeEvolutionProblem,
     alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
     ensemblealg,
     ntraj::Int,
 )
-    sol = solve(ens_prob_mc.prob, alg, ensemblealg, trajectories = ntraj)
+    sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
     return sol
+end
+
+# For mapped solvers
+function _se_me_map_prob_func(prob, i, repeat, iter)
+    f = deepcopy(prob.f.f)
+    u0 = iter[i][1]
+    p = iter[i][2:end]
+    if haskey(prob.kwargs, :callback)
+        return remake(prob, f = f, u0 = u0, p = p, callback = deepcopy(prob.kwargs[:callback]))
+    else
+        return remake(prob, f = f, u0 = u0, p = p)
+    end
 end
 
 #######################################
@@ -452,8 +463,8 @@ function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
     return remake(prob.prob, noise = noise, seed = seed)
 end
 
-# Standard output function
-_stochastic_output_func(sol, i) = (sol, false)
+# Standard output function which does nothing (used for mapped and stochastic solvers)
+_standard_output_func(sol, i) = (sol, false)
 
 #= 
     Define diagonal or non-diagonal noise depending on the type of `sc_ops`.

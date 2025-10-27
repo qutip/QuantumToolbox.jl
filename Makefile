@@ -12,10 +12,10 @@ changelog:
 	${JULIA} -e 'using Changelog; Changelog.generate(Changelog.CommonMark(), "CHANGELOG.md"; repo = "qutip/QuantumToolbox.jl")'
 
 test:
-	${JULIA} --project -e 'using Pkg; Pkg.resolve(); Pkg.test()'
+	${JULIA} --project -e 'using Pkg; Pkg.update(); Pkg.test()'
 
 docs:
-	${JULIA} --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+	${JULIA} --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.update()'
 	${JULIA} --project=docs docs/make.jl
 
 vitepress:

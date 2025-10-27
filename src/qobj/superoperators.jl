@@ -159,7 +159,7 @@ See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 function liouvillian(
     H::AbstractQuantumObject{OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    Id_cache = I(prod(H.dimensions)),
+    Id_cache::Diagonal = I(prod(H.dimensions)),
 ) where {OpType<:Union{Operator,SuperOperator}}
     L = liouvillian(H, Id_cache)
     if !(c_ops isa Nothing)
@@ -178,19 +178,4 @@ liouvillian(H::AbstractQuantumObject{Operator}, Id_cache::Diagonal = I(prod(H.di
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal) = H
 
-function _sum_lindblad_dissipators(c_ops, Id_cache::Diagonal)
-    D = 0
-    # sum all the (time-independent) c_ops first
-    c_ops_ti = filter(op -> isa(op, QuantumObject), c_ops)
-    if !isempty(c_ops_ti)
-        D += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_ti)
-    end
-
-    # sum rest of the QobjEvo together
-    c_ops_td = filter(op -> isa(op, QuantumObjectEvolution), c_ops)
-    if !isempty(c_ops_td)
-        D += mapreduce(op -> lindblad_dissipator(op, Id_cache), +, c_ops_td)
-    end
-
-    return D
-end
+_sum_lindblad_dissipators(c_ops, Id_cache::Diagonal) = sum(op -> lindblad_dissipator(op, Id_cache), c_ops)

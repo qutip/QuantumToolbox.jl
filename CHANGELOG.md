@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Generalize the definition of `liouvillian`. It no longer expects the Hamiltonian to be Hermitian. ([#541])
 
+## [v0.38.1]
+Release date: 2025-10-27
+
+- Add `ProgressMeterKWARGS` in `QuantumToolbox.settings` for customizing progress bar. ([#579])
+
+## [v0.38.0]
+Release date: 2025-10-27
+
+- Introduce new methods of `sesolve_map` and `mesolve_map` for advanced usage. Users can now customize their own `iter`ator structure, `prob_func` and `output_func`. ([#565])
+- Use `ProgressMeter.jl` for progress bar rather than our in-house implementation. ([#569], [#575])
+- Simplify type structure for time evolution solutions. ([#572])
+- Add support to arbitrary precision computation. Tested for `sesolve`, `mesolve` and `eigensolve`. ([#576])
+
+## [v0.37.0]
+Release date: 2025-10-12
+
+- Fix `cite()` bibtex output. ([#552])
+- Implement `sesolve_map` and `mesolve_map` for solving multiple initial states and parameter sets in parallel. ([#554])
+- Add `qeye_like` and `qzero_like`, which are synonyms of `one` and `zero`. ([#555])
+- Add steadystate and DSF benchmarks. The `SteadyStateODESOlver` tolerances are lowered to `terminate_reltol=1e-4` and `terminate_abstol=1e-6` to improve speed at the cost of accuracy. ([#557])
+
+## [v0.36.0]
+Release date: 2025-09-29
+
+- Add `QuantumToolbox.cite()` for bibtex generator of `QuantumToolbox.jl`. ([#544])
+- Add `sortby` and `rev` keyword arguments to eigensolvers. ([#546])
+
 ## [v0.35.0]
 Release date: 2025-09-03
 
@@ -225,6 +252,10 @@ Release date: 2024-11-13
 [v0.34.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.34.0
 [v0.34.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.34.1
 [v0.35.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.35.0
+[v0.36.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.36.0
+[v0.37.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.37.0
+[v0.38.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.38.0
+[v0.38.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.38.1
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -317,3 +348,15 @@ Release date: 2024-11-13
 [#537]: https://github.com/qutip/QuantumToolbox.jl/issues/537
 [#539]: https://github.com/qutip/QuantumToolbox.jl/issues/539
 [#541]: https://github.com/qutip/QuantumToolbox.jl/issues/541
+[#544]: https://github.com/qutip/QuantumToolbox.jl/issues/544
+[#546]: https://github.com/qutip/QuantumToolbox.jl/issues/546
+[#552]: https://github.com/qutip/QuantumToolbox.jl/issues/552
+[#554]: https://github.com/qutip/QuantumToolbox.jl/issues/554
+[#555]: https://github.com/qutip/QuantumToolbox.jl/issues/555
+[#557]: https://github.com/qutip/QuantumToolbox.jl/issues/557
+[#565]: https://github.com/qutip/QuantumToolbox.jl/issues/565
+[#569]: https://github.com/qutip/QuantumToolbox.jl/issues/569
+[#572]: https://github.com/qutip/QuantumToolbox.jl/issues/572
+[#575]: https://github.com/qutip/QuantumToolbox.jl/issues/575
+[#576]: https://github.com/qutip/QuantumToolbox.jl/issues/576
+[#579]: https://github.com/qutip/QuantumToolbox.jl/issues/579

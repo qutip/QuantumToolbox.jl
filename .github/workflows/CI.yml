@@ -56,11 +56,11 @@ jobs:
 
         include:
           # for core tests (intermediate versions)
-          # - version: '1.x'
-          #   node:
-          #     os: 'ubuntu-latest'
-          #     arch: 'x64'
-          #   group: 'Core'
+          - version: '1.11'
+            node:
+              os: 'ubuntu-latest'
+              arch: 'x64'
+            group: 'Core'
 
           # for extension tests
           - version: '1'
@@ -68,11 +68,16 @@ jobs:
               os: 'ubuntu-latest'
               arch: 'x64'
             group: 'Makie_Ext'
-          - version: '1'
+          - version: '1.11'
             node:
               os: 'ubuntu-latest'
               arch: 'x64'
             group: 'AutoDiff_Ext'
+          - version: '1'
+            node:
+              os: 'ubuntu-latest'
+              arch: 'x64'
+            group: 'Arbitrary-Precision'
 
     steps:
       - uses: actions/checkout@v5

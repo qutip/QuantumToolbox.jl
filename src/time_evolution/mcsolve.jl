@@ -26,16 +26,16 @@ function _normalize_state!(u, dims, normalize_states)
 end
 
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
-    c_ops isa Nothing && return QobjEvo(H)
-    return QobjEvo(H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2)
+    c_ops isa Nothing && return QuantumObjectEvolution(H)
+    return QuantumObjectEvolution(H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2)
 end
 function _mcsolve_make_Heff_QobjEvo(H::Tuple, c_ops)
-    c_ops isa Nothing && return QobjEvo(H)
-    return QobjEvo((H..., -1im * mapreduce(op -> op' * op, +, c_ops) / 2))
+    c_ops isa Nothing && return QuantumObjectEvolution(H)
+    return QuantumObjectEvolution((H..., -1im * sum(op -> op' * op, c_ops) / 2))
 end
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObjectEvolution, c_ops)
     c_ops isa Nothing && return H
-    return H + QobjEvo(mapreduce(op -> op' * op, +, c_ops), -1im / 2)
+    return H + QuantumObjectEvolution(sum(op -> -1im * op' * op / 2, c_ops))
 end
 
 @doc raw"""
@@ -205,7 +205,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -238,7 +238,13 @@ function mcsolveEnsembleProblem(
     _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
-        _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, _mcsolve_output_func) : output_func
+        _ensemble_dispatch_output_func(
+            ensemblealg,
+            progress_bar,
+            ntraj,
+            _mcsolve_output_func;
+            progr_desc = "[mcsolve] ",
+        ) : output_func
 
     prob_mc = mcsolveProblem(
         H,
@@ -332,7 +338,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
-- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `ProgressBar` object, and the (optional) `RemoteChannel` object.
+- `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `normalize_states`: Whether to normalize the states. Default to `Val(true)`.
 - `kwargs`: The keyword arguments for the ODEProblem.

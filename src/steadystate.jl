@@ -47,8 +47,8 @@ end
         alg = Tsit5(),
         ψ0 = nothing,
         tmax = Inf,
-        terminate_reltol = 1e-5,
-        terminate_abstol = 1e-7
+        terminate_reltol = 1e-4,
+        terminate_abstol = 1e-6
     )
 
 An ordinary differential equation (ODE) solver for solving [`steadystate`](@ref). It solves the stationary state based on [`mesolve`](@ref) with a termination condition.
@@ -69,8 +69,8 @@ or
 - `alg::OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm to solve the ODE.
 - `ψ0::Union{Nothing,QuantumObject}=nothing`: The initial state of the system. If not specified, a random pure state will be generated.
 - `tmax::Real=Inf`: The final time step for the steady state problem.
-- `terminate_reltol` = The relative tolerance for stationary state terminate condition. Default to `1e-5`.
-- `terminate_abstol` = The absolute tolerance for stationary state terminate condition. Default to `1e-7`.
+- `terminate_reltol` = The relative tolerance for stationary state terminate condition. Default to `1e-4`.
+- `terminate_abstol` = The absolute tolerance for stationary state terminate condition. Default to `1e-6`.
 
 !!! warning "Tolerances for terminate condition"
     The terminate condition tolerances `terminate_reltol` and `terminate_abstol` should be larger than `reltol` and `abstol` of [`mesolve`](@ref), respectively.
@@ -87,8 +87,8 @@ Base.@kwdef struct SteadyStateODESolver{
     alg::MT = Tsit5()
     ψ0::ST = nothing
     tmax::TT = Inf
-    terminate_reltol::RT = 10 * DEFAULT_ODE_SOLVER_OPTIONS.reltol
-    terminate_abstol::AT = 10 * DEFAULT_ODE_SOLVER_OPTIONS.abstol
+    terminate_reltol::RT = 1e-4
+    terminate_abstol::AT = 1e-6
 end
 
 @doc raw"""
