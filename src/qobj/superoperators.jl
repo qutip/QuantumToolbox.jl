@@ -43,6 +43,10 @@ end
 _liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}} =
     -1im * _spre(H, Id) + 1im * _spost(H', Id) # without extracting the prefactor -1im seems to be better for AbstractSciMLOperator
 _liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
+    -1im * (_spre(H, Id) - _spost(H', Id))
+_liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
+_liouvillian(H::ScaledOperator, Id::AbstractMatrix) =
+    -1im * (ScaledOperator(H.λ, _spre(H.L, Id)) - ScaledOperator(conj(H.λ), _spost(H.L', Id)))
 _liouvillian(H::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _liouvillian(op, Id), H.ops))
 
 # intrinsic lindblad_dissipator
