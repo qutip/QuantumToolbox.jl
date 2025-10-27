@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+## [v0.38.0]
+Release date: 2025-10-27
+
 - Introduce new methods of `sesolve_map` and `mesolve_map` for advanced usage. Users can now customize their own `iter`ator structure, `prob_func` and `output_func`. ([#565])
 - Use `ProgressMeter.jl` for progress bar rather than our in-house implementation. ([#569], [#575])
 - Simplify type structure for time evolution solutions. ([#572])
@@ -244,6 +247,7 @@ Release date: 2024-11-13
 [v0.35.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.35.0
 [v0.36.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.36.0
 [v0.37.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.37.0
+[v0.38.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.38.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
