@@ -156,7 +156,7 @@ function Base.show(io::IO, b::Bloch)
     # we use rpad `17` and `maxLen` for Bloch sphere data and properties, respectively
     # 17 is the length of string: `Number of vectors`
     # maxLen is the maximum length among all field names
-    maxLen = maximum(length ∘ String, fieldnames(Settings))
+    maxLen = maximum(length ∘ String, fieldnames(Bloch))
 
     println(io, "Bloch Sphere\n")
     println(io, "data:")
