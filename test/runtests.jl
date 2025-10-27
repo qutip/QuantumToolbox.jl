@@ -89,7 +89,9 @@ if (GROUP == "Arbitrary-Precision")
     Pkg.update()
 
     using QuantumToolbox
+    using LinearAlgebra
     using SparseArrays
+    using Sparspak
     using GenericSchur
 
     QuantumToolbox.about()

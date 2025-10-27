@@ -378,9 +378,16 @@ function eigsolve(
         !haskey(kwargs2, :assumptions) && (kwargs2 = merge(kwargs2, (assumptions = OperatorAssumptions(true),)))
 
         prob = LinearProblem{true}(Aₛ, v0)
-        linsolve =
-            typeof(A) <: SparseMatrixCSC ? init(prob, UMFPACKFactorization(); kwargs2...) :
+
+        linsolve = if isnothing(solver)
+            if typeof(A) <: SparseMatrixCSC && isprimitivetype(T)
+                init(prob, UMFPACKFactorization(); kwargs2...)
+            else
+                init(prob; kwargs2...)
+            end
+        else
             init(prob, solver; kwargs2...)
+        end
 
         Amap = EigsolveInverseMap(T, size(A), linsolve)
 
