@@ -370,7 +370,6 @@ function eigsolve(
         vals = res.values
     else
         Aₛ = A - sigma * I
-        isnothing(solver) && (solver = typeof(A) <: SparseMatrixCSC ? UMFPACKFactorization() : KrylovJL_GMRES())
 
         kwargs2 = (; kwargs...)
 
@@ -379,7 +378,9 @@ function eigsolve(
         !haskey(kwargs2, :assumptions) && (kwargs2 = merge(kwargs2, (assumptions = OperatorAssumptions(true),)))
 
         prob = LinearProblem{true}(Aₛ, v0)
-        linsolve = init(prob, solver; kwargs2...)
+        linsolve =
+            typeof(A) <: SparseMatrixCSC ? init(prob, UMFPACKFactorization(); kwargs2...) :
+            init(prob, solver; kwargs2...)
 
         Amap = EigsolveInverseMap(T, size(A), linsolve)
 
