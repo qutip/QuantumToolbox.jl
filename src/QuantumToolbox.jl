@@ -46,7 +46,8 @@ import SciMLOperators:
     IdentityOperator,
     update_coefficients!,
     concretize
-import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
+import LinearSolve:
+    LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, OperatorAssumptions
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
@@ -58,7 +59,6 @@ import ArrayInterface: allowed_getindex, allowed_setindex!
 import Distributed: RemoteChannel
 import FFTW: fft, ifft, fftfreq, fftshift
 import Graphs: connected_components, DiGraph
-import IncompleteLU: ilu
 import LaTeXStrings: @L_str
 import Pkg
 import ProgressMeter: Progress, next!

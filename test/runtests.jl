@@ -74,7 +74,8 @@ if (GROUP == "CUDA_Ext")
     import StaticArraysCore: SVector
     using CUDA
     using CUDA.CUSPARSE
-    # CUDA.allowscalar(false) # This is already set in the extension script
+    using CUDSS
+    using LinearSolve
 
     QuantumToolbox.about()
     CUDA.versioninfo()

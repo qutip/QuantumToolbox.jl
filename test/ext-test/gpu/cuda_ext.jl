@@ -264,3 +264,35 @@ end
         @inferred ptrace(ψ, 2)
     end
 end
+
+@testset "CUDA eigsolve" begin
+    N = 30
+    Δ = 0.5
+    U = 0.1
+    κ = 0.1
+    F = 0.5
+
+    a = destroy(N)
+    H = Δ * a' * a + U / 2 * a' * a' * a * a + F * (a + a')
+
+    c_ops = [sqrt(κ) * a]
+
+    L = liouvillian(H, c_ops)
+    L_gpu = CuSparseMatrixCSR(L)
+
+    vals_cpu, vecs_cpu = eigenstates(L; sparse = true, sigma = 0.01, eigvals = 4, krylovdim = 30)
+    vals_gpu, vecs_gpu = eigenstates(
+        L_gpu;
+        sparse = true,
+        sigma = 0.01,
+        eigvals = 4,
+        krylovdim = 30,
+        solver = LUFactorization(),
+        v0 = CUDA.rand(ComplexF64, size(L_gpu, 1)),
+    )
+
+    @test vals_cpu ≈ vals_gpu atol = 1e-8
+    @test all(zip(vecs_cpu, vecs_gpu)) do (v_cpu, v_gpu)
+        return isapprox(abs(dot(v_cpu.data, Array(v_gpu.data))), 1; atol = 1e-8)
+    end
+end

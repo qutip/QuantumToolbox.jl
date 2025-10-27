@@ -352,10 +352,9 @@ function eigsolve(
     kwargs...,
 )
     T = eltype(A)
-    isH = ishermitian(A)
-    v0 === nothing && (v0 = normalize!(rand(T, size(A, 1))))
+    isnothing(v0) && (v0 = normalize!(rand(T, size(A, 1))))
 
-    if sigma === nothing
+    if isnothing(sigma)
         res = _eigsolve(
             A,
             v0,
@@ -371,16 +370,15 @@ function eigsolve(
         vals = res.values
     else
         Aₛ = A - sigma * I
-        solver === nothing && (solver = isH ? KrylovJL_MINRES() : KrylovJL_GMRES())
+        isnothing(solver) && (solver = typeof(A) <: SparseMatrixCSC ? UMFPACKFactorization() : KrylovJL_GMRES())
 
         kwargs2 = (; kwargs...)
-        condition = !haskey(kwargs2, :Pl) && typeof(A) <: SparseMatrixCSC
-        condition && (kwargs2 = merge(kwargs2, (Pl = ilu(Aₛ, τ = 0.01),)))
 
         !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, (abstol = tol * 1e-6,)))
         !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, (reltol = tol * 1e-6,)))
+        !haskey(kwargs2, :assumptions) && (kwargs2 = merge(kwargs2, (assumptions = OperatorAssumptions(true),)))
 
-        prob = LinearProblem(Aₛ, v0)
+        prob = LinearProblem{true}(Aₛ, v0)
         linsolve = init(prob, solver; kwargs2...)
 
         Amap = EigsolveInverseMap(T, size(A), linsolve)
