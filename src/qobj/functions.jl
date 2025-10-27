@@ -291,8 +291,8 @@ function mat2vec(A::MT) where {MT<:AbstractSparseMatrix}
     return sparsevec(i .+ (j .- 1) .* size(A, 1), v, prod(size(A)))
 end
 for op in (:Transpose, :Adjoint)
-    @eval mat2vec(A::$op{T,<:AbstractSparseMatrix}) where {T<:BlasFloat} = mat2vec(sparse(A))
-    @eval mat2vec(A::$op{T,<:AbstractMatrix}) where {T<:BlasFloat} = mat2vec(Matrix(A))
+    @eval mat2vec(A::$op{T,<:AbstractSparseMatrix}) where {T<:Number} = mat2vec(sparse(A))
+    @eval mat2vec(A::$op{T,<:AbstractMatrix}) where {T<:Number} = mat2vec(Matrix(A))
 end
 
 function mat2vec(::Type{M}) where {M<:DenseMatrix}
@@ -316,9 +316,7 @@ function mat2vec(::Type{M}) where {M<:SparseMatrixCSC}
     return SparseVector{par[1],par[2]}
 end
 
-function mat2vec(
-    ::Type{M},
-) where {M<:Union{Adjoint{<:BlasFloat,<:SparseMatrixCSC},Transpose{<:BlasFloat,<:SparseMatrixCSC}}}
+function mat2vec(::Type{M}) where {M<:Union{Adjoint{<:Number,<:SparseMatrixCSC},Transpose{<:Number,<:SparseMatrixCSC}}}
     T = M.parameters[2]
     par = T.parameters
     npar = length(par)

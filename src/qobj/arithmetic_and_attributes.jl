@@ -256,7 +256,7 @@ julia> tr(a' * a)
 LinearAlgebra.tr(A::QuantumObject{OpType}) where {OpType<:Union{Operator,SuperOperator}} = tr(A.data)
 LinearAlgebra.tr(
     A::QuantumObject{OpType,DimsType,<:Union{<:Hermitian{TF},Symmetric{TR}}},
-) where {OpType<:Operator,DimsType,TF<:BlasFloat,TR<:Real} = real(tr(A.data))
+) where {OpType<:Operator,DimsType,TF<:Number,TR<:Real} = real(tr(A.data))
 
 @doc raw"""
     svdvals(A::QuantumObject)

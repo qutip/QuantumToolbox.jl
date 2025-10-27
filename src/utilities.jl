@@ -183,6 +183,7 @@ _float_type(::Type{Complex{Int32}}) = Float32
 _float_type(::Type{Complex{Int64}}) = Float64
 _float_type(::Type{Complex{Float32}}) = Float32
 _float_type(::Type{Complex{Float64}}) = Float64
+_float_type(::Type{Complex{T}}) where {T<:Real} = T
 _float_type(T::Type{<:Real}) = T # Allow other untracked Real types, like ForwardDiff.Dual
 _complex_float_type(::AbstractArray{T}) where {T<:Number} = _complex_float_type(T)
 _complex_float_type(::Type{Int32}) = ComplexF32

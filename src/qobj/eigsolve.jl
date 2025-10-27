@@ -129,36 +129,55 @@ function LinearAlgebra.mul!(y::AbstractVector, A::EigsolveInverseMap, x::Abstrac
     return copyto!(y, solve!(A.linsolve).u)
 end
 
-function _permuteschur!(
-    T::AbstractMatrix{S},
-    Q::AbstractMatrix{S},
-    order::AbstractVector{<:Integer},
-) where {S<:BlasFloat}
-    n = checksquare(T)
-    p = collect(order) # makes copy cause will be overwritten
-    @inbounds for i in eachindex(p)
-        ifirst::BlasInt = p[i]
-        ilast::BlasInt = i
-        LAPACK.trexc!(ifirst, ilast, T, Q)
-        for k in (i+1):length(p)
-            if p[k] < p[i]
-                p[k] += 1
-            end
-        end
-    end
-    return T, Q
-end
-
-function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals, sortby, rev)
-    F = hessenberg!(Hₘ)
+function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
     copyto!(Uₘ, Hₘ)
-    LAPACK.orghr!(1, m, Uₘ, F.τ)
-    Tₘ, Uₘ, values = hseqr!(Hₘ, Uₘ)
+    F = schur!(Uₘ)
+
+    values = F.values
     sortperm!(sorted_vals, values, by = sortby, rev = rev)
-    _permuteschur!(Tₘ, Uₘ, sorted_vals)
+
+    select = fill(false, length(values))
+    @inbounds for j in 1:k
+        select[sorted_vals[j]] = true
+    end
+
+    ordschur!(F, select)
+
+    copyto!(Hₘ, F.T)
+    copyto!(Uₘ, F.Z)
     mul!(f, Uₘᵥ, β)
 
-    return Tₘ, Uₘ
+    return nothing
+end
+
+# Pure Julia implementation of computing right eigenvectors from Schur form
+# Instead of using LAPACK.trevc!('R', 'A', select, Tₘ)
+function _schur_right_eigenvectors(Tₘ::AbstractMatrix, k::Integer)
+    n = size(Tₘ, 1)
+    vecs = zeros(eltype(Tₘ), n, k)
+
+    @inbounds for col in 1:k
+        vec = view(vecs, :, col)
+        vec[col] = one(eltype(Tₘ))
+        λ = Tₘ[col, col]
+
+        for row in (col-1):-1:1
+            acc = zero(eltype(Tₘ))
+            for inner in (row+1):col
+                acc += Tₘ[row, inner] * vec[inner]
+            end
+            denom = Tₘ[row, row] - λ
+            vec[row] = if abs(denom) <= eps(typeof(abs(λ))) * max(one(typeof(abs(λ))), abs(λ))
+                zero(eltype(Tₘ))
+            else
+                -acc / denom
+            end
+        end
+
+        normalize!(vec)
+    end
+
+    return vecs
 end
 
 function _eigsolve(
@@ -172,7 +191,7 @@ function _eigsolve(
     maxiter::Int = 200,
     sortby::Function = abs2,
     rev = true,
-) where {T<:BlasFloat,ObjType<:Union{Nothing,Operator,SuperOperator}}
+) where {T<:Number,ObjType<:Union{Nothing,Operator,SuperOperator}}
     n = size(A, 2)
     V = similar(b, n, m + 1)
     H = zeros(T, m + 1, m)
@@ -201,7 +220,7 @@ function _eigsolve(
     cache0 = similar(b, m, m)
     cache1 = similar(b, size(V, 1), m)
     cache2 = similar(H, m)
-    sorted_vals = Array{Int16}(undef, m)
+    sorted_vals = Array{Int}(undef, m)
 
     V₁ₖ = view(V, :, 1:k)
     Vₖ₊₁ = view(V, :, k + 1)
@@ -211,7 +230,7 @@ function _eigsolve(
 
     M = typeof(cache0)
 
-    Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals, sortby, rev)
+    _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
 
     numops = m
     iter = 0
@@ -237,20 +256,17 @@ function _eigsolve(
 
         # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
 
-        Tₘ, Uₘ = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, m, β, sorted_vals, sortby, rev)
+        _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
 
         numops += m - k - 1
         iter += 1
     end
 
+    Tₘ = Hₘ
     vals = diag(view(Tₘ, 1:k, 1:k))
-    select = Vector{BlasInt}(undef, 0)
-    VR = LAPACK.trevc!('R', 'A', select, Tₘ)
-    @inbounds for i in 1:size(VR, 2)
-        normalize!(view(VR, :, i))
-    end
-    mul!(cache1, Vₘ, M(Uₘ * VR))
-    vecs = cache1[:, 1:k]
+    VR = _schur_right_eigenvectors(Tₘ, k)
+    mul!(cache1₁ₖ, Vₘ, M(Uₘ * VR))
+    vecs = copy(cache1₁ₖ)
     settings.auto_tidyup && tidyup!(vecs)
 
     return EigsolveResult(vals, vecs, type, dimensions, iter, numops, (iter < maxiter))

@@ -84,7 +84,7 @@ function _wigner(
     yvec::AbstractVector{T},
     g::Real,
     method::WignerLaguerre,
-) where {T<:BlasFloat}
+) where {T<:Number}
     g = convert(T, g)
     X, Y = meshgrid(xvec, yvec)
     A = g / 2 * (X + 1im * Y)
@@ -100,7 +100,7 @@ function _wigner(
     yvec::AbstractVector{T},
     g::Real,
     method::WignerClenshaw,
-) where {T1<:BlasFloat,T<:BlasFloat}
+) where {T1<:Number,T<:Number}
     g = convert(T, g)
     M = size(ρ, 1)
     X, Y = meshgrid(xvec, yvec)
@@ -183,7 +183,7 @@ function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray,
     return @. W * g^2 * exp(-B / 2) / 2 / π
 end
 
-# function _genlaguerre(n::Int, α::Int, x::T) where {T<:BlasFloat}
+# function _genlaguerre(n::Int, α::Int, x::T) where {T<:Number}
 #     t = binomial(n+α,n)
 #     L = t
 #     for k = 1:n
@@ -193,7 +193,7 @@ end
 #     return L
 # end
 # This is a little bit slower, but it supports GPU
-function _genlaguerre(n::Int, α::Number, x::T) where {T<:BlasFloat}
+function _genlaguerre(n::Int, α::Number, x::T) where {T<:Number}
     α = convert(T, α)
     p0, p1 = one(T), -x + (α + 1)
     n == 0 && return p0

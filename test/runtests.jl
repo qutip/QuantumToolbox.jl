@@ -2,7 +2,7 @@ using Test
 using TestItemRunner
 using Pkg
 
-const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext"]
+const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext", "Arbitrary-Precision"]
 
 const GROUP = get(ENV, "GROUP", "All")
 (GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nThe allowed groups are: $GROUP_LIST\n"))
@@ -80,4 +80,18 @@ if (GROUP == "CUDA_Ext")
     CUDA.versioninfo()
 
     include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
+end
+
+if (GROUP == "Arbitrary-Precision")
+    Pkg.activate("ext-test/cpu/arbitrary_precision")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.update()
+
+    using QuantumToolbox
+    using SparseArrays
+    using GenericSchur
+
+    QuantumToolbox.about()
+
+    include(joinpath(testdir, "ext-test", "cpu", "arbitrary_precision", "arbitrary_precision.jl"))
 end
