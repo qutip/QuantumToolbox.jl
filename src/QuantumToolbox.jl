@@ -59,6 +59,7 @@ import ArrayInterface: allowed_getindex, allowed_setindex!
 import Distributed: RemoteChannel
 import FFTW: fft, ifft, fftfreq, fftshift
 import Graphs: connected_components, DiGraph
+import IncompleteLU: ilu
 import LaTeXStrings: @L_str
 import Pkg
 import ProgressMeter: Progress, next!
