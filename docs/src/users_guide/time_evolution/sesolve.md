@@ -35,7 +35,7 @@ H = 2 * π * 0.1 * sigmax()
 ψ0 = basis(2, 0) # spin-up
 tlist = LinRange(0.0, 10.0, 20)
 
-prob = sesolveProblem(H, ψ0, tlist, e_ops = [sigmaz()])
+prob = sesolveProblem(H, ψ0, tlist, e_ops = [sigmaz()], progress_bar = Val(false))
 sol = sesolve(prob)
 ```
 

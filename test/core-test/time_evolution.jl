@@ -140,7 +140,7 @@ end
         @inferred sesolveProblem(H, ψ0, tlist, progress_bar = Val(false))
         @inferred sesolveProblem(H, ψ0, [0, 10], progress_bar = Val(false))
         @inferred sesolveProblem(H, TESetup.ψ0_int, tlist, progress_bar = Val(false))
-        @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
+        @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(true)) # test progress bar
         @inferred sesolve(H, ψ0, tlist, progress_bar = Val(false))
         @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
         @inferred sesolve(H, ψ0, tlist, e_ops = (TESetup.a' * TESetup.a, TESetup.a'), progress_bar = Val(false)) # We test the type inference for Tuple of different types
@@ -171,7 +171,7 @@ end
     ωq_fun(p, t) = p[2]
     H = QobjEvo(a' * a, ωc_fun) + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σm')
 
-    sols0 = sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops) # no params, but test progress_bar
+    sols0 = sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(false)) # no params
     sols1 = sesolve_map(H, ψ_0_e, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     sols2 = sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     @test size(sols0) == (2,)
@@ -195,7 +195,7 @@ end
     end
 
     @testset "Type Inference sesolve_map" begin
-        @inferred sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(false)) # no params
+        @inferred sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(true)) # no params, test progress bar
         @inferred sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     end
 end
@@ -289,7 +289,7 @@ end
         @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
         @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
         @inferred mesolveProblem(H, TESetup.ψ0_int, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
-        @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(true)) # also test progress bar
         @inferred mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
         @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
         @inferred mesolve(H, ψ0, tlist, (a, ad_t), e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple
@@ -327,8 +327,8 @@ end
     ωq_fun(p, t) = p[2]
     H = QobjEvo(a' * a, ωc_fun) + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σm')
 
-    # Test with multiple initial states but no params (this also tests progress_bar)
-    sols0 = mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops)
+    # Test with multiple initial states but no params
+    sols0 = mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops, progress_bar = Val(false))
     # Test with single initial state
     sols1 = mesolve_map(H, ψ_0_e, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     # Test with multiple initial states
@@ -375,7 +375,7 @@ end
     @test sols5 isa Array{<:TimeEvolutionSol}
 
     @testset "Type Inference mesolve_map" begin
-        @inferred mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops, progress_bar = Val(false)) # no params
+        @inferred mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops, progress_bar = Val(true)) # no params, but test progress bar
         @inferred mesolve_map(
             H,
             ψ0_list,
@@ -564,7 +564,7 @@ end
             rng = rng,
         )
         @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
-        @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng)
+        @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng) # test progress bar
         @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
         @inferred mcsolve(H, TESetup.ψ0_int, tlist, c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
         @inferred mcsolve(H, ψ0, tlist, (a, a'), e_ops = (a' * a, a'), ntraj = 5, progress_bar = Val(false), rng = rng) # We test the type inference for Tuple of different types
@@ -696,7 +696,7 @@ end
             rng = rng,
         )
         @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
-        @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng)
+        @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng) # test progress bar
         @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
         @inferred ssesolve(H, TESetup.ψ0_int, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
         @inferred ssesolve(
@@ -960,7 +960,7 @@ end
             ntraj = 5,
             progress_bar = Val(true),
             rng = rng,
-        )
+        ) # test progress bar
         @inferred smesolve(
             H,
             ψ0,
