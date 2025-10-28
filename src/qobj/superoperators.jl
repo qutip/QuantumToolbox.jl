@@ -42,12 +42,13 @@ end
 ## intrinsic liouvillian 
 function _liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
     CType = _complex_float_type(H)
-    CType(-1.0im) * _spre(H, Id) + CType(1.0im) * _spost(H', Id)
+    return CType(-1.0im) * _spre(H, Id) + CType(1.0im) * _spost(H', Id)
 end
 _liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
 function _liouvillian(H::ScaledOperator, Id::AbstractMatrix)
     CType = _complex_float_type(H)
-    CType(-1.0im) * ScaledOperator(H.λ, _spre(H.L, Id)) + CType(1.0im) * ScaledOperator(conj(H.λ), _spost(H.L', Id))
+    return CType(-1.0im) * ScaledOperator(H.λ, _spre(H.L, Id)) +
+           CType(1.0im) * ScaledOperator(conj(H.λ), _spost(H.L', Id))
 end
 _liouvillian(H::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _liouvillian(op, Id), H.ops))
 
