@@ -15,6 +15,7 @@ import SciMLBase:
     remake,
     u_modified!,
     NullParameters,
+    LinearProblem,
     ODEFunction,
     SDEFunction,
     ODEProblem,
@@ -46,7 +47,8 @@ import SciMLOperators:
     IdentityOperator,
     update_coefficients!,
     concretize
-import LinearSolve: LinearProblem, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES
+import LinearSolve:
+    SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, OperatorAssumptions
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
 import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
