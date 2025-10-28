@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Generalize the definition of `liouvillian`. It no longer expects the Hamiltonian to be Hermitian. ([#581])
+
 ## [v0.38.1]
 Release date: 2025-10-27
 
@@ -357,3 +359,4 @@ Release date: 2024-11-13
 [#575]: https://github.com/qutip/QuantumToolbox.jl/issues/575
 [#576]: https://github.com/qutip/QuantumToolbox.jl/issues/576
 [#579]: https://github.com/qutip/QuantumToolbox.jl/issues/579
+[#581]: https://github.com/qutip/QuantumToolbox.jl/issues/581
