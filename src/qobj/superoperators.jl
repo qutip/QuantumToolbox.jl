@@ -180,11 +180,8 @@ liouvillian(H::Nothing, c_ops::Union{AbstractVector,Tuple}, Id_cache::Diagonal =
 
 liouvillian(H::Nothing, c_ops::Nothing) = 0
 
-function liouvillian(H::AbstractQuantumObject{Operator}, Id_cache::Diagonal = I(prod(H.dimensions)))
-    @warn "The definition of `liouvillian` L for a given Hamiltonian H is changed to L[⋅] = -i( H[⋅] - [⋅]H' ), with ' represents complex conjugation" *
-          "QuantumToolbox.jl no longer expects H to be Hermitian." maxlog = 1
-    return get_typename_wrapper(H)(_liouvillian(H.data, Id_cache), SuperOperator(), H.dimensions)
-end
+liouvillian(H::AbstractQuantumObject{Operator}, Id_cache::Diagonal = I(prod(H.dimensions))) =
+    get_typename_wrapper(H)(_liouvillian(H.data, Id_cache), SuperOperator(), H.dimensions)
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal) = H
 
