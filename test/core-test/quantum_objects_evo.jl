@@ -215,7 +215,7 @@
             coef2(p, t) * conj(coef3(p, t)) * (spre(a) * spost(X') - 0.5 * spre(X' * a) - 0.5 * spost(X' * a)) + # cross terms
             conj(coef2(p, t)) * coef3(p, t) * (spre(X) * spost(a') - 0.5 * spre(a' * X) - 0.5 * spost(a' * X))   # cross terms
         L_ti = liouvillian(H_ti) + D1_ti + D2_ti
-        L_td = @test_logs (:warn,) (:warn,) liouvillian(H_td, c_ops) # warnings from lazy tensor in `lindblad_dissipator(c_op2)`
+        L_td = @test_logs (:warn,) (:warn,) (:warn,) liouvillian(H_td, c_ops) # two warnings from lazy tensor `lindblad_dissipator(c_op2)`, one from changing liouvillian definition
         ρvec = mat2vec(rand_dm(N))
         @test L_td(p, t) ≈ L_ti
         @test iscached(L_td) == false
@@ -227,7 +227,7 @@
 
         coef_wrong1(t) = nothing
         coef_wrong2(p, t::ComplexF64) = nothing
-        @test_logs (:warn,) (:warn,) liouvillian(H_td * H_td) # warnings from lazy tensor
+        @test_logs (:warn,) (:warn,) (:warn,) liouvillian(H_td * H_td) # two warnings from lazy tensor, one from changing liouvillian definition
         @test_throws ArgumentError QobjEvo(a, coef_wrong1)
         @test_throws ArgumentError QobjEvo(a, coef_wrong2)
         @test_throws MethodError QobjEvo([[a, coef1], a' * a, [a', coef2]])

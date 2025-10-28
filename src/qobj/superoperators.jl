@@ -41,14 +41,14 @@ end
 
 ## intrinsic liouvillian 
 function _liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
-    CType = _complex_float_type(H)
-    return CType(-1.0im) * _spre(H, Id) + CType(1.0im) * _spost(H', Id)
+    CFType = _complex_float_type(H)
+    return CFType(-1.0im) * _spre(H, Id) + CFType(1.0im) * _spost(H', Id)
 end
 _liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
 function _liouvillian(H::ScaledOperator, Id::AbstractMatrix)
-    CType = _complex_float_type(H)
-    return CType(-1.0im) * ScaledOperator(H.λ, _spre(H.L, Id)) +
-           CType(1.0im) * ScaledOperator(conj(H.λ), _spost(H.L', Id))
+    CFType = _complex_float_type(H)
+    return CFType(-1.0im) * ScaledOperator(H.λ, _spre(H.L, Id)) +
+           CFType(1.0im) * ScaledOperator(conj(H.λ), _spost(H.L', Id))
 end
 _liouvillian(H::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _liouvillian(op, Id), H.ops))
 
@@ -180,9 +180,12 @@ liouvillian(H::Nothing, c_ops::Union{AbstractVector,Tuple}, Id_cache::Diagonal =
 
 liouvillian(H::Nothing, c_ops::Nothing) = 0
 
-liouvillian(H::AbstractQuantumObject{Operator}, Id_cache::Diagonal = I(prod(H.dimensions))) =
-    get_typename_wrapper(H)(_liouvillian(H.data, Id_cache), SuperOperator(), H.dimensions)
+function liouvillian(H::AbstractQuantumObject{Operator}, Id_cache::Diagonal = I(prod(H.dimensions)))
+    @warn "The definition of `liouvillian` L for a given Hamiltonian H is changed to L[⋅] = -i( H[⋅] - [⋅]H' ), with ' represents complex conjugation" *
+          "QuantumToolbox.jl no longer expects H to be Hermitian." maxlog = 1
+    return get_typename_wrapper(H)(_liouvillian(H.data, Id_cache), SuperOperator(), H.dimensions)
+end
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal) = H
 
-_sum_lindblad_dissipators(c_ops, Id_cache::Diagonal) = sum(op -> lindblad_dissipator(op, Id_cache), c_ops; init = 0)
+_sum_lindblad_dissipators(c_ops, Id_cache::Diagonal) = sum(op -> lindblad_dissipator(op, Id_cache), c_ops)
