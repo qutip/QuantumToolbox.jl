@@ -55,7 +55,7 @@ _liouvillian(H::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _li
 # intrinsic lindblad_dissipator
 function _lindblad_dissipator(O::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
     Od_O = O' * O
-    return _sprepost(O, O') + _complex_float_type(H)(-0.5 + 0.0im) * (_spre(Od_O, Id) + _spost(Od_O, Id))
+    return _sprepost(O, O') + _complex_float_type(O)(-0.5 + 0.0im) * (_spre(Od_O, Id) + _spost(Od_O, Id))
 end
 function _lindblad_dissipator(O::MatrixOperator, Id::AbstractMatrix)
     _O = O.A
