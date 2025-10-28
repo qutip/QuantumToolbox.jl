@@ -40,17 +40,21 @@ function _spost(B::AbstractSciMLOperator, Id::AbstractMatrix)
 end
 
 ## intrinsic liouvillian 
-_liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}} =
-    -1im * (_spre(H, Id) - _spost(H', Id))
+function _liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
+    CType = _complex_float_type(H)
+    CType(-1.0im) * _spre(H, Id) + CType(1.0im) * _spost(H', Id)
+end
 _liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
-_liouvillian(H::ScaledOperator, Id::AbstractMatrix) =
-    -1im * (ScaledOperator(H.λ, _spre(H.L, Id)) - ScaledOperator(conj(H.λ), _spost(H.L', Id)))
+function _liouvillian(H::ScaledOperator, Id::AbstractMatrix)
+    CType = _complex_float_type(H)
+    CType(-1.0im) * ScaledOperator(H.λ, _spre(H.L, Id)) + CType(1.0im) * ScaledOperator(conj(H.λ), _spost(H.L', Id))
+end
 _liouvillian(H::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _liouvillian(op, Id), H.ops))
 
 # intrinsic lindblad_dissipator
 function _lindblad_dissipator(O::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
     Od_O = O' * O
-    return _sprepost(O, O') - (_spre(Od_O, Id) + _spost(Od_O, Id)) / 2
+    return _sprepost(O, O') + _complex_float_type(H)(-0.5 + 0.0im) * (_spre(Od_O, Id) + _spost(Od_O, Id))
 end
 function _lindblad_dissipator(O::MatrixOperator, Id::AbstractMatrix)
     _O = O.A
