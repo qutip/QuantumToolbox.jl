@@ -39,18 +39,38 @@ function _spost(B::AbstractSciMLOperator, Id::AbstractMatrix)
     return kron(B_T, Id)
 end
 
-## intrinsic liouvillian 
-function _liouvillian(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
+## intrinsic liouvillian
+_liouvillian(
+    H::MT,
+    Id::AbstractMatrix,
+    assume_hermitian::Val{true},
+) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}} = _liouvillian_Herm(H, Id)
+_liouvillian(
+    H::MT,
+    Id::AbstractMatrix,
+    assume_hermitian::Val{false},
+) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}} = _liouvillian_NonHerm(H, Id)
+
+## intrinsic liouvillian (assume H is Hermitian)
+_liouvillian_Herm(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}} =
+    -1im * (_spre(H, Id) - _spost(H, Id))
+_liouvillian_Herm(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian_Herm(H.A, Id))
+_liouvillian_Herm(H::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(H.λ, _liouvillian_Herm(H.L, Id))
+_liouvillian_Herm(H::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _liouvillian_Herm(op, Id), +, H.ops) # use mapreduce to sum (+) all ops
+
+## intrinsic liouvillian (assume H is Non-Hermitian)
+function _liouvillian_NonHerm(H::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
     CFType = _complex_float_type(H)
     return CFType(-1.0im) * _spre(H, Id) + CFType(1.0im) * _spost(H', Id)
 end
-_liouvillian(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian(H.A, Id))
-function _liouvillian(H::ScaledOperator, Id::AbstractMatrix)
+_liouvillian_NonHerm(H::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_liouvillian_NonHerm(H.A, Id))
+function _liouvillian_NonHerm(H::ScaledOperator, Id::AbstractMatrix)
     CFType = _complex_float_type(H)
     return CFType(-1.0im) * ScaledOperator(H.λ, _spre(H.L, Id)) +
            CFType(1.0im) * ScaledOperator(conj(H.λ), _spost(H.L', Id))
 end
-_liouvillian(H::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _liouvillian(op, Id), H.ops))
+_liouvillian_NonHerm(H::AddedOperator, Id::AbstractMatrix) =
+    mapreduce(op -> _liouvillian_NonHerm(op, Id), +, H.ops) # use mapreduce to sum (+) all ops
 
 # intrinsic lindblad_dissipator
 function _lindblad_dissipator(O::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
@@ -145,12 +165,25 @@ lindblad_dissipator(O::AbstractQuantumObject{Operator}, Id_cache = I(size(O, 1))
 lindblad_dissipator(O::AbstractQuantumObject{SuperOperator}, Id_cache = nothing) = O
 
 @doc raw"""
-    liouvillian(H::AbstractQuantumObject, c_ops::Union{Nothing,AbstractVector,Tuple}=nothing, Id_cache=I(prod(H.dimensions)))
+    liouvillian(
+        H::AbstractQuantumObject,
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
+        Id_cache=I(prod(H.dimensions));
+        assume_hermitian::Union{Bool,Val} = Val(true),
+    )
 
-Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``:
+Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``.
+
+By default, when the Hamiltonian `H` is assumed to be Hermitian [`assume_hermitian = Val(true)` or `true`], the Liouvillian [`SuperOperator`](@ref) is defined as :
 
 ```math
-\mathcal{L} [\cdot] = -i\left(\hat{H}[\cdot] - [\cdot]\hat{H}^\dagger\right) + \sum_n \mathcal{D}(\hat{C}_n) [\cdot]
+\mathcal{L} [\cdot] = -i\left(\hat{H}[\cdot] - [\cdot]\hat{H}\right) + \sum_n \mathcal{D}(\hat{C}_n) [\cdot],
+```
+
+otherwise [`assume_hermitian = Val(false)` or `false`],
+
+```math
+\mathcal{L} [\cdot] = -i\left(\hat{H}[\cdot] - [\cdot]\hat{H}^\dagger\right) + \sum_n \mathcal{D}(\hat{C}_n) [\cdot],
 ```
 
 where 
@@ -162,27 +195,42 @@ where
 The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
 
 See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `assume_hermitian = Val(true)` instead of `assume_hermitian = true`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function liouvillian(
     H::AbstractQuantumObject{OpType},
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    Id_cache::Diagonal = I(prod(H.dimensions)),
+    Id_cache::Diagonal = I(prod(H.dimensions));
+    assume_hermitian::Union{Bool,Val} = Val(true),
 ) where {OpType<:Union{Operator,SuperOperator}}
-    L = liouvillian(H, Id_cache)
+    L = liouvillian(H, Id_cache; assume_hermitian = assume_hermitian)
     if !(c_ops isa Nothing)
         L += _sum_lindblad_dissipators(c_ops, Id_cache)
     end
     return L
 end
 
-liouvillian(H::Nothing, c_ops::Union{AbstractVector,Tuple}, Id_cache::Diagonal = I(prod(c_ops[1].dims))) =
-    _sum_lindblad_dissipators(c_ops, Id_cache)
+liouvillian(
+    H::Nothing,
+    c_ops::Union{AbstractVector,Tuple},
+    Id_cache::Diagonal = I(prod(c_ops[1].dims));
+    assume_hermitian::Union{Bool,Val} = Val(true),
+) = _sum_lindblad_dissipators(c_ops, Id_cache)
 
-liouvillian(H::Nothing, c_ops::Nothing) = 0
+liouvillian(H::Nothing, c_ops::Nothing; assume_hermitian::Union{Bool,Val} = Val(true)) = 0
 
-liouvillian(H::AbstractQuantumObject{Operator}, Id_cache::Diagonal = I(prod(H.dimensions))) =
-    get_typename_wrapper(H)(_liouvillian(H.data, Id_cache), SuperOperator(), H.dimensions)
+liouvillian(
+    H::AbstractQuantumObject{Operator},
+    Id_cache::Diagonal = I(prod(H.dimensions));
+    assume_hermitian::Union{Bool,Val} = Val(true),
+) = get_typename_wrapper(H)(_liouvillian(H.data, Id_cache, makeVal(assume_hermitian)), SuperOperator(), H.dimensions)
 
-liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal) = H
+liouvillian(
+    H::AbstractQuantumObject{SuperOperator},
+    Id_cache::Diagonal;
+    assume_hermitian::Union{Bool,Val} = Val(true),
+) = H
 
 _sum_lindblad_dissipators(c_ops, Id_cache::Diagonal) = sum(op -> lindblad_dissipator(op, Id_cache), c_ops)

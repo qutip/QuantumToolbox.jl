@@ -182,15 +182,15 @@
     @testset "Time Dependent Operators and SuperOperators" begin
         N = 10
         a = destroy(N)
-        coef1(p, t) = exp(-1im * p.ω1 * t)
-        coef2(p, t) = sin(p.ω2 * t)
-        coef3(p, t) = sin(p.ω3 * t)
+        coef1(p, t) = exp(-p.γ * t)
+        coef2(p, t) = cos(p.ω1 * t)
+        coef3(p, t) = sin(p.ω2 * t)
         t = rand()
-        p = (ω1 = rand(), ω2 = rand(), ω3 = rand())
+        p = (γ = rand(), ω1 = rand(), ω2 = rand())
 
         # Operator
-        H_td = QobjEvo(((a, coef1), a' * a, (a', coef2)))
-        H_ti = coef1(p, t) * a + a' * a + coef2(p, t) * a'
+        H_td = QobjEvo(((a + a', coef1), a' * a, (-1im * (a - a'), coef2))) # a Hermitian Hamiltonian
+        H_ti = coef1(p, t) * (a + a') + a' * a - 1im * coef2(p, t) * (a - a')
         ψ = rand_ket(N)
         @test H_td(p, t) ≈ H_ti
         @test iscached(H_td) == true
@@ -225,6 +225,13 @@
         @test isconstant(L_td) == false
         @test issuper(L_td) == true
 
+        # test number of lazy operators and assume_hermitian = Val(false)
+        L_td_assume_herm = liouvillian(H_td)
+        L_td_assume_not_herm = liouvillian(H_td, assume_hermitian = Val(false))
+        @test length(L_td_assume_herm.data.ops) == 3 # 1-time-indep. + 2-time-dep.
+        @test length(L_td_assume_not_herm.data.ops) == 5 # 1-time-indep. + 2 x 2-time-dep.
+        @test L_td_assume_herm(p, t) ≈ L_td_assume_not_herm(p, t) # check the matrix since H_td is itself Hermitian
+
         coef_wrong1(t) = nothing
         coef_wrong2(p, t::ComplexF64) = nothing
         @test_logs (:warn,) (:warn,) liouvillian(H_td * H_td) # warnings from lazy tensor
@@ -245,6 +252,7 @@
             @inferred liouvillian(H_td, c_ops2)
             @inferred liouvillian(H_td2, c_ops1)
             @inferred liouvillian(H_td2, c_ops2)
+            @inferred liouvillian(H_td2, c_ops2, assume_hermitian = Val(false))
         end
     end
 end

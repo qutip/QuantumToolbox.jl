@@ -134,13 +134,4 @@ include("visualization.jl")
 # deprecated functions
 include("deprecated.jl")
 
-# module initialization
-function __init__()
-    # this will be called immediately after the module is loaded (e.g., by import or using) at runtime for the first time.
-    # useful for announcement
-    @warn "The definition of `liouvillian` L for a given Hamiltonian H is changed to L[⋅] = -i( H[⋅] - [⋅]H' ), with ' representing complex conjugation. " *
-          "QuantumToolbox.jl no longer expects H to be Hermitian."
-    return nothing
-end
-
 end
