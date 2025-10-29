@@ -69,8 +69,7 @@ function _liouvillian_NonHerm(H::ScaledOperator, Id::AbstractMatrix)
     return CFType(-1.0im) * ScaledOperator(H.λ, _spre(H.L, Id)) +
            CFType(1.0im) * ScaledOperator(conj(H.λ), _spost(H.L', Id))
 end
-_liouvillian_NonHerm(H::AddedOperator, Id::AbstractMatrix) =
-    mapreduce(op -> _liouvillian_NonHerm(op, Id), +, H.ops) # use mapreduce to sum (+) all ops
+_liouvillian_NonHerm(H::AddedOperator, Id::AbstractMatrix) = mapreduce(op -> _liouvillian_NonHerm(op, Id), +, H.ops) # use mapreduce to sum (+) all ops
 
 # intrinsic lindblad_dissipator
 function _lindblad_dissipator(O::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
