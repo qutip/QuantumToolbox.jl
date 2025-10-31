@@ -266,7 +266,12 @@ function _eigsolve(
     vals = diag(view(Tₘ, 1:k, 1:k))
     VR = _schur_right_eigenvectors(Tₘ, k)
     mul!(cache1₁ₖ, Vₘ, M(Uₘ * VR))
-    vecs = copy(cache1₁ₖ)
+
+    # Order the eigenvalues and eigenvectors
+    idxs = sortperm(vals, by = sortby, rev = rev)
+    vals = vals[idxs]
+    vecs = cache1₁ₖ[:, idxs]
+
     settings.auto_tidyup && tidyup!(vecs)
 
     return EigsolveResult(vals, vecs, type, dimensions, iter, numops, (iter < maxiter))
@@ -309,7 +314,7 @@ Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi met
 function eigsolve(
     A::QuantumObject;
     v0::Union{Nothing,AbstractVector} = nothing,
-    sigma::Union{Nothing,Real} = nothing,
+    sigma::Union{Nothing,Number} = nothing,
     eigvals::Int = 1,
     krylovdim::Int = max(20, 2 * eigvals + 1),
     tol::Real = 1e-8,
@@ -341,7 +346,7 @@ function eigsolve(
     v0::Union{Nothing,AbstractVector} = nothing,
     type::Union{Nothing,Operator,SuperOperator} = nothing,
     dimensions = nothing,
-    sigma::Union{Nothing,Real} = nothing,
+    sigma::Union{Nothing,Number} = nothing,
     eigvals::Int = 1,
     krylovdim::Int = max(20, 2 * eigvals + 1),
     tol::Real = 1e-8,
