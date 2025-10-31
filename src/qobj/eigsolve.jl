@@ -280,7 +280,7 @@ end
 @doc raw"""
     eigsolve(A::QuantumObject; 
         v0::Union{Nothing,AbstractVector}=nothing, 
-        sigma::Union{Nothing, Real}=nothing,
+        sigma::Union{Nothing, Number}=nothing,
         eigvals::Int = 1,
         krylovdim::Int = max(20, 2*k+1),
         tol::Real = 1e-8,
@@ -295,7 +295,7 @@ Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi met
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues and eigenvectors.
 - `v0::Union{Nothing,AbstractVector}`: the initial vector for the Arnoldi method. Default is a random vector.
-- `sigma::Union{Nothing, Real}`: the shift for the eigenvalue problem. Default is `nothing`.
+- `sigma::Union{Nothing, Number}`: the shift for the eigenvalue problem. Default is `nothing`.
 - `eigvals::Int`: the number of eigenvalues to compute. Default is `1`.
 - `krylovdim::Int`: the dimension of the Krylov subspace. Default is `max(20, 2*k+1)`.
 - `tol::Real`: the tolerance for the Arnoldi method. Default is `1e-8`.
