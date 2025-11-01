@@ -53,10 +53,24 @@ coef_γ(p, t) = sqrt(p[3])
 H = QobjEvo(a' * a, coef_Δ) + QobjEvo(a + a', coef_F)
 c_ops = [QobjEvo(a, coef_γ)]
 const L = liouvillian(H, c_ops)
+const L_assume_non_herm = liouvillian(H, c_ops, assume_hermitian = Val(false))
 
 function my_f_mesolve(p)
     sol = mesolve(
         L,
+        ψ0_mesolve,
+        tlist_mesolve,
+        progress_bar = Val(false),
+        params = p,
+        sensealg = BacksolveAdjoint(autojacvec = EnzymeVJP()),
+    )
+
+    return real(expect(a' * a, sol.states[end]))
+end
+
+function my_f_mesolve_assume_non_herm(p)
+    sol = mesolve(
+        L_assume_non_herm,
         ψ0_mesolve,
         tlist_mesolve,
         progress_bar = Val(false),
@@ -113,6 +127,7 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
         my_f_mesolve_direct(params)
         my_f_mesolve(params)
+        my_f_mesolve_assume_non_herm(params)
 
         grad_exact = Zygote.gradient((p) -> n_ss(p[1], p[2], p[3]), params)[1]
 
@@ -122,20 +137,31 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
         end
 
         @testset "Zygote.jl" begin
-            grad_qt = Zygote.gradient(my_f_mesolve, params)[1]
-            @test grad_qt ≈ grad_exact atol=1e-6
+            grad_qt1 = Zygote.gradient(my_f_mesolve, params)[1]
+            grad_qt2 = Zygote.gradient(my_f_mesolve_assume_non_herm, params)[1]
+            @test grad_qt1 ≈ grad_exact atol=1e-6
+            @test grad_qt2 ≈ grad_exact atol=1e-6
         end
 
         @testset "Enzyme.jl" begin
-            dparams = Enzyme.make_zero(params)
+            dparams1 = Enzyme.make_zero(params)
             Enzyme.autodiff(
                 Enzyme.set_runtime_activity(Enzyme.Reverse),
                 my_f_mesolve,
                 Active,
-                Duplicated(params, dparams),
+                Duplicated(params, dparams1),
             )[1]
 
-            @test dparams ≈ grad_exact atol=1e-6
+            dparams2 = Enzyme.make_zero(params)
+            Enzyme.autodiff(
+                Enzyme.set_runtime_activity(Enzyme.Reverse),
+                my_f_mesolve_assume_non_herm,
+                Active,
+                Duplicated(params, dparams2),
+            )[1]
+
+            @test dparams1 ≈ grad_exact atol=1e-6
+            @test dparams2 ≈ grad_exact atol=1e-6
         end
     end
 end

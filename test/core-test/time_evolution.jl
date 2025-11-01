@@ -1046,6 +1046,11 @@ end
     @test sol_me.expect ≈ sol_me_td2.expect atol = 1e-6 * length(tlist)
     @test sol_mc.expect ≈ sol_mc_td2.expect atol = 1e-2 * length(tlist)
     # @test sol_sse.expect ≈ sol_sse_td2.expect atol = 1e-2 * length(tlist)
+
+    # test assume_hermitian = Val(false)
+    L_td_non_herm = liouvillian(H_td2, c_ops, assume_hermitian = Val(false))
+    sol_me_td3 = mesolve(L_td_non_herm, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
+    @test sol_me.expect ≈ sol_me_td3.expect atol = 1e-6 * length(tlist)
 end
 
 @testitem "mcsolve, ssesolve and smesolve reproducibility" setup=[TESetup] begin
