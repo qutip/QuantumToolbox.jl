@@ -266,7 +266,12 @@ function _eigsolve(
     vals = diag(view(Tₘ, 1:k, 1:k))
     VR = _schur_right_eigenvectors(Tₘ, k)
     mul!(cache1₁ₖ, Vₘ, M(Uₘ * VR))
-    vecs = copy(cache1₁ₖ)
+
+    # Order the eigenvalues and eigenvectors
+    idxs = sortperm(vals, by = sortby, rev = rev)
+    vals = vals[idxs]
+    vecs = cache1₁ₖ[:, idxs]
+
     settings.auto_tidyup && tidyup!(vecs)
 
     return EigsolveResult(vals, vecs, type, dimensions, iter, numops, (iter < maxiter))
@@ -275,7 +280,7 @@ end
 @doc raw"""
     eigsolve(A::QuantumObject; 
         v0::Union{Nothing,AbstractVector}=nothing, 
-        sigma::Union{Nothing, Real}=nothing,
+        sigma::Union{Nothing, Number}=nothing,
         eigvals::Int = 1,
         krylovdim::Int = max(20, 2*k+1),
         tol::Real = 1e-8,
@@ -290,7 +295,7 @@ Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi met
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues and eigenvectors.
 - `v0::Union{Nothing,AbstractVector}`: the initial vector for the Arnoldi method. Default is a random vector.
-- `sigma::Union{Nothing, Real}`: the shift for the eigenvalue problem. Default is `nothing`.
+- `sigma::Union{Nothing, Number}`: the shift for the eigenvalue problem. Default is `nothing`.
 - `eigvals::Int`: the number of eigenvalues to compute. Default is `1`.
 - `krylovdim::Int`: the dimension of the Krylov subspace. Default is `max(20, 2*k+1)`.
 - `tol::Real`: the tolerance for the Arnoldi method. Default is `1e-8`.
@@ -309,7 +314,7 @@ Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi met
 function eigsolve(
     A::QuantumObject;
     v0::Union{Nothing,AbstractVector} = nothing,
-    sigma::Union{Nothing,Real} = nothing,
+    sigma::Union{Nothing,Number} = nothing,
     eigvals::Int = 1,
     krylovdim::Int = max(20, 2 * eigvals + 1),
     tol::Real = 1e-8,
@@ -341,7 +346,7 @@ function eigsolve(
     v0::Union{Nothing,AbstractVector} = nothing,
     type::Union{Nothing,Operator,SuperOperator} = nothing,
     dimensions = nothing,
-    sigma::Union{Nothing,Real} = nothing,
+    sigma::Union{Nothing,Number} = nothing,
     eigvals::Int = 1,
     krylovdim::Int = max(20, 2 * eigvals + 1),
     tol::Real = 1e-8,
