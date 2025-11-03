@@ -3,6 +3,7 @@
     using SparseArrays
     using StaticArraysCore
     using SciMLOperators
+    import SciMLOperators: AddedOperator
 
     # DomainError: incompatible between size of array and type
     @testset "Thrown Errors" begin
@@ -228,6 +229,8 @@
         # test number of lazy operators and assume_hermitian = Val(false)
         L_td_assume_herm = liouvillian(H_td)
         L_td_assume_not_herm = liouvillian(H_td, assume_hermitian = Val(false))
+        @test L_td_assume_herm.data isa AddedOperator
+        @test L_td_assume_not_herm.data isa AddedOperator
         @test length(L_td_assume_herm.data.ops) == 3 # 1-time-indep. + 2-time-dep.
         @test length(L_td_assume_not_herm.data.ops) == 5 # 1-time-indep. + 2 x 2-time-dep.
         @test L_td_assume_herm(p, t) ≈ L_td_assume_not_herm(p, t) # check the matrix since H_td is itself Hermitian
