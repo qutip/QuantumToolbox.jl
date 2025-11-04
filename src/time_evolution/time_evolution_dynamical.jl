@@ -571,8 +571,9 @@ function _DSF_mcsolve_Affect!(integrator)
     c_ops0_herm .= map(op -> op' * op, c_ops0)
 
     H_nh = convert(eltype(ψt), 0.5im) * sum(c_ops0_herm)
-    # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
-    copyto!(integrator.f.f.A, lmul!(-1im, H(op_l2, dsf_params).data - H_nh))
+    # By doing this, we are assuming that the system is time-independent and f is a ScaledOperator
+    # of the form -1im * (H - H_nh)
+    copyto!(integrator.f.f.L, H(op_l2, dsf_params).data - H_nh)
     return u_modified!(integrator, true)
 end
 
