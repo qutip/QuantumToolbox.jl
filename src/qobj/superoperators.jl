@@ -50,7 +50,8 @@ function _liouvillian(
     return -1im * (H_spre - H_spost)
 end
 function _liouvillian(H::MatrixOperator, Id::AbstractMatrix, assume_hermitian::Val)
-    isconstant(H) || throw(ArgumentError("The given Hamiltonian for constructing Liouvillian must be constant MatrixOperator."))
+    isconstant(H) ||
+        throw(ArgumentError("The given Hamiltonian for constructing Liouvillian must be constant MatrixOperator."))
     return MatrixOperator(_liouvillian(H.A, Id, assume_hermitian))
 end
 _liouvillian(H::ScaledOperator, Id::AbstractMatrix, assume_hermitian::Val{true}) =
