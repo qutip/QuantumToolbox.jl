@@ -32,7 +32,8 @@ import SciMLBase:
     DiscreteCallback,
     AbstractSciMLProblem,
     AbstractODEIntegrator,
-    AbstractODESolution
+    AbstractODESolution,
+    AbstractODEAlgorithm
 import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA2, SRIW1
 import SciMLOperators:
     cache_operator,
@@ -51,8 +52,7 @@ import LinearSolve:
     SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, OperatorAssumptions
 import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
-import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
-import OrdinaryDiffEqTsit5: Tsit5
+import OrdinaryDiffEqVerner: Vern7
 import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
 
 # other dependencies (in alphabetical order)

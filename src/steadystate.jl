@@ -44,7 +44,7 @@ end
 
 @doc raw"""
     SteadyStateODESolver(
-        alg = Tsit5(),
+        alg = Vern7(),
         ψ0 = nothing,
         tmax = Inf,
         terminate_reltol = 1e-4,
@@ -66,7 +66,7 @@ or
 ```
 
 # Arguments
-- `alg::OrdinaryDiffEqAlgorithm=Tsit5()`: The algorithm to solve the ODE.
+- `alg::AbstractODEAlgorithm=Vern7()`: The algorithm to solve the ODE.
 - `ψ0::Union{Nothing,QuantumObject}=nothing`: The initial state of the system. If not specified, a random pure state will be generated.
 - `tmax::Real=Inf`: The final time step for the steady state problem.
 - `terminate_reltol` = The relative tolerance for stationary state terminate condition. Default to `1e-4`.
@@ -78,13 +78,13 @@ or
 For more details about the solving `alg`orithms, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/).
 """
 Base.@kwdef struct SteadyStateODESolver{
-    MT<:OrdinaryDiffEqAlgorithm,
+    MT<:AbstractODEAlgorithm,
     ST<:Union{Nothing,QuantumObject},
     TT<:Real,
     RT<:Real,
     AT<:Real,
 } <: SteadyStateSolver
-    alg::MT = Tsit5()
+    alg::MT = Vern7()
     ψ0::ST = nothing
     tmax::TT = Inf
     terminate_reltol::RT = 1e-4

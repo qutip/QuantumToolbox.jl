@@ -65,7 +65,7 @@ struct TimeEvolutionSol{
     TS<:AbstractVector,
     TE<:Union{AbstractMatrix,Nothing},
     RETT<:Enum,
-    AlgT<:OrdinaryDiffEqAlgorithm,
+    AlgT<:AbstractODEAlgorithm,
     TolT<:Real,
 }
     times::TT1
@@ -138,7 +138,7 @@ struct TimeEvolutionMCSol{
     TE<:Union{AbstractArray,Nothing},
     TJT<:Vector{<:Vector{<:Real}},
     TJW<:Vector{<:Vector{<:Integer}},
-    AlgT<:OrdinaryDiffEqAlgorithm,
+    AlgT<:AbstractODEAlgorithm,
     TolT<:Real,
 } <: TimeEvolutionMultiTrajSol{TS,TE}
     ntraj::Int
@@ -406,7 +406,7 @@ end
 
 function _ensemble_dispatch_solve(
     ens_prob::TimeEvolutionProblem,
-    alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
+    alg::Union{<:AbstractODEAlgorithm,<:StochasticDiffEqAlgorithm},
     ensemblealg::ET,
     ntraj::Int,
 ) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
@@ -427,7 +427,7 @@ function _ensemble_dispatch_solve(
 end
 function _ensemble_dispatch_solve(
     ens_prob::TimeEvolutionProblem,
-    alg::Union{<:OrdinaryDiffEqAlgorithm,<:StochasticDiffEqAlgorithm},
+    alg::Union{<:AbstractODEAlgorithm,<:StochasticDiffEqAlgorithm},
     ensemblealg,
     ntraj::Int,
 )

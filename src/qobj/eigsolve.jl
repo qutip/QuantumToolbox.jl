@@ -422,7 +422,7 @@ end
         H::Union{AbstractQuantumObject{HOpType},Tuple},
         T::Real,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        alg::AbstractODEAlgorithm = Vern7(),
         params::NamedTuple = NamedTuple(),
         ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
         eigvals::Int = 1,
@@ -440,7 +440,7 @@ Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnol
 - `H`: The Hamiltonian (or directly the Liouvillian) of the system. It can be a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a tuple of the form supported by [`mesolve`](@ref).
 - `T`: The time at which to evaluate the time evolution.
 - `c_ops`: A vector of collapse operators. Default is `nothing` meaning the system is closed.
-- `alg`: The differential equation solver algorithm. Default is `Tsit5()`.
+- `alg`: The differential equation solver algorithm. Default is `Vern7()`.
 - `params`: A `NamedTuple` containing the parameters of the system.
 - `ρ0`: The initial density matrix. If not specified, a random density matrix is used.
 - `eigvals`: The number of eigenvalues to compute.
@@ -465,7 +465,7 @@ function eigsolve_al(
     H::Union{AbstractQuantumObject{HOpType},Tuple},
     T::Real,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = Vern7(),
     params::NamedTuple = NamedTuple(),
     ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
     eigvals::Int = 1,

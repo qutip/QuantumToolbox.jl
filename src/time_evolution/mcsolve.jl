@@ -274,7 +274,7 @@ end
         ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        alg::AbstractODEAlgorithm = Vern7(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
@@ -329,7 +329,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
-- `alg`: The algorithm to use for the ODE solver. Default to `Tsit5()`.
+- `alg`: The algorithm to use for the ODE solver. Default to `Vern7()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
@@ -361,7 +361,7 @@ function mcsolve(
     ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = Vern7(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
@@ -398,7 +398,7 @@ end
 
 function mcsolve(
     ens_prob_mc::TimeEvolutionProblem,
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = Vern7(),
     ntraj::Int = 500,
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     keep_runs_results = Val(false),

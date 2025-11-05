@@ -195,7 +195,7 @@ end
     dfd_mesolve(H::Function, ψ0::QuantumObject,
         tlist::AbstractVector, c_ops::Function, maxdims::AbstractVector,
         dfd_params::NamedTuple=NamedTuple();
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::AbstractODEAlgorithm=Vern7(),
         e_ops::Function=(dim_list) -> Vector{Vector{T1}}([]),
         params::NamedTuple=NamedTuple(),
         tol_list::Vector{<:Number}=fill(1e-8, length(maxdims)),
@@ -214,7 +214,7 @@ function dfd_mesolve(
     c_ops::Function,
     maxdims::Vector{T2},
     dfd_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = Vern7(),
     e_ops::Function = (dim_list) -> Vector{Vector{eltype(ψ0)}}([]),
     params::NamedTuple = NamedTuple(),
     tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
@@ -407,7 +407,7 @@ end
         op_list::Vector{TOl},
         α0_l::Vector{<:Number}=zeros(length(op_list)),
         dsf_params::NamedTuple=NamedTuple();
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::AbstractODEAlgorithm=Vern7(),
         e_ops::Function=(op_list,p) -> Vector{TOl}([]),
         params::NamedTuple=NamedTuple(),
         δα_list::Vector{<:Number}=fill(0.2, length(op_list)),
@@ -428,7 +428,7 @@ function dsf_mesolve(
     op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = Vern7(),
     e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
@@ -460,7 +460,7 @@ function dsf_mesolve(
     op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = Vern7(),
     e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
@@ -676,7 +676,7 @@ end
         op_list::Vector{TOl},
         α0_l::Vector{<:Number}=zeros(length(op_list)),
         dsf_params::NamedTuple=NamedTuple();
-        alg::OrdinaryDiffEqAlgorithm=Tsit5(),
+        alg::AbstractODEAlgorithm=Vern7(),
         e_ops::Function=(op_list,p) -> Vector{TOl}([]),
         params::NamedTuple=NamedTuple(),
         δα_list::Vector{<:Real}=fill(0.2, length(op_list)),
@@ -701,7 +701,7 @@ function dsf_mcsolve(
     op_list::Union{AbstractVector,Tuple},
     α0_l::Vector{<:Number} = zeros(length(op_list)),
     dsf_params::NamedTuple = NamedTuple();
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = Vern7(),
     e_ops::Function = (op_list, p) -> (),
     params::NamedTuple = NamedTuple(),
     δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
