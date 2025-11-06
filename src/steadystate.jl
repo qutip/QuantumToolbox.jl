@@ -214,7 +214,8 @@ end
 function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
     ψ0 = isnothing(solver.ψ0) ? rand_ket(L.dimensions) : solver.ψ0
     ftype = _float_type(ψ0)
-    tlist = [ftype(0), ftype(solver.tmax)]
+    tmax = ftype(solver.tmax)
+    tlist = [ftype(0), tmax]
 
     # overwrite some kwargs and throw warning message to tell the users that we are ignoring these settings
     haskey(kwargs, :progress_bar) && @warn "Ignore keyword argument 'progress_bar' for SteadyStateODESolver"
@@ -222,7 +223,7 @@ function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadySta
     haskey(kwargs, :saveat) && @warn "Ignore keyword argument 'saveat' for SteadyStateODESolver"
     kwargs2 = merge(
         NamedTuple(kwargs), # we convert to NamedTuple just in case if kwargs is empty
-        (progress_bar = Val(false), save_everystep = false, saveat = ftype[]),
+        (progress_bar = Val(false), save_everystep = false, saveat = ftype[tmax]),
     )
 
     # add terminate condition (callback)
