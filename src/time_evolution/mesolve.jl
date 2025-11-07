@@ -130,7 +130,7 @@ end
         ψ0::QuantumObject,
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        alg::AbstractODEAlgorithm = DP5(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
@@ -156,7 +156,7 @@ where
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
-- `alg`: The algorithm for the ODE solver. The default value is `Tsit5()`.
+- `alg`: The algorithm for the ODE solver. The default value is `DP5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -181,7 +181,7 @@ function mesolve(
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = DP5(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
@@ -226,7 +226,7 @@ function mesolve(
     end
 end
 
-function mesolve(prob::TimeEvolutionProblem, alg::OrdinaryDiffEqAlgorithm = Tsit5(); kwargs...)
+function mesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = DP5(); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
     return _gen_mesolve_solution(sol, prob.times, prob.dimensions, prob.kwargs.isoperket)
@@ -238,7 +238,7 @@ end
         ψ0::Union{QuantumObject,AbstractVector{<:QuantumObject}},
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-        alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+        alg::AbstractODEAlgorithm = DP5(),
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params::Union{NullParameters,Tuple} = NullParameters(),
@@ -268,7 +268,7 @@ for each combination in the ensemble.
 - `ψ0`: Initial state(s) of the system. Can be a single [`QuantumObject`](@ref) or a `Vector` of initial states. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
-- `alg`: The algorithm for the ODE solver. The default is `Tsit5()`.
+- `alg`: The algorithm for the ODE solver. The default is `DP5()`.
 - `ensemblealg`: Ensemble algorithm to use for parallel computation. Default is `EnsembleThreads()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: A `Tuple` of parameter sets. Each element should be an `AbstractVector` representing the sweep range for that parameter. The function will solve for all combinations of initial states and parameter sets.
@@ -291,7 +291,7 @@ function mesolve_map(
     ψ0::AbstractVector{<:QuantumObject{StateOpType}},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = DP5(),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params::Union{NullParameters,Tuple} = NullParameters(),
@@ -358,7 +358,7 @@ mesolve_map(
 function mesolve_map(
     prob::TimeEvolutionProblem{<:ODEProblem},
     iter::AbstractArray,
-    alg::OrdinaryDiffEqAlgorithm = Tsit5(),
+    alg::AbstractODEAlgorithm = DP5(),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads();
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,

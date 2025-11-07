@@ -287,7 +287,7 @@ end
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-        alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
+        alg::Union{Nothing,AbstractSDEAlgorithm} = nothing,
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
@@ -361,7 +361,7 @@ function smesolve(
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-    alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
+    alg::Union{Nothing,AbstractSDEAlgorithm} = nothing,
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
@@ -403,7 +403,7 @@ end
 
 function smesolve(
     ens_prob::TimeEvolutionProblem,
-    alg::StochasticDiffEqAlgorithm = SRA2(),
+    alg::AbstractSDEAlgorithm = SRA2(),
     ntraj::Int = 500,
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     keep_runs_results = Val(false),

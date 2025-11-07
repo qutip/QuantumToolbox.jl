@@ -1,12 +1,16 @@
 module QuantumToolbox
 
-# Standard Julia libraries
+## Standard Julia libraries
 using LinearAlgebra
-import LinearAlgebra: checksquare
 using SparseArrays
+
+import Distributed: RemoteChannel
+import LinearAlgebra: checksquare
+import Pkg
+import Random: AbstractRNG, default_rng, seed!
 import Statistics: mean, std
 
-# SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
+## SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
 import SciMLBase:
     solve,
     solve!,
@@ -32,8 +36,10 @@ import SciMLBase:
     DiscreteCallback,
     AbstractSciMLProblem,
     AbstractODEIntegrator,
-    AbstractODESolution
-import StochasticDiffEq: StochasticDiffEqAlgorithm, SRA2, SRIW1
+    AbstractODEAlgorithm,
+    AbstractODESolution,
+    AbstractSDEAlgorithm
+import StochasticDiffEq: SRA2, SRIW1
 import SciMLOperators:
     cache_operator,
     iscached,
@@ -49,44 +55,42 @@ import SciMLOperators:
     concretize
 import LinearSolve:
     SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, OperatorAssumptions
-import DiffEqBase: get_tstops
 import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
-import OrdinaryDiffEqCore: OrdinaryDiffEqAlgorithm
-import OrdinaryDiffEqTsit5: Tsit5
+import OrdinaryDiffEqVerner: Vern7
+import OrdinaryDiffEqLowOrderRK: DP5
 import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
 
-# other dependencies (in alphabetical order)
+## other dependencies (in alphabetical order)
 import ArrayInterface: allowed_getindex, allowed_setindex!
-import Distributed: RemoteChannel
 import FFTW: fft, ifft, fftfreq, fftshift
 import FillArrays: Eye
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import LaTeXStrings: @L_str
-import Pkg
 import ProgressMeter: Progress, next!
-import Random: AbstractRNG, default_rng, seed!
 import SpecialFunctions: loggamma
 import StaticArraysCore: SVector, MVector
 
 # Export functions from the other modules
 
-# LinearAlgebra
+## LinearAlgebra
 export ishermitian, issymmetric, isposdef, dot, tr, svdvals, norm, normalize, normalize!, diag, Hermitian, Symmetric
 
-# SparseArrays
+## SparseArrays
 export permute
 
-# SciMLOperators
+## SciMLOperators
 export cache_operator, iscached, isconstant
 
-# Utility
+# Source files
+
+## Utility
 include("settings.jl")
 include("utilities.jl")
 include("versioninfo.jl")
 include("linear_maps.jl")
 
-# Quantum Object
+## Quantum Object
 include("qobj/space.jl")
 include("qobj/energy_restricted.jl")
 include("qobj/dimensions.jl")
@@ -103,7 +107,7 @@ include("qobj/superoperators.jl")
 include("qobj/synonyms.jl")
 include("qobj/block_diagonal_form.jl")
 
-# time evolution
+## time evolution
 include("time_evolution/time_evolution.jl")
 include("time_evolution/callback_helpers/callback_helpers.jl")
 include("time_evolution/callback_helpers/sesolve_callback_helpers.jl")
@@ -120,7 +124,7 @@ include("time_evolution/ssesolve.jl")
 include("time_evolution/smesolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 
-# Others
+## Others
 include("correlations.jl")
 include("wigner.jl")
 include("spin_lattice.jl")
@@ -132,7 +136,7 @@ include("steadystate.jl")
 include("spectrum.jl")
 include("visualization.jl")
 
-# deprecated functions
+## deprecated functions
 include("deprecated.jl")
 
 end
