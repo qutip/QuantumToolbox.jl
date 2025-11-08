@@ -115,11 +115,12 @@ function mesolveProblem(
     L = L_evo.data
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
-    kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncMESolve)
+    kwargs3 = _merge_tstops(kwargs2, isconstant(L), tlist)
+    kwargs4 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs3, SaveFuncMESolve)
 
     tspan = (tlist[1], tlist[end])
 
-    prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs3...)
+    prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs4...)
 
     return TimeEvolutionProblem(prob, tlist, L_evo.dimensions, (isoperket = Val(isoperket(ψ0)),))
 end

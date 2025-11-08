@@ -105,23 +105,17 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rn
         )
     end
 
-    kwargs2 = _kwargs_set_tstops(kwargs, tlist)
     if e_ops isa Nothing
         # We are implicitly saying that we don't have a `Progress`
-        kwargs3 =
-            haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, kwargs2.callback),)) :
-            merge(kwargs2, (callback = cb1,))
-        return kwargs3
+        kwargs2 = _merge_kwargs_with_callback(kwargs, cb1)
     else
         expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
 
         _save_func = SaveFuncMCSolve(get_data.(e_ops), Ref(1), expvals)
         cb2 = FunctionCallingCallback(_save_func, funcat = tlist)
-        kwargs3 =
-            haskey(kwargs2, :callback) ? merge(kwargs2, (callback = CallbackSet(cb1, cb2, kwargs2.callback),)) :
-            merge(kwargs2, (callback = CallbackSet(cb1, cb2),))
-        return kwargs3
+        kwargs2 = _merge_kwargs_with_callback(kwargs, CallbackSet(cb1, cb2))
     end
+    return kwargs2
 end
 
 function _lindblad_jump_affect!(

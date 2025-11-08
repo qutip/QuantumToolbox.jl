@@ -6,20 +6,21 @@ This file contains helper functions for callbacks. The affect! function are defi
 
 abstract type AbstractSaveFunc end
 
-function _kwargs_set_tstops(kwargs, tlist)
-    tstops = haskey(kwargs, :tstops) ? unique!(sort!(vcat(tlist, kwargs.tstops))) : tlist
-    return merge(kwargs, (tstops = tstops,))
+function _merge_tstops(kwargs, prob_is_constant::Bool, tlist)
+    if prob_is_constant
+        return kwargs
+    else
+        tstops = haskey(kwargs, :tstops) ? unique!(sort!(vcat(tlist, kwargs.tstops))) : tlist
+        return merge(kwargs, (tstops = tstops,))
+    end
 end
 
 # Multiple dispatch depending on the progress_bar and e_ops types
 function _generate_se_me_kwargs(e_ops, progress_bar, tlist, kwargs, method)
     cb = _generate_save_callback(e_ops, tlist, progress_bar, method)
-
-    kwargs2 = _kwargs_set_tstops(kwargs, tlist)
-    return _merge_kwargs_with_callback(kwargs2, cb)
+    return _merge_kwargs_with_callback(kwargs, cb)
 end
-_generate_se_me_kwargs(e_ops::Nothing, progress_bar::Val{false}, tlist, kwargs, method) =
-    _kwargs_set_tstops(kwargs, tlist)
+_generate_se_me_kwargs(e_ops::Nothing, progress_bar::Val{false}, tlist, kwargs, method) = kwargs
 
 function _generate_stochastic_kwargs(
     e_ops,
@@ -34,7 +35,7 @@ function _generate_stochastic_kwargs(
 
     # Ensure that the noise is stored in tlist. # TODO: Fix this directly in DiffEqNoiseProcess.jl
     # See https://github.com/SciML/DiffEqNoiseProcess.jl/issues/214 for example
-    kwargs2 = _kwargs_set_tstops(kwargs, tlist)
+    kwargs2 = _merge_tstops(kwargs, true, tlist) # true to force add 'tstops = tlist'
 
     if SF === SaveFuncSSESolve
         cb_normalize = _ssesolve_generate_normalize_cb()
@@ -51,7 +52,7 @@ _generate_stochastic_kwargs(
     store_measurement::Val{false},
     kwargs,
     method::Type{SF},
-) where {SF<:AbstractSaveFunc} = _kwargs_set_tstops(kwargs, tlist)
+) where {SF<:AbstractSaveFunc} = kwargs
 
 function _merge_kwargs_with_callback(kwargs, cb)
     kwargs2 =

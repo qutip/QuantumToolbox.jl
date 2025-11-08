@@ -83,11 +83,12 @@ function sesolveProblem(
     U = H_evo.data
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
-    kwargs3 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs2, SaveFuncSESolve)
+    kwargs3 = _merge_tstops(kwargs2, isconstant(U), tlist)
+    kwargs4 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs3, SaveFuncSESolve)
 
     tspan = (tlist[1], tlist[end])
 
-    prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, params; kwargs3...)
+    prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, params; kwargs4...)
 
     return TimeEvolutionProblem(prob, tlist, H_evo.dimensions)
 end
