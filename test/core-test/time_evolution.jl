@@ -1223,7 +1223,7 @@ end
     ρ0 = ket2dm(ψ0) # to force using mesolve
 
     # sesolve & mesolve
-    tlist = range(0.0, stop=140.0, length=10000) # don't change tlist, to check the second pulse contribute correctly under 'tstops=tlist' setting
+    tlist = range(0.0, stop = 140.0, length = 10000) # don't change tlist, to check the second pulse contribute correctly under 'tstops=tlist' setting
     e_ops = [sigmax(), sigmaz()]
     params = (A1 = A1, A2 = A2)
     sol_se = sesolve(H, ψ0, tlist; e_ops = e_ops, params = params, progress_bar = Val(false))
@@ -1231,6 +1231,7 @@ end
 
     # analytic solution
     function θ(t, t_start, A)
+        # a dummy comment to avoid julia formatter
         if t < t_start
             return 0
         elseif (t_start <= t) && (t <= t_start + T)
