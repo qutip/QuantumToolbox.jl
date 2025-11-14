@@ -16,26 +16,16 @@
 
 ```@raw html
 <div align="center">
-  <a href="https://www.epfl.ch" target="about:blank">
-    <img src="https://www.epfl.ch/about/overview/wp-content/themes/wp-theme-2018/assets/svg/epfl-logo.svg" alt="EPFL logo" width="200">
-  </a>
+  <a href="https://www.epfl.ch" target="about:blank"><img src="/org-logo/EPFL.svg" style="margin:5px;" alt="EPFL logo" width="200"></a> 
+  <a href="https://www.epfl.ch/research/domains/quantum-center" target="about:blank"><img src="/org-logo/EPFL-QSE.svg" style="margin:5px;" alt="EPFL QSE logo" width="200"></a> 
 
-  <a href="https://qfort.ncku.edu.tw/" target="about:blank">
-    <img src="https://qfort.ncku.edu.tw/assets/qfort-e1fc1ae14478164bd4f01e145f0aeb32e0f7fdddd89266149afa3e4a9e1eb64b.png" alt="QFort logo" width="200">
-  </a>
-  <a href="https://www.ncku.edu.tw/" target="about:blank">
-    <img src="https://qutip.org/images/ncku.png" alt="NCKU logo" width="200">
-  </a>
-  <a href="https://www.nstc.gov.tw/" target="about:blank">
-    <img src="https://www.nstc.gov.tw/assets/footer-logo-484f234e56d83a29555951b7afbe7cc3.svg" alt="NSTC logo" width="200">
-  </a>
+  <a href="https://www.ncku.edu.tw" target="about:blank"><img src="/org-logo/NCKU.png" style="margin:5px;" alt="NCKU logo" width="250"></a> 
+  <a href="https://qfort.ncku.edu.tw" target="about:blank"><img src="/org-logo/QFort.png" style="margin:5px;" alt="QFort logo" width="250"></a> 
+  <a href="https://www.nstc.gov.tw" target="about:blank"><img src="/org-logo/NSTC.png" style="margin:5px;" alt="NSTC logo" width="250"></a> 
 
-  <a href="https://rqc.riken.jp/" target="about:blank">
-    <img src="https://rqc.riken.jp/en/images/common/logo.svg" alt="RIKEN RQC logo" width="200">
-  </a>
-  <a href="https://dml.riken.jp" target="about:blank">
-    <img src="https://www.riken.jp/medialibrary/img/common/logo-02.png" alt="RIKEN logo" width="200">
-  </a>
+  <a href="https://dml.riken.jp" target="about:blank"><img src="/org-logo/RIKEN.png" style="margin:5px;" alt="RIKEN logo" width="200"></a> 
+  <a href="https://rqc.riken.jp" target="about:blank"><img src="/org-logo/RIKEN-RQC.svg" style="margin:5px;" alt="RIKEN RQC logo" width="200"></a>
+  <a href="https://www.jst.go.jp/moonshot" target="about:blank"><img src="/org-logo/JST-Moonshot.png" style="margin:5px;" alt="JST Moonshot logo" width="200"></a>
 </div>
 ```
 
