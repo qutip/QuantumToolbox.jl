@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Change default solver detection in `eigensolve` when using `sigma` keyword argument (shift-inverse algorithm). If the operator is a `SparseMatrixCSC`, the default solver is `UMFPACKFactorization`, otherwise it is automatically chosen by LinearSolve.jl, depending on the type of the operator. ([#580]) 
+- Add keyword argument `assume_hermitian` to `liouvillian`. This allows users to disable the assumption that the Hamiltonian is Hermitian. ([#581])
 
 ## [v0.38.1]
 Release date: 2025-10-27
@@ -360,3 +361,4 @@ Release date: 2024-11-13
 [#576]: https://github.com/qutip/QuantumToolbox.jl/issues/576
 [#579]: https://github.com/qutip/QuantumToolbox.jl/issues/579
 [#580]: https://github.com/qutip/QuantumToolbox.jl/issues/580
+[#581]: https://github.com/qutip/QuantumToolbox.jl/issues/581

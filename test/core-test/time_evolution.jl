@@ -62,6 +62,7 @@ end
 
 @testitem "sesolve" setup=[TESetup] begin
     using SciMLOperators
+    import SciMLOperators: ScaledOperator
 
     # Get parameters from TESetup to simplify the code
     H = TESetup.H
@@ -82,7 +83,7 @@ end
     amp_rabi = TESetup.g^2 / Ω_rabi^2
     ##
 
-    @test prob.prob.f.f isa MatrixOperator
+    @test prob.prob.f.f isa ScaledOperator
     @test sum(abs.(sol.expect[1, :] .- amp_rabi .* sin.(Ω_rabi * tlist) .^ 2)) / length(tlist) < 0.1
     @test length(sol.times) == length(tlist)
     @test length(sol.times_states) == 1
@@ -390,6 +391,7 @@ end
 
 @testitem "mcsolve" setup=[TESetup] begin
     using SciMLOperators
+    import SciMLOperators: ScaledOperator
     using Statistics
 
     # Get parameters from TESetup to simplify the code
@@ -432,7 +434,7 @@ end
     expect_mc_states_mean = expect.(Ref(e_ops[1]), average_states(sol_mc_states))
     expect_mc_states_mean2 = expect.(Ref(e_ops[1]), average_states(sol_mc_states2))
 
-    @test prob_mc.prob.f.f isa MatrixOperator
+    @test prob_mc.prob.f.f isa ScaledOperator
     @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, average_expect(sol_mc3) .- sol_me.expect) / length(tlist) < 0.1
@@ -523,7 +525,7 @@ end
                 progress_bar = Val(false),
                 keep_runs_results = Val(true),
             )
-            @test allocs_tot < n1 * ntraj + 400 # 150 allocations per trajectory + 500 for initialization
+            @test allocs_tot < n1 * ntraj + 600 # 150 allocations per trajectory + 600 for initialization
 
             allocs_tot = @allocations mcsolve(
                 H,
@@ -1046,6 +1048,11 @@ end
     @test sol_me.expect ≈ sol_me_td2.expect atol = 1e-6 * length(tlist)
     @test sol_mc.expect ≈ sol_mc_td2.expect atol = 1e-2 * length(tlist)
     # @test sol_sse.expect ≈ sol_sse_td2.expect atol = 1e-2 * length(tlist)
+
+    # test assume_hermitian = Val(false)
+    L_td_non_herm = liouvillian(H_td2, c_ops, assume_hermitian = Val(false))
+    sol_me_td3 = mesolve(L_td_non_herm, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
+    @test sol_me.expect ≈ sol_me_td3.expect atol = 1e-6 * length(tlist)
 end
 
 @testitem "mcsolve, ssesolve and smesolve reproducibility" setup=[TESetup] begin

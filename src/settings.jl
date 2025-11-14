@@ -15,7 +15,7 @@ function Base.show(io::IO, s::Settings)
 end
 
 @doc raw"""
-    QuantumToolbox.settings 
+    QuantumToolbox.settings
 
 Contains all the default global settings of QuantumToolbox.jl.
 
