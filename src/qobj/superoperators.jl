@@ -212,6 +212,8 @@ liouvillian(
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal; kwargs...) = H
 
+_sum_lindblad_dissipators(c_ops::Nothing, Id_cache::Diagonal) = 0
+
 function _sum_lindblad_dissipators(c_ops::AbstractVector, Id_cache::Diagonal)
     return sum(op -> lindblad_dissipator(op, Id_cache), c_ops; init = 0)
 end
