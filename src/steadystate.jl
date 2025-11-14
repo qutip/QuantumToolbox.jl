@@ -24,7 +24,7 @@ struct SteadyStateEigenSolver <: SteadyStateSolver end
 
 @doc raw"""
     SteadyStateLinearSolver(
-        alg = KrylovJL_GMRES(; precs = (A, p) -> (ilu(A, τ = 0.01), I))
+        alg = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
     )
 
 A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillian [`SuperOperator`](@ref) using the `alg`orithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/).
@@ -36,7 +36,7 @@ A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillia
 Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more details about the available algorithms. For example, the preconditioners can be defined directly in the solver like: `SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (I, Diagonal(A))))`.
 """
 Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{SciMLLinearSolveAlgorithm,Nothing}} <: SteadyStateSolver
-    alg::MT = KrylovJL_GMRES(; precs = (A, p) -> (ilu(A, τ = 0.01), I))
+    alg::MT = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
 end
 
 @doc raw"""

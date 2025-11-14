@@ -39,10 +39,11 @@ To change a solver, use the keyword argument `solver`, for example:
 
 Although it is not obvious, the [`SteadyStateDirectSolver()`](@ref SteadyStateDirectSolver) and [`SteadyStateEigenSolver()`](@ref SteadyStateEigenSolver) methods all use an LU decomposition internally and thus can have a large memory overhead. In contrast, for [`SteadyStateLinearSolver()`](@ref SteadyStateLinearSolver), iterative algorithms provided by [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/), such as `KrylovJL_GMRES()` and `KrylovJL_BICGSTAB()`, do not factor the matrix and thus take less memory than the LU methods and allow, in principle, for extremely large system sizes. The downside is that these methods can take much longer than the direct method as the condition number of the Liouvillian matrix is large, indicating that these iterative methods require a large number of iterations for convergence. 
 
-To overcome this, one can provide preconditioner that solves for an approximate inverse for the (modified) Liouvillian, thus better conditioning the problem, leading to faster convergence. The left and right preconditioner can be specified as the keyword argument `Pl` and `Pr`, respectively:
+To overcome this, preconditioners can be defined directly in the solver algorithm using LinearSolve's precs parameter. For example:
 ```julia
-solver = SteadyStateLinearSolver(alg = KrylovJL_GMRES())
+SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (ilu(A, τ = 0.01), I)))
 ```
+
 The use of a preconditioner can actually make these iterative methods faster than the other solution methods. The problem with precondioning is that it is only well defined for Hermitian matrices. Since the Liouvillian is non-Hermitian, the ability to find a good preconditioner is not guaranteed. Moreover, if a preconditioner is found, it is not guaranteed to have a good condition number. 
 
 Furthermore, `QuantiumToolbox` can take advantage of the Intel (Pardiso) LU solver in the Intel Math Kernel library (Intel-MKL) by using [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) and either [`Pardiso.jl`](https://github.com/JuliaSparse/Pardiso.jl) or [`MKL_jll.jl`](https://github.com/JuliaBinaryWrappers/MKL_jll.jl):
