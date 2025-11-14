@@ -41,7 +41,7 @@ Although it is not obvious, the [`SteadyStateDirectSolver()`](@ref SteadyStateDi
 
 To overcome this, one can provide preconditioner that solves for an approximate inverse for the (modified) Liouvillian, thus better conditioning the problem, leading to faster convergence. The left and right preconditioner can be specified as the keyword argument `Pl` and `Pr`, respectively:
 ```julia
-solver = SteadyStateLinearSolver(alg = KrylovJL_GMRES(), Pl = Pl, Pr = Pr)
+solver = SteadyStateLinearSolver(alg = KrylovJL_GMRES())
 ```
 The use of a preconditioner can actually make these iterative methods faster than the other solution methods. The problem with precondioning is that it is only well defined for Hermitian matrices. Since the Liouvillian is non-Hermitian, the ability to find a good preconditioner is not guaranteed. Moreover, if a preconditioner is found, it is not guaranteed to have a good condition number. 
 
