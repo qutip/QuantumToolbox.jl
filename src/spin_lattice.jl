@@ -53,11 +53,11 @@ function multisite_operator(dims::Union{AbstractVector,Tuple}, pairs::Pair{<:Int
 
     _dims[sites] == [get_dimensions_to(op)[1].size for op in ops] || throw(ArgumentError("The dimensions of the operators do not match the dimensions of the lattice."))
 
-    data = kron(I(prod(_dims[1:(sites[1]-1)])), ops[1].data)
+    data = kron(Eye(prod(_dims[1:(sites[1]-1)])), ops[1].data)
     for i in 2:length(sites)
-        data = kron(data, I(prod(_dims[(sites[i-1]+1):(sites[i]-1)])), ops[i].data)
+        data = kron(data, Eye(prod(_dims[(sites[i-1]+1):(sites[i]-1)])), ops[i].data)
     end
-    data = kron(data, I(prod(_dims[(sites[end]+1):end])))
+    data = kron(data, Eye(prod(_dims[(sites[end]+1):end])))
 
     return QuantumObject(data; type = Operator(), dims = dims)
 end

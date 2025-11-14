@@ -59,6 +59,7 @@ import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
 import ArrayInterface: allowed_getindex, allowed_setindex!
 import Distributed: RemoteChannel
 import FFTW: fft, ifft, fftfreq, fftshift
+import FillArrays: Eye
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import LaTeXStrings: @L_str

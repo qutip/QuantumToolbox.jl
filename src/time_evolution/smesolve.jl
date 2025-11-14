@@ -111,13 +111,12 @@ function smesolveProblem(
 
     K = get_data(L_evo)
 
-    Id = I(prod(dims))
     Id_op = IdentityOperator(prod(dims)^2)
     D_l = map(sc_ops_evo_data) do op
         # TODO: # Currently, we are assuming a time-independent MatrixOperator
         # Also, the u state may become non-hermitian, so Tr[Sn * ρ + ρ * Sn'] != real(Tr[Sn * ρ]) / 2
         op_vec = mat2vec(adjoint(op.A))
-        return AddedOperator(_spre(op, Id), _spost(op', Id), _smesolve_ScalarOperator(op_vec) * Id_op)
+        return AddedOperator(_spre(op), _spost(op'), _smesolve_ScalarOperator(op_vec) * Id_op)
     end
     D = DiffusionOperator(D_l)
 
