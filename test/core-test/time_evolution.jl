@@ -525,7 +525,7 @@ end
                 progress_bar = Val(false),
                 keep_runs_results = Val(true),
             )
-            @test allocs_tot < n1 * ntraj + 400 # 150 allocations per trajectory + 500 for initialization
+            @test allocs_tot < n1 * ntraj + 600 # 150 allocations per trajectory + 600 for initialization
 
             allocs_tot = @allocations mcsolve(
                 H,

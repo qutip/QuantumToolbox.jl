@@ -221,6 +221,9 @@ end
 # Help the compiler to unroll the sum at compile time
 @generated function _sum_lindblad_dissipators(c_ops::Tuple, Id_cache::Diagonal)
     N = length(c_ops.parameters)
+    if N == 0
+        return :(0)
+    end
     ex = :(lindblad_dissipator(c_ops[1], Id_cache))
     for i in 2:N
         ex = :($ex + lindblad_dissipator(c_ops[$i], Id_cache))
