@@ -193,8 +193,8 @@ function liouvillian(
     assume_hermitian::Union{Bool,Val} = Val(true),
 ) where {OpType<:Union{Operator,SuperOperator}}
     L = liouvillian(H, Id_cache; assume_hermitian = assume_hermitian)
-    if !(c_ops isa Nothing)
-        L += _sum_lindblad_dissipators(c_ops, Id_cache)
+    if !isnothing(c_ops)
+        return L + _sum_lindblad_dissipators(c_ops, Id_cache)
     end
     return L
 end
@@ -212,4 +212,16 @@ liouvillian(
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal; kwargs...) = H
 
-_sum_lindblad_dissipators(c_ops, Id_cache::Diagonal) = sum(op -> lindblad_dissipator(op, Id_cache), c_ops)
+function _sum_lindblad_dissipators(c_ops::AbstractVector, Id_cache::Diagonal)
+    return sum(op -> lindblad_dissipator(op, Id_cache), c_ops; init = 0)
+end
+
+# Help the compiler to unroll the sum at compile time
+@generated function _sum_lindblad_dissipators(c_ops::Tuple, Id_cache::Diagonal)
+    N = length(c_ops.parameters)
+    ex = :(lindblad_dissipator(c_ops[1], Id_cache))
+    for i in 2:N
+        ex = :($ex + lindblad_dissipator(c_ops[$i], Id_cache))
+    end
+    return ex
+end
