@@ -14,9 +14,7 @@ _sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), spa
 _sprepost(A::AbstractMatrix, B::AbstractSparseMatrix) = kron(transpose(B), sparse(A))
 _sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), A)
 _sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(transpose(B), A)
-function _sprepost(A, B) # for any other input types
-    return _spre(A) * _spost(B)
-end
+_sprepost(A, B) = _spre(A) * _spost(B) # for any other input types
 
 ## if input is AbstractSciMLOperator 
 ## some of them are optimized to speed things up
