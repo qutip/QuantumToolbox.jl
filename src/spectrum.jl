@@ -140,7 +140,7 @@ function _spectrum(
     _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(_complex_float_type(L), D)) # same as vec(system_identity_matrix)
     _tr_A = transpose(_tr) * spre(A).data
 
-    Id = I(D^2)
+    Id = Eye(D^2)
 
     # DO the idx = 1 case
     ω = ωList[1]

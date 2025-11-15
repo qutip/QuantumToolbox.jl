@@ -149,10 +149,10 @@ The `dimensions` can be either the following types:
     If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 maximally_mixed_dm(dimensions::Int) =
-    QuantumObject(I(dimensions) / complex(dimensions), Operator(), SVector(dimensions))
+    QuantumObject(Eye(dimensions) / complex(dimensions), Operator(), SVector(dimensions))
 function maximally_mixed_dm(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
     N = prod(dimensions)
-    return QuantumObject(I(N) / complex(N), Operator(), dimensions)
+    return QuantumObject(Eye(N) / complex(N), Operator(), dimensions)
 end
 
 @doc raw"""

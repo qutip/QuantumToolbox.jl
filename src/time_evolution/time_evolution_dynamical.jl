@@ -362,7 +362,7 @@ function dsf_mesolveProblem(
     op_l_vec = map(op -> mat2vec(get_data(op)'), op_list)
     # Create the Krylov subspace with kron(H₀.data, H₀.data) just for initialize
     expv_cache = arnoldi(kron(H₀.data, H₀.data), mat2vec(ket2dm(ψ0).data), krylov_dim)
-    dsf_identity = I(prod(H₀.dimensions))
+    dsf_identity = Eye(prod(H₀.dimensions))
     dsf_displace_cache_left = sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(op.data, dsf_identity)), op_list)
     dsf_displace_cache_left_dag =
         sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(sparse(op.data'), dsf_identity)), op_list)

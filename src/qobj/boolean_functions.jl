@@ -85,7 +85,7 @@ Test whether the [`QuantumObject`](@ref) ``U`` is unitary operator. This functio
 
 Note that all the keyword arguments will be passed to `Base.isapprox`.
 """
-isunitary(U::QuantumObject; kwargs...) = isoper(U) ? isapprox(U.data * U.data', I(size(U, 1)); kwargs...) : false
+isunitary(U::QuantumObject; kwargs...) = isoper(U) ? isapprox(U.data * U.data', Eye(size(U, 1)); kwargs...) : false
 
 @doc raw"""
     SciMLOperators.iscached(A::AbstractQuantumObject)
