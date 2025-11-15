@@ -23,23 +23,20 @@ A solver which solves [`steadystate`](@ref) by finding the zero (or lowest) eige
 struct SteadyStateEigenSolver <: SteadyStateSolver end
 
 @doc raw"""
-    SteadyStateLinearSolver(alg = KrylovJL_GMRES(), Pl = nothing, Pr = nothing)
+    SteadyStateLinearSolver(
+        alg = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
+    )
 
 A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillian [`SuperOperator`](@ref) using the `alg`orithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/).
 
 # Arguments
 - `alg::SciMLLinearSolveAlgorithm=KrylovJL_GMRES()`: algorithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/)
-- `Pl::Union{Function,Nothing}=nothing`: left preconditioner, see documentation [Solving for Steady-State Solutions](@ref doc:Solving-for-Steady-State-Solutions) for more details.
-- `Pr::Union{Function,Nothing}=nothing`: right preconditioner, see documentation [Solving for Steady-State Solutions](@ref doc:Solving-for-Steady-State-Solutions) for more details.
+
+# Note
+Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more details about the available algorithms. For example, the preconditioners can be defined directly in the solver like: `SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (I, Diagonal(A))))`.
 """
-Base.@kwdef struct SteadyStateLinearSolver{
-    MT<:Union{SciMLLinearSolveAlgorithm,Nothing},
-    PlT<:Union{Function,Nothing},
-    PrT<:Union{Function,Nothing},
-} <: SteadyStateSolver
-    alg::MT = KrylovJL_GMRES()
-    Pl::PlT = nothing
-    Pr::PrT = nothing
+Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{SciMLLinearSolveAlgorithm,Nothing}} <: SteadyStateSolver
+    alg::MT = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
 end
 
 @doc raw"""
@@ -159,14 +156,8 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
     L_tmp = L_tmp + Tn
 
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
-    if !isnothing(solver.Pl)
-        kwargs = merge((; kwargs...), (Pl = solver.Pl(L_tmp),))
-    elseif isa(L_tmp, SparseMatrixCSC)
-        kwargs = merge((; kwargs...), (Pl = ilu(L_tmp, τ = 0.01),))
-    end
-    !isnothing(solver.Pr) && (kwargs = merge((; kwargs...), (Pr = solver.Pr(L_tmp),)))
 
-    prob = LinearProblem(L_tmp, v0)
+    prob = LinearProblem{true}(L_tmp, v0)
     ρss_vec = solve(prob, solver.alg; kwargs...).u
 
     ρss = reshape(ρss_vec, N, N)
@@ -407,16 +398,10 @@ function _steadystate_fourier(
     v0[n_max*N+1] = weight
 
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
-    if !isnothing(solver.Pl)
-        kwargs = merge((; kwargs...), (Pl = solver.Pl(M),))
-    elseif isa(M, SparseMatrixCSC)
-        kwargs = merge((; kwargs...), (Pl = ilu(M, τ = 0.01),))
-    end
-    !isnothing(solver.Pr) && (kwargs = merge((; kwargs...), (Pr = solver.Pr(M),)))
     !haskey(kwargs, :abstol) && (kwargs = merge((; kwargs...), (abstol = tol,)))
     !haskey(kwargs, :reltol) && (kwargs = merge((; kwargs...), (reltol = tol,)))
 
-    prob = LinearProblem(M, v0)
+    prob = LinearProblem{true}(M, v0)
     ρtot = solve(prob, solver.alg; kwargs...).u
 
     offset1 = n_max * N
