@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add keyword argument `assume_hermitian` to `liouvillian`. This allows users to disable the assumption that the Hamiltonian is Hermitian. ([#581])
 - Use LinearSolve's internal methods for preconditioners in `SteadyStateLinearSolver`. ([#588])
 - Use `FillArrays.jl` for handling superoperators. This makes the code cleaner and potentially more efficient. ([#589])
+- Make sure state generating functions return dense array by default. ([#591])
 
 ## [v0.38.1]
 Release date: 2025-10-27
@@ -366,3 +367,4 @@ Release date: 2024-11-13
 [#581]: https://github.com/qutip/QuantumToolbox.jl/issues/581
 [#588]: https://github.com/qutip/QuantumToolbox.jl/issues/588
 [#589]: https://github.com/qutip/QuantumToolbox.jl/issues/589
+[#591]: https://github.com/qutip/QuantumToolbox.jl/issues/591
