@@ -138,3 +138,44 @@ function ProgressBar(args...; kwargs...)
         "`ProgressBar` is deprecated and will be removed in next major release. Use `Progress` from `ProgressMeter.jl` instead.",
     )
 end
+
+function spre(A::AbstractQuantumObject{Operator}, Id_cache)
+    Base.depwarn(
+        "The argument `Id_cache` for `spre` is now deprecated, as we now internally use FillArrays.jl, which preserves the same efficiency without requiring this parameter.",
+        :spre,
+        force = true,
+    )
+    return spre(A)
+end
+
+function spost(A::AbstractQuantumObject{Operator}, Id_cache)
+    Base.depwarn(
+        "The argument `Id_cache` for `spost` is now deprecated, as we now internally use FillArrays.jl, which preserves the same efficiency without requiring this parameter.",
+        :spost,
+        force = true,
+    )
+    return spost(A)
+end
+
+function lindblad_dissipator(C::QuantumObject{Operator}, Id_cache)
+    Base.depwarn(
+        "The argument `Id_cache` for `lindblad_dissipator` is now deprecated, as we now internally use FillArrays.jl, which preserves the same efficiency without requiring this parameter.",
+        :lindblad_dissipator,
+        force = true,
+    )
+    return lindblad_dissipator(C)
+end
+
+function liouvillian(
+    H::QuantumObject{HOpType},
+    c_ops::AbstractVector,
+    Id_cache;
+    kwargs...,
+) where {HOpType<:Union{Operator,SuperOperator}}
+    Base.depwarn(
+        "The argument `Id_cache` for `liouvillian` is now deprecated, as we now internally use FillArrays.jl, which preserves the same efficiency without requiring this parameter.",
+        :liouvillian,
+        force = true,
+    )
+    return liouvillian(H, c_ops; kwargs...)
+end
