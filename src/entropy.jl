@@ -36,9 +36,9 @@ Mixed state:
 julia> ρ = maximally_mixed_dm(2)
 
 Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
-2×2 Diagonal{ComplexF64, Vector{ComplexF64}}:
- 0.5-0.0im      ⋅    
-     ⋅      0.5-0.0im
+2×2 Matrix{ComplexF64}:
+ 0.5+0.0im  0.0+0.0im
+ 0.0+0.0im  0.5+0.0im
 
 julia> entropy_vn(ρ, base=2)
 1.0

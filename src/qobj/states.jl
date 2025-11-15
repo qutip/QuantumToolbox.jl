@@ -127,8 +127,7 @@ Density matrix for a thermal state (generating thermal state probabilities) with
 """
 function thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val} = Val(false))
     β = log(1.0 / n + 1.0)
-    N_list = Array{Float64}(0:(N-1))
-    data = exp.(-β .* N_list)
+    data = [exp(-β * ComplexF64(j)) for j in 0:(N-1)]
     if getVal(sparse)
         return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator(), N)
     else
@@ -149,10 +148,10 @@ The `dimensions` can be either the following types:
     If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 maximally_mixed_dm(dimensions::Int) =
-    QuantumObject(Eye(dimensions) / complex(dimensions), Operator(), SVector(dimensions))
+    QuantumObject(diagm(0 => fill(ComplexF64(1 / dimensions), dimensions)), Operator(), SVector(dimensions))
 function maximally_mixed_dm(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
     N = prod(dimensions)
-    return QuantumObject(Eye(N) / complex(N), Operator(), dimensions)
+    return QuantumObject(diagm(0 => fill(ComplexF64(1 / N), N)), Operator(), dimensions)
 end
 
 @doc raw"""
@@ -321,7 +320,9 @@ Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
 function w_state(::Val{n}) where {n}
     nzind = 2 .^ (0:(n-1)) .+ 1
     nzval = fill(ComplexF64(1 / sqrt(n)), n)
-    return QuantumObject(SparseVector(2^n, nzind, nzval), Ket(), ntuple(x -> 2, Val(n)))
+    data = zeros(ComplexF64, 2^n)
+    @inbounds data[nzind] .= nzval
+    return QuantumObject(data, Ket(), ntuple(x -> 2, Val(n)))
 end
 w_state(n::Int) = w_state(Val(n))
 
@@ -341,7 +342,9 @@ Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
 """
 function ghz_state(::Val{n}; d::Int = 2) where {n}
     nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
-    nzval = ones(ComplexF64, d) / sqrt(d)
-    return QuantumObject(SparseVector(d^n, nzind, nzval), Ket(), ntuple(x -> d, Val(n)))
+    nzval = fill(ComplexF64(1 / sqrt(d)), d)
+    data = zeros(ComplexF64, d^n)
+    @inbounds data[nzind] .= nzval
+    return QuantumObject(data, Ket(), ntuple(x -> d, Val(n)))
 end
 ghz_state(n::Int; d::Int = 2) = ghz_state(Val(n), d = d)
