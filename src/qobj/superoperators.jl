@@ -6,35 +6,34 @@ export spre, spost, sprepost, liouvillian, lindblad_dissipator
 
 # intrinsic functions for super-operators
 ## keep these because they take AbstractMatrix as input and ensure the output is sparse matrix
-_spre(A::AbstractMatrix, Id::AbstractMatrix) = kron(Id, sparse(A))
-_spre(A::AbstractSparseMatrix, Id::AbstractMatrix) = kron(Id, A)
-_spost(B::AbstractMatrix, Id::AbstractMatrix) = kron(transpose(sparse(B)), Id)
-_spost(B::AbstractSparseMatrix, Id::AbstractMatrix) = kron(transpose(B), Id)
+_spre(A::AbstractMatrix) = kron(Eye(size(A, 1)), sparse(A))
+_spre(A::AbstractSparseMatrix) = kron(Eye(size(A, 1)), A)
+_spost(B::AbstractMatrix) = kron(transpose(sparse(B)), Eye(size(B, 1)))
+_spost(B::AbstractSparseMatrix) = kron(transpose(B), Eye(size(B, 1)))
 _sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), sparse(A))
 _sprepost(A::AbstractMatrix, B::AbstractSparseMatrix) = kron(transpose(B), sparse(A))
 _sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), A)
 _sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(transpose(B), A)
-function _sprepost(A, B) # for any other input types
-    Id_cache = I(size(A, 1))
-    return _spre(A, Id_cache) * _spost(B, Id_cache)
-end
+_sprepost(A, B) = _spre(A) * _spost(B) # for any other input types
 
 ## if input is AbstractSciMLOperator 
 ## some of them are optimized to speed things up
 ## the rest of the SciMLOperators will just use lazy tensor (and prompt a warning)
-_spre(A::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spre(A.A, Id))
-_spre(A::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(A.λ, _spre(A.L, Id))
-_spre(A::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _spre(op, Id), A.ops))
-function _spre(A::AbstractSciMLOperator, Id::AbstractMatrix)
+_spre(A::MatrixOperator) = MatrixOperator(_spre(A.A))
+_spre(A::ScaledOperator) = ScaledOperator(A.λ, _spre(A.L))
+_spre(A::AddedOperator) = AddedOperator(map(op -> _spre(op), A.ops))
+function _spre(A::AbstractSciMLOperator)
+    Id = Eye(size(A, 1))
     _lazy_tensor_warning(Id, A)
     return kron(Id, A)
 end
 
-_spost(B::MatrixOperator, Id::AbstractMatrix) = MatrixOperator(_spost(B.A, Id))
-_spost(B::ScaledOperator, Id::AbstractMatrix) = ScaledOperator(B.λ, _spost(B.L, Id))
-_spost(B::AddedOperator, Id::AbstractMatrix) = AddedOperator(map(op -> _spost(op, Id), B.ops))
-function _spost(B::AbstractSciMLOperator, Id::AbstractMatrix)
+_spost(B::MatrixOperator) = MatrixOperator(_spost(B.A))
+_spost(B::ScaledOperator) = ScaledOperator(B.λ, _spost(B.L))
+_spost(B::AddedOperator) = AddedOperator(map(op -> _spost(op), B.ops))
+function _spost(B::AbstractSciMLOperator)
     B_T = transpose(B)
+    Id = Eye(size(B, 1))
     _lazy_tensor_warning(B_T, Id)
     return kron(B_T, Id)
 end
@@ -42,40 +41,38 @@ end
 ## intrinsic liouvillian 
 function _liouvillian(
     H::MT,
-    Id::AbstractMatrix,
     ::Val{assume_hermitian},
 ) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator},assume_hermitian}
-    H_spre = _spre(H, Id)
-    H_spost = assume_hermitian ? _spost(H, Id) : _spost(H', Id)
+    H_spre = _spre(H)
+    H_spost = assume_hermitian ? _spost(H) : _spost(H')
     return -1im * (H_spre - H_spost)
 end
-function _liouvillian(H::MatrixOperator, Id::AbstractMatrix, assume_hermitian::Val)
+function _liouvillian(H::MatrixOperator, assume_hermitian::Val)
     isconstant(H) ||
         throw(ArgumentError("The given Hamiltonian for constructing Liouvillian must be constant MatrixOperator."))
-    return MatrixOperator(_liouvillian(H.A, Id, assume_hermitian))
+    return MatrixOperator(_liouvillian(H.A, assume_hermitian))
 end
-_liouvillian(H::ScaledOperator, Id::AbstractMatrix, assume_hermitian::Val{true}) =
-    ScaledOperator(H.λ, _liouvillian(H.L, Id, assume_hermitian))
-_liouvillian(H::AddedOperator, Id::AbstractMatrix, assume_hermitian::Val) =
-    AddedOperator(map(op -> _liouvillian(op, Id, assume_hermitian), H.ops))
+_liouvillian(H::ScaledOperator, assume_hermitian::Val{true}) = ScaledOperator(H.λ, _liouvillian(H.L, assume_hermitian))
+_liouvillian(H::AddedOperator, assume_hermitian::Val) =
+    AddedOperator(map(op -> _liouvillian(op, assume_hermitian), H.ops))
 
 # intrinsic lindblad_dissipator
-function _lindblad_dissipator(O::MT, Id::AbstractMatrix) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
+function _lindblad_dissipator(O::MT) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
     Od_O = O' * O
-    return _sprepost(O, O') - (_spre(Od_O, Id) + _spost(Od_O, Id)) / 2
+    return _sprepost(O, O') - (_spre(Od_O) + _spost(Od_O)) / 2
 end
-function _lindblad_dissipator(O::MatrixOperator, Id::AbstractMatrix)
+function _lindblad_dissipator(O::MatrixOperator)
     _O = O.A
     Od_O = _O' * _O
-    return MatrixOperator(_sprepost(_O, _O') - (_spre(Od_O, Id) + _spost(Od_O, Id)) / 2)
+    return MatrixOperator(_sprepost(_O, _O') - (_spre(Od_O) + _spost(Od_O)) / 2)
 end
-function _lindblad_dissipator(O::ScaledOperator, Id::AbstractMatrix)
+function _lindblad_dissipator(O::ScaledOperator)
     λc_λ = conj(O.λ) * O.λ
-    return ScaledOperator(λc_λ, _lindblad_dissipator(O.L, Id))
+    return ScaledOperator(λc_λ, _lindblad_dissipator(O.L))
 end
 
 @doc raw"""
-    spre(A::AbstractQuantumObject, Id_cache=I(size(A,1)))
+    spre(A::AbstractQuantumObject)
 
 Returns the [`SuperOperator`](@ref) form of `A` acting on the left of the density matrix operator: ``\mathcal{O} \left(\hat{A}\right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho}``.
 
@@ -86,15 +83,12 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 ```
 (see the section in documentation: [Superoperators and Vectorized Operators](@ref doc:Superoperators-and-Vectorized-Operators) for more details)
 
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
-
 See also [`spost`](@ref) and [`sprepost`](@ref).
 """
-spre(A::AbstractQuantumObject{Operator}, Id_cache = I(size(A, 1))) =
-    get_typename_wrapper(A)(_spre(A.data, Id_cache), SuperOperator(), A.dimensions)
+spre(A::AbstractQuantumObject{Operator}) = get_typename_wrapper(A)(_spre(A.data), SuperOperator(), A.dimensions)
 
 @doc raw"""
-    spost(B::AbstractQuantumObject, Id_cache=I(size(B,1)))
+    spost(B::AbstractQuantumObject)
 
 Returns the [`SuperOperator`](@ref) form of `B` acting on the right of the density matrix operator: ``\mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{\rho} \hat{B}``.
 
@@ -105,12 +99,9 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 ```
 (see the section in documentation: [Superoperators and Vectorized Operators](@ref doc:Superoperators-and-Vectorized-Operators) for more details)
 
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
-
 See also [`spre`](@ref) and [`sprepost`](@ref).
 """
-spost(B::AbstractQuantumObject{Operator}, Id_cache = I(size(B, 1))) =
-    get_typename_wrapper(B)(_spost(B.data, Id_cache), SuperOperator(), B.dimensions)
+spost(B::AbstractQuantumObject{Operator}) = get_typename_wrapper(B)(_spost(B.data), SuperOperator(), B.dimensions)
 
 @doc raw"""
     sprepost(A::AbstractQuantumObject, B::AbstractQuantumObject)
@@ -132,7 +123,7 @@ function sprepost(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{O
 end
 
 @doc raw"""
-    lindblad_dissipator(O::AbstractQuantumObject, Id_cache=I(size(O,1))
+    lindblad_dissipator(O::AbstractQuantumObject)
 
 Returns the Lindblad [`SuperOperator`](@ref) defined as
 
@@ -141,21 +132,18 @@ Returns the Lindblad [`SuperOperator`](@ref) defined as
 \hat{O}^\dagger \hat{O} \hat{\rho} - \hat{\rho} \hat{O}^\dagger \hat{O} \right)
 ```
 
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
-
 See also [`spre`](@ref), [`spost`](@ref), and [`sprepost`](@ref).
 """
-lindblad_dissipator(O::AbstractQuantumObject{Operator}, Id_cache = I(size(O, 1))) =
-    get_typename_wrapper(O)(_lindblad_dissipator(O.data, Id_cache), SuperOperator(), O.dimensions)
+lindblad_dissipator(O::AbstractQuantumObject{Operator}) =
+    get_typename_wrapper(O)(_lindblad_dissipator(O.data), SuperOperator(), O.dimensions)
 
 # It is already a SuperOperator
-lindblad_dissipator(O::AbstractQuantumObject{SuperOperator}, Id_cache = nothing) = O
+lindblad_dissipator(O::AbstractQuantumObject{SuperOperator}) = O
 
 @doc raw"""
     liouvillian(
         H::AbstractQuantumObject,
-        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing,
-        Id_cache=I(prod(H.dimensions));
+        c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         assume_hermitian::Union{Bool,Val} = Val(true),
     )
 
@@ -179,8 +167,6 @@ where
 \mathcal{D}(\hat{C}_n) [\cdot] = \hat{C}_n [\cdot] \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n [\cdot] - \frac{1}{2} [\cdot] \hat{C}_n^\dagger \hat{C}_n
 ```
 
-The optional argument `Id_cache` can be used to pass a precomputed identity matrix. This can be useful when the same function is applied multiple times with a known Hilbert space dimension.
-
 See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 
 !!! warning "Beware of type-stability!"
@@ -188,45 +174,37 @@ See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 """
 function liouvillian(
     H::AbstractQuantumObject{OpType},
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    Id_cache::Diagonal = I(prod(H.dimensions));
+    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     assume_hermitian::Union{Bool,Val} = Val(true),
 ) where {OpType<:Union{Operator,SuperOperator}}
-    L = liouvillian(H, Id_cache; assume_hermitian = assume_hermitian)
+    L = liouvillian(H; assume_hermitian = assume_hermitian)
     if !isnothing(c_ops)
-        return L + _sum_lindblad_dissipators(c_ops, Id_cache)
+        return L + _sum_lindblad_dissipators(c_ops)
     end
     return L
 end
 
-liouvillian(H::Nothing, c_ops::Union{AbstractVector,Tuple}, Id_cache::Diagonal = I(prod(c_ops[1].dims)); kwargs...) =
-    _sum_lindblad_dissipators(c_ops, Id_cache)
+liouvillian(H::Nothing, c_ops::Union{AbstractVector,Tuple}; kwargs...) = _sum_lindblad_dissipators(c_ops)
 
 liouvillian(H::Nothing, c_ops::Nothing; kwargs...) = 0
 
-liouvillian(
-    H::AbstractQuantumObject{Operator},
-    Id_cache::Diagonal = I(prod(H.dimensions));
-    assume_hermitian::Union{Bool,Val} = Val(true),
-) = get_typename_wrapper(H)(_liouvillian(H.data, Id_cache, makeVal(assume_hermitian)), SuperOperator(), H.dimensions)
+liouvillian(H::AbstractQuantumObject{Operator}; assume_hermitian::Union{Bool,Val} = Val(true)) =
+    get_typename_wrapper(H)(_liouvillian(H.data, makeVal(assume_hermitian)), SuperOperator(), H.dimensions)
 
-liouvillian(H::AbstractQuantumObject{SuperOperator}, Id_cache::Diagonal; kwargs...) = H
+liouvillian(H::AbstractQuantumObject{SuperOperator}; kwargs...) = H
+_sum_lindblad_dissipators(c_ops::Nothing) = 0
 
-_sum_lindblad_dissipators(c_ops::Nothing, Id_cache::Diagonal) = 0
-
-function _sum_lindblad_dissipators(c_ops::AbstractVector, Id_cache::Diagonal)
-    return sum(op -> lindblad_dissipator(op, Id_cache), c_ops; init = 0)
-end
+_sum_lindblad_dissipators(c_ops::AbstractVector) = sum(op -> lindblad_dissipator(op), c_ops; init = 0)
 
 # Help the compiler to unroll the sum at compile time
-@generated function _sum_lindblad_dissipators(c_ops::Tuple, Id_cache::Diagonal)
+@generated function _sum_lindblad_dissipators(c_ops::Tuple)
     N = length(c_ops.parameters)
     if N == 0
         return :(0)
     end
-    ex = :(lindblad_dissipator(c_ops[1], Id_cache))
+    ex = :(lindblad_dissipator(c_ops[1]))
     for i in 2:N
-        ex = :($ex + lindblad_dissipator(c_ops[$i], Id_cache))
+        ex = :($ex + lindblad_dissipator(c_ops[$i]))
     end
     return ex
 end

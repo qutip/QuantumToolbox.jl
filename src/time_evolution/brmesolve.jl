@@ -126,7 +126,6 @@ function _brterm(
     _check_br_spectra(spectra)
 
     U = rst.vectors
-    Id = I(prod(rst.dimensions))
 
     skew = @. rst.values - rst.values' |> real
     spectrum = spectra.(skew)
@@ -166,7 +165,7 @@ function _brterm(
         tidyup!(bd_term)
     end
 
-    out = (_sprepost(A_mat_spec_t, A_mat) + _sprepost(A_mat, A_mat_spec) - _spost(ac_term, Id) - _spre(bd_term, Id)) / 2
+    out = (_sprepost(A_mat_spec_t, A_mat) + _sprepost(A_mat, A_mat_spec) - _spost(ac_term) - _spre(bd_term)) / 2
 
     (sec_cutoff != -1) && (out .*= M_cut)
 

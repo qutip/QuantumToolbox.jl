@@ -285,7 +285,6 @@ function _DSF_mesolve_Affect!(integrator)
     dsf_cache = internal_params.dsf_cache
     dsf_params = internal_params.dsf_params
     expv_cache = internal_params.expv_cache
-    dsf_identity = internal_params.dsf_identity
     dsf_displace_cache_full = internal_params.dsf_displace_cache_full
 
     op_l_length = length(op_list)
@@ -334,7 +333,7 @@ function _DSF_mesolve_Affect!(integrator)
     e_ops2 = e_ops(op_l2, dsf_params)
     _mesolve_callbacks_new_e_ops!(integrator, [_generate_mesolve_e_op(op) for op in e_ops2])
     # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
-    copyto!(integrator.f.f.A, liouvillian(H(op_l2, dsf_params), c_ops(op_l2, dsf_params), dsf_identity).data)
+    copyto!(integrator.f.f.A, liouvillian(H(op_l2, dsf_params), c_ops(op_l2, dsf_params)).data)
     return u_modified!(integrator, true)
 end
 
@@ -363,7 +362,7 @@ function dsf_mesolveProblem(
     op_l_vec = map(op -> mat2vec(get_data(op)'), op_list)
     # Create the Krylov subspace with kron(H₀.data, H₀.data) just for initialize
     expv_cache = arnoldi(kron(H₀.data, H₀.data), mat2vec(ket2dm(ψ0).data), krylov_dim)
-    dsf_identity = I(prod(H₀.dimensions))
+    dsf_identity = Eye(prod(H₀.dimensions))
     dsf_displace_cache_left = sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(op.data, dsf_identity)), op_list)
     dsf_displace_cache_left_dag =
         sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(sparse(op.data'), dsf_identity)), op_list)
@@ -385,7 +384,6 @@ function dsf_mesolveProblem(
             δα_list = δα_list,
             dsf_cache = similar(ψ0.data, length(ψ0.data)^2),
             expv_cache = expv_cache,
-            dsf_identity = dsf_identity,
             dsf_params = dsf_params,
             dsf_displace_cache_full = dsf_displace_cache_full,
         ),
