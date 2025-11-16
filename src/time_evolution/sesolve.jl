@@ -98,7 +98,7 @@ end
         H::Union{AbstractQuantumObject{Operator},Tuple},
         ψ0::QuantumObject{Ket},
         tlist::AbstractVector;
-        alg::AbstractODEAlgorithm = Vern7(),
+        alg::AbstractODEAlgorithm = Vern7(lazy=false),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
@@ -117,7 +117,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
-- `alg`: The algorithm for the ODE solver. The default is `Vern7()`.
+- `alg`: The algorithm for the ODE solver. The default is `Vern7(lazy=false)`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
@@ -140,7 +140,7 @@ function sesolve(
     H::Union{AbstractQuantumObject{Operator},Tuple},
     ψ0::QuantumObject{Ket},
     tlist::AbstractVector;
-    alg::AbstractODEAlgorithm = Vern7(),
+    alg::AbstractODEAlgorithm = Vern7(lazy=false),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
@@ -172,7 +172,7 @@ function sesolve(
     end
 end
 
-function sesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = Vern7(); kwargs...)
+function sesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = Vern7(lazy=false); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
     return _gen_sesolve_solution(sol, prob.times, prob.dimensions)
@@ -183,7 +183,7 @@ end
         H::Union{AbstractQuantumObject{Operator},Tuple},
         ψ0::Union{QuantumObject{Ket},AbstractVector{<:QuantumObject{Ket}}},
         tlist::AbstractVector;
-        alg::AbstractODEAlgorithm = Vern7(),
+        alg::AbstractODEAlgorithm = Vern7(lazy=false),
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params::Union{NullParameters,Tuple} = NullParameters(),
@@ -206,7 +206,7 @@ for each combination in the ensemble.
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state(s) of the system. Can be a single [`QuantumObject`](@ref) or a `Vector` of initial states.
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
-- `alg`: The algorithm for the ODE solver. The default is `Vern7()`.
+- `alg`: The algorithm for the ODE solver. The default is `Vern7(lazy=false)`.
 - `ensemblealg`: Ensemble algorithm to use for parallel computation. Default is `EnsembleThreads()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: A `Tuple` of parameter sets. Each element should be an `AbstractVector` representing the sweep range for that parameter. The function will solve for all combinations of initial states and parameter sets.
@@ -227,7 +227,7 @@ function sesolve_map(
     H::Union{AbstractQuantumObject{Operator},Tuple},
     ψ0::AbstractVector{<:QuantumObject{Ket}},
     tlist::AbstractVector;
-    alg::AbstractODEAlgorithm = Vern7(),
+    alg::AbstractODEAlgorithm = Vern7(lazy=false),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params::Union{NullParameters,Tuple} = NullParameters(),
@@ -267,7 +267,7 @@ sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{
 function sesolve_map(
     prob::TimeEvolutionProblem{<:ODEProblem},
     iter::AbstractArray,
-    alg::AbstractODEAlgorithm = Vern7(),
+    alg::AbstractODEAlgorithm = Vern7(lazy=false),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads();
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
