@@ -16,6 +16,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 | **Code Quality**  | [![Code Quality][code-quality-img]][code-quality-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] |
 | **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] |
 | **Benchmark** | [![Benchmarks][benchmark-img]][benchmark-url] |
+| **Community** | [![Zulip][zulip-img]][zulip-url] [![QuTiP-discussion][QuTiP-discussion-img]][QuTiP-discussion-url] |
 | **Support** | [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund) |
 
 [release-img]: https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg
@@ -52,6 +53,12 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 
 [benchmark-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/Benchmarks.yml/badge.svg?branch=main
 [benchmark-url]: https://qutip.org/QuantumToolbox.jl/benchmarks/
+
+[zulip-img]: https://img.shields.io/badge/Zulip%20Chat-join-6f73af.svg
+[zulip-url]: https://quantumtoolbox-jl.zulipchat.com
+
+[QuTip-discussion-img]: https://img.shields.io/badge/QuTiP%20discussion%20group-join-6f73af.svg
+[QuTip-discussion-url]: https://groups.google.com/g/qutip
 
 ## Introduction
 
@@ -174,7 +181,11 @@ Here we provide a brief performance comparison between `QuantumToolbox.jl` and o
 
 ## Contributing to QuantumToolbox.jl
 
-You are most welcome to contribute to `QuantumToolbox.jl` development by forking this repository and sending pull requests (PRs), or filing bug reports at the issues page. Contributors and users are invited to [![Zulip](https://img.shields.io/badge/chat-on%20Zulip-6f73af.svg)](https://quantumtoolbox-jl.zulipchat.com) for questions, development discussions, and community updates. You can also help out with users' questions, or discuss proposed changes in the [QuTiP discussion group](https://groups.google.com/g/qutip).
+You are most welcome to contribute to `QuantumToolbox.jl` development by forking this repository and sending pull requests (PRs), or filing bug reports at the issues page.
+
+Contributors and users for `QuantumToolbox.jl` are invited to [![Zulip][zulip-img]][zulip-url] for questions, development discussions, and community updates.
+
+You can also help out with users' questions, or discuss proposed changes for the entire QuTiP organization in the [![QuTiP-discussion][QuTiP-discussion-img]][QuTiP-discussion-url].
 
 For more information about contribution, including technical advice, please see the [Contributing to Quantum Toolbox in Julia](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing).
 
