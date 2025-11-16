@@ -121,13 +121,14 @@ function smesolveProblem(
     D = DiffusionOperator(D_l)
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
-    kwargs3 = _generate_stochastic_kwargs(
+    kwargs3 = _merge_tstops(kwargs2, isconstant(K), tlist)
+    kwargs4 = _generate_stochastic_kwargs(
         e_ops,
         sc_ops_list,
         makeVal(progress_bar),
         tlist,
         makeVal(store_measurement),
-        kwargs2,
+        kwargs3,
         SaveFuncSMESolve,
     )
 
@@ -142,7 +143,7 @@ function smesolveProblem(
         params;
         noise_rate_prototype = noise_rate_prototype,
         noise = noise,
-        kwargs3...,
+        kwargs4...,
     )
 
     return TimeEvolutionProblem(prob, tlist, dims, (isoperket = Val(isoperket(ψ0)),))
@@ -287,7 +288,7 @@ end
         tlist::AbstractVector,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-        alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
+        alg::Union{Nothing,AbstractSDEAlgorithm} = nothing,
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
@@ -361,7 +362,7 @@ function smesolve(
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-    alg::Union{Nothing,StochasticDiffEqAlgorithm} = nothing,
+    alg::Union{Nothing,AbstractSDEAlgorithm} = nothing,
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     rng::AbstractRNG = default_rng(),
@@ -403,7 +404,7 @@ end
 
 function smesolve(
     ens_prob::TimeEvolutionProblem,
-    alg::StochasticDiffEqAlgorithm = SRA2(),
+    alg::AbstractSDEAlgorithm = SRA2(),
     ntraj::Int = 500,
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     keep_runs_results = Val(false),
