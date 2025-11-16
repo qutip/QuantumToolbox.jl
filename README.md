@@ -55,7 +55,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [benchmark-url]: https://qutip.org/QuantumToolbox.jl/benchmarks/
 
 [zulip-img]: https://img.shields.io/badge/Zulip%20Chat-join-6f73af.svg
-[zulip-url]: https://quantumtoolbox-jl.zulipchat.com
+[zulip-url]: https://quantumtoolbox-jl.zulipchat.com/#narrow/stream/General
 
 [QuTip-discussion-img]: https://img.shields.io/badge/QuTiP%20discussion%20group-join-6f73af.svg
 [QuTip-discussion-url]: https://groups.google.com/g/qutip
