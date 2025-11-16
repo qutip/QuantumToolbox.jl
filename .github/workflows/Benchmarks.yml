@@ -28,6 +28,7 @@ permissions:
     actions: write
     contents: write
     deployments: write
+    pull-requests: write
 
 jobs:
   benchmark:
@@ -63,4 +64,4 @@ jobs:
           fail-on-alert: true
           benchmark-data-dir-path: benchmarks
           max-items-in-chart: 100
-          auto-push: ${{ github.event_name != 'pull_request' }}
+          auto-push: ${{ github.event_name != 'pull_request' || github.event.pull_request.merged }}
