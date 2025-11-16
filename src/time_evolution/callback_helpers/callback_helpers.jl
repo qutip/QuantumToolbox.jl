@@ -6,8 +6,8 @@ This file contains helper functions for callbacks. The affect! function are defi
 
 abstract type AbstractSaveFunc end
 
-function _merge_tstops(kwargs, prob_is_constant::Bool, tlist)
-    if prob_is_constant
+function _merge_tstops(kwargs, prob_is_const::Bool, tlist)
+    if prob_is_const
         return kwargs
     else
         tstops = haskey(kwargs, :tstops) ? unique!(sort!(vcat(tlist, kwargs.tstops))) : tlist
@@ -35,7 +35,7 @@ function _generate_stochastic_kwargs(
 
     # Ensure that the noise is stored in tlist. # TODO: Fix this directly in DiffEqNoiseProcess.jl
     # See https://github.com/SciML/DiffEqNoiseProcess.jl/issues/214 for example
-    kwargs2 = _merge_tstops(kwargs, true, tlist) # true to force add 'tstops = tlist'
+    kwargs2 = _merge_tstops(kwargs, false, tlist) # set 'prob_is_const = false' to force add 'tstops = tlist'
 
     if SF === SaveFuncSSESolve
         cb_normalize = _ssesolve_generate_normalize_cb()

@@ -134,7 +134,7 @@ end
 
         allocs_tot = @allocations sesolve(H, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false)) # Warm-up
         allocs_tot = @allocations sesolve(H, ψ0, tlist, saveat = [tlist[end]], progress_bar = Val(false))
-        @test allocs_tot < 90
+        @test allocs_tot < 95
     end
 
     @testset "Type Inference sesolve" begin

@@ -140,7 +140,7 @@ function sesolve(
     H::Union{AbstractQuantumObject{Operator},Tuple},
     ψ0::QuantumObject{Ket},
     tlist::AbstractVector;
-    alg::AbstractODEAlgorithm = Vern7(lazy=false),
+    alg::AbstractODEAlgorithm = Vern7(lazy = false),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
@@ -172,7 +172,7 @@ function sesolve(
     end
 end
 
-function sesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = Vern7(lazy=false); kwargs...)
+function sesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = Vern7(lazy = false); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
     return _gen_sesolve_solution(sol, prob.times, prob.dimensions)
@@ -227,7 +227,7 @@ function sesolve_map(
     H::Union{AbstractQuantumObject{Operator},Tuple},
     ψ0::AbstractVector{<:QuantumObject{Ket}},
     tlist::AbstractVector;
-    alg::AbstractODEAlgorithm = Vern7(lazy=false),
+    alg::AbstractODEAlgorithm = Vern7(lazy = false),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params::Union{NullParameters,Tuple} = NullParameters(),
@@ -267,7 +267,7 @@ sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{
 function sesolve_map(
     prob::TimeEvolutionProblem{<:ODEProblem},
     iter::AbstractArray,
-    alg::AbstractODEAlgorithm = Vern7(lazy=false),
+    alg::AbstractODEAlgorithm = Vern7(lazy = false),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads();
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
