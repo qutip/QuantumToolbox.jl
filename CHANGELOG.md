@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Update default value of `Settings.ProgressMeterKWARGS`. ([#593])
+
 ## [v0.39.0]
 Release date: 2025-11-17
 
@@ -16,7 +18,6 @@ Release date: 2025-11-17
 - Use LinearSolve's internal methods for preconditioners in `SteadyStateLinearSolver`. ([#588])
 - Use `FillArrays.jl` for handling superoperators. This makes the code cleaner and potentially more efficient. ([#589])
 - Make sure state generating functions return dense array by default. ([#591])
-- Update default value of `Settings.ProgressMeterKWARGS`. ([#593])
 
 ## [v0.38.1]
 Release date: 2025-10-27
