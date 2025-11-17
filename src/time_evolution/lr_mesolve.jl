@@ -25,7 +25,7 @@ struct TimeEvolutionLRSol{
     TS<:AbstractVector,
     TE<:Matrix{ComplexF64},
     RetT<:Enum,
-    AlgT<:OrdinaryDiffEqAlgorithm,
+    AlgT<:AbstractODEAlgorithm,
     TolT<:Real,
     TSZB<:AbstractVector,
     TM<:Vector{<:Integer},
@@ -45,7 +45,7 @@ struct TimeEvolutionLRSol{
 end
 
 lr_mesolve_options_default = (
-    alg = Tsit5(),
+    alg = DP5(),
     progress = true,
     err_max = 0.0,
     p0 = 0.0,
