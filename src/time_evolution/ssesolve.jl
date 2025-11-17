@@ -111,7 +111,7 @@ function ssesolveProblem(
         sc_ops_evo_data,
     )
 
-    K = get_data(-1im * QuantumObjectEvolution(H_eff_evo)) + K_l
+    K = cache_operator(get_data(-1im * QuantumObjectEvolution(H_eff_evo)) + K_l, ψ0)
 
     D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(prod(dims)), sc_ops_evo_data)
     D = DiffusionOperator(D_l)

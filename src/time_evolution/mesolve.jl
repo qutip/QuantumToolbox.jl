@@ -112,7 +112,7 @@ function mesolveProblem(
     else
         to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
     end
-    L = L_evo.data
+    L = cache_operator(L_evo.data, ρ0)
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(L), tlist)
