@@ -15,7 +15,7 @@ Here, we list out each setting along with the specific functions that will use i
 - `auto_tidyup::Bool = true` : Automatically tidyup during the following situations:
     * Solving for eigenstates, including [`eigenstates`](@ref), [`eigsolve`](@ref), [`eigsolve_al`](@ref)
     * Creating [`bloch_redfield_tensor`](@ref) or [`brterm`](@ref), and solving [`brmesolve`](@ref).
-- `ProgressMeterKWARGS::NamedTuple = (showspeed = true, printed = true)` : Default keyword arguments for progress bar in [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl). This allows the customization of progress bar.
+- `ProgressMeterKWARGS::NamedTuple = (dt = 1.0, showspeed = true, printed = true)` : Default keyword arguments for progress bar in [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl). This allows the customization of progress bar.
 - (to be announced)
 
 ## Change default settings

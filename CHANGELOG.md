@@ -16,6 +16,7 @@ Release date: 2025-11-17
 - Use LinearSolve's internal methods for preconditioners in `SteadyStateLinearSolver`. ([#588])
 - Use `FillArrays.jl` for handling superoperators. This makes the code cleaner and potentially more efficient. ([#589])
 - Make sure state generating functions return dense array by default. ([#591])
+- Update default value of `Settings.ProgressMeterKWARGS`. ([#593])
 
 ## [v0.38.1]
 Release date: 2025-10-27
@@ -374,3 +375,4 @@ Release date: 2024-11-13
 [#588]: https://github.com/qutip/QuantumToolbox.jl/issues/588
 [#589]: https://github.com/qutip/QuantumToolbox.jl/issues/589
 [#591]: https://github.com/qutip/QuantumToolbox.jl/issues/591
+[#593]: https://github.com/qutip/QuantumToolbox.jl/issues/593

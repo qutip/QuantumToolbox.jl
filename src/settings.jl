@@ -1,7 +1,7 @@
 Base.@kwdef mutable struct Settings
     tidyup_tol::Float64 = 1e-14
     auto_tidyup::Bool = true
-    ProgressMeterKWARGS::NamedTuple = (showspeed = true, printed = true)
+    ProgressMeterKWARGS::NamedTuple = (dt = 1.0, showspeed = true, printed = true)
 end
 
 function Base.show(io::IO, s::Settings)
@@ -23,7 +23,7 @@ Contains all the default global settings of QuantumToolbox.jl.
 
 - `tidyup_tol::Float64 = 1e-14` : tolerance for [`tidyup`](@ref) and [`tidyup!`](@ref).
 - `auto_tidyup::Bool = true` : Automatically tidyup.
-- `ProgressMeterKWARGS::NamedTuple = (showspeed = true, printed = true)` : Default keyword arguments for progress bar in [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl). This allows the customization of progress bar.
+- `ProgressMeterKWARGS::NamedTuple = (dt = 1.0, showspeed = true, printed = true)` : Default keyword arguments for progress bar in [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl). This allows the customization of progress bar.
 
 For detailed explanation of each settings, see our documentation [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/settings).
 
