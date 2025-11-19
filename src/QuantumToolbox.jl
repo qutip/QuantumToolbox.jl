@@ -50,6 +50,7 @@ import SciMLOperators:
     ScalarOperator,
     ScaledOperator,
     AddedOperator,
+    ComposedOperator,
     IdentityOperator,
     update_coefficients!,
     concretize

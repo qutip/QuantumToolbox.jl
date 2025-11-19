@@ -80,7 +80,7 @@ function sesolveProblem(
 
     T = Base.promote_eltype(H_evo, ψ0)
     ψ0 = to_dense(_complex_float_type(T), get_data(ψ0)) # Convert it to dense vector with complex element type
-    U = H_evo.data
+    U = cache_operator(H_evo.data, ψ0)
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(U), tlist)

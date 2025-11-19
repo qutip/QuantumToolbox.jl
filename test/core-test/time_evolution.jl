@@ -1256,3 +1256,26 @@ end
     @test all(isapprox.(Z_analytic, sol_se.expect[2, :]; atol = 1e-6))
     @test all(isapprox.(Z_analytic, sol_me.expect[2, :]; atol = 1e-6))
 end
+
+@testitem "ComposedOperator support in time evolution" begin
+    N = 10  # number of basis states
+    a = destroy(N)
+    H = a' * a
+
+    ψ0 = basis(N, 9)  # initial state
+
+    γ0 = 0.5
+    γ1(p, t) = sqrt(p[1] * exp(-t))
+    c_ops_1 = [QobjEvo(2a, γ1)] # This generates a ScaledOperator internally
+    c_ops_2 = [QobjEvo(a, γ1) + QobjEvo(a, γ1)] # This generates a ComposedOperator internally
+
+    e_ops = [a' * a]
+
+    tlist = range(0, 10, 100)
+    params = [γ0]
+    sol_1 = mesolve(H, ψ0, tlist, c_ops_1, e_ops = e_ops; progress_bar = Val(false), params = params, saveat = tlist)
+    sol_2 = mesolve(H, ψ0, tlist, c_ops_2, e_ops = e_ops; progress_bar = Val(false), params = params, saveat = tlist)
+
+    @test sol_1.expect[1, :] ≈ sol_2.expect[1, :] atol=1e-10
+    @test all(x -> isapprox(x[1].data, x[2].data; atol = 1e-10), zip(sol_1.states, sol_2.states))
+end

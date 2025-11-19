@@ -109,7 +109,7 @@ function smesolveProblem(
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
-    K = get_data(L_evo)
+    K = cache_operator(get_data(L_evo), ρ0)
 
     Id_op = IdentityOperator(prod(dims)^2)
     D_l = map(sc_ops_evo_data) do op
