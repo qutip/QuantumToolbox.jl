@@ -59,9 +59,9 @@ function check_mul_dimensions(from::NTuple{NA, AbstractSpace}, to::NTuple{NB, Ab
     return nothing
 end
 
-for ADimType in (:Dimensions, :GeneralDimensions)
-    for BDimType in (:Dimensions, :GeneralDimensions)
-        if ADimType == BDimType == :Dimensions
+for ADimType in (:ProductDimensions, :GeneralProductDimensions)
+    for BDimType in (:ProductDimensions, :GeneralProductDimensions)
+        if ADimType == BDimType == :ProductDimensions
             @eval begin
                 function Base.:(*)(
                         A::AbstractQuantumObject{Operator, <:$ADimType},
@@ -83,7 +83,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
                     return QType(
                         A.data * B.data,
                         Operator(),
-                        GeneralDimensions(get_dimensions_to(A), get_dimensions_from(B)),
+                        GeneralProductDimensions(get_dimensions_to(A), get_dimensions_from(B)),
                     )
                 end
             end
@@ -91,13 +91,13 @@ for ADimType in (:Dimensions, :GeneralDimensions)
     end
 end
 
-function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket, <:Dimensions})
+function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket, <:ProductDimensions})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-    return QuantumObject(A.data * B.data, Ket(), Dimensions(get_dimensions_to(A)))
+    return QuantumObject(A.data * B.data, Ket(), ProductDimensions(get_dimensions_to(A)))
 end
-function Base.:(*)(A::QuantumObject{Bra, <:Dimensions}, B::AbstractQuantumObject{Operator})
+function Base.:(*)(A::QuantumObject{Bra, <:ProductDimensions}, B::AbstractQuantumObject{Operator})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-    return QuantumObject(A.data * B.data, Bra(), Dimensions(get_dimensions_from(B)))
+    return QuantumObject(A.data * B.data, Bra(), ProductDimensions(get_dimensions_from(B)))
 end
 function Base.:(*)(A::QuantumObject{Ket}, B::QuantumObject{Bra})
     check_dimensions(A, B)
@@ -523,7 +523,7 @@ function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int}, Tuple})
 
     _sort_sel = sort(SVector{length(sel), Int}(sel))
     ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, _sort_sel)
-    return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
+    return QuantumObject(ρtr, type = Operator(), dims = ProductDimensions(dkeep))
 end
 
 ptrace(QO::QuantumObject{Bra}, sel::Union{AbstractVector{Int}, Tuple}) = ptrace(QO', sel)
@@ -532,7 +532,7 @@ function ptrace(QO::QuantumObject{Operator}, sel::Union{AbstractVector{Int}, Tup
     any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("ptrace does not support EnrSpace"))
 
     # TODO: support for special cases when some of the subsystems have same `to` and `from` space
-    isa(QO.dimensions, GeneralDimensions) &&
+    isa(QO.dimensions, GeneralProductDimensions) &&
         (get_dimensions_to(QO) != get_dimensions_from(QO)) &&
         throw(ArgumentError("Invalid partial trace for dims = $(_get_dims_string(QO.dimensions))"))
 
@@ -553,7 +553,7 @@ function ptrace(QO::QuantumObject{Operator}, sel::Union{AbstractVector{Int}, Tup
     dims = dimensions_to_dims(get_dimensions_to(QO))
     _sort_sel = sort(SVector{length(sel), Int}(sel))
     ρtr, dkeep = _ptrace_oper(QO.data, dims, _sort_sel)
-    return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
+    return QuantumObject(ρtr, type = Operator(), dims = ProductDimensions(dkeep))
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
@@ -740,14 +740,14 @@ end
 _dims_and_perm(::ObjType, dims::SVector{N, Int}, order::AbstractVector{Int}, L::Int) where {ObjType <: Union{Ket, Bra}, N} =
     reverse(dims), reverse((L + 1) .- order)
 
-# if dims originates from Dimensions
+# if dims originates from ProductDimensions
 _dims_and_perm(::Operator, dims::SVector{N, Int}, order::AbstractVector{Int}, L::Int) where {N} =
     reverse(vcat(dims, dims)), reverse((2 * L + 1) .- vcat(order, order .+ L))
 
-# if dims originates from GeneralDimensions
+# if dims originates from GeneralProductDimensions
 _dims_and_perm(::Operator, dims::SVector{2, SVector{N, Int}}, order::AbstractVector{Int}, L::Int) where {N} =
     reverse(vcat(dims[2], dims[1])), reverse((2 * L + 1) .- vcat(order, order .+ L))
 
-_order_dimensions(dimensions::Dimensions, order::AbstractVector{Int}) = Dimensions(dimensions.to[order])
-_order_dimensions(dimensions::GeneralDimensions, order::AbstractVector{Int}) =
-    GeneralDimensions(dimensions.to[order], dimensions.from[order])
+_order_dimensions(dimensions::ProductDimensions, order::AbstractVector{Int}) = ProductDimensions(dimensions.to[order])
+_order_dimensions(dimensions::GeneralProductDimensions, order::AbstractVector{Int}) =
+    GeneralProductDimensions(dimensions.to[order], dimensions.from[order])

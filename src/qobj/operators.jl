@@ -19,7 +19,7 @@ Returns a random unitary [`QuantumObject`](@ref) with element type `T = ComplexF
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{ProductDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 The `distribution` specifies which of the method used to obtain the unitary matrix:
 - `:haar`: Haar random unitary matrix using the algorithm from reference 1
@@ -33,9 +33,9 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 """
 rand_unitary(::Type{T}, dimensions::Int, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: FloatOrComplex} =
     rand_unitary(T, SVector(dimensions), makeVal(distribution))
-rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: FloatOrComplex} =
+rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: FloatOrComplex} =
     rand_unitary(T, dimensions, makeVal(distribution))
-function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:haar}) where {T <: FloatOrComplex}
+function rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}, ::Val{:haar}) where {T <: FloatOrComplex}
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -50,7 +50,7 @@ function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{In
     Λ ./= abs.(Λ) # rescaling the elements
     return QuantumObject(to_dense(Q * Diagonal(Λ)); type = Operator(), dims = dimensions)
 end
-function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:exp}) where {T <: FloatOrComplex}
+function rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}, ::Val{:exp}) where {T <: FloatOrComplex}
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -61,7 +61,7 @@ function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{In
     H = QuantumObject((Z + Z') / 2; type = Operator(), dims = dimensions)
     return to_dense(_rand_unitary_exp(H))
 end
-rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{Td}) where {T <: FloatOrComplex, Td} =
+rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}, ::Val{Td}) where {T <: FloatOrComplex, Td} =
     throw(ArgumentError("Invalid distribution: $(Td)"))
 rand_unitary(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) = rand_unitary(ComplexF64, dimensions, distribution)
 
@@ -565,7 +565,7 @@ Generates a discrete Fourier transform matrix ``\hat{F}_N`` for [Quantum Fourier
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{ProductDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 ``N`` represents the total dimension, and therefore the matrix is defined as
 
@@ -586,7 +586,7 @@ where ``\omega = \exp(\frac{2 \pi i}{N})``.
     It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 qft(::Type{T}, dimensions::Int) where {T <: Complex} = QuantumObject(_qft_op(T, dimensions), Operator(), dimensions)
-qft(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Complex} =
+qft(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: Complex} =
     QuantumObject(_qft_op(T, prod(dimensions)), Operator(), dimensions)
 qft(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = qft(ComplexF64, dimensions)
 

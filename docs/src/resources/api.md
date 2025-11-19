@@ -19,8 +19,8 @@ end
 ```@docs
 Space
 EnrSpace
-Dimensions
-GeneralDimensions
+ProductDimensions
+GeneralProductDimensions
 AbstractQuantumObject
 Bra
 Ket

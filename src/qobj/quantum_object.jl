@@ -41,7 +41,7 @@ julia> a.dims
  20
 
 julia> a.dimensions
-Dimensions{1, Tuple{Space}}((Space(20),))
+ProductDimensions{1, Tuple{Space}}((Space(20),))
 ```
 """
 struct QuantumObject{ObjType <: QuantumObjectType, DimType <: AbstractDimensions, DataType <: AbstractArray} <:
@@ -88,13 +88,13 @@ function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) whe
 
     if dims isa Nothing
         if type isa Bra
-            dims = Dimensions(_size[2])
+            dims = ProductDimensions(_size[2])
         elseif type isa Operator
             dims =
-                (_size[1] == _size[2]) ? Dimensions(_size[1]) :
-                GeneralDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
+                (_size[1] == _size[2]) ? ProductDimensions(_size[1]) :
+                GeneralProductDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
         elseif type isa SuperOperator || type isa OperatorBra
-            dims = Dimensions(isqrt(_size[2]))
+            dims = ProductDimensions(isqrt(_size[2]))
         end
     end
 
@@ -112,9 +112,9 @@ function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) whe
     if dims isa Nothing
         _size = _get_size(A)
         if type isa Ket
-            dims = Dimensions(_size[1])
+            dims = ProductDimensions(_size[1])
         elseif type isa OperatorKet
-            dims = Dimensions(isqrt(_size[1]))
+            dims = ProductDimensions(isqrt(_size[1]))
         end
     end
 

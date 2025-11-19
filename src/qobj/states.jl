@@ -14,13 +14,13 @@ Returns a zero [`Ket`](@ref) vector with given argument `dimensions` and element
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int}, Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{ProductDimensions,AbstractVector{Int}, Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 zero_ket(::Type{T}, dimensions::Int) where {T <: Number} = QuantumObject(zeros(T, dimensions), Ket(), dimensions)
-zero_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number} =
+zero_ket(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: Number} =
     QuantumObject(zeros(T, prod(dimensions)), Ket(), dimensions)
 zero_ket(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = zero_ket(ComplexF64, dimensions)
 
@@ -66,13 +66,13 @@ Generate a random normalized [`Ket`](@ref) vector with given argument `dimension
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{ProductDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 rand_ket(::Type{T}, dimensions::Int) where {T <: Complex} = rand_ket(T, SVector(dimensions))
-function rand_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Complex}
+function rand_ket(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: Complex}
     N = prod(dimensions)
     ψ = rand(T, N) .- (one(T) / 2 + one(T) * im / 2)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
@@ -139,14 +139,14 @@ Returns the maximally mixed density matrix with given argument `dimensions` and 
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{ProductDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 maximally_mixed_dm(::Type{T}, dimensions::Int) where {T <: FloatOrComplex} =
     QuantumObject(diagm(0 => fill(1 / T(dimensions), dimensions))::Matrix{T}, Operator(), SVector(dimensions)) # TODO: remove `::Matrix{T}` if JET.jl fix https://github.com/aviatesk/JET.jl/issues/790
-function maximally_mixed_dm(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: FloatOrComplex}
+function maximally_mixed_dm(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: FloatOrComplex}
     N = prod(dimensions)
     return QuantumObject(diagm(0 => fill(1 / T(N), N)), Operator(), dimensions)
 end
@@ -159,7 +159,7 @@ Generate a random density matrix from Ginibre ensemble with given argument `dime
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{ProductDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 The default keyword argument `rank = prod(dimensions)` (full rank).
 
@@ -174,7 +174,7 @@ rand_dm(::Type{T}, dimensions::Int; rank::Int = dimensions) where {T <: Complex}
     rand_dm(T, SVector(dimensions); rank)
 function rand_dm(
         ::Type{T},
-        dimensions::Union{Dimensions, AbstractVector{Int}, Tuple};
+        dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple};
         rank::Int = prod(dimensions),
     ) where {T <: Complex}
     N = prod(dimensions)

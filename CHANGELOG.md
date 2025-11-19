@@ -144,7 +144,7 @@ Release date: 2025-05-03
 ## [v0.30.1]
 Release date: 2025-04-24
 
-- Support different length for `to` and `from` on GeneralDimensions. ([#448])
+- Support different length for `to` and `from` on GeneralProductDimensions. ([#448])
 - Extend the `Makie.jl` extension to all the other available backends. ([#450])
 - Fix definition of noise derivative in stochastic solvers. ([#453])
 
@@ -226,7 +226,7 @@ Release date: 2025-01-20
 
 - Change the structure of block diagonalization functions, using `BlockDiagonalForm` struct and changing the function name from `bdf` to `block_diagonal_form`. ([#349])
 - Add **GPUArrays** compatibility for `ptrace` function, by using **KernelAbstractions.jl**. ([#350])
-- Introduce `Space`, `Dimensions`, `GeneralDimensions` structures to support wider definitions and operations of `Qobj/QobjEvo`, and potential functionalities in the future. ([#271], [#353], [#360])
+- Introduce `Space`, `ProductDimensions`, `GeneralProductDimensions` structures to support wider definitions and operations of `Qobj/QobjEvo`, and potential functionalities in the future. ([#271], [#353], [#360])
 - Improve lazy tensor warning for `SciMLOperators`. ([#370])
 - Change order of `AbstractQuantumObject` data type. For example, from `QuantumObject{DataType,ObjType,DimsType}` to `QuantumObject{ObjType,DimsType,DataType}`. ([#371])
 

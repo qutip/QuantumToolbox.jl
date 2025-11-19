@@ -97,15 +97,15 @@
         @test opstring ==
             "\nQuantum Object:   type=Operator()   dims=$ρ_tot_dims   size=$((ρ_tot_size, ρ_tot_size))   ishermitian=$ρ_tot_isherm\n$datastring"
 
-        # use GeneralDimensions to do partial trace
-        new_dims1 = GeneralDimensions((Space(1), Space(1), space_enr), (Space(1), Space(1), space_enr))
+        # use GeneralProductDimensions to do partial trace
+        new_dims1 = GeneralProductDimensions((Space(1), Space(1), space_enr), (Space(1), Space(1), space_enr))
         ρ_enr_compound = Qobj(zeros(ComplexF64, size_enr, size_enr), dims = new_dims1)
         basis_list = [tensor(basis(D1, i), basis(D2, j)) for i in 0:(D1 - 1) for j in 0:(D2 - 1)]
         for b in basis_list
             ρ_enr_compound += tensor(b', I_enr) * ρ_tot * tensor(b, I_enr)
         end
         new_dims2 =
-            GeneralDimensions((space_s..., Space(1), Space(1), Space(1)), (space_s..., Space(1), Space(1), Space(1)))
+            GeneralProductDimensions((space_s..., Space(1), Space(1), Space(1)), (space_s..., Space(1), Space(1), Space(1)))
         ρ_s_compound = Qobj(zeros(ComplexF64, size_s, size_s), dims = new_dims2)
         basis_list = [enr_fock(space_enr, space_enr.idx2state[idx]) for idx in 1:space_enr.size]
         for b in basis_list
