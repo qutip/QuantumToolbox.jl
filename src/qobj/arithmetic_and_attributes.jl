@@ -38,6 +38,8 @@ for op in (:(+), :(-), :(*))
     @eval begin
         function Base.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
             check_dimensions(A, B)
+            A.type != B.type &&
+                throw(DomainError((A.type, B.type), "The quantum objects should have the same type to do $op."))
             QType = promote_op_type(A, B)
             return QType($(op)(A.data, B.data), A.type, A.dimensions)
         end
@@ -50,52 +52,22 @@ for op in (:(+), :(-), :(*))
     end
 end
 
-function check_mul_dimensions(from::NTuple{NA,AbstractSpace}, to::NTuple{NB,AbstractSpace}) where {NA,NB}
-    (from != to) && throw(
-        DimensionMismatch(
-            "The quantum object with (right) dims = $(dimensions_to_dims(from)) can not multiply a quantum object with (left) dims = $(dimensions_to_dims(to)) on the right-hand side.",
-        ),
+for type in (:Operator, :SuperOperator)
+    @eval function Base.:(*)(
+        A::AbstractQuantumObject{$type,ProductDimensions},
+        B::AbstractQuantumObject{$type,ProductDimensions},
     )
-    return nothing
-end
-
-for ADimType in (:Dimensions, :GeneralDimensions)
-    for BDimType in (:Dimensions, :GeneralDimensions)
-        if ADimType == BDimType == :Dimensions
-            @eval begin
-                function Base.:(*)(
-                    A::AbstractQuantumObject{Operator,<:$ADimType},
-                    B::AbstractQuantumObject{Operator,<:$BDimType},
-                )
-                    check_dimensions(A, B)
-                    QType = promote_op_type(A, B)
-                    return QType(A.data * B.data, Operator(), A.dimensions)
-                end
-            end
-        else
-            @eval begin
-                function Base.:(*)(
-                    A::AbstractQuantumObject{Operator,<:$ADimType},
-                    B::AbstractQuantumObject{Operator,<:$BDimType},
-                )
-                    check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-                    QType = promote_op_type(A, B)
-                    return QType(
-                        A.data * B.data,
-                        Operator(),
-                        GeneralDimensions(get_dimensions_to(A), get_dimensions_from(B)),
-                    )
-                end
-            end
-        end
+        check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
+        QType = promote_op_type(A, B)
+        return QType(A.data * B.data, $type(), ProductDimensions(get_dimensions_to(A), get_dimensions_from(B)))
     end
 end
 
-function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket,<:Dimensions})
+function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
     return QuantumObject(A.data * B.data, Ket(), Dimensions(get_dimensions_to(A)))
 end
-function Base.:(*)(A::QuantumObject{Bra,<:Dimensions}, B::AbstractQuantumObject{Operator})
+function Base.:(*)(A::QuantumObject{Bra}, B::AbstractQuantumObject{Operator})
     check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
     return QuantumObject(A.data * B.data, Bra(), Dimensions(get_dimensions_from(B)))
 end
@@ -122,6 +94,15 @@ end
 function Base.:(*)(A::QuantumObject{OperatorBra}, B::AbstractQuantumObject{SuperOperator})
     check_dimensions(A, B)
     return QuantumObject(A.data * B.data, OperatorBra(), A.dimensions)
+end
+
+function check_mul_dimensions(from::NTuple{NA,AbstractSpace}, to::NTuple{NB,AbstractSpace}) where {NA,NB}
+    (from != to) && throw(
+        DimensionMismatch(
+            "The quantum object with (right) dims = $(dimensions_to_dims(from)) can not multiply a quantum object with (left) dims = $(dimensions_to_dims(to)) on the right-hand side.",
+        ),
+    )
+    return nothing
 end
 
 Base.:(^)(A::QuantumObject, n::T) where {T<:Number} = QuantumObject(^(A.data, n), A.type, A.dimensions)
@@ -748,6 +729,5 @@ _dims_and_perm(::Operator, dims::SVector{N,Int}, order::AbstractVector{Int}, L::
 _dims_and_perm(::Operator, dims::SVector{2,SVector{N,Int}}, order::AbstractVector{Int}, L::Int) where {N} =
     reverse(vcat(dims[2], dims[1])), reverse((2 * L + 1) .- vcat(order, order .+ L))
 
-_order_dimensions(dimensions::Dimensions, order::AbstractVector{Int}) = Dimensions(dimensions.to[order])
-_order_dimensions(dimensions::GeneralDimensions, order::AbstractVector{Int}) =
-    GeneralDimensions(dimensions.to[order], dimensions.from[order])
+_order_dimensions(dimensions::ProductDimensions, order::AbstractVector{Int}) =
+    ProductDimensions(dimensions.to[order], isnothing(dimensions.from) ? nothing : dimensions.from[order])

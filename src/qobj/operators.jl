@@ -19,7 +19,7 @@ Returns a random unitary [`QuantumObject`](@ref).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 The `distribution` specifies which of the method used to obtain the unitary matrix:
 - `:haar`: Haar random unitary matrix using the algorithm from reference 1
@@ -33,10 +33,12 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 """
 rand_unitary(dimensions::Int, distribution::Union{Symbol,Val} = Val(:haar)) =
     rand_unitary(SVector(dimensions), makeVal(distribution))
-rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, distribution::Union{Symbol,Val} = Val(:haar)) =
-    rand_unitary(dimensions, makeVal(distribution))
-function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{:haar})
-    N = prod(dimensions)
+rand_unitary(
+    dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple},
+    distribution::Union{Symbol,Val} = Val(:haar),
+) = rand_unitary(dimensions, makeVal(distribution))
+function rand_unitary(dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}, ::Val{:haar})
+    N = hilbert_dimensions_to_size(dimensions)[1]
 
     # generate N x N matrix Z of complex standard normal random variates
     Z = randn(ComplexF64, N, N)
@@ -50,8 +52,8 @@ function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, :
     Λ ./= abs.(Λ) # rescaling the elements
     return QuantumObject(to_dense(Q * Diagonal(Λ)); type = Operator(), dims = dimensions)
 end
-function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{:exp})
-    N = prod(dimensions)
+function rand_unitary(dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}, ::Val{:exp})
+    N = hilbert_dimensions_to_size(dimensions)[1]
 
     # generate N x N matrix Z of complex standard normal random variates
     Z = randn(ComplexF64, N, N)
@@ -61,7 +63,7 @@ function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, :
 
     return to_dense(exp(-1.0im * H))
 end
-rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{T}) where {T} =
+rand_unitary(dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}, ::Val{T}) where {T} =
     throw(ArgumentError("Invalid distribution: $(T)"))
 
 @doc raw"""
@@ -530,7 +532,7 @@ Generates a discrete Fourier transform matrix ``\hat{F}_N`` for [Quantum Fourier
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 ``N`` represents the total dimension, and therefore the matrix is defined as
 
@@ -551,8 +553,8 @@ where ``\omega = \exp(\frac{2 \pi i}{N})``.
     It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator(), dimensions)
-qft(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =
-    QuantumObject(_qft_op(prod(dimensions)), Operator(), dimensions)
+qft(dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}) =
+    QuantumObject(_qft_op(hilbert_dimensions_to_size(dimensions)[1]), Operator(), dimensions)
 function _qft_op(N::Int)
     ω = exp(2.0im * π / N)
     arr = 0:(N-1)

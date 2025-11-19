@@ -14,13 +14,13 @@ Returns a zero [`Ket`](@ref) vector with given argument `dimensions`.
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int}, Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractDimensions,AbstractVector{Int}, Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket(), dimensions)
-zero_ket(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =
+zero_ket(dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}) =
     QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket(), dimensions)
 
 @doc raw"""
@@ -70,13 +70,13 @@ Generate a random normalized [`Ket`](@ref) vector with given argument `dimension
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 rand_ket(dimensions::Int) = rand_ket(SVector(dimensions))
-function rand_ket(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
+function rand_ket(dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple})
     N = prod(dimensions)
     ψ = rand(ComplexF64, N) .- (0.5 + 0.5im)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
@@ -142,28 +142,28 @@ Returns the maximally mixed density matrix with given argument `dimensions`.
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 maximally_mixed_dm(dimensions::Int) =
     QuantumObject(diagm(0 => fill(ComplexF64(1 / dimensions), dimensions)), Operator(), SVector(dimensions))
-function maximally_mixed_dm(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
+function maximally_mixed_dm(dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple})
     N = prod(dimensions)
     return QuantumObject(diagm(0 => fill(ComplexF64(1 / N), N)), Operator(), dimensions)
 end
 
 @doc raw"""
-    rand_dm(dimensions; rank::Int=prod(dimensions))
+    rand_dm(dimensions; rank::Int=hilbert_dimensions_to_size(dimensions)[1])
 
 Generate a random density matrix from Ginibre ensemble with given argument `dimensions` and `rank`, ensuring that it is positive semi-definite and trace equals to `1`.
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
-- `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
+- `dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
-The default keyword argument `rank = prod(dimensions)` (full rank).
+The default keyword argument `rank = hilbert_dimensions_to_size(dimensions)[1]` (full rank).
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_dm(dimensions; rank=rank)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
@@ -172,9 +172,13 @@ The default keyword argument `rank = prod(dimensions)` (full rank).
 - [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)
 - [K. Życzkowski, et al., Generating random density matrices, Journal of Mathematical Physics 52, 062201 (2011)](http://dx.doi.org/10.1063/1.3595693)
 """
-rand_dm(dimensions::Int; rank::Int = prod(dimensions)) = rand_dm(SVector(dimensions), rank = rank)
-function rand_dm(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}; rank::Int = prod(dimensions))
-    N = prod(dimensions)
+rand_dm(dimensions::Int; rank::Int = hilbert_dimensions_to_size(dimensions)[1]) =
+    rand_dm(SVector(dimensions), rank = rank)
+function rand_dm(
+    dimensions::Union{AbstractDimensions,AbstractVector{Int},Tuple};
+    rank::Int = hilbert_dimensions_to_size(dimensions)[1],
+)
+    N = hilbert_dimensions_to_size(dimensions)[1]
     (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
     (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))
 
