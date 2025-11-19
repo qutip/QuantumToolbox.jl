@@ -210,8 +210,8 @@ end
 
 get_dimensions_to(A::AbstractQuantumObject) = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject) = isnothing(A.dimensions.from) ? A.dimensions.to : A.dimensions.from
-get_dimensions_from(::AbstractQuantumObject{Ket}) = nothing
-get_dimensions_to(::AbstractQuantumObject{Bra}) = nothing
+get_dimensions_from(A::AbstractQuantumObject{Ket}) = space_one_list(A.dimensions.to)
+get_dimensions_to(A::AbstractQuantumObject{Bra}) = space_one_list(A.dimensions.to)
 
 # functions for getting Float or Complex element type
 _float_type(A::AbstractQuantumObject) = _float_type(eltype(A))

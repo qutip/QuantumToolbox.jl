@@ -13,16 +13,19 @@ abstract type AbstractDimensions{M,N} end
     end
 
 A structure that describes the left-hand side (`to`) and right-hand side (`from`) dimensions of a quantum object.
+
+The `from` field can be different from `nothing` only for non-square [`Operator`](@ref) and [`SuperOperator`](@ref) quantum objects.
 """
 struct ProductDimensions{M,N,T1<:Tuple,T2<:Union{<:Tuple,Nothing}} <: AbstractDimensions{M,N}
     to::T1   # space acting on the left
     from::T2 # space acting on the right
 
-    function ProductDimensions(to::NTuple{M}, from::Union{NTuple,Nothing}) where {M}
+    function ProductDimensions(to::Union{AbstractVector,NTuple}, from::Union{NTuple,Nothing})
+        M = length(to)
         N = isnothing(from) ? M : length(from)
 
-        _non_static_array_warning("to", to)
-        isnothing(from) || _non_static_array_warning("from", from)
+        _non_static_array_warning("dims", to)
+        isnothing(from) || _non_static_array_warning("dims", from)
 
         to_space = _dims_tuple_of_space(to)
         from_space = _dims_tuple_of_space(from)
@@ -37,18 +40,25 @@ function ProductDimensions(dims::Union{AbstractVector,Tuple})
 end
 
 ProductDimensions(dims::Union{Int,AbstractSpace}) = ProductDimensions((dims,), nothing)
-ProductDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N} = ProductDimensions(dims, nothing)
+ProductDimensions(dims::Union{AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} = ProductDimensions(dims, nothing)
+ProductDimensions(dims::Union{AbstractVector{<:AbstractSpace},NTuple{N,AbstractSpace}}) where {N} = ProductDimensions(dims, nothing)
 ProductDimensions(dims::ProductDimensions) = dims
 
 # obtain dims in the type of SVector with integers
-dimensions_to_dims(dimensions::NTuple{N,AbstractSpace}) where {N} = SVector{N}(map(dimensions_to_dims, dimensions))
-dimensions_to_dims(dimensions::ProductDimensions) =
-    SVector{2}(dimensions_to_dims(dimensions.to), dimensions_to_dims(dimensions.from))
+dimensions_to_dims(dimensions::NTuple{N,AbstractSpace}) where {N} = vcat(map(dimensions_to_dims, dimensions)...)
+function dimensions_to_dims(dimensions::ProductDimensions)
+    dims_to = dimensions_to_dims(dimensions.to)
+    isnothing(dimensions.from) && return dims_to
+    dims_from = dimensions_to_dims(dimensions.from)
+    return SVector{2}(dims_to, dims_from)
+end
 dimensions_to_dims(::Nothing) = nothing # for EigsolveResult.dimensions = nothing
 
 hilbert_dimensions_to_size(dimensions::ProductDimensions) =
     (hilbert_dimensions_to_size(dimensions.to), hilbert_dimensions_to_size(dimensions.from))
 hilbert_dimensions_to_size(dimensions::NTuple{N,AbstractSpace}) where {N} = prod(hilbert_dimensions_to_size, dimensions)
+hilbert_dimensions_to_size(dim::Int) = dim
+hilbert_dimensions_to_size(dimensions::Union{AbstractVector, NTuple{N,Integer}}) where {N} = prod(dimensions)
 hilbert_dimensions_to_size(::Nothing) = nothing
 
 liouvillian_dimensions_to_size(dimensions::ProductDimensions) =
@@ -66,9 +76,10 @@ Base.adjoint(dimensions::AbstractDimensions) = transpose(dimensions)
 Base.:(==)(dim1::ProductDimensions, dim2::ProductDimensions) = (dim1.to == dim2.to) && (dim1.from == dim2.from)
 
 _dims_tuple_of_space(dims::NTuple{N,AbstractSpace}) where {N} = dims
-function _dims_tuple_of_space(dims::NTuple{N, Integer}) where {N}
+function _dims_tuple_of_space(dims::Union{AbstractVector{<:Integer},SVector{M, <:Integer}, NTuple{M, Integer}}) where {M}
     _non_static_array_warning("dims", dims)
 
+    N = length(dims)
     N > 0 || throw(DomainError(N, "The length of `dims` must be larger or equal to 1."))
 
     return ntuple(dim -> HilbertSpace(dims[dim]), Val(N))
@@ -81,7 +92,10 @@ _gen_dimensions(dims) = ProductDimensions(dims)
 # this is used to show `dims` for Qobj and QobjEvo
 function _get_dims_string(dimensions::ProductDimensions)
     dims = dimensions_to_dims(dimensions)
-    isnothing(dims[2]) && return string(dims[1])
+    isnothing(dimensions.from) && return string(dims)
     return "[$(string(dims[1])), $(string(dims[2]))]"
 end
 _get_dims_string(::Nothing) = "nothing" # for EigsolveResult.dimensions = nothing
+
+space_one_list(dimensions::NTuple{N,AbstractSpace}) where {N} =
+    ntuple(i -> one(dimensions[i]), Val(sum(length, dimensions)))

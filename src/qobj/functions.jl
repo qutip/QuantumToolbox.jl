@@ -186,26 +186,21 @@ julia> a.dims, O.dims
 ([20], [20, 20])
 ```
 """
-Base.kron(A::AbstractQuantumObject, B::AbstractQuantumObject)
+function Base.kron(
+    A::AbstractQuantumObject{ObjType,<:ProductDimensions},
+    B::AbstractQuantumObject{ObjType,<:ProductDimensions},
+) where {ObjType<:Union{Ket, Bra, Operator}}
+    QType = promote_op_type(A, B)
+    _lazy_tensor_warning(A.data, B.data)
 
-for type in (:Operator, :SuperOperator)
-    @eval function Base.kron(
-        A::AbstractQuantumObject{$type,ProductDimensions},
-        B::AbstractQuantumObject{$type,ProductDimensions},
-    )
-        QType = promote_op_type(A, B)
-        _lazy_tensor_warning(A.data, B.data)
+    A_dims_from = get_dimensions_from(A)
+    B_dims_from = get_dimensions_from(B)
+    AB_dims_to = (get_dimensions_to(A)..., get_dimensions_to(B)...)
+    AB_dims_from = (A.dimensions.from === B.dimensions.from === nothing) ? nothing : (A_dims_from..., B_dims_from...)
 
-        A_dims_from = get_dimensions_from(A)
-        B_dims_from = get_dimensions_from(B)
-        AB_dims_to = (get_dimensions_to(A)..., get_dimensions_to(B)...)
-        AB_dims_from = (isnothing(A_dims_from) && isnothing(B_dims_from)) ? nothing : (A_dims_from..., B_dims_from...)
-
-        return QType(kron(A.data, B.data), $type(), ProductDimensions(AB_dims_to, AB_dims_from))
-    end
+    return QType(kron(A.data, B.data), A.type, ProductDimensions(AB_dims_to, AB_dims_from))
 end
 
-# if A and B are different type (must return Operator with GeneralDimensions)
 for AOpType in (:Ket, :Bra, :Operator)
     for BOpType in (:Ket, :Bra, :Operator)
         if (AOpType != BOpType)
@@ -213,14 +208,13 @@ for AOpType in (:Ket, :Bra, :Operator)
                 function Base.kron(A::AbstractQuantumObject{$AOpType}, B::AbstractQuantumObject{$BOpType})
                     QType = promote_op_type(A, B)
                     _lazy_tensor_warning(A.data, B.data)
-                    return QType(
-                        kron(A.data, B.data),
-                        Operator(),
-                        GeneralDimensions(
-                            (get_dimensions_to(A)..., get_dimensions_to(B)...),
-                            (get_dimensions_from(A)..., get_dimensions_from(B)...),
-                        ),
-                    )
+
+                    A_dims_from = get_dimensions_from(A)
+                    B_dims_from = get_dimensions_from(B)
+                    AB_dims_to = (get_dimensions_to(A)..., get_dimensions_to(B)...)
+                    AB_dims_from = (A.dimensions.from === B.dimensions.from === nothing) ? nothing : (A_dims_from..., B_dims_from...)
+
+                    return QType(kron(A.data, B.data), Operator(), ProductDimensions(AB_dims_to, AB_dims_from))
                 end
             end
         end

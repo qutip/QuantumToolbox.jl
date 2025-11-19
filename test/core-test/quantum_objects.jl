@@ -17,7 +17,7 @@
     # DomainError: incompatible between size of array and type
     @testset "DomainError" begin
         a = rand(ComplexF64, 3, 2)
-        for t in [SuperOperator(), Bra(), OperatorBra()]
+        for t in (Bra(), OperatorBra())
             @test_throws DomainError Qobj(a, type = t)
         end
 
@@ -33,17 +33,14 @@
         @test_throws DomainError Qobj(rand(ComplexF64, 2, 1), type = Operator()) # should be type = Bra
 
         # check that Ket, Bra, SuperOperator, OperatorKet, and OperatorBra don't support GeneralDimensions
-        @test_throws DomainError Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 1, 2), type = Bra(), dims = ((1,), (2,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 4, 4), type = SuperOperator(), dims = ((2,), (2,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 4), type = OperatorKet(), dims = ((2,), (1,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 1, 4), type = OperatorBra(), dims = ((1,), (2,)))
+        @test_throws DimensionMismatch Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,)))
+        @test_throws DimensionMismatch Qobj(rand(ComplexF64, 1, 2), type = Bra(), dims = ((1,), (2,)))
     end
 
     # unsupported type of dims
     @testset "unsupported dims" begin
-        @test_throws ArgumentError Qobj(rand(2, 2), dims = 2.0)
-        @test_throws ArgumentError Qobj(rand(2, 2), dims = 2.0 + 0.0im)
+        @test_throws MethodError Qobj(rand(2, 2), dims = 2.0)
+        @test_throws MethodError Qobj(rand(2, 2), dims = 2.0 + 0.0im)
         @test_throws DomainError Qobj(rand(2, 2), dims = 0)
         @test_throws DomainError Qobj(rand(2, 2), dims = (2, -2))
         @test_logs (
@@ -367,8 +364,8 @@
             end
 
             UnionType = Union{
-                QuantumObject{Bra,Dimensions{1,Tuple{Space}},Matrix{T}},
-                QuantumObject{Operator,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Bra,ProductDimensions{1,1,Tuple{HilbertSpace},Nothing},Matrix{T}},
+                QuantumObject{Operator,ProductDimensions{1,1,Tuple{HilbertSpace},Nothing},Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
@@ -377,8 +374,8 @@
             end
 
             UnionType2 = Union{
-                QuantumObject{Operator,GeneralDimensions{1,1,Tuple{Space},Tuple{Space}},Matrix{T}},
-                QuantumObject{Operator,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Operator,ProductDimensions{1,1,Tuple{HilbertSpace},Tuple{HilbertSpace}},Matrix{T}},
+                QuantumObject{Operator,ProductDimensions{1,1,Tuple{HilbertSpace},Nothing},Matrix{T}},
             }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)

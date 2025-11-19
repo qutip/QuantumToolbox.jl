@@ -124,8 +124,7 @@ struct QuantumObjectEvolution{
 
         dimensions = _gen_dimensions(dims)
 
-        _size = _get_size(data)
-        _check_QuantumObject(type, dimensions, _size[1], _size[2])
+        _check_QuantumObject(type, dimensions, size(data, 1), size(data, 2))
 
         return new{ObjType,typeof(dimensions),DT}(data, type, dimensions)
     end
@@ -158,16 +157,15 @@ Generate a [`QuantumObjectEvolution`](@ref) object from a [`SciMLOperator`](http
 Note that `QobjEvo` is a synonym of `QuantumObjectEvolution`
 """
 function QuantumObjectEvolution(data::AbstractSciMLOperator; type = Operator(), dims = nothing)
-    _size = _get_size(data)
     _check_type(type)
 
-    if dims isa Nothing
+    if isnothing(dims)
         if type isa Operator
-            dims =
-                (_size[1] == _size[2]) ? Dimensions(_size[1]) :
-                GeneralDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
+            dims_to = (size(data, 1), )
+            dims_from = (size(data, 1) == size(data, 2)) ? nothing : (size(data, 2), )
+            dims = ProductDimensions(dims_to, dims_from)
         elseif type isa SuperOperator
-            dims = Dimensions(isqrt(_size[2]))
+            dims = ProductDimensions(isqrt(size(data, 2)))
         end
     end
 

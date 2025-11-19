@@ -55,8 +55,7 @@ struct QuantumObject{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,Data
 
         ObjType = _check_type(type)
 
-        _size = _get_size(data)
-        _check_QuantumObject(type, dimensions, _size[1], _size[2])
+        _check_QuantumObject(type, dimensions, size(data, 1), size(data, 2))
 
         return new{ObjType,typeof(dimensions),DT}(data, type, dimensions)
     end
@@ -72,12 +71,10 @@ Generate [`QuantumObject`](@ref) with a given `A::AbstractArray` and specified `
     `Qobj` is a synonym of `QuantumObject`.
 """
 function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) where {T}
-    _size = _get_size(A)
-
     _check_type(type)
 
-    if type isa Nothing
-        type = (_size[1] == 1 && _size[2] > 1) ? Bra() : Operator() # default type
+    if isnothing(type)
+        type = (size(A, 1) == 1 && size(A, 2) > 1) ? Bra() : Operator() # default type
     elseif !(type isa Operator) && !(type isa SuperOperator) && !(type isa Bra) && !(type isa OperatorBra)
         throw(
             ArgumentError(
@@ -86,15 +83,15 @@ function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) whe
         )
     end
 
-    if dims isa Nothing
+    if isnothing(dims)
         if type isa Bra
-            dims = Dimensions(_size[2])
+            dims = ProductDimensions(size(A, 2))
         elseif type isa Operator
-            dims =
-                (_size[1] == _size[2]) ? Dimensions(_size[1]) :
-                GeneralDimensions(SVector{2}(SVector{1}(_size[1]), SVector{1}(_size[2])))
+            dims_to = (size(A, 1), )
+            dims_from = (size(A, 1) == size(A, 2)) ? nothing : (size(A, 2), )
+            dims = ProductDimensions(dims_to, dims_from)
         elseif type isa SuperOperator || type isa OperatorBra
-            dims = Dimensions(isqrt(_size[2]))
+            dims = ProductDimensions(isqrt(size(A, 2)))
         end
     end
 
@@ -103,18 +100,18 @@ end
 
 function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) where {T}
     _check_type(type)
-    if type isa Nothing
+
+    if isnothing(type)
         type = Ket() # default type
     elseif !(type isa Ket) && !(type isa OperatorKet)
         throw(ArgumentError("The argument type must be Ket() or OperatorKet() if the input array is a vector."))
     end
 
-    if dims isa Nothing
-        _size = _get_size(A)
+    if isnothing(dims)
         if type isa Ket
-            dims = Dimensions(_size[1])
+            dims = ProductDimensions(size(A, 1))
         elseif type isa OperatorKet
-            dims = Dimensions(isqrt(_size[1]))
+            dims = ProductDimensions(isqrt(size(A, 1)))
         end
     end
 
@@ -126,10 +123,9 @@ function QuantumObject(A::AbstractArray{T,N}; type = nothing, dims = nothing) wh
 end
 
 function QuantumObject(A::QuantumObject; type = A.type, dims = A.dimensions)
-    _size = _get_size(A.data)
     dimensions = _gen_dimensions(dims)
     _check_type(type)
-    _check_QuantumObject(type, dimensions, _size[1], _size[2])
+    _check_QuantumObject(type, dimensions, size(A, 1), size(A, 2))
     return QuantumObject(copy(A.data), type, dimensions)
 end
 

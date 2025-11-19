@@ -22,6 +22,9 @@ struct HilbertSpace <: AbstractSpace
     end
 end
 
+Base.one(::HilbertSpace) = HilbertSpace(1)
+Base.length(::HilbertSpace) = 1
+
 dimensions_to_dims(s::HilbertSpace) = SVector{1,Int}(s.size)
 hilbert_dimensions_to_size(s::HilbertSpace) = s.size
 liouvillian_dimensions_to_size(s::HilbertSpace) = s.size^2
