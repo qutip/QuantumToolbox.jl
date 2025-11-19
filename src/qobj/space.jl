@@ -2,7 +2,7 @@
 This file defines the Hilbert space structure.
 =#
 
-export AbstractSpace, Space
+export AbstractSpace, HilbertSpace
 
 abstract type AbstractSpace end
 

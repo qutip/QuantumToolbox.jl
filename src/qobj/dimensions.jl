@@ -2,7 +2,7 @@
 This file defines the Dimensions structures, which can describe composite Hilbert spaces.
 =#
 
-export AbstractDimensions, Dimensions, GeneralDimensions
+export AbstractDimensions, ProductDimensions
 
 abstract type AbstractDimensions{M,N} end
 
@@ -18,22 +18,26 @@ struct ProductDimensions{M,N,T1<:Tuple,T2<:Union{<:Tuple,Nothing}} <: AbstractDi
     to::T1   # space acting on the left
     from::T2 # space acting on the right
 
-    # make sure the elements in the tuple are all AbstractSpace
-    GeneralDimensions(to::NTuple{M,AbstractSpace}, from::Union{NTuple{N,AbstractSpace},Nothing}) where {M,N} =
-        new{M,N,typeof(to),typeof(from)}(to, from)
+    function ProductDimensions(to::NTuple{M}, from::Union{NTuple,Nothing}) where {M}
+        N = isnothing(from) ? M : length(from)
+
+        _non_static_array_warning("to", to)
+        isnothing(from) || _non_static_array_warning("from", from)
+
+        to_space = _dims_tuple_of_space(to)
+        from_space = _dims_tuple_of_space(from)
+
+        new{M,N,typeof(to_space),typeof(from_space)}(to_space, from_space)
+    end
 end
-function ProductDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N}
+function ProductDimensions(dims::Union{AbstractVector,Tuple})
     (length(dims) != 2) && throw(ArgumentError("Invalid dims = $dims"))
 
-    to = _dims_tuple_of_space(dims[1])
-    from = isnothing(dims[2]) ? nothing : _dims_tuple_of_space(dims[2])
-
-    return ProductDimensions(to, from)
+    return ProductDimensions(dims[1], dims[2])
 end
 
 ProductDimensions(dims::Union{Int,AbstractSpace}) = ProductDimensions((dims,), nothing)
 ProductDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N} = ProductDimensions(dims, nothing)
-ProductDimensions(to::NTuple{M,Int}, from::Union{NTuple{N,Int},Nothing}) where {M,N} = ProductDimensions((to, from))
 ProductDimensions(dims::ProductDimensions) = dims
 
 # obtain dims in the type of SVector with integers
@@ -56,17 +60,23 @@ liouvillian_dimensions_to_size(::Nothing) = nothing
 Base.length(::AbstractDimensions{N}) where {N} = N
 
 Base.transpose(dimensions::ProductDimensions) = ProductDimensions(dimensions.from, dimensions.to) # switch `to` and `from`
+Base.transpose(dimensions::ProductDimensions{M,N,T1,Nothing}) where {M,N,T1<:Tuple} = dimensions
 Base.adjoint(dimensions::AbstractDimensions) = transpose(dimensions)
 
 Base.:(==)(dim1::ProductDimensions, dim2::ProductDimensions) = (dim1.to == dim2.to) && (dim1.from == dim2.from)
 
-function _dims_tuple_of_space(dims::NTuple{N,AbstractSpace}) where {N}
+_dims_tuple_of_space(dims::NTuple{N,AbstractSpace}) where {N} = dims
+function _dims_tuple_of_space(dims::NTuple{N, Integer}) where {N}
     _non_static_array_warning("dims", dims)
 
     N > 0 || throw(DomainError(N, "The length of `dims` must be larger or equal to 1."))
 
     return ntuple(dim -> HilbertSpace(dims[dim]), Val(N))
 end
+_dims_tuple_of_space(::Nothing) = nothing
+
+_gen_dimensions(dims::AbstractDimensions) = dims
+_gen_dimensions(dims) = ProductDimensions(dims)
 
 # this is used to show `dims` for Qobj and QobjEvo
 function _get_dims_string(dimensions::ProductDimensions)
