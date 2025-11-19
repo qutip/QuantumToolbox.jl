@@ -45,7 +45,7 @@ julia> λ
   1.0
 
 julia> ψ
-2-element Vector{QuantumObject{Ket, Dimensions{1, Tuple{Space}}, Vector{ComplexF64}}}:
+2-element Vector{QuantumObject{Ket, ProductDimensions{1, Tuple{Space}}, Vector{ComplexF64}}}:
 
 Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:

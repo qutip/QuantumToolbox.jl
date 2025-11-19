@@ -221,7 +221,7 @@ Calculate the [concurrence](https://en.wikipedia.org/wiki/Concurrence_(quantum_c
 - [Hill-Wootters1997](@citet)
 """
 function concurrence(ρ::QuantumObject{OpType}) where {OpType <: Union{Ket, Operator}}
-    (ρ.dimensions == Dimensions((Space(2), Space(2)))) || throw(
+    (ρ.dimensions == ProductDimensions((Space(2), Space(2)))) || throw(
         ArgumentError(
             "The `concurrence` only works for a two-qubit state, invalid dims = $(_get_dims_string(ρ.dimensions)).",
         ),

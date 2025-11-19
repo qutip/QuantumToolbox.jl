@@ -130,7 +130,7 @@ check_dimensions(A::AbstractQuantumObject...) = check_dimensions(A)
 
 _check_QuantumObject(
     type::ObjType,
-    dimensions::GeneralDimensions,
+    dimensions::GeneralProductDimensions,
     m::Int,
     n::Int,
 ) where {ObjType <: Union{Ket, Bra, SuperOperator, OperatorBra, OperatorKet}} = throw(
@@ -140,7 +140,7 @@ _check_QuantumObject(
     ),
 )
 
-function _check_QuantumObject(type::Ket, dimensions::Dimensions, m::Int, n::Int)
+function _check_QuantumObject(type::Ket, dimensions::ProductDimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
     (prod(dimensions) != m) && throw(
         DimensionMismatch("Ket with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
@@ -148,7 +148,7 @@ function _check_QuantumObject(type::Ket, dimensions::Dimensions, m::Int, n::Int)
     return nothing
 end
 
-function _check_QuantumObject(type::Bra, dimensions::Dimensions, m::Int, n::Int)
+function _check_QuantumObject(type::Bra, dimensions::ProductDimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Bra"))
     (prod(dimensions) != n) && throw(
         DimensionMismatch("Bra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
@@ -156,7 +156,7 @@ function _check_QuantumObject(type::Bra, dimensions::Dimensions, m::Int, n::Int)
     return nothing
 end
 
-function _check_QuantumObject(type::Operator, dimensions::Dimensions, m::Int, n::Int)
+function _check_QuantumObject(type::Operator, dimensions::ProductDimensions, m::Int, n::Int)
     L = prod(dimensions)
     (L == m == n) || throw(
         DimensionMismatch(
@@ -166,7 +166,7 @@ function _check_QuantumObject(type::Operator, dimensions::Dimensions, m::Int, n:
     return nothing
 end
 
-function _check_QuantumObject(type::Operator, dimensions::GeneralDimensions, m::Int, n::Int)
+function _check_QuantumObject(type::Operator, dimensions::GeneralProductDimensions, m::Int, n::Int)
     ((m == 1) || (n == 1)) && throw(DomainError((m, n), "The size of the array is not compatible with Operator"))
     ((prod(dimensions.to) != m) || (prod(dimensions.from) != n)) && throw(
         DimensionMismatch(
@@ -176,7 +176,7 @@ function _check_QuantumObject(type::Operator, dimensions::GeneralDimensions, m::
     return nothing
 end
 
-function _check_QuantumObject(type::SuperOperator, dimensions::Dimensions, m::Int, n::Int)
+function _check_QuantumObject(type::SuperOperator, dimensions::ProductDimensions, m::Int, n::Int)
     (m != n) && throw(DomainError((m, n), "The size of the array is not compatible with SuperOperator"))
     (prod(dimensions) != sqrt(m)) && throw(
         DimensionMismatch(
@@ -186,7 +186,7 @@ function _check_QuantumObject(type::SuperOperator, dimensions::Dimensions, m::In
     return nothing
 end
 
-function _check_QuantumObject(type::OperatorKet, dimensions::Dimensions, m::Int, n::Int)
+function _check_QuantumObject(type::OperatorKet, dimensions::ProductDimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorKet"))
     (prod(dimensions) != sqrt(m)) && throw(
         DimensionMismatch(
@@ -196,7 +196,7 @@ function _check_QuantumObject(type::OperatorKet, dimensions::Dimensions, m::Int,
     return nothing
 end
 
-function _check_QuantumObject(type::OperatorBra, dimensions::Dimensions, m::Int, n::Int)
+function _check_QuantumObject(type::OperatorBra, dimensions::ProductDimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorBra"))
     (prod(dimensions) != sqrt(n)) && throw(
         DimensionMismatch(
@@ -220,22 +220,22 @@ function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
     end
 end
 
-# this returns `to` in GeneralDimensions representation
-get_dimensions_to(A::AbstractQuantumObject{Ket, <:Dimensions}) = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{Bra, <:Dimensions}) = space_one_list(A.dimensions.to)
-get_dimensions_to(A::AbstractQuantumObject{Operator, <:Dimensions}) = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{Operator, <:GeneralDimensions}) = A.dimensions.to
+# this returns `to` in GeneralProductDimensions representation
+get_dimensions_to(A::AbstractQuantumObject{Ket, <:ProductDimensions}) = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{Bra, <:ProductDimensions}) = space_one_list(A.dimensions.to)
+get_dimensions_to(A::AbstractQuantumObject{Operator, <:ProductDimensions}) = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{Operator, <:GeneralProductDimensions}) = A.dimensions.to
 get_dimensions_to(
-    A::AbstractQuantumObject{ObjType, <:Dimensions},
+    A::AbstractQuantumObject{ObjType, <:ProductDimensions},
 ) where {ObjType <: Union{SuperOperator, OperatorBra, OperatorKet}} = A.dimensions.to
 
-# this returns `from` in GeneralDimensions representation
-get_dimensions_from(A::AbstractQuantumObject{Ket, <:Dimensions}) = space_one_list(A.dimensions.to)
-get_dimensions_from(A::AbstractQuantumObject{Bra, <:Dimensions}) = A.dimensions.to
-get_dimensions_from(A::AbstractQuantumObject{Operator, <:Dimensions}) = A.dimensions.to
-get_dimensions_from(A::AbstractQuantumObject{Operator, <:GeneralDimensions}) = A.dimensions.from
+# this returns `from` in GeneralProductDimensions representation
+get_dimensions_from(A::AbstractQuantumObject{Ket, <:ProductDimensions}) = space_one_list(A.dimensions.to)
+get_dimensions_from(A::AbstractQuantumObject{Bra, <:ProductDimensions}) = A.dimensions.to
+get_dimensions_from(A::AbstractQuantumObject{Operator, <:ProductDimensions}) = A.dimensions.to
+get_dimensions_from(A::AbstractQuantumObject{Operator, <:GeneralProductDimensions}) = A.dimensions.from
 get_dimensions_from(
-    A::AbstractQuantumObject{ObjType, <:Dimensions},
+    A::AbstractQuantumObject{ObjType, <:ProductDimensions},
 ) where {ObjType <: Union{SuperOperator, OperatorBra, OperatorKet}} = A.dimensions.to
 
 # this creates a list of Space(1), it is used to generate `from` for Ket, and `to` for Bra

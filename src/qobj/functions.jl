@@ -189,18 +189,18 @@ julia> a.dims, O.dims
 ```
 """
 function Base.kron(
-        A::AbstractQuantumObject{OpType, <:Dimensions},
-        B::AbstractQuantumObject{OpType, <:Dimensions},
+        A::AbstractQuantumObject{OpType, <:ProductDimensions},
+        B::AbstractQuantumObject{OpType, <:ProductDimensions},
     ) where {OpType <: Union{Ket, Bra, Operator}}
     QType = promote_op_type(A, B)
     _lazy_tensor_warning(A.data, B.data)
-    return QType(kron(A.data, B.data), A.type, Dimensions((A.dimensions.to..., B.dimensions.to...)))
+    return QType(kron(A.data, B.data), A.type, ProductDimensions((A.dimensions.to..., B.dimensions.to...)))
 end
 
-# if A and B are both Operator but either one of them has GeneralDimensions
-for ADimType in (:Dimensions, :GeneralDimensions)
-    for BDimType in (:Dimensions, :GeneralDimensions)
-        if !(ADimType == BDimType == :Dimensions) # not for this case because it's already implemented
+# if A and B are both Operator but either one of them has GeneralProductDimensions
+for ADimType in (:ProductDimensions, :GeneralProductDimensions)
+    for BDimType in (:ProductDimensions, :GeneralProductDimensions)
+        if !(ADimType == BDimType == :ProductDimensions) # not for this case because it's already implemented
             @eval begin
                 function Base.kron(
                         A::AbstractQuantumObject{Operator, <:$ADimType},
@@ -211,7 +211,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
                     return QType(
                         kron(A.data, B.data),
                         Operator(),
-                        GeneralDimensions(
+                        GeneralProductDimensions(
                             (get_dimensions_to(A)..., get_dimensions_to(B)...),
                             (get_dimensions_from(A)..., get_dimensions_from(B)...),
                         ),
@@ -222,7 +222,7 @@ for ADimType in (:Dimensions, :GeneralDimensions)
     end
 end
 
-# if A and B are different type (must return Operator with GeneralDimensions)
+# if A and B are different type (must return Operator with GeneralProductDimensions)
 for AOpType in (:Ket, :Bra, :Operator)
     for BOpType in (:Ket, :Bra, :Operator)
         if (AOpType != BOpType)
@@ -233,7 +233,7 @@ for AOpType in (:Ket, :Bra, :Operator)
                     return QType(
                         kron(A.data, B.data),
                         Operator(),
-                        GeneralDimensions(
+                        GeneralProductDimensions(
                             (get_dimensions_to(A)..., get_dimensions_to(B)...),
                             (get_dimensions_from(A)..., get_dimensions_from(B)...),
                         ),
