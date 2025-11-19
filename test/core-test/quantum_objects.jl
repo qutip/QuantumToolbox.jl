@@ -367,8 +367,8 @@
             end
 
             UnionType = Union{
-                QuantumObject{Bra, ProductDimensions{1, Tuple{Space}}, Matrix{T}},
-                QuantumObject{Operator, ProductDimensions{1, Tuple{Space}}, Matrix{T}},
+                QuantumObject{Bra, ProductDimensions{1, Tuple{HilbertSpace}}, Matrix{T}},
+                QuantumObject{Operator, ProductDimensions{1, Tuple{HilbertSpace}}, Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
@@ -377,8 +377,8 @@
             end
 
             UnionType2 = Union{
-                QuantumObject{Operator, GeneralProductDimensions{1, 1, Tuple{Space}, Tuple{Space}}, Matrix{T}},
-                QuantumObject{Operator, ProductDimensions{1, Tuple{Space}}, Matrix{T}},
+                QuantumObject{Operator, GeneralProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Matrix{T}},
+                QuantumObject{Operator, ProductDimensions{1, Tuple{HilbertSpace}}, Matrix{T}},
             }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)

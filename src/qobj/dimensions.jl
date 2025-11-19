@@ -11,7 +11,7 @@ abstract type AbstractDimensions{M, N} end
         to::T
     end
 
-A structure that describes the Hilbert [`Space`](@ref) of each subsystems.
+A structure that embodies the [`AbstractSpace`](@ref) of each subsystem in a composite Hilbert space.
 """
 struct ProductDimensions{N, T <: Tuple} <: AbstractDimensions{N, N}
     to::T
@@ -24,9 +24,9 @@ function ProductDimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) where {
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
 
-    return ProductDimensions(Tuple(Space.(dims)))
+    return ProductDimensions(Tuple(HilbertSpace.(dims)))
 end
-ProductDimensions(dims::Int) = ProductDimensions(Space(dims))
+ProductDimensions(dims::Int) = ProductDimensions(HilbertSpace(dims))
 ProductDimensions(dims::DimType) where {DimType <: AbstractSpace} = ProductDimensions((dims,))
 ProductDimensions(dims::Any) = throw(
     ArgumentError(
@@ -40,7 +40,7 @@ ProductDimensions(dims::Any) = throw(
         from::T2
     end
 
-A structure that describes the left-hand side (`to`) and right-hand side (`from`) Hilbert [`Space`](@ref) of an [`Operator`](@ref).
+A structure that embodies the left-hand side (`to`) and right-hand side (`from`) [`AbstractSpace`](@ref) of a quantum object.
 """
 struct GeneralProductDimensions{M, N, T1 <: Tuple, T2 <: Tuple} <: AbstractDimensions{M, N}
     to::T1   # space acting on the left
@@ -61,7 +61,7 @@ function GeneralProductDimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) 
     (L1 > 0) || throw(DomainError(L1, "The length of `dims[1]` must be larger or equal to 1."))
     (L2 > 0) || throw(DomainError(L2, "The length of `dims[2]` must be larger or equal to 1."))
 
-    return GeneralProductDimensions(Tuple(Space.(dims[1])), Tuple(Space.(dims[2])))
+    return GeneralProductDimensions(Tuple(HilbertSpace.(dims[1])), Tuple(HilbertSpace.(dims[2])))
 end
 
 _gen_dimensions(dims::AbstractDimensions) = dims
