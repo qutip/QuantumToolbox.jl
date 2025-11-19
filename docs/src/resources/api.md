@@ -17,7 +17,7 @@ end
 ## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 
 ```@docs
-Space
+HilbertSpace
 EnrSpace
 ProductDimensions
 GeneralProductDimensions

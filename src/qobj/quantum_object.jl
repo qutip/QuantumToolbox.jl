@@ -41,7 +41,7 @@ julia> a.dims
  20
 
 julia> a.dimensions
-ProductDimensions{1, Tuple{Space}}((Space(20),))
+ProductDimensions{1, Tuple{HilbertSpace}}((HilbertSpace(20),))
 ```
 """
 struct QuantumObject{ObjType <: QuantumObjectType, DimType <: AbstractDimensions, DataType <: AbstractArray} <:

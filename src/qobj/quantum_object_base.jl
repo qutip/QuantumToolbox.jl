@@ -238,10 +238,10 @@ get_dimensions_from(
     A::AbstractQuantumObject{ObjType, <:ProductDimensions},
 ) where {ObjType <: Union{SuperOperator, OperatorBra, OperatorKet}} = A.dimensions.to
 
-# this creates a list of Space(1), it is used to generate `from` for Ket, and `to` for Bra
+# this creates a list of HilbertSpace(1), it is used to generate `from` for Ket, and `to` for Bra
 space_one_list(dimensions::NTuple{N, AbstractSpace}) where {N} =
-    ntuple(i -> Space(1), Val(sum(_get_dims_length, dimensions)))
-_get_dims_length(::Space) = 1
+    ntuple(i -> HilbertSpace(1), Val(sum(_get_dims_length, dimensions)))
+_get_dims_length(::HilbertSpace) = 1
 _get_dims_length(::EnrSpace{N}) where {N} = N
 
 # functions for getting Float or Complex element type
