@@ -99,6 +99,7 @@ end
 _get_dims_string(::Nothing) = "nothing" # for EigsolveResult.dimensions = nothing
 
 Base.:(==)(dim1::ProductDimensions, dim2::ProductDimensions) = dim1.to == dim2.to
-Base.:(==)(dim1::GeneralProductDimensions, dim2::GeneralProductDimensions) = (dim1.to == dim2.to) && (dim1.from == dim2.from)
+Base.:(==)(dim1::GeneralProductDimensions, dim2::GeneralProductDimensions) =
+    (dim1.to == dim2.to) && (dim1.from == dim2.from)
 Base.:(==)(dim1::ProductDimensions, dim2::GeneralProductDimensions) = false
 Base.:(==)(dim1::GeneralProductDimensions, dim2::ProductDimensions) = false

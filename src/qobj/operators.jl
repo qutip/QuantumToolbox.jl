@@ -33,8 +33,10 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 """
 rand_unitary(::Type{T}, dimensions::Int, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: FloatOrComplex} =
     rand_unitary(T, SVector(dimensions), makeVal(distribution))
-rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: FloatOrComplex} =
-    rand_unitary(T, dimensions, makeVal(distribution))
+rand_unitary(::Type{T}, 
+    dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple},
+    distribution::Union{Symbol, Val} = Val(:haar),
+) where {T <: FloatOrComplex} = rand_unitary(T, dimensions, makeVal(distribution))
 function rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}, ::Val{:haar}) where {T <: FloatOrComplex}
     N = prod(dimensions)
 

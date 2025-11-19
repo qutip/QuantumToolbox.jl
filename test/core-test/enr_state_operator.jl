@@ -104,8 +104,10 @@
         for b in basis_list
             ρ_enr_compound += tensor(b', I_enr) * ρ_tot * tensor(b, I_enr)
         end
-        new_dims2 =
-            GeneralProductDimensions((space_s..., Space(1), Space(1), Space(1)), (space_s..., Space(1), Space(1), Space(1)))
+        new_dims2 = GeneralProductDimensions(
+            (space_s..., Space(1), Space(1), Space(1)),
+            (space_s..., Space(1), Space(1), Space(1)),
+        )
         ρ_s_compound = Qobj(zeros(ComplexF64, size_s, size_s), dims = new_dims2)
         basis_list = [enr_fock(space_enr, space_enr.idx2state[idx]) for idx in 1:space_enr.size]
         for b in basis_list
