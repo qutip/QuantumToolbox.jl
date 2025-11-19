@@ -240,9 +240,7 @@ get_dimensions_from(
 
 # this creates a list of HilbertSpace(1), it is used to generate `from` for Ket, and `to` for Bra
 space_one_list(dimensions::NTuple{N, AbstractSpace}) where {N} =
-    ntuple(i -> HilbertSpace(1), Val(sum(_get_dims_length, dimensions)))
-_get_dims_length(::HilbertSpace) = 1
-_get_dims_length(::EnrSpace{N}) where {N} = N
+    ntuple(i -> HilbertSpace(1), Val(sum(length, dimensions)))
 
 # functions for getting Float or Complex element type
 _float_type(A::AbstractQuantumObject) = _float_type(eltype(A))
