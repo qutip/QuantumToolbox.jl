@@ -672,7 +672,7 @@ Get the coherence value ``\alpha`` by measuring the expectation value of the des
 It returns both ``\alpha`` and the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
 """
 function get_coherence(ψ::QuantumObject{Ket})
-    a = destroy(prod(ψ.dimensions))
+    a = destroy(hilbert_dimensions_to_size(ψ.dimensions)[1])
     α = expect(a, ψ)
     D = exp(α * a' - conj(α) * a)
 
@@ -680,7 +680,7 @@ function get_coherence(ψ::QuantumObject{Ket})
 end
 
 function get_coherence(ρ::QuantumObject{Operator})
-    a = destroy(prod(ρ.dimensions))
+    a = destroy(hilbert_dimensions_to_size(ρ.dimensions)[1])
     α = expect(a, ρ)
     D = exp(α * a' - conj(α) * a)
 

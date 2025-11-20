@@ -3,6 +3,7 @@ This file defines the ProductDimensions structures, which can describe composite
 =#
 
 export AbstractDimensions, ProductDimensions, GeneralProductDimensions
+export hilbert_dimensions_to_size, liouville_dimensions_to_size
 
 abstract type AbstractDimensions{M, N} end
 
@@ -80,11 +81,52 @@ dimensions_to_dims(::Nothing) = nothing # for EigsolveResult.dimensions = nothin
 
 Base.length(::AbstractDimensions{N}) where {N} = N
 
-# need to specify return type `Int` for `_get_space_size`
-# otherwise the type of `prod(::ProductDimensions)` will be unstable
-_get_space_size(s::AbstractSpace)::Int = s.size
-Base.prod(dims::ProductDimensions) = prod(dims.to)
-Base.prod(spaces::NTuple{N, AbstractSpace}) where {N} = prod(_get_space_size, spaces)
+"""
+    hilbert_dimensions_to_size(dimensions)
+
+Returns the matrix dimensions `(m, n)` of an [`Operator`](@ref) with the given `dimensions`.
+
+For [`ProductDimensions`](@ref), returns `(m, m)` where `m` is the product of all subsystem Hilbert space dimensions.
+For [`GeneralProductDimensions`](@ref), returns `(m, n)` where `m` is the product of the `to` dimensions
+and `n` is the product of the `from` dimensions.
+
+If `dimensions` is an `Integer` or a vector/tuple of `Integer`s, it is automatically treated as [`ProductDimensions`](@ref).
+"""
+function hilbert_dimensions_to_size(dimensions::ProductDimensions)
+    m = prod(hilbert_dimensions_to_size, dimensions.to)
+    return (m, m)
+end
+function hilbert_dimensions_to_size(dimensions::GeneralProductDimensions)
+    m = prod(hilbert_dimensions_to_size, dimensions.to)
+    n = prod(hilbert_dimensions_to_size, dimensions.from)
+    return (m, n)
+end
+hilbert_dimensions_to_size(dimensions::Union{<:Integer,AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} =
+    hilbert_dimensions_to_size(ProductDimensions(dimensions))
+
+"""
+    liouville_dimensions_to_size(dimensions)
+
+Returns the matrix dimensions `(m, n)` of a [`SuperOperator`](@ref) with the given `dimensions`.
+
+For [`ProductDimensions`](@ref), returns `(m, m)` where `m` is the product of all subsystem Liouville space dimensions
+(each Hilbert dimension `d` contributes `d²` to the product).
+For [`GeneralProductDimensions`](@ref), returns `(m, n)` where `m` is the product of the `to` dimensions
+and `n` is the product of the `from` dimensions.
+
+If `dimensions` is an `Integer` or a vector/tuple of `Integer`s, it is automatically treated as [`ProductDimensions`](@ref).
+"""
+function liouville_dimensions_to_size(dimensions::ProductDimensions)
+    m = prod(liouville_dimensions_to_size, dimensions.to)
+    return (m, m)
+end
+function liouville_dimensions_to_size(dimensions::GeneralProductDimensions)
+    m = prod(liouville_dimensions_to_size, dimensions.to)
+    n = prod(liouville_dimensions_to_size, dimensions.from)
+    return (m, n)
+end
+liouville_dimensions_to_size(dimensions::Union{<:Integer,AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} =
+    liouville_dimensions_to_size(ProductDimensions(dimensions))
 
 Base.transpose(dimensions::ProductDimensions) = dimensions
 Base.transpose(dimensions::GeneralProductDimensions) = GeneralProductDimensions(dimensions.from, dimensions.to) # switch `to` and `from`
