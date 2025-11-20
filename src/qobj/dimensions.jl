@@ -65,7 +65,7 @@ function GeneralProductDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) wh
 end
 
 _gen_dimensions(dims::AbstractDimensions) = dims
-_gen_dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N} = ProductDimensions(dims)
+_gen_dimensions(dims::Union{AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} = ProductDimensions(dims)
 _gen_dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N} =
     GeneralProductDimensions(dims)
 _gen_dimensions(dims::Any) = ProductDimensions(dims)

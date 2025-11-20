@@ -222,7 +222,7 @@ end
 
 # this returns `to` in GeneralProductDimensions representation
 get_dimensions_to(A::AbstractQuantumObject{Ket,<:ProductDimensions}) = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{Bra,<:ProductDimensions}) = space_one_list(A.dimensions.to)
+get_dimensions_to(A::AbstractQuantumObject{Bra,<:ProductDimensions}) = hilbertspace_one_list(A.dimensions.to)
 get_dimensions_to(A::AbstractQuantumObject{Operator,<:ProductDimensions}) = A.dimensions.to
 get_dimensions_to(A::AbstractQuantumObject{Operator,<:GeneralProductDimensions}) = A.dimensions.to
 get_dimensions_to(
@@ -230,17 +230,13 @@ get_dimensions_to(
 ) where {ObjType<:Union{SuperOperator,OperatorBra,OperatorKet}} = A.dimensions.to
 
 # this returns `from` in GeneralProductDimensions representation
-get_dimensions_from(A::AbstractQuantumObject{Ket,<:ProductDimensions}) = space_one_list(A.dimensions.to)
+get_dimensions_from(A::AbstractQuantumObject{Ket,<:ProductDimensions}) = hilbertspace_one_list(A.dimensions.to)
 get_dimensions_from(A::AbstractQuantumObject{Bra,<:ProductDimensions}) = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject{Operator,<:ProductDimensions}) = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject{Operator,<:GeneralProductDimensions}) = A.dimensions.from
 get_dimensions_from(
     A::AbstractQuantumObject{ObjType,<:ProductDimensions},
 ) where {ObjType<:Union{SuperOperator,OperatorBra,OperatorKet}} = A.dimensions.to
-
-# this creates a list of HilbertSpace(1), it is used to generate `from` for Ket, and `to` for Bra
-space_one_list(dimensions::NTuple{N,AbstractSpace}) where {N} =
-    ntuple(i -> HilbertSpace(1), Val(sum(length, dimensions)))
 
 # functions for getting Float or Complex element type
 _float_type(A::AbstractQuantumObject) = _float_type(eltype(A))
