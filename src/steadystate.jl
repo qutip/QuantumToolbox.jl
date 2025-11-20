@@ -138,7 +138,7 @@ end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinearSolver; kwargs...)
     L_tmp = L.data
-    N = prod(L.dimensions)
+    N = hilbert_dimensions_to_size(L.dimensions)[1]
     weight = norm(L_tmp, 1) / length(L_tmp)
 
     v0 = _dense_similar(L_tmp, N^2)
@@ -166,7 +166,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
 end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateEigenSolver; kwargs...)
-    N = prod(L.dimensions)
+    N = hilbert_dimensions_to_size(L.dimensions)[1]
 
     kwargs = merge((sigma = 1.0e-8, eigvals = 1), (; kwargs...))
 
@@ -179,7 +179,7 @@ end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirectSolver)
     L_tmp = L.data
-    N = prod(L.dimensions)
+    N = hilbert_dimensions_to_size(L.dimensions)[1]
     weight = norm(L_tmp, 1) / length(L_tmp)
 
     v0 = _dense_similar(L_tmp, N^2)

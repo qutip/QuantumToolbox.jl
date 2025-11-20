@@ -109,7 +109,7 @@ function smesolveProblem(
 
     K = cache_operator(get_data(L_evo), ρ0)
 
-    Id_op = IdentityOperator(prod(dims)^2)
+    Id_op = IdentityOperator(liouville_dimensions_to_size(dims)[1])
     D_l = map(sc_ops_evo_data) do op
         # TODO: # Currently, we are assuming a time-independent MatrixOperator
         # Also, the u state may become non-hermitian, so Tr[Sn * ρ + ρ * Sn'] != real(Tr[Sn * ρ]) / 2

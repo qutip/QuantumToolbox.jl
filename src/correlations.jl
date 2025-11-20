@@ -113,7 +113,7 @@ function correlation_2op_2t(
         reverse::Bool = false,
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
-    C = eye(prod(H.dimensions), dims = H.dimensions)
+    C = eye(hilbert_dimensions_to_size(H.dimensions)[1], dims = H.dimensions)
     if reverse
         corr = correlation_3op_2t(H, ψ0, tlist, τlist, c_ops, A, B, C; kwargs...)
     else
