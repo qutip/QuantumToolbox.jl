@@ -424,7 +424,7 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::AbstractODEAlgorithm = DP5(),
         params::NamedTuple = NamedTuple(),
-        ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
+        ρ0::AbstractMatrix = rand_dm(hilbert_dimensions_to_size(H.dimensions)[1]).data,
         eigvals::Int = 1,
         krylovdim::Int = min(10, size(H, 1)),
         maxiter::Int = 200,
@@ -467,7 +467,7 @@ function eigsolve_al(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::AbstractODEAlgorithm = DP5(),
     params::NamedTuple = NamedTuple(),
-    ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
+    ρ0::AbstractMatrix = rand_dm(hilbert_dimensions_to_size(H.dimensions)[1]).data,
     eigvals::Int = 1,
     krylovdim::Int = min(10, size(H, 1)),
     maxiter::Int = 200,

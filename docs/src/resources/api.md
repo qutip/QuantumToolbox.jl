@@ -326,6 +326,8 @@ convert_unit
 row_major_reshape
 meshgrid
 enr_state_dictionaries
+hilbert_dimensions_to_size
+liouville_dimensions_to_size
 ```
 
 ## [Visualization](@id doc-API:Visualization)

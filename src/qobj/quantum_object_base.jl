@@ -142,7 +142,7 @@ _check_QuantumObject(
 
 function _check_QuantumObject(type::Ket, dimensions::ProductDimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
-    (prod(dimensions) != m) && throw(
+    (hilbert_dimensions_to_size(dimensions)[1] != m) && throw(
         DimensionMismatch("Ket with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
     )
     return nothing
@@ -150,15 +150,15 @@ end
 
 function _check_QuantumObject(type::Bra, dimensions::ProductDimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Bra"))
-    (prod(dimensions) != n) && throw(
+    (hilbert_dimensions_to_size(dimensions)[1] != n) && throw(
         DimensionMismatch("Bra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
     )
     return nothing
 end
 
 function _check_QuantumObject(type::Operator, dimensions::ProductDimensions, m::Int, n::Int)
-    L = prod(dimensions)
-    (L == m == n) || throw(
+    obj_size = hilbert_dimensions_to_size(dimensions)[1]
+    (obj_size == m == n) || throw(
         DimensionMismatch(
             "Operator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
         ),
@@ -168,7 +168,8 @@ end
 
 function _check_QuantumObject(type::Operator, dimensions::GeneralProductDimensions, m::Int, n::Int)
     ((m == 1) || (n == 1)) && throw(DomainError((m, n), "The size of the array is not compatible with Operator"))
-    ((prod(dimensions.to) != m) || (prod(dimensions.from) != n)) && throw(
+    obj_size = hilbert_dimensions_to_size(dimensions)
+    ((obj_size[1] != m) || (obj_size[2] != n)) && throw(
         DimensionMismatch(
             "Operator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
         ),
@@ -178,7 +179,7 @@ end
 
 function _check_QuantumObject(type::SuperOperator, dimensions::ProductDimensions, m::Int, n::Int)
     (m != n) && throw(DomainError((m, n), "The size of the array is not compatible with SuperOperator"))
-    (prod(dimensions) != sqrt(m)) && throw(
+    (liouville_dimensions_to_size(dimensions)[1] != m) && throw(
         DimensionMismatch(
             "SuperOperator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
         ),
@@ -188,7 +189,7 @@ end
 
 function _check_QuantumObject(type::OperatorKet, dimensions::ProductDimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorKet"))
-    (prod(dimensions) != sqrt(m)) && throw(
+    (liouville_dimensions_to_size(dimensions)[1] != m) && throw(
         DimensionMismatch(
             "OperatorKet with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
         ),
@@ -198,7 +199,7 @@ end
 
 function _check_QuantumObject(type::OperatorBra, dimensions::ProductDimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorBra"))
-    (prod(dimensions) != sqrt(n)) && throw(
+    (liouville_dimensions_to_size(dimensions)[1] != n) && throw(
         DimensionMismatch(
             "OperatorBra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
         ),
