@@ -27,3 +27,7 @@ Base.length(s::HilbertSpace) = 1
 Base.length(s::HilbertSpace) = 1
 
 dimensions_to_dims(s::HilbertSpace) = SVector{1, Int}(s.size)
+
+# this creates a list of HilbertSpace(1), it is used to generate `from` for Ket, and `to` for Bra
+hilbertspace_one_list(dimensions::NTuple{N,AbstractSpace}) where {N} =
+    ntuple(i -> HilbertSpace(1), Val(sum(length, dimensions)))

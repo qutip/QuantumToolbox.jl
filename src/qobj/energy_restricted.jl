@@ -70,7 +70,7 @@ function Base.show(io::IO, s::EnrSpace)
     return nothing
 end
 
-Base.length(s::EnrSpace{N}) where {N} = N
+Base.length(::EnrSpace{N}) where {N} = N
 
 Base.:(==)(s_enr1::EnrSpace, s_enr2::EnrSpace) = (s_enr1.size == s_enr2.size) && (s_enr1.dims == s_enr2.dims)
 
