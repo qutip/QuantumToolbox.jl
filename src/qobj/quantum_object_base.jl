@@ -222,7 +222,7 @@ end
 
 # this returns `to` in GeneralProductDimensions representation
 get_dimensions_to(A::AbstractQuantumObject{Ket, <:ProductDimensions}) = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{Bra, <:ProductDimensions}) = space_one_list(A.dimensions.to)
+get_dimensions_to(A::AbstractQuantumObject{Bra, <:ProductDimensions}) = hilbertspace_one_list(A.dimensions.to)
 get_dimensions_to(A::AbstractQuantumObject{Operator, <:ProductDimensions}) = A.dimensions.to
 get_dimensions_to(A::AbstractQuantumObject{Operator, <:GeneralProductDimensions}) = A.dimensions.to
 get_dimensions_to(
@@ -230,7 +230,7 @@ get_dimensions_to(
 ) where {ObjType <: Union{SuperOperator, OperatorBra, OperatorKet}} = A.dimensions.to
 
 # this returns `from` in GeneralProductDimensions representation
-get_dimensions_from(A::AbstractQuantumObject{Ket, <:ProductDimensions}) = space_one_list(A.dimensions.to)
+get_dimensions_from(A::AbstractQuantumObject{Ket, <:ProductDimensions}) = hilbertspace_one_list(A.dimensions.to)
 get_dimensions_from(A::AbstractQuantumObject{Bra, <:ProductDimensions}) = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject{Operator, <:ProductDimensions}) = A.dimensions.to
 get_dimensions_from(A::AbstractQuantumObject{Operator, <:GeneralProductDimensions}) = A.dimensions.from
