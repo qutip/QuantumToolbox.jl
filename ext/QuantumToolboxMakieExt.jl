@@ -226,7 +226,7 @@ function _plot_fock_distribution(
     kwargs...,
 ) where {SType<:Union{Bra,Ket,Operator}}
     ρ = ket2dm(ρ)
-    D = prod(ρ.dims)
+    D = hilbert_dimensions_to_size(ρ.dims)[1]
     isapprox(tr(ρ), 1, atol = 1e-4) || (@warn "The input ρ should be normalized.")
 
     xvec = 0:(D-1)
