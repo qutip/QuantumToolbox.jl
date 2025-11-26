@@ -2,7 +2,7 @@
 Functions for generating (common) quantum states.
 =#
 
-export zero_ket, fock, basis, coherent, rand_ket
+export zero_ket, fock, coherent, rand_ket
 export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
 export spin_state, spin_coherent
 export bell_state, singlet_state, triplet_states, w_state, ghz_state
@@ -25,6 +25,7 @@ zero_ket(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =
 
 @doc raw"""
     fock(N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
+    basis(N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
 Generates a fock state ``\ket{\psi}`` of dimension `N`. 
 
@@ -32,8 +33,13 @@ It is also possible to specify the list of dimensions `dims` if different subsys
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fock(N, j, dims=dims, sparse=Val(sparse))` instead of `fock(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+
+!!! note
+    `basis(N, j; dims = dims, sparse = sparse)` is a synonym of `fock(N, j; dims = dims, sparse = sparse)`.
 """
 function fock(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N, sparse::Union{Bool,Val} = Val(false))
+    (0 <= i < N) || throw(ArgumentError("Invalid argument i, must satisfy: 0 ≤ i ≤ N-1"))
+    (0 <= j < N) || throw(ArgumentError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
     if getVal(sparse)
         array = sparsevec([j + 1], [1.0 + 0im], N)
     else
@@ -41,18 +47,6 @@ function fock(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N
     end
     return QuantumObject(array; type = Ket(), dims = dims)
 end
-
-@doc raw"""
-    basis(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple}=N)
-
-Generates a fock state like [`fock`](@ref).
-
-It is also possible to specify the list of dimensions `dims` if different subsystems are present.
-
-!!! warning "Beware of type-stability!"
-    If you want to keep type stability, it is recommended to use `basis(N, j, dims=dims)` with `dims` as a `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
-"""
-basis(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N) = fock(N, j, dims = dims)
 
 @doc raw"""
     coherent(N::Int, α::Number)
@@ -203,7 +197,7 @@ function spin_state(j::Real, m::Real)
         throw(ArgumentError("Invalid eigenvalue m: (j - m) must be a non-negative integer."))
     (m < (-j)) && throw(ArgumentError("Invalid eigenvalue m, must satisfy: -j ≤ m ≤ j"))
 
-    return basis(Int(J), Int(Δ))
+    return fock(Int(J), Int(Δ))
 end
 
 @doc raw"""
@@ -318,6 +312,8 @@ Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
     If you want to keep type stability, it is recommended to use `w_state(Val(n))` instead of `w_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function w_state(::Val{n}) where {n}
+    (n >= 3) || throw(ArgumentError("Invalid argument n, must satisfy: n ≥ 3"))
+
     nzind = 2 .^ (0:(n-1)) .+ 1
     nzval = fill(ComplexF64(1 / sqrt(n)), n)
     data = zeros(ComplexF64, 2^n)
@@ -341,6 +337,9 @@ Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
     If you want to keep type stability, it is recommended to use `ghz_state(Val(n))` instead of `ghz_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function ghz_state(::Val{n}; d::Int = 2) where {n}
+    (n >= 2) || throw(ArgumentError("Invalid argument n, must satisfy: n ≥ 2"))
+    (d >= 2) || throw(ArgumentError("Invalid argument d, must satisfy: d ≥ 2"))
+
     nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
     nzval = fill(ComplexF64(1 / sqrt(d)), d)
     data = zeros(ComplexF64, d^n)

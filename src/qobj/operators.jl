@@ -477,7 +477,7 @@ _Jordan_Wigner(N::Int, j::Int, op::QuantumObject{Operator}) = _Jordan_Wigner(Val
 
 function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{Operator}) where {N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
-    ((j > N) || (j < 1)) && throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
+    (1 <= j <= N) || throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
     σz = sigmaz().data
     Z_tensor = kron(1, 1, fill(σz, j - 1)...)
