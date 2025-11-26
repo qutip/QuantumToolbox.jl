@@ -20,6 +20,7 @@
         # fock, basis, and fock_dm
         @test fock_dm(4; dims = (2, 2), sparse = true) ≈ ket2dm(basis(4; dims = (2, 2)))
         @test_throws DimensionMismatch fock(4; dims = 2)
+        @test_throws ArgumentError fock(4, 4)
     end
 
     @testset "coherent state" begin
@@ -121,16 +122,21 @@
         @test_throws ArgumentError bell_state(0, 2)
         @test_throws ArgumentError bell_state(3, 1)
         @test_throws ArgumentError bell_state(2, 3)
+        @test_throws ArgumentError w_state(1)
+        @test_throws ArgumentError ghz_state(1)
+        @test_throws ArgumentError ghz_state(2; d = 1)
     end
 
     @testset "bosonic operators" begin
         # destroy, create, num, position, momentum
         n = 10
+        i, j = rand(0:(n-1), 2)
         a = destroy(n)
         ad = create(n)
         N = num(n)
         x = position(n)
         p = momentum(n)
+        Pij = projection(n, i, j)
         @test isoper(x)
         @test isoper(p)
         @test a.dims == ad.dims == N.dims == x.dims == p.dims == [n]
@@ -138,6 +144,9 @@
         @test commutator(N, a) ≈ -a
         @test commutator(N, ad) ≈ ad
         @test all(diag(commutator(x, p))[1:(n-1)] .≈ 1.0im)
+        @test fock(n, i) == Pij * fock(n, j)
+        @test_throws ArgumentError projection(n, n, 0)
+        @test_throws ArgumentError projection(n, 0, n)
     end
 
     @testset "displacement and squeezing operators" begin
