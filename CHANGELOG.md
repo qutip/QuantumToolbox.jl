@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Release date: 2025-11-19
 
 - Add `spre` and `spost` methods for `ComposedOperator` and cache propagator in every time evolution solver. ([#596])
+- Add error message for bad input in state/operator generating functions ([#603])
 
 ## [v0.39.0]
 Release date: 2025-11-17
@@ -381,3 +382,4 @@ Release date: 2024-11-13
 [#589]: https://github.com/qutip/QuantumToolbox.jl/issues/589
 [#591]: https://github.com/qutip/QuantumToolbox.jl/issues/591
 [#596]: https://github.com/qutip/QuantumToolbox.jl/issues/596
+[#603]: https://github.com/qutip/QuantumToolbox.jl/issues/603
