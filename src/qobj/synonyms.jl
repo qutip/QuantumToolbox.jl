@@ -4,6 +4,7 @@ Synonyms of the functions for QuantumObject
 
 export Qobj, QobjEvo, shape, isherm
 export trans, dag, matrix_element, unit
+export basis
 export tensor, ⊗
 export qeye, qeye_like, qzero_like
 export vector_to_operator, operator_to_vector
@@ -32,6 +33,8 @@ const isherm = ishermitian
 const trans = transpose
 
 const dag = adjoint
+
+const basis = fock
 
 @doc raw"""
     matrix_element(i::QuantumObject, A::QuantumObject, j::QuantumObject)
