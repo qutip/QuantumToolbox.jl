@@ -494,8 +494,8 @@ end
 Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N`.
 """
 function projection(N::Int, i::Int, j::Int)
-    (0 <= i < N) || throw(DomainError("Invalid argument i, must satisfy: 0 ≤ i ≤ N-1"))
-    (0 <= j < N) || throw(DomainError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
+    (0 <= i < N) || throw(ArgumentError("Invalid argument i, must satisfy: 0 ≤ i ≤ N-1"))
+    (0 <= j < N) || throw(ArgumentError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
 
     return QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator(), dims = N)
 end
