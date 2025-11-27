@@ -38,7 +38,7 @@ It is also possible to specify the list of dimensions `dims` if different subsys
     `basis(N, j; dims = dims, sparse = sparse)` is a synonym of `fock(N, j; dims = dims, sparse = sparse)`.
 """
 function fock(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N, sparse::Union{Bool,Val} = Val(false))
-    (0 <= j < N) || throw(ArgumentError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
+    (0 <= j < N) || throw(DomainError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
     if getVal(sparse)
         array = sparsevec([j + 1], [1.0 + 0im], N)
     else
@@ -311,7 +311,7 @@ Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
     If you want to keep type stability, it is recommended to use `w_state(Val(n))` instead of `w_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function w_state(::Val{n}) where {n}
-    (n >= 2) || throw(ArgumentError("Invalid argument n, must satisfy: n ≥ 2"))
+    (n >= 2) || throw(DomainError("Invalid argument n, must satisfy: n ≥ 2"))
 
     nzind = 2 .^ (0:(n-1)) .+ 1
     nzval = fill(ComplexF64(1 / sqrt(n)), n)
@@ -336,8 +336,8 @@ Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
     If you want to keep type stability, it is recommended to use `ghz_state(Val(n))` instead of `ghz_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 function ghz_state(::Val{n}; d::Int = 2) where {n}
-    (n >= 2) || throw(ArgumentError("Invalid argument n, must satisfy: n ≥ 2"))
-    (d >= 2) || throw(ArgumentError("Invalid argument d, must satisfy: d ≥ 2"))
+    (n >= 2) || throw(DomainError("Invalid argument n, must satisfy: n ≥ 2"))
+    (d >= 2) || throw(DomainError("Invalid argument d, must satisfy: d ≥ 2"))
 
     nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
     nzval = fill(ComplexF64(1 / sqrt(d)), d)
