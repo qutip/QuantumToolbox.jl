@@ -564,7 +564,7 @@ function liouvillian_generalized(
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
 
     dims = (N_trunc isa Nothing) ? H.dimensions : SVector(N_trunc)
-    final_size = prod(dims)
+    final_size = hilbert_dimensions_to_size(dims)[1]
     result = eigen(H)
     E = real.(result.values[1:final_size])
     U = QuantumObject(result.vectors, result.type, result.dimensions)
