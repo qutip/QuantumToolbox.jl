@@ -2,7 +2,8 @@ using Test
 using TestItemRunner
 using Pkg
 
-const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext", "AMDGPU_Ext", "Arbitrary-Precision"]
+const GROUP_LIST =
+    String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext", "AMDGPU_Ext", "Arbitrary-Precision"]
 
 const GROUP = get(ENV, "GROUP", "All")
 (GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nThe allowed groups are: $GROUP_LIST\n"))
@@ -65,7 +66,7 @@ if (GROUP == "Makie_Ext")
 end
 
 if (GROUP == "CUDA_Ext")
-    Pkg.activate("ext-test/gpu")
+    Pkg.activate("ext-test/gpu/cuda")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.update()
 
@@ -80,11 +81,11 @@ if (GROUP == "CUDA_Ext")
     QuantumToolbox.about()
     CUDA.versioninfo()
 
-    include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
+    include(joinpath(testdir, "ext-test", "gpu", "cuda", "cuda_ext.jl"))
 end
 
 if (GROUP == "AMDGPU_Ext")
-    Pkg.activate("ext-test/gpu")
+    Pkg.activate("ext-test/gpu/amdgpu")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.update()
 
@@ -92,14 +93,13 @@ if (GROUP == "AMDGPU_Ext")
     import LinearAlgebra: Diagonal, dot
     import StaticArraysCore: SVector
     using AMDGPU
-    using AMDGPU: ROCArray, ROCVector, ROCMatrix
-    using AMDGPU.rocSPARSE: ROCSparseVector, ROCSparseMatrixCSC, ROCSparseMatrixCSR
+    using AMDGPU.rocSPARSE
     using LinearSolve
 
     QuantumToolbox.about()
     AMDGPU.versioninfo()
 
-    include(joinpath(testdir, "ext-test", "gpu", "amdgpu_ext.jl"))
+    include(joinpath(testdir, "ext-test", "gpu", "amdgpu", "amdgpu_ext.jl"))
 end
 
 if (GROUP == "Arbitrary-Precision")

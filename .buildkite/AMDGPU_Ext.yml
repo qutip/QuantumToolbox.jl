@@ -21,4 +21,5 @@ steps:
       rocmgpu: "*"
     env:
       GROUP: "AMDGPU_Ext"
+      SECRET_CODECOV_TOKEN: "ZfhQu/IcRLqNyZ//ZNs5sjBPaV76IHfU5gui52Qn+Rp8tOurukqgScuyDt+3HQ4R0hJYBw1/Nqg6jmBsvWSc9NEUx8kGsUJFHfN3no0+b+PFxA8oJkWc9EpyIsjht5ZIjlsFWR3f0DpPqMEle/QyWOPcal63CChXR8oAoR+Fz1Bh8GkokLlnC8F9Ugp9xBlu401GCbyZhvLTZnNIgK5yy9q8HBJnBg1cPOhI81J6JvYpEmcIofEzFV/qkfpTUPclu43WNoFX2DZPzbxilf3fsAd5/+nRkRfkNML8KiN4mnmjHxPPbuY8F5zC/PS5ybXtDpfvaMQc01WApXCkZk0ZAQ==;U2FsdGVkX1+eDT7dqCME5+Ox5i8GvWRTQbwiP/VYjapThDbxXFDeSSIC6Opmon+M8go22Bun3bat6Fzie65ang=="
     timeout_in_minutes: 60

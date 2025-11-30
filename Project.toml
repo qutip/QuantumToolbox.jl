@@ -45,7 +45,7 @@ QuantumToolboxGPUArraysExt = ["GPUArrays", "KernelAbstractions"]
 QuantumToolboxMakieExt = "Makie"
 
 [compat]
-AMDGPU = "1, 2"
+AMDGPU = "2.1"
 ArrayInterface = "6, 7"
 CUDA = "5.0 - 5.8, 5.9.4 - 5"
 ChainRulesCore = "1"

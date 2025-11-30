@@ -34,16 +34,22 @@
 
     # type conversion of AMDGPU sparse arrays
     @test typeof(roc(ψsi; word_size = 64).data) == typeof(ROCSparseVector(ψsi).data) == ROCSparseVector{Int64,Int32}
-    @test typeof(roc(ψsi; word_size = 32).data) == typeof(ROCSparseVector{Int32}(ψsi).data) == ROCSparseVector{Int32,Int32}
+    @test typeof(roc(ψsi; word_size = 32).data) ==
+          typeof(ROCSparseVector{Int32}(ψsi).data) ==
+          ROCSparseVector{Int32,Int32}
     @test typeof(roc(ψsf; word_size = 64).data) == typeof(ROCSparseVector(ψsf).data) == ROCSparseVector{Float64,Int32}
     @test typeof(roc(ψsf; word_size = 32).data) ==
           typeof(ROCSparseVector{Float32}(ψsf).data) ==
           ROCSparseVector{Float32,Int32}
-    @test typeof(roc(ψsc; word_size = 64).data) == typeof(ROCSparseVector(ψsc).data) == ROCSparseVector{ComplexF64,Int32}
+    @test typeof(roc(ψsc; word_size = 64).data) ==
+          typeof(ROCSparseVector(ψsc).data) ==
+          ROCSparseVector{ComplexF64,Int32}
     @test typeof(roc(ψsc; word_size = 32).data) ==
           typeof(ROCSparseVector{ComplexF32}(ψsc).data) ==
           ROCSparseVector{ComplexF32,Int32}
-    @test typeof(roc(Xsi; word_size = 64).data) == typeof(ROCSparseMatrixCSC(Xsi).data) == ROCSparseMatrixCSC{Int64,Int32}
+    @test typeof(roc(Xsi; word_size = 64).data) ==
+          typeof(ROCSparseMatrixCSC(Xsi).data) ==
+          ROCSparseMatrixCSC{Int64,Int32}
     @test typeof(roc(Xsi; word_size = 32).data) ==
           typeof(ROCSparseMatrixCSC{Int32}(Xsi).data) ==
           ROCSparseMatrixCSC{Int32,Int32}
