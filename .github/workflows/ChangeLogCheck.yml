@@ -16,7 +16,7 @@ jobs:
           skipLabels: 'Skip ChangeLog'
       
       # check whether the format of CHANGELOG.md is correct
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1'

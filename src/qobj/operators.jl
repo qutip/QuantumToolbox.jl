@@ -477,7 +477,7 @@ _Jordan_Wigner(N::Int, j::Int, op::QuantumObject{Operator}) = _Jordan_Wigner(Val
 
 function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{Operator}) where {N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
-    ((j > N) || (j < 1)) && throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
+    (1 <= j <= N) || throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
     σz = sigmaz().data
     Z_tensor = kron(1, 1, fill(σz, j - 1)...)
@@ -493,8 +493,12 @@ end
 
 Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N`.
 """
-projection(N::Int, i::Int, j::Int) =
-    QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator(), dims = N)
+function projection(N::Int, i::Int, j::Int)
+    (0 <= i < N) || throw(ArgumentError("Invalid argument i, must satisfy: 0 ≤ i ≤ N-1"))
+    (0 <= j < N) || throw(ArgumentError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
+
+    return QuantumObject(sparse([i + 1], [j + 1], [1.0 + 0.0im], N, N), type = Operator(), dims = N)
+end
 
 @doc raw"""
     tunneling(N::Int, m::Int=1; sparse::Union{Bool,Val{<:Bool}}=Val(false))
