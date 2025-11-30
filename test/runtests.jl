@@ -2,7 +2,7 @@ using Test
 using TestItemRunner
 using Pkg
 
-const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext", "Arbitrary-Precision"]
+const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext", "AMDGPU_Ext", "Arbitrary-Precision"]
 
 const GROUP = get(ENV, "GROUP", "All")
 (GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nThe allowed groups are: $GROUP_LIST\n"))
@@ -81,6 +81,25 @@ if (GROUP == "CUDA_Ext")
     CUDA.versioninfo()
 
     include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
+end
+
+if (GROUP == "AMDGPU_Ext")
+    Pkg.activate("ext-test/gpu")
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.update()
+
+    using QuantumToolbox
+    import LinearAlgebra: Diagonal, dot
+    import StaticArraysCore: SVector
+    using AMDGPU
+    using AMDGPU: ROCArray, ROCVector, ROCMatrix
+    using AMDGPU.rocSPARSE: ROCSparseVector, ROCSparseMatrixCSC, ROCSparseMatrixCSR
+    using LinearSolve
+
+    QuantumToolbox.about()
+    AMDGPU.versioninfo()
+
+    include(joinpath(testdir, "ext-test", "gpu", "amdgpu_ext.jl"))
 end
 
 if (GROUP == "Arbitrary-Precision")
