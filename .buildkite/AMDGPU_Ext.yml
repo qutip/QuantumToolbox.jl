@@ -18,6 +18,7 @@ steps:
     agents:
       queue: "juliagpu"
       rocm: "*"
+      rocmgpu: "*"
     env:
       GROUP: "AMDGPU_Ext"
     timeout_in_minutes: 60
