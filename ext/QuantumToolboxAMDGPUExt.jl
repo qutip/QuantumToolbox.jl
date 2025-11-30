@@ -60,7 +60,7 @@ If `A.data` is in the type of `SparseMatrixCSC`, return a new [`QuantumObject`](
 ROCSparseMatrixCSR(A::QuantumObject) = QuantumObject(ROCSparseMatrixCSR(A.data), A.type, A.dimensions)
 
 @doc raw"""
-    ROCSparseMatrixCSR(A::QuantumObject)
+    ROCSparseMatrixCSR{T}(A::QuantumObject)
 
 If `A.data` is in the type of `SparseMatrixCSC`, return a new [`QuantumObject`](@ref) where `A.data` is in the type of `AMDGPU.rocSPARSE.ROCSparseMatrixCSR` with element type `T` for gpu calculations.
 """
