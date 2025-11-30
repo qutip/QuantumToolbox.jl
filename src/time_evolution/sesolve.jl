@@ -235,6 +235,9 @@ function sesolve_map(
     kwargs...,
 ) where {X<:Union{Ket,Operator}}
     # mapping initial states and parameters
+
+    ψ0 = map(to_dense, ψ0) # Convert all initial states to dense vectors
+
     ψ0_iter = map(get_data, ψ0)
     if params isa NullParameters
         iter = collect(Iterators.product(ψ0_iter, [params])) |> vec # convert nx1 Matrix into Vector
