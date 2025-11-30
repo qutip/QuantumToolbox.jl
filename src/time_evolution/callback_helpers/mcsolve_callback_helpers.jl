@@ -18,7 +18,7 @@ struct LindbladJump{
     T2,
     RNGType<:AbstractRNG,
     RandT,
-    CT<:AbstractVector,
+    CT<:AbstractArray,
     WT<:AbstractVector,
     JTT<:AbstractVector,
     JWT<:AbstractVector,

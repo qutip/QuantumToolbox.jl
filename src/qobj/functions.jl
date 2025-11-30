@@ -119,10 +119,12 @@ Converts a sparse QuantumObject to a dense QuantumObject.
 to_dense(A::QuantumObject) = QuantumObject(to_dense(A.data), A.type, A.dimensions)
 to_dense(A::MT) where {MT<:AbstractSparseArray} = Array(A)
 to_dense(A::MT) where {MT<:AbstractArray} = A
+to_dense(A::Diagonal) = diagm(A.diag)
 
 to_dense(::Type{T}, A::AbstractSparseArray) where {T<:Number} = Array{T}(A)
 to_dense(::Type{T1}, A::AbstractArray{T2}) where {T1<:Number,T2<:Number} = Array{T1}(A)
 to_dense(::Type{T}, A::AbstractArray{T}) where {T<:Number} = A
+to_dense(::Type{T}, A::Diagonal{T}) where {T<:Number} = diagm(A.diag)
 
 function to_dense(::Type{M}) where {M<:Union{Diagonal,SparseMatrixCSC}}
     T = M

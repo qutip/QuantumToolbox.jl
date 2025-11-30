@@ -76,7 +76,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 """
 function ssesolveProblem(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
+    ψ0::QuantumObject{X},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -85,7 +85,7 @@ function ssesolveProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-)
+) where {X<:Union{Ket,Operator}}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -142,7 +142,7 @@ function ssesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, dims)
+    return TimeEvolutionProblem(prob, tlist, X(), dims)
 end
 
 @doc raw"""
@@ -218,7 +218,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 """
 function ssesolveEnsembleProblem(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
+    ψ0::QuantumObject{X},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -231,7 +231,7 @@ function ssesolveEnsembleProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-)
+) where {X<:Union{Ket,Operator}}
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
@@ -268,6 +268,7 @@ function ssesolveEnsembleProblem(
     ensemble_prob = TimeEvolutionProblem(
         EnsembleProblem(prob_sme, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
         prob_sme.times,
+        X(),
         prob_sme.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
@@ -355,7 +356,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 """
 function ssesolve(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
+    ψ0::QuantumObject{X},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     alg::Union{Nothing,AbstractSDEAlgorithm} = nothing,
@@ -370,7 +371,7 @@ function ssesolve(
     keep_runs_results::Union{Val,Bool} = Val(false),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-)
+) where {X<:Union{Ket,Operator}}
     ens_prob = ssesolveEnsembleProblem(
         H,
         ψ0,

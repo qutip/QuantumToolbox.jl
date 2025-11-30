@@ -25,9 +25,10 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 !!! note "`dims` property"
     For a given `prob::TimeEvolutionProblem`, `prob.dims` or `getproperty(prob, :dims)` returns its `dimensions` in the type of integer-vector.
 """
-struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractDimensions,KWT}
+struct TimeEvolutionProblem{ST,PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractDimensions,KWT}
     prob::PT
     times::TT
+    states_type::ST
     dimensions::DT
     kwargs::KWT
 end
@@ -41,7 +42,7 @@ function Base.getproperty(prob::TimeEvolutionProblem, key::Symbol)
     end
 end
 
-TimeEvolutionProblem(prob, times, dims) = TimeEvolutionProblem(prob, times, dims, nothing)
+TimeEvolutionProblem(prob, times, states_type, dims) = TimeEvolutionProblem(prob, times, states_type, dims, nothing)
 
 @doc raw"""
     struct TimeEvolutionSol
