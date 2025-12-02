@@ -7,7 +7,7 @@ _mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both 
 c_ops are Nothing. You are probably running the wrong function."))
 
 function _gen_mesolve_solution(sol, prob::TimeEvolutionProblem{ST}) where {ST<:Union{Operator,OperatorKet,SuperOperator}}
-    if ST == Operator
+    if prob.states_type == Operator
         ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = prob.states_type, dims = prob.dimensions), sol.u)
     else
         ρt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
