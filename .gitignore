@@ -10,4 +10,5 @@ Manifest.toml
 benchmarks/benchmarks_output.json
 
 .ipynb_checkpoints
+.devcontainer/*
 *.ipynb
