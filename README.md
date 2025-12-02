@@ -28,7 +28,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [cite-img]: https://img.shields.io/badge/cite-Quantum_9%2C_1866_(2025)-blue
 [cite-url]: https://doi.org/10.22331/q-2025-09-29-1866
 
-[download-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuantumToolbox&query=total_requests&label=Downloads
+[download-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FQuantumToolbox&query=total_requests&suffix=%2Fmonth&label=Downloads
 [download-url]: https://juliapkgstats.com/pkg/QuantumToolbox
 
 [runtests-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main
