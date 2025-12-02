@@ -6,11 +6,11 @@ _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvil
 _mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both H and
 c_ops are Nothing. You are probably running the wrong function."))
 
-function _gen_mesolve_solution(sol, prob::TimeEvolutionProblem{X}) where {X<:Union{Operator,OperatorKet,SuperOperator}}
-    if X() == Operator()
-        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = X(), dims = prob.dimensions), sol.u)
+function _gen_mesolve_solution(sol, prob::TimeEvolutionProblem{ST}) where {ST<:Union{Operator,OperatorKet,SuperOperator}}
+    if ST == Operator
+        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = prob.states_type, dims = prob.dimensions), sol.u)
     else
-        ρt = map(ϕ -> QuantumObject(ϕ, type = X(), dims = prob.dimensions), sol.u)
+        ρt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
     end
 
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
@@ -124,8 +124,6 @@ function mesolveProblem(
     elseif issuper(ψ0)
         ρ0 = to_dense(_complex_float_type(T), copy(ψ0.data))
         state_type = SuperOperator()
-    else
-        throw(ArgumentError("Unsupported state type for ψ0 in mesolveProblem."))
     end
 
     L = cache_operator(L_evo.data, ρ0)
@@ -138,7 +136,7 @@ function mesolveProblem(
 
     prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs4...)
 
-    return TimeEvolutionProblem(prob, tlist, state_type, L_evo.dimensions)#, (isoperket = Val(isoperket(ψ0)),))
+    return TimeEvolutionProblem(prob, tlist, state_type, L_evo.dimensions)
 end
 
 @doc raw"""
@@ -246,7 +244,7 @@ end
 function mesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = DP5(); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
-    return _gen_mesolve_solution(sol, prob)#, prob.kwargs.isoperket)
+    return _gen_mesolve_solution(sol, prob)
 end
 
 @doc raw"""
@@ -339,8 +337,6 @@ function mesolve_map(
             to_dense(_complex_float_type(T), mat2vec(ket2dm(state).data))
         elseif issuper(state)
             to_dense(_complex_float_type(T), copy(state.data))
-        else
-            throw(ArgumentError("Unsupported state type for ψ0 in mesolveProblem."))
         end
     end
     if params isa NullParameters
@@ -379,7 +375,7 @@ mesolve_map(
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function mesolve_map(
-    prob::TimeEvolutionProblem{StateOpType,<:ODEProblem},
+    prob::TimeEvolutionProblem{StateOpType, <:AbstractDimensions, <:ODEProblem},
     iter::AbstractArray,
     alg::AbstractODEAlgorithm = DP5(),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads();

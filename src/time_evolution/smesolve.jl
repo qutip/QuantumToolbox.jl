@@ -146,7 +146,7 @@ function smesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, X(), dims)
+    return TimeEvolutionProblem(prob, tlist,StateOpType(), dims)
 end
 
 @doc raw"""
