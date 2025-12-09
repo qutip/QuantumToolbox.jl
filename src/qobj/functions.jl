@@ -259,6 +259,9 @@ function vec2mat(A::AbstractVector)
     newsize = isqrt(length(A))
     return reshape(A, newsize, newsize)
 end
+function vec2mat(A::AbstractMatrix)
+    return A
+end
 
 @doc raw"""
     vec2mat(A::QuantumObject)

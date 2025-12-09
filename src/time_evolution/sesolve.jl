@@ -117,7 +117,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `alg`: The algorithm for the ODE solver. The default is `Vern7(lazy=false)`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
@@ -128,7 +128,6 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 
 # Notes
 
-- Initial state can also be [`Operator`](@ref)s where each column represents a state vector, such as the Identity operator. This can be used, for example, to calculate the propagator.
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
@@ -217,10 +216,9 @@ for each combination in the ensemble.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
-- Initial state can also be [`Operator`](@ref)s where each column represents a state vector, such as the Identity operator. This can be used, for example, to calculate the propagator.
+
 - The function returns an array of solutions with dimensions matching the Cartesian product of initial states and parameter sets.
 - If `ψ0` is a vector of `m` states and `params = (p1, p2, ...)` where `p1` has length `n1`, `p2` has length `n2`, etc., the output will be of size `(m, n1, n2, ...)`.
-- Similarly, the initial state(s) can also be `Operator`s where each column represents a state vector, such as the Identity operator. This can be used, for example, to calculate many propagators.
 - See [`sesolve`](@ref) for more details.
 
 # Returns
