@@ -20,9 +20,9 @@ function _mcsolve_output_func(sol, i)
     return (sol, false)
 end
 
-function _normalize_state!(u, dims, normalize_states, type)
+function _normalize_state!(u, dims, normalize_states)
     getVal(normalize_states) && normalize!(u)
-    return QuantumObject(u, type, dims)
+    return QuantumObject(u, Ket(), dims)
 end
 
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
@@ -110,7 +110,7 @@ If the environmental measurements register a quantum jump, the wave function und
 """
 function mcsolveProblem(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{ST},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -118,7 +118,7 @@ function mcsolveProblem(
     rng::AbstractRNG = default_rng(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
-) where {ST<:Union{Ket,Operator}, TJC<:LindbladJumpCallbackType}
+) where {TJC<:LindbladJumpCallbackType}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -221,7 +221,7 @@ If the environmental measurements register a quantum jump, the wave function und
 """
 function mcsolveEnsembleProblem(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{ST},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -234,7 +234,7 @@ function mcsolveEnsembleProblem(
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
-) where {ST<:Union{Ket,Operator}, TJC<:LindbladJumpCallbackType}
+) where {TJC<:LindbladJumpCallbackType}
     _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
@@ -359,7 +359,7 @@ If the environmental measurements register a quantum jump, the wave function und
 """
 function mcsolve(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{ST},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::AbstractODEAlgorithm = DP5(),
@@ -375,7 +375,7 @@ function mcsolve(
     keep_runs_results::Union{Val,Bool} = Val(false),
     normalize_states::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {ST<:Union{Ket,Operator}, TJC<:LindbladJumpCallbackType}
+) where {TJC<:LindbladJumpCallbackType}
     ens_prob_mc = mcsolveEnsembleProblem(
         H,
         ψ0,
@@ -415,11 +415,8 @@ function mcsolve(
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMCSolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
-
-    states_all = stack(
-        map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states, [ens_prob_mc.states_type]), eachindex(sol)), # Unsure why ens_prob_mc.states_type needs to be in an array but the other two arguments don't!
-        dims = 1,
-    )
+    # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
+    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol)), dims = 1)
 
     col_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_times, eachindex(sol))
     col_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_which, eachindex(sol))

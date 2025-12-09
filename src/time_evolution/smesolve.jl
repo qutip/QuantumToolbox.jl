@@ -1,14 +1,7 @@
 export smesolveProblem, smesolveEnsembleProblem, smesolve
 
-#_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
-#_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
-function _smesolve_generate_state(u, dims, type)
-    if type == OperatorKet
-        return QuantumObject(u, type = type, dims = dims)
-    else
-        return QuantumObject(vec2mat(u), type = Operator(), dims = dims)
-    end
-end
+_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
+_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
 
 function _smesolve_update_coeff(u, p, t, op_vec)
     return 2 * real(dot(op_vec, u)) #this is Tr[Sn * ρ + ρ * Sn']
@@ -110,10 +103,10 @@ function smesolveProblem(
     T = Base.promote_eltype(L_evo, ψ0)
     if isoperket(ψ0) # Convert it to dense vector with complex element type
         ρ0 = to_dense(_complex_float_type(T), copy(ψ0.data))
-        states_type = OperatorKet()
+        state_type = OperatorKet()
     else
         ρ0 = to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
-        states_type = Operator()
+        state_type = Operator()
     end
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
@@ -155,7 +148,7 @@ function smesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, states_type, dims, ())
+    return TimeEvolutionProblem(prob, tlist, state_type, dims, (isoperket = Val(isoperket(ψ0)),))
 end
 
 @doc raw"""
@@ -285,7 +278,7 @@ function smesolveEnsembleProblem(
         prob_sme.times,
         prob_sme.states_type,
         prob_sme.dimensions,
-        (progr = _output_func[2], channel = _output_func[3]),
+        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3])),
     )
 
     return ensemble_prob
@@ -432,7 +425,7 @@ function smesolve(
 
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
     states_all = stack(
-        map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims), [ens_prob.states_type]), eachindex(sol)),
+        map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims), ens_prob.kwargs.isoperket), eachindex(sol)),
         dims = 1,
     )
 

@@ -50,6 +50,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 
 # Notes
 
+- Initial state can also be [`Operator`](@ref)s where each column represents a state vector, such as the Identity operator. This can be used, for example, to calculate the propagator.
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
@@ -127,6 +128,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 
 # Notes
 
+- Initial state can also be [`Operator`](@ref)s where each column represents a state vector, such as the Identity operator. This can be used, for example, to calculate the propagator.
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
@@ -215,9 +217,10 @@ for each combination in the ensemble.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
-
+- Initial state can also be [`Operator`](@ref)s where each column represents a state vector, such as the Identity operator. This can be used, for example, to calculate the propagator.
 - The function returns an array of solutions with dimensions matching the Cartesian product of initial states and parameter sets.
 - If `ψ0` is a vector of `m` states and `params = (p1, p2, ...)` where `p1` has length `n1`, `p2` has length `n2`, etc., the output will be of size `(m, n1, n2, ...)`.
+- Similarly, the initial state(s) can also be `Operator`s where each column represents a state vector, such as the Identity operator. This can be used, for example, to calculate many propagators.
 - See [`sesolve`](@ref) for more details.
 
 # Returns
@@ -239,7 +242,7 @@ function sesolve_map(
 
     ψ0 = map(to_dense, ψ0) # Convert all initial states to dense vectors
 
-    ψ0_iter = map(get_data, ψ0)
+      ψ0_iter = map(state -> to_dense(_complex_float_type(eltype(state)), copy(state.data)), ψ0) 
     if params isa NullParameters
         iter = collect(Iterators.product(ψ0_iter, [params])) |> vec # convert nx1 Matrix into Vector
     else

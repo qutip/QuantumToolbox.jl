@@ -76,7 +76,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 """
 function ssesolveProblem(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{ST},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -85,7 +85,7 @@ function ssesolveProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-) where {ST<:Union{Ket,Operator}}
+)
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -95,13 +95,13 @@ function ssesolveProblem(
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     tlist = _check_tlist(tlist, _float_type(ψ0))
-    states_type = ψ0.type
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
     check_dimensions(H_eff_evo, ψ0)
     dims = H_eff_evo.dimensions
 
+    states_type = ψ0.type
     ψ0 = to_dense(_complex_float_type(ψ0), get_data(ψ0))
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
@@ -219,7 +219,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 """
 function ssesolveEnsembleProblem(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{ST},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -232,7 +232,7 @@ function ssesolveEnsembleProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-) where {ST<:Union{Ket,Operator}}
+)
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
@@ -253,7 +253,7 @@ function ssesolveEnsembleProblem(
             progr_desc = "[ssesolve] ",
         ) : output_func
 
-    prob_sse = ssesolveProblem(
+    prob_sme = ssesolveProblem(
         H,
         ψ0,
         tlist,
@@ -267,10 +267,10 @@ function ssesolveEnsembleProblem(
     )
 
     ensemble_prob = TimeEvolutionProblem(
-        EnsembleProblem(prob_sse, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
-        prob_sse.times,
-        prob_sse.states_type,
-        prob_sse.dimensions,
+        EnsembleProblem(prob_sme, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
+        prob_sme.times,
+        prob_sme.states_type,
+        prob_sme.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
 
@@ -357,7 +357,7 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 """
 function ssesolve(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{ST},
+    ψ0::QuantumObject{Ket},
     tlist::AbstractVector,
     sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
     alg::Union{Nothing,AbstractSDEAlgorithm} = nothing,
@@ -372,7 +372,7 @@ function ssesolve(
     keep_runs_results::Union{Val,Bool} = Val(false),
     store_measurement::Union{Val,Bool} = Val(false),
     kwargs...,
-) where {ST<:Union{Ket,Operator}}
+)
     ens_prob = ssesolveEnsembleProblem(
         H,
         ψ0,
@@ -419,7 +419,7 @@ function ssesolve(
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
-    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states, [ens_prob.states_type]), eachindex(sol)), dims = 1)
+    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol)), dims = 1)
 
     _m_expvals =
         _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))

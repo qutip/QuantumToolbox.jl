@@ -7,7 +7,7 @@ _mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both 
 c_ops are Nothing. You are probably running the wrong function."))
 
 function _gen_mesolve_solution(sol, prob::TimeEvolutionProblem{ST}) where {ST<:Union{Operator,OperatorKet,SuperOperator}}
-    if prob.states_type == Operator
+    if prob.states_type isa Operator
         ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = prob.states_type, dims = prob.dimensions), sol.u)
     else
         ρt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
@@ -66,6 +66,7 @@ where
 
 # Notes
 
+- The initial state can also be [`SuperOperator`](@ref) (such as a super-identity). This is useful for simulating many density matrices simultaneously or calculating process matrices. Currently must be Square. 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolveProblem`](@ref) instead.
@@ -106,24 +107,15 @@ function mesolveProblem(
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     check_dimensions(L_evo, ψ0)
 
-    T = Base.promote_eltype(L_evo, ψ0)
-    # ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
-    #     to_dense(_complex_float_type(T), copy(ψ0.data))
-    # else
-    #     to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
-    # end
-    if isoper(ψ0)
-        ρ0 = to_dense(_complex_float_type(T), mat2vec(ψ0.data))
+    # Convert to dense vector with complex element type
+
+    T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
+    if isoperket(ψ0) || issuper(ψ0)
+        ρ0 = to_dense(T, copy(ψ0.data))
+        states_type = ψ0.type
+    else
+        ρ0 = to_dense(T, mat2vec(ket2dm(ψ0).data))
         states_type = Operator()
-    elseif isoperket(ψ0)
-        ρ0 = to_dense(_complex_float_type(T), copy(ψ0.data))
-        states_type = OperatorKet()
-    elseif isket(ψ0)
-        ρ0 = to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
-        states_type = Operator()
-    elseif issuper(ψ0)
-        ρ0 = to_dense(_complex_float_type(T), copy(ψ0.data))
-        states_type = SuperOperator()
     end
 
     L = cache_operator(L_evo.data, ρ0)
@@ -180,6 +172,7 @@ where
 
 # Notes
 
+- The initial state can also be [`SuperOperator`](@ref) (such as a super-identity). This is useful for simulating many density matrices simultaneously or calculating process matrices. Currently must be Square. 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolve`](@ref) instead.
@@ -292,6 +285,7 @@ for each combination in the ensemble.
 
 # Notes
 
+- The initial state can also be [`SuperOperator`](@ref) (such as a super-identity). This is useful for simulating many density matrices simultaneously or calculating process matrices. Currently must be Square. 
 - The function returns an array of solutions with dimensions matching the Cartesian product of initial states and parameter sets.
 - If `ψ0` is a vector of `m` states and `params = (p1, p2, ...)` where `p1` has length `n1`, `p2` has length `n2`, etc., the output will be of size `(m, n1, n2, ...)`.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolve_map`](@ref) instead.
@@ -329,14 +323,10 @@ function mesolve_map(
     # Convert to appropriate format based on state type
     ψ0_iter = map(ψ0) do state
         T = _complex_float_type(eltype(state))
-        if isoper(state)
-            to_dense(_complex_float_type(T), mat2vec(state.data))
-        elseif isoperket(state)
-            to_dense(_complex_float_type(T), copy(state.data))
-        elseif isket(state)
-            to_dense(_complex_float_type(T), mat2vec(ket2dm(state).data))
-        elseif issuper(state)
-            to_dense(_complex_float_type(T), copy(state.data))
+        if isoperket(state) || issuper(state)
+            to_dense(T, copy(state.data))
+        else
+            to_dense(T, mat2vec(ket2dm(state).data))
         end
     end
     if params isa NullParameters
