@@ -73,6 +73,7 @@ function sesolveProblem(
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     tlist = _check_tlist(tlist, _float_type(ψ0))
+    states_type = ψ0.type
 
     H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
@@ -90,7 +91,7 @@ function sesolveProblem(
 
     prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, params; kwargs4...)
 
-    return TimeEvolutionProblem(prob, tlist, ST(), H_evo.dimensions)
+    return TimeEvolutionProblem(prob, tlist, states_type, H_evo.dimensions)
 end
 
 @doc raw"""

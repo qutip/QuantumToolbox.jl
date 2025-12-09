@@ -95,6 +95,7 @@ function ssesolveProblem(
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     tlist = _check_tlist(tlist, _float_type(ψ0))
+    states_type = ψ0.type
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
@@ -142,7 +143,7 @@ function ssesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, ST(), dims)
+    return TimeEvolutionProblem(prob, tlist, states_type, dims)
 end
 
 @doc raw"""
@@ -252,7 +253,7 @@ function ssesolveEnsembleProblem(
             progr_desc = "[ssesolve] ",
         ) : output_func
 
-    prob_sme = ssesolveProblem(
+    prob_sse = ssesolveProblem(
         H,
         ψ0,
         tlist,
@@ -266,10 +267,10 @@ function ssesolveEnsembleProblem(
     )
 
     ensemble_prob = TimeEvolutionProblem(
-        EnsembleProblem(prob_sme, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
-        prob_sme.times,
-        ST(),
-        prob_sme.dimensions,
+        EnsembleProblem(prob_sse, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
+        prob_sse.times,
+        prob_sse.states_type,
+        prob_sse.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
 

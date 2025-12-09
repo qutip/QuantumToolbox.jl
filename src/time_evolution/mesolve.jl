@@ -114,16 +114,16 @@ function mesolveProblem(
     # end
     if isoper(ψ0)
         ρ0 = to_dense(_complex_float_type(T), mat2vec(ψ0.data))
-        state_type = Operator()
+        states_type = Operator()
     elseif isoperket(ψ0)
         ρ0 = to_dense(_complex_float_type(T), copy(ψ0.data))
-        state_type = OperatorKet()
+        states_type = OperatorKet()
     elseif isket(ψ0)
         ρ0 = to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
-        state_type = Operator()
+        states_type = Operator()
     elseif issuper(ψ0)
         ρ0 = to_dense(_complex_float_type(T), copy(ψ0.data))
-        state_type = SuperOperator()
+        states_type = SuperOperator()
     end
 
     L = cache_operator(L_evo.data, ρ0)
@@ -136,7 +136,7 @@ function mesolveProblem(
 
     prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs4...)
 
-    return TimeEvolutionProblem(prob, tlist, state_type, L_evo.dimensions)
+    return TimeEvolutionProblem(prob, tlist, states_type, L_evo.dimensions)
 end
 
 @doc raw"""
@@ -398,7 +398,7 @@ function mesolve_map(
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob.times,
-        StateOpType(),
+        prob.states_type,
         prob.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )

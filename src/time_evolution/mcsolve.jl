@@ -118,7 +118,7 @@ function mcsolveProblem(
     rng::AbstractRNG = default_rng(),
     jump_callback::TJC = ContinuousLindbladJumpCallback(),
     kwargs...,
-) where {TJC<:LindbladJumpCallbackType,ST<:Union{Ket,Operator}}
+) where {ST<:Union{Ket,Operator}, TJC<:LindbladJumpCallbackType}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -234,7 +234,7 @@ function mcsolveEnsembleProblem(
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     kwargs...,
-) where {TJC<:LindbladJumpCallbackType,ST<:Union{Ket,Operator}}
+) where {ST<:Union{Ket,Operator}, TJC<:LindbladJumpCallbackType}
     _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
@@ -261,7 +261,7 @@ function mcsolveEnsembleProblem(
     ensemble_prob = TimeEvolutionProblem(
         EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob_mc.times,
-        ST(),
+        prob_mc.states_type,
         prob_mc.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
@@ -375,7 +375,7 @@ function mcsolve(
     keep_runs_results::Union{Val,Bool} = Val(false),
     normalize_states::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {TJC<:LindbladJumpCallbackType} where {ST<:Union{Ket,Operator}}
+) where {ST<:Union{Ket,Operator}, TJC<:LindbladJumpCallbackType}
     ens_prob_mc = mcsolveEnsembleProblem(
         H,
         ψ0,
