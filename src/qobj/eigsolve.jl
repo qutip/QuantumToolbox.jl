@@ -64,7 +64,7 @@ julia> U
 ```
 """
 struct EigsolveResult{
-    T1<:Vector{<:Number},
+    T1<:AbstractVector{<:Number},
     T2<:AbstractMatrix{<:Number},
     ObjType<:Union{Nothing,Operator,SuperOperator},
     DimType<:Union{Nothing,AbstractDimensions},
@@ -551,11 +551,11 @@ true
 ```
 """
 function LinearAlgebra.eigen(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Operator,SuperOperator}}
-    MT = typeof(A.data)
+    # This creates a weak Union type on CPU. See https://github.com/JuliaLang/LinearAlgebra.jl/issues/1498
     F = eigen(to_dense(A.data); kwargs...)
-    # This fixes a type inference issue. But doesn't work for GPU arrays
-    E::mat2vec(to_dense(MT)) = F.values
-    U::to_dense(MT) = F.vectors
+
+    E = F.values
+    U = F.vectors
     settings.auto_tidyup && tidyup!(U)
 
     return EigsolveResult(E, U, A.type, A.dimensions, 0, 0, true)
@@ -570,51 +570,57 @@ LinearAlgebra.eigvals(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{
     eigvals(to_dense(A.data); kwargs...)
 
 @doc raw"""
-    eigenenergies(A::QuantumObject; sparse::Bool=false, kwargs...)
+    eigenenergies(A::QuantumObject; sparse::Union{Bool,Val}=Val(false), kwargs...)
 
 Calculate the eigenenergies
 
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues
-- `sparse::Bool`: if `false` call [`eigvals(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
+- `sparse::Union{Bool,Val}`: if `false` call [`eigvals(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `Val(false)`.
 - `kwargs`: Additional keyword arguments passed to the solver. If `sparse=true`, the keyword arguments are passed to [`eigsolve`](@ref), otherwise to [`eigen`](@ref).
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `eigenenergies(A; sparse=Val(sparse))` instead of `eigenenergies(A; sparse=sparse)`. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 
 # Returns
 - `::Vector{<:Number}`: a list of eigenvalues
 """
 function eigenenergies(
     A::QuantumObject{OpType};
-    sparse::Bool = false,
+    sparse::Union{Bool,Val} = Val(false),
     kwargs...,
 ) where {OpType<:Union{Operator,SuperOperator}}
-    if !sparse
-        return eigvals(A; kwargs...)
-    else
+    if getVal(sparse)
         return eigsolve(A; kwargs...).values
+    else
+        return eigvals(A; kwargs...)
     end
 end
 
 @doc raw"""
-    eigenstates(A::QuantumObject; sparse::Bool=false, kwargs...)
+    eigenstates(A::QuantumObject; sparse::Union{Bool,Val}=Val(false), kwargs...)
 
 Calculate the eigenvalues and corresponding eigenvectors
 
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues and eigenvectors
-- `sparse::Bool`: if `false` call [`eigen(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
+- `sparse::Union{Bool,Val}`: if `false` call [`eigen(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `Val(false)`.
 - `kwargs`: Additional keyword arguments passed to the solver. If `sparse=true`, the keyword arguments are passed to [`eigsolve`](@ref), otherwise to [`eigen`](@ref).
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `eigenstates(A; sparse=Val(sparse))` instead of `eigenstates(A; sparse=sparse)`. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 
 # Returns
 - `::EigsolveResult`: containing the eigenvalues, the eigenvectors, and some information from the solver. see also [`EigsolveResult`](@ref)
 """
 function eigenstates(
     A::QuantumObject{OpType};
-    sparse::Bool = false,
+    sparse::Union{Bool,Val} = Val(false),
     kwargs...,
 ) where {OpType<:Union{Operator,SuperOperator}}
-    if !sparse
-        return eigen(A; kwargs...)
-    else
+    if getVal(sparse)
         return eigsolve(A; kwargs...)
+    else
+        return eigen(A; kwargs...)
     end
 end

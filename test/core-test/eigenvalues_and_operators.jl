@@ -105,9 +105,11 @@
         c_ops = [√((1 + n_th) * κ) * a, √κ * b, √(n_th * κ) * a_d]
         L = liouvillian(H, c_ops)
 
-        @inferred eigenstates(H, sparse = false)
-        @inferred eigenstates(H, sparse = true)
-        @inferred eigenstates(L, sparse = true)
+        UnionType = Union{QuantumToolbox.EigsolveResult{Vector{ComplexF64}, Matrix{ComplexF64}, QuantumToolbox.Operator, QuantumToolbox.Dimensions{2, Tuple{QuantumToolbox.Space, QuantumToolbox.Space}}}, QuantumToolbox.EigsolveResult{Vector{Float64}, Matrix{ComplexF64}, QuantumToolbox.Operator, QuantumToolbox.Dimensions{2, Tuple{QuantumToolbox.Space, QuantumToolbox.Space}}}}
+
+        @inferred UnionType eigenstates(H, sparse = Val(false))
+        @inferred eigenstates(H, sparse = Val(true))
+        @inferred eigenstates(L, sparse = Val(true))
         @inferred eigsolve_al(L, 1 \ (40 * κ), eigvals = 10)
     end
 end
