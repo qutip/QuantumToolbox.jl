@@ -29,9 +29,9 @@ One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-typ
 julia> result = eigenstates(sigmax())
 EigsolveResult:   type=Operator()   dims=[2]
 values:
-2-element Vector{ComplexF64}:
- -1.0 + 0.0im
-  1.0 + 0.0im
+2-element Vector{Float64}:
+ -1.0
+  1.0
 vectors:
 2×2 Matrix{ComplexF64}:
  -0.707107+0.0im  0.707107+0.0im
@@ -40,9 +40,9 @@ vectors:
 julia> λ, ψ, U = result;
 
 julia> λ
-2-element Vector{ComplexF64}:
- -1.0 + 0.0im
-  1.0 + 0.0im
+2-element Vector{Float64}:
+ -1.0
+  1.0
 
 julia> ψ
 2-element Vector{QuantumObject{Ket, Dimensions{1, Tuple{Space}}, Vector{ComplexF64}}}:
@@ -532,12 +532,12 @@ julia> using LinearAlgebra;
 julia> E, ψ, U = eigen(H)
 EigsolveResult:   type=Operator()   dims=[5]
 values:
-5-element Vector{ComplexF64}:
-       -2.8569700138728 + 0.0im
-    -1.3556261799742608 + 0.0im
- 1.3322676295501878e-15 + 0.0im
-     1.3556261799742677 + 0.0im
-     2.8569700138728056 + 0.0im
+5-element Vector{Float64}:
+ -2.8569700138728
+ -1.3556261799742608
+  1.3322676295501878e-15
+  1.3556261799742677
+  2.8569700138728056
 vectors:
 5×5 Matrix{ComplexF64}:
   0.106101+0.0im  -0.471249-0.0im  …   0.471249+0.0im  0.106101+0.0im
