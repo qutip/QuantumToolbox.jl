@@ -30,12 +30,14 @@
     @test all(spec2 .≈ spec3)
     @test all(spec2 .≈ spec4)
 
-    @testset "Type Inference spectrum" begin
-        @inferred correlation_2op_1t(H, nothing, t_l, c_ops, a', a; progress_bar = Val(false))
-        @inferred spectrum_correlation_fft(t_l, corr1)
-        @inferred spectrum(H, ω_l2, c_ops, a', a)
-        @inferred spectrum(H, ω_l2, c_ops, a', a; solver = PseudoInverse())
-        @inferred spectrum(H, ω_l2, c_ops, a', a; solver = Lanczos())
+    if VERSION >= v"1.11" # eigen is type unstable on v1.10
+        @testset "Type Inference spectrum" begin
+            @inferred correlation_2op_1t(H, nothing, t_l, c_ops, a', a; progress_bar = Val(false))
+            @inferred spectrum_correlation_fft(t_l, corr1)
+            @inferred spectrum(H, ω_l2, c_ops, a', a)
+            @inferred spectrum(H, ω_l2, c_ops, a', a; solver = PseudoInverse())
+            @inferred spectrum(H, ω_l2, c_ops, a', a; solver = Lanczos())
+        end
     end
 
     @testset "Verbose mode Lanczos" begin
