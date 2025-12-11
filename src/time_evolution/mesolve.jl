@@ -66,7 +66,7 @@ where
 
 # Notes
 
-The initial state `ψ0` can also be [`SuperOperator`](@ref). This is useful for simulating many density matrices simultaneously or calculating propagator. For example, when `H` is a [`SuperOperator`](@ref), `ψ0` can be given as `qeye_like(H)` (an identity [`SuperOperator`](@ref) matrix).
+- The initial state `ψ0` can also be [`SuperOperator`](@ref). This is useful for simulating many density matrices simultaneously or calculating propagator. For example, when `H` is a [`SuperOperator`](@ref), `ψ0` can be given as `qeye_like(H)` (an identity [`SuperOperator`](@ref) matrix).
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolveProblem`](@ref) instead.
@@ -171,7 +171,7 @@ where
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
-
+- The initial state `ψ0` can also be [`SuperOperator`](@ref). This is useful for simulating many density matrices simultaneously or calculating propagator. For example, when `H` is a [`SuperOperator`](@ref), `ψ0` can be given as `qeye_like(H)` (an identity [`SuperOperator`](@ref) matrix).
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolve`](@ref) instead.
@@ -284,7 +284,7 @@ for each combination in the ensemble.
 
 # Notes
 
-- The initial state can also be [`SuperOperator`](@ref) (such as a super-identity). This is useful for simulating many density matrices simultaneously or calculating process matrices. Currently must be Square. 
+- The initial state `ψ0` can also be [`SuperOperator`](@ref). This is useful for simulating many density matrices simultaneously or calculating propagator. For example, when `H` is a [`SuperOperator`](@ref), `ψ0` can be given as `qeye_like(H)` (an identity [`SuperOperator`](@ref) matrix).
 - The function returns an array of solutions with dimensions matching the Cartesian product of initial states and parameter sets.
 - If `ψ0` is a vector of `m` states and `params = (p1, p2, ...)` where `p1` has length `n1`, `p2` has length `n2`, etc., the output will be of size `(m, n1, n2, ...)`.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolve_map`](@ref) instead.
