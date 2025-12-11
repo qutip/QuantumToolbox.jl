@@ -55,7 +55,7 @@ where
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
@@ -66,7 +66,7 @@ where
 
 # Notes
 
-- The initial state can also be [`SuperOperator`](@ref) (such as a super-identity). This is useful for simulating many density matrices simultaneously or calculating process matrices. Currently must be Square. 
+The initial state `ψ0` can also be [`SuperOperator`](@ref). This is useful for simulating many density matrices simultaneously or calculating propagator. For example, when `H` is a [`SuperOperator`](@ref), `ψ0` can be given as `qeye_like(H)` (an identity [`SuperOperator`](@ref) matrix).
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolveProblem`](@ref) instead.
@@ -88,7 +88,7 @@ function mesolveProblem(
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
-    (isoper(H) && (isket(ψ0) || isoper(ψ0)) && isnothing(c_ops)) && return sesolveProblem(
+    (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolveProblem(
         H,
         ψ0,
         tlist;

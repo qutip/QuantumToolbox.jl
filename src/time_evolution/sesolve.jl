@@ -128,6 +128,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 
 # Notes
 
+- The initial state `ψ0` can also be [`Operator`](@ref). This is useful for simulating many states simultaneously or calculating propagator. For example, `ψ0` can be given as `qeye_like(H)` (an identity [`Operator`](@ref) matrix).
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
