@@ -10,7 +10,7 @@
 and [Y.-T. Huang](https://github.com/ytdHuang).
 
 <!-- Table of Badges -->
-| **Release**       | [![Release][release-img]][release-url] [![License][license-img]][license-url] [![Cite][cite-img]][cite-url] [![Downloads][download-img]][download-url] |
+| **Release**       | [![Release][release-img]][release-url] [![License][license-img]][license-url] [![Downloads-total][download-tot-img]][download-url] [![Downloads-monthly][download-mon-img]][download-url] [![Cite][cite-img]][cite-url] |
 |:-----------------:|:-------------|
 | **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] |
 | **Code Quality**  | [![Code Quality][code-quality-img]][code-quality-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] |
@@ -25,11 +25,12 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [license-img]: https://img.shields.io/badge/license-New%20BSD-blue.svg
 [license-url]: https://opensource.org/licenses/BSD-3-Clause
 
+[download-tot-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuantumToolbox&query=total_requests&label=Downloads%20%7C%20total
+[download-mon-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FQuantumToolbox&query=total_requests&label=Downloads%20%7C%20monthly
+[download-url]: https://juliapkgstats.com/pkg/QuantumToolbox
+
 [cite-img]: https://img.shields.io/badge/cite-Quantum_9%2C_1866_(2025)-blue
 [cite-url]: https://doi.org/10.22331/q-2025-09-29-1866
-
-[download-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FQuantumToolbox&query=total_requests&suffix=%2Fmonth&label=Downloads
-[download-url]: https://juliapkgstats.com/pkg/QuantumToolbox
 
 [runtests-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main
 [runtests-url]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain
