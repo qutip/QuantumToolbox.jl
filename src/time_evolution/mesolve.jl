@@ -6,7 +6,10 @@ _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvil
 _mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both H and
 c_ops are Nothing. You are probably running the wrong function."))
 
-function _gen_mesolve_solution(sol, prob::TimeEvolutionProblem{ST}) where {ST<:Union{Operator,OperatorKet,SuperOperator}}
+function _gen_mesolve_solution(
+    sol,
+    prob::TimeEvolutionProblem{ST},
+) where {ST<:Union{Operator,OperatorKet,SuperOperator}}
     if prob.states_type isa Operator
         ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = prob.states_type, dims = prob.dimensions), sol.u)
     else
@@ -364,7 +367,7 @@ mesolve_map(
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function mesolve_map(
-    prob::TimeEvolutionProblem{StateOpType, <:AbstractDimensions, <:ODEProblem},
+    prob::TimeEvolutionProblem{StateOpType,<:AbstractDimensions,<:ODEProblem},
     iter::AbstractArray,
     alg::AbstractODEAlgorithm = DP5(),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads();

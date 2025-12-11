@@ -242,7 +242,7 @@ function sesolve_map(
 
     ψ0 = map(to_dense, ψ0) # Convert all initial states to dense vectors
 
-      ψ0_iter = map(state -> to_dense(_complex_float_type(eltype(state)), copy(state.data)), ψ0) 
+    ψ0_iter = map(state -> to_dense(_complex_float_type(eltype(state)), copy(state.data)), ψ0)
     if params isa NullParameters
         iter = collect(Iterators.product(ψ0_iter, [params])) |> vec # convert nx1 Matrix into Vector
     else
@@ -276,7 +276,7 @@ sesolve_map(
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function sesolve_map(
-    prob::TimeEvolutionProblem{ST, <:AbstractDimensions, <:ODEProblem},
+    prob::TimeEvolutionProblem{ST,<:AbstractDimensions,<:ODEProblem},
     iter::AbstractArray,
     alg::AbstractODEAlgorithm = Vern7(lazy = false),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads();
