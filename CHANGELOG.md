@@ -384,3 +384,4 @@ Release date: 2024-11-13
 [#591]: https://github.com/qutip/QuantumToolbox.jl/issues/591
 [#596]: https://github.com/qutip/QuantumToolbox.jl/issues/596
 [#603]: https://github.com/qutip/QuantumToolbox.jl/issues/603
+[#606]: https://github.com/qutip/QuantumToolbox.jl/issues/606

@@ -100,7 +100,7 @@ function smesolveProblem(
     check_dimensions(L_evo, ψ0)
     dims = L_evo.dimensions
 
-    T = Base.promote_eltype(L_evo, ψ0)
+    T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
     ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
         to_dense(T, copy(ψ0.data))
     else
