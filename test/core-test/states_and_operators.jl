@@ -18,7 +18,7 @@
 
     @testset "fock state" begin
         # fock, basis, and fock_dm
-        @test fock_dm(4; dims = (2, 2), sparse = true) ≈ ket2dm(basis(4; dims = (2, 2)))
+        @test fock_dm(4; dims = (2, 2), sparse = Val(true)) ≈ ket2dm(basis(4; dims = (2, 2)))
         @test_throws DimensionMismatch fock(4; dims = 2)
         @test_throws ArgumentError fock(4, 4)
     end
@@ -37,7 +37,7 @@
 
     @testset "thermal state" begin
         ρTd = thermal_dm(5, 0.123)
-        ρTs = thermal_dm(5, 0.123; sparse = true)
+        ρTs = thermal_dm(5, 0.123; sparse = Val(true))
         @test isoper(ρTd)
         @test ρTd.dims == [5]
         @test tr(ρTd) ≈ 1.0
@@ -180,7 +180,7 @@
     end
 
     @testset "tunneling" begin
-        @test tunneling(10, 2) == tunneling(10, 2; sparse = true)
+        @test tunneling(10, 2) == tunneling(10, 2; sparse = Val(true))
         @test_throws ArgumentError tunneling(10, 0)
     end
 

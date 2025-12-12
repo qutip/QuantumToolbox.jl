@@ -274,16 +274,27 @@ end
 
     a = destroy(N)
     H = Δ * a' * a + U / 2 * a' * a' * a * a + F * (a + a')
+    H_gpu = cu(H)
 
     c_ops = [sqrt(κ) * a]
 
     L = liouvillian(H, c_ops)
     L_gpu = CuSparseMatrixCSR(L)
 
-    vals_cpu, vecs_cpu = eigenstates(L; sparse = true, sigma = 0.01, eigvals = 4, krylovdim = 30)
+    # Dense eigen solver for Hamiltonian
+    vals_H_cpu, vecs_H_cpu = eigenstates(H)
+    vals_H_gpu, vecs_H_gpu = eigenstates(H_gpu)
+
+    @test vals_H_cpu ≈ Array(vals_H_gpu) atol = 1e-8
+    @test all(zip(vecs_H_cpu, vecs_H_gpu)) do (v_cpu, v_gpu)
+        return isapprox(abs(dot(v_cpu.data, Array(v_gpu.data))), 1; atol = 1e-8)
+    end
+
+    # Sparse eigen solver for Liouvillian
+    vals_cpu, vecs_cpu = eigenstates(L; sparse = Val(true), sigma = 0.01, eigvals = 4, krylovdim = 30)
     vals_gpu, vecs_gpu = eigenstates(
         L_gpu;
-        sparse = true,
+        sparse = Val(true),
         sigma = 0.01,
         eigvals = 4,
         krylovdim = 30,
