@@ -45,7 +45,7 @@ julia> λ
   1.0 + 0.0im
 
 julia> ψ
-2-element Vector{QuantumObject{Ket, Dimensions{1, Tuple{Space}}, Vector{ComplexF64}}}:
+2-element Vector{QuantumObject{Ket, ProductDimensions{1, Tuple{HilbertSpace}}, Vector{ComplexF64}}}:
 
 Quantum Object:   type=Ket()   dims=[2]   size=(2,)
 2-element Vector{ComplexF64}:
@@ -424,7 +424,7 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::AbstractODEAlgorithm = DP5(),
         params::NamedTuple = NamedTuple(),
-        ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
+        ρ0::AbstractMatrix = rand_dm(hilbert_dimensions_to_size(H.dimensions)[1]).data,
         eigvals::Int = 1,
         krylovdim::Int = min(10, size(H, 1)),
         maxiter::Int = 200,
@@ -467,7 +467,7 @@ function eigsolve_al(
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     alg::AbstractODEAlgorithm = DP5(),
     params::NamedTuple = NamedTuple(),
-    ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
+    ρ0::AbstractMatrix = rand_dm(hilbert_dimensions_to_size(H.dimensions)[1]).data,
     eigvals::Int = 1,
     krylovdim::Int = min(10, size(H, 1)),
     maxiter::Int = 200,
