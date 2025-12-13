@@ -198,7 +198,7 @@ function mesolve(
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
-    (isoper(H) && (isket(ψ0) || isoper(ψ0)) && isnothing(c_ops)) && return sesolve(
+    (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolve(
         H,
         ψ0,
         tlist;
@@ -309,7 +309,7 @@ function mesolve_map(
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
 ) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
-    (isoper(H) && (all(isket, ψ0) || all(isoper, ψ0)) && isnothing(c_ops)) && return sesolve_map(
+    (isoper(H) && all(isket, ψ0) && isnothing(c_ops)) && return sesolve_map(
         H,
         ψ0,
         tlist;
