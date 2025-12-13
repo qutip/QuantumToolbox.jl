@@ -261,6 +261,7 @@ function mcsolveEnsembleProblem(
     ensemble_prob = TimeEvolutionProblem(
         EnsembleProblem(prob_mc.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob_mc.times,
+        prob_mc.states_type,
         prob_mc.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )

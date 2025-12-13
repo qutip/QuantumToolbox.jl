@@ -101,6 +101,7 @@ function ssesolveProblem(
     check_dimensions(H_eff_evo, ψ0)
     dims = H_eff_evo.dimensions
 
+    states_type = ψ0.type
     ψ0 = to_dense(_complex_float_type(ψ0), get_data(ψ0))
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
@@ -142,7 +143,7 @@ function ssesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, dims)
+    return TimeEvolutionProblem(prob, tlist, states_type, dims)
 end
 
 @doc raw"""
@@ -268,6 +269,7 @@ function ssesolveEnsembleProblem(
     ensemble_prob = TimeEvolutionProblem(
         EnsembleProblem(prob_sme, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
         prob_sme.times,
+        prob_sme.states_type,
         prob_sme.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
