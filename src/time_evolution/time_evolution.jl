@@ -19,7 +19,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
 - `times::AbstractVector`: The time list of the evolution.
-- `states_type::QuantumObjectType`: The type of the quantum states during the evolution (e.g., `Ket`, `Operator`, `OperatorKet` or `SuperOperator`).
+- `states_type::QuantumObjectType`: The type of the quantum states during the evolution (e.g., [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref)).
 - `dimensions::AbstractDimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
 
