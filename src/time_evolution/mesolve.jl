@@ -163,7 +163,7 @@ where
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref) or [`SuperOperator`](@ref).
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm for the ODE solver. The default value is `DP5()`.
