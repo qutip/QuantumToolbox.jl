@@ -120,11 +120,24 @@ Density matrix for a thermal state (generating thermal state probabilities) with
 """
 function thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val} = Val(false))
     β = log(1.0 / n + 1.0)
-    data = [exp(-β * ComplexF64(j)) for j in 0:(N-1)]
+    exp_β = exp(-β) # Be careful that β might be infinite and exp_β might be 0
+    s = (1.0 - exp(-β * N)) / (1.0 - exp_β)
+    data = Vector{complex(typeof(s))}(undef, N)
+    @inbounds for j in 0:(N-1)
+        data[j+1] = if j == 0
+            inv(s)
+        elseif j == 1
+            exp_β / s
+        elseif j == 2
+            exp_β * exp_β / s
+        else
+            exp(-β * j) / s
+        end
+    end
     if getVal(sparse)
-        return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator(), N)
+        return QuantumObject(spdiagm(0 => data), Operator(), N)
     else
-        return QuantumObject(diagm(0 => data ./ sum(data)), Operator(), N)
+        return QuantumObject(diagm(0 => data), Operator(), N)
     end
 end
 

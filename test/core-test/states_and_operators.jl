@@ -52,6 +52,12 @@
         )
         @test typeof(ρTs.data) <: AbstractSparseMatrix
         @test ρTd ≈ ρTs
+
+        ρTd0 = thermal_dm(5, 0.0)
+        ρTs0 = thermal_dm(5, 0.0; sparse = true)
+        @test tr(ρTd0) ≈ 1.0
+        @test tr(ρTs0) ≈ 1.0
+        @test ρTd0 ≈ ρTs0
     end
 
     @testset "maximally mixed state" begin
