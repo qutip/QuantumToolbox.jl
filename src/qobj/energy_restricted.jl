@@ -194,9 +194,9 @@ function enr_thermal_dm(
     D = s_enr.size
     idx2state = s_enr.idx2state
 
-    exp_minus_β = @. 1 - (1 / (nvec + 1)) # use "1-1/(n+1)" instead of "n/(n+1)" for numerical stability
+    exp_minus_β = @. 1 - (1 / (nvec + 1)) # use "1-1/(n+1)" instead of "n/(n+1)" for numerical stability (works for n=0 and Inf)
     P_n = _complex_float_type(nvec)[prod(exp_minus_β .^ idx2state[idx]) for idx in 1:D]
-    P_n ./= sum(P_n)
+    P_n /= sum(P_n)
     if getVal(sparse)
         return QuantumObject(spdiagm(0 => P_n), Operator(), s_enr)
     else
