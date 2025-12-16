@@ -144,7 +144,7 @@ function dfd_mesolveProblem(
     c_ops::Function,
     maxdims::Vector{T2},
     dfd_params::NamedTuple = NamedTuple();
-    e_ops::Function = (dim_list) -> Vector{Vector{eltype(ψ0)}}([]),
+    e_ops::Function = (dim_list) -> (),
     params::NamedTuple = NamedTuple(),
     tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
     kwargs...,
@@ -196,7 +196,7 @@ end
         tlist::AbstractVector, c_ops::Function, maxdims::AbstractVector,
         dfd_params::NamedTuple=NamedTuple();
         alg::AbstractODEAlgorithm=DP5(),
-        e_ops::Function=(dim_list) -> Vector{Vector{T1}}([]),
+        e_ops::Function=(dim_list) -> (),
         params::NamedTuple=NamedTuple(),
         tol_list::Vector{<:Number}=fill(1e-8, length(maxdims)),
         kwargs...)
@@ -215,7 +215,7 @@ function dfd_mesolve(
     maxdims::Vector{T2},
     dfd_params::NamedTuple = NamedTuple();
     alg::AbstractODEAlgorithm = DP5(),
-    e_ops::Function = (dim_list) -> Vector{Vector{eltype(ψ0)}}([]),
+    e_ops::Function = (dim_list) -> (),
     params::NamedTuple = NamedTuple(),
     tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
     kwargs...,
