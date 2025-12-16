@@ -190,6 +190,7 @@ _complex_float_type(::Type{Int32}) = ComplexF32
 _complex_float_type(::Type{Int64}) = ComplexF64
 _complex_float_type(::Type{Float32}) = ComplexF32
 _complex_float_type(::Type{Float64}) = ComplexF64
+_complex_float_type(::Type{BigFloat}) = Complex{BigFloat}
 _complex_float_type(::Type{Complex{Int32}}) = ComplexF32
 _complex_float_type(::Type{Complex{Int64}}) = ComplexF64
 _complex_float_type(::Type{Complex{Float32}}) = ComplexF32

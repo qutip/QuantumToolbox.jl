@@ -47,9 +47,9 @@
         @test ρTd0 ≈ ρTs0 ≈ fock_dm(N, 0)
         @test ρTd∞ ≈ ρTs∞ ≈ maximally_mixed_dm(N)
 
-        # general case
-        ρTd = thermal_dm(N, 0.123)
-        ρTs = thermal_dm(N, 0.123; sparse = Val(true))
+        # general case (also test BigFloat)
+        ρTd = thermal_dm(N, big(0.123))
+        ρTs = thermal_dm(N, big(0.123); sparse = Val(true))
         @test isoper(ρTd)
         @test ρTd.dims == [N]
         @test tr(ρTd) ≈ tr(ρTs) ≈ 1.0

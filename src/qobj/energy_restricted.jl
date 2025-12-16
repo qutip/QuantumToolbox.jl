@@ -195,7 +195,7 @@ function enr_thermal_dm(
     idx2state = s_enr.idx2state
 
     exp_minus_β = @. 1 - (1 / (nvec + 1)) # use "1-1/(n+1)" instead of "n/(n+1)" to avoid n=Inf issues
-    P_n = ComplexF64[prod(exp_minus_β .^ idx2state[idx]) for idx in 1:D]
+    P_n = _complex_float_type(nvec)[prod(exp_minus_β .^ idx2state[idx]) for idx in 1:D]
     P_n /= sum(P_n)
     if getVal(sparse)
         return QuantumObject(spdiagm(0 => P_n), Operator(), s_enr)
