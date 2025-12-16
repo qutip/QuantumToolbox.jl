@@ -1,5 +1,5 @@
 #=
-This file defines the energy restricted space structure.
+This file defines the excitation number restricted space structure.
 =#
 
 export EnrSpace, enr_state_dictionaries
@@ -194,13 +194,13 @@ function enr_thermal_dm(
     D = s_enr.size
     idx2state = s_enr.idx2state
 
-    diags = ComplexF64[prod((nvec ./ (1 .+ nvec)) .^ idx2state[idx]) for idx in 1:D]
-    diags /= sum(diags)
-
+    exp_minus_β = @. 1 - (1 / (nvec + 1)) # use "1-1/(n+1)" instead of "n/(n+1)" to avoid n=Inf issues
+    P_n = ComplexF64[prod(exp_minus_β .^ idx2state[idx]) for idx in 1:D]
+    P_n /= sum(P_n)
     if getVal(sparse)
-        return QuantumObject(spdiagm(0 => diags), Operator(), s_enr)
+        return QuantumObject(spdiagm(0 => P_n), Operator(), s_enr)
     else
-        return QuantumObject(diagm(0 => diags), Operator(), s_enr)
+        return QuantumObject(diagm(0 => P_n), Operator(), s_enr)
     end
 end
 

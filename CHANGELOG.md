@@ -6,7 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
-- Add error message for bad input in state/operator generating functions ([#603])
+- Add error message for bad input in state/operator generating functions. ([#603])
+- Fix `thermal_dm` and `enr_thermal_dm` for extreme cases. ([#614])
 
 ## [v0.39.1]
 Release date: 2025-11-19
@@ -383,3 +384,4 @@ Release date: 2024-11-13
 [#591]: https://github.com/qutip/QuantumToolbox.jl/issues/591
 [#596]: https://github.com/qutip/QuantumToolbox.jl/issues/596
 [#603]: https://github.com/qutip/QuantumToolbox.jl/issues/603
+[#614]: https://github.com/qutip/QuantumToolbox.jl/issues/614

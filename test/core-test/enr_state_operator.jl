@@ -39,6 +39,15 @@
         I_enr = enr_identity(space_enr)
         size_enr = space_enr.size
 
+        # enr_thermal_dm (extreme cases)
+        ρTd0 = enr_thermal_dm(space_enr, 0.0)
+        ρTs0 = enr_thermal_dm(space_enr, 0.0; sparse = Val(true))
+        ρTd∞ = enr_thermal_dm(space_enr, Inf)
+        ρTs∞ = enr_thermal_dm(space_enr, Inf; sparse = Val(true))
+        @test tr(ρTd0) ≈ tr(ρTs0) ≈ tr(ρTd∞) ≈ tr(ρTs∞) ≈ 1.0
+        @test ρTd0.data ≈ ρTs0.data ≈ fock_dm(size_enr, 0).data
+        @test ρTd∞.data ≈ ρTs∞.data ≈ maximally_mixed_dm(size_enr).data
+
         # tensor between normal and ENR space
         ρ_tot = tensor(ρ_s, ρ_enr)
         opstring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot)
