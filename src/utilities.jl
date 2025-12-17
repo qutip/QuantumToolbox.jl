@@ -190,12 +190,12 @@ _complex_float_type(::Type{Int32}) = ComplexF32
 _complex_float_type(::Type{Int64}) = ComplexF64
 _complex_float_type(::Type{Float32}) = ComplexF32
 _complex_float_type(::Type{Float64}) = ComplexF64
-_complex_float_type(::Type{BigFloat}) = Complex{BigFloat}
 _complex_float_type(::Type{Complex{Int32}}) = ComplexF32
 _complex_float_type(::Type{Complex{Int64}}) = ComplexF64
 _complex_float_type(::Type{Complex{Float32}}) = ComplexF32
 _complex_float_type(::Type{Complex{Float64}}) = ComplexF64
-_complex_float_type(T::Type{<:Complex}) = T # Allow other untracked Complex types, like ForwardDiff.Dual
+_complex_float_type(T::Type{<:Real}) = Complex{T} # Allow other untracked Complex types, like ForwardDiff.Dual
+_complex_float_type(T::Type{<:Complex}) = T       # Allow other untracked Complex types, like ForwardDiff.Dual
 
 _convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:Int} = Int64
 _convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:Int} = Int32
