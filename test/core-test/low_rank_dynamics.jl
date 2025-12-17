@@ -75,7 +75,7 @@
 
     opt = (err_max = 1e-3, p0 = 0.0, atol_inv = 1e-6, adj_condition = "variational", Δt = 0.0, progress = false)
 
-    sol_lr = lr_mesolve(H, z, B, tl, c_ops; e_ops = e_ops, f_ops = (f_entropy,), opt = opt)
+    sol_lr = variational_lr_mesolve(H, z, B, tl, c_ops; e_ops = e_ops, f_ops = (f_entropy,), opt = opt)
 
     # Test
     S_lr = real(sol_lr.fexpect[1, end]) / latt.N
