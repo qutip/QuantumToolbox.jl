@@ -113,13 +113,13 @@ function mesolveProblem(
     # Convert to dense vector with complex element type
 
     T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
+    is_operket_or_super = isoperket(ψ0) || issuper(ψ0)
+    ρ0 = is_operket_or_super ? to_dense(T, copy(ψ0.data)) : to_dense(T, mat2vec(ket2dm(ψ0).data))
     states_type = ψ0.type
-    if isoperket(ψ0) || issuper(ψ0)
-        ρ0 = to_dense(T, copy(ψ0.data))
-    else
-        ρ0 = to_dense(T, mat2vec(ket2dm(ψ0).data))
+    if !is_operket_or_super
         states_type = Operator()
     end
+
 
 
     L = cache_operator(L_evo.data, ρ0)
