@@ -43,8 +43,8 @@
         L = liouvillian(H, c_ops)
         L_big = liouvillian(H_big, c_ops_big)
 
-        vals, vecs = eigenstates(L; sparse = true, sigma = 0.01, eigvals = 7, krylovdim = 30)
-        vals_big, vecs_big = eigenstates(L_big; sparse = true, sigma = 0.01, eigvals = 7, krylovdim = 30)
+        vals, vecs = eigenstates(L; sparse = Val(true), sigma = 0.01, eigvals = 7, krylovdim = 30)
+        vals_big, vecs_big = eigenstates(L_big; sparse = Val(true), sigma = 0.01, eigvals = 7, krylovdim = 30)
 
         # Align eigenvalues
         idxs = [findmin(abs.(vals_big .- val))[2] for val in vals]

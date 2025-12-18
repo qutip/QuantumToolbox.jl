@@ -110,8 +110,7 @@ function _spectrum(
     idxs = findall(x -> abs(x) > solver.tol, amps)
     amps, rates = amps[idxs], rates[idxs]
 
-    # spec = map(ω -> 2 * real(sum(@. amps * (1 / (1im * ω - rates)))), ωlist)
-    amps_rates = zip(amps, rates)
+    amps_rates = zip(amps, complex.(rates))
     spec = map(ω -> 2 * real(sum(x -> x[1] / (1im * ω - x[2]), amps_rates)), ωlist)
 
     return spec

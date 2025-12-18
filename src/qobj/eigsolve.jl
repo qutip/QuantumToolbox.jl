@@ -29,9 +29,9 @@ One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-typ
 julia> result = eigenstates(sigmax())
 EigsolveResult:   type=Operator()   dims=[2]
 values:
-2-element Vector{ComplexF64}:
- -1.0 + 0.0im
-  1.0 + 0.0im
+2-element Vector{Float64}:
+ -1.0
+  1.0
 vectors:
 2×2 Matrix{ComplexF64}:
  -0.707107+0.0im  0.707107+0.0im
@@ -40,9 +40,9 @@ vectors:
 julia> λ, ψ, U = result;
 
 julia> λ
-2-element Vector{ComplexF64}:
- -1.0 + 0.0im
-  1.0 + 0.0im
+2-element Vector{Float64}:
+ -1.0
+  1.0
 
 julia> ψ
 2-element Vector{QuantumObject{Ket, Dimensions{1, Tuple{Space}}, Vector{ComplexF64}}}:
@@ -64,7 +64,7 @@ julia> U
 ```
 """
 struct EigsolveResult{
-    T1<:Vector{<:Number},
+    T1<:AbstractVector{<:Number},
     T2<:AbstractMatrix{<:Number},
     ObjType<:Union{Nothing,Operator,SuperOperator},
     DimType<:Union{Nothing,AbstractDimensions},
@@ -532,12 +532,12 @@ julia> using LinearAlgebra;
 julia> E, ψ, U = eigen(H)
 EigsolveResult:   type=Operator()   dims=[5]
 values:
-5-element Vector{ComplexF64}:
-       -2.8569700138728 + 0.0im
-    -1.3556261799742608 + 0.0im
- 1.3322676295501878e-15 + 0.0im
-     1.3556261799742677 + 0.0im
-     2.8569700138728056 + 0.0im
+5-element Vector{Float64}:
+ -2.8569700138728
+ -1.3556261799742608
+  1.3322676295501878e-15
+  1.3556261799742677
+  2.8569700138728056
 vectors:
 5×5 Matrix{ComplexF64}:
   0.106101+0.0im  -0.471249-0.0im  …   0.471249+0.0im  0.106101+0.0im
@@ -551,11 +551,11 @@ true
 ```
 """
 function LinearAlgebra.eigen(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Operator,SuperOperator}}
-    MT = typeof(A.data)
+    # This creates a weak Union type on CPU. See https://github.com/JuliaLang/LinearAlgebra.jl/issues/1498
     F = eigen(to_dense(A.data); kwargs...)
-    # This fixes a type inference issue. But doesn't work for GPU arrays
-    E::mat2vec(to_dense(MT)) = F.values
-    U::to_dense(MT) = F.vectors
+
+    E = F.values
+    U = F.vectors
     settings.auto_tidyup && tidyup!(U)
 
     return EigsolveResult(E, U, A.type, A.dimensions, 0, 0, true)
@@ -570,51 +570,57 @@ LinearAlgebra.eigvals(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{
     eigvals(to_dense(A.data); kwargs...)
 
 @doc raw"""
-    eigenenergies(A::QuantumObject; sparse::Bool=false, kwargs...)
+    eigenenergies(A::QuantumObject; sparse::Union{Bool,Val}=Val(false), kwargs...)
 
 Calculate the eigenenergies
 
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues
-- `sparse::Bool`: if `false` call [`eigvals(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
+- `sparse::Union{Bool,Val}`: if `false` call [`eigvals(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `Val(false)`.
 - `kwargs`: Additional keyword arguments passed to the solver. If `sparse=true`, the keyword arguments are passed to [`eigsolve`](@ref), otherwise to [`eigen`](@ref).
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `eigenenergies(A; sparse=Val(sparse))` instead of `eigenenergies(A; sparse=sparse)`. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 
 # Returns
 - `::Vector{<:Number}`: a list of eigenvalues
 """
 function eigenenergies(
     A::QuantumObject{OpType};
-    sparse::Bool = false,
+    sparse::Union{Bool,Val} = Val(false),
     kwargs...,
 ) where {OpType<:Union{Operator,SuperOperator}}
-    if !sparse
-        return eigvals(A; kwargs...)
-    else
+    if getVal(sparse)
         return eigsolve(A; kwargs...).values
+    else
+        return eigvals(A; kwargs...)
     end
 end
 
 @doc raw"""
-    eigenstates(A::QuantumObject; sparse::Bool=false, kwargs...)
+    eigenstates(A::QuantumObject; sparse::Union{Bool,Val}=Val(false), kwargs...)
 
 Calculate the eigenvalues and corresponding eigenvectors
 
 # Arguments
 - `A::QuantumObject`: the [`QuantumObject`](@ref) to solve eigenvalues and eigenvectors
-- `sparse::Bool`: if `false` call [`eigen(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `false`.
+- `sparse::Union{Bool,Val}`: if `false` call [`eigen(A::QuantumObject; kwargs...)`](@ref), otherwise call [`eigsolve`](@ref). Default to `Val(false)`.
 - `kwargs`: Additional keyword arguments passed to the solver. If `sparse=true`, the keyword arguments are passed to [`eigsolve`](@ref), otherwise to [`eigen`](@ref).
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `eigenstates(A; sparse=Val(sparse))` instead of `eigenstates(A; sparse=sparse)`. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 
 # Returns
 - `::EigsolveResult`: containing the eigenvalues, the eigenvectors, and some information from the solver. see also [`EigsolveResult`](@ref)
 """
 function eigenstates(
     A::QuantumObject{OpType};
-    sparse::Bool = false,
+    sparse::Union{Bool,Val} = Val(false),
     kwargs...,
 ) where {OpType<:Union{Operator,SuperOperator}}
-    if !sparse
-        return eigen(A; kwargs...)
-    else
+    if getVal(sparse)
         return eigsolve(A; kwargs...)
+    else
+        return eigen(A; kwargs...)
     end
 end

@@ -40,14 +40,16 @@
     @test_throws ArgumentError entropy_mutual(ρAB, (1, 2), 3)
     @test_throws ArgumentError entropy_mutual(ρAB, (1, 2), (1, 3))
 
-    @testset "Type Stability (entropy)" begin
-        @inferred entropy_vn(ρ1)
-        @inferred entropy_vn(ρ1, base = base)
-        @inferred entropy_relative(ρ1, ψ)
-        @inferred entropy_relative(ρ1, σ1, base = base)
-        @inferred entropy_linear(ρ1)
-        @inferred entropy_mutual(ρAB, selA, selB)
-        @inferred entropy_conditional(ρAB, selA)
+    if VERSION >= v"1.11" # eigen is type unstable on v1.10
+        @testset "Type Stability (entropy)" begin
+            @inferred entropy_vn(ρ1)
+            @inferred entropy_vn(ρ1, base = base)
+            @inferred entropy_relative(ρ1, ψ)
+            @inferred entropy_relative(ρ1, σ1, base = base)
+            @inferred entropy_linear(ρ1)
+            @inferred entropy_mutual(ρAB, selA, selB)
+            @inferred entropy_conditional(ρAB, selA)
+        end
     end
 end
 

@@ -17,7 +17,7 @@ function benchmark_eigenvalues!(SUITE)
 
     SUITE["Eigenvalues"]["eigenstates"]["dense"] = @benchmarkable eigenstates($L)
     SUITE["Eigenvalues"]["eigenstates"]["sparse"] =
-        @benchmarkable eigenstates($L, sparse = true, sigma = 0.01, eigvals = 5)
+        @benchmarkable eigenstates($L, sparse = Val(true), sigma = 0.01, eigvals = 5)
 
     return nothing
 end
