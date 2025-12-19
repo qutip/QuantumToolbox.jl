@@ -137,6 +137,8 @@ _sparse_similar(A::AbstractArray, args...) = sparse(args...)
 
 _Ginibre_ensemble(n::Int, rank::Int = n) = randn(ComplexF64, n, rank) / sqrt(n)
 
+_Boltzmann_weight(β::T, E::Int) where {T<:Real} = (E != 0 || isfinite(β)) ? exp(-β * E) : one(T)
+
 makeVal(x::Val{T}) where {T} = x
 makeVal(x) = Val(x)
 

@@ -196,7 +196,7 @@ function enr_thermal_dm(
 
     β = @. log(1 + 1 / nvec)
     P = _complex_float_type(T)[
-        prod(Boltzmann_weight(β[k], n_excite) for (k, n_excite) in pairs(idx2state[idx])) for idx in 1:D
+        prod(_Boltzmann_weight(β[k], n_excite) for (k, n_excite) in pairs(idx2state[idx])) for idx in 1:D
     ]
     P /= sum(P)
     if getVal(sparse)

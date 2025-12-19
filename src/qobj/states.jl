@@ -120,7 +120,7 @@ Density matrix for a thermal state (generating thermal state probabilities) with
 """
 function thermal_dm(N::Int, n::T; sparse::Union{Bool,Val} = Val(false)) where {T<:Real}
     β = log(1 + 1 / n)
-    P = _complex_float_type(T)[Boltzmann_weight(β, j) for j in 0:(N-1)]
+    P = _complex_float_type(T)[_Boltzmann_weight(β, j) for j in 0:(N-1)]
     P /= sum(P)
     if getVal(sparse)
         return QuantumObject(spdiagm(0 => P), Operator(), N)
@@ -128,7 +128,6 @@ function thermal_dm(N::Int, n::T; sparse::Union{Bool,Val} = Val(false)) where {T
         return QuantumObject(diagm(0 => P), Operator(), N)
     end
 end
-Boltzmann_weight(β::T, E::Int) where {T<:Real} = (E != 0 || isfinite(β)) ? exp(-β * E) : one(T)
 
 @doc raw"""
     maximally_mixed_dm(dimensions)
