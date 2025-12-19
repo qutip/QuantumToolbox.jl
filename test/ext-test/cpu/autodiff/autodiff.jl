@@ -85,7 +85,6 @@ end
 n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
 @testset "Autodiff" verbose=true begin
-
     @testset "ForwardDiff for thermal_dm" begin
         N = 100  # dimension of the system
         N_op = num(N) # number operator
