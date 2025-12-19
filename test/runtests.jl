@@ -41,6 +41,8 @@ if (GROUP == "AutoDiff_Ext")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.update()
 
+    println(Pkg.status())
+
     using QuantumToolbox
     using ForwardDiff
     using Zygote

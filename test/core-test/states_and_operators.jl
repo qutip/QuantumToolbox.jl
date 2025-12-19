@@ -18,7 +18,7 @@
 
     @testset "fock state" begin
         # fock, basis, and fock_dm
-        @test fock_dm(4; dims = (2, 2), sparse = true) ≈ ket2dm(basis(4; dims = (2, 2)))
+        @test fock_dm(4; dims = (2, 2), sparse = Val(true)) ≈ ket2dm(basis(4; dims = (2, 2)))
         @test_throws DimensionMismatch fock(4; dims = 2)
         @test_throws ArgumentError fock(4, 4)
     end
@@ -190,7 +190,7 @@
     end
 
     @testset "tunneling" begin
-        @test tunneling(10, 2) == tunneling(10, 2; sparse = true)
+        @test tunneling(10, 2) == tunneling(10, 2; sparse = Val(true))
         @test_throws ArgumentError tunneling(10, 0)
     end
 
