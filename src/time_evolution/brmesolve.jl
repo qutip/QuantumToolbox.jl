@@ -138,13 +138,9 @@ function _brterm(
     bd_term = A_mat * A_mat_spec_t
 
     if sec_cutoff != -1
-        m_cut = similar(skew)
-        map!(x -> abs(x) < sec_cutoff, m_cut, skew)
+        m_cut = map(x -> abs(x) < sec_cutoff, skew)
         ac_term .*= m_cut
         bd_term .*= m_cut
-
-        vec_skew = vec(skew)
-        M_cut = @. abs(vec_skew - vec_skew') < sec_cutoff
     end
 
     # Rotate the terms to the eigenbasis if possible
@@ -167,7 +163,12 @@ function _brterm(
 
     out = (_sprepost(A_mat_spec_t, A_mat) + _sprepost(A_mat, A_mat_spec) - _spost(ac_term) - _spre(bd_term)) / 2
 
-    (sec_cutoff != -1) && (out .*= M_cut)
+    if (sec_cutoff != -1)
+        vec_skew = vec(skew)
+        M_cut = @. abs(vec_skew - vec_skew') < sec_cutoff
+
+        out .*= M_cut
+    end
 
     return QuantumObject(out, SuperOperator(), rst.dimensions)
 end
