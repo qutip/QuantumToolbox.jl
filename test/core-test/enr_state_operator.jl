@@ -1,5 +1,6 @@
 @testitem "Excitation number restricted state space" begin
     using StaticArraysCore
+    using SparseArrays
 
     @testset "EnrSpace" begin
         s_enr = EnrSpace((2, 2, 3), 3)
@@ -32,14 +33,46 @@
         space_s = (Space(D1), Space(D2))
 
         # EnrSpace
-        dims_enr = (2, 2, 3)
-        excitations = 3
+        dims_enr = (2, 3, 2)
+        excitations = 4
         space_enr = EnrSpace(dims_enr, excitations)
-        ρ_enr = enr_thermal_dm(space_enr, rand(3))
         I_enr = enr_identity(space_enr)
         size_enr = space_enr.size
 
+        # enr_thermal_dm (extreme cases)
+        ρTd0 = enr_thermal_dm(space_enr, 0.0)
+        ρTs0 = enr_thermal_dm(space_enr, 0.0; sparse = Val(true))
+        ρTd∞ = enr_thermal_dm(space_enr, Inf)
+        ρTs∞ = enr_thermal_dm(space_enr, Inf; sparse = Val(true))
+        @test tr(ρTd0) ≈ tr(ρTs0) ≈ tr(ρTd∞) ≈ tr(ρTs∞) ≈ 1.0
+        @test ρTd0.data ≈ ρTs0.data ≈ fock_dm(size_enr, 0).data
+        @test ρTd∞.data ≈ ρTs∞.data ≈ maximally_mixed_dm(size_enr).data
+
+        # general case (also test BigFloat)
+        nvec = BigFloat[0.123, 0.456, 0.789]
+        ρTd = enr_thermal_dm(space_enr, nvec)
+        ρTs = enr_thermal_dm(space_enr, nvec; sparse = Val(true))
+        @test isoper(ρTd)
+        @test tr(ρTd) ≈ tr(ρTs) ≈ 1.0
+        @test diag(ρTd) ≈ Float64[
+            0.44317797863426783,
+            0.19545412249437527,
+            0.13879749880303996,
+            0.06121365374823841,
+            0.0434695463284246,
+            0.019171309140931812,
+            0.04854041974355738,
+            0.021407708875163092,
+            0.015202219370235007,
+            0.006704612120243388,
+            0.004761134637930744,
+            0.0020997961035927096,
+        ]
+        @test ρTs.data isa AbstractSparseMatrix
+        @test ρTd ≈ ρTs
+
         # tensor between normal and ENR space
+        ρ_enr = enr_thermal_dm(space_enr, rand(3))
         ρ_tot = tensor(ρ_s, ρ_enr)
         opstring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot.data)

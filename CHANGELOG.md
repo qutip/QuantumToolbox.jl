@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add error message for bad input in state/operator generating functions ([#603])
 - Extend `sesolve` and `mesolve` to handle `Operator` and `SuperOperator` as initial conditions for propagator calculation. This introduces a `states_type` field to `TimeEvolutionProblem`. ([#606])
 
+- Add error message for bad input in state/operator generating functions. ([#603])
+- Support time-dependent operators on `dsf_mesolve` ([#610])
+- Fix `thermal_dm` and `enr_thermal_dm` for extreme cases. ([#614], [#613])
+
 ## [v0.39.1]
 Release date: 2025-11-19
 
@@ -385,3 +389,6 @@ Release date: 2024-11-13
 [#596]: https://github.com/qutip/QuantumToolbox.jl/issues/596
 [#603]: https://github.com/qutip/QuantumToolbox.jl/issues/603
 [#606]: https://github.com/qutip/QuantumToolbox.jl/issues/606
+[#610]: https://github.com/qutip/QuantumToolbox.jl/issues/610
+[#613]: https://github.com/qutip/QuantumToolbox.jl/issues/613
+[#614]: https://github.com/qutip/QuantumToolbox.jl/issues/614

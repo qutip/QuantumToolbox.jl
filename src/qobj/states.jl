@@ -118,13 +118,14 @@ Density matrix for a thermal state (generating thermal state probabilities) with
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `thermal_dm(N, n, sparse=Val(sparse))` instead of `thermal_dm(N, n, sparse=sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val} = Val(false))
-    β = log(1.0 / n + 1.0)
-    data = [exp(-β * ComplexF64(j)) for j in 0:(N-1)]
+function thermal_dm(N::Int, n::T; sparse::Union{Bool,Val} = Val(false)) where {T<:Real}
+    β = log(1 + 1 / n)
+    P = _complex_float_type(T)[_Boltzmann_weight(β, j) for j in 0:(N-1)]
+    P /= sum(P)
     if getVal(sparse)
-        return QuantumObject(spdiagm(0 => data ./ sum(data)), Operator(), N)
+        return QuantumObject(spdiagm(0 => P), Operator(), N)
     else
-        return QuantumObject(diagm(0 => data ./ sum(data)), Operator(), N)
+        return QuantumObject(diagm(0 => P), Operator(), N)
     end
 end
 

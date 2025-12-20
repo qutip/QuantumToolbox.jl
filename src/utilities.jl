@@ -137,6 +137,8 @@ _sparse_similar(A::AbstractArray, args...) = sparse(args...)
 
 _Ginibre_ensemble(n::Int, rank::Int = n) = randn(ComplexF64, n, rank) / sqrt(n)
 
+_Boltzmann_weight(β::T, E::Int) where {T<:Real} = (E != 0 || isfinite(β)) ? exp(-β * E) : one(T)
+
 makeVal(x::Val{T}) where {T} = x
 makeVal(x) = Val(x)
 
@@ -194,7 +196,8 @@ _complex_float_type(::Type{Complex{Int32}}) = ComplexF32
 _complex_float_type(::Type{Complex{Int64}}) = ComplexF64
 _complex_float_type(::Type{Complex{Float32}}) = ComplexF32
 _complex_float_type(::Type{Complex{Float64}}) = ComplexF64
-_complex_float_type(T::Type{<:Complex}) = T # Allow other untracked Complex types, like ForwardDiff.Dual
+_complex_float_type(T::Type{<:Real}) = Complex{T} # Allow other untracked Complex types, like ForwardDiff.Dual
+_complex_float_type(T::Type{<:Complex}) = T       # Allow other untracked Complex types, like ForwardDiff.Dual
 
 _convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:Int} = Int64
 _convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:Int} = Int32

@@ -18,7 +18,7 @@
 
     @testset "fock state" begin
         # fock, basis, and fock_dm
-        @test fock_dm(4; dims = (2, 2), sparse = true) ≈ ket2dm(basis(4; dims = (2, 2)))
+        @test fock_dm(4; dims = (2, 2), sparse = Val(true)) ≈ ket2dm(basis(4; dims = (2, 2)))
         @test_throws DimensionMismatch fock(4; dims = 2)
         @test_throws ArgumentError fock(4, 4)
     end
@@ -36,21 +36,31 @@
     end
 
     @testset "thermal state" begin
-        ρTd = thermal_dm(5, 0.123)
-        ρTs = thermal_dm(5, 0.123; sparse = true)
+        N = 5
+
+        # extreme cases
+        ρTd0 = thermal_dm(N, 0.0)
+        ρTs0 = thermal_dm(N, 0.0; sparse = Val(true))
+        ρTd∞ = thermal_dm(N, Inf)
+        ρTs∞ = thermal_dm(N, Inf; sparse = Val(true))
+        @test tr(ρTd0) ≈ tr(ρTs0) ≈ tr(ρTd∞) ≈ tr(ρTs∞) ≈ 1.0
+        @test ρTd0 ≈ ρTs0 ≈ fock_dm(N, 0)
+        @test ρTd∞ ≈ ρTs∞ ≈ maximally_mixed_dm(N)
+
+        # general case (also test BigFloat)
+        ρTd = thermal_dm(N, big(0.123))
+        ρTs = thermal_dm(N, big(0.123); sparse = Val(true))
         @test isoper(ρTd)
-        @test ρTd.dims == [5]
-        @test tr(ρTd) ≈ 1.0
-        @test ρTd.data ≈ spdiagm(
-            0 => Float64[
-                0.8904859864731106,
-                0.09753319353178326,
-                0.010682620484781245,
-                0.0011700465891612583,
-                0.00012815292116369966,
-            ],
-        )
-        @test typeof(ρTs.data) <: AbstractSparseMatrix
+        @test ρTd.dims == [N]
+        @test tr(ρTd) ≈ tr(ρTs) ≈ 1.0
+        @test diag(ρTd) ≈ Float64[
+            0.8904859864731106,
+            0.09753319353178326,
+            0.010682620484781245,
+            0.0011700465891612583,
+            0.00012815292116369966,
+        ]
+        @test ρTs.data isa AbstractSparseMatrix
         @test ρTd ≈ ρTs
     end
 
@@ -180,7 +190,7 @@
     end
 
     @testset "tunneling" begin
-        @test tunneling(10, 2) == tunneling(10, 2; sparse = true)
+        @test tunneling(10, 2) == tunneling(10, 2; sparse = Val(true))
         @test_throws ArgumentError tunneling(10, 0)
     end
 

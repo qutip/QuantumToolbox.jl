@@ -332,8 +332,10 @@ function _DSF_mesolve_Affect!(integrator)
     op_l2 = op_list .+ αt_list
     e_ops2 = e_ops(op_l2, dsf_params)
     _mesolve_callbacks_new_e_ops!(integrator, [_generate_mesolve_e_op(op) for op in e_ops2])
-    # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
-    copyto!(integrator.f.f.A, liouvillian(H(op_l2, dsf_params), c_ops(op_l2, dsf_params)).data)
+
+    # By doing this, we are assuming that all the arguments of ODEFunction are the default ones
+    integrator.f =
+        ODEFunction{true,FullSpecialize}(_mesolve_make_L_QobjEvo(H(op_l2, dsf_params), c_ops(op_l2, dsf_params)).data)
     return u_modified!(integrator, true)
 end
 
@@ -360,9 +362,12 @@ function dsf_mesolveProblem(
 
     αt_list = convert(Vector{T}, α0_l)
     op_l_vec = map(op -> mat2vec(get_data(op)'), op_list)
-    # Create the Krylov subspace with kron(H₀.data, H₀.data) just for initialize
-    expv_cache = arnoldi(kron(H₀.data, H₀.data), mat2vec(ket2dm(ψ0).data), krylov_dim)
+
     dsf_identity = Eye(prod(H₀.dimensions))
+
+    # Create the Krylov subspace just for initialize
+    expv_cache = arnoldi(kron(dsf_identity, dsf_identity), mat2vec(ket2dm(ψ0).data), krylov_dim)
+
     dsf_displace_cache_left = sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(op.data, dsf_identity)), op_list)
     dsf_displace_cache_left_dag =
         sum(op -> ScalarOperator(one(T)) * MatrixOperator(kron(sparse(op.data'), dsf_identity)), op_list)
