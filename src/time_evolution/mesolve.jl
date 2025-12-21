@@ -120,8 +120,6 @@ function mesolveProblem(
         states_type = Operator()
     end
 
-
-
     L = cache_operator(L_evo.data, ρ0)
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
