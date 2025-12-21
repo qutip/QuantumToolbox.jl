@@ -10,11 +10,11 @@
     tlist = 0:Δt:(2π)
     ψt = sesolve(H, ψ0, tlist; progress_bar = Val(false)).states[2:end] # ignore the initial state
     ρt = mesolve(H, ρ0, tlist; progress_bar = Val(false)).states[2:end] # ignore the initial state
-    G_se = sesolve(H, qeye_like(H), [0, Δt]; progress_bar = Val(false)).states[end]
-    G_me = mesolve(L, qeye_like(L), [0, Δt]; progress_bar = Val(false)).states[end]
+    U_se = sesolve(H, qeye_like(H), [0, Δt]; progress_bar = Val(false)).states[end]
+    U_me = mesolve(L, qeye_like(L), [0, Δt]; progress_bar = Val(false)).states[end]
 
     for n in 1:(length(tlist)-1)
-        @test isapprox(G_se^n * ψ0, ψt[n]; atol = 1e-5)
-        @test isapprox(G_me^n * ρ0, ρt[n]; atol = 1e-5)
+        @test isapprox(U_se^n * ψ0, ψt[n]; atol = 1e-5)
+        @test isapprox(U_me^n * ρ0, ρt[n]; atol = 1e-5)
     end
 end
