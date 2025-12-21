@@ -60,6 +60,7 @@ const PAGES = [
             "Stochastic Solver" => "users_guide/time_evolution/stochastic.md",
             "Solving Problems with Time-dependent Hamiltonians" => "users_guide/time_evolution/time_dependent.md",
             "Bloch-Redfield master equation" => "users_guide/time_evolution/brmesolve.md",
+            "Computing propagators" => "users_guide/time_evolution/propagator.md",
         ],
         "Automatic Differentiation" => "users_guide/autodiff.md",
         "Intensive parallelization on a Cluster" => "users_guide/cluster.md",

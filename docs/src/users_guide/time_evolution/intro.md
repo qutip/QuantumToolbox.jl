@@ -31,6 +31,7 @@
 - [Bloch-Redfield master equation](@ref doc-TE:Bloch-Redfield-master-equation)
     - [Brief Derivation and Definitions](@ref doc-TE:Brief-Derivation-and-Definitions)
     - [Bloch-Redfield master equation in `QuantumToolbox.jl`](@ref Bloch-Redfield-master-equation-in-QuantumToolbox-jl)
+- [Computing propagators](@ref doc-TE:Computing-propagators)
 
 
 # [Introduction](@id doc-TE:Introduction)
