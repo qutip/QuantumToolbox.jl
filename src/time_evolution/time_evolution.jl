@@ -19,15 +19,23 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
 - `times::AbstractVector`: The time list of the evolution.
+- `states_type::QuantumObjectType`: The type of the quantum states during the evolution (e.g., [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref)).
 - `dimensions::AbstractDimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
 
 !!! note "`dims` property"
     For a given `prob::TimeEvolutionProblem`, `prob.dims` or `getproperty(prob, :dims)` returns its `dimensions` in the type of integer-vector.
 """
-struct TimeEvolutionProblem{PT<:AbstractSciMLProblem,TT<:AbstractVector,DT<:AbstractDimensions,KWT}
+struct TimeEvolutionProblem{
+    ST<:QuantumObjectType,
+    DT<:AbstractDimensions,
+    PT<:AbstractSciMLProblem,
+    TT<:AbstractVector,
+    KWT,
+}
     prob::PT
     times::TT
+    states_type::ST
     dimensions::DT
     kwargs::KWT
 end
@@ -41,7 +49,7 @@ function Base.getproperty(prob::TimeEvolutionProblem, key::Symbol)
     end
 end
 
-TimeEvolutionProblem(prob, times, dims) = TimeEvolutionProblem(prob, times, dims, nothing)
+TimeEvolutionProblem(prob, times, states_type, dims) = TimeEvolutionProblem(prob, times, states_type, dims, nothing)
 
 @doc raw"""
     struct TimeEvolutionSol

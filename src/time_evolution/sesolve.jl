@@ -2,13 +2,13 @@ export sesolveProblem, sesolve, sesolve_map
 
 _sesolve_make_U_QobjEvo(H) = -1im * QuantumObjectEvolution(H, type = Operator())
 
-function _gen_sesolve_solution(sol, times, dimensions)
-    ψt = map(ϕ -> QuantumObject(ϕ, type = Ket(), dims = dimensions), sol.u)
+function _gen_sesolve_solution(sol, prob::TimeEvolutionProblem{ST}) where {ST<:Union{Ket,Operator}}
+    ψt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
 
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
 
     return TimeEvolutionSol(
-        times,
+        prob.times,
         sol.t,
         ψt,
         _get_expvals(sol, SaveFuncSESolve),
@@ -40,7 +40,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
@@ -50,6 +50,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 
 # Notes
 
+- The initial state `ψ0` can also be [`Operator`](@ref). This is useful for simulating many states simultaneously or calculating propagator. For example, `ψ0` can be given as `qeye_like(H)` (an identity [`Operator`](@ref) matrix).
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
@@ -61,18 +62,19 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 """
 function sesolveProblem(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
+    ψ0::QuantumObject{ST},
     tlist::AbstractVector;
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
     params = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
-)
+) where {ST<:Union{Ket,Operator}}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     tlist = _check_tlist(tlist, _float_type(ψ0))
+    states_type = ψ0.type
 
     H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
@@ -90,7 +92,7 @@ function sesolveProblem(
 
     prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, params; kwargs4...)
 
-    return TimeEvolutionProblem(prob, tlist, H_evo.dimensions)
+    return TimeEvolutionProblem(prob, tlist, states_type, H_evo.dimensions)
 end
 
 @doc raw"""
@@ -115,7 +117,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref) or a [`Operator`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `alg`: The algorithm for the ODE solver. The default is `Vern7(lazy=false)`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
@@ -126,6 +128,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 
 # Notes
 
+- The initial state `ψ0` can also be [`Operator`](@ref). This is useful for simulating many states simultaneously or calculating propagator. For example, `ψ0` can be given as `qeye_like(H)` (an identity [`Operator`](@ref) matrix).
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
@@ -138,7 +141,7 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 """
 function sesolve(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
+    ψ0::QuantumObject{ST},
     tlist::AbstractVector;
     alg::AbstractODEAlgorithm = Vern7(lazy = false),
     e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
@@ -146,7 +149,7 @@ function sesolve(
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
-)
+) where {ST<:Union{Ket,Operator}}
 
     # Move sensealg argument to solve for Enzyme.jl support.
     # TODO: Remove it when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed.
@@ -175,7 +178,7 @@ end
 function sesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = Vern7(lazy = false); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
-    return _gen_sesolve_solution(sol, prob.times, prob.dimensions)
+    return _gen_sesolve_solution(sol, prob)
 end
 
 @doc raw"""
@@ -204,7 +207,7 @@ for each combination in the ensemble.
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state(s) of the system. Can be a single [`QuantumObject`](@ref) or a `Vector` of initial states.
+- `ψ0`: Initial state(s) of the system. Can be a single [`QuantumObject`](@ref) or a `Vector` of initial states. It can be either a [`Ket`](@ref) or [`Operator`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `alg`: The algorithm for the ODE solver. The default is `Vern7(lazy=false)`.
 - `ensemblealg`: Ensemble algorithm to use for parallel computation. Default is `EnsembleThreads()`.
@@ -215,6 +218,7 @@ for each combination in the ensemble.
 
 # Notes
 
+- The initial state `ψ0` can also be [`Operator`](@ref). This is useful for simulating many states simultaneously or calculating propagator. For example, `ψ0` can be given as `qeye_like(H)` (an identity [`Operator`](@ref) matrix).
 - The function returns an array of solutions with dimensions matching the Cartesian product of initial states and parameter sets.
 - If `ψ0` is a vector of `m` states and `params = (p1, p2, ...)` where `p1` has length `n1`, `p2` has length `n2`, etc., the output will be of size `(m, n1, n2, ...)`.
 - See [`sesolve`](@ref) for more details.
@@ -225,7 +229,7 @@ for each combination in the ensemble.
 """
 function sesolve_map(
     H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::AbstractVector{<:QuantumObject{Ket}},
+    ψ0::AbstractVector{<:QuantumObject{ST}},
     tlist::AbstractVector;
     alg::AbstractODEAlgorithm = Vern7(lazy = false),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
@@ -233,9 +237,12 @@ function sesolve_map(
     params::Union{NullParameters,Tuple} = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-)
+) where {ST<:Union{Ket,Operator}}
     # mapping initial states and parameters
-    ψ0_iter = map(get_data, ψ0)
+
+    ψ0 = map(to_dense, ψ0) # Convert all initial states to dense vectors
+
+    ψ0_iter = map(state -> to_dense(_complex_float_type(eltype(state)), copy(state.data)), ψ0)
     if params isa NullParameters
         iter = collect(Iterators.product(ψ0_iter, [params])) |> vec # convert nx1 Matrix into Vector
     else
@@ -255,8 +262,12 @@ function sesolve_map(
 
     return sesolve_map(prob, iter, alg, ensemblealg; progress_bar = progress_bar)
 end
-sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{Ket}, tlist::AbstractVector; kwargs...) =
-    sesolve_map(H, [ψ0], tlist; kwargs...)
+sesolve_map(
+    H::Union{AbstractQuantumObject{Operator},Tuple},
+    ψ0::QuantumObject{ST},
+    tlist::AbstractVector;
+    kwargs...,
+) where {ST<:Union{Ket,Operator}} = sesolve_map(H, [ψ0], tlist; kwargs...)
 
 # this method is for advanced usage
 # User can define their own iterator structure, prob_func and output_func
@@ -265,14 +276,14 @@ sesolve_map(H::Union{AbstractQuantumObject{Operator},Tuple}, ψ0::QuantumObject{
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function sesolve_map(
-    prob::TimeEvolutionProblem{<:ODEProblem},
+    prob::TimeEvolutionProblem{ST,<:AbstractDimensions,<:ODEProblem},
     iter::AbstractArray,
     alg::AbstractODEAlgorithm = Vern7(lazy = false),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads();
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
-)
+) where {ST<:Union{Ket,Operator}}
     # generate ensemble problem
     ntraj = length(iter)
     _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func
@@ -288,6 +299,7 @@ function sesolve_map(
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob.times,
+        prob.states_type,
         prob.dimensions,
         (progr = _output_func[2], channel = _output_func[3]),
     )
@@ -295,6 +307,6 @@ function sesolve_map(
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     # handle solution and make it become an Array of TimeEvolutionSol
-    sol_vec = [_gen_sesolve_solution(sol[:, i], prob.times, prob.dimensions) for i in eachindex(sol)] # map is type unstable
+    sol_vec = [_gen_sesolve_solution(sol[:, i], prob) for i in eachindex(sol)] # map is type unstable
     return reshape(sol_vec, size(iter))
 end

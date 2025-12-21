@@ -6,17 +6,20 @@ _mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvil
 _mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both H and
 c_ops are Nothing. You are probably running the wrong function."))
 
-function _gen_mesolve_solution(sol, times, dimensions, isoperket::Val)
-    if getVal(isoperket)
-        ρt = map(ϕ -> QuantumObject(ϕ, type = OperatorKet(), dims = dimensions), sol.u)
+function _gen_mesolve_solution(
+    sol,
+    prob::TimeEvolutionProblem{ST},
+) where {ST<:Union{Operator,OperatorKet,SuperOperator}}
+    if prob.states_type isa Operator
+        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = prob.states_type, dims = prob.dimensions), sol.u)
     else
-        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = Operator(), dims = dimensions), sol.u)
+        ρt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
     end
 
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
 
     return TimeEvolutionSol(
-        times,
+        prob.times,
         sol.t,
         ρt,
         _get_expvals(sol, SaveFuncMESolve),
@@ -55,7 +58,7 @@ where
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
@@ -66,6 +69,7 @@ where
 
 # Notes
 
+- The initial state `ψ0` can also be [`SuperOperator`](@ref). This is useful for simulating many density matrices simultaneously or calculating propagator. For example, when `H` is a [`SuperOperator`](@ref), `ψ0` can be given as `qeye_like(H)` (an identity [`SuperOperator`](@ref) matrix).
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolveProblem`](@ref) instead.
@@ -86,7 +90,7 @@ function mesolveProblem(
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet}}
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
     (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolveProblem(
         H,
         ψ0,
@@ -106,12 +110,16 @@ function mesolveProblem(
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     check_dimensions(L_evo, ψ0)
 
-    T = Base.promote_eltype(L_evo, ψ0)
-    ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
-        to_dense(_complex_float_type(T), copy(ψ0.data))
-    else
-        to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
+    # Convert to dense vector with complex element type
+
+    T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
+    is_operket_or_super = isoperket(ψ0) || issuper(ψ0)
+    ρ0 = is_operket_or_super ? to_dense(T, copy(ψ0.data)) : to_dense(T, mat2vec(ket2dm(ψ0).data))
+    states_type = ψ0.type
+    if !is_operket_or_super
+        states_type = Operator()
     end
+
     L = cache_operator(L_evo.data, ρ0)
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
@@ -122,7 +130,7 @@ function mesolveProblem(
 
     prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs4...)
 
-    return TimeEvolutionProblem(prob, tlist, L_evo.dimensions, (isoperket = Val(isoperket(ψ0)),))
+    return TimeEvolutionProblem(prob, tlist, states_type, L_evo.dimensions)
 end
 
 @doc raw"""
@@ -154,7 +162,7 @@ where
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
+- `ψ0`: Initial state of the system ``|\psi(0)\rangle``. It can be either a [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm for the ODE solver. The default value is `DP5()`.
@@ -165,7 +173,7 @@ where
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
-
+- The initial state `ψ0` can also be [`SuperOperator`](@ref). This is useful for simulating many density matrices simultaneously or calculating propagator. For example, when `H` is a [`SuperOperator`](@ref), `ψ0` can be given as `qeye_like(H)` (an identity [`SuperOperator`](@ref) matrix).
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolve`](@ref) instead.
@@ -188,7 +196,7 @@ function mesolve(
     progress_bar::Union{Val,Bool} = Val(true),
     inplace::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet}}
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
     (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolve(
         H,
         ψ0,
@@ -230,7 +238,7 @@ end
 function mesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = DP5(); kwargs...)
     sol = solve(prob.prob, alg; kwargs...)
 
-    return _gen_mesolve_solution(sol, prob.times, prob.dimensions, prob.kwargs.isoperket)
+    return _gen_mesolve_solution(sol, prob)
 end
 
 @doc raw"""
@@ -266,7 +274,7 @@ for each combination in the ensemble.
 # Arguments
 
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
-- `ψ0`: Initial state(s) of the system. Can be a single [`QuantumObject`](@ref) or a `Vector` of initial states. It can be either a [`Ket`](@ref), [`Operator`](@ref) or [`OperatorKet`](@ref).
+- `ψ0`: Initial state(s) of the system. Can be a single [`QuantumObject`](@ref) or a `Vector` of initial states. It can be either a [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref).
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
 - `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
 - `alg`: The algorithm for the ODE solver. The default is `DP5()`.
@@ -278,6 +286,7 @@ for each combination in the ensemble.
 
 # Notes
 
+- The initial state `ψ0` can also be [`SuperOperator`](@ref). This is useful for simulating many density matrices simultaneously or calculating propagator. For example, when `H` is a [`SuperOperator`](@ref), `ψ0` can be given as `qeye_like(H)` (an identity [`SuperOperator`](@ref) matrix).
 - The function returns an array of solutions with dimensions matching the Cartesian product of initial states and parameter sets.
 - If `ψ0` is a vector of `m` states and `params = (p1, p2, ...)` where `p1` has length `n1`, `p2` has length `n2`, etc., the output will be of size `(m, n1, n2, ...)`.
 - If `H` is an [`Operator`](@ref), `ψ0` is a [`Ket`](@ref) and `c_ops` is `Nothing`, the function will call [`sesolve_map`](@ref) instead.
@@ -298,7 +307,7 @@ function mesolve_map(
     params::Union{NullParameters,Tuple} = NullParameters(),
     progress_bar::Union{Val,Bool} = Val(true),
     kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet}}
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
     (isoper(H) && all(isket, ψ0) && isnothing(c_ops)) && return sesolve_map(
         H,
         ψ0,
@@ -315,7 +324,7 @@ function mesolve_map(
     # Convert to appropriate format based on state type
     ψ0_iter = map(ψ0) do state
         T = _complex_float_type(eltype(state))
-        if isoperket(state)
+        if isoperket(state) || issuper(state)
             to_dense(T, copy(state.data))
         else
             to_dense(T, mat2vec(ket2dm(state).data))
@@ -347,7 +356,7 @@ mesolve_map(
     tlist::AbstractVector,
     c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
     kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet}} =
+) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}} =
     mesolve_map(H, [ψ0], tlist, c_ops; kwargs...)
 
 # this method is for advanced usage
@@ -357,14 +366,14 @@ mesolve_map(
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function mesolve_map(
-    prob::TimeEvolutionProblem{<:ODEProblem},
+    prob::TimeEvolutionProblem{StateOpType,<:AbstractDimensions,<:ODEProblem},
     iter::AbstractArray,
     alg::AbstractODEAlgorithm = DP5(),
     ensemblealg::EnsembleAlgorithm = EnsembleThreads();
     prob_func::Union{Function,Nothing} = nothing,
     output_func::Union{Tuple,Nothing} = nothing,
     progress_bar::Union{Val,Bool} = Val(true),
-)
+) where {StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
     # generate ensemble problem
     ntraj = length(iter)
     _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func
@@ -380,14 +389,14 @@ function mesolve_map(
     ens_prob = TimeEvolutionProblem(
         EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
         prob.times,
+        prob.states_type,
         prob.dimensions,
-        (progr = _output_func[2], channel = _output_func[3], isoperket = prob.kwargs.isoperket),
+        (progr = _output_func[2], channel = _output_func[3]),
     )
 
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     # handle solution and make it become an Array of TimeEvolutionSol
-    sol_vec =
-        [_gen_mesolve_solution(sol[:, i], prob.times, prob.dimensions, prob.kwargs.isoperket) for i in eachindex(sol)] # map is type unstable
+    sol_vec = [_gen_mesolve_solution(sol[:, i], prob) for i in eachindex(sol)] # map is type unstable
     return reshape(sol_vec, size(iter))
 end

@@ -100,11 +100,11 @@ function smesolveProblem(
     check_dimensions(L_evo, ψ0)
     dims = L_evo.dimensions
 
-    T = Base.promote_eltype(L_evo, ψ0)
+    T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
     ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
-        to_dense(_complex_float_type(T), copy(ψ0.data))
+        to_dense(T, copy(ψ0.data))
     else
-        to_dense(_complex_float_type(T), mat2vec(ket2dm(ψ0).data))
+        to_dense(T, mat2vec(ket2dm(ψ0).data))
     end
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
@@ -146,7 +146,7 @@ function smesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, dims, (isoperket = Val(isoperket(ψ0)),))
+    return TimeEvolutionProblem(prob, tlist, ψ0.type, dims, (isoperket = Val(isoperket(ψ0)),))
 end
 
 @doc raw"""
@@ -274,6 +274,7 @@ function smesolveEnsembleProblem(
     ensemble_prob = TimeEvolutionProblem(
         EnsembleProblem(prob_sme, prob_func = _prob_func, output_func = _output_func[1], safetycopy = true),
         prob_sme.times,
+        prob_sme.states_type,
         prob_sme.dimensions,
         merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3])),
     )
