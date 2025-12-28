@@ -246,6 +246,129 @@ function _plot_fock_distribution(
     return fig, ax, bp
 end
 
+@doc raw"""
+    matrix_histogram(
+        library::Val{:Makie},
+        M::QuantumObject;
+        xbasis::Union{Nothing,AbstractVector}=nothing,
+        ybasis::Union{Nothing,AbstractVector}=nothing,
+        limits::Union{Nothing,Tuple{Real,Real}}=nothing,
+        bar_style::Union{Symbol,Val} = Val(:real),
+        azimuth::Real = -60,
+        elevation::Real = 45,
+        bars_spacing::Real = 0.2,
+        bars_shading::Bool = true,
+        colorbar::Bool = true,
+        colorbar_label::Union{Nothing,AbstractString} = nothing,
+        colormap = :viridis,
+        location::Union{GridPosition,Nothing} = nothing,
+        kwargs...,
+    )
+
+Plot a 3D histogram for the matrix `M`.
+
+# Arguments
+- `library::Val{:Makie}`: The plotting library to use.
+- `M::QuantumObject`: The quantum object for which to be plotted. It can be either a [`Operator`](@ref) or [`SuperOperator`](@ref).
+- (TBA)...
+- ...
+- ...
+- ...
+- `location::Union{GridPosition,Nothing}`: The location of the plot in the layout. If `nothing`, the plot is created in a new figure. Default is `nothing`.
+- `kwargs...`: Additional keyword arguments to pass to the plotting function. 
+
+# Returns
+- `fig`: The figure object.
+- `ax`: The axis object.
+- `ms`: The meshscatter object.
+
+!!! note "Import library first"
+    [`Makie.jl`](https://github.com/MakieOrg/Makie.jl) must first be imported before using this function. This can be done by importing one of the available backends, such as [`CairoMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie), [`GLMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/GLMakie), or [`WGLMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/WGLMakie).
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `Val(:real)`, `Val(:imag)`, and `Val(:abs)` instead of `:real`, `imag`, and `:abs`, respectively. Also, specify the library as `Val(:Makie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+"""
+function QuantumToolbox.matrix_histogram(
+    library::Val{:Makie},
+    M::QuantumObject{MT};
+    xbasis::Union{Nothing,AbstractVector} = nothing,
+    ybasis::Union{Nothing,AbstractVector} = nothing,
+    limits::Union{Nothing,Tuple{LT1,LT2}} = nothing,
+    bar_style::Union{Symbol,Val} = Val(:real),
+    azimuth::Real = -60,
+    elevation::Real = 45,
+    bars_spacing::Real = 0.2,
+    bars_shading::Bool = true,
+    colorbar::Bool = true,
+    colorbar_label::Union{Nothing,AbstractString} = nothing,
+    colormap = :viridis,
+    location::Union{GridPosition,Nothing} = nothing,
+    kwargs...,
+) where {MT<:Union{Operator,SuperOperator},LT1<:Real,LT2<:Real}
+    fig, location = _getFigAndLocation(location)
+    lyt = GridLayout(location)
+
+    Nx, Ny = size(M)
+    xdata = 0:(Nx-1)
+    ydata = 0:(Ny-1)
+    z0 = zeros(Nx, Ny)
+    zdata = vec(_handle_matrix_plot_data(M, makeVal(bar_style)))
+
+    xbasis = isnothing(xbasis) ? map(x -> L"\langle%$(x)|", xdata) : xbasis
+    ybasis = isnothing(ybasis) ? map(y -> L"|%$(y)\rangle", ydata) : ybasis
+    length(xbasis) == Nx ||
+        throw(ArgumentError("Length of xbasis ($(length(xbasis))) does not match matrix size: ($Nx)"))
+    length(ybasis) == Ny ||
+        throw(ArgumentError("Length of ybasis ($(length(ybasis))) does not match matrix size: ($Ny)"))
+    xticks = (xdata, xbasis)
+    yticks = (ydata, ybasis)
+
+    ax = Axis3(
+        lyt[1, 1];
+        aspect = (2, 2, 1),
+        limits = ((-0.5, Nx - 0.5), (-0.5, Ny - 0.5), limits),
+        azimuth = deg2rad(azimuth),
+        elevation = deg2rad(elevation),
+        xticks = xticks,
+        yticks = yticks,
+        xlabelvisible = false,
+        ylabelvisible = false,
+        zlabelvisible = false,
+        xticksvisible = false,
+        yticksvisible = false,
+        xgridvisible = false,
+        ygridvisible = false,
+    )
+
+    (0 ≤ bars_spacing ≤ 1) ||
+        throw(ArgumentError("Invalid keyword argument bars_spacing = $(bars_spacing), should be: 0 ≤ bars_spacing ≤ 1"))
+    bar_edge_length = 1 - bars_spacing
+
+    ms = meshscatter!(
+        ax,
+        xdata,
+        ydata,
+        z0;
+        marker = Rect3f((-0.5, -0.5, 0), (1, 1, 1)),
+        markersize = Vec3f.(bar_edge_length, bar_edge_length, zdata),
+        shading = bars_shading,
+        color = zdata,
+        colormap = colormap,
+        kwargs...,
+    )
+
+    colorbar_label = isnothing(colorbar_label) ? string(getVal(bar_style)) : colorbar_label
+    colorbar && Colorbar(lyt[1, 2], ms, label = colorbar_label)
+
+    return fig, ax, ms
+end
+
+_handle_matrix_plot_data(M::QuantumObject{MT}, ::Val{:real}) where {MT<:Union{Operator,SuperOperator}} = real(M.data)
+_handle_matrix_plot_data(M::QuantumObject{MT}, ::Val{:imag}) where {MT<:Union{Operator,SuperOperator}} = imag(M.data)
+_handle_matrix_plot_data(M::QuantumObject{MT}, ::Val{:abs}) where {MT<:Union{Operator,SuperOperator}} = abs.(M.data)
+_handle_matrix_plot_data(::QuantumObject{MT}, v::Val) where {MT<:Union{Operator,SuperOperator}} =
+    throw(ArgumentError("Invalid keyword argument $(v), should be either: :real, :imag, or :abs"))
+
 raw"""
     _getFigAndLocation(location::Nothing)
     

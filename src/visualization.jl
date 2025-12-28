@@ -1,5 +1,6 @@
 export plot_wigner
 export plot_fock_distribution
+export matrix_histogram
 export plot_bloch, Bloch, render, add_points!, add_vectors!, add_line!, add_arc!, clear!, add_states!
 
 @doc raw"""
@@ -62,6 +63,37 @@ plot_fock_distribution(
 ) where {SType<:Union{Bra,Ket,Operator}} = plot_fock_distribution(makeVal(library), ρ; kwargs...)
 
 plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T,SType<:Union{Bra,Ket,Operator}} =
+    throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))
+
+@doc raw"""
+    matrix_histogram(
+        M::QuantumObject{MT};
+        library::Union{Val, Symbol} = Val(:Makie),
+        kwargs...
+    ) where {MT<:Union{Operator,SuperOperator}}
+
+Plot a 3D histogram for the matrix `M`.
+
+The `library` keyword argument specifies the plotting library to use, defaulting to [`Makie`](https://github.com/MakieOrg/Makie.jl). 
+
+# Arguments
+- `M::QuantumObject`: The quantum object for which to be plotted. It can be either a [`Operator`](@ref) or [`SuperOperator`](@ref).
+- `library::Union{Val,Symbol}`: The plotting library to use. Default is `Val(:Makie)`.
+- `kwargs...`: Additional keyword arguments to pass to the plotting function. See the documentation for the specific plotting library for more information.
+
+!!! note "Import library first"
+    The plotting libraries must first be imported before using them with this function.
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `Val(:Makie)` instead of `:Makie` as the plotting library. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+"""
+matrix_histogram(
+    M::QuantumObject{MT};
+    library::Union{Val,Symbol} = Val(:Makie),
+    kwargs...,
+) where {MT<:Union{Operator,SuperOperator}} = matrix_histogram(makeVal(library), M; kwargs...)
+
+matrix_histogram(::Val{T}, M::QuantumObject{MT}; kwargs...) where {MT<:Union{Operator,SuperOperator}} =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))
 
 @doc raw"""
