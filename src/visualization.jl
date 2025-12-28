@@ -79,6 +79,7 @@ The `library` keyword argument specifies the plotting library to use, defaulting
 # Arguments
 - `M::QuantumObject`: The quantum object for which to be plotted. It can be either a [`Operator`](@ref) or [`SuperOperator`](@ref).
 - `library::Union{Val,Symbol}`: The plotting library to use. Default is `Val(:Makie)`.
+- `method::Union{Symbol,Val} = Val(:real)`: Method to use for plotting the matrix elements. Can be either `:real`, `:imag`, or `:abs`. Default is `Val(:real)`.
 - `kwargs...`: Additional keyword arguments to pass to the plotting function. See the documentation for the specific plotting library for more information.
 
 !!! note "Import library first"
@@ -90,11 +91,24 @@ The `library` keyword argument specifies the plotting library to use, defaulting
 matrix_histogram(
     M::QuantumObject{MT};
     library::Union{Val,Symbol} = Val(:Makie),
+    method::Union{Symbol,Val} = Val(:real),
     kwargs...,
-) where {MT<:Union{Operator,SuperOperator}} = matrix_histogram(makeVal(library), M; kwargs...)
+) where {MT<:Union{Operator,SuperOperator}} = matrix_histogram(makeVal(library), M.data; kwargs...)
+matrix_histogram(
+    M::AbstractMatrix{T};
+    library::Union{Val,Symbol} = Val(:Makie),
+    method::Union{Symbol,Val} = Val(:real),
+    kwargs...,
+) where {T<:Number} = matrix_histogram(makeVal(library), _handle_matrix_plot_data(M, makeVal(method)); kwargs...)
 
 matrix_histogram(::Val{T}, M::QuantumObject{MT}; kwargs...) where {MT<:Union{Operator,SuperOperator}} =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))
+
+_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:real}) where {T<:Number} = real(M)
+_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:imag}) where {T<:Number} = imag(M)
+_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:abs}) where {T<:Number} = abs.(M)
+_handle_matrix_plot_data(::AbstractMatrix{T}, v::Val) where {T<:Number} =
+    throw(ArgumentError("Invalid keyword argument $(v), should be either: :real, :imag, or :abs"))
 
 @doc raw"""
     Bloch(kwargs...)
