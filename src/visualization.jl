@@ -93,7 +93,9 @@ matrix_histogram(
     library::Union{Val,Symbol} = Val(:Makie),
     method::Union{Symbol,Val} = Val(:real),
     kwargs...,
-) where {MT<:Union{Operator,SuperOperator}} = matrix_histogram(makeVal(library), M.data; kwargs...)
+) where {MT<:Union{Operator,SuperOperator}} = matrix_histogram(M.data; library = library, method = method, kwargs...)
+
+# this method makes it also work for generic AbstractMatrix
 matrix_histogram(
     M::AbstractMatrix{T};
     library::Union{Val,Symbol} = Val(:Makie),
@@ -101,7 +103,7 @@ matrix_histogram(
     kwargs...,
 ) where {T<:Number} = matrix_histogram(makeVal(library), _handle_matrix_plot_data(M, makeVal(method)); kwargs...)
 
-matrix_histogram(::Val{T}, M::QuantumObject{MT}; kwargs...) where {MT<:Union{Operator,SuperOperator}} =
+matrix_histogram(::Val{T}, M; kwargs...) =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))
 
 _handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:real}) where {T<:Number} = real(M)
