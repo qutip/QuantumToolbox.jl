@@ -136,7 +136,7 @@ include("negativity.jl")
 include("steadystate.jl")
 include("spectrum.jl")
 
-# Visualization
+## Visualization
 include("visualization/bloch_sphere.jl")
 include("visualization/fock_distribution.jl")
 include("visualization/wigner.jl")
