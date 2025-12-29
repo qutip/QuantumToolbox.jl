@@ -327,7 +327,7 @@ function matrix_histogram(
     # generate z data
     ## z0 mean the origin of all bars
     ## the matrix data (zdata) will be handled by scaling each marker size in meshscatter! later
-    z0 = zeros(Nx, Ny) 
+    z0 = zeros(Nx, Ny)
     zdata = vec(_handle_matrix_plot_data(M, makeVal(method)))
 
     # handle x and y ticks
@@ -366,6 +366,7 @@ function matrix_histogram(
         elevation = deg2rad(elevation),
         xticks = xticks,
         yticks = yticks,
+        yreversed = true,
         xlabelvisible = false,
         ylabelvisible = false,
         zlabelvisible = false,

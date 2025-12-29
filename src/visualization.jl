@@ -94,24 +94,31 @@ matrix_histogram(
     library::Union{Val,Symbol} = Val(:Makie),
     method::Union{Symbol,Val} = Val(:real),
     kwargs...,
-) where {QT<:Union{Operator,SuperOperator},MT<:Number} = matrix_histogram(makeVal(library), M; method = makeVal(method), kwargs...)
+) where {QT<:Union{Operator,SuperOperator},MT<:Number} =
+    matrix_histogram(makeVal(library), M; method = makeVal(method), kwargs...)
 
 matrix_histogram(::Val{T}, M; kwargs...) where {T} =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))
 
 # the following functions will be used in all plotting backends
-_handle_matrix_plot_data(M::QuantumObject{T}, method::Val) where {T<:Union{Operator,SuperOperator}} = _handle_matrix_plot_data(M.data, method)
-_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:real}) where {T<:Number} = real(M)
-_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:imag}) where {T<:Number} = imag(M)
-_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:abs}) where {T<:Number} = abs.(M)
-_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:angle}) where {T<:Number} = angle.(M)
+_handle_matrix_plot_data(M::QuantumObject{T}, method::Val) where {T<:Union{Operator,SuperOperator}} =
+    _handle_matrix_plot_data(M.data, method)
+_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:real}) where {T<:Number} = real(transpose(M))
+_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:imag}) where {T<:Number} = imag(transpose(M))
+_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:abs}) where {T<:Number} = abs.(transpose(M))
+_handle_matrix_plot_data(M::AbstractMatrix{T}, ::Val{:angle}) where {T<:Number} = angle.(transpose(M))
 _handle_matrix_plot_data(::AbstractMatrix{T}, method::Val) where {T<:Number} =
     throw(ArgumentError("Invalid keyword argument method = $(method), should be either: :real, :imag, :abs, or :angle"))
 
-_gen_default_ket_labels(::Union{QuantumObject{Operator},AbstractMatrix{T}}, ydata) where {T<:Number} = map(y -> L"|%$(y)\rangle", ydata)
-_gen_default_bra_labels(::Union{QuantumObject{Operator},AbstractMatrix{T}}, xdata) where {T<:Number} = map(x -> L"\langle%$(x)|", xdata)
+# for y-axis ticks
 _gen_default_ket_labels(::QuantumObject{SuperOperator}, ydata) = map(y -> L"|%$(y)\rangle\!\rangle", ydata)
+_gen_default_ket_labels(::Union{QuantumObject{Operator},AbstractMatrix{T}}, ydata) where {T<:Number} =
+    map(y -> L"|%$(y)\rangle", ydata)
+
+# for x-axis ticks
 _gen_default_bra_labels(::QuantumObject{SuperOperator}, xdata) = map(x -> L"\langle\!\langle%$(x)|", xdata)
+_gen_default_bra_labels(::Union{QuantumObject{Operator},AbstractMatrix{T}}, xdata) where {T<:Number} =
+    map(x -> L"\langle%$(x)|", xdata)
 
 @doc raw"""
     Bloch(kwargs...)
