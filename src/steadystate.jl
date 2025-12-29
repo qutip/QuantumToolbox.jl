@@ -50,16 +50,16 @@ end
 
 An ordinary differential equation (ODE) solver for solving [`steadystate`](@ref). It solves the stationary state based on [`mesolve`](@ref) with a termination condition.
 
-The termination condition of the stationary state ``|\rho\rangle\rangle`` is that either the following condition is `true`:
+The termination condition of the stationary state ``|\rho\rangle\!\rangle`` is that either the following condition is `true`:
 
 ```math
-\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}+|\hat{\rho}\rangle\rangle\rVert
+\lVert\frac{\partial |\hat{\rho}\rangle\!\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\hat{\rho}\rangle\!\rangle}{\partial t}+|\hat{\rho}\rangle\!\rangle\rVert
 ```
 
 or
 
 ```math
-\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{abstol}
+\lVert\frac{\partial |\hat{\rho}\rangle\!\rangle}{\partial t}\rVert \leq \textrm{abstol}
 ```
 
 # Arguments
