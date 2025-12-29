@@ -328,7 +328,7 @@ function matrix_histogram(
     ## z0 mean the origin of all bars
     ## the matrix data (zdata) will be handled by scaling each marker size in meshscatter! later
     z0 = zeros(Nx, Ny) 
-    zdata = vec(_handle_matrix_plot_data(M, method))
+    zdata = vec(_handle_matrix_plot_data(M, makeVal(method)))
 
     # handle x and y ticks
     xbasis = isnothing(xbasis) ? _gen_default_bra_labels(M, xdata) : xbasis

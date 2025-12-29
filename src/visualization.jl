@@ -94,7 +94,7 @@ matrix_histogram(
     library::Union{Val,Symbol} = Val(:Makie),
     method::Union{Symbol,Val} = Val(:real),
     kwargs...,
-) where {QT<:Union{Operator,SuperOperator},MT<:Number} = matrix_histogram(makeVal(library), M; method = method, kwargs...)
+) where {QT<:Union{Operator,SuperOperator},MT<:Number} = matrix_histogram(makeVal(library), M; method = makeVal(method), kwargs...)
 
 matrix_histogram(::Val{T}, M; kwargs...) where {T} =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))
