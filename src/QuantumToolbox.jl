@@ -125,7 +125,7 @@ include("time_evolution/ssesolve.jl")
 include("time_evolution/smesolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 
-## Others
+## Other functionalities
 include("correlations.jl")
 include("wigner.jl")
 include("spin_lattice.jl")
@@ -135,7 +135,11 @@ include("metrics.jl")
 include("negativity.jl")
 include("steadystate.jl")
 include("spectrum.jl")
-include("visualization.jl")
+
+# Visualization
+include("visualization/bloch_sphere.jl")
+include("visualization/fock_distribution.jl")
+include("visualization/wigner.jl")
 
 ## deprecated functions
 include("deprecated.jl")
