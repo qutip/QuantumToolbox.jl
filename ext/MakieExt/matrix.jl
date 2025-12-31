@@ -47,7 +47,7 @@ Plot a heatmap for the elements of matrix `M`.
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `method = Val(:real)`, `Val(:imag)`, `Val(:abs)`, and `Val(:angle)` instead of `:real`, `:imag`, `:abs`, and `:angle`, respectively. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function matrix_heatmap(
+function QuantumToolbox.matrix_heatmap(
     library::Val{:Makie},
     M::Union{QuantumObject{QT},AbstractMatrix{MT}};
     method::Union{Symbol,Val} = Val(:real),
