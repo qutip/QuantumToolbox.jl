@@ -39,7 +39,7 @@ Plot a heatmap for the elements of matrix `M`.
 # Returns
 - `fig`: The figure object.
 - `ax`: The axis object.
-- `hm`: The heatmat object.
+- `hm`: The heatmap object.
 
 !!! note "Import library first"
     [`Makie.jl`](https://github.com/MakieOrg/Makie.jl) must first be imported before using this function. This can be done by importing one of the available backends, such as [`CairoMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/CairoMakie), [`GLMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/GLMakie), or [`WGLMakie.jl`](https://github.com/MakieOrg/Makie.jl/tree/master/WGLMakie).
