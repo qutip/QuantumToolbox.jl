@@ -591,7 +591,7 @@ function liouvillian_generalized(
     tol::Real = 1e-12,
     σ_filter::Union{Nothing,Real} = nothing,
 )
-    (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
+    (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
 
     dims = isnothing(N_trunc) ? H.dims : (N_trunc,)
     final_size = prod(dims)
