@@ -71,7 +71,8 @@ function matrix_histogram(
     lyt = GridLayout(location)
 
     # generate x and y data
-    Nx, Ny = size(M)
+    # y-axis means row, x-axis means column
+    Ny, Nx = size(M)
     xdata = 0:(Nx-1)   # computational basis
     ydata = 0:(Ny-1)   # computational basis
 
@@ -111,8 +112,8 @@ function matrix_histogram(
     # create 3D axis
     ax = Axis3(
         lyt[1, 1];
-        aspect = (2, 2, 1),
-        limits = ((-0.5, Nx - 0.5), (-0.5, Ny - 0.5), limits), # -0.5 in x and y due to the width of bar
+        aspect = (Nx / Ny, 1, 0.5), # this ratio makes the elements always be squared size (even in non-squared matrix cases)
+        limits = ((-0.5, Nx - 0.5), (-0.5, Ny - 0.5), limits), # -0.5 in x and y originates from the half width of bar
         azimuth = deg2rad(azimuth),
         elevation = deg2rad(elevation),
         xticks = xticks,
