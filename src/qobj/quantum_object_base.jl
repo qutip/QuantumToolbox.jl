@@ -62,7 +62,7 @@ Base.show(io::IO, ::SuperOperator) = print(io, "SuperOperator()")
 @doc raw"""
     OperatorBra <: QuantumObjectType
 
-Constructor representing a bra state in the [`SuperOperator`](@ref) formalism ``\langle\langle\rho|``.
+Constructor representing a bra state in the [`SuperOperator`](@ref) formalism ``\langle\!\langle\rho|``.
 """
 struct OperatorBra <: QuantumObjectType end
 
@@ -71,7 +71,7 @@ Base.show(io::IO, ::OperatorBra) = print(io, "OperatorBra()")
 @doc raw"""
     OperatorKet <: QuantumObjectType
 
-Constructor representing a ket state in the [`SuperOperator`](@ref) formalism ``|\rho\rangle\rangle``.
+Constructor representing a ket state in the [`SuperOperator`](@ref) formalism ``|\rho\rangle\!\rangle``.
 """
 struct OperatorKet <: QuantumObjectType end
 
