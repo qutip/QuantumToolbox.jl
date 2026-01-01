@@ -311,7 +311,7 @@ This support is based on the correspondence between linear operators acting on a
 ```
 Therefore, a given density matrix ``\hat{\rho}`` can then be vectorized, denoted as 
 ```math
-|\hat{\rho}\rangle\rangle = \textrm{vec}(\hat{\rho}).
+|\hat{\rho}\rangle\!\rangle = \textrm{vec}(\hat{\rho}).
 ```
 
 `QuantumToolbox` uses the column-stacking convention for the isomorphism between ``\mathcal{L}(\mathcal{H})`` and ``\mathcal{H}\otimes\mathcal{H}``. This isomorphism is implemented by the functions [`mat2vec`](@ref) (or [`operator_to_vector`](@ref)) and [`vec2mat`](@ref) (or [`vector_to_operator`](@ref)):
@@ -343,9 +343,9 @@ Because `Julia` is a column-oriented languages (like `Fortran` and `MATLAB`), in
 
 ```math
 \begin{align}
-\hat{A}\hat{\rho}~~~ &\rightarrow \textrm{spre}(\hat{A}) * \textrm{vec}(\hat{\rho}) = \hat{\mathbb{1}}\otimes \hat{A} ~ |\hat{\rho}\rangle\rangle,\notag\\
-\hat{\rho} \hat{B} &\rightarrow \textrm{spost}(\hat{B}) * \textrm{vec}(\hat{\rho}) = \hat{B}^T\otimes \hat{\mathbb{1}} ~ |\hat{\rho}\rangle\rangle,\notag\\
-\hat{A} \hat{\rho} \hat{B} &\rightarrow \textrm{sprepost}(\hat{A},\hat{B}) * \textrm{vec}(\hat{\rho}) = \hat{B}^T\otimes \hat{A} ~ |\hat{\rho}\rangle\rangle,\notag
+\hat{A}\hat{\rho}~~~ &\rightarrow \textrm{spre}(\hat{A}) * \textrm{vec}(\hat{\rho}) = \hat{\mathbb{1}}\otimes \hat{A} ~ |\hat{\rho}\rangle\!\rangle,\notag\\
+\hat{\rho} \hat{B} &\rightarrow \textrm{spost}(\hat{B}) * \textrm{vec}(\hat{\rho}) = \hat{B}^T\otimes \hat{\mathbb{1}} ~ |\hat{\rho}\rangle\!\rangle,\notag\\
+\hat{A} \hat{\rho} \hat{B} &\rightarrow \textrm{sprepost}(\hat{A},\hat{B}) * \textrm{vec}(\hat{\rho}) = \hat{B}^T\otimes \hat{A} ~ |\hat{\rho}\rangle\!\rangle,\notag
 \end{align}
 ```
 where ``\hat{\mathbb{1}}`` represents the identity operator with Hilbert space dimension equal to ``\hat{\rho}``.
