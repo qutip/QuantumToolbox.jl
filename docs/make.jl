@@ -71,7 +71,7 @@ const PAGES = [
         "QuantumToolbox Settings" => "users_guide/settings.md",
         "Extensions" => [
             "Extension for CUDA.jl" => "users_guide/extensions/cuda.md",
-            "Extension for the Makie.jl ecosystem" => "users_guide/extensions/cairomakie.md",
+            "Extension for the Makie.jl ecosystem" => "users_guide/extensions/makie.md",
         ],
     ],
     "Resources" => [
