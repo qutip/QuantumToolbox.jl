@@ -248,8 +248,8 @@ dsf_mcsolve
 
 ```@docs
 TimeEvolutionLRSol
-lr_mesolveProblem
-lr_mesolve
+variational_lr_mesolveProblem
+variational_lr_mesolve
 ```
 
 ## [Correlations and Spectrum](@id doc-API:Correlations-and-Spectrum)

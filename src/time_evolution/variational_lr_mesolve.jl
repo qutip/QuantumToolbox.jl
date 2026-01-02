@@ -1,4 +1,4 @@
-export lr_mesolve, lr_mesolveProblem, TimeEvolutionLRSol
+export variational_lr_mesolve, variational_lr_mesolveProblem, TimeEvolutionLRSol
 
 @doc raw"""
     struct TimeEvolutionLRSol
@@ -44,7 +44,7 @@ struct TimeEvolutionLRSol{
     M::TM
 end
 
-lr_mesolve_options_default = (
+variational_lr_mesolve_options_default = (
     alg = DP5(),
     progress = true,
     err_max = 0.0,
@@ -104,7 +104,7 @@ end
     _calculate_expectation!(p,z,B,idx)
 
 Calculates the expectation values and function values of the operators and functions in p.e_ops and p.f_ops, respectively, and stores them in p.expvals and p.funvals.
-The function is called by the callback _save_affect_lr_mesolve!.
+The function is called by the callback _save_affect_variational_lr_mesolve!.
 
 # Arguments
 
@@ -146,9 +146,9 @@ function _periodicsave_func(integrator)
     return u_modified!(integrator, false)
 end
 
-_save_control_lr_mesolve(u, t, integrator) = t in integrator.p.times
+_save_control_variational_lr_mesolve(u, t, integrator) = t in integrator.p.times
 
-function _save_affect_lr_mesolve!(integrator)
+function _save_affect_variational_lr_mesolve!(integrator)
     ip = integrator.p
     N, M = ip.N, ip.M
     idx = select(integrator.t, ip.times)
@@ -367,7 +367,7 @@ get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (
 =#
 
 @doc raw"""
-    lr_mesolveProblem(
+    variational_lr_mesolveProblem(
         H::QuantumObject{Operator},
         z::AbstractArray{T,2},
         B::AbstractArray{T,2},
@@ -375,11 +375,11 @@ get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (
         c_ops::Union{AbstractVector,Tuple}=();
         e_ops::Union{AbstractVector,Tuple}=(),
         f_ops::Union{AbstractVector,Tuple}=(),
-        opt::NamedTuple = lr_mesolve_options_default,
+        opt::NamedTuple = variational_lr_mesolve_options_default,
         kwargs...,
     )
 
-Formulates the ODEproblem for the low-rank time evolution of the system. The function is called by [`lr_mesolve`](@ref). For more information about the low-rank master equation, see [gravina2024adaptive](@cite).
+Formulates the ODEproblem for the low-rank time evolution of the system. The function is called by [`variational_lr_mesolve`](@ref). For more information about the low-rank master equation, see [gravina2024adaptive](@cite).
 
 # Arguments
 - `H::QuantumObject`: The Hamiltonian of the system.
@@ -392,7 +392,7 @@ Formulates the ODEproblem for the low-rank time evolution of the system. The fun
 - `opt::NamedTuple`: The options of the low-rank master equation.
 - `kwargs`: Additional keyword arguments.
 """
-function lr_mesolveProblem(
+function variational_lr_mesolveProblem(
     H::QuantumObject{Operator},
     z::AbstractArray{T,2},
     B::AbstractArray{T,2},
@@ -400,7 +400,7 @@ function lr_mesolveProblem(
     c_ops::Union{AbstractVector,Tuple} = ();
     e_ops::Union{AbstractVector,Tuple} = (),
     f_ops::Union{AbstractVector,Tuple} = (),
-    opt::NamedTuple = lr_mesolve_options_default,
+    opt::NamedTuple = variational_lr_mesolve_options_default,
     kwargs...,
 ) where {T}
     Hdims = H.dimensions
@@ -418,7 +418,7 @@ function lr_mesolveProblem(
     funvals = Array{ComplexF64}(undef, length(f_ops), length(t_l))
     Ml = Array{Int64}(undef, length(t_l))
 
-    opt = merge(lr_mesolve_options_default, opt)
+    opt = merge(variational_lr_mesolve_options_default, opt)
     if opt.err_max > 0
         opt = merge(opt, (is_dynamical = true,))
     end
@@ -458,7 +458,7 @@ function lr_mesolveProblem(
     # Initialization of Callbacks
     if !isempty(e_ops) || !isempty(f_ops)
         _calculate_expectation!(p, z, B, 1)
-        cb_save = DiscreteCallback(_save_control_lr_mesolve, _save_affect_lr_mesolve!, save_positions = (false, false))
+        cb_save = DiscreteCallback(_save_control_variational_lr_mesolve, _save_affect_variational_lr_mesolve!, save_positions = (false, false))
         kwargs2 = merge(
             kwargs2,
             haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_save, kwargs2[:callback])) :
@@ -498,7 +498,7 @@ function lr_mesolveProblem(
 end
 
 @doc raw"""
-    lr_mesolve(
+    variational_lr_mesolve(
         H::QuantumObject{Operator},
         z::AbstractArray{T,2},
         B::AbstractArray{T,2},
@@ -506,7 +506,7 @@ end
         c_ops::Union{AbstractVector,Tuple}=();
         e_ops::Union{AbstractVector,Tuple}=(),
         f_ops::Union{AbstractVector,Tuple}=(),
-        opt::NamedTuple = lr_mesolve_options_default,
+        opt::NamedTuple = variational_lr_mesolve_options_default,
         kwargs...,
     )
 
@@ -523,7 +523,7 @@ Time evolution of an open quantum system using the low-rank master equation. For
 - `opt::NamedTuple`: The options of the low-rank master equation.
 - `kwargs`: Additional keyword arguments.
 """
-function lr_mesolve(
+function variational_lr_mesolve(
     H::QuantumObject{Operator},
     z::AbstractArray{T2,2},
     B::AbstractArray{T2,2},
@@ -531,14 +531,14 @@ function lr_mesolve(
     c_ops::Union{AbstractVector,Tuple} = ();
     e_ops::Union{AbstractVector,Tuple} = (),
     f_ops::Union{AbstractVector,Tuple} = (),
-    opt::NamedTuple = lr_mesolve_options_default,
+    opt::NamedTuple = variational_lr_mesolve_options_default,
     kwargs...,
 ) where {T2}
-    prob = lr_mesolveProblem(H, z, B, tlist, c_ops; e_ops = e_ops, f_ops = f_ops, opt = opt, kwargs...)
-    return lr_mesolve(prob; kwargs...)
+    prob = variational_lr_mesolveProblem(H, z, B, tlist, c_ops; e_ops = e_ops, f_ops = f_ops, opt = opt, kwargs...)
+    return variational_lr_mesolve(prob; kwargs...)
 end
 
-function lr_mesolve(prob::ODEProblem; kwargs...)
+function variational_lr_mesolve(prob::ODEProblem; kwargs...)
     sol = solve(prob, prob.p.opt.alg, tstops = prob.p.times)
     prob.p.opt.progress && print("\n")
 
