@@ -595,9 +595,10 @@ function liouvillian_generalized(
 
     dims = isnothing(N_trunc) ? H.dims : (N_trunc,)
     final_size = prod(dims)
+    final_dims = isnothing(N_trunc) ? H.dims : (H.dims, dims)
     result = eigen(H)
     E = real.(result.values[1:final_size])
-    U = QuantumObject(result.vectors[:, 1:final_size], result.type, (H.dims, dims))
+    U = QuantumObject(result.vectors[:, 1:final_size], result.type, final_dims)
 
     H_d = QuantumObject(Diagonal(complex(E)), type = Operator(), dims = dims)
 
