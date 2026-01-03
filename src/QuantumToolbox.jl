@@ -139,6 +139,7 @@ include("spectrum.jl")
 ## Visualization
 include("visualization/bloch_sphere.jl")
 include("visualization/fock_distribution.jl")
+include("visualization/matrix.jl")
 include("visualization/wigner.jl")
 
 ## deprecated functions

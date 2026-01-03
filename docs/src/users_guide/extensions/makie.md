@@ -20,4 +20,6 @@ The supported plotting functions are listed as follows:
 |:----------------------|:----------------|
 | [`plot_wigner`](@ref) | [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) |
 | [`plot_fock_distribution`](@ref) | [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution |
-| [`plot_bloch`](@ref)  | [Plotting on the Bloch Sphere](@ref doc:Plotting-on-the-Bloch-Sphere) |
+| [`plot_bloch`](@ref) | [Plotting on the Bloch Sphere](@ref doc:Plotting-on-the-Bloch-Sphere) |
+| [`matrix_heatmap`](@ref) | Plot a heatmap for the elements of a matrix |
+| [`matrix_histogram`](@ref) | Plot a 3D histogram for the elements of a matrix |
