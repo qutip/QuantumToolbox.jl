@@ -157,6 +157,8 @@ end
         xbasis::Union{Nothing,AbstractVector}=nothing,
         ybasis::Union{Nothing,AbstractVector}=nothing,
         limits::Union{Nothing,Tuple{Real,Real}}=nothing,
+        xreversed::Bool = true,
+        yreversed::Bool = false,
         azimuth::Real = -60,
         elevation::Real = 45,
         bars_spacing::Real = 0.2,
