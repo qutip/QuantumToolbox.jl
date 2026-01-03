@@ -77,10 +77,8 @@ function QuantumToolbox.matrix_heatmap(
     # handle x and y ticks
     xbasis = isnothing(xbasis) ? _gen_default_bra_labels(M, xdata) : xbasis
     ybasis = isnothing(ybasis) ? _gen_default_ket_labels(M, ydata) : ybasis
-    length(xbasis) == Nx ||
-        throw(ArgumentError("Length of xbasis ($(length(xbasis))) does not match matrix size: ($Nx)"))
-    length(ybasis) == Ny ||
-        throw(ArgumentError("Length of ybasis ($(length(ybasis))) does not match matrix size: ($Ny)"))
+    length(xbasis) == Nx || throw(ArgumentError("Length of xbasis ($(length(xbasis))) does not match matrix size: $Nx"))
+    length(ybasis) == Ny || throw(ArgumentError("Length of ybasis ($(length(ybasis))) does not match matrix size: $Ny"))
     xticks = (xdata, xbasis)
     yticks = (ydata, ybasis)
 
@@ -242,10 +240,8 @@ function QuantumToolbox.matrix_histogram(
     # handle x and y ticks
     xbasis = isnothing(xbasis) ? _gen_default_bra_labels(M, xdata) : xbasis
     ybasis = isnothing(ybasis) ? _gen_default_ket_labels(M, ydata) : ybasis
-    length(xbasis) == Nx ||
-        throw(ArgumentError("Length of xbasis ($(length(xbasis))) does not match matrix size: ($Nx)"))
-    length(ybasis) == Ny ||
-        throw(ArgumentError("Length of ybasis ($(length(ybasis))) does not match matrix size: ($Ny)"))
+    length(xbasis) == Nx || throw(ArgumentError("Length of xbasis ($(length(xbasis))) does not match matrix size: $Nx"))
+    length(ybasis) == Ny || throw(ArgumentError("Length of ybasis ($(length(ybasis))) does not match matrix size: $Ny"))
     xticks = (xdata, xbasis)
     yticks = (ydata, ybasis)
 
