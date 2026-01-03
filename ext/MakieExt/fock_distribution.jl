@@ -59,19 +59,27 @@ function _plot_fock_distribution(
     D = prod(ρ.dims)
     isapprox(tr(ρ), 1, atol = 1e-4) || (@warn "The input ρ should be normalized.")
 
+    # handle x ticks
     xvec = 0:(D-1)
-    isnothing(fock_numbers) && (fock_numbers = string.(collect(xvec)))
+    fock_numbers = isnothing(fock_numbers) ? string.(collect(xvec)) : fock_numbers
+    length(fock_numbers) == D ||
+        throw(ArgumentError("Length of fock_numbers ($(length(fock_numbers))) does not match the total dimension: $D"))
+
+    # handle limits
+    # -0.5 originates from the half width of bar
+    limits = unit_y_range ? (-0.5, D - 0.5, 0, 1) : (-0.5, D - 0.5, nothing, nothing)
 
     fig, location = _getFigAndLocation(location)
     lyt = GridLayout(location)
-    ax = Axis(lyt[1, 1])
+    ax = Axis(
+        lyt[1, 1];
+        xticks = (xvec, fock_numbers),
+        xlabel = "Fock number",
+        ylabel = "Occupation probability",
+        limits = limits,
+    )
 
     bp = barplot!(ax, xvec, real(diag(ρ)); kwargs...)
-
-    ax.xticks = (xvec, fock_numbers)
-    ax.xlabel = "Fock number"
-    ax.ylabel = "Occupation probability"
-    unit_y_range && ylims!(ax, 0, 1)
 
     return fig, ax, bp
 end
