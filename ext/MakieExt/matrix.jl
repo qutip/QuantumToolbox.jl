@@ -178,6 +178,8 @@ Plot a 3D histogram for the elements of matrix `M`.
 - `xbasis::Union{Nothing,AbstractVector}`: List of `x`-ticklabels. If `nothing`, the labels of computational basis will be automatically created. Default is `nothing`.
 - `ybasis::Union{Nothing,AbstractVector}`: List of `y`-ticklabels. If `nothing`, the labels of computational basis will be automatically created. Default is `nothing`.
 - `limits::Union{Nothing,Tuple{Real,Real}}`: The `z`-axis limits `(z_min, z_max)`. If `nothing`, the limits will be automatically decided. Default is `nothing`.
+- `xreversed::Bool`: Whether to reverse the `x`-axis. Default is `true`.
+- `yreversed::Bool`: Whether to reverse the `y`-axis. Default is `false`.
 - `azimuth::Real`: The azimuthal viewing angle (in degrees). Default is `-60`.
 - `elevation::Real`: The elevation viewing angle (in degrees). Default is `45`.
 - `bars_spacing::Real`: Spacing between bars. Default is `0.2`.
@@ -207,6 +209,8 @@ function QuantumToolbox.matrix_histogram(
     xbasis::Union{Nothing,AbstractVector} = nothing,
     ybasis::Union{Nothing,AbstractVector} = nothing,
     limits::Union{Nothing,Tuple{Real,Real}} = nothing,
+    xreversed::Bool = true,
+    yreversed::Bool = false,
     azimuth::Real = -60,
     elevation::Real = 45,
     bars_spacing::Real = 0.2,
@@ -269,7 +273,8 @@ function QuantumToolbox.matrix_histogram(
         elevation = deg2rad(elevation),
         xticks = xticks,
         yticks = yticks,
-        yreversed = true,
+        xreversed = xreversed,
+        yreversed = yreversed,
         xlabelvisible = false,
         ylabelvisible = false,
         zlabelvisible = false,
@@ -288,6 +293,7 @@ function QuantumToolbox.matrix_histogram(
         marker = Rect3f((-0.5, -0.5, 0), (1, 1, 1)), # corner position of the bar (x=-0.5,y=-0.5,z=0); original width (1,1,1)
         markersize = Vec3f.(bar_edge_length, bar_edge_length, zdata), # scale the size of the marker
         shading = shading,
+        backlight = 1, # this makes shading better when zdata contains exact zero values
         color = zdata,
         colormap = colormap,
         colorrange = colorrange,
