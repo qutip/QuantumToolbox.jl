@@ -3,8 +3,7 @@
 Visualization is often an important complement to a simulation of a quantum mechanical system. The first method of visualization that come to mind might be to plot the expectation values of a few selected operators. But on top of that, it can often be instructive to visualize for example the state vectors, density matrices, Hamiltonian, or Liouvillian. In this section, we demonstrate how `QuantumToolbox.jl` and [`Makie.jl`](https://github.com/MakieOrg/Makie.jl) can be used to perform a few types of visualizations that often can provide additional understanding of quantum system.
 
 ```@example visualization
-using CairoMakie # using Cairo.jl : high-quality vector graphics (SVG and PDF)
-using GLMakie    # requires OpenGL: better for 3D shading
+using CairoMakie
 ```
 
 ```@setup visualization
@@ -35,8 +34,6 @@ nothing # hide
 `QuantumToolbox.jl` provides a convenient function [`plot_fock_distribution`](@ref) to visualize the Fock-distribution:
 
 ```@example visualization
-CairoMakie.activate!() # activate 2D plotting backend
-
 fig = Figure(size = (600, 350))
 
 # only show several x-labels
@@ -68,8 +65,6 @@ In `QuantumToolbox.jl`, the Wigner function for a harmonic mode can be calculate
 In the following example, the Wigner functions are calculated and plotted for the same three states as in the previous section by calling the function [`plot_wigner`](@ref):
 
 ```@example visualization
-CairoMakie.activate!() # activate 2D plotting backend
-
 fig = Figure(size = (600, 200))
 
 xvec = LinRange(-5, 5, 200)
@@ -98,9 +93,6 @@ Sometimes, it may also be useful to directly visualizing the underlying matrix r
 For example, to illustrate the use of [`matrix_heatmap`](@ref), let’s visualize the Jaynes-Cummings Hamiltonian:
 
 ```@example visualization
-CairoMakie.activate!() # activate 2D plotting backend
-
-# Jaynes-Cummings model
 N = 5
 a = tensor(destroy(N), qeye(2))
 σm = tensor(qeye(N), destroy(2))
@@ -134,11 +126,12 @@ fig
 Similarly, we can use the function [`matrix_histogram`](@ref) to visualize the above Hamiltonian:
 
 ```@example visualization
-GLMakie.activate!() # activate 3D plotting backend
-
 fig = Figure(size = (500, 350))
 
 matrix_histogram(H; location = fig[1,1])
 
 fig
 ```
+
+!!! warning "Backend"
+    `CairoMakie` is not the best backend for handling 3D shading, we suggest to use `GLMakie` in this case.
