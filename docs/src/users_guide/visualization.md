@@ -146,5 +146,5 @@ fig
 ```
 
 ```@raw html
-<img src="/results/demo_matrix_histogram.png">
+<img src="docs/src/assets/demo/matrix_histogram.png">
 ```
