@@ -89,6 +89,9 @@
             @test ms isa MeshScatter
         end
     end
+    @test_throws ArgumentError matrix_heatmap(H; method = Val(:wrong))
+    @test_throws ArgumentError matrix_histogram(H; method = Val(:wrong))
+
     fig = Figure()
     pos = fig[2, 3]
     fig1, ax = matrix_heatmap(H; library = Val(:Makie), location = pos)
