@@ -90,7 +90,7 @@ Sometimes, it may also be useful to directly visualizing the underlying matrix r
 
 `QuantumToolbox.jl` offers a few functions for quickly visualizing matrix data in the form of 2D heatmap ([`matrix_heatmap`](@ref)) and 3D histogram ([`matrix_histogram`](@ref)).
 
-For example, to illustrate the use of [`matrix_heatmap`](@ref), let’s visualize the Jaynes-Cummings Hamiltonian:
+For example, to illustrate the use of these functions, let’s visualize the Jaynes-Cummings Hamiltonian:
 
 ```@example visualization
 N = 5
@@ -105,7 +105,14 @@ matrix_heatmap(H; location = fig[1,1])
 fig
 ```
 
-We can also use [`matrix_heatmap`](@ref) to visualize the `real` and `imag`inary parts of [`steadystate`](@ref):
+We can also handle the matrix elements with different `method` (keyword argument) before plotting them: 
+
+- `method = Val(:real)`: the real part of each element
+- `method = Val(:imag)`: the imaginary part of each element
+- `method = Val(:abs)`: the absolute value of each element
+- `method = Val(:angle)`: the (complex) phase angle in radians of each element
+
+For example, the `real` and `imag`inary parts of [`steadystate`](@ref) can be visualized by:
 
 ```@example visualization
 # collapse operators
@@ -123,9 +130,14 @@ matrix_heatmap(ρss; method = Val(:imag), location = fig[2,1])
 fig
 ```
 
-Similarly, we can use the function [`matrix_histogram`](@ref) to visualize the above Hamiltonian:
+Similarly, we can use the function [`matrix_histogram`](@ref) to visualize the above Hamiltonian in a 3D histogram:
 
-```@example visualization
+!!! warning "Backend"
+    `CairoMakie` is not the best backend for handling 3D shading, we suggest to use `GLMakie` for [`matrix_histogram`](@ref).
+
+```julia
+using GLMakie # requires OpenGL: a backend better for 3D shading
+
 fig = Figure(size = (500, 350))
 
 matrix_histogram(H; location = fig[1,1])
@@ -133,5 +145,6 @@ matrix_histogram(H; location = fig[1,1])
 fig
 ```
 
-!!! warning "Backend"
-    `CairoMakie` is not the best backend for handling 3D shading, we suggest to use `GLMakie` in this case.
+```@raw html
+<img src="/results/demo_matrix_histogram.png">
+```
