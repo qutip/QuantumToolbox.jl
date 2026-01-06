@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Introduce `matrix_heatmap` and `matrix_histogram` for visualizing operators. ([#621])
+- Allow rectangular eigenvector matrices in `liouvillian_generalized` and expand its documentation with proper citation. Rename it to `liouvillian_dressed_nonsecular`. ([#624])
 
 ## [v0.40.0]
 Release date: 2025-12-21
@@ -399,3 +400,4 @@ Release date: 2024-11-13
 [#614]: https://github.com/qutip/QuantumToolbox.jl/issues/614
 [#619]: https://github.com/qutip/QuantumToolbox.jl/issues/619
 [#621]: https://github.com/qutip/QuantumToolbox.jl/issues/621
+[#624]: https://github.com/qutip/QuantumToolbox.jl/issues/624

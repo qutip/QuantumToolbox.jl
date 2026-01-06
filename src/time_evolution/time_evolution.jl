@@ -2,7 +2,7 @@ export TimeEvolutionSol
 export TimeEvolutionMultiTrajSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
 export average_states, average_expect, std_expect
 
-export liouvillian_floquet, liouvillian_generalized
+export liouvillian_floquet, liouvillian_dressed_nonsecular
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
 const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-3, reltol = 2e-3, save_everystep = false, save_end = true)
@@ -554,14 +554,36 @@ function liouvillian_floquet(
 end
 
 @doc raw"""
-    liouvillian_generalized(H::QuantumObject, fields::Vector, 
-    T_list::Vector; N_trunc::Int=size(H,1), tol::Float64=0.0, σ_filter::Union{Nothing, Real}=nothing)
+    liouvillian_dressed_nonsecular(
+        H::QuantumObject{Operator},
+        fields::Vector,
+        T_list::Vector{<:Real};
+        N_trunc::Union{Int,Nothing}=nothing,
+        tol::Real=1e-12,
+        σ_filter::Union{Nothing,Real}=nothing,
+    )
 
-Constructs the generalized Liouvillian for a system coupled to a bath of harmonic oscillators.
+Build the generalized Liouvillian for a system coupled to multiple bosonic baths in the ultrastrong-coupling regime. The Hamiltonian `H` is diagonalized, the system-bath operators in `fields` are projected into the eigenbasis, and thermal jump operators are assembled for each temperature in `T_list`.
 
-See, e.g., Settineri, Alessio, et al. "Dissipation and thermal noise in hybrid quantum systems in the ultrastrong-coupling regime." Physical Review A 98.5 (2018): 053834.
+# Arguments
+- `H::QuantumObject{Operator}`: System Hamiltonian.
+- `fields::Vector`: Coupling operators that mediate the interaction with each bath; must match the length of `T_list`.
+- `T_list::Vector{<:Real}`: Bath temperatures ordered consistently with `fields`.
+
+# Keyword Arguments
+- `N_trunc::Union{Int,Nothing}`: If provided, truncate the eigenbasis to the first `N_trunc` levels; otherwise use the full dimension of `H`.
+- `tol::Real`: Tolerance passed to sparsification utilities when constructing the filters and dissipators.
+- `σ_filter::Union{Nothing,Real}`: Width of the Gaussian frequency filter. If `nothing`, a heuristic value proportional to the coupling strengths is used.
+
+# Returns
+- `E`: Eigenenergies of `H` (truncated if `N_trunc` is provided).
+- `U`: Eigenvectors of `H` as a [`QuantumObject`](@ref) mapping to the truncated basis.
+- `L`: Generalized Liouvillian [`SuperOperator`](@ref) including the frequency-filtered dissipators.
+
+# References
+- [Settineri2018](@cite)
 """
-function liouvillian_generalized(
+function liouvillian_dressed_nonsecular(
     H::QuantumObject{Operator},
     fields::Vector,
     T_list::Vector{<:Real};
@@ -569,13 +591,14 @@ function liouvillian_generalized(
     tol::Real = 1e-12,
     σ_filter::Union{Nothing,Real} = nothing,
 )
-    (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields, ωs and Ts must be the same."))
+    (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
 
-    dims = (N_trunc isa Nothing) ? H.dimensions : SVector(N_trunc)
+    dims = isnothing(N_trunc) ? H.dims : (N_trunc,)
     final_size = prod(dims)
+    final_dims = isnothing(N_trunc) ? H.dims : (H.dims, dims)
     result = eigen(H)
     E = real.(result.values[1:final_size])
-    U = QuantumObject(result.vectors, result.type, result.dimensions)
+    U = QuantumObject(result.vectors[:, 1:final_size], result.type, final_dims)
 
     H_d = QuantumObject(Diagonal(complex(E)), type = Operator(), dims = dims)
 
@@ -601,7 +624,7 @@ function liouvillian_generalized(
 
     for i in eachindex(fields)
         # The operator that couples the system to the bath in the eigenbasis
-        X_op = to_sparse((U'*fields[i]*U).data[1:final_size, 1:final_size], tol)
+        X_op = to_sparse((U'*fields[i]*U).data, tol)
         if ishermitian(fields[i])
             X_op = (X_op + X_op') / 2 # Make sure it's hermitian
         end
@@ -620,6 +643,8 @@ function liouvillian_generalized(
             1 / 2 *
             (F2 .* (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂')) - spre(F1 .* (Sp₀' * Sp₂)) - spost(F1 .* (Sp₂' * Sp₀)))
     end
+
+    settings.auto_tidyup && tidyup!(L)
 
     return E, U, L
 end

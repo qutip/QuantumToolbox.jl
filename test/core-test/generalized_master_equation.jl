@@ -16,7 +16,7 @@
     fields = [sqrt(0.01) * (a + a'), sqrt(0.01) * sx]
     Tlist = [0, 0.0]
 
-    E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
+    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
     Ω = to_sparse((E' .- E)[1:N_trunc, 1:N_trunc], tol)
 
     H_d = Qobj(to_sparse((U'*H*U)[1:N_trunc, 1:N_trunc], tol))
@@ -34,7 +34,7 @@
 
     Tlist = [0.2, 0.0]
 
-    E, U, L1 = liouvillian_generalized(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
+    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
     Ω = to_sparse((E' .- E)[1:N_trunc, 1:N_trunc], tol)
 
     H_d = Qobj(to_sparse((U'*H*U)[1:N_trunc, 1:N_trunc], tol))
@@ -45,7 +45,7 @@
     @test abs(expect(Xp' * Xp, steadystate(L1)) - n_thermal(1, Tlist[1])) / n_thermal(1, Tlist[1]) < 1e-4
 
     if VERSION >= v"1.11" # eigen is type unstable on v1.10
-        @testset "Type Inference (liouvillian_generalized)" begin
+        @testset "Type Inference (liouvillian_dressed_nonsecular)" begin
             N_c = 30
             N_trunc = 10
             tol = 1e-14
@@ -61,7 +61,7 @@
             fields = [sqrt(0.01) * (a + a'), sqrt(0.01) * sx]
             Tlist = [0, 0.01]
 
-            @inferred liouvillian_generalized(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
+            @inferred liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
         end
     end
 end
