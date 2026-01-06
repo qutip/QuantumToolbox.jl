@@ -333,6 +333,8 @@ enr_state_dictionaries
 ```@docs
 plot_wigner
 plot_fock_distribution
+matrix_heatmap
+matrix_histogram
 ```
 
 ### [Bloch Sphere](@id doc-API:Bloch-Sphere)
