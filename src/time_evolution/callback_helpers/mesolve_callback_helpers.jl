@@ -24,9 +24,9 @@ function _save_func_mesolve(u, integrator, e_ops, progr, iter, expvals)
     # The advantage of using this convention is that We don't need
     # to reshape u to make it a matrix, but we reshape the e_ops once.
 
-    ρ = u
-    _expect = op -> dot(op, ρ)
-    @. expvals[:, iter[]] = _expect(e_ops)
+    for (i, op) in enumerate(e_ops)
+        expvals[i, iter[]] = dot(op, integrator.u)
+    end
     iter[] += 1
 
     return _save_func(integrator, progr)
