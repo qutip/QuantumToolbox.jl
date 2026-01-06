@@ -1,6 +1,6 @@
 # [Visualization of quantum states and operators](@id doc:Visualization-of-quantum-states-and-operators)
 
-Visualization is often an important complement to a simulation of a quantum mechanical system. The first method of visualization that come to mind might be to plot the expectation values of a few selected operators. But on top of that, it can often be instructive to visualize for example the state vectors, density matrices, Hamiltonian, or Liouvillian. In this section, we demonstrate how `QuantumToolbox.jl` and [`Makie.jl`](https://github.com/MakieOrg/Makie.jl) can be used to perform a few types of visualizations that often can provide additional understanding of quantum system.
+Visualization is often an important complement to the simulation of a quantum mechanical system. The first method of visualization that comes to mind might be to plot the expectation values of a few selected operators. But on top of that, it can often be instructive to visualize for example the state vectors, density matrices, Hamiltonian, or Liouvillian. In this section, we demonstrate how `QuantumToolbox.jl` and [`Makie.jl`](https://github.com/MakieOrg/Makie.jl) can be used to perform several types of visualizations that often can provide additional understanding of quantum system.
 
 ```@example visualization
 using CairoMakie
@@ -16,7 +16,7 @@ CairoMakie.enable_only_mime!(MIME"image/svg+xml"())
 
 ## Fock-basis probability distribution
 
-In quantum mechanics probability distributions plays an important role, and as in statistics, the expectation values computed from a probability distribution does not reveal the full story. For example, consider an quantum harmonic oscillator mode with Hamiltonian ``\hat{H}=\hbar\omega\hat{a}^\dagger\hat{a}``, which is in a state described by its density matrix ``\hat{\rho}``, and which on average is occupied by two photons, ``\textrm{Tr}[\hat{a}^\dagger\hat{a}\hat{\rho}] = 2``. Given this information we cannot say whether the oscillator is in a Fock state, a thermal state, a coherent state, etc. By visualizing the photon distribution in the Fock state basis important clues about the underlying state can be obtained.
+In quantum mechanics, probability distributions plays an important role, and as in statistics, the expectation values computed from a probability distribution do not reveal the full story. For example, consider an quantum harmonic oscillator mode with Hamiltonian ``\hat{H}=\hbar\omega\hat{a}^\dagger\hat{a}``, which is in a state described by its density matrix ``\hat{\rho}``, and which on average is occupied by two photons, ``\textrm{Tr}[\hat{a}^\dagger\hat{a}\hat{\rho}] = 2``. Given this information we cannot say whether the oscillator is in a Fock state, a thermal state, a coherent state, etc. By visualizing the photon distribution in the Fock state basis important clues about the underlying state can be obtained.
 
 One convenient way to visualize a probability distribution is to use histograms. Consider the following histogram visualization of the number-basis probability distribution, which can be obtained from the diagonal of the density matrix, for a few possible oscillator states with on average occupation of two photons.
 
@@ -56,7 +56,7 @@ fig
 
 ## Quasi-probability distributions
 
-The probability distribution in the number (Fock) basis only describes the occupation probabilities for a discrete set of states. A more complete phase-space probability-distribution-like function for harmonic modes are the Wigner and Husumi Q-functions, which provide full descriptions of the quantum state (equivalent to the density matrix). These are called quasi-distribution functions because unlike real probability distribution functions they can for example be negative. In addition to being more complete descriptions of a state (compared to only the occupation probabilities plotted above), these distributions are also great for demonstrating if a quantum state is quantum mechanical, since for example a negative Wigner function is a definite indicator that a state is distinctly nonclassical.
+The probability distribution in the number (Fock) basis only describes the occupation probabilities for a discrete set of states. A more complete phase-space probability-distribution-like function for harmonic modes are the Wigner and Husimi Q-functions, which provide full descriptions of the quantum state (equivalent to the density matrix). These are called quasi-distribution functions because unlike real probability distribution functions they can for example be negative. In addition to being more complete descriptions of a state (compared to only the occupation probabilities plotted above), these distributions are also great for demonstrating if a quantum state is quantum mechanical, since for example a negative Wigner function is a definite indicator that a state is distinctly nonclassical.
 
 ### Wigner function
 
@@ -145,6 +145,4 @@ matrix_histogram(H; location = fig[1,1])
 fig
 ```
 
-```@raw html
-<img src="../assets/demo/matrix_histogram.png" width="500">
-```
+![](../assets/demo/matrix_histogram.png)
