@@ -2,7 +2,7 @@ export TimeEvolutionSol
 export TimeEvolutionMultiTrajSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
 export average_states, average_expect, std_expect
 
-export liouvillian_floquet, liouvillian_generalized
+export liouvillian_floquet, liouvillian_dressed_nonsecular
 
 const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
 const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-3, reltol = 2e-3, save_everystep = false, save_end = true)
@@ -554,7 +554,7 @@ function liouvillian_floquet(
 end
 
 @doc raw"""
-    liouvillian_generalized(
+    liouvillian_dressed_nonsecular(
         H::QuantumObject{Operator},
         fields::Vector,
         T_list::Vector{<:Real};
@@ -583,7 +583,7 @@ Build the generalized Liouvillian for a system coupled to multiple bosonic baths
 # References
 - [Settineri2018](@cite)
 """
-function liouvillian_generalized(
+function liouvillian_dressed_nonsecular(
     H::QuantumObject{Operator},
     fields::Vector,
     T_list::Vector{<:Real};
