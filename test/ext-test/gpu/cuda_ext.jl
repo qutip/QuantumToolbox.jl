@@ -105,28 +105,14 @@
     ψ0_gpu64 = cu(fock(N, 3))
     H_gpu64 = ω64 * a_gpu64' * a_gpu64
     c_ops_gpu64 = [sqrt(γ64) * a_gpu64]
-    sol_gpu64 = mesolve(
-        H_gpu64,
-        ψ0_gpu64,
-        tlist,
-        c_ops_gpu64,
-        e_ops = [a_gpu64' * a_gpu64],
-        progress_bar = Val(false),
-    )
+    sol_gpu64 = mesolve(H_gpu64, ψ0_gpu64, tlist, c_ops_gpu64, e_ops = [a_gpu64' * a_gpu64], progress_bar = Val(false))
 
     ## calculate by GPU (with 32-bit)
     a_gpu32 = cu(destroy(N), word_size = 32)
     ψ0_gpu32 = cu(fock(N, 3), word_size = 32)
     H_gpu32 = ω32 * a_gpu32' * a_gpu32
     c_ops_gpu32 = [sqrt(γ32) * a_gpu32]
-    sol_gpu32 = mesolve(
-        H_gpu32,
-        ψ0_gpu32,
-        tlist,
-        c_ops_gpu32,
-        e_ops = [a_gpu32' * a_gpu32],
-        progress_bar = Val(false),
-    )
+    sol_gpu32 = mesolve(H_gpu32, ψ0_gpu32, tlist, c_ops_gpu32, e_ops = [a_gpu32' * a_gpu32], progress_bar = Val(false))
 
     L_cpu = liouvillian(H_cpu, c_ops_cpu)
     L_gpu64 = liouvillian(H_gpu64, c_ops_gpu64)
