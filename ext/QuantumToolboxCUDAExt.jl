@@ -8,8 +8,6 @@ import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR, CuSp
 import SparseArrays: SparseVector, SparseMatrixCSC, sparse
 import CUDA.Adapt: adapt
 
-const AbstractCuSparseArray = Union{CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR, CuSparseMatrixCOO}
-
 allowscalar(false)
 
 @doc raw"""
