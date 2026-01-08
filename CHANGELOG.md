@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduce `matrix_heatmap` and `matrix_histogram` for visualizing operators. ([#621])
 - Allow rectangular eigenvector matrices in `liouvillian_generalized` and expand its documentation with proper citation. Rename it to `liouvillian_dressed_nonsecular`. ([#624])
 - Optimize `liouvillian_dressed_nonsecular`: avoid O(N⁴) dense filter matrices. ([#627])
+- Restrict `CUDA.jl` version compatibility to < 5.9.6 due to breaking changes in that release. ([#630])
 
 ## [v0.40.0]
 Release date: 2025-12-21
@@ -403,3 +404,4 @@ Release date: 2024-11-13
 [#621]: https://github.com/qutip/QuantumToolbox.jl/issues/621
 [#624]: https://github.com/qutip/QuantumToolbox.jl/issues/624
 [#627]: https://github.com/qutip/QuantumToolbox.jl/issues/627
+[#630]: https://github.com/qutip/QuantumToolbox.jl/issues/630
