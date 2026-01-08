@@ -1,0 +1,91 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+
+      - name: Calculate new version
+        id: calc_ver
+        run: |
+          # We use a quick inline Julia script to parse and increment the version
+          # This ensures we handle Semantic Versioning correctly
+          julia -e '
+            using Pkg
+            using TOML
+            
+            # Read current version
+            p = TOML.parsefile("Project.toml")
+            v = VersionNumber(p["version"])
+            
+            # Determine increment type from input
+            type = ENV["BUMP_TYPE"]
+            
+            new_v = if type == "major"
+                VersionNumber(v.major + 1, 0, 0)
+            elseif type == "minor"
+                VersionNumber(v.major, v.minor + 1, 0)
+            else # patch
+                VersionNumber(v.major, v.minor, v.patch + 1)
+            end
+            
+            # Output to GitHub Actions variables
+            println("NEW_VERSION=$new_v")
+            open(ENV["GITHUB_OUTPUT"], "a") do io
+              println(io, "new_version=$new_v")
+            end
+          '
+        env:
+          BUMP_TYPE: ${{ inputs.bump_type }}
+
+      - name: Create Branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          BRANCH_NAME="bump-to-${{ steps.calc_ver.outputs.new_version }}"
+          git checkout -b $BRANCH_NAME
+          
+          # Update Project.toml
+          # We use sed to replace the version line to preserve other formatting/comments
+          sed -i "s/^version = \".*\"/version = \"${{ steps.calc_ver.outputs.new_version }}\"/" Project.toml
+          
+          # Commit and Push
+          git commit -am "[no ci] Bump version to v${{ steps.calc_ver.outputs.new_version }}"
+          git push origin $BRANCH_NAME
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="bump-to-${{ steps.calc_ver.outputs.new_version }}"
+          gh pr create \
+            --base main \
+            --head $BRANCH_NAME \
+            --title "Bump version to v${{ steps.calc_ver.outputs.new_version }}" \
+            --body "This PR bumps the package version to v${{ steps.calc_ver.outputs.new_version }}."
+            --label "Skip ChangeLog"
