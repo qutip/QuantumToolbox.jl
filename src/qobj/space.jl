@@ -4,6 +4,11 @@ This file defines the Hilbert space structure.
 
 export AbstractSpace, HilbertSpace
 
+@doc raw"""
+    abstract type AbstractSpace
+
+Abstract type for all Hilbert and Liouville space structures.
+"""
 abstract type AbstractSpace end
 
 @doc raw"""
