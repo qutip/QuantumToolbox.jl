@@ -3,7 +3,7 @@ This file defines the ProductDimensions structures, which can describe composite
 =#
 
 export AbstractDimensions, ProductDimensions, GeneralProductDimensions
-export hilbert_dimensions_to_size, liouville_dimensions_to_size
+export get_hilbert_size, get_liouville_size
 
 abstract type AbstractDimensions{M, N} end
 
@@ -82,7 +82,7 @@ dimensions_to_dims(::Nothing) = nothing # for EigsolveResult.dimensions = nothin
 Base.length(::AbstractDimensions{N}) where {N} = N
 
 """
-    hilbert_dimensions_to_size(dimensions)
+    get_hilbert_size(dimensions)
 
 Returns the matrix dimensions `(m, n)` of an [`Operator`](@ref) with the given `dimensions`.
 
@@ -92,20 +92,20 @@ and `n` is the product of the `from` dimensions.
 
 If `dimensions` is an `Integer` or a vector/tuple of `Integer`s, it is automatically treated as [`ProductDimensions`](@ref).
 """
-function hilbert_dimensions_to_size(dimensions::ProductDimensions)
-    m = prod(hilbert_dimensions_to_size, dimensions.to)
+function get_hilbert_size(dimensions::ProductDimensions)
+    m = prod(get_hilbert_size, dimensions.to)
     return (m, m)
 end
-function hilbert_dimensions_to_size(dimensions::GeneralProductDimensions)
-    m = prod(hilbert_dimensions_to_size, dimensions.to)
-    n = prod(hilbert_dimensions_to_size, dimensions.from)
+function get_hilbert_size(dimensions::GeneralProductDimensions)
+    m = prod(get_hilbert_size, dimensions.to)
+    n = prod(get_hilbert_size, dimensions.from)
     return (m, n)
 end
-hilbert_dimensions_to_size(dimensions::Union{<:Integer,AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} =
-    hilbert_dimensions_to_size(ProductDimensions(dimensions))
+get_hilbert_size(dimensions::Union{<:Integer,AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} =
+    get_hilbert_size(ProductDimensions(dimensions))
 
 """
-    liouville_dimensions_to_size(dimensions)
+    get_liouville_size(dimensions)
 
 Returns the matrix dimensions `(m, n)` of a [`SuperOperator`](@ref) with the given `dimensions`.
 
@@ -116,17 +116,17 @@ and `n` is the product of the `from` dimensions.
 
 If `dimensions` is an `Integer` or a vector/tuple of `Integer`s, it is automatically treated as [`ProductDimensions`](@ref).
 """
-function liouville_dimensions_to_size(dimensions::ProductDimensions)
-    m = prod(liouville_dimensions_to_size, dimensions.to)
+function get_liouville_size(dimensions::ProductDimensions)
+    m = prod(get_liouville_size, dimensions.to)
     return (m, m)
 end
-function liouville_dimensions_to_size(dimensions::GeneralProductDimensions)
-    m = prod(liouville_dimensions_to_size, dimensions.to)
-    n = prod(liouville_dimensions_to_size, dimensions.from)
+function get_liouville_size(dimensions::GeneralProductDimensions)
+    m = prod(get_liouville_size, dimensions.to)
+    n = prod(get_liouville_size, dimensions.from)
     return (m, n)
 end
-liouville_dimensions_to_size(dimensions::Union{<:Integer,AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} =
-    liouville_dimensions_to_size(ProductDimensions(dimensions))
+get_liouville_size(dimensions::Union{<:Integer,AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} =
+    get_liouville_size(ProductDimensions(dimensions))
 
 Base.transpose(dimensions::ProductDimensions) = dimensions
 Base.transpose(dimensions::GeneralProductDimensions) = GeneralProductDimensions(dimensions.from, dimensions.to) # switch `to` and `from`
