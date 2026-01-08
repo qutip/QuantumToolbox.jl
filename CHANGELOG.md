@@ -24,7 +24,7 @@ Release date: 2026-01-12
 - Move from `JuliaFormatter.jl` to `Runic.jl` for code formatting. ([#633])
 - Improve eigsolve_al initial state handling and returned values and vectors. ([#636])
 - Convert `tlist` to promoted type in all time evolution solvers. ([#638])
-- Restructure `Dimensions` and `Space`. Avoid using `pro(::Dimensions)` for getting matrix sizes, and instead use `get_hilbert_size` and `get_liouville_size`. ([#600])
+- Restructure `Dimensions` and `Space`. Avoid using `prod(::Dimensions)` for getting matrix sizes, and instead use `get_hilbert_size` and `get_liouville_size`. ([#600])
 
 ## [v0.40.0]
 Release date: 2025-12-21
