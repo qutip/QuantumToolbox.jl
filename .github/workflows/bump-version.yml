@@ -37,9 +37,11 @@ jobs:
           julia -e '
             using Pkg; Pkg.add("Changelog")
             using TOML, Dates, Changelog
+            project_file = "Project.toml"
+            changelog_file = "CHANGELOG.md"
 
             # --- PART 1: Calculate new version number ---
-            p = TOML.parsefile("Project.toml")
+            p = TOML.parsefile(project_file)
             v = VersionNumber(p["version"])
             type = ENV["BUMP_TYPE"]
             new_v = if type == "major"
@@ -52,20 +54,18 @@ jobs:
             println("Bump version from v$v to v$new_v")
 
             # --- PART 2: Update Project.toml (using Regex to preserve formatting) ---
-            project_file = "Project.toml"
             project_content = read(project_file, String)
             new_project_content = replace(project_content, r"version = \".*\"" => "version = \"$new_v\"")
             write(project_file, new_project_content)
             println("Updated $project_file")
 
             # --- PART 3: Update CHANGELOG.md ---
-            changelog_file = "CHANGELOG.md"
             content = read(changelog_file, String)
             marker = "## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)"
             insertion = "$marker\n\n\n\n## [v$new_v]\nRelease date: $(Dates.format(now(), "yyyy-mm-dd"))"
             new_content = replace(content, marker => insertion)
             write(changelog_file, new_content)
-            Changelog.generate(Changelog.CommonMark(), "CHANGELOG.md"; repo = "qutip/QuantumToolbox.jl")
+            Changelog.generate(Changelog.CommonMark(), changelog_file; repo = "qutip/QuantumToolbox.jl")
             println("Updated $changelog_file")
           '
         env:
