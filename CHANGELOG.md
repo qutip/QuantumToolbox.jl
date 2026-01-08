@@ -24,6 +24,7 @@ Release date: 2026-01-12
 - Move from `JuliaFormatter.jl` to `Runic.jl` for code formatting. ([#633])
 - Improve eigsolve_al initial state handling and returned values and vectors. ([#636])
 - Convert `tlist` to promoted type in all time evolution solvers. ([#638])
+- Restructure `Dimensions` and `Space`. Avoid using `pro(::Dimensions)` for getting matrix sizes, and instead use `get_hilbert_size` and `get_liouville_size`. ([#600])
 
 ## [v0.40.0]
 Release date: 2025-12-21
@@ -410,6 +411,7 @@ Release date: 2024-11-13
 [#589]: https://github.com/qutip/QuantumToolbox.jl/issues/589
 [#591]: https://github.com/qutip/QuantumToolbox.jl/issues/591
 [#596]: https://github.com/qutip/QuantumToolbox.jl/issues/596
+[#600]: https://github.com/qutip/QuantumToolbox.jl/issues/600
 [#603]: https://github.com/qutip/QuantumToolbox.jl/issues/603
 [#606]: https://github.com/qutip/QuantumToolbox.jl/issues/606
 [#610]: https://github.com/qutip/QuantumToolbox.jl/issues/610
