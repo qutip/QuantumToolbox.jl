@@ -61,9 +61,9 @@ sol = mesolve(H, ψ0, tlist, c_ops; ...)          # Solve directly
 
 ### Dimension Handling
 Never assume 1D systems. All code must handle arbitrary composite Hilbert spaces:
-- `dimensions::Dimensions` stores as `StaticArraysCore.SVector`
+- `dimensions::AbstractDimensions` stores as `StaticArraysCore.SVector`
 - Access via `qobj.dims` (returns dims Tuple) or `qobj.dimensions` (full Dimensions object)
-- Use `Dimensions()` constructor to create from integer/tuple specifications
+- Use `ProductDimensions()` constructor to create from integer/tuple specifications
 
 ### Error Checking
 Use `@assert` for internal checks; throw descriptive `ArgumentError` for invalid user inputs. Example:
@@ -148,3 +148,5 @@ julia --project=benchmarks benchmarks/runbenchmarks.jl
 **Type-stable code**: Always use concrete types. Test with JET.jl. Use `@code_warntype` for debugging.
 
 **Documentation**: Add docstrings with `@doc raw"""..."""` blocks in function definitions; examples auto-tested.
+
+**Auto updating instructions**: Keep this file updated with any architectural or workflow changes.
