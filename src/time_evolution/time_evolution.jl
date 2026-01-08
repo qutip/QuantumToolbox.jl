@@ -605,20 +605,8 @@ function liouvillian_dressed_nonsecular(
     Ω = E' .- E
     Ωp = triu(to_sparse(Ω, tol), 1)
 
-    # Filter in the Hilbert space
+    # Filter width
     σ = isnothing(σ_filter) ? 500 * maximum([norm(field) / length(field) for field in fields]) : σ_filter
-    F1 = QuantumObject(gaussian.(Ω, 0, σ), type = Operator(), dims = dims)
-    F1 = to_sparse(F1, tol)
-
-    # Filter in the Liouville space
-    # M1 = ones(final_size, final_size)
-    M1 = similar(E, final_size, final_size)
-    M1 .= 1
-    Ω1 = kron(Ω, M1)
-    Ω2 = kron(M1, Ω)
-    Ωdiff = Ω1 .- Ω2
-    F2 = QuantumObject(gaussian.(Ωdiff, 0, σ), SuperOperator(), dims)
-    F2 = to_sparse(F2, tol)
 
     L = liouvillian(H_d)
 
@@ -636,17 +624,49 @@ function liouvillian_dressed_nonsecular(
         Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), type = Operator(), dims = dims)
         # S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
 
-        L +=
-            1 / 2 *
-            (F2 .* (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁)) - spre(F1 .* (Sp₀ * Sp₁')) - spost(F1 .* (Sp₁ * Sp₀')))
-        L +=
-            1 / 2 *
-            (F2 .* (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂')) - spre(F1 .* (Sp₀' * Sp₂)) - spost(F1 .* (Sp₂' * Sp₀)))
+        # Build the dissipator contribution and apply Gaussian filter in Liouville space
+        D₁ = 1 / 2 * (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁) - spre(Sp₀ * Sp₁') - spost(Sp₁ * Sp₀'))
+        D₂ = 1 / 2 * (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂') - spre(Sp₀' * Sp₂) - spost(Sp₂' * Sp₀))
+
+        L += _apply_liouville_filter(D₁ + D₂, E, σ, tol)
     end
 
     settings.auto_tidyup && tidyup!(L)
 
     return E, U, L
+end
+
+function _apply_liouville_filter(
+    L::QuantumObject{SuperOperator,DimsType,MT},
+    E::AbstractVector,
+    σ::Real,
+    tol::Real,
+) where {DimsType,MT<:AbstractSparseMatrix}
+    data = L.data
+    N = length(E)
+
+    I, J, V = findnz(data)
+
+    # Broadcast the filter computation for GPU compatibility
+    V .*= _liouville_filter_weights.(I, J, N, Ref(E), σ)
+
+    # Reconstruct sparse matrix, filtering out small values
+    mask = abs.(V) .> tol
+    filtered_data = sparse(I[mask], J[mask], V[mask], size(data)...)
+    return QuantumObject(filtered_data, SuperOperator(), L.dimensions)
+end
+
+function _liouville_filter_weights(row::Int, col::Int, N::Int, E::AbstractVector, σ::Real)
+    j, l = _linear_to_subscript(row, N)
+    k, m = _linear_to_subscript(col, N)
+    Ωdiff = (E[j] - E[k]) - (E[l] - E[m])
+    return gaussian(Ωdiff, 0, σ)
+end
+
+function _linear_to_subscript(idx::Int, N::Int)
+    row = mod1(idx, N)
+    col = div(idx - 1, N) + 1
+    return row, col
 end
 
 function _liouvillian_floquet(
