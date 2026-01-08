@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimize `liouvillian_dressed_nonsecular`: avoid O(N⁴) dense filter matrices. ([#627])
 - Restrict `CUDA.jl` version compatibility to < 5.9.6 due to breaking changes in that release. ([#630])
 - Move from `JuliaFormatter.jl` to `Runic.jl` for code formatting. ([#633])
-- Restructure `Dimensions` and `Space`. Avoid using `pro(::Dimensions)` for getting matrix sizes, and instead use `get_hilbert_size` and `get_liouville_size`. ([#600])
+- Restructure `Dimensions` and `Space`. Avoid using `prod(::Dimensions)` for getting matrix sizes, and instead use `get_hilbert_size` and `get_liouville_size`. ([#600])
 
 ## [v0.40.0]
 Release date: 2025-12-21
