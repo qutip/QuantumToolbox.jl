@@ -1,0 +1,95 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+
+      - name: Calculate new version & Update files
+        id: updates
+        run: |
+          # We use a quick inline Julia script to parse and increment the version
+          # This ensures we handle Semantic Versioning correctly
+          julia -e '
+            using Pkg; Pkg.add("Changelog")
+            using TOML, Dates, Changelog
+            project_file = "Project.toml"
+            changelog_file = "CHANGELOG.md"
+
+            # --- PART 1: Calculate new version number ---
+            p = TOML.parsefile(project_file)
+            v = VersionNumber(p["version"])
+            type = ENV["BUMP_TYPE"]
+            new_v = if type == "major"
+                VersionNumber(v.major + 1, 0, 0)
+            elseif type == "minor"
+                VersionNumber(v.major, v.minor + 1, 0)
+            else
+                VersionNumber(v.major, v.minor, v.patch + 1)
+            end
+            println("Bump version from v$v to v$new_v")
+
+            # --- PART 2: Update Project.toml (using Regex to preserve formatting) ---
+            project_content = read(project_file, String)
+            new_project_content = replace(project_content, r"version = \".*\"" => "version = \"$new_v\"")
+            write(project_file, new_project_content)
+            println("Updated $project_file")
+
+            # --- PART 3: Update CHANGELOG.md ---
+            content = read(changelog_file, String)
+            marker = "## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)"
+            insertion = "$marker\n\n\n\n## [v$new_v]\nRelease date: $(Dates.format(now(), "yyyy-mm-dd"))"
+            new_content = replace(content, marker => insertion)
+            write(changelog_file, new_content)
+            Changelog.generate(Changelog.CommonMark(), changelog_file; repo = "qutip/QuantumToolbox.jl")
+            println("Updated $changelog_file")
+          '
+        env:
+          BUMP_TYPE: ${{ inputs.bump_type }}
+
+      - name: Create Branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          BRANCH_NAME="bump-to-${{ steps.updates.outputs.new_version }}"
+          git checkout -b $BRANCH_NAME
+          git add Project.toml CHANGELOG.md
+          git commit -m "[no ci] Bump version to v${{ steps.updates.outputs.new_version }}"
+          git push origin $BRANCH_NAME
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="bump-to-${{ steps.updates.outputs.new_version }}"
+          gh pr create \
+            --base main \
+            --head $BRANCH_NAME \
+            --title "Bump version to v${{ steps.updates.outputs.new_version }}" \
+            --body "This PR bumps the package version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md."
+            --label "Skip ChangeLog"
