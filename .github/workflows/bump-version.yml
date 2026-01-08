@@ -29,35 +29,44 @@ jobs:
         with:
           version: '1'
 
-      - name: Calculate new version
-        id: calc_ver
+      - name: Calculate new version & Update files
+        id: updates
         run: |
           # We use a quick inline Julia script to parse and increment the version
           # This ensures we handle Semantic Versioning correctly
           julia -e '
-            using Pkg
-            using TOML
-            
-            # Read current version
+            using Pkg; Pkg.add("Changelog")
+            using TOML, Dates, Changelog
+
+            # --- PART 1: Calculate new version number ---
             p = TOML.parsefile("Project.toml")
             v = VersionNumber(p["version"])
-            
-            # Determine increment type from input
             type = ENV["BUMP_TYPE"]
-            
             new_v = if type == "major"
                 VersionNumber(v.major + 1, 0, 0)
             elseif type == "minor"
                 VersionNumber(v.major, v.minor + 1, 0)
-            else # patch
+            else
                 VersionNumber(v.major, v.minor, v.patch + 1)
             end
-            
-            # Output to GitHub Actions variables
-            println("NEW_VERSION=$new_v")
-            open(ENV["GITHUB_OUTPUT"], "a") do io
-              println(io, "new_version=$new_v")
-            end
+            println("Bump version from v$v to v$new_v")
+
+            # --- PART 2: Update Project.toml (using Regex to preserve formatting) ---
+            project_file = "Project.toml"
+            project_content = read(project_file, String)
+            new_project_content = replace(project_content, r"version = \".*\"" => "version = \"$new_v\"")
+            write(project_file, new_project_content)
+            println("Updated $project_file")
+
+            # --- PART 3: Update CHANGELOG.md ---
+            changelog_file = "CHANGELOG.md"
+            content = read(changelog_file, String)
+            marker = "## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)"
+            insertion = "$marker\n\n\n\n## [v$new_v]\nRelease date: $(Dates.format(now(), "yyyy-mm-dd"))"
+            new_content = replace(content, marker => insertion)
+            write(changelog_file, new_content)
+            Changelog.generate(Changelog.CommonMark(), "CHANGELOG.md"; repo = "qutip/QuantumToolbox.jl")
+            println("Updated $changelog_file")
           '
         env:
           BUMP_TYPE: ${{ inputs.bump_type }}
@@ -67,25 +76,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          BRANCH_NAME="bump-to-${{ steps.calc_ver.outputs.new_version }}"
+          BRANCH_NAME="bump-to-${{ steps.updates.outputs.new_version }}"
           git checkout -b $BRANCH_NAME
-          
-          # Update Project.toml
-          # We use sed to replace the version line to preserve other formatting/comments
-          sed -i "s/^version = \".*\"/version = \"${{ steps.calc_ver.outputs.new_version }}\"/" Project.toml
-          
-          # Commit and Push
-          git commit -am "[no ci] Bump version to v${{ steps.calc_ver.outputs.new_version }}"
+          git add Project.toml CHANGELOG.md
+          git commit -m "[no ci] Bump version to v${{ steps.updates.outputs.new_version }}"
           git push origin $BRANCH_NAME
 
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="bump-to-${{ steps.calc_ver.outputs.new_version }}"
+          BRANCH_NAME="bump-to-${{ steps.updates.outputs.new_version }}"
           gh pr create \
             --base main \
             --head $BRANCH_NAME \
-            --title "Bump version to v${{ steps.calc_ver.outputs.new_version }}" \
-            --body "This PR bumps the package version to v${{ steps.calc_ver.outputs.new_version }}."
+            --title "Bump version to v${{ steps.updates.outputs.new_version }}" \
+            --body "This PR bumps the package version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md."
             --label "Skip ChangeLog"
