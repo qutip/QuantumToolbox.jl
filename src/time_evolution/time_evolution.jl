@@ -594,7 +594,7 @@ function liouvillian_dressed_nonsecular(
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
 
     dims = isnothing(N_trunc) ? H.dims : (N_trunc,)
-    final_size = hilbert_dimensions_to_size(dims)[1]
+    final_size = get_hilbert_size(dims)[1]
     final_dims = isnothing(N_trunc) ? H.dims : (H.dims, dims)
     result = eigen(H)
     E = real.(result.values[1:final_size])

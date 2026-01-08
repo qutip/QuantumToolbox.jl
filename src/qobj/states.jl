@@ -21,7 +21,7 @@ The `dimensions` can be either the following types:
 """
 zero_ket(::Type{T}, dimensions::Int) where {T <: Number} = QuantumObject(zeros(T, dimensions), Ket(), dimensions)
 zero_ket(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: Number} =
-    QuantumObject(zeros(T, hilbert_dimensions_to_size(dimensions)[1]), Ket(), dimensions)
+    QuantumObject(zeros(T, get_hilbert_size(dimensions)[1]), Ket(), dimensions)
 zero_ket(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = zero_ket(ComplexF64, dimensions)
 
 @doc raw"""
@@ -73,7 +73,7 @@ The `dimensions` can be either the following types:
 """
 rand_ket(::Type{T}, dimensions::Int) where {T <: Complex} = rand_ket(T, SVector(dimensions))
 function rand_ket(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: Complex}
-    N = hilbert_dimensions_to_size(dimensions)[1]
+    N = get_hilbert_size(dimensions)[1]
     ψ = rand(T, N) .- (one(T) / 2 + one(T) * im / 2)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
 end
@@ -147,13 +147,13 @@ The `dimensions` can be either the following types:
 maximally_mixed_dm(::Type{T}, dimensions::Int) where {T <: FloatOrComplex} =
     QuantumObject(diagm(0 => fill(1 / T(dimensions), dimensions))::Matrix{T}, Operator(), SVector(dimensions)) # TODO: remove `::Matrix{T}` if JET.jl fix https://github.com/aviatesk/JET.jl/issues/790
 function maximally_mixed_dm(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: FloatOrComplex}
-    N = hilbert_dimensions_to_size(dimensions)[1]
+    N = get_hilbert_size(dimensions)[1]
     return QuantumObject(diagm(0 => fill(1 / T(N), N)), Operator(), dimensions)
 end
 maximally_mixed_dm(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = maximally_mixed_dm(ComplexF64, dimensions)
 
 @doc raw"""
-    rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=hilbert_dimensions_to_size(dimensions)[1])
+    rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=get_hilbert_size(dimensions)[1])
 
 Generate a random density matrix from Ginibre ensemble with given argument `dimensions`, `rank`, and element type `T = ComplexF64` (default), ensuring that it is positive semi-definite and trace equals to `1`.
 
@@ -161,7 +161,7 @@ The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
 - `dimensions::Union{ProductDimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
-The default keyword argument `rank = hilbert_dimensions_to_size(dimensions)[1]` (full rank).
+The default keyword argument `rank = get_hilbert_size(dimensions)[1]` (full rank).
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_dm(dimensions; rank=rank)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
@@ -175,9 +175,9 @@ rand_dm(::Type{T}, dimensions::Int; rank::Int = dimensions) where {T <: Complex}
 function rand_dm(
         ::Type{T},
         dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple};
-        rank::Int = hilbert_dimensions_to_size(dimensions)[1],
+        rank::Int = get_hilbert_size(dimensions)[1],
     ) where {T <: Complex}
-    N = prod(dimensions)
+    N = get_hilbert_size(dimensions)[1]
     (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
     (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))
 

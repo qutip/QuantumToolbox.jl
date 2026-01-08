@@ -183,7 +183,7 @@ The `dims` field contains the dimensions of the subsystems (in this case, three 
 
 ```@example type-stability
 function reshape_operator_data(dims)
-    op = Qobj(randn(hilbert_dimensions_to_size(dims)...), type=Operator(), dims=dims)
+    op = Qobj(randn(get_hilbert_size(dims)...), type=Operator(), dims=dims)
     op_dims = op.dims
     op_data = op.data
     return reshape(op_data, vcat(op_dims, op_dims)...)

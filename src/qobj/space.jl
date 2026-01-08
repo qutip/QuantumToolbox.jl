@@ -28,8 +28,8 @@ Base.length(s::HilbertSpace) = 1
 
 dimensions_to_dims(s::HilbertSpace) = SVector{1, Int}(s.size)
 
-hilbert_dimensions_to_size(s::HilbertSpace) = s.size
-liouville_dimensions_to_size(s::HilbertSpace) = s.size^2
+get_hilbert_size(s::HilbertSpace) = s.size
+get_liouville_size(s::HilbertSpace) = s.size^2
 
 # this creates a list of HilbertSpace(1), it is used to generate `from` for Ket, and `to` for Bra
 hilbertspace_one_list(dimensions::NTuple{N,AbstractSpace}) where {N} =

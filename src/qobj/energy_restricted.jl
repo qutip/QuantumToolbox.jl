@@ -76,8 +76,8 @@ Base.:(==)(s_enr1::EnrSpace, s_enr2::EnrSpace) = (s_enr1.size == s_enr2.size) &&
 
 dimensions_to_dims(s_enr::EnrSpace) = s_enr.dims
 
-hilbert_dimensions_to_size(s_enr::EnrSpace) = s_enr.size
-liouville_dimensions_to_size(s_enr::EnrSpace) = s_enr.size^2
+get_hilbert_size(s_enr::EnrSpace) = s_enr.size
+get_liouville_size(s_enr::EnrSpace) = s_enr.size^2
 
 @doc raw"""
     enr_state_dictionaries(dims, n_excitations)

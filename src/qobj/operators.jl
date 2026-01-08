@@ -38,7 +38,7 @@ rand_unitary(::Type{T},
     distribution::Union{Symbol, Val} = Val(:haar),
 ) where {T <: FloatOrComplex} = rand_unitary(T, dimensions, makeVal(distribution))
 function rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}, ::Val{:haar}) where {T <: FloatOrComplex}
-    N = hilbert_dimensions_to_size(dimensions)[1]
+    N = get_hilbert_size(dimensions)[1]
 
     # generate N x N matrix Z of complex standard normal random variates
     Z = randn(T, N, N)
@@ -53,7 +53,7 @@ function rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVe
     return QuantumObject(to_dense(Q * Diagonal(Λ)); type = Operator(), dims = dimensions)
 end
 function rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}, ::Val{:exp}) where {T <: FloatOrComplex}
-    N = hilbert_dimensions_to_size(dimensions)[1]
+    N = get_hilbert_size(dimensions)[1]
 
     # generate N x N matrix Z of complex standard normal random variates
     Z = randn(T, N, N)
@@ -589,7 +589,7 @@ where ``\omega = \exp(\frac{2 \pi i}{N})``.
 """
 qft(::Type{T}, dimensions::Int) where {T <: Complex} = QuantumObject(_qft_op(T, dimensions), Operator(), dimensions)
 qft(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: Complex} =
-    QuantumObject(_qft_op(T, hilbert_dimensions_to_size(dimensions)[1]), Operator(), dimensions)
+    QuantumObject(_qft_op(T, get_hilbert_size(dimensions)[1]), Operator(), dimensions)
 qft(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = qft(ComplexF64, dimensions)
 
 function _qft_op(::Type{T}, N::Int) where {T <: Complex}
