@@ -3,11 +3,11 @@ JULIA:=julia
 default: help
 
 setup:
-    ${JULIA} -e 'import Pkg; Pkg.add(["Changelog"])'
-    ${JULIA} --project=@runic --startup-file=no -e 'using Pkg; Pkg.add("Runic")'
+	${JULIA} -e 'import Pkg; Pkg.add(["Changelog"])'
+	${JULIA} --project=@runic --startup-file=no -e 'using Pkg; Pkg.add("Runic")'
 
 format:
-    ${JULIA} --project=@runic --startup-file=no -e 'using Runic; exit(Runic.main(ARGS))' -- --inplace .
+	${JULIA} --project=@runic --startup-file=no -e 'using Runic; exit(Runic.main(ARGS))' -- --inplace .
 
 changelog:
 	${JULIA} -e 'using Changelog; Changelog.generate(Changelog.CommonMark(), "CHANGELOG.md"; repo = "qutip/QuantumToolbox.jl")'

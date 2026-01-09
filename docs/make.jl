@@ -1,6 +1,3 @@
-#! format: off
-# turns off the julia formatting of this file
-
 using QuantumToolbox
 using Documenter
 using DocumenterVitepress
@@ -23,8 +20,8 @@ const DOCTEST = get(ENV, "DOCTEST", true) == true # `DOCTEST = false` skips doc 
 
 # generate bibliography
 bib = CitationBibliography(
-    joinpath(@__DIR__, "src", "resources", "bibliography.bib"), 
-    style=:authoryear,
+    joinpath(@__DIR__, "src", "resources", "bibliography.bib"),
+    style = :authoryear,
 )
 
 # generate changelog
@@ -86,7 +83,7 @@ const PAGES = [
 
 makedocs(;
     modules = [
-        QuantumToolbox, 
+        QuantumToolbox,
         Base.get_extension(QuantumToolbox, :QuantumToolboxMakieExt),
     ],
     authors = "Alberto Mercurio and Yi-Te Huang",
