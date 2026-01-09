@@ -1,5 +1,5 @@
 module QuantumToolbox
-
+using Revise
 ## Standard Julia libraries
 using LinearAlgebra
 using SparseArrays
