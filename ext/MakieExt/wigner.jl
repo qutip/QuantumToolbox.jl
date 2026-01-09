@@ -38,17 +38,17 @@ Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wi
     If you want to keep type stability, it is recommended to use `Val(:two_dim)` and `Val(:three_dim)` instead of `:two_dim` and `:three_dim`, respectively. Also, specify the library as `Val(:Makie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function QuantumToolbox.plot_wigner(
-    library::Val{:Makie},
-    state::QuantumObject{OpType};
-    xvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
-    yvec::Union{Nothing,AbstractVector} = LinRange(-7.5, 7.5, 200),
-    g::Real = √2,
-    method::WignerSolver = WignerClenshaw(),
-    projection::Union{Val,Symbol} = Val(:two_dim),
-    location::Union{GridPosition,Nothing} = nothing,
-    colorbar::Bool = false,
-    kwargs...,
-) where {OpType<:Union{Bra,Ket,Operator}}
+        library::Val{:Makie},
+        state::QuantumObject{OpType};
+        xvec::Union{Nothing, AbstractVector} = LinRange(-7.5, 7.5, 200),
+        yvec::Union{Nothing, AbstractVector} = LinRange(-7.5, 7.5, 200),
+        g::Real = √2,
+        method::WignerSolver = WignerClenshaw(),
+        projection::Union{Val, Symbol} = Val(:two_dim),
+        location::Union{GridPosition, Nothing} = nothing,
+        colorbar::Bool = false,
+        kwargs...,
+    ) where {OpType <: Union{Bra, Ket, Operator}}
     QuantumToolbox.getVal(projection) == :two_dim ||
         QuantumToolbox.getVal(projection) == :three_dim ||
         throw(ArgumentError("Unsupported projection: $projection"))
@@ -68,17 +68,17 @@ function QuantumToolbox.plot_wigner(
 end
 
 function _plot_wigner(
-    ::Val{:Makie},
-    state::QuantumObject{OpType},
-    xvec::AbstractVector,
-    yvec::AbstractVector,
-    projection::Val{:two_dim},
-    g::Real,
-    method::WignerSolver,
-    location::Union{GridPosition,Nothing},
-    colorbar::Bool;
-    kwargs...,
-) where {OpType<:Union{Bra,Ket,Operator}}
+        ::Val{:Makie},
+        state::QuantumObject{OpType},
+        xvec::AbstractVector,
+        yvec::AbstractVector,
+        projection::Val{:two_dim},
+        g::Real,
+        method::WignerSolver,
+        location::Union{GridPosition, Nothing},
+        colorbar::Bool;
+        kwargs...,
+    ) where {OpType <: Union{Bra, Ket, Operator}}
     fig, location = _getFigAndLocation(location)
 
     lyt = GridLayout(location)
@@ -101,17 +101,17 @@ function _plot_wigner(
 end
 
 function _plot_wigner(
-    ::Val{:Makie},
-    state::QuantumObject{OpType},
-    xvec::AbstractVector,
-    yvec::AbstractVector,
-    projection::Val{:three_dim},
-    g::Real,
-    method::WignerSolver,
-    location::Union{GridPosition,Nothing},
-    colorbar::Bool;
-    kwargs...,
-) where {OpType<:Union{Bra,Ket,Operator}}
+        ::Val{:Makie},
+        state::QuantumObject{OpType},
+        xvec::AbstractVector,
+        yvec::AbstractVector,
+        projection::Val{:three_dim},
+        g::Real,
+        method::WignerSolver,
+        location::Union{GridPosition, Nothing},
+        colorbar::Bool;
+        kwargs...,
+    ) where {OpType <: Union{Bra, Ket, Operator}}
     fig, location = _getFigAndLocation(location)
 
     lyt = GridLayout(location)

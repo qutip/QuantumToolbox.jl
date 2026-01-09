@@ -27,12 +27,12 @@ The return depends on `fock_basis`.
 - `fock_basis=Val(false)`: return the Bloch-Redfield tensor (in the eigen basis) along with the transformation matrix from eigen to fock basis.
 """
 function bloch_redfield_tensor(
-    H::QuantumObject{Operator},
-    a_ops::Union{AbstractVector,Tuple,Nothing},
-    c_ops::Union{AbstractVector,Tuple,Nothing} = nothing;
-    sec_cutoff::Real = 0.1,
-    fock_basis::Union{Val,Bool} = Val(false),
-)
+        H::QuantumObject{Operator},
+        a_ops::Union{AbstractVector, Tuple, Nothing},
+        c_ops::Union{AbstractVector, Tuple, Nothing} = nothing;
+        sec_cutoff::Real = 0.1,
+        fock_basis::Union{Val, Bool} = Val(false),
+    )
     rst = eigenstates(H)
     U = QuantumObject(rst.vectors, Operator(), H.dimensions)
     sec_cutoff = float(sec_cutoff)
@@ -91,12 +91,12 @@ The return depends on `fock_basis`.
 - `fock_basis=Val(false)`: return the Bloch-Redfield term (in the eigen basis) along with the transformation matrix from eigen to fock basis.
 """
 function brterm(
-    H::QuantumObject{Operator},
-    a_op::QuantumObject{Operator},
-    spectra::Function;
-    sec_cutoff::Real = 0.1,
-    fock_basis::Union{Bool,Val} = Val(false),
-)
+        H::QuantumObject{Operator},
+        a_op::QuantumObject{Operator},
+        spectra::Function;
+        sec_cutoff::Real = 0.1,
+        fock_basis::Union{Bool, Val} = Val(false),
+    )
     rst = eigenstates(H)
     U = QuantumObject(rst.vectors, Operator(), H.dimensions)
 
@@ -117,12 +117,12 @@ function brterm(
 end
 
 function _brterm(
-    rst::EigsolveResult,
-    a_op::T,
-    spectra::F,
-    sec_cutoff::Real,
-    fock_basis_hamiltonian::Union{Bool,Val},
-) where {T<:QuantumObject{Operator},F<:Function}
+        rst::EigsolveResult,
+        a_op::T,
+        spectra::F,
+        sec_cutoff::Real,
+        fock_basis_hamiltonian::Union{Bool, Val},
+    ) where {T <: QuantumObject{Operator}, F <: Function}
     _check_br_spectra(spectra)
 
     U = rst.vectors
@@ -207,15 +207,15 @@ Solves for the dynamics of a system using the Bloch-Redfield master equation, gi
 - `sol::TimeEvolutionSol`: The solution of the time evolution. See also [`TimeEvolutionSol`](@ref)
 """
 function brmesolve(
-    H::QuantumObject{Operator},
-    ψ0::QuantumObject,
-    tlist::AbstractVector,
-    a_ops::Union{Nothing,AbstractVector,Tuple},
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    sec_cutoff::Real = 0.1,
-    e_ops::Union{Nothing,AbstractVector} = nothing,
-    kwargs...,
-)
+        H::QuantumObject{Operator},
+        ψ0::QuantumObject,
+        tlist::AbstractVector,
+        a_ops::Union{Nothing, AbstractVector, Tuple},
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        sec_cutoff::Real = 0.1,
+        e_ops::Union{Nothing, AbstractVector} = nothing,
+        kwargs...,
+    )
     R = bloch_redfield_tensor(H, a_ops, c_ops; sec_cutoff = sec_cutoff, fock_basis = Val(true))
 
     return mesolve(R, ψ0, tlist, nothing; e_ops = e_ops, kwargs...)

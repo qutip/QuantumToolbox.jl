@@ -3,10 +3,10 @@ JULIA:=julia
 default: help
 
 setup:
-	${JULIA} -e 'import Pkg; Pkg.add(["JuliaFormatter", "Changelog"])'
+	${JULIA} -e 'import Pkg; Pkg.add(["Runic", "Changelog"])'
 
 format:
-	${JULIA} -e 'using JuliaFormatter; format(".")'
+	runic --inplace .
 
 changelog:
 	${JULIA} -e 'using Changelog; Changelog.generate(Changelog.CommonMark(), "CHANGELOG.md"; repo = "qutip/QuantumToolbox.jl")'
@@ -26,7 +26,7 @@ all: setup format changelog test docs vitepress
 help:
 	@echo "The following make commands are available:"
 	@echo " - make setup: install the dependencies for make command"
-	@echo " - make format: format codes with JuliaFormatter"
+	@echo " - make format: format codes with Runic"
 	@echo " - make changelog: generate changelog"
 	@echo " - make test: run the tests"
 	@echo " - make docs: instantiate and build the documentation"

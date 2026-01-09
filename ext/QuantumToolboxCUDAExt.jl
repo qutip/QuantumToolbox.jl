@@ -75,32 +75,32 @@ Return a new [`QuantumObject`](@ref) where `A.data` is in the type of `CUDA` arr
 - `A::QuantumObject`: The [`QuantumObject`](@ref)
 - `word_size::Int`: The word size of the element type of `A`, can be either `32` or `64`. Default to `64`.
 """
-function cu(A::QuantumObject; word_size::Union{Val,Int} = Val(64))
+function cu(A::QuantumObject; word_size::Union{Val, Int} = Val(64))
     _word_size = getVal(makeVal(word_size))
 
     ((_word_size == 64) || (_word_size == 32)) || throw(DomainError(_word_size, "The word size should be 32 or 64."))
 
     return cu(A, makeVal(word_size))
 end
-cu(A::QuantumObject, word_size::Union{Val{32},Val{64}}) =
+cu(A::QuantumObject, word_size::Union{Val{32}, Val{64}}) =
     QuantumObject(adapt(CuArray{_convert_eltype_wordsize(eltype(A), word_size)}, A.data), A.type, A.dimensions)
 function cu(
-    A::QuantumObject{ObjType,DimsType,<:SparseVector},
-    word_size::Union{Val{32},Val{64}},
-) where {ObjType<:QuantumObjectType,DimsType<:AbstractDimensions}
+        A::QuantumObject{ObjType, DimsType, <:SparseVector},
+        word_size::Union{Val{32}, Val{64}},
+    ) where {ObjType <: QuantumObjectType, DimsType <: AbstractDimensions}
     return CuSparseVector{_convert_eltype_wordsize(eltype(A), word_size)}(A)
 end
 function cu(
-    A::QuantumObject{ObjType,DimsType,<:SparseMatrixCSC},
-    word_size::Union{Val{32},Val{64}},
-) where {ObjType<:QuantumObjectType,DimsType<:AbstractDimensions}
+        A::QuantumObject{ObjType, DimsType, <:SparseMatrixCSC},
+        word_size::Union{Val{32}, Val{64}},
+    ) where {ObjType <: QuantumObjectType, DimsType <: AbstractDimensions}
     return CuSparseMatrixCSC{_convert_eltype_wordsize(eltype(A), word_size)}(A)
 end
 
-QuantumToolbox.to_dense(A::MT) where {MT<:AbstractCuSparseArray} = CuArray(A)
+QuantumToolbox.to_dense(A::MT) where {MT <: AbstractCuSparseArray} = CuArray(A)
 
-QuantumToolbox.to_dense(::Type{T1}, A::CuArray{T2}) where {T1<:Number,T2<:Number} = CuArray{T1}(A)
-QuantumToolbox.to_dense(::Type{T}, A::AbstractCuSparseArray) where {T<:Number} = CuArray{T}(A)
+QuantumToolbox.to_dense(::Type{T1}, A::CuArray{T2}) where {T1 <: Number, T2 <: Number} = CuArray{T1}(A)
+QuantumToolbox.to_dense(::Type{T}, A::AbstractCuSparseArray) where {T <: Number} = CuArray{T}(A)
 
 QuantumToolbox._sparse_similar(A::CuSparseMatrixCSC, args...) = sparse(args..., fmt = :csc)
 QuantumToolbox._sparse_similar(A::CuSparseMatrixCSR, args...) = sparse(args..., fmt = :csr)

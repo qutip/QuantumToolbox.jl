@@ -15,7 +15,7 @@
     @test all(abs.(eigenenergies(σx, sparse = Val(false))) .≈ abs.(λd))
     @test all(abs.(eigenenergies(σx, sparse = Val(true), eigvals = 2)) .≈ abs.(λs))
     @test resstring ==
-          "EigsolveResult:   type=$(Operator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
+        "EigsolveResult:   type=$(Operator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
     N = 30
     a = kron(destroy(N), qeye(2))
@@ -62,9 +62,9 @@
     vecs2 = vecs2[:, 1:10]
 
     @test sum(abs2, vals) ≈ sum(abs2, vals2)
-    @test abs2(vals2[1]) ≈ abs2(vals3[1]) atol=1e-7
-    @test vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])) ≈ vec2mat(vecs2[:, 1]) atol=1e-7
-    @test vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])) ≈ vec2mat(vecs3[:, 1]) atol=1e-5
+    @test abs2(vals2[1]) ≈ abs2(vals3[1]) atol = 1.0e-7
+    @test vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])) ≈ vec2mat(vecs2[:, 1]) atol = 1.0e-7
+    @test vec2mat(vecs[:, 1]) * exp(-1im * angle(vecs[1, 1])) ≈ vec2mat(vecs3[:, 1]) atol = 1.0e-5
 
     # eigen solve for QuantumObject
     result = eigenstates(L, sparse = Val(true), sigma = 0.01, eigvals = 10, krylovdim = 50)
@@ -73,7 +73,7 @@
     valstring = sprint((t, s) -> show(t, "text/plain", s), result.values)
     vecsstring = sprint((t, s) -> show(t, "text/plain", s), result.vectors)
     @test resstring ==
-          "EigsolveResult:   type=$(SuperOperator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
+        "EigsolveResult:   type=$(SuperOperator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
     vals2, vecs2 = eigenstates(L, sortby = abs)
     vals2 = vals2[1:10]
@@ -84,9 +84,9 @@
     @test all([v.type isa OperatorKet for v in vecs])
     @test typeof(result.vectors) <: AbstractMatrix
     @test sum(abs2, vals) ≈ sum(abs2, vals2)
-    @test abs2(vals2[1]) ≈ abs2(vals3[1]) atol=1e-7
+    @test abs2(vals2[1]) ≈ abs2(vals3[1]) atol = 1.0e-7
     @test vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])) ≈ vec2mat(vecs2[1]).data
-    @test vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])) ≈ vec2mat(state3[1]).data atol=1e-5
+    @test vec2mat(vecs[1]).data * exp(-1im * angle(vecs[1][1])) ≈ vec2mat(state3[1]).data atol = 1.0e-5
 
     @testset "Type Inference (eigen)" begin
         N = 5
@@ -110,13 +110,13 @@
                 Vector{ComplexF64},
                 Matrix{ComplexF64},
                 QuantumToolbox.Operator,
-                QuantumToolbox.Dimensions{2,Tuple{QuantumToolbox.Space,QuantumToolbox.Space}},
+                QuantumToolbox.Dimensions{2, Tuple{QuantumToolbox.Space, QuantumToolbox.Space}},
             },
             QuantumToolbox.EigsolveResult{
                 Vector{Float64},
                 Matrix{ComplexF64},
                 QuantumToolbox.Operator,
-                QuantumToolbox.Dimensions{2,Tuple{QuantumToolbox.Space,QuantumToolbox.Space}},
+                QuantumToolbox.Dimensions{2, Tuple{QuantumToolbox.Space, QuantumToolbox.Space}},
             },
         }
 

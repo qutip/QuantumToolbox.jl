@@ -16,7 +16,7 @@ _sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)
 _sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(transpose(B), A)
 _sprepost(A, B) = _spre(A) * _spost(B) # for any other input types
 
-## if input is AbstractSciMLOperator 
+## if input is AbstractSciMLOperator
 ## some of them are optimized to speed things up
 ## the rest of the SciMLOperators will just use lazy tensor (and prompt a warning)
 _spre(A::MatrixOperator) = MatrixOperator(_spre(A.A))
@@ -40,11 +40,11 @@ function _spost(B::AbstractSciMLOperator)
     return kron(B_T, Id)
 end
 
-## intrinsic liouvillian 
+## intrinsic liouvillian
 function _liouvillian(
-    H::MT,
-    ::Val{assume_hermitian},
-) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator},assume_hermitian}
+        H::MT,
+        ::Val{assume_hermitian},
+    ) where {MT <: Union{AbstractMatrix, AbstractSciMLOperator}, assume_hermitian}
     H_spre = _spre(H)
     H_spost = assume_hermitian ? _spost(H) : _spost(H')
     return -1im * (H_spre - H_spost)
@@ -59,7 +59,7 @@ _liouvillian(H::AddedOperator, assume_hermitian::Val) =
     AddedOperator(map(op -> _liouvillian(op, assume_hermitian), H.ops))
 
 # intrinsic lindblad_dissipator
-function _lindblad_dissipator(O::MT) where {MT<:Union{AbstractMatrix,AbstractSciMLOperator}}
+function _lindblad_dissipator(O::MT) where {MT <: Union{AbstractMatrix, AbstractSciMLOperator}}
     Od_O = O' * O
     return _sprepost(O, O') - (_spre(Od_O) + _spost(Od_O)) / 2
 end
@@ -175,10 +175,10 @@ See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
     If you want to keep type stability, it is recommended to use `assume_hermitian = Val(true)` instead of `assume_hermitian = true`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function liouvillian(
-    H::AbstractQuantumObject{OpType},
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    assume_hermitian::Union{Bool,Val} = Val(true),
-) where {OpType<:Union{Operator,SuperOperator}}
+        H::AbstractQuantumObject{OpType},
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        assume_hermitian::Union{Bool, Val} = Val(true),
+    ) where {OpType <: Union{Operator, SuperOperator}}
     L = liouvillian(H; assume_hermitian = assume_hermitian)
     if !isnothing(c_ops)
         return L + _sum_lindblad_dissipators(c_ops)
@@ -186,11 +186,11 @@ function liouvillian(
     return L
 end
 
-liouvillian(H::Nothing, c_ops::Union{AbstractVector,Tuple}; kwargs...) = _sum_lindblad_dissipators(c_ops)
+liouvillian(H::Nothing, c_ops::Union{AbstractVector, Tuple}; kwargs...) = _sum_lindblad_dissipators(c_ops)
 
 liouvillian(H::Nothing, c_ops::Nothing; kwargs...) = 0
 
-liouvillian(H::AbstractQuantumObject{Operator}; assume_hermitian::Union{Bool,Val} = Val(true)) =
+liouvillian(H::AbstractQuantumObject{Operator}; assume_hermitian::Union{Bool, Val} = Val(true)) =
     get_typename_wrapper(H)(_liouvillian(H.data, makeVal(assume_hermitian)), SuperOperator(), H.dimensions)
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}; kwargs...) = H

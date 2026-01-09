@@ -24,9 +24,9 @@ The `library` keyword argument specifies the plotting library to use, defaulting
 """
 plot_fock_distribution(
     ρ::QuantumObject{SType};
-    library::Union{Val,Symbol} = Val(:Makie),
+    library::Union{Val, Symbol} = Val(:Makie),
     kwargs...,
-) where {SType<:Union{Bra,Ket,Operator}} = plot_fock_distribution(makeVal(library), ρ; kwargs...)
+) where {SType <: Union{Bra, Ket, Operator}} = plot_fock_distribution(makeVal(library), ρ; kwargs...)
 
-plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T,SType<:Union{Bra,Ket,Operator}} =
+plot_fock_distribution(::Val{T}, ρ::QuantumObject{SType}; kwargs...) where {T, SType <: Union{Bra, Ket, Operator}} =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))

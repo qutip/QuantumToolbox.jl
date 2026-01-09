@@ -4,7 +4,7 @@ This file defines the Dimensions structures, which can describe composite Hilber
 
 export AbstractDimensions, Dimensions, GeneralDimensions
 
-abstract type AbstractDimensions{M,N} end
+abstract type AbstractDimensions{M, N} end
 
 @doc raw"""
     struct Dimensions{N,T<:Tuple} <: AbstractDimensions{N, N}
@@ -13,13 +13,13 @@ abstract type AbstractDimensions{M,N} end
 
 A structure that describes the Hilbert [`Space`](@ref) of each subsystems.
 """
-struct Dimensions{N,T<:Tuple} <: AbstractDimensions{N,N}
+struct Dimensions{N, T <: Tuple} <: AbstractDimensions{N, N}
     to::T
 
     # make sure the elements in the tuple are all AbstractSpace
-    Dimensions(to::NTuple{N,AbstractSpace}) where {N} = new{N,typeof(to)}(to)
+    Dimensions(to::NTuple{N, AbstractSpace}) where {N} = new{N, typeof(to)}(to)
 end
-function Dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N}
+function Dimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Integer, N}
     _non_static_array_warning("dims", dims)
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
@@ -27,7 +27,7 @@ function Dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Intege
     return Dimensions(Tuple(Space.(dims)))
 end
 Dimensions(dims::Int) = Dimensions(Space(dims))
-Dimensions(dims::DimType) where {DimType<:AbstractSpace} = Dimensions((dims,))
+Dimensions(dims::DimType) where {DimType <: AbstractSpace} = Dimensions((dims,))
 Dimensions(dims::Any) = throw(
     ArgumentError(
         "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
@@ -42,15 +42,15 @@ Dimensions(dims::Any) = throw(
 
 A structure that describes the left-hand side (`to`) and right-hand side (`from`) Hilbert [`Space`](@ref) of an [`Operator`](@ref).
 """
-struct GeneralDimensions{M,N,T1<:Tuple,T2<:Tuple} <: AbstractDimensions{M,N}
+struct GeneralDimensions{M, N, T1 <: Tuple, T2 <: Tuple} <: AbstractDimensions{M, N}
     to::T1   # space acting on the left
     from::T2 # space acting on the right
 
     # make sure the elements in the tuple are all AbstractSpace
-    GeneralDimensions(to::NTuple{M,AbstractSpace}, from::NTuple{N,AbstractSpace}) where {M,N} =
-        new{M,N,typeof(to),typeof(from)}(to, from)
+    GeneralDimensions(to::NTuple{M, AbstractSpace}, from::NTuple{N, AbstractSpace}) where {M, N} =
+        new{M, N, typeof(to), typeof(from)}(to, from)
 end
-function GeneralDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N}
+function GeneralDimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Union{AbstractVector, NTuple}, N}
     (length(dims) != 2) && throw(ArgumentError("Invalid dims = $dims"))
 
     _non_static_array_warning("dims[1]", dims[1])
@@ -65,13 +65,13 @@ function GeneralDimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<
 end
 
 _gen_dimensions(dims::AbstractDimensions) = dims
-_gen_dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Integer,N} = Dimensions(dims)
-_gen_dimensions(dims::Union{AbstractVector{T},NTuple{N,T}}) where {T<:Union{AbstractVector,NTuple},N} =
+_gen_dimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Integer, N} = Dimensions(dims)
+_gen_dimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Union{AbstractVector, NTuple}, N} =
     GeneralDimensions(dims)
 _gen_dimensions(dims::Any) = Dimensions(dims)
 
 # obtain dims in the type of SVector with integers
-dimensions_to_dims(dimensions::NTuple{N,AbstractSpace}) where {N} = vcat(map(dimensions_to_dims, dimensions)...)
+dimensions_to_dims(dimensions::NTuple{N, AbstractSpace}) where {N} = vcat(map(dimensions_to_dims, dimensions)...)
 dimensions_to_dims(dimensions::Dimensions) = dimensions_to_dims(dimensions.to)
 dimensions_to_dims(dimensions::GeneralDimensions) =
     SVector{2}(dimensions_to_dims(dimensions.to), dimensions_to_dims(dimensions.from))
@@ -84,7 +84,7 @@ Base.length(::AbstractDimensions{N}) where {N} = N
 # otherwise the type of `prod(::Dimensions)` will be unstable
 _get_space_size(s::AbstractSpace)::Int = s.size
 Base.prod(dims::Dimensions) = prod(dims.to)
-Base.prod(spaces::NTuple{N,AbstractSpace}) where {N} = prod(_get_space_size, spaces)
+Base.prod(spaces::NTuple{N, AbstractSpace}) where {N} = prod(_get_space_size, spaces)
 
 Base.transpose(dimensions::Dimensions) = dimensions
 Base.transpose(dimensions::GeneralDimensions) = GeneralDimensions(dimensions.from, dimensions.to) # switch `to` and `from`

@@ -16,11 +16,11 @@ function benchmark_dsf!(SUITE)
         J = p.J
         a1, a2 = op_list
         return Δ * a1' * a1 +
-               Δ * a2' * a2 +
-               U * a1'^2 * a1^2 +
-               U * a2'^2 * a2^2 +
-               F * (a1 + a1') +
-               J * (a1' * a2 + a1 * a2')
+            Δ * a2' * a2 +
+            U * a1'^2 * a1^2 +
+            U * a2'^2 * a2^2 +
+            F * (a1 + a1') +
+            J * (a1' * a2 + a1 * a2')
     end
     function c_ops_dsf(op_list, p)
         κ = p.κ

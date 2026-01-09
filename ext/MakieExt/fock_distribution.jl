@@ -30,13 +30,13 @@ Plot the [Fock state](https://en.wikipedia.org/wiki/Fock_state) distribution of 
     If you want to keep type stability, it is recommended to use `Val(:two_dim)` and `Val(:three_dim)` instead of `:two_dim` and `:three_dim`, respectively. Also, specify the library as `Val(:Makie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function QuantumToolbox.plot_fock_distribution(
-    library::Val{:Makie},
-    ρ::QuantumObject{SType};
-    fock_numbers::Union{Nothing,AbstractVector} = nothing,
-    unit_y_range::Bool = true,
-    location::Union{GridPosition,Nothing} = nothing,
-    kwargs...,
-) where {SType<:Union{Bra,Ket,Operator}}
+        library::Val{:Makie},
+        ρ::QuantumObject{SType};
+        fock_numbers::Union{Nothing, AbstractVector} = nothing,
+        unit_y_range::Bool = true,
+        location::Union{GridPosition, Nothing} = nothing,
+        kwargs...,
+    ) where {SType <: Union{Bra, Ket, Operator}}
     return _plot_fock_distribution(
         library,
         ρ;
@@ -48,19 +48,19 @@ function QuantumToolbox.plot_fock_distribution(
 end
 
 function _plot_fock_distribution(
-    ::Val{:Makie},
-    ρ::QuantumObject{SType};
-    fock_numbers::Union{Nothing,AbstractVector} = nothing,
-    unit_y_range::Bool = true,
-    location::Union{GridPosition,Nothing} = nothing,
-    kwargs...,
-) where {SType<:Union{Bra,Ket,Operator}}
+        ::Val{:Makie},
+        ρ::QuantumObject{SType};
+        fock_numbers::Union{Nothing, AbstractVector} = nothing,
+        unit_y_range::Bool = true,
+        location::Union{GridPosition, Nothing} = nothing,
+        kwargs...,
+    ) where {SType <: Union{Bra, Ket, Operator}}
     ρ = ket2dm(ρ)
     D = prod(ρ.dims)
-    isapprox(tr(ρ), 1, atol = 1e-4) || (@warn "The input ρ should be normalized.")
+    isapprox(tr(ρ), 1, atol = 1.0e-4) || (@warn "The input ρ should be normalized.")
 
     # handle x ticks
-    xvec = 0:(D-1)
+    xvec = 0:(D - 1)
     fock_numbers = isnothing(fock_numbers) ? string.(collect(xvec)) : fock_numbers
     length(fock_numbers) == D ||
         throw(ArgumentError("Length of fock_numbers ($(length(fock_numbers))) does not match the total dimension: $D"))

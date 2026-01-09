@@ -22,4 +22,4 @@ struct Space <: AbstractSpace
     end
 end
 
-dimensions_to_dims(s::Space) = SVector{1,Int}(s.size)
+dimensions_to_dims(s::Space) = SVector{1, Int}(s.size)

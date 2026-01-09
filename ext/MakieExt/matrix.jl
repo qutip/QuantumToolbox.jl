@@ -48,30 +48,30 @@ Plot a heatmap for the elements of matrix `M`.
     If you want to keep type stability, it is recommended to use `method = Val(:real)`, `Val(:imag)`, `Val(:abs)`, and `Val(:angle)` instead of `:real`, `:imag`, `:abs`, and `:angle`, respectively. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function QuantumToolbox.matrix_heatmap(
-    library::Val{:Makie},
-    M::Union{QuantumObject{QT},AbstractMatrix{MT}};
-    method::Union{Symbol,Val} = Val(:real),
-    xbasis::Union{Nothing,AbstractVector} = nothing,
-    ybasis::Union{Nothing,AbstractVector} = nothing,
-    limits::Union{Nothing,Tuple{Real,Real}} = nothing,
-    show_grid::Bool = true,
-    grid_alpha::Real = 0.5,
-    xlabel_top::Bool = true,
-    colorbar::Bool = true,
-    colorbar_label::Union{Nothing,AbstractString} = nothing,
-    colormap = :RdBu,
-    colorrange::Union{Nothing,Tuple{Real,Real}} = nothing,
-    location::Union{GridPosition,Nothing} = nothing,
-    kwargs...,
-) where {QT<:Union{Operator,SuperOperator},MT<:Number}
+        library::Val{:Makie},
+        M::Union{QuantumObject{QT}, AbstractMatrix{MT}};
+        method::Union{Symbol, Val} = Val(:real),
+        xbasis::Union{Nothing, AbstractVector} = nothing,
+        ybasis::Union{Nothing, AbstractVector} = nothing,
+        limits::Union{Nothing, Tuple{Real, Real}} = nothing,
+        show_grid::Bool = true,
+        grid_alpha::Real = 0.5,
+        xlabel_top::Bool = true,
+        colorbar::Bool = true,
+        colorbar_label::Union{Nothing, AbstractString} = nothing,
+        colormap = :RdBu,
+        colorrange::Union{Nothing, Tuple{Real, Real}} = nothing,
+        location::Union{GridPosition, Nothing} = nothing,
+        kwargs...,
+    ) where {QT <: Union{Operator, SuperOperator}, MT <: Number}
     fig, location = _getFigAndLocation(location)
     lyt = GridLayout(location)
 
     # generate x, y, and z data
     # y-axis means row, x-axis means column
     Ny, Nx = size(M)
-    xdata = 0:(Nx-1)   # computational basis
-    ydata = 0:(Ny-1)   # computational basis
+    xdata = 0:(Nx - 1)   # computational basis
+    ydata = 0:(Ny - 1)   # computational basis
     zdata = _handle_matrix_plot_data(M, makeVal(method))
 
     # handle x and y ticks
@@ -111,7 +111,7 @@ function QuantumToolbox.matrix_heatmap(
     if show_grid
         # in order to show the grid at the edge of the squares, we use minorticks and minorgrid
         # note that the position of "ticks" is the center of each square (matrix element), and the length of each square is 1
-        # so the half width of square is 0.5, and the grid position (minor ticks) should be given as: [0.5, 1.5, 2.5, ...] 
+        # so the half width of square is 0.5, and the grid position (minor ticks) should be given as: [0.5, 1.5, 2.5, ...]
         axis_kwargs = merge(
             axis_kwargs,
             (
@@ -119,8 +119,8 @@ function QuantumToolbox.matrix_heatmap(
                 yminorgridvisible = true,
                 xminorgridcolor = (:black, grid_alpha),
                 yminorgridcolor = (:black, grid_alpha),
-                xminorticks = 0.5:(Nx-0.5),
-                yminorticks = 0.5:(Ny-0.5),
+                xminorticks = 0.5:(Nx - 0.5),
+                yminorticks = 0.5:(Ny - 0.5),
             ),
         )
     end
@@ -203,33 +203,33 @@ Plot a 3D histogram for the elements of matrix `M`.
     If you want to keep type stability, it is recommended to use `method = Val(:real)`, `Val(:imag)`, `Val(:abs)`, and `Val(:angle)` instead of `:real`, `:imag`, `:abs`, and `:angle`, respectively. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function QuantumToolbox.matrix_histogram(
-    library::Val{:Makie},
-    M::Union{QuantumObject{QT},AbstractMatrix{MT}};
-    method::Union{Symbol,Val} = Val(:real),
-    xbasis::Union{Nothing,AbstractVector} = nothing,
-    ybasis::Union{Nothing,AbstractVector} = nothing,
-    limits::Union{Nothing,Tuple{Real,Real}} = nothing,
-    xreversed::Bool = true,
-    yreversed::Bool = false,
-    azimuth::Real = -60,
-    elevation::Real = 45,
-    bars_spacing::Real = 0.2,
-    shading::Bool = true,
-    colorbar::Bool = true,
-    colorbar_label::Union{Nothing,AbstractString} = nothing,
-    colormap = :viridis,
-    colorrange::Union{Nothing,Tuple{Real,Real}} = nothing,
-    location::Union{GridPosition,Nothing} = nothing,
-    kwargs...,
-) where {QT<:Union{Operator,SuperOperator},MT<:Number}
+        library::Val{:Makie},
+        M::Union{QuantumObject{QT}, AbstractMatrix{MT}};
+        method::Union{Symbol, Val} = Val(:real),
+        xbasis::Union{Nothing, AbstractVector} = nothing,
+        ybasis::Union{Nothing, AbstractVector} = nothing,
+        limits::Union{Nothing, Tuple{Real, Real}} = nothing,
+        xreversed::Bool = true,
+        yreversed::Bool = false,
+        azimuth::Real = -60,
+        elevation::Real = 45,
+        bars_spacing::Real = 0.2,
+        shading::Bool = true,
+        colorbar::Bool = true,
+        colorbar_label::Union{Nothing, AbstractString} = nothing,
+        colormap = :viridis,
+        colorrange::Union{Nothing, Tuple{Real, Real}} = nothing,
+        location::Union{GridPosition, Nothing} = nothing,
+        kwargs...,
+    ) where {QT <: Union{Operator, SuperOperator}, MT <: Number}
     fig, location = _getFigAndLocation(location)
     lyt = GridLayout(location)
 
     # generate x and y data
     # y-axis means row, x-axis means column
     Ny, Nx = size(M)
-    xdata = 0:(Nx-1)   # computational basis
-    ydata = 0:(Ny-1)   # computational basis
+    xdata = 0:(Nx - 1)   # computational basis
+    ydata = 0:(Ny - 1)   # computational basis
 
     # generate z data
     ## z0 mean the origin of all bars

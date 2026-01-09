@@ -75,17 +75,17 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `prob`: The `SDEProblem` for the Stochastic Schrödinger time evolution of the system.
 """
 function ssesolveProblem(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
-    tlist::AbstractVector,
-    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    rng::AbstractRNG = default_rng(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    store_measurement::Union{Val,Bool} = Val(false),
-    kwargs...,
-)
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{Ket},
+        tlist::AbstractVector,
+        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        store_measurement::Union{Val, Bool} = Val(false),
+        kwargs...,
+    )
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -218,21 +218,21 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and  ``dW_n(t)`` is t
 - `prob::EnsembleProblem with SDEProblem`: The Ensemble SDEProblem for the Stochastic Shrödinger time evolution.
 """
 function ssesolveEnsembleProblem(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
-    tlist::AbstractVector,
-    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    rng::AbstractRNG = default_rng(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    prob_func::Union{Function,Nothing} = nothing,
-    output_func::Union{Tuple,Nothing} = nothing,
-    progress_bar::Union{Val,Bool} = Val(true),
-    store_measurement::Union{Val,Bool} = Val(false),
-    kwargs...,
-)
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{Ket},
+        tlist::AbstractVector,
+        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple, Nothing} = nothing,
+        progress_bar::Union{Val, Bool} = Val(true),
+        store_measurement::Union{Val, Bool} = Val(false),
+        kwargs...,
+    )
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
@@ -356,23 +356,23 @@ Above, ``\hat{S}_n`` are the stochastic collapse operators and ``dW_n(t)`` is th
 - `sol::TimeEvolutionStochasticSol`: The solution of the time evolution. See [`TimeEvolutionStochasticSol`](@ref).
 """
 function ssesolve(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
-    tlist::AbstractVector,
-    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-    alg::Union{Nothing,AbstractSDEAlgorithm} = nothing,
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    rng::AbstractRNG = default_rng(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    prob_func::Union{Function,Nothing} = nothing,
-    output_func::Union{Tuple,Nothing} = nothing,
-    progress_bar::Union{Val,Bool} = Val(true),
-    keep_runs_results::Union{Val,Bool} = Val(false),
-    store_measurement::Union{Val,Bool} = Val(false),
-    kwargs...,
-)
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{Ket},
+        tlist::AbstractVector,
+        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
+        alg::Union{Nothing, AbstractSDEAlgorithm} = nothing,
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple, Nothing} = nothing,
+        progress_bar::Union{Val, Bool} = Val(true),
+        keep_runs_results::Union{Val, Bool} = Val(false),
+        store_measurement::Union{Val, Bool} = Val(false),
+        kwargs...,
+    )
     ens_prob = ssesolveEnsembleProblem(
         H,
         ψ0,
@@ -400,12 +400,12 @@ function ssesolve(
 end
 
 function ssesolve(
-    ens_prob::TimeEvolutionProblem,
-    alg::AbstractSDEAlgorithm = SRA2(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    keep_runs_results = Val(false),
-)
+        ens_prob::TimeEvolutionProblem,
+        alg::AbstractSDEAlgorithm = SRA2(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        keep_runs_results = Val(false),
+    )
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     _sol_1 = sol[:, 1]

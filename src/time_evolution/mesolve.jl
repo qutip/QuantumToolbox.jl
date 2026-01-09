@@ -1,15 +1,15 @@
 export mesolveProblem, mesolve, mesolve_map
 
-_mesolve_make_L_QobjEvo(H::Union{QuantumObject,Nothing}, c_ops) =
+_mesolve_make_L_QobjEvo(H::Union{QuantumObject, Nothing}, c_ops) =
     QuantumObjectEvolution(liouvillian(H, c_ops), type = SuperOperator())
-_mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution,Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
+_mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution, Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
 _mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both H and
 c_ops are Nothing. You are probably running the wrong function."))
 
 function _gen_mesolve_solution(
-    sol,
-    prob::TimeEvolutionProblem{ST},
-) where {ST<:Union{Operator,OperatorKet,SuperOperator}}
+        sol,
+        prob::TimeEvolutionProblem{ST},
+    ) where {ST <: Union{Operator, OperatorKet, SuperOperator}}
     if prob.states_type isa Operator
         ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = prob.states_type, dims = prob.dimensions), sol.u)
     else
@@ -81,16 +81,16 @@ where
 - `prob::ODEProblem`: The ODEProblem for the master equation time evolution.
 """
 function mesolveProblem(
-    H::Union{AbstractQuantumObject{HOpType},Tuple},
-    ψ0::QuantumObject{StateOpType},
-    tlist,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    inplace::Union{Val,Bool} = Val(true),
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
+        H::Union{AbstractQuantumObject{HOpType}, Tuple},
+        ψ0::QuantumObject{StateOpType},
+        tlist,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        inplace::Union{Val, Bool} = Val(true),
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolveProblem(
         H,
         ψ0,
@@ -128,7 +128,7 @@ function mesolveProblem(
 
     tspan = (tlist[1], tlist[end])
 
-    prob = ODEProblem{getVal(inplace),FullSpecialize}(L, ρ0, tspan, params; kwargs4...)
+    prob = ODEProblem{getVal(inplace), FullSpecialize}(L, ρ0, tspan, params; kwargs4...)
 
     return TimeEvolutionProblem(prob, tlist, states_type, L_evo.dimensions)
 end
@@ -186,17 +186,17 @@ where
 - `sol::TimeEvolutionSol`: The solution of the time evolution. See also [`TimeEvolutionSol`](@ref)
 """
 function mesolve(
-    H::Union{AbstractQuantumObject{HOpType},Tuple},
-    ψ0::QuantumObject{StateOpType},
-    tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::AbstractODEAlgorithm = DP5(),
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    inplace::Union{Val,Bool} = Val(true),
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
+        H::Union{AbstractQuantumObject{HOpType}, Tuple},
+        ψ0::QuantumObject{StateOpType},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        alg::AbstractODEAlgorithm = DP5(),
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        inplace::Union{Val, Bool} = Val(true),
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolve(
         H,
         ψ0,
@@ -297,17 +297,17 @@ for each combination in the ensemble.
 - An array of [`TimeEvolutionSol`](@ref) objects with dimensions `(length(ψ0), length(params[1]), length(params[2]), ...)`.
 """
 function mesolve_map(
-    H::Union{AbstractQuantumObject{HOpType},Tuple},
-    ψ0::AbstractVector{<:QuantumObject{StateOpType}},
-    tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::AbstractODEAlgorithm = DP5(),
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::Union{NullParameters,Tuple} = NullParameters(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
+        H::Union{AbstractQuantumObject{HOpType}, Tuple},
+        ψ0::AbstractVector{<:QuantumObject{StateOpType}},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        alg::AbstractODEAlgorithm = DP5(),
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params::Union{NullParameters, Tuple} = NullParameters(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     (isoper(H) && all(isket, ψ0) && isnothing(c_ops)) && return sesolve_map(
         H,
         ψ0,
@@ -351,12 +351,12 @@ function mesolve_map(
     return mesolve_map(prob, iter, alg, ensemblealg; progress_bar = progress_bar)
 end
 mesolve_map(
-    H::Union{AbstractQuantumObject{HOpType},Tuple},
+    H::Union{AbstractQuantumObject{HOpType}, Tuple},
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+    c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
     kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}} =
+) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}} =
     mesolve_map(H, [ψ0], tlist, c_ops; kwargs...)
 
 # this method is for advanced usage
@@ -366,14 +366,14 @@ mesolve_map(
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function mesolve_map(
-    prob::TimeEvolutionProblem{StateOpType,<:AbstractDimensions,<:ODEProblem},
-    iter::AbstractArray,
-    alg::AbstractODEAlgorithm = DP5(),
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads();
-    prob_func::Union{Function,Nothing} = nothing,
-    output_func::Union{Tuple,Nothing} = nothing,
-    progress_bar::Union{Val,Bool} = Val(true),
-) where {StateOpType<:Union{Ket,Operator,OperatorKet,SuperOperator}}
+        prob::TimeEvolutionProblem{StateOpType, <:AbstractDimensions, <:ODEProblem},
+        iter::AbstractArray,
+        alg::AbstractODEAlgorithm = DP5(),
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads();
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple, Nothing} = nothing,
+        progress_bar::Union{Val, Bool} = Val(true),
+    ) where {StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     # generate ensemble problem
     ntraj = length(iter)
     _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func

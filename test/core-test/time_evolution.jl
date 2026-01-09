@@ -60,7 +60,7 @@
     sol_me = mesolve(prob_me)
 end
 
-@testitem "sesolve" setup=[TESetup] begin
+@testitem "sesolve" setup = [TESetup] begin
     using SciMLOperators
     import SciMLOperators: ScaledOperator
 
@@ -98,29 +98,29 @@ end
     @test length(sol3.times_states) == length(saveat)
     @test length(sol3.states) == length(saveat)
     @test size(sol3.expect) == (length(e_ops), length(tlist))
-    @test sol.expect[1, saveat_idxs] ≈ expect(e_ops[1], sol3.states) atol = 1e-6
+    @test sol.expect[1, saveat_idxs] ≈ expect(e_ops[1], sol3.states) atol = 1.0e-6
 
     sol_string = sprint((t, s) -> show(t, "text/plain", s), sol)
     @test sol_string ==
-          "Solution of time evolution\n" *
-          "(return code: $(sol.retcode))\n" *
-          "--------------------------\n" *
-          "num_states = $(length(sol.states))\n" *
-          "num_expect = $(size(sol.expect, 1))\n" *
-          "ODE alg.: $(sol.alg)\n" *
-          "abstol = $(sol.abstol)\n" *
-          "reltol = $(sol.reltol)\n"
+        "Solution of time evolution\n" *
+        "(return code: $(sol.retcode))\n" *
+        "--------------------------\n" *
+        "num_states = $(length(sol.states))\n" *
+        "num_expect = $(size(sol.expect, 1))\n" *
+        "ODE alg.: $(sol.alg)\n" *
+        "abstol = $(sol.abstol)\n" *
+        "reltol = $(sol.reltol)\n"
 
     sol_string2 = sprint((t, s) -> show(t, "text/plain", s), sol2)
     @test sol_string2 ==
-          "Solution of time evolution\n" *
-          "(return code: $(sol2.retcode))\n" *
-          "--------------------------\n" *
-          "num_states = $(length(sol2.states))\n" *
-          "num_expect = 0\n" *
-          "ODE alg.: $(sol2.alg)\n" *
-          "abstol = $(sol2.abstol)\n" *
-          "reltol = $(sol2.reltol)\n"
+        "Solution of time evolution\n" *
+        "(return code: $(sol2.retcode))\n" *
+        "--------------------------\n" *
+        "num_states = $(length(sol2.states))\n" *
+        "num_expect = 0\n" *
+        "ODE alg.: $(sol2.alg)\n" *
+        "abstol = $(sol2.abstol)\n" *
+        "reltol = $(sol2.reltol)\n"
 
     @test_throws ArgumentError sesolve(H, ψ0, TESetup.tlist1, progress_bar = Val(false))
     @test_throws ArgumentError sesolve(H, ψ0, TESetup.tlist2, progress_bar = Val(false))
@@ -149,7 +149,7 @@ end
     end
 end
 
-@testitem "sesolve_map" setup=[TESetup] begin
+@testitem "sesolve_map" setup = [TESetup] begin
 
     # Get parameters from TESetup to simplify the code
     N = TESetup.N
@@ -191,8 +191,8 @@ end
             Ω_rabi = sqrt(g^2 + ((ωc - ωq) / 2)^2)
             amp_rabi = g^2 / Ω_rabi^2
 
-            @test sol_0_e.expect[1, :] ≈ amp_rabi .* sin.(Ω_rabi * tlist) .^ 2 atol = 1e-2
-            @test sol_1_g.expect[1, :] ≈ 1 .- amp_rabi .* sin.(Ω_rabi * tlist) .^ 2 atol = 1e-2
+            @test sol_0_e.expect[1, :] ≈ amp_rabi .* sin.(Ω_rabi * tlist) .^ 2 atol = 1.0e-2
+            @test sol_1_g.expect[1, :] ≈ 1 .- amp_rabi .* sin.(Ω_rabi * tlist) .^ 2 atol = 1.0e-2
         end
     end
 
@@ -202,7 +202,7 @@ end
     end
 end
 
-@testitem "mesolve" setup=[TESetup] begin
+@testitem "mesolve" setup = [TESetup] begin
     using SciMLOperators
 
     # Get parameters from TESetup to simplify the code
@@ -238,19 +238,19 @@ end
     @test length(sol_me3.times_states) == length(saveat)
     @test length(sol_me3.states) == length(saveat)
     @test size(sol_me3.expect) == (length(e_ops), length(tlist))
-    @test sol_me3.expect[1, TESetup.saveat_idxs] ≈ expect(e_ops[1], sol_me3.states) atol = 1e-6
+    @test sol_me3.expect[1, TESetup.saveat_idxs] ≈ expect(e_ops[1], sol_me3.states) atol = 1.0e-6
     @test all([sol_me3.states[i] ≈ vector_to_operator(sol_me4.states[i]) for i in eachindex(saveat)])
 
     sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
     @test sol_me_string ==
-          "Solution of time evolution\n" *
-          "(return code: $(sol_me.retcode))\n" *
-          "--------------------------\n" *
-          "num_states = $(length(sol_me.states))\n" *
-          "num_expect = $(size(sol_me.expect, 1))\n" *
-          "ODE alg.: $(sol_me.alg)\n" *
-          "abstol = $(sol_me.abstol)\n" *
-          "reltol = $(sol_me.reltol)\n"
+        "Solution of time evolution\n" *
+        "(return code: $(sol_me.retcode))\n" *
+        "--------------------------\n" *
+        "num_states = $(length(sol_me.states))\n" *
+        "num_expect = $(size(sol_me.expect, 1))\n" *
+        "ODE alg.: $(sol_me.alg)\n" *
+        "abstol = $(sol_me.abstol)\n" *
+        "reltol = $(sol_me.reltol)\n"
 
     @test_throws ArgumentError mesolve(H, ψ0, TESetup.tlist1, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError mesolve(H, ψ0, TESetup.tlist2, c_ops, progress_bar = Val(false))
@@ -302,7 +302,7 @@ end
     end
 end
 
-@testitem "mesolve_map" setup=[TESetup] begin
+@testitem "mesolve_map" setup = [TESetup] begin
 
     # Get parameters from TESetup to simplify the code
     N = TESetup.N
@@ -356,8 +356,8 @@ end
             sol_1_g = sols2[2, i, j]
 
             # Check that expectation values are bounded and physical (take real part for physical observables)
-            @test all(x -> real(x) >= -1e-4, sol_0_e.expect[1, :]) # a'a should be non-negative (with small tolerance)
-            @test all(x -> real(x) >= -1e-4, sol_1_g.expect[1, :])
+            @test all(x -> real(x) >= -1.0e-4, sol_0_e.expect[1, :]) # a'a should be non-negative (with small tolerance)
+            @test all(x -> real(x) >= -1.0e-4, sol_1_g.expect[1, :])
         end
     end
 
@@ -391,7 +391,7 @@ end
     end
 end
 
-@testitem "mcsolve" setup=[TESetup] begin
+@testitem "mcsolve" setup = [TESetup] begin
     using SciMLOperators
     import SciMLOperators: ScaledOperator
     using Statistics
@@ -459,25 +459,25 @@ end
     sol_mc_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc)
     sol_mc_string_states = sprint((t, s) -> show(t, "text/plain", s), sol_mc_states)
     @test sol_mc_string ==
-          "Solution of quantum trajectories\n" *
-          "(converged: $(sol_mc.converged))\n" *
-          "--------------------------------\n" *
-          "num_trajectories = $(sol_mc.ntraj)\n" *
-          "num_states = $(size(sol_mc.states, ndims(sol_mc.states)))\n" *
-          "num_expect = $(size(sol_mc.expect, 1))\n" *
-          "ODE alg.: $(sol_mc.alg)\n" *
-          "abstol = $(sol_mc.abstol)\n" *
-          "reltol = $(sol_mc.reltol)\n"
+        "Solution of quantum trajectories\n" *
+        "(converged: $(sol_mc.converged))\n" *
+        "--------------------------------\n" *
+        "num_trajectories = $(sol_mc.ntraj)\n" *
+        "num_states = $(size(sol_mc.states, ndims(sol_mc.states)))\n" *
+        "num_expect = $(size(sol_mc.expect, 1))\n" *
+        "ODE alg.: $(sol_mc.alg)\n" *
+        "abstol = $(sol_mc.abstol)\n" *
+        "reltol = $(sol_mc.reltol)\n"
     @test sol_mc_string_states ==
-          "Solution of quantum trajectories\n" *
-          "(converged: $(sol_mc_states.converged))\n" *
-          "--------------------------------\n" *
-          "num_trajectories = $(sol_mc_states.ntraj)\n" *
-          "num_states = $(size(sol_mc_states.states, ndims(sol_mc_states.states)))\n" *
-          "num_expect = 0\n" *
-          "ODE alg.: $(sol_mc_states.alg)\n" *
-          "abstol = $(sol_mc_states.abstol)\n" *
-          "reltol = $(sol_mc_states.reltol)\n"
+        "Solution of quantum trajectories\n" *
+        "(converged: $(sol_mc_states.converged))\n" *
+        "--------------------------------\n" *
+        "num_trajectories = $(sol_mc_states.ntraj)\n" *
+        "num_states = $(size(sol_mc_states.states, ndims(sol_mc_states.states)))\n" *
+        "num_expect = 0\n" *
+        "ODE alg.: $(sol_mc_states.alg)\n" *
+        "abstol = $(sol_mc_states.abstol)\n" *
+        "reltol = $(sol_mc_states.reltol)\n"
 
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist1, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist2, c_ops, progress_bar = Val(false))
@@ -495,7 +495,7 @@ end
         isapprox.(
             stdvals[:, 2:end], # ignore testing initial time point since its standard deviation is a very small value (basically zero)
             dropdims(sqrt.(mean(abs2.(expvals_all), dims = 2) .- abs2.(mean(expvals_all, dims = 2))), dims = 2);
-            atol = 1e-6,
+            atol = 1.0e-6,
         ),
     )
     @test average_expect(sol_mc_states) === nothing
@@ -587,7 +587,7 @@ end
     end
 end
 
-@testitem "ssesolve" setup=[TESetup] begin
+@testitem "ssesolve" setup = [TESetup] begin
     # Get parameters from TESetup to simplify the code
     H = TESetup.H
     ψ0 = TESetup.ψ0
@@ -618,15 +618,15 @@ end
 
     sol_sse_string = sprint((t, s) -> show(t, "text/plain", s), sol_sse)
     @test sol_sse_string ==
-          "Solution of stochastic quantum trajectories\n" *
-          "(converged: $(sol_sse.converged))\n" *
-          "--------------------------------\n" *
-          "num_trajectories = $(sol_sse.ntraj)\n" *
-          "num_states = $(size(sol_sse.states, ndims(sol_sse.states)))\n" *
-          "num_expect = $(size(sol_sse.expect, 1))\n" *
-          "SDE alg.: $(sol_sse.alg)\n" *
-          "abstol = $(sol_sse.abstol)\n" *
-          "reltol = $(sol_sse.reltol)\n"
+        "Solution of stochastic quantum trajectories\n" *
+        "(converged: $(sol_sse.converged))\n" *
+        "--------------------------------\n" *
+        "num_trajectories = $(sol_sse.ntraj)\n" *
+        "num_states = $(size(sol_sse.states, ndims(sol_sse.states)))\n" *
+        "num_expect = $(size(sol_sse.expect, 1))\n" *
+        "SDE alg.: $(sol_sse.alg)\n" *
+        "abstol = $(sol_sse.abstol)\n" *
+        "reltol = $(sol_sse.reltol)\n"
 
     @test_throws ArgumentError ssesolve(H, ψ0, TESetup.tlist1, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError ssesolve(H, ψ0, TESetup.tlist2, c_ops, progress_bar = Val(false))
@@ -728,7 +728,7 @@ end
     end
 end
 
-@testitem "smesolve" setup=[TESetup] begin
+@testitem "smesolve" setup = [TESetup] begin
     using Random
 
     # Get parameters from TESetup to simplify the code
@@ -793,15 +793,15 @@ end
 
     sol_sme_string = sprint((t, s) -> show(t, "text/plain", s), sol_sme)
     @test sol_sme_string ==
-          "Solution of stochastic quantum trajectories\n" *
-          "(converged: $(sol_sme.converged))\n" *
-          "--------------------------------\n" *
-          "num_trajectories = $(sol_sme.ntraj)\n" *
-          "num_states = $(size(sol_sme.states, ndims(sol_sme.states)))\n" *
-          "num_expect = $(size(sol_sme.expect, 1))\n" *
-          "SDE alg.: $(sol_sme.alg)\n" *
-          "abstol = $(sol_sme.abstol)\n" *
-          "reltol = $(sol_sme.reltol)\n"
+        "Solution of stochastic quantum trajectories\n" *
+        "(converged: $(sol_sme.converged))\n" *
+        "--------------------------------\n" *
+        "num_trajectories = $(sol_sme.ntraj)\n" *
+        "num_states = $(size(sol_sme.states, ndims(sol_sme.states)))\n" *
+        "num_expect = $(size(sol_sme.expect, 1))\n" *
+        "SDE alg.: $(sol_sme.alg)\n" *
+        "abstol = $(sol_sme.abstol)\n" *
+        "reltol = $(sol_sme.reltol)\n"
 
     @test_throws ArgumentError smesolve(H, ψ0, TESetup.tlist1, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
     @test_throws ArgumentError smesolve(H, ψ0, TESetup.tlist2, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
@@ -1000,7 +1000,7 @@ end
     end
 end
 
-@testitem "Time-dependent Hamiltonian" setup=[TESetup] begin
+@testitem "Time-dependent Hamiltonian" setup = [TESetup] begin
     # Get parameters from TESetup to simplify the code
     ωd = TESetup.ωd
     F = TESetup.F
@@ -1036,9 +1036,9 @@ end
     sol_mc_td = mcsolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
     # sol_sse_td = ssesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
 
-    @test sol_se.expect ≈ sol_se_td.expect atol = 1e-6 * length(tlist)
-    @test sol_me.expect ≈ sol_me_td.expect atol = 1e-6 * length(tlist)
-    @test sol_mc.expect ≈ sol_mc_td.expect atol = 1e-2 * length(tlist)
+    @test sol_se.expect ≈ sol_se_td.expect atol = 1.0e-6 * length(tlist)
+    @test sol_me.expect ≈ sol_me_td.expect atol = 1.0e-6 * length(tlist)
+    @test sol_mc.expect ≈ sol_mc_td.expect atol = 1.0e-2 * length(tlist)
     # @test sol_sse.expect ≈ sol_sse_td.expect atol = 1e-2 * length(tlist)
 
     sol_se_td2 = sesolve(H_td2, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
@@ -1047,18 +1047,18 @@ end
     # sol_sse_td2 =
     # ssesolve(H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p, rng = rng)
 
-    @test sol_se.expect ≈ sol_se_td2.expect atol = 1e-6 * length(tlist)
-    @test sol_me.expect ≈ sol_me_td2.expect atol = 1e-6 * length(tlist)
-    @test sol_mc.expect ≈ sol_mc_td2.expect atol = 1e-2 * length(tlist)
+    @test sol_se.expect ≈ sol_se_td2.expect atol = 1.0e-6 * length(tlist)
+    @test sol_me.expect ≈ sol_me_td2.expect atol = 1.0e-6 * length(tlist)
+    @test sol_mc.expect ≈ sol_mc_td2.expect atol = 1.0e-2 * length(tlist)
     # @test sol_sse.expect ≈ sol_sse_td2.expect atol = 1e-2 * length(tlist)
 
     # test assume_hermitian = Val(false)
     L_td_non_herm = liouvillian(H_td2, c_ops, assume_hermitian = Val(false))
     sol_me_td3 = mesolve(L_td_non_herm, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false), params = p)
-    @test sol_me.expect ≈ sol_me_td3.expect atol = 1e-6 * length(tlist)
+    @test sol_me.expect ≈ sol_me_td3.expect atol = 1.0e-6 * length(tlist)
 end
 
-@testitem "mcsolve, ssesolve and smesolve reproducibility" setup=[TESetup] begin
+@testitem "mcsolve, ssesolve and smesolve reproducibility" setup = [TESetup] begin
     using Random
 
     # Get parameters from TESetup to simplify the code
@@ -1167,19 +1167,19 @@ end
         keep_runs_results = Val(true),
     )
 
-    @test sol_mc1.expect ≈ sol_mc2.expect atol = 1e-10
-    @test sol_mc1.col_times ≈ sol_mc2.col_times atol = 1e-10
-    @test sol_mc1.col_which ≈ sol_mc2.col_which atol = 1e-10
+    @test sol_mc1.expect ≈ sol_mc2.expect atol = 1.0e-10
+    @test sol_mc1.col_times ≈ sol_mc2.col_times atol = 1.0e-10
+    @test sol_mc1.col_which ≈ sol_mc2.col_which atol = 1.0e-10
 
-    @test sol_mc1.expect ≈ sol_mc3.expect[:, 1:500, :] atol = 1e-10
+    @test sol_mc1.expect ≈ sol_mc3.expect[:, 1:500, :] atol = 1.0e-10
 
-    @test sol_sse1.expect ≈ sol_sse2.expect atol = 1e-10
+    @test sol_sse1.expect ≈ sol_sse2.expect atol = 1.0e-10
 
-    @test sol_sse1.expect ≈ sol_sse3.expect[:, 1:50, :] atol = 1e-10
+    @test sol_sse1.expect ≈ sol_sse3.expect[:, 1:50, :] atol = 1.0e-10
 
-    @test sol_sme1.expect ≈ sol_sme2.expect atol = 1e-10
+    @test sol_sme1.expect ≈ sol_sme2.expect atol = 1.0e-10
 
-    @test sol_sme1.expect ≈ sol_sme3.expect[:, 1:50, :] atol = 1e-10
+    @test sol_sme1.expect ≈ sol_sme3.expect[:, 1:50, :] atol = 1.0e-10
 end
 
 @testitem "Example: Two qubit model" begin
@@ -1251,10 +1251,10 @@ end
 
     @test prob_se.prob.kwargs[:tstops] == tlist # tstops should be equal to tlist for time-dependent cases
     @test prob_me.prob.kwargs[:tstops] == tlist # tstops should be equal to tlist for time-dependent cases
-    @test all(isapprox.(X_analytic, sol_se.expect[1, :]; atol = 1e-6))
-    @test all(isapprox.(X_analytic, sol_me.expect[1, :]; atol = 1e-6))
-    @test all(isapprox.(Z_analytic, sol_se.expect[2, :]; atol = 1e-6))
-    @test all(isapprox.(Z_analytic, sol_me.expect[2, :]; atol = 1e-6))
+    @test all(isapprox.(X_analytic, sol_se.expect[1, :]; atol = 1.0e-6))
+    @test all(isapprox.(X_analytic, sol_me.expect[1, :]; atol = 1.0e-6))
+    @test all(isapprox.(Z_analytic, sol_se.expect[2, :]; atol = 1.0e-6))
+    @test all(isapprox.(Z_analytic, sol_me.expect[2, :]; atol = 1.0e-6))
 end
 
 @testitem "ComposedOperator support in time evolution" begin
@@ -1276,6 +1276,6 @@ end
     sol_1 = mesolve(H, ψ0, tlist, c_ops_1, e_ops = e_ops; progress_bar = Val(false), params = params, saveat = tlist)
     sol_2 = mesolve(H, ψ0, tlist, c_ops_2, e_ops = e_ops; progress_bar = Val(false), params = params, saveat = tlist)
 
-    @test sol_1.expect[1, :] ≈ sol_2.expect[1, :] atol=1e-10
-    @test all(x -> isapprox(x[1].data, x[2].data; atol = 1e-10), zip(sol_1.states, sol_2.states))
+    @test sol_1.expect[1, :] ≈ sol_2.expect[1, :] atol = 1.0e-10
+    @test all(x -> isapprox(x[1].data, x[2].data; atol = 1.0e-10), zip(sol_1.states, sol_2.states))
 end

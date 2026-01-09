@@ -31,11 +31,11 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_unitary(dimensions, Val(distribution))` instead of `rand_unitary(dimensions, distribution)`. Also, put `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl). See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-rand_unitary(dimensions::Int, distribution::Union{Symbol,Val} = Val(:haar)) =
+rand_unitary(dimensions::Int, distribution::Union{Symbol, Val} = Val(:haar)) =
     rand_unitary(SVector(dimensions), makeVal(distribution))
-rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, distribution::Union{Symbol,Val} = Val(:haar)) =
+rand_unitary(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) =
     rand_unitary(dimensions, makeVal(distribution))
-function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{:haar})
+function rand_unitary(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:haar})
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -50,7 +50,7 @@ function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, :
     Λ ./= abs.(Λ) # rescaling the elements
     return QuantumObject(to_dense(Q * Diagonal(Λ)); type = Operator(), dims = dimensions)
 end
-function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{:exp})
+function rand_unitary(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:exp})
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -61,7 +61,7 @@ function rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, :
 
     return to_dense(exp(-1.0im * H))
 end
-rand_unitary(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}, ::Val{T}) where {T} =
+rand_unitary(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{T}) where {T} =
     throw(ArgumentError("Invalid distribution: $(T)"))
 
 @doc raw"""
@@ -99,7 +99,7 @@ julia> fock(20, 3)' * a * fock(20, 4)
 2.0 + 0.0im
 ```
 """
-destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:(N-1)))), Operator(), N)
+destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:(N - 1)))), Operator(), N)
 
 @doc raw"""
     create(N::Int)
@@ -125,7 +125,7 @@ julia> fock(20, 4)' * a_d * fock(20, 3)
 2.0 + 0.0im
 ```
 """
-create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:(N-1)))), Operator(), N)
+create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:(N - 1)))), Operator(), N)
 
 @doc raw"""
     displace(N::Int, α::Number)
@@ -138,7 +138,7 @@ Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_op
 
 where ``\hat{a}`` is the bosonic annihilation operator, and ``\alpha`` is the amount of displacement in optical phase space.
 """
-function displace(N::Int, α::T) where {T<:Number}
+function displace(N::Int, α::T) where {T <: Number}
     a = destroy(N)
     return exp(α * a' - α' * a)
 end
@@ -154,7 +154,7 @@ Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_
 
 where ``\hat{a}`` is the bosonic annihilation operator.
 """
-function squeeze(N::Int, z::T) where {T<:Number}
+function squeeze(N::Int, z::T) where {T <: Number}
     a_sq = destroy(N)^2
     return exp((z' * a_sq - z * a_sq') / 2)
 end
@@ -166,7 +166,7 @@ Bosonic number operator with Hilbert space cutoff `N`.
 
 This operator is defined as ``\hat{N}=\hat{a}^\dagger \hat{a}``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
-num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:(N-1))), Operator(), N)
+num(N::Int) = QuantumObject(spdiagm(0 => Array{ComplexF64}(0:(N - 1))), Operator(), N)
 
 @doc raw"""
     position(N::Int)
@@ -219,7 +219,7 @@ and
 - [Michael Martin Nieto, QUANTUM PHASE AND QUANTUM PHASE OPERATORS: Some Physics and Some History, arXiv:hep-th/9304036](https://arxiv.org/abs/hep-th/9304036), Equation (30-32).
 """
 function phase(N::Int, ϕ0::Real = 0)
-    N_list = collect(0:(N-1))
+    N_list = collect(0:(N - 1))
     ϕ = ϕ0 .+ (2 * π / N) .* N_list
     states = [exp.((1.0im * ϕ[m]) .* N_list) ./ sqrt(N) for m in 1:N]
     return QuantumObject(sum([ϕ[m] * states[m] * states[m]' for m in 1:N]); type = Operator(), dims = N)
@@ -311,10 +311,10 @@ jmat(j::Real, ::Val{T}) where {T} = throw(ArgumentError("Invalid spin operator: 
 
 function _jm(j::Real)
     m = j:(-1):(-j)
-    data = sqrt.(j * (j + 1) .- m .* (m .- 1))[1:(end-1)]
+    data = sqrt.(j * (j + 1) .- m .* (m .- 1))[1:(end - 1)]
     return spdiagm(-1 => Array{ComplexF64}(data))
 end
-_jz(j::Real) = spdiagm(0 => Array{ComplexF64}(j .- (0:Int(2*j))))
+_jz(j::Real) = spdiagm(0 => Array{ComplexF64}(j .- (0:Int(2 * j))))
 
 @doc raw"""
     spin_Jx(j::Real)
@@ -452,7 +452,7 @@ Note that we put ``\hat{\sigma}_{+} = \begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatri
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fdestroy(Val(N), j)` instead of `fdestroy(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-fdestroy(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmap())
+fdestroy(N::Union{Int, Val}, j::Int) = _Jordan_Wigner(N, j, sigmap())
 
 @doc raw"""
     fcreate(N::Union{Int,Val}, j::Int)
@@ -471,7 +471,7 @@ Note that we put ``\hat{\sigma}_{-} = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatri
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fcreate(Val(N), j)` instead of `fcreate(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-fcreate(N::Union{Int,Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
+fcreate(N::Union{Int, Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
 
 _Jordan_Wigner(N::Int, j::Int, op::QuantumObject{Operator}) = _Jordan_Wigner(Val(N), j, op)
 
@@ -516,7 +516,7 @@ If `sparse=true`, the operator is returned as a sparse matrix, otherwise a dense
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `tunneling(N, m, Val(sparse))` instead of `tunneling(N, m, sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function tunneling(N::Int, m::Int = 1; sparse::Union{Bool,Val} = Val(false))
+function tunneling(N::Int, m::Int = 1; sparse::Union{Bool, Val} = Val(false))
     (m < 1) && throw(ArgumentError("The number of excitations (m) cannot be less than 1"))
 
     data = ones(ComplexF64, N - m)
@@ -555,11 +555,11 @@ where ``\omega = \exp(\frac{2 \pi i}{N})``.
     It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 qft(dimensions::Int) = QuantumObject(_qft_op(dimensions), Operator(), dimensions)
-qft(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =
+qft(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) =
     QuantumObject(_qft_op(prod(dimensions)), Operator(), dimensions)
 function _qft_op(N::Int)
     ω = exp(2.0im * π / N)
-    arr = 0:(N-1)
+    arr = 0:(N - 1)
     L, M = meshgrid(arr, arr)
     return ω .^ (L .* M) / sqrt(N)
 end
