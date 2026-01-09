@@ -76,7 +76,7 @@ function partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     (length(mask) != length(ρ.dimensions)) &&
         throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
 
-    isa(ρ.dimensions, GeneralDimensions) &&
+    isa(ρ.dimensions, GeneralProductDimensions) &&
         (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
         throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
 
@@ -100,7 +100,7 @@ function _partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     return QuantumObject(
         reshape(permutedims(reshape(ρ.data, (dims_rev..., dims_rev...)), pt_idx), size(ρ)),
         Operator(),
-        Dimensions(ρ.dimensions.to),
+        ProductDimensions(ρ.dimensions.to),
     )
 end
 

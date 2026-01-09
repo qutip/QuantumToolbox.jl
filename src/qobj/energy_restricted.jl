@@ -70,9 +70,14 @@ function Base.show(io::IO, s::EnrSpace)
     return nothing
 end
 
+Base.length(::EnrSpace{N}) where {N} = N
+
 Base.:(==)(s_enr1::EnrSpace, s_enr2::EnrSpace) = (s_enr1.size == s_enr2.size) && (s_enr1.dims == s_enr2.dims)
 
 dimensions_to_dims(s_enr::EnrSpace) = s_enr.dims
+
+get_hilbert_size(s_enr::EnrSpace) = s_enr.size
+get_liouville_size(s_enr::EnrSpace) = s_enr.size^2
 
 @doc raw"""
     enr_state_dictionaries(dims, n_excitations)
