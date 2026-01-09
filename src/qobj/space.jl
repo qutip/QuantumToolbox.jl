@@ -37,5 +37,5 @@ get_hilbert_size(s::HilbertSpace) = s.size
 get_liouville_size(s::HilbertSpace) = s.size^2
 
 # this creates a list of HilbertSpace(1), it is used to generate `from` for Ket, and `to` for Bra
-hilbertspace_one_list(dimensions::NTuple{N,AbstractSpace}) where {N} =
+hilbertspace_one_list(dimensions::NTuple{N, AbstractSpace}) where {N} =
     ntuple(i -> HilbertSpace(1), Val(sum(length, dimensions)))

@@ -101,7 +101,7 @@ function get_hilbert_size(dimensions::GeneralProductDimensions)
     n = prod(get_hilbert_size, dimensions.from)
     return (m, n)
 end
-get_hilbert_size(dimensions::Union{<:Integer,AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} =
+get_hilbert_size(dimensions::Union{<:Integer, AbstractVector{<:Integer}, NTuple{N, Integer}}) where {N} =
     get_hilbert_size(ProductDimensions(dimensions))
 
 """
@@ -125,7 +125,7 @@ function get_liouville_size(dimensions::GeneralProductDimensions)
     n = prod(get_liouville_size, dimensions.from)
     return (m, n)
 end
-get_liouville_size(dimensions::Union{<:Integer,AbstractVector{<:Integer},NTuple{N,Integer}}) where {N} =
+get_liouville_size(dimensions::Union{<:Integer, AbstractVector{<:Integer}, NTuple{N, Integer}}) where {N} =
     get_liouville_size(ProductDimensions(dimensions))
 
 Base.transpose(dimensions::ProductDimensions) = dimensions
