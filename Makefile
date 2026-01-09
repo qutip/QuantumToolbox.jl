@@ -3,7 +3,7 @@ JULIA:=julia
 default: help
 
 setup:
-	${JULIA} -e 'import Pkg; Pkg.add(["Runic", "Changelog"])'
+	${JULIA} -e 'import Pkg; Pkg.add(["Changelog"]); Pkg.Apps.add("Runic"); println("Setup completed. Add `~/.julia/bin` to your PATH to use `runic` command.")'
 
 format:
 	runic --inplace .
