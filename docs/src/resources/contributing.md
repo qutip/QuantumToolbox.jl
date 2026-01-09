@@ -81,7 +81,7 @@ We use [`Runic.jl`](https://github.com/fredrikekre/Runic.jl) to format all the s
 To format the changed codes, use the following command under the *__root directory of the repository__* you are working on:
 
 !!! note "Requirements"
-    If this is your first time running `make` command in the local repository you are working on or you just had reinstalled `Julia`, you should run `make setup` first. Furthermore, check that you have added `~/.julia/bin` to your `PATH` environment variable to use the `runic` command.
+    If this is your first time running `make` command in the local repository you are working on or you just had reinstalled `Julia`, you should run `make setup` first.
 
 ```shell
 make format
