@@ -168,9 +168,9 @@ The default keyword argument `rank = get_hilbert_size(dimensions)[1]` (full rank
 """
 rand_dm(dimensions::Int; rank::Int = get_hilbert_size(dimensions)[1]) = rand_dm(SVector(dimensions), rank = rank)
 function rand_dm(
-    dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple};
-    rank::Int = get_hilbert_size(dimensions)[1],
-)
+        dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple};
+        rank::Int = get_hilbert_size(dimensions)[1],
+    )
     N = get_hilbert_size(dimensions)[1]
     (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
     (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))

@@ -140,8 +140,8 @@
             a = MatrixOperator(rand(T, N, N))
             UnionType = Union{
                 QuantumObjectEvolution{
-                    Operator, 
-                    GeneralProductDimensions{1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, 
+                    Operator,
+                    GeneralProductDimensions{1, Tuple{HilbertSpace}, Tuple{HilbertSpace}},
                     typeof(a),
                 },
                 QuantumObjectEvolution{Operator, ProductDimensions{1, Tuple{HilbertSpace}}, typeof(a)},

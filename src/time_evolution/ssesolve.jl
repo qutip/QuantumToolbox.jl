@@ -109,7 +109,7 @@ function ssesolveProblem(
     # Here the coefficients depend on the state, so this is a non-linear operator, which should be implemented with FunctionOperator instead. However, the nonlinearity is only on the coefficients, and it should be safe.
     K_l = sum(
         op ->
-            _ScalarOperator_e(op, +) * op + _ScalarOperator_e2_2(op, -) * IdentityOperator(get_hilbert_size(dims)[1]),
+        _ScalarOperator_e(op, +) * op + _ScalarOperator_e2_2(op, -) * IdentityOperator(get_hilbert_size(dims)[1]),
         sc_ops_evo_data,
     )
 
