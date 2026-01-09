@@ -43,7 +43,7 @@ n(\omega, \omega_{\textrm{th}}) = \frac{1}{e^{\omega/\omega_{\textrm{th}}} - 1},
 ```
 where ``\hbar`` is the reduced Planck constant, and ``k_B`` is the Boltzmann constant.
 """
-function n_thermal(ω::T1, ω_th::T2) where {T1<:Real,T2<:Real}
+function n_thermal(ω::T1, ω_th::T2) where {T1 <: Real, T2 <: Real}
     x = exp(ω / ω_th)
     n = ((x != 1) && (ω_th > 0)) ? 1 / (x - 1) : 0
     return _float_type(promote_type(T1, T2))(n)
@@ -74,7 +74,7 @@ julia> PhysicalConstants.ħ
 """
 const PhysicalConstants = (
     c = 299792458.0,
-    G = 6.67430e-11,
+    G = 6.6743e-11,
     h = 6.62607015e-34,
     ħ = 6.62607015e-34 / (2 * π),
     e = 1.602176634e-19,
@@ -85,7 +85,7 @@ const PhysicalConstants = (
 )
 
 # common energy units (the values below are all in the unit of Joule)
-const _energy_units::Dict{Symbol,Float64} = Dict(
+const _energy_units::Dict{Symbol, Float64} = Dict(
     :J => 1.0,
     :eV => PhysicalConstants.e,
     :meV => 1.0e-3 * PhysicalConstants.e,
@@ -122,7 +122,7 @@ julia> round(convert_unit(1, :meV, :mK), digits=4)
 11604.5181
 ```
 """
-function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T<:Real}
+function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T <: Real}
     !haskey(_energy_units, unit1) && throw(ArgumentError("Invalid unit :$(unit1)"))
     !haskey(_energy_units, unit2) && throw(ArgumentError("Invalid unit :$(unit2)"))
     return _float_type(T)(value * (_energy_units[unit1] / _energy_units[unit2]))
@@ -137,7 +137,7 @@ _sparse_similar(A::AbstractArray, args...) = sparse(args...)
 
 _Ginibre_ensemble(n::Int, rank::Int = n) = randn(ComplexF64, n, rank) / sqrt(n)
 
-_Boltzmann_weight(β::T, E::Int) where {T<:Real} = (E != 0 || isfinite(β)) ? exp(-β * E) : one(T)
+_Boltzmann_weight(β::T, E::Int) where {T <: Real} = (E != 0 || isfinite(β)) ? exp(-β * E) : one(T)
 
 makeVal(x::Val{T}) where {T} = x
 makeVal(x) = Val(x)
@@ -151,13 +151,13 @@ _get_size(A::AbstractSciMLOperator) = size(A)
 
 _non_static_array_warning(argname, arg::Tuple{}) =
     throw(ArgumentError("The argument $argname must be a Tuple or a StaticVector of non-zero length."))
-_non_static_array_warning(argname, arg::Union{SVector{N,T},MVector{N,T},NTuple{N,T}}) where {N,T} = nothing
+_non_static_array_warning(argname, arg::Union{SVector{N, T}, MVector{N, T}, NTuple{N, T}}) where {N, T} = nothing
 _non_static_array_warning(argname, arg::AbstractVector{T}) where {T} =
     @warn "The argument $argname should be a Tuple or a StaticVector for better performance. Try to use `$argname = $(Tuple(arg))` instead of `$argname = $arg`. " *
-          "Alternatively, you can do `import QuantumToolbox: SVector` " *
-          "and use `$argname = SVector(" *
-          join(arg, ", ") *
-          ")`." maxlog = 1
+    "Alternatively, you can do `import QuantumToolbox: SVector` " *
+    "and use `$argname = SVector(" *
+    join(arg, ", ") *
+    ")`." maxlog = 1
 
 # lazy tensor warning
 for AType in (:AbstractArray, :AbstractSciMLOperator)
@@ -176,7 +176,7 @@ for AType in (:AbstractArray, :AbstractSciMLOperator)
 end
 
 # functions for getting Float or Complex element type
-_float_type(::AbstractArray{T}) where {T<:Number} = _float_type(T)
+_float_type(::AbstractArray{T}) where {T <: Number} = _float_type(T)
 _float_type(::Type{Int32}) = Float32
 _float_type(::Type{Int64}) = Float64
 _float_type(::Type{Float32}) = Float32
@@ -185,9 +185,9 @@ _float_type(::Type{Complex{Int32}}) = Float32
 _float_type(::Type{Complex{Int64}}) = Float64
 _float_type(::Type{Complex{Float32}}) = Float32
 _float_type(::Type{Complex{Float64}}) = Float64
-_float_type(::Type{Complex{T}}) where {T<:Real} = T
+_float_type(::Type{Complex{T}}) where {T <: Real} = T
 _float_type(T::Type{<:Real}) = T # Allow other untracked Real types, like ForwardDiff.Dual
-_complex_float_type(::AbstractArray{T}) where {T<:Number} = _complex_float_type(T)
+_complex_float_type(::AbstractArray{T}) where {T <: Number} = _complex_float_type(T)
 _complex_float_type(::Type{Int32}) = ComplexF32
 _complex_float_type(::Type{Int64}) = ComplexF64
 _complex_float_type(::Type{Float32}) = ComplexF32
@@ -199,9 +199,9 @@ _complex_float_type(::Type{Complex{Float64}}) = ComplexF64
 _complex_float_type(T::Type{<:Real}) = Complex{T} # Allow other untracked Complex types, like ForwardDiff.Dual
 _complex_float_type(T::Type{<:Complex}) = T       # Allow other untracked Complex types, like ForwardDiff.Dual
 
-_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:Int} = Int64
-_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:Int} = Int32
-_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T<:AbstractFloat} = Float64
-_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T<:AbstractFloat} = Float32
-_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{64}) where {T<:Union{Int,AbstractFloat}} = ComplexF64
-_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{32}) where {T<:Union{Int,AbstractFloat}} = ComplexF32
+_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T <: Int} = Int64
+_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T <: Int} = Int32
+_convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T <: AbstractFloat} = Float64
+_convert_eltype_wordsize(::Type{T}, ::Val{32}) where {T <: AbstractFloat} = Float32
+_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{64}) where {T <: Union{Int, AbstractFloat}} = ComplexF64
+_convert_eltype_wordsize(::Type{Complex{T}}, ::Val{32}) where {T <: Union{Int, AbstractFloat}} = ComplexF32

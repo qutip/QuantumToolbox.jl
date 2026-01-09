@@ -3,11 +3,11 @@ export dfd_mesolve, dsf_mesolve, dsf_mcsolve
 ### DYNAMICAL FOCK DIMENSION ###
 
 function _reduce_dims(
-    QO::AbstractArray{T},
-    dims::Union{SVector{N,DT},MVector{N,DT}},
-    sel,
-    reduce,
-) where {T,N,DT<:Integer}
+        QO::AbstractArray{T},
+        dims::Union{SVector{N, DT}, MVector{N, DT}},
+        sel,
+        reduce,
+    ) where {T, N, DT <: Integer}
     n_d = length(dims)
     dims_new = zero(dims)
     dims_new[sel] .= reduce
@@ -27,11 +27,11 @@ function _reduce_dims(
 end
 
 function _increase_dims(
-    QO::AbstractArray{T},
-    dims::Union{SVector{N,DT},MVector{N,DT}},
-    sel,
-    increase,
-) where {T,N,DT<:Integer}
+        QO::AbstractArray{T},
+        dims::Union{SVector{N, DT}, MVector{N, DT}},
+        sel,
+        increase,
+    ) where {T, N, DT <: Integer}
     n_d = length(dims)
     dims_new = MVector(zero(dims)) # Mutable SVector
     dims_new[sel] .= increase
@@ -39,15 +39,15 @@ function _increase_dims(
 
     if n_d == 1
         ρmat = similar(QO, dims_new[1], dims_new[1])
-        fill!(selectdim(ρmat, 1, (dims[1]+1):dims_new[1]), 0)
-        fill!(selectdim(ρmat, 2, (dims[1]+1):dims_new[1]), 0)
+        fill!(selectdim(ρmat, 1, (dims[1] + 1):dims_new[1]), 0)
+        fill!(selectdim(ρmat, 2, (dims[1] + 1):dims_new[1]), 0)
         copyto!(view(ρmat, 1:dims[1], 1:dims[1]), QO)
     else
         ρmat2 = similar(QO, reverse(vcat(dims_new, dims_new))...)
         ρmat = reshape(QO, reverse(vcat(dims, dims))...)
         for i in eachindex(sel)
-            fill!(selectdim(ρmat2, n_d - sel[i] + 1, (dims[sel[i]]+1):dims_new[sel[i]]), 0)
-            fill!(selectdim(ρmat2, 2 * n_d - sel[i] + 1, (dims[sel[i]]+1):dims_new[sel[i]]), 0)
+            fill!(selectdim(ρmat2, n_d - sel[i] + 1, (dims[sel[i]] + 1):dims_new[sel[i]]), 0)
+            fill!(selectdim(ρmat2, 2 * n_d - sel[i] + 1, (dims[sel[i]] + 1):dims_new[sel[i]]), 0)
         end
         copyto!(view(ρmat2, reverse!(repeat([1:n for n in dims], 2))...), ρmat)
         ρmat = reshape(ρmat2, prod(dims_new), prod(dims_new))
@@ -77,10 +77,10 @@ function _DFDIncreaseReduceCondition(u, t, integrator)
         pillow_i = pillow_list[i]
         if dim_i < maxdim_i && dim_i > 2 && maxdim_i != 0
             ρi = _ptrace_oper(vec2mat(dfd_ρt_cache), dim_list, SVector(i))[1]
-            @views res = norm(ρi[diagind(ρi)[(end-pillow_i):end]], 1) * sqrt(dim_i) / pillow_i
+            @views res = norm(ρi[diagind(ρi)[(end - pillow_i):end]], 1) * sqrt(dim_i) / pillow_i
             if res > tol_list[i]
                 increase_list[i] = true
-            elseif res < tol_list[i] * 1e-2 && dim_i > 3
+            elseif res < tol_list[i] * 1.0e-2 && dim_i > 3
                 reduce_list[i] = true
             end
         end
@@ -130,7 +130,7 @@ function _DFDIncreaseReduceAffect!(integrator)
     resize!(integrator, size(L, 1))
     copyto!(integrator.u, mat2vec(ρt))
     # By doing this, we are assuming that the system is time-independent and f is a MatrixOperator
-    integrator.f = ODEFunction{true,FullSpecialize}(MatrixOperator(L))
+    integrator.f = ODEFunction{true, FullSpecialize}(MatrixOperator(L))
     integrator.p = merge(params, (dfd_ρt_cache = similar(integrator.u),))
     _mesolve_callbacks_new_e_ops!(integrator, e_ops2)
 
@@ -138,17 +138,17 @@ function _DFDIncreaseReduceAffect!(integrator)
 end
 
 function dfd_mesolveProblem(
-    H::Function,
-    ψ0::QuantumObject{StateOpType},
-    tlist::AbstractVector,
-    c_ops::Function,
-    maxdims::Vector{T2},
-    dfd_params::NamedTuple = NamedTuple();
-    e_ops::Function = (dim_list) -> Vector{Vector{eltype(ψ0)}}([]),
-    params::NamedTuple = NamedTuple(),
-    tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
-    kwargs...,
-) where {T2<:Integer,StateOpType<:Union{Ket,Operator}}
+        H::Function,
+        ψ0::QuantumObject{StateOpType},
+        tlist::AbstractVector,
+        c_ops::Function,
+        maxdims::Vector{T2},
+        dfd_params::NamedTuple = NamedTuple();
+        e_ops::Function = (dim_list) -> Vector{Vector{eltype(ψ0)}}([]),
+        params::NamedTuple = NamedTuple(),
+        tol_list::Vector{<:Number} = fill(1.0e-8, length(maxdims)),
+        kwargs...,
+    ) where {T2 <: Integer, StateOpType <: Union{Ket, Operator}}
     length(ψ0.dimensions) != length(maxdims) &&
         throw(DimensionMismatch("`dim_list` and `maxdims` do not have the same dimension."))
 
@@ -208,18 +208,18 @@ Time evolution of an open quantum system using master equation, dynamically chan
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 """
 function dfd_mesolve(
-    H::Function,
-    ψ0::QuantumObject{StateOpType},
-    tlist::AbstractVector,
-    c_ops::Function,
-    maxdims::Vector{T2},
-    dfd_params::NamedTuple = NamedTuple();
-    alg::AbstractODEAlgorithm = DP5(),
-    e_ops::Function = (dim_list) -> Vector{Vector{eltype(ψ0)}}([]),
-    params::NamedTuple = NamedTuple(),
-    tol_list::Vector{<:Number} = fill(1e-8, length(maxdims)),
-    kwargs...,
-) where {T2<:Integer,StateOpType<:Union{Ket,Operator}}
+        H::Function,
+        ψ0::QuantumObject{StateOpType},
+        tlist::AbstractVector,
+        c_ops::Function,
+        maxdims::Vector{T2},
+        dfd_params::NamedTuple = NamedTuple();
+        alg::AbstractODEAlgorithm = DP5(),
+        e_ops::Function = (dim_list) -> Vector{Vector{eltype(ψ0)}}([]),
+        params::NamedTuple = NamedTuple(),
+        tol_list::Vector{<:Number} = fill(1.0e-8, length(maxdims)),
+        kwargs...,
+    ) where {T2 <: Integer, StateOpType <: Union{Ket, Operator}}
     dfd_prob = dfd_mesolveProblem(
         H,
         ψ0,
@@ -312,16 +312,16 @@ function _DSF_mesolve_Affect!(integrator)
             # expv!(integrator.u, expv_cache, one(αt), dsf_cache)
 
             dsf_displace_cache_full.ops[i].λ.val = Δα
-            dsf_displace_cache_full.ops[i+op_l_length].λ.val = -conj(Δα)
-            dsf_displace_cache_full.ops[i+2*op_l_length].λ.val = conj(Δα)
-            dsf_displace_cache_full.ops[i+3*op_l_length].λ.val = -Δα
+            dsf_displace_cache_full.ops[i + op_l_length].λ.val = -conj(Δα)
+            dsf_displace_cache_full.ops[i + 2 * op_l_length].λ.val = conj(Δα)
+            dsf_displace_cache_full.ops[i + 3 * op_l_length].λ.val = -Δα
 
             αt_list[i] += Δα
         else
             dsf_displace_cache_full.ops[i].λ.val = 0
-            dsf_displace_cache_full.ops[i+op_l_length].λ.val = 0
-            dsf_displace_cache_full.ops[i+2*op_l_length].λ.val = 0
-            dsf_displace_cache_full.ops[i+3*op_l_length].λ.val = 0
+            dsf_displace_cache_full.ops[i + op_l_length].λ.val = 0
+            dsf_displace_cache_full.ops[i + 2 * op_l_length].λ.val = 0
+            dsf_displace_cache_full.ops[i + 3 * op_l_length].λ.val = 0
         end
     end
 
@@ -335,24 +335,24 @@ function _DSF_mesolve_Affect!(integrator)
 
     # By doing this, we are assuming that all the arguments of ODEFunction are the default ones
     integrator.f =
-        ODEFunction{true,FullSpecialize}(_mesolve_make_L_QobjEvo(H(op_l2, dsf_params), c_ops(op_l2, dsf_params)).data)
+        ODEFunction{true, FullSpecialize}(_mesolve_make_L_QobjEvo(H(op_l2, dsf_params), c_ops(op_l2, dsf_params)).data)
     return u_modified!(integrator, true)
 end
 
 function dsf_mesolveProblem(
-    H::Function,
-    ψ0::QuantumObject{StateOpType},
-    tlist::AbstractVector,
-    c_ops::Function,
-    op_list::Union{AbstractVector,Tuple},
-    α0_l::Vector{<:Number} = zeros(length(op_list)),
-    dsf_params::NamedTuple = NamedTuple();
-    e_ops::Function = (op_list, p) -> (),
-    params::NamedTuple = NamedTuple(),
-    δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
-    kwargs...,
-) where {StateOpType<:Union{Ket,Operator}}
+        H::Function,
+        ψ0::QuantumObject{StateOpType},
+        tlist::AbstractVector,
+        c_ops::Function,
+        op_list::Union{AbstractVector, Tuple},
+        α0_l::Vector{<:Number} = zeros(length(op_list)),
+        dsf_params::NamedTuple = NamedTuple();
+        e_ops::Function = (op_list, p) -> (),
+        params::NamedTuple = NamedTuple(),
+        δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
+        krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
+        kwargs...,
+    ) where {StateOpType <: Union{Ket, Operator}}
     op_list = deepcopy(op_list)
     H₀ = H(op_list .+ α0_l, dsf_params)
     c_ops₀ = c_ops(op_list .+ α0_l, dsf_params)
@@ -424,20 +424,20 @@ Time evolution of an open quantum system using master equation and the Dynamical
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 """
 function dsf_mesolve(
-    H::Function,
-    ψ0::QuantumObject{StateOpType},
-    tlist::AbstractVector,
-    c_ops::Function,
-    op_list::Union{AbstractVector,Tuple},
-    α0_l::Vector{<:Number} = zeros(length(op_list)),
-    dsf_params::NamedTuple = NamedTuple();
-    alg::AbstractODEAlgorithm = DP5(),
-    e_ops::Function = (op_list, p) -> (),
-    params::NamedTuple = NamedTuple(),
-    δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
-    kwargs...,
-) where {StateOpType<:Union{Ket,Operator}}
+        H::Function,
+        ψ0::QuantumObject{StateOpType},
+        tlist::AbstractVector,
+        c_ops::Function,
+        op_list::Union{AbstractVector, Tuple},
+        α0_l::Vector{<:Number} = zeros(length(op_list)),
+        dsf_params::NamedTuple = NamedTuple();
+        alg::AbstractODEAlgorithm = DP5(),
+        e_ops::Function = (op_list, p) -> (),
+        params::NamedTuple = NamedTuple(),
+        δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
+        krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
+        kwargs...,
+    ) where {StateOpType <: Union{Ket, Operator}}
     dsf_prob = dsf_mesolveProblem(
         H,
         ψ0,
@@ -457,19 +457,19 @@ function dsf_mesolve(
 end
 
 function dsf_mesolve(
-    H::Function,
-    ψ0::QuantumObject{StateOpType},
-    tlist::AbstractVector,
-    op_list::Union{AbstractVector,Tuple},
-    α0_l::Vector{<:Number} = zeros(length(op_list)),
-    dsf_params::NamedTuple = NamedTuple();
-    alg::AbstractODEAlgorithm = DP5(),
-    e_ops::Function = (op_list, p) -> (),
-    params::NamedTuple = NamedTuple(),
-    δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
-    kwargs...,
-) where {StateOpType<:Union{Ket,Operator}}
+        H::Function,
+        ψ0::QuantumObject{StateOpType},
+        tlist::AbstractVector,
+        op_list::Union{AbstractVector, Tuple},
+        α0_l::Vector{<:Number} = zeros(length(op_list)),
+        dsf_params::NamedTuple = NamedTuple();
+        alg::AbstractODEAlgorithm = DP5(),
+        e_ops::Function = (op_list, p) -> (),
+        params::NamedTuple = NamedTuple(),
+        δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
+        krylov_dim::Int = max(6, min(10, cld(length(ket2dm(ψ0).data), 4))),
+        kwargs...,
+    ) where {StateOpType <: Union{Ket, Operator}}
     c_ops = op_list -> ()
     return dsf_mesolve(
         H,
@@ -551,12 +551,12 @@ function _DSF_mcsolve_Affect!(integrator)
             # expv!(integrator.u, expv_cache, one(αt), dsf_cache)
 
             dsf_displace_cache_full.ops[i].λ.val = conj(Δα)
-            dsf_displace_cache_full.ops[i+op_l_length].λ.val = -Δα
+            dsf_displace_cache_full.ops[i + op_l_length].λ.val = -Δα
 
             αt_list[i] += Δα
         else
             dsf_displace_cache_full.ops[i].λ.val = 0
-            dsf_displace_cache_full.ops[i+op_l_length].λ.val = 0
+            dsf_displace_cache_full.ops[i + op_l_length].λ.val = 0
         end
     end
 
@@ -603,23 +603,23 @@ function _dsf_mcsolve_prob_func(prob, i, repeat)
 end
 
 function dsf_mcsolveEnsembleProblem(
-    H::Function,
-    ψ0::QuantumObject{Ket},
-    tlist::AbstractVector,
-    c_ops::Function,
-    op_list::Union{AbstractVector,Tuple},
-    α0_l::Vector{<:Number} = zeros(length(op_list)),
-    dsf_params::NamedTuple = NamedTuple();
-    e_ops::Function = (op_list, p) -> (),
-    params::NamedTuple = NamedTuple(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    jump_callback::TJC = ContinuousLindbladJumpCallback(),
-    krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
-    progress_bar::Union{Bool,Val} = Val(true),
-    kwargs...,
-) where {TJC<:LindbladJumpCallbackType}
+        H::Function,
+        ψ0::QuantumObject{Ket},
+        tlist::AbstractVector,
+        c_ops::Function,
+        op_list::Union{AbstractVector, Tuple},
+        α0_l::Vector{<:Number} = zeros(length(op_list)),
+        dsf_params::NamedTuple = NamedTuple();
+        e_ops::Function = (op_list, p) -> (),
+        params::NamedTuple = NamedTuple(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
+        progress_bar::Union{Bool, Val} = Val(true),
+        kwargs...,
+    ) where {TJC <: LindbladJumpCallbackType}
     op_list = deepcopy(op_list)
     H₀ = H(op_list .+ α0_l, dsf_params)
     c_ops₀ = c_ops(op_list .+ α0_l, dsf_params)
@@ -698,24 +698,24 @@ Time evolution of a quantum system using the Monte Carlo wave function method an
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 """
 function dsf_mcsolve(
-    H::Function,
-    ψ0::QuantumObject{Ket},
-    tlist::AbstractVector,
-    c_ops::Function,
-    op_list::Union{AbstractVector,Tuple},
-    α0_l::Vector{<:Number} = zeros(length(op_list)),
-    dsf_params::NamedTuple = NamedTuple();
-    alg::AbstractODEAlgorithm = DP5(),
-    e_ops::Function = (op_list, p) -> (),
-    params::NamedTuple = NamedTuple(),
-    δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    jump_callback::TJC = ContinuousLindbladJumpCallback(),
-    krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
-    progress_bar::Union{Bool,Val} = Val(true),
-    kwargs...,
-) where {TJC<:LindbladJumpCallbackType}
+        H::Function,
+        ψ0::QuantumObject{Ket},
+        tlist::AbstractVector,
+        c_ops::Function,
+        op_list::Union{AbstractVector, Tuple},
+        α0_l::Vector{<:Number} = zeros(length(op_list)),
+        dsf_params::NamedTuple = NamedTuple();
+        alg::AbstractODEAlgorithm = DP5(),
+        e_ops::Function = (op_list, p) -> (),
+        params::NamedTuple = NamedTuple(),
+        δα_list::Vector{<:Real} = fill(0.2, length(op_list)),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        krylov_dim::Int = min(5, cld(length(ψ0.data), 3)),
+        progress_bar::Union{Bool, Val} = Val(true),
+        kwargs...,
+    ) where {TJC <: LindbladJumpCallbackType}
     ens_prob_mc = dsf_mcsolveEnsembleProblem(
         H,
         ψ0,

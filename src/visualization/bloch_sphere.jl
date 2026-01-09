@@ -59,7 +59,7 @@ A structure representing a Bloch sphere visualization for quantum states. Availa
 @kwdef mutable struct Bloch
     points::Vector{Matrix{Float64}} = Vector{Matrix{Float64}}()
     vectors::Vector{Vector{Float64}} = Vector{Vector{Float64}}()
-    lines::Vector{Tuple{Vector{Vector{Float64}},String}} = Vector{Tuple{Vector{Vector{Float64}},String}}()
+    lines::Vector{Tuple{Vector{Vector{Float64}}, String}} = Vector{Tuple{Vector{Vector{Float64}}, String}}()
     arcs::Vector{Vector{Vector{Float64}}} = Vector{Vector{Vector{Float64}}}()
     font_color::String = "black"
     font_size::Int = 20
@@ -67,7 +67,7 @@ A structure representing a Bloch sphere visualization for quantum states. Availa
     frame_color::String = "gray"
     frame_width::Float64 = 1.0
     point_default_color::Vector{String} = ["blue", "red", "green", "#CC6600"]
-    point_color::Vector{Union{Nothing,String}} = Union{Nothing,String}[]
+    point_color::Vector{Union{Nothing, String}} = Union{Nothing, String}[]
     point_marker::Vector{Symbol} = [:circle, :rect, :diamond, :utriangle]
     point_size::Vector{Float64} = [5.5, 6.2, 6.5, 7.5]
     point_style::Vector{Symbol} = Symbol[]
@@ -176,12 +176,12 @@ Add multiple points to the Bloch sphere visualization.
 ```
 """
 function add_points!(
-    b::Bloch,
-    pnts::AbstractMatrix{<:Real};
-    meth::Symbol = :s,
-    color::Union{Nothing,String} = nothing,
-    alpha::Float64 = 1.0,
-)
+        b::Bloch,
+        pnts::AbstractMatrix{<:Real};
+        meth::Symbol = :s,
+        color::Union{Nothing, String} = nothing,
+        alpha::Float64 = 1.0,
+    )
     (size(pnts, 1) == 3) || throw(ArgumentError("Points must be a 3×N matrix where each column is [x; y; z]"))
     (meth in (:s, :m, :l)) || throw(ArgumentError("`meth` must be :s, :m, or :l"))
 
@@ -243,11 +243,11 @@ add_line!(b, ψ₁, ψ₂; fmt = "r--")
 ```
 """
 function add_line!(
-    b::Bloch,
-    start_point::QuantumObject{OpType1},
-    end_point::QuantumObject{OpType2};
-    fmt = "k",
-) where {OpType1<:Union{Ket,Bra,Operator},OpType2<:Union{Ket,Bra,Operator}}
+        b::Bloch,
+        start_point::QuantumObject{OpType1},
+        end_point::QuantumObject{OpType2};
+        fmt = "k",
+    ) where {OpType1 <: Union{Ket, Bra, Operator}, OpType2 <: Union{Ket, Bra, Operator}}
     coords1 = _state_to_bloch(start_point)
     coords2 = _state_to_bloch(end_point)
     return add_line!(b, coords1, coords2; fmt = fmt)
@@ -306,20 +306,20 @@ Add a circular arc through three points on the Bloch sphere.
 This function converts the given quantum states into their Bloch vector representations and adds a arc between these two (or three) points on the Bloch sphere visualization. 
 """
 function add_arc!(
-    b::Bloch,
-    start_point::QuantumObject{OpType1},
-    end_point::QuantumObject{OpType2},
-) where {OpType1<:Union{Ket,Bra,Operator},OpType2<:Union{Ket,Bra,Operator}}
+        b::Bloch,
+        start_point::QuantumObject{OpType1},
+        end_point::QuantumObject{OpType2},
+    ) where {OpType1 <: Union{Ket, Bra, Operator}, OpType2 <: Union{Ket, Bra, Operator}}
     coords1 = _state_to_bloch(start_point)
     coords2 = _state_to_bloch(end_point)
     return add_arc!(b, coords1, coords2)
 end
 function add_arc!(
-    b::Bloch,
-    start_point::QuantumObject{OpType1},
-    middle_point::QuantumObject{OpType2},
-    end_point::QuantumObject{OpType3},
-) where {OpType1<:Union{Ket,Bra,Operator},OpType2<:Union{Ket,Bra,Operator},OpType3<:Union{Ket,Bra,Operator}}
+        b::Bloch,
+        start_point::QuantumObject{OpType1},
+        middle_point::QuantumObject{OpType2},
+        end_point::QuantumObject{OpType3},
+    ) where {OpType1 <: Union{Ket, Bra, Operator}, OpType2 <: Union{Ket, Bra, Operator}, OpType3 <: Union{Ket, Bra, Operator}}
     coords1 = _state_to_bloch(start_point)
     coords2 = _state_to_bloch(middle_point)
     coords3 = _state_to_bloch(end_point)
@@ -385,7 +385,7 @@ function _ket_to_bloch(state::QuantumObject{Ket})
         throw(ArgumentError("Bloch sphere visualization is only supported for qubit states (2-level systems)"))
 
     state_norm = norm(state)
-    if !isapprox(state_norm, 1.0, atol = 1e-6)
+    if !isapprox(state_norm, 1.0, atol = 1.0e-6)
         @warn "State is not normalized. Normalizing before Bloch vector conversion."
         ψ = state.data / state_norm
     else
@@ -422,7 +422,7 @@ function _dm_to_bloch(ρ::QuantumObject{Operator})
     ishermitian(ρ) || (@warn "Density matrix is not Hermitian. Results may not be meaningful.")
 
     state_norm = norm(ρ)
-    if !isapprox(state_norm, 1.0, atol = 1e-6)
+    if !isapprox(state_norm, 1.0, atol = 1.0e-6)
         @warn "State is not normalized. Normalizing before Bloch vector conversion."
         ρ2 = ρ / state_norm
     else
@@ -498,8 +498,8 @@ The `library` keyword argument specifies the plotting backend to use. The defaul
 """
 plot_bloch(
     state::QuantumObject{OpType};
-    library::Union{Symbol,Val} = Val(:Makie),
+    library::Union{Symbol, Val} = Val(:Makie),
     kwargs...,
-) where {OpType<:Union{Ket,Bra,Operator}} = plot_bloch(makeVal(library), state; kwargs...)
-plot_bloch(::Val{T}, state::QuantumObject{OpType}; kwargs...) where {T,OpType<:Union{Ket,Bra,Operator}} =
+) where {OpType <: Union{Ket, Bra, Operator}} = plot_bloch(makeVal(library), state; kwargs...)
+plot_bloch(::Val{T}, state::QuantumObject{OpType}; kwargs...) where {T, OpType <: Union{Ket, Bra, Operator}} =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))

@@ -7,7 +7,7 @@
     θ = atan(tg)
     U = sin(θ)
     κ2 = cos(θ)
-    κϕ = 1e-3
+    κϕ = 1.0e-3
     nth = 0.0
 
     a = destroy(N)

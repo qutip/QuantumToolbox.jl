@@ -19,56 +19,56 @@
     @test_throws DomainError cu(ψdi; word_size = 16)
 
     # type conversion of CUDA dense arrays
-    @test typeof(cu(ψdi; word_size = 64).data) == typeof(CuArray(ψdi).data) <: CuArray{Int64,1}
-    @test typeof(cu(ψdi; word_size = 32).data) == typeof(CuArray{Int32}(ψdi).data) <: CuArray{Int32,1}
-    @test typeof(cu(ψdf; word_size = 64).data) == typeof(CuArray(ψdf).data) <: CuArray{Float64,1}
-    @test typeof(cu(ψdf; word_size = 32).data) == typeof(CuArray{Float32}(ψdf).data) <: CuArray{Float32,1}
-    @test typeof(cu(ψdc; word_size = 64).data) == typeof(CuArray(ψdc).data) <: CuArray{ComplexF64,1}
-    @test typeof(cu(ψdc; word_size = 32).data) == typeof(CuArray{ComplexF32}(ψdc).data) <: CuArray{ComplexF32,1}
-    @test typeof(cu(Xdi; word_size = 64).data) == typeof(CuArray(Xdi).data) <: CuArray{Int64,2}
-    @test typeof(cu(Xdi; word_size = 32).data) == typeof(CuArray{Int32}(Xdi).data) <: CuArray{Int32,2}
-    @test typeof(cu(Xdf; word_size = 64).data) == typeof(CuArray(Xdf).data) <: CuArray{Float64,2}
-    @test typeof(cu(Xdf; word_size = 32).data) == typeof(CuArray{Float32}(Xdf).data) <: CuArray{Float32,2}
-    @test typeof(cu(Xdc; word_size = 64).data) == typeof(CuArray(Xdc).data) <: CuArray{ComplexF64,2}
-    @test typeof(cu(Xdc; word_size = 32).data) == typeof(CuArray{ComplexF32}(Xdc).data) <: CuArray{ComplexF32,2}
+    @test typeof(cu(ψdi; word_size = 64).data) == typeof(CuArray(ψdi).data) <: CuArray{Int64, 1}
+    @test typeof(cu(ψdi; word_size = 32).data) == typeof(CuArray{Int32}(ψdi).data) <: CuArray{Int32, 1}
+    @test typeof(cu(ψdf; word_size = 64).data) == typeof(CuArray(ψdf).data) <: CuArray{Float64, 1}
+    @test typeof(cu(ψdf; word_size = 32).data) == typeof(CuArray{Float32}(ψdf).data) <: CuArray{Float32, 1}
+    @test typeof(cu(ψdc; word_size = 64).data) == typeof(CuArray(ψdc).data) <: CuArray{ComplexF64, 1}
+    @test typeof(cu(ψdc; word_size = 32).data) == typeof(CuArray{ComplexF32}(ψdc).data) <: CuArray{ComplexF32, 1}
+    @test typeof(cu(Xdi; word_size = 64).data) == typeof(CuArray(Xdi).data) <: CuArray{Int64, 2}
+    @test typeof(cu(Xdi; word_size = 32).data) == typeof(CuArray{Int32}(Xdi).data) <: CuArray{Int32, 2}
+    @test typeof(cu(Xdf; word_size = 64).data) == typeof(CuArray(Xdf).data) <: CuArray{Float64, 2}
+    @test typeof(cu(Xdf; word_size = 32).data) == typeof(CuArray{Float32}(Xdf).data) <: CuArray{Float32, 2}
+    @test typeof(cu(Xdc; word_size = 64).data) == typeof(CuArray(Xdc).data) <: CuArray{ComplexF64, 2}
+    @test typeof(cu(Xdc; word_size = 32).data) == typeof(CuArray{ComplexF32}(Xdc).data) <: CuArray{ComplexF32, 2}
 
     # type conversion of CUDA sparse arrays
-    @test typeof(cu(ψsi; word_size = 64).data) == typeof(CuSparseVector(ψsi).data) == CuSparseVector{Int64,Int32}
-    @test typeof(cu(ψsi; word_size = 32).data) == typeof(CuSparseVector{Int32}(ψsi).data) == CuSparseVector{Int32,Int32}
-    @test typeof(cu(ψsf; word_size = 64).data) == typeof(CuSparseVector(ψsf).data) == CuSparseVector{Float64,Int32}
+    @test typeof(cu(ψsi; word_size = 64).data) == typeof(CuSparseVector(ψsi).data) == CuSparseVector{Int64, Int32}
+    @test typeof(cu(ψsi; word_size = 32).data) == typeof(CuSparseVector{Int32}(ψsi).data) == CuSparseVector{Int32, Int32}
+    @test typeof(cu(ψsf; word_size = 64).data) == typeof(CuSparseVector(ψsf).data) == CuSparseVector{Float64, Int32}
     @test typeof(cu(ψsf; word_size = 32).data) ==
-          typeof(CuSparseVector{Float32}(ψsf).data) ==
-          CuSparseVector{Float32,Int32}
-    @test typeof(cu(ψsc; word_size = 64).data) == typeof(CuSparseVector(ψsc).data) == CuSparseVector{ComplexF64,Int32}
+        typeof(CuSparseVector{Float32}(ψsf).data) ==
+        CuSparseVector{Float32, Int32}
+    @test typeof(cu(ψsc; word_size = 64).data) == typeof(CuSparseVector(ψsc).data) == CuSparseVector{ComplexF64, Int32}
     @test typeof(cu(ψsc; word_size = 32).data) ==
-          typeof(CuSparseVector{ComplexF32}(ψsc).data) ==
-          CuSparseVector{ComplexF32,Int32}
-    @test typeof(cu(Xsi; word_size = 64).data) == typeof(CuSparseMatrixCSC(Xsi).data) == CuSparseMatrixCSC{Int64,Int32}
+        typeof(CuSparseVector{ComplexF32}(ψsc).data) ==
+        CuSparseVector{ComplexF32, Int32}
+    @test typeof(cu(Xsi; word_size = 64).data) == typeof(CuSparseMatrixCSC(Xsi).data) == CuSparseMatrixCSC{Int64, Int32}
     @test typeof(cu(Xsi; word_size = 32).data) ==
-          typeof(CuSparseMatrixCSC{Int32}(Xsi).data) ==
-          CuSparseMatrixCSC{Int32,Int32}
+        typeof(CuSparseMatrixCSC{Int32}(Xsi).data) ==
+        CuSparseMatrixCSC{Int32, Int32}
     @test typeof(cu(Xsf; word_size = 64).data) ==
-          typeof(CuSparseMatrixCSC(Xsf).data) ==
-          CuSparseMatrixCSC{Float64,Int32}
+        typeof(CuSparseMatrixCSC(Xsf).data) ==
+        CuSparseMatrixCSC{Float64, Int32}
     @test typeof(cu(Xsf; word_size = 32).data) ==
-          typeof(CuSparseMatrixCSC{Float32}(Xsf).data) ==
-          CuSparseMatrixCSC{Float32,Int32}
+        typeof(CuSparseMatrixCSC{Float32}(Xsf).data) ==
+        CuSparseMatrixCSC{Float32, Int32}
     @test typeof(cu(Xsc; word_size = 64).data) ==
-          typeof(CuSparseMatrixCSC(Xsc).data) ==
-          CuSparseMatrixCSC{ComplexF64,Int32}
+        typeof(CuSparseMatrixCSC(Xsc).data) ==
+        CuSparseMatrixCSC{ComplexF64, Int32}
     @test typeof(cu(Xsc; word_size = 32).data) ==
-          typeof(CuSparseMatrixCSC{ComplexF32}(Xsc).data) ==
-          CuSparseMatrixCSC{ComplexF32,Int32}
-    @test typeof(CuSparseMatrixCSR(Xsi).data) == CuSparseMatrixCSR{Int64,Int32}
-    @test typeof(CuSparseMatrixCSR{Int32}(Xsi).data) == CuSparseMatrixCSR{Int32,Int32}
-    @test typeof(CuSparseMatrixCSR(Xsf).data) == CuSparseMatrixCSR{Float64,Int32}
-    @test typeof(CuSparseMatrixCSR{Float32}(Xsf).data) == CuSparseMatrixCSR{Float32,Int32}
-    @test typeof(CuSparseMatrixCSR(Xsc).data) == CuSparseMatrixCSR{ComplexF64,Int32}
-    @test typeof(CuSparseMatrixCSR{ComplexF32}(Xsc).data) == CuSparseMatrixCSR{ComplexF32,Int32}
+        typeof(CuSparseMatrixCSC{ComplexF32}(Xsc).data) ==
+        CuSparseMatrixCSC{ComplexF32, Int32}
+    @test typeof(CuSparseMatrixCSR(Xsi).data) == CuSparseMatrixCSR{Int64, Int32}
+    @test typeof(CuSparseMatrixCSR{Int32}(Xsi).data) == CuSparseMatrixCSR{Int32, Int32}
+    @test typeof(CuSparseMatrixCSR(Xsf).data) == CuSparseMatrixCSR{Float64, Int32}
+    @test typeof(CuSparseMatrixCSR{Float32}(Xsf).data) == CuSparseMatrixCSR{Float32, Int32}
+    @test typeof(CuSparseMatrixCSR(Xsc).data) == CuSparseMatrixCSR{ComplexF64, Int32}
+    @test typeof(CuSparseMatrixCSR{ComplexF32}(Xsc).data) == CuSparseMatrixCSR{ComplexF32, Int32}
 
     # type conversion of CUDA Diagonal arrays
-    @test cu(qeye(10), word_size = Val(32)).data isa Diagonal{ComplexF32,<:CuVector{ComplexF32}}
-    @test cu(qeye(10), word_size = Val(64)).data isa Diagonal{ComplexF64,<:CuVector{ComplexF64}}
+    @test cu(qeye(10), word_size = Val(32)).data isa Diagonal{ComplexF32, <:CuVector{ComplexF32}}
+    @test cu(qeye(10), word_size = Val(64)).data isa Diagonal{ComplexF64, <:CuVector{ComplexF64}}
 
     # Sparse To Dense
     # @test to_dense(cu(ψsi; word_size = 64)).data isa CuVector{Int64} # TODO: Fix this in CUDA.jl
@@ -126,7 +126,7 @@
     )
 
     @test all([isapprox(sol_cpu.expect[i], sol_gpu64.expect[i]) for i in 1:length(tlist)])
-    @test all([isapprox(sol_cpu.expect[i], sol_gpu32.expect[i]; atol = 1e-6) for i in 1:length(tlist)])
+    @test all([isapprox(sol_cpu.expect[i], sol_gpu32.expect[i]; atol = 1.0e-6) for i in 1:length(tlist)])
 end
 
 @testset "CUDA steadystate" begin
@@ -150,8 +150,8 @@ end
     c_ops_gpu_csr = [CuSparseMatrixCSR(c_op) for c_op in c_ops_gpu_csc]
     ρ_ss_gpu_csr = steadystate(H_gpu_csr, c_ops_gpu_csr, solver = SteadyStateLinearSolver())
 
-    @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csc.data) atol = 1e-8 * length(ρ_ss_cpu)
-    @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csr.data) atol = 1e-8 * length(ρ_ss_cpu)
+    @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csc.data) atol = 1.0e-8 * length(ρ_ss_cpu)
+    @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csr.data) atol = 1.0e-8 * length(ρ_ss_cpu)
 end
 
 @testset "CUDA spectrum" begin
@@ -188,8 +188,8 @@ end
     ρ2 = ptrace(ψ, 2)
     @test ρ1.data isa CuArray
     @test ρ2.data isa CuArray
-    @test Array(ρ1.data) ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
-    @test Array(ρ2.data) ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+    @test Array(ρ1.data) ≈ [0.3 0.0; 0.0 0.7] atol = 1.0e-10
+    @test Array(ρ2.data) ≈ [0.7 0.0; 0.0 0.3] atol = 1.0e-10
 
     ψ_d = ψ'
 
@@ -197,8 +197,8 @@ end
     ρ2 = ptrace(ψ_d, 2)
     @test ρ1.data isa CuArray
     @test ρ2.data isa CuArray
-    @test Array(ρ1.data) ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
-    @test Array(ρ2.data) ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+    @test Array(ρ1.data) ≈ [0.3 0.0; 0.0 0.7] atol = 1.0e-10
+    @test Array(ρ2.data) ≈ [0.7 0.0; 0.0 0.3] atol = 1.0e-10
 
     ρ = ket2dm(ψ)
     ρ1 = ptrace(ρ, 1)
@@ -206,8 +206,8 @@ end
     @test ρ.data isa CuArray
     @test ρ1.data isa CuArray
     @test ρ2.data isa CuArray
-    @test Array(ρ1.data) ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
-    @test Array(ρ2.data) ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+    @test Array(ρ1.data) ≈ [0.3 0.0; 0.0 0.7] atol = 1.0e-10
+    @test Array(ρ2.data) ≈ [0.7 0.0; 0.0 0.3] atol = 1.0e-10
 
     ψ1 = normalize(g + 1im * e)
     ψ2 = normalize(g + e)
@@ -218,15 +218,15 @@ end
     ρ2_ptr = ptrace(ρ, 2)
     @test ρ1_ptr.data isa CuArray
     @test ρ2_ptr.data isa CuArray
-    @test ρ1.data ≈ Array(ρ1_ptr.data) atol = 1e-10
-    @test ρ2.data ≈ Array(ρ2_ptr.data) atol = 1e-10
+    @test ρ1.data ≈ Array(ρ1_ptr.data) atol = 1.0e-10
+    @test ρ2.data ≈ Array(ρ2_ptr.data) atol = 1.0e-10
 
     ψlist = [rand_ket(2), rand_ket(3), rand_ket(4), rand_ket(5)]
     ρlist = [rand_dm(2), rand_dm(3), rand_dm(4), rand_dm(5)]
     ψtotal = tensor(ψlist...) |> cu
     ρtotal = tensor(ρlist...) |> cu
     sel_tests = [
-        SVector{0,Int}(),
+        SVector{0, Int}(),
         1,
         2,
         3,
@@ -285,9 +285,9 @@ end
     vals_H_cpu, vecs_H_cpu = eigenstates(H)
     vals_H_gpu, vecs_H_gpu = eigenstates(H_gpu)
 
-    @test vals_H_cpu ≈ Array(vals_H_gpu) atol = 1e-8
+    @test vals_H_cpu ≈ Array(vals_H_gpu) atol = 1.0e-8
     @test all(zip(vecs_H_cpu, vecs_H_gpu)) do (v_cpu, v_gpu)
-        return isapprox(abs(dot(v_cpu.data, Array(v_gpu.data))), 1; atol = 1e-8)
+        return isapprox(abs(dot(v_cpu.data, Array(v_gpu.data))), 1; atol = 1.0e-8)
     end
 
     # Sparse eigen solver for Liouvillian
@@ -302,8 +302,8 @@ end
         v0 = CUDA.rand(ComplexF64, size(L_gpu, 1)),
     )
 
-    @test vals_cpu ≈ vals_gpu atol = 1e-8
+    @test vals_cpu ≈ vals_gpu atol = 1.0e-8
     @test all(zip(vecs_cpu, vecs_gpu)) do (v_cpu, v_gpu)
-        return isapprox(abs(dot(v_cpu.data, Array(v_gpu.data))), 1; atol = 1e-8)
+        return isapprox(abs(dot(v_cpu.data, Array(v_gpu.data))), 1; atol = 1.0e-8)
     end
 end

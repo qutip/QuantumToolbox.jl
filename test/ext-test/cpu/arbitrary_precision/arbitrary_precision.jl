@@ -1,4 +1,4 @@
-@testset "Arbitrary Precision" verbose=true begin
+@testset "Arbitrary Precision" verbose = true begin
     N = 20
     Δ = 1.0
     U = 0.1
@@ -24,7 +24,7 @@
         sol_big = sesolve(H_big, ψ0_big, tlist; progress_bar = Val(false))
 
         # Test all fidelities are close to 1
-        @test all((x) -> isapprox(fidelity(x[1], x[2]), 1; atol = 1e-7), zip(sol.states, sol_big.states))
+        @test all((x) -> isapprox(fidelity(x[1], x[2]), 1; atol = 1.0e-7), zip(sol.states, sol_big.states))
 
         @inferred sesolve(H_big, ψ0_big, tlist; progress_bar = Val(false))
     end
@@ -34,7 +34,7 @@
         sol_big = mesolve(H_big, ψ0_big, tlist, c_ops_big; progress_bar = Val(false))
 
         # Test all fidelities are close to 1
-        @test all((x) -> isapprox(hilbert_dist(x[1], x[2]), 0; atol = 1e-10), zip(sol.states, sol_big.states))
+        @test all((x) -> isapprox(hilbert_dist(x[1], x[2]), 0; atol = 1.0e-10), zip(sol.states, sol_big.states))
 
         @inferred mesolve(H_big, ψ0_big, tlist, c_ops_big; progress_bar = Val(false))
     end
@@ -49,9 +49,9 @@
         # Align eigenvalues
         idxs = [findmin(abs.(vals_big .- val))[2] for val in vals]
 
-        @test vals ≈ vals_big[idxs] atol=1e-7
+        @test vals ≈ vals_big[idxs] atol = 1.0e-7
         @test all(zip(vecs, vecs_big[idxs])) do (v, v_big)
-            return isapprox(abs(dot(v.data, v_big.data)), 1; atol = 1e-7)
+            return isapprox(abs(dot(v.data, v_big.data)), 1; atol = 1.0e-7)
         end
     end
 end

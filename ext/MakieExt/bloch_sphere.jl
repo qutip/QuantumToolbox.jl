@@ -237,7 +237,7 @@ function _plot_points!(b::Bloch, lscene)
         raw_z = pts[3, :]
 
         ds = vec(sqrt.(sum(abs2, pts; dims = 1)))
-        if !all(isapprox.(ds, ds[1]; rtol = 1e-12))
+        if !all(isapprox.(ds, ds[1]; rtol = 1.0e-12))
             indperm = sortperm(ds)
         else
             indperm = collect(1:N)
@@ -387,10 +387,10 @@ Plot a pure quantum state on the Bloch sphere using the `Makie` backend.
     This is the `Makie`-specific implementation called by the main `plot_bloch` function.
 """
 function QuantumToolbox.plot_bloch(
-    ::Val{:Makie},
-    state::QuantumObject{OpType};
-    kwargs...,
-) where {OpType<:Union{Ket,Bra,Operator}}
+        ::Val{:Makie},
+        state::QuantumObject{OpType};
+        kwargs...,
+    ) where {OpType <: Union{Ket, Bra, Operator}}
     bloch_vec = _state_to_bloch(state)
     return _render_bloch_makie(bloch_vec; kwargs...)
 end

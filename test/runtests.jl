@@ -14,7 +14,7 @@ if (GROUP == "All") || (GROUP == "Core")
     QuantumToolbox.about()
 
     println("\nStart running Core tests...\n")
-    @run_package_tests verbose=true
+    @run_package_tests verbose = true
 end
 
 ########################################################################

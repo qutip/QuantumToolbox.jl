@@ -90,8 +90,8 @@ Test groups (set `GROUP` env var): "All", "Core", "Code-Quality", "AutoDiff_Ext"
 
 ### Code Quality & Formatting
 ```bash
-make format                  # Format code with JuliaFormatter
-make setup                   # Install dev dependencies (JuliaFormatter, Changelog)
+make format                  # Format code with Runic
+make setup                   # Install dev dependencies (Runic, Changelog)
 ```
 
 Uses Aqua.jl and JET.jl for static analysis (see [test/core-test/code-quality/](../test/core-test/code-quality/)).

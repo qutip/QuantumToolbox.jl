@@ -90,7 +90,7 @@
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator())
         a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # GeneralDimensions
-        a5 = QuantumObject(rand(ComplexF64, 2*3*4, 5), dims = ((2, 3, 4), (5,)))
+        a5 = QuantumObject(rand(ComplexF64, 2 * 3 * 4, 5), dims = ((2, 3, 4), (5,)))
         @test isket(a2) == false
         @test isbra(a2) == false
         @test isoper(a2) == true
@@ -228,9 +228,9 @@
         @test issymmetric(Z) == true
 
         # diag
-        @test diag(a, 1) ≈ [sqrt(i) for i in 1:(N-1)]
-        @test diag(a_d, -1) == [sqrt(i) for i in 1:(N-1)]
-        @test diag(a_d * a) ≈ collect(0:(N-1))
+        @test diag(a, 1) ≈ [sqrt(i) for i in 1:(N - 1)]
+        @test diag(a_d, -1) == [sqrt(i) for i in 1:(N - 1)]
+        @test diag(a_d * a) ≈ collect(0:(N - 1))
 
         @test Y[1, 2] == conj(Y[2, 1])
 
@@ -269,7 +269,7 @@
         a_size = size(a)
         a_isherm = isherm(a)
         @test opstring ==
-              "\nQuantum Object:   type=Operator()   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+            "\nQuantum Object:   type=Operator()   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
         # GeneralDimensions
         Gop = tensor(a, ψ)
@@ -279,7 +279,7 @@
         Gop_size = size(Gop)
         Gop_isherm = isherm(Gop)
         @test opstring ==
-              "\nQuantum Object:   type=Operator()   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
+            "\nQuantum Object:   type=Operator()   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
 
         a = spre(a)
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
@@ -340,16 +340,16 @@
         @test typeof(Vector(vs).data) == Vector{Int64}
         @test typeof(Vector{ComplexF64}(vd).data) == Vector{ComplexF64}
         @test typeof(Vector{ComplexF64}(vs).data) == Vector{ComplexF64}
-        @test typeof(SparseVector(vd).data) == SparseVector{Int64,Int64}
-        @test typeof(SparseVector(vs).data) == SparseVector{Int64,Int64}
-        @test typeof(SparseVector{ComplexF64}(vs).data) == SparseVector{ComplexF64,Int64}
+        @test typeof(SparseVector(vd).data) == SparseVector{Int64, Int64}
+        @test typeof(SparseVector(vs).data) == SparseVector{Int64, Int64}
+        @test typeof(SparseVector{ComplexF64}(vs).data) == SparseVector{ComplexF64, Int64}
         @test typeof(Matrix(Md).data) == Matrix{Int64}
         @test typeof(Matrix(Ms).data) == Matrix{Int64}
         @test typeof(Matrix{ComplexF64}(Ms).data) == Matrix{ComplexF64}
         @test typeof(Matrix{ComplexF64}(Md).data) == Matrix{ComplexF64}
-        @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64,Int64}
-        @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64,Int64}
-        @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64,Int64}
+        @test typeof(SparseMatrixCSC(Md).data) == SparseMatrixCSC{Int64, Int64}
+        @test typeof(SparseMatrixCSC(Ms).data) == SparseMatrixCSC{Int64, Int64}
+        @test typeof(SparseMatrixCSC{ComplexF64}(Ms).data) == SparseMatrixCSC{ComplexF64, Int64}
 
         @testset "Deprecated Warnings" begin
             @test_logs (:warn,) sparse_to_dense(vs)
@@ -367,8 +367,8 @@
             end
 
             UnionType = Union{
-                QuantumObject{Bra,Dimensions{1,Tuple{Space}},Matrix{T}},
-                QuantumObject{Operator,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Bra, Dimensions{1, Tuple{Space}}, Matrix{T}},
+                QuantumObject{Operator, Dimensions{1, Tuple{Space}}, Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
@@ -377,8 +377,8 @@
             end
 
             UnionType2 = Union{
-                QuantumObject{Operator,GeneralDimensions{1,1,Tuple{Space},Tuple{Space}},Matrix{T}},
-                QuantumObject{Operator,Dimensions{1,Tuple{Space}},Matrix{T}},
+                QuantumObject{Operator, GeneralDimensions{1, 1, Tuple{Space}, Tuple{Space}}, Matrix{T}},
+                QuantumObject{Operator, Dimensions{1, Tuple{Space}}, Matrix{T}},
             }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)
@@ -527,10 +527,10 @@
     @testset "get coherence" begin
         ψ = coherent(30, 3)
         α, δψ = get_coherence(ψ)
-        @test isapprox(abs(α), 3, atol = 1e-5) && abs2(δψ[1]) > 0.999
+        @test isapprox(abs(α), 3, atol = 1.0e-5) && abs2(δψ[1]) > 0.999
         ρ = ket2dm(ψ)
         α, δρ = get_coherence(ρ)
-        @test isapprox(abs(α), 3, atol = 1e-5) && abs2(δρ[1, 1]) > 0.999
+        @test isapprox(abs(α), 3, atol = 1.0e-5) && abs2(δρ[1, 1]) > 0.999
 
         @testset "Type Inference (get_coherence)" begin
             @inferred get_coherence(ψ)
@@ -545,8 +545,8 @@
         Ms = Qobj(sprand(ComplexF64, 10, 10, 0.5))
         @test svdvals(vd)[1] ≈ √(vd' * vd)
         @test svdvals(vs)[1] ≈ √(vs' * vs)
-        @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol = 1e-6
-        @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol = 1e-6
+        @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol = 1.0e-6
+        @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol = 1.0e-6
 
         @testset "Type Inference (SVD and Schatten p-norm)" begin
             @inferred svdvals(vd)
@@ -646,21 +646,21 @@
 
         ρ1 = ptrace(ψ, 1)
         ρ2 = ptrace(ψ, 2)
-        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
-        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1.0e-10
+        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1.0e-10
 
         ψ_d = ψ'
 
         ρ1 = ptrace(ψ_d, 1)
         ρ2 = ptrace(ψ_d, 2)
-        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
-        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1.0e-10
+        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1.0e-10
 
         ρ = ket2dm(ψ)
         ρ1 = ptrace(ρ, 1)
         ρ2 = ptrace(ρ, 2)
-        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1e-10
-        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1e-10
+        @test ρ1.data ≈ [0.3 0.0; 0.0 0.7] atol = 1.0e-10
+        @test ρ2.data ≈ [0.7 0.0; 0.0 0.3] atol = 1.0e-10
 
         ψ1 = normalize(g + 1im * e)
         ψ2 = normalize(g + e)
@@ -695,7 +695,7 @@
         ψtotal = tensor(ψlist...)
         ρtotal = tensor(ρlist...)
         sel_tests = [
-            SVector{0,Int}(),
+            SVector{0, Int}(),
             1,
             2,
             3,

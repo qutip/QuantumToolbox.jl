@@ -22,7 +22,7 @@
     @test entropy_relative(ρ1, rand_dm(10, rank = 9)) == Inf
     @test entropy_relative(ψ, ψ) + 1 ≈ 1
     @test entropy_relative(λ * ρ1 + (1 - λ) * ρ2, λ * σ1 + (1 - λ) * σ2) <=
-          λ * entropy_relative(ρ1, σ1) + (1 - λ) * entropy_relative(ρ2, σ2) # joint convexity
+        λ * entropy_relative(ρ1, σ1) + (1 - λ) * entropy_relative(ρ2, σ2) # joint convexity
 
     # relations between different entropies
     @test entropy_relative(ρA, IA / nA) ≈ log(nA) - entropy_vn(ρA)
@@ -71,8 +71,8 @@ end
     # this only works for "pure" two-qubit states
     ψr = rand_ket((2, 2)) # might be an entangled two-qubit state
     val = concurrence(ψr)
-    @test isapprox(val, sqrt(2 * entropy_linear(ptrace(ψr, 1))); atol = 1e-5) # √(2 * (1 - Tr(ρA^2)))
-    @test isapprox(val, sqrt(2 * entropy_linear(ptrace(ψr, 2))); atol = 1e-5) # √(2 * (1 - Tr(ρB^2)))
+    @test isapprox(val, sqrt(2 * entropy_linear(ptrace(ψr, 1))); atol = 1.0e-5) # √(2 * (1 - Tr(ρA^2)))
+    @test isapprox(val, sqrt(2 * entropy_linear(ptrace(ψr, 2))); atol = 1.0e-5) # √(2 * (1 - Tr(ρB^2)))
 
     @test_throws ArgumentError entanglement(rand_dm((2, 2)), 1)
     @test_throws ArgumentError concurrence(rand_dm((2, 3)))
@@ -102,7 +102,7 @@ end
 
     ψ = rand_ket(10)
     ϕ = rand_ket(10)
-    @test isapprox(tracedist(ψ, ϕ)^2, hilbert_dist(ψ, ϕ) / 2; atol = 1e-6)
+    @test isapprox(tracedist(ψ, ϕ)^2, hilbert_dist(ψ, ϕ) / 2; atol = 1.0e-6)
 
     @testset "Type Inference (trace distance)" begin
         @inferred tracedist(ψz0, ψx0)
@@ -126,16 +126,16 @@ end
     M1 = ket2dm(ψ1)
     b00 = bell_state(Val(0), Val(0))
     b01 = bell_state(Val(0), Val(1))
-    @test isapprox(fidelity(M0, M1), fidelity(ψ1, M0); atol = 1e-6)
-    @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1e-6)
-    @test isapprox(fidelity(b00, b00), 1; atol = 1e-6)
-    @test isapprox(bures_dist(b00, b00) + 1, 1; atol = 1e-6)
-    @test isapprox(bures_angle(b00, b00) + 1, 1; atol = 1e-6)
-    @test isapprox(hellinger_dist(b00, b00) + 1, 1; atol = 1e-6)
-    @test isapprox(fidelity(b00, b01) + 1, 1; atol = 1e-6)
-    @test isapprox(bures_dist(b00, b01), √2; atol = 1e-6)
-    @test isapprox(bures_angle(b00, b01), π / 2; atol = 1e-6)
-    @test isapprox(hellinger_dist(b00, b01), √2; atol = 1e-6)
+    @test isapprox(fidelity(M0, M1), fidelity(ψ1, M0); atol = 1.0e-6)
+    @test isapprox(fidelity(ψ1, ψ2), fidelity(ket2dm(ψ1), ket2dm(ψ2)); atol = 1.0e-6)
+    @test isapprox(fidelity(b00, b00), 1; atol = 1.0e-6)
+    @test isapprox(bures_dist(b00, b00) + 1, 1; atol = 1.0e-6)
+    @test isapprox(bures_angle(b00, b00) + 1, 1; atol = 1.0e-6)
+    @test isapprox(hellinger_dist(b00, b00) + 1, 1; atol = 1.0e-6)
+    @test isapprox(fidelity(b00, b01) + 1, 1; atol = 1.0e-6)
+    @test isapprox(bures_dist(b00, b01), √2; atol = 1.0e-6)
+    @test isapprox(bures_angle(b00, b01), π / 2; atol = 1.0e-6)
+    @test isapprox(hellinger_dist(b00, b01), √2; atol = 1.0e-6)
 
     # some relations between Bures and Hellinger dintances
     # together with some monotonicity under tensor products
@@ -150,12 +150,12 @@ end
     d_Bu_AB = bures_dist(ρAB, σAB)
     d_He_A = hellinger_dist(ρA, σA)
     d_He_AB = hellinger_dist(ρAB, σAB)
-    @test isapprox(fidelity(ρAB, σAB), fidelity(ρA, σA) * fidelity(ρB, σB); atol = 1e-6)
+    @test isapprox(fidelity(ρAB, σAB), fidelity(ρA, σA) * fidelity(ρB, σB); atol = 1.0e-6)
     @test d_He_AB >= d_Bu_AB
     @test d_Bu_AB >= d_Bu_A
-    @test isapprox(bures_dist(ρAB, tensor(σA, ρB)), d_Bu_A; atol = 1e-6)
+    @test isapprox(bures_dist(ρAB, tensor(σA, ρB)), d_Bu_A; atol = 1.0e-6)
     @test d_He_AB >= d_He_A
-    @test isapprox(hellinger_dist(ρAB, tensor(σA, ρB)), d_He_A; atol = 1e-6)
+    @test isapprox(hellinger_dist(ρAB, tensor(σA, ρB)), d_He_A; atol = 1.0e-6)
 
     @testset "Type Inference (fidelity)" begin
         @inferred fidelity(M0, M1)

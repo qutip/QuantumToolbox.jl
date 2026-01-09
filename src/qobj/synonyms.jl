@@ -75,7 +75,7 @@ Matrix logarithm of [`QuantumObject`](@ref)
 
 Note that this function is same as `log(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-logm(A::QuantumObject{ObjType}) where {ObjType<:Union{Operator,SuperOperator}} = log(A)
+logm(A::QuantumObject{ObjType}) where {ObjType <: Union{Operator, SuperOperator}} = log(A)
 
 @doc raw"""
     expm(A::QuantumObject)
@@ -84,7 +84,7 @@ Matrix exponential of [`QuantumObject`](@ref)
 
 Note that this function is same as `exp(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-expm(A::QuantumObject{ObjType}) where {ObjType<:Union{Operator,SuperOperator}} = exp(A)
+expm(A::QuantumObject{ObjType}) where {ObjType <: Union{Operator, SuperOperator}} = exp(A)
 
 @doc raw"""
     sinm(A::QuantumObject)
@@ -95,7 +95,7 @@ Matrix sine of [`QuantumObject`](@ref), defined as
 
 Note that this function is same as `sin(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-sinm(A::QuantumObject{ObjType}) where {ObjType<:Union{Operator,SuperOperator}} = sin(A)
+sinm(A::QuantumObject{ObjType}) where {ObjType <: Union{Operator, SuperOperator}} = sin(A)
 
 @doc raw"""
     cosm(A::QuantumObject)
@@ -106,7 +106,7 @@ Matrix cosine of [`QuantumObject`](@ref), defined as
 
 Note that this function is same as `cos(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-cosm(A::QuantumObject{ObjType}) where {ObjType<:Union{Operator,SuperOperator}} = cos(A)
+cosm(A::QuantumObject{ObjType}) where {ObjType <: Union{Operator, SuperOperator}} = cos(A)
 
 @doc raw"""
     qeye_like(A::AbstractQuantumObject)
@@ -115,7 +115,7 @@ Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same
 
 Note that this function is same as `one(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-qeye_like(A::AbstractQuantumObject{OpType}) where {OpType<:Union{Operator,SuperOperator}} = one(A)
+qeye_like(A::AbstractQuantumObject{OpType}) where {OpType <: Union{Operator, SuperOperator}} = one(A)
 
 @doc raw"""
     qzero_like(A::AbstractQuantumObject)
@@ -124,4 +124,4 @@ Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same
 
 Note that this function is same as `zero(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-qzero_like(A::AbstractQuantumObject{OpType}) where {OpType<:Union{Operator,SuperOperator}} = zero(A)
+qzero_like(A::AbstractQuantumObject{OpType}) where {OpType <: Union{Operator, SuperOperator}} = zero(A)

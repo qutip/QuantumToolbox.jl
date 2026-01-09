@@ -8,19 +8,19 @@ abstract type SpectrumSolver end
 
 A solver which solves [`spectrum`](@ref) by finding the eigen decomposition of the Liouvillian [`SuperOperator`](@ref) and calculate the exponential series.
 """
-struct ExponentialSeries{T<:Real,CALC_SS} <: SpectrumSolver
+struct ExponentialSeries{T <: Real, CALC_SS} <: SpectrumSolver
     tol::T
-    ExponentialSeries(tol::T, calc_steadystate::Bool = false) where {T} = new{T,calc_steadystate}(tol)
+    ExponentialSeries(tol::T, calc_steadystate::Bool = false) where {T} = new{T, calc_steadystate}(tol)
 end
 
-ExponentialSeries(; tol = 1e-14, calc_steadystate = false) = ExponentialSeries(tol, calc_steadystate)
+ExponentialSeries(; tol = 1.0e-14, calc_steadystate = false) = ExponentialSeries(tol, calc_steadystate)
 
 @doc raw"""
     PseudoInverse(; alg::SciMLLinearSolveAlgorithm = KrylovJL_GMRES())
 
 A solver which solves [`spectrum`](@ref) by finding the inverse of Liouvillian [`SuperOperator`](@ref) using the `alg`orithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/).
 """
-struct PseudoInverse{MT<:SciMLLinearSolveAlgorithm} <: SpectrumSolver
+struct PseudoInverse{MT <: SciMLLinearSolveAlgorithm} <: SpectrumSolver
     alg::MT
 end
 
@@ -33,8 +33,8 @@ A solver which solves [`spectrum`](@ref) by using a non-symmetric Lanczos varian
 The nonsymmetric Lanczos algorithm is adapted from Algorithm 6.6 in [Saad2011](https://www-users.cse.umn.edu/~saad/eig_book_2ndEd.pdf).
 The running estimate is updated via a [Wallis-Euler recursion](https://en.wikipedia.org/wiki/Continued_fraction).
 """
-Base.@kwdef struct Lanczos{T<:Real,SS<:Union{Nothing,<:SteadyStateSolver}} <: SpectrumSolver
-    tol::T = 1e-8
+Base.@kwdef struct Lanczos{T <: Real, SS <: Union{Nothing, <:SteadyStateSolver}} <: SpectrumSolver
+    tol::T = 1.0e-8
     maxiter::Int = 5000
     verbose::Int = 0
     steadystate_solver::SS = nothing
@@ -61,25 +61,25 @@ See also the following list for `SpectrumSolver` docstrings:
 - [`Lanczos`](@ref)
 """
 function spectrum(
-    H::QuantumObject{HOpType},
-    ωlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator};
-    solver::SpectrumSolver = ExponentialSeries(),
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator}}
+        H::QuantumObject{HOpType},
+        ωlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple},
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator};
+        solver::SpectrumSolver = ExponentialSeries(),
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}}
     return _spectrum(liouvillian(H, c_ops), ωlist, A, B, solver; kwargs...)
 end
 
-function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T,true}) where {T}
+function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T, true}) where {T}
     result = eigen(L)
     rates, vecs = result.values, result.vectors
 
     return rates, vecs, steadystate(L).data
 end
 
-function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T,false}) where {T}
+function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T, false}) where {T}
     result = eigen(L)
     rates, vecs = result.values, result.vectors
 
@@ -92,13 +92,13 @@ function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T,false}) wher
 end
 
 function _spectrum(
-    L::QuantumObject{SuperOperator},
-    ωlist::AbstractVector,
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator},
-    solver::ExponentialSeries;
-    kwargs...,
-)
+        L::QuantumObject{SuperOperator},
+        ωlist::AbstractVector,
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator},
+        solver::ExponentialSeries;
+        kwargs...,
+    )
     check_dimensions(L, A, B)
 
     rates, vecs, ρss = _spectrum_get_rates_vecs_ss(L, solver)
@@ -117,13 +117,13 @@ function _spectrum(
 end
 
 function _spectrum(
-    L::QuantumObject{SuperOperator},
-    ωlist::AbstractVector,
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator},
-    solver::PseudoInverse;
-    kwargs...,
-)
+        L::QuantumObject{SuperOperator},
+        ωlist::AbstractVector,
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator},
+        solver::PseudoInverse;
+        kwargs...,
+    )
     check_dimensions(L, A, B)
 
     ωList = convert(Vector{_float_type(L)}, ωlist) # Convert it to support GPUs and avoid type instabilities
@@ -136,7 +136,7 @@ function _spectrum(
 
     # multiply by operator A on the left (spre) and then perform trace operation
     D = prod(L.dimensions)
-    _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(_complex_float_type(L), D)) # same as vec(system_identity_matrix)
+    _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D - 1)], ones(_complex_float_type(L), D)) # same as vec(system_identity_matrix)
     _tr_A = transpose(_tr) * spre(A).data
 
     Id = Eye(D^2)
@@ -152,19 +152,19 @@ function _spectrum(
         sol = solve!(cache)
 
         # trace over the Hilbert space of system (expectation value)
-        spec[idx+1] = -2 * real(dot(_tr_A, sol.u))
+        spec[idx + 1] = -2 * real(dot(_tr_A, sol.u))
     end
 
     return spec
 end
 
 function _spectrum(
-    L::QuantumObject{SuperOperator},
-    ωlist::AbstractVector,
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator},
-    solver::Lanczos,
-)
+        L::QuantumObject{SuperOperator},
+        ωlist::AbstractVector,
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator},
+        solver::Lanczos,
+    )
     check_dimensions(L, A, B)
 
     # Define type shortcuts
@@ -182,7 +182,7 @@ function _spectrum(
 
     # Calculate <w₁| = <I|A
     D = prod(L.dimensions)
-    Ivec = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D-1)], ones(cT, D)) # same as vec(system_identity_matrix)
+    Ivec = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D - 1)], ones(cT, D)) # same as vec(system_identity_matrix)
     wₖ = spre(A).data' * vT(Ivec)
 
     # Store the normalization factor for the Green's function before renormalizing |v₁> and <w₁|
@@ -192,7 +192,7 @@ function _spectrum(
     end
     scalingF = sqrt(abs(gfNorm))
     vₖ ./= scalingF
-    wₖ ./= conj(gfNorm/scalingF)
+    wₖ ./= conj(gfNorm / scalingF)
 
     # Handle input frequency range
     ωList = vT(convert(Vector{fT}, ωlist))  # Make sure they're real frequencies and potentially on GPU

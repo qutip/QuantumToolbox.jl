@@ -36,7 +36,7 @@ Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 tracedist(
     ρ::QuantumObject{ObjType1},
     σ::QuantumObject{ObjType2},
-) where {ObjType1<:Union{Ket,Operator},ObjType2<:Union{Ket,Operator}} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
+) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
 
 @doc raw"""
     hilbert_dist(ρ::QuantumObject, σ::QuantumObject)
@@ -50,9 +50,9 @@ Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 - [Vedral-Plenio1998](@citet)
 """
 function hilbert_dist(
-    ρ::QuantumObject{ObjType1},
-    σ::QuantumObject{ObjType2},
-) where {ObjType1<:Union{Ket,Operator},ObjType2<:Union{Ket,Operator}}
+        ρ::QuantumObject{ObjType1},
+        σ::QuantumObject{ObjType2},
+    ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
     check_dimensions(ρ, σ)
 
     A = ket2dm(ρ) - ket2dm(σ)
@@ -71,9 +71,9 @@ Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 - [Spehner2017](@citet)
 """
 function hellinger_dist(
-    ρ::QuantumObject{ObjType1},
-    σ::QuantumObject{ObjType2},
-) where {ObjType1<:Union{Ket,Operator},ObjType2<:Union{Ket,Operator}}
+        ρ::QuantumObject{ObjType1},
+        σ::QuantumObject{ObjType2},
+    ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
     # Ket (pure state) doesn't need to do square root
     sqrt_ρ = isket(ρ) ? ket2dm(ρ) : sqrt(ρ)
     sqrt_σ = isket(σ) ? ket2dm(σ) : sqrt(σ)

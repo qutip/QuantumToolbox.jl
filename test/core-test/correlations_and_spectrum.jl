@@ -44,7 +44,7 @@
         cout = stdout
         r, w = redirect_stdout()
         nout = @async read(r, String)
-        spectrum(H, ω_l2, c_ops, a', a; solver = Lanczos(verbose = 2, maxiter = 2, tol = 1e-16));
+        spectrum(H, ω_l2, c_ops, a', a; solver = Lanczos(verbose = 2, maxiter = 2, tol = 1.0e-16))
         redirect_stdout(cout)
         close(w)
         out = fetch(nout)

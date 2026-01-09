@@ -24,9 +24,9 @@ The `library` keyword argument specifies the plotting library to use, defaulting
 """
 plot_wigner(
     state::QuantumObject{OpType};
-    library::Union{Val,Symbol} = Val(:Makie),
+    library::Union{Val, Symbol} = Val(:Makie),
     kwargs...,
-) where {OpType<:Union{Bra,Ket,Operator}} = plot_wigner(makeVal(library), state; kwargs...)
+) where {OpType <: Union{Bra, Ket, Operator}} = plot_wigner(makeVal(library), state; kwargs...)
 
-plot_wigner(::Val{T}, state::QuantumObject{OpType}; kwargs...) where {T,OpType<:Union{Bra,Ket,Operator}} =
+plot_wigner(::Val{T}, state::QuantumObject{OpType}; kwargs...) where {T, OpType <: Union{Bra, Ket, Operator}} =
     throw(ArgumentError("The specified plotting library $T is not available. Try running `using $T` first."))

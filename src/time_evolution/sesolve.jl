@@ -2,7 +2,7 @@ export sesolveProblem, sesolve, sesolve_map
 
 _sesolve_make_U_QobjEvo(H) = -1im * QuantumObjectEvolution(H, type = Operator())
 
-function _gen_sesolve_solution(sol, prob::TimeEvolutionProblem{ST}) where {ST<:Union{Ket,Operator}}
+function _gen_sesolve_solution(sol, prob::TimeEvolutionProblem{ST}) where {ST <: Union{Ket, Operator}}
     ψt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
 
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
@@ -61,15 +61,15 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the `ODEProblem` for the Schrödinger time evolution of the system.
 """
 function sesolveProblem(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{ST},
-    tlist::AbstractVector;
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    inplace::Union{Val,Bool} = Val(true),
-    kwargs...,
-) where {ST<:Union{Ket,Operator}}
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{ST},
+        tlist::AbstractVector;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        inplace::Union{Val, Bool} = Val(true),
+        kwargs...,
+    ) where {ST <: Union{Ket, Operator}}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -90,7 +90,7 @@ function sesolveProblem(
 
     tspan = (tlist[1], tlist[end])
 
-    prob = ODEProblem{getVal(inplace),FullSpecialize}(U, ψ0, tspan, params; kwargs4...)
+    prob = ODEProblem{getVal(inplace), FullSpecialize}(U, ψ0, tspan, params; kwargs4...)
 
     return TimeEvolutionProblem(prob, tlist, states_type, H_evo.dimensions)
 end
@@ -140,16 +140,16 @@ Time evolution of a closed quantum system using the Schrödinger equation:
 - `sol::TimeEvolutionSol`: The solution of the time evolution. See also [`TimeEvolutionSol`](@ref)
 """
 function sesolve(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{ST},
-    tlist::AbstractVector;
-    alg::AbstractODEAlgorithm = Vern7(lazy = false),
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    inplace::Union{Val,Bool} = Val(true),
-    kwargs...,
-) where {ST<:Union{Ket,Operator}}
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{ST},
+        tlist::AbstractVector;
+        alg::AbstractODEAlgorithm = Vern7(lazy = false),
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        inplace::Union{Val, Bool} = Val(true),
+        kwargs...,
+    ) where {ST <: Union{Ket, Operator}}
 
     # Move sensealg argument to solve for Enzyme.jl support.
     # TODO: Remove it when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed.
@@ -228,16 +228,16 @@ for each combination in the ensemble.
 - An array of [`TimeEvolutionSol`](@ref) objects with dimensions `(length(ψ0), length(params[1]), length(params[2]), ...)`.
 """
 function sesolve_map(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::AbstractVector{<:QuantumObject{ST}},
-    tlist::AbstractVector;
-    alg::AbstractODEAlgorithm = Vern7(lazy = false),
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params::Union{NullParameters,Tuple} = NullParameters(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    kwargs...,
-) where {ST<:Union{Ket,Operator}}
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::AbstractVector{<:QuantumObject{ST}},
+        tlist::AbstractVector;
+        alg::AbstractODEAlgorithm = Vern7(lazy = false),
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params::Union{NullParameters, Tuple} = NullParameters(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        kwargs...,
+    ) where {ST <: Union{Ket, Operator}}
     # mapping initial states and parameters
 
     ψ0 = map(to_dense, ψ0) # Convert all initial states to dense vectors
@@ -263,11 +263,11 @@ function sesolve_map(
     return sesolve_map(prob, iter, alg, ensemblealg; progress_bar = progress_bar)
 end
 sesolve_map(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
+    H::Union{AbstractQuantumObject{Operator}, Tuple},
     ψ0::QuantumObject{ST},
     tlist::AbstractVector;
     kwargs...,
-) where {ST<:Union{Ket,Operator}} = sesolve_map(H, [ψ0], tlist; kwargs...)
+) where {ST <: Union{Ket, Operator}} = sesolve_map(H, [ψ0], tlist; kwargs...)
 
 # this method is for advanced usage
 # User can define their own iterator structure, prob_func and output_func
@@ -276,14 +276,14 @@ sesolve_map(
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function sesolve_map(
-    prob::TimeEvolutionProblem{ST,<:AbstractDimensions,<:ODEProblem},
-    iter::AbstractArray,
-    alg::AbstractODEAlgorithm = Vern7(lazy = false),
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads();
-    prob_func::Union{Function,Nothing} = nothing,
-    output_func::Union{Tuple,Nothing} = nothing,
-    progress_bar::Union{Val,Bool} = Val(true),
-) where {ST<:Union{Ket,Operator}}
+        prob::TimeEvolutionProblem{ST, <:AbstractDimensions, <:ODEProblem},
+        iter::AbstractArray,
+        alg::AbstractODEAlgorithm = Vern7(lazy = false),
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads();
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple, Nothing} = nothing,
+        progress_bar::Union{Val, Bool} = Val(true),
+    ) where {ST <: Union{Ket, Operator}}
     # generate ensemble problem
     ntraj = length(iter)
     _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func

@@ -13,21 +13,21 @@
 
     solver = SteadyStateODESolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
-    @test tracedist(rho_me, ρ_ss) < 1e-4
+    @test tracedist(rho_me, ρ_ss) < 1.0e-4
 
     solver = SteadyStateDirectSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
-    @test tracedist(rho_me, ρ_ss) < 1e-4
+    @test tracedist(rho_me, ρ_ss) < 1.0e-4
     @test_throws ArgumentError steadystate(Ht, c_ops, solver = solver)
 
     solver = SteadyStateLinearSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
-    @test tracedist(rho_me, ρ_ss) < 1e-4
+    @test tracedist(rho_me, ρ_ss) < 1.0e-4
     @test_throws ArgumentError steadystate(Ht, c_ops, solver = solver)
 
     solver = SteadyStateEigenSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
-    @test tracedist(rho_me, ρ_ss) < 1e-4
+    @test tracedist(rho_me, ρ_ss) < 1.0e-4
     @test_throws ArgumentError steadystate(Ht, c_ops, solver = solver)
 
     @testset "Type Inference (steadystate)" begin
@@ -68,8 +68,8 @@
     ρ_ss2 =
         steadystate_fourier(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SSFloquetEffectiveLiouvillian())
 
-    @test abs(sum(sol_me.expect[1, (end-100):end]) / 101 - expect(e_ops[1], ρ_ss1)) < 1e-3
-    @test abs(sum(sol_me.expect[1, (end-100):end]) / 101 - expect(e_ops[1], ρ_ss2)) < 1e-3
+    @test abs(sum(sol_me.expect[1, (end - 100):end]) / 101 - expect(e_ops[1], ρ_ss1)) < 1.0e-3
+    @test abs(sum(sol_me.expect[1, (end - 100):end]) / 101 - expect(e_ops[1], ρ_ss2)) < 1.0e-3
 
     @testset "Type Inference (steadystate_fourier)" begin
         @inferred steadystate_fourier(

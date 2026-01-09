@@ -109,16 +109,16 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the `ODEProblem` for the Monte Carlo wave function time evolution.
 """
 function mcsolveProblem(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
-    tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    rng::AbstractRNG = default_rng(),
-    jump_callback::TJC = ContinuousLindbladJumpCallback(),
-    kwargs...,
-) where {TJC<:LindbladJumpCallbackType}
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{Ket},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        kwargs...,
+    ) where {TJC <: LindbladJumpCallbackType}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -220,21 +220,21 @@ If the environmental measurements register a quantum jump, the wave function und
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the Ensemble `ODEProblem` for the Monte Carlo wave function time evolution.
 """
 function mcsolveEnsembleProblem(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
-    tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    rng::AbstractRNG = default_rng(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    jump_callback::TJC = ContinuousLindbladJumpCallback(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    prob_func::Union{Function,Nothing} = nothing,
-    output_func::Union{Tuple,Nothing} = nothing,
-    kwargs...,
-) where {TJC<:LindbladJumpCallbackType}
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{Ket},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple, Nothing} = nothing,
+        kwargs...,
+    ) where {TJC <: LindbladJumpCallbackType}
     _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
@@ -358,24 +358,24 @@ If the environmental measurements register a quantum jump, the wave function und
 - `sol::TimeEvolutionMCSol`: The solution of the time evolution. See also [`TimeEvolutionMCSol`](@ref).
 """
 function mcsolve(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{Ket},
-    tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::AbstractODEAlgorithm = DP5(),
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    rng::AbstractRNG = default_rng(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    jump_callback::TJC = ContinuousLindbladJumpCallback(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    prob_func::Union{Function,Nothing} = nothing,
-    output_func::Union{Tuple,Nothing} = nothing,
-    keep_runs_results::Union{Val,Bool} = Val(false),
-    normalize_states::Union{Val,Bool} = Val(true),
-    kwargs...,
-) where {TJC<:LindbladJumpCallbackType}
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{Ket},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        alg::AbstractODEAlgorithm = DP5(),
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple, Nothing} = nothing,
+        keep_runs_results::Union{Val, Bool} = Val(false),
+        normalize_states::Union{Val, Bool} = Val(true),
+        kwargs...,
+    ) where {TJC <: LindbladJumpCallbackType}
     ens_prob_mc = mcsolveEnsembleProblem(
         H,
         ψ0,
@@ -398,13 +398,13 @@ function mcsolve(
 end
 
 function mcsolve(
-    ens_prob_mc::TimeEvolutionProblem,
-    alg::AbstractODEAlgorithm = DP5(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    keep_runs_results = Val(false),
-    normalize_states = Val(true),
-)
+        ens_prob_mc::TimeEvolutionProblem,
+        alg::AbstractODEAlgorithm = DP5(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        keep_runs_results = Val(false),
+        normalize_states = Val(true),
+    )
     sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj)
 
     dims = ens_prob_mc.dimensions

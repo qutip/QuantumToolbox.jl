@@ -25,14 +25,14 @@
     @test fig isa Figure
     @test ax isa Axis
     @test hm isa Heatmap
-    @test all(isapprox.(hm[3].value.x, wig, atol = 1e-6))
+    @test all(isapprox.(hm[3].value.x, wig, atol = 1.0e-6))
 
     fig, ax, surf =
         plot_wigner(ψ; library = Val(:Makie), xvec = xvec, yvec = yvec, projection = Val(:three_dim), colorbar = true)
     @test fig isa Figure
     @test ax isa Axis3
     @test surf isa Surface
-    @test all(isapprox.(surf[3].value.x, wig, atol = 1e-6))
+    @test all(isapprox.(surf[3].value.x, wig, atol = 1.0e-6))
 
     fig = Figure()
     pos = fig[2, 3]
@@ -190,7 +190,7 @@ end
         @test !isnothing(lscene)
     catch e
         @test false
-        @info "Render threw unexpected error" exception=e
+        @info "Render threw unexpected error" exception = e
     end
 
     b = Bloch()
@@ -203,7 +203,7 @@ end
         @test !isnothing(lscene)
     catch e
         @test false
-        @info "Render threw unexpected error" exception=e
+        @info "Render threw unexpected error" exception = e
     end
 
     # test `state to Bloch vector` conversion and `add_states!` function
@@ -227,14 +227,14 @@ end
     @test_throws ArgumentError add_states!(b, states, kind = :wrong)
 
     th = range(0, 2π; length = 20)
-    xp = cos.(th);
-    yp = sin.(th);
-    zp = zeros(20);
-    pnts = [xp, yp, zp];
-    pnts = Matrix(hcat(xp, yp, zp)');
-    add_points!(b, pnts);
-    vec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
-    add_vectors!(b, vec);
+    xp = cos.(th)
+    yp = sin.(th)
+    zp = zeros(20)
+    pnts = [xp, yp, zp]
+    pnts = Matrix(hcat(xp, yp, zp)')
+    add_points!(b, pnts)
+    vec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    add_vectors!(b, vec)
     add_line!(b, [1, 0, 0], [0, 1, 0])
     add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
     try
@@ -243,7 +243,7 @@ end
         @test !isnothing(lscene)
     catch e
         @test false
-        @info "Render threw unexpected error" exception=e
+        @info "Render threw unexpected error" exception = e
     end
 
     b = Bloch()
@@ -260,7 +260,7 @@ end
         @test !isnothing(lscene)
     catch e
         @test false
-        @info "Render threw unexpected error" exception=e
+        @info "Render threw unexpected error" exception = e
     end
 
     # if render location is given as lscene, should return the same Figure and LScene

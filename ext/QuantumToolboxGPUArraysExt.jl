@@ -17,7 +17,7 @@ import KernelAbstractions: @kernel, @Const, @index, get_backend, synchronize
     end
 end
 
-function QuantumToolbox._map_trace(A::AbstractGPUArray{T,4}) where {T}
+function QuantumToolbox._map_trace(A::AbstractGPUArray{T, 4}) where {T}
     B = similar(A, size(A, 1), size(A, 2))
     fill!(B, 0)
 

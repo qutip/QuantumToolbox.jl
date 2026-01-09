@@ -109,15 +109,15 @@ Quantum Object:   type=Operator()   dims=[10, 2]   size=(20, 20)   ishermitian=f
 ```
 """
 struct QuantumObjectEvolution{
-    ObjType<:Union{Operator,SuperOperator},
-    DimType<:AbstractDimensions,
-    DataType<:AbstractSciMLOperator,
-} <: AbstractQuantumObject{ObjType,DimType,DataType}
+        ObjType <: Union{Operator, SuperOperator},
+        DimType <: AbstractDimensions,
+        DataType <: AbstractSciMLOperator,
+    } <: AbstractQuantumObject{ObjType, DimType, DataType}
     data::DataType
     type::ObjType
     dimensions::DimType
 
-    function QuantumObjectEvolution(data::DT, type, dims) where {DT<:AbstractSciMLOperator}
+    function QuantumObjectEvolution(data::DT, type, dims) where {DT <: AbstractSciMLOperator}
         ObjType = _check_type(type)
         (type isa Operator || type isa SuperOperator) ||
             throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
@@ -127,7 +127,7 @@ struct QuantumObjectEvolution{
         _size = _get_size(data)
         _check_QuantumObject(type, dimensions, _size[1], _size[2])
 
-        return new{ObjType,typeof(dimensions),DT}(data, type, dimensions)
+        return new{ObjType, typeof(dimensions), DT}(data, type, dimensions)
     end
 end
 
@@ -283,7 +283,7 @@ function QuantumObjectEvolution(op_func_list::Tuple; type = nothing)
 end
 
 # this is a extra method if user accidentally specify `QuantumObjectEvolution( (op, func) )` or `QuantumObjectEvolution( ((op, func)) )`
-QuantumObjectEvolution(op_func::Tuple{<:QuantumObject,<:Function}; type = nothing) =
+QuantumObjectEvolution(op_func::Tuple{<:QuantumObject, <:Function}; type = nothing) =
     QuantumObjectEvolution((op_func,); type = type)
 
 @doc raw"""
@@ -407,17 +407,17 @@ function _QobjEvo_check_op_func(op_func::Tuple)
     return nothing
 end
 
-_QobjEvo_get_first_op(op_func_list_1::Union{Tuple,AbstractQuantumObject}) =
-    if op_func_list_1 isa Tuple
-        _QobjEvo_check_op_func(op_func_list_1)
-        op = op_func_list_1[1]
-        _QobjEvo_check_op(op)
-        return op
-    else
-        op = op_func_list_1
-        _QobjEvo_check_op(op)
-        return op
-    end
+_QobjEvo_get_first_op(op_func_list_1::Union{Tuple, AbstractQuantumObject}) =
+if op_func_list_1 isa Tuple
+    _QobjEvo_check_op_func(op_func_list_1)
+    op = op_func_list_1[1]
+    _QobjEvo_check_op(op)
+    return op
+else
+    op = op_func_list_1
+    _QobjEvo_check_op(op)
+    return op
+end
 
 function _make_SciMLOperator(op_func::Tuple)
     op, coef = op_func
@@ -476,11 +476,11 @@ true
 ```
 """
 function (A::QuantumObjectEvolution)(
-    ψout::QuantumObject{QobjType},
-    ψin::QuantumObject{QobjType},
-    p,
-    t,
-) where {QobjType<:Union{Ket,OperatorKet}}
+        ψout::QuantumObject{QobjType},
+        ψin::QuantumObject{QobjType},
+        p,
+        t,
+    ) where {QobjType <: Union{Ket, OperatorKet}}
     check_dimensions(A, ψout, ψin)
 
     if isoper(A) && isoperket(ψin)
@@ -503,7 +503,7 @@ end
 
 Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the input state `ψ` at time `t` with parameters `p`. Out-of-place version of [`(A::QuantumObjectEvolution)(ψout, ψin, p, t)`](@ref). The output state is stored in a new [`QuantumObject`](@ref) object. This function mimics the behavior of a `AbstractSciMLOperator` object.
 """
-function (A::QuantumObjectEvolution)(ψ::QuantumObject{QobjType}, p, t) where {QobjType<:Union{Ket,OperatorKet}}
+function (A::QuantumObjectEvolution)(ψ::QuantumObject{QobjType}, p, t) where {QobjType <: Union{Ket, OperatorKet}}
     ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dimensions)
     return A(ψout, ψ, p, t)
 end

@@ -56,21 +56,21 @@ expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Ket}) = dot(ψ.data
 expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Bra}) = expect(O, ψ')
 expect(O::QuantumObject{Operator}, ρ::QuantumObject{Operator}) = tr(O * ρ)
 expect(
-    O::QuantumObject{Operator,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
+    O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ψ::QuantumObject{Ket},
-) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real} = real(dot(ψ.data, O.data, ψ.data))
+) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = real(dot(ψ.data, O.data, ψ.data))
 expect(
-    O::QuantumObject{Operator,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
+    O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ψ::QuantumObject{Bra},
-) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real} = real(expect(O, ψ'))
+) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = real(expect(O, ψ'))
 expect(
-    O::QuantumObject{Operator,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}},
+    O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ρ::QuantumObject{Operator},
-) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real} = real(tr(O * ρ))
+) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = real(tr(O * ρ))
 expect(
-    O::AbstractVector{<:AbstractQuantumObject{Operator,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}}},
+    O::AbstractVector{<:AbstractQuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}}},
     ρ::QuantumObject,
-) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real} = expect.(O, Ref(ρ))
+) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = expect.(O, Ref(ρ))
 function expect(O::AbstractVector{<:AbstractQuantumObject{Operator}}, ρ::QuantumObject)
     result = Vector{ComplexF64}(undef, length(O))
     result .= expect.(O, Ref(ρ))
@@ -78,9 +78,9 @@ function expect(O::AbstractVector{<:AbstractQuantumObject{Operator}}, ρ::Quantu
 end
 expect(O::AbstractQuantumObject{Operator}, ρ::AbstractVector{<:QuantumObject}) = expect.(Ref(O), ρ)
 function expect(
-    O::AbstractVector{<:AbstractQuantumObject{Operator,DimsType,<:Union{<:Hermitian{TF},<:Symmetric{TR}}}},
-    ρ::AbstractVector{<:QuantumObject},
-) where {DimsType<:AbstractDimensions,TF<:Number,TR<:Real}
+        O::AbstractVector{<:AbstractQuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}}},
+        ρ::AbstractVector{<:QuantumObject},
+    ) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real}
     N_ops = length(O)
     result = Matrix{Float64}(undef, N_ops, length(ρ))
     for i in 1:N_ops
@@ -117,16 +117,16 @@ variance(O::QuantumObject{Operator}, ψ::Vector{<:QuantumObject}) = expect(O^2, 
 Converts a sparse QuantumObject to a dense QuantumObject.
 """
 to_dense(A::QuantumObject) = QuantumObject(to_dense(A.data), A.type, A.dimensions)
-to_dense(A::MT) where {MT<:AbstractSparseArray} = Array(A)
-to_dense(A::MT) where {MT<:AbstractArray} = A
+to_dense(A::MT) where {MT <: AbstractSparseArray} = Array(A)
+to_dense(A::MT) where {MT <: AbstractArray} = A
 to_dense(A::Diagonal) = diagm(A.diag)
 
-to_dense(::Type{T}, A::AbstractSparseArray) where {T<:Number} = Array{T}(A)
-to_dense(::Type{T1}, A::AbstractArray{T2}) where {T1<:Number,T2<:Number} = Array{T1}(A)
-to_dense(::Type{T}, A::AbstractArray{T}) where {T<:Number} = A
-to_dense(::Type{T}, A::Diagonal{T}) where {T<:Number} = diagm(A.diag)
+to_dense(::Type{T}, A::AbstractSparseArray) where {T <: Number} = Array{T}(A)
+to_dense(::Type{T1}, A::AbstractArray{T2}) where {T1 <: Number, T2 <: Number} = Array{T1}(A)
+to_dense(::Type{T}, A::AbstractArray{T}) where {T <: Number} = A
+to_dense(::Type{T}, A::Diagonal{T}) where {T <: Number} = diagm(A.diag)
 
-function to_dense(::Type{M}) where {M<:Union{Diagonal,SparseMatrixCSC}}
+function to_dense(::Type{M}) where {M <: Union{Diagonal, SparseMatrixCSC}}
     T = M
     par = T.parameters
     npar = length(par)
@@ -134,22 +134,22 @@ function to_dense(::Type{M}) where {M<:Union{Diagonal,SparseMatrixCSC}}
     return Matrix{par[1]}
 end
 
-to_dense(::Type{M}) where {M<:AbstractMatrix} = M
+to_dense(::Type{M}) where {M <: AbstractMatrix} = M
 
 @doc raw"""
     to_sparse(A::QuantumObject)
 
 Converts a dense QuantumObject to a sparse QuantumObject.
 """
-to_sparse(A::QuantumObject, tol::Real = 1e-10) = QuantumObject(to_sparse(A.data, tol), A.type, A.dimensions)
-function to_sparse(A::MT, tol::Real = 1e-10) where {MT<:AbstractMatrix}
+to_sparse(A::QuantumObject, tol::Real = 1.0e-10) = QuantumObject(to_sparse(A.data, tol), A.type, A.dimensions)
+function to_sparse(A::MT, tol::Real = 1.0e-10) where {MT <: AbstractMatrix}
     idxs = findall(@. abs(A) > tol)
     row_indices = getindex.(idxs, 1)
     col_indices = getindex.(idxs, 2)
     vals = getindex(A, idxs)
     return sparse(row_indices, col_indices, vals, size(A)...)
 end
-function to_sparse(A::VT, tol::Real = 1e-10) where {VT<:AbstractVector}
+function to_sparse(A::VT, tol::Real = 1.0e-10) where {VT <: AbstractVector}
     idxs = findall(@. abs(A) > tol)
     vals = getindex(A, idxs)
     return sparsevec(idxs, vals, length(A))
@@ -189,9 +189,9 @@ julia> a.dims, O.dims
 ```
 """
 function Base.kron(
-    A::AbstractQuantumObject{OpType,<:Dimensions},
-    B::AbstractQuantumObject{OpType,<:Dimensions},
-) where {OpType<:Union{Ket,Bra,Operator}}
+        A::AbstractQuantumObject{OpType, <:Dimensions},
+        B::AbstractQuantumObject{OpType, <:Dimensions},
+    ) where {OpType <: Union{Ket, Bra, Operator}}
     QType = promote_op_type(A, B)
     _lazy_tensor_warning(A.data, B.data)
     return QType(kron(A.data, B.data), A.type, Dimensions((A.dimensions.to..., B.dimensions.to...)))
@@ -203,9 +203,9 @@ for ADimType in (:Dimensions, :GeneralDimensions)
         if !(ADimType == BDimType == :Dimensions) # not for this case because it's already implemented
             @eval begin
                 function Base.kron(
-                    A::AbstractQuantumObject{Operator,<:$ADimType},
-                    B::AbstractQuantumObject{Operator,<:$BDimType},
-                )
+                        A::AbstractQuantumObject{Operator, <:$ADimType},
+                        B::AbstractQuantumObject{Operator, <:$BDimType},
+                    )
                     QType = promote_op_type(A, B)
                     _lazy_tensor_warning(A.data, B.data)
                     return QType(
@@ -287,41 +287,41 @@ mat2vec(A::QuantumObject{Operator}) = QuantumObject(mat2vec(A.data), OperatorKet
 
 Converts a matrix to a vector.
 """
-mat2vec(A::MT) where {MT<:AbstractMatrix} = vec(A) # reshape(A, :)
-function mat2vec(A::MT) where {MT<:AbstractSparseMatrix}
+mat2vec(A::MT) where {MT <: AbstractMatrix} = vec(A) # reshape(A, :)
+function mat2vec(A::MT) where {MT <: AbstractSparseMatrix}
     i, j, v = findnz(A)
     return sparsevec(i .+ (j .- 1) .* size(A, 1), v, prod(size(A)))
 end
 for op in (:Transpose, :Adjoint)
-    @eval mat2vec(A::$op{T,<:AbstractSparseMatrix}) where {T<:Number} = mat2vec(sparse(A))
-    @eval mat2vec(A::$op{T,<:AbstractMatrix}) where {T<:Number} = mat2vec(Matrix(A))
+    @eval mat2vec(A::$op{T, <:AbstractSparseMatrix}) where {T <: Number} = mat2vec(sparse(A))
+    @eval mat2vec(A::$op{T, <:AbstractMatrix}) where {T <: Number} = mat2vec(Matrix(A))
 end
 
-function mat2vec(::Type{M}) where {M<:DenseMatrix}
+function mat2vec(::Type{M}) where {M <: DenseMatrix}
     T = hasproperty(M, :body) ? M.body : M
     par = T.parameters
     npar = length(par)
     (2 ≤ npar ≤ 3) || error("Type $M is not supported.")
     if npar == 2
-        S = T.name.wrapper{par[1],1}
+        S = T.name.wrapper{par[1], 1}
     else
-        S = T.name.wrapper{par[1],1,par[3]}
+        S = T.name.wrapper{par[1], 1, par[3]}
     end
     return S
 end
 
-function mat2vec(::Type{M}) where {M<:SparseMatrixCSC}
+function mat2vec(::Type{M}) where {M <: SparseMatrixCSC}
     T = M
     par = T.parameters
     npar = length(par)
     (2 == npar) || error("Type $M is not supported.")
-    return SparseVector{par[1],par[2]}
+    return SparseVector{par[1], par[2]}
 end
 
-function mat2vec(::Type{M}) where {M<:Union{Adjoint{<:Number,<:SparseMatrixCSC},Transpose{<:Number,<:SparseMatrixCSC}}}
+function mat2vec(::Type{M}) where {M <: Union{Adjoint{<:Number, <:SparseMatrixCSC}, Transpose{<:Number, <:SparseMatrixCSC}}}
     T = M.parameters[2]
     par = T.parameters
     npar = length(par)
     (2 == npar) || error("Type $M is not supported.")
-    return SparseVector{par[1],par[2]}
+    return SparseVector{par[1], par[2]}
 end

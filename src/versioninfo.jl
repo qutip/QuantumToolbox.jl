@@ -42,7 +42,7 @@ function versioninfo(io::IO = stdout)
         "====================================\n",
         """OS       : $(OS_name) ($(Sys.MACHINE))\n""",
         """CPU      : $(length(cpu)) × $(cpu[1].model)\n""",
-        """Memory   : $(round(Sys.total_memory() / 2 ^ 30, digits=3)) GB\n""",
+        """Memory   : $(round(Sys.total_memory() / 2^30, digits = 3)) GB\n""",
         """WORD_SIZE: $(Sys.WORD_SIZE)\n""",
         """LIBM     : $(Base.libm_name)\n""",
         """LLVM     : libLLVM-$(Base.libllvm_version) ($(Sys.JIT), $(Sys.CPU_NAME))\n""",
@@ -75,6 +75,7 @@ function _get_pkg_version(pkg_name::String)
             return D[uuid].version
         end
     end
+    return
 end
 
 @doc raw"""

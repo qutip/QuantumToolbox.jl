@@ -80,12 +80,12 @@
         ρ_tot_size = size_s * size_enr
         ρ_tot_isherm = isherm(ρ_tot)
         @test opstring ==
-              "\nQuantum Object:   type=Operator()   dims=$ρ_tot_dims   size=$((ρ_tot_size, ρ_tot_size))   ishermitian=$ρ_tot_isherm\n$datastring"
+            "\nQuantum Object:   type=Operator()   dims=$ρ_tot_dims   size=$((ρ_tot_size, ρ_tot_size))   ishermitian=$ρ_tot_isherm\n$datastring"
 
         # use GeneralDimensions to do partial trace
         new_dims1 = GeneralDimensions((Space(1), Space(1), space_enr), (Space(1), Space(1), space_enr))
         ρ_enr_compound = Qobj(zeros(ComplexF64, size_enr, size_enr), dims = new_dims1)
-        basis_list = [tensor(basis(D1, i), basis(D2, j)) for i in 0:(D1-1) for j in 0:(D2-1)]
+        basis_list = [tensor(basis(D1, i), basis(D2, j)) for i in 0:(D1 - 1) for j in 0:(D2 - 1)]
         for b in basis_list
             ρ_enr_compound += tensor(b', I_enr) * ρ_tot * tensor(b, I_enr)
         end
@@ -130,10 +130,10 @@
         ρ_ss_enr = steadystate(H_enr, c_ops_enr)
 
         # check mesolve result
-        @test all(isapprox.(sol_JC.expect, sol_enr.expect, atol = 1e-4))
+        @test all(isapprox.(sol_JC.expect, sol_enr.expect, atol = 1.0e-4))
 
         # check steadystate result
-        @test expect(sz, ρ_ss_JC) ≈ expect(sz_enr, ρ_ss_enr) atol=1e-4
+        @test expect(sz, ρ_ss_JC) ≈ expect(sz_enr, ρ_ss_enr) atol = 1.0e-4
 
         # check eigenstates
         λ, v = eigenstates(H_enr)

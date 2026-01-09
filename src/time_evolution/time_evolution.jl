@@ -4,11 +4,11 @@ export average_states, average_expect, std_expect
 
 export liouvillian_floquet, liouvillian_dressed_nonsecular
 
-const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1e-8, reltol = 1e-6, save_everystep = false, save_end = true)
-const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1e-3, reltol = 2e-3, save_everystep = false, save_end = true)
+const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1.0e-8, reltol = 1.0e-6, save_everystep = false, save_end = true)
+const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1.0e-3, reltol = 2.0e-3, save_everystep = false, save_end = true)
 const COL_TIMES_WHICH_INIT_SIZE = 200
 
-abstract type TimeEvolutionMultiTrajSol{Tstates,Texpect} end
+abstract type TimeEvolutionMultiTrajSol{Tstates, Texpect} end
 
 @doc raw"""
     struct TimeEvolutionProblem
@@ -27,12 +27,12 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
     For a given `prob::TimeEvolutionProblem`, `prob.dims` or `getproperty(prob, :dims)` returns its `dimensions` in the type of integer-vector.
 """
 struct TimeEvolutionProblem{
-    ST<:QuantumObjectType,
-    DT<:AbstractDimensions,
-    PT<:AbstractSciMLProblem,
-    TT<:AbstractVector,
-    KWT,
-}
+        ST <: QuantumObjectType,
+        DT <: AbstractDimensions,
+        PT <: AbstractSciMLProblem,
+        TT <: AbstractVector,
+        KWT,
+    }
     prob::PT
     times::TT
     states_type::ST
@@ -68,14 +68,14 @@ A structure storing the results and some information from solving time evolution
 - `reltol::Real`: The relative tolerance which is used during the solving process.
 """
 struct TimeEvolutionSol{
-    TT1<:AbstractVector{<:Real},
-    TT2<:AbstractVector{<:Real},
-    TS<:AbstractVector,
-    TE<:Union{AbstractMatrix,Nothing},
-    RETT<:Enum,
-    AlgT<:AbstractODEAlgorithm,
-    TolT<:Real,
-}
+        TT1 <: AbstractVector{<:Real},
+        TT2 <: AbstractVector{<:Real},
+        TS <: AbstractVector,
+        TE <: Union{AbstractMatrix, Nothing},
+        RETT <: Enum,
+        AlgT <: AbstractODEAlgorithm,
+        TolT <: Real,
+    }
     times::TT1
     times_states::TT2
     states::TS
@@ -140,15 +140,15 @@ We also provide the following functions for statistical analysis of multi-trajec
 - [`std_expect`](@ref)
 """
 struct TimeEvolutionMCSol{
-    TT1<:AbstractVector{<:Real},
-    TT2<:AbstractVector{<:Real},
-    TS<:AbstractVecOrMat,
-    TE<:Union{AbstractArray,Nothing},
-    TJT<:Vector{<:Vector{<:Real}},
-    TJW<:Vector{<:Vector{<:Integer}},
-    AlgT<:AbstractODEAlgorithm,
-    TolT<:Real,
-} <: TimeEvolutionMultiTrajSol{TS,TE}
+        TT1 <: AbstractVector{<:Real},
+        TT2 <: AbstractVector{<:Real},
+        TS <: AbstractVecOrMat,
+        TE <: Union{AbstractArray, Nothing},
+        TJT <: Vector{<:Vector{<:Real}},
+        TJW <: Vector{<:Vector{<:Integer}},
+        AlgT <: AbstractODEAlgorithm,
+        TolT <: Real,
+    } <: TimeEvolutionMultiTrajSol{TS, TE}
     ntraj::Int
     times::TT1
     times_states::TT2
@@ -215,14 +215,14 @@ We also provide the following functions for statistical analysis of multi-trajec
 - [`std_expect`](@ref)
 """
 struct TimeEvolutionStochasticSol{
-    TT1<:AbstractVector{<:Real},
-    TT2<:AbstractVector{<:Real},
-    TS<:AbstractVecOrMat,
-    TE<:Union{AbstractArray,Nothing},
-    TEM<:Union{AbstractArray,Nothing},
-    AlgT<:AbstractSDEAlgorithm,
-    TolT<:Real,
-} <: TimeEvolutionMultiTrajSol{TS,TE}
+        TT1 <: AbstractVector{<:Real},
+        TT2 <: AbstractVector{<:Real},
+        TS <: AbstractVecOrMat,
+        TE <: Union{AbstractArray, Nothing},
+        TEM <: Union{AbstractArray, Nothing},
+        AlgT <: AbstractSDEAlgorithm,
+        TolT <: Real,
+    } <: TimeEvolutionMultiTrajSol{TS, TE}
     ntraj::Int
     times::TT1
     times_states::TT2
@@ -263,7 +263,7 @@ average_states(sol::TimeEvolutionMultiTrajSol{<:Vector{<:QuantumObject}}) = sol.
 # TODO: Check if broadcasting division ./ size(states, 1) is type stable
 _average_traj_states(states::Matrix{<:QuantumObject{Ket}}) =
     map(x -> x / size(states, 1), dropdims(sum(ket2dm, states, dims = 1), dims = 1))
-_average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType<:Union{Operator,OperatorKet}} =
+_average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType <: Union{Operator, OperatorKet}} =
     map(x -> x / size(states, 1), dropdims(sum(states, dims = 1), dims = 1))
 
 @doc raw"""
@@ -271,19 +271,19 @@ _average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType<:U
 
 Return the trajectory-averaged expectation values at each time point.
 """
-average_expect(sol::TimeEvolutionMultiTrajSol{TS,Array{T,3}}) where {TS,T<:Number} = _average_traj_expect(sol.expect)
-average_expect(sol::TimeEvolutionMultiTrajSol{TS,Matrix{T}}) where {TS,T<:Number} = sol.expect  # this case should already be averaged over all trajectories
-average_expect(::TimeEvolutionMultiTrajSol{TS,Nothing}) where {TS} = nothing
+average_expect(sol::TimeEvolutionMultiTrajSol{TS, Array{T, 3}}) where {TS, T <: Number} = _average_traj_expect(sol.expect)
+average_expect(sol::TimeEvolutionMultiTrajSol{TS, Matrix{T}}) where {TS, T <: Number} = sol.expect  # this case should already be averaged over all trajectories
+average_expect(::TimeEvolutionMultiTrajSol{TS, Nothing}) where {TS} = nothing
 
-_average_traj_expect(expvals::Array{T,3}) where {T<:Number} =
+_average_traj_expect(expvals::Array{T, 3}) where {T <: Number} =
     dropdims(sum(expvals, dims = 2), dims = 2) ./ size(expvals, 2)
 
 # these are used in multi-trajectory solvers before returning solutions
 _store_multitraj_states(states::Matrix{<:QuantumObject}, keep_runs_results::Val{false}) = _average_traj_states(states)
 _store_multitraj_states(states::Matrix{<:QuantumObject}, keep_runs_results::Val{true}) = states
-_store_multitraj_expect(expvals::Array{T,3}, keep_runs_results::Val{false}) where {T<:Number} =
+_store_multitraj_expect(expvals::Array{T, 3}, keep_runs_results::Val{false}) where {T <: Number} =
     _average_traj_expect(expvals)
-_store_multitraj_expect(expvals::Array{T,3}, keep_runs_results::Val{true}) where {T<:Number} = expvals
+_store_multitraj_expect(expvals::Array{T, 3}, keep_runs_results::Val{true}) where {T <: Number} = expvals
 _store_multitraj_expect(expvals::Nothing, keep_runs_results) = nothing
 
 @doc raw"""
@@ -291,7 +291,7 @@ _store_multitraj_expect(expvals::Nothing, keep_runs_results) = nothing
 
 Return the trajectory-wise standard deviation of the expectation values at each time point.
 """
-function std_expect(sol::TimeEvolutionMultiTrajSol{TS,Array{T,3}}) where {TS,T<:Number}
+function std_expect(sol::TimeEvolutionMultiTrajSol{TS, Array{T, 3}}) where {TS, T <: Number}
     # the following standard deviation (std) is defined as the square-root of variance instead of pseudo-variance
     # i.e., it is equivalent to (even for complex expectation values):
     #    dropdims(
@@ -301,12 +301,12 @@ function std_expect(sol::TimeEvolutionMultiTrajSol{TS,Array{T,3}}) where {TS,T<:
     # [this should be included in the runtest]
     return dropdims(std(sol.expect, corrected = false, dims = 2), dims = 2)
 end
-std_expect(::TimeEvolutionMultiTrajSol{TS,Matrix{T}}) where {TS,T<:Number} = throw(
+std_expect(::TimeEvolutionMultiTrajSol{TS, Matrix{T}}) where {TS, T <: Number} = throw(
     ArgumentError(
         "Can not compute the standard deviation without the expectation values of each trajectory. Try to specify keyword argument `keep_runs_results=Val(true)` to the solver.",
     ),
 )
-std_expect(::TimeEvolutionMultiTrajSol{TS,Nothing}) where {TS} = nothing
+std_expect(::TimeEvolutionMultiTrajSol{TS, Nothing}) where {TS} = nothing
 
 #######################################
 #=
@@ -375,12 +375,12 @@ function _ensemble_output_func_distributed(sol, i, channel, output_func)
 end
 
 function _ensemble_dispatch_output_func(
-    ::ET,
-    progress_bar,
-    ntraj,
-    output_func;
-    progr_desc = "Progress: ",
-) where {ET<:Union{EnsembleSerial,EnsembleThreads}}
+        ::ET,
+        progress_bar,
+        ntraj,
+        output_func;
+        progr_desc = "Progress: ",
+    ) where {ET <: Union{EnsembleSerial, EnsembleThreads}}
     if getVal(progress_bar)
         progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
         f = (sol, i) -> _ensemble_output_func_progress(sol, i, progr, output_func)
@@ -390,12 +390,12 @@ function _ensemble_dispatch_output_func(
     end
 end
 function _ensemble_dispatch_output_func(
-    ::ET,
-    progress_bar,
-    ntraj,
-    output_func;
-    progr_desc = "Progress... ",
-) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
+        ::ET,
+        progress_bar,
+        ntraj,
+        output_func;
+        progr_desc = "Progress... ",
+    ) where {ET <: Union{EnsembleSplitThreads, EnsembleDistributed}}
     if getVal(progress_bar)
         progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
@@ -413,11 +413,11 @@ function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
-    ens_prob::TimeEvolutionProblem,
-    alg::Union{<:AbstractODEAlgorithm,<:AbstractSDEAlgorithm},
-    ensemblealg::ET,
-    ntraj::Int,
-) where {ET<:Union{EnsembleSplitThreads,EnsembleDistributed}}
+        ens_prob::TimeEvolutionProblem,
+        alg::Union{<:AbstractODEAlgorithm, <:AbstractSDEAlgorithm},
+        ensemblealg::ET,
+        ntraj::Int,
+    ) where {ET <: Union{EnsembleSplitThreads, EnsembleDistributed}}
     sol = nothing
 
     @sync begin
@@ -434,11 +434,11 @@ function _ensemble_dispatch_solve(
     return sol
 end
 function _ensemble_dispatch_solve(
-    ens_prob::TimeEvolutionProblem,
-    alg::Union{<:AbstractODEAlgorithm,<:AbstractSDEAlgorithm},
-    ensemblealg,
-    ntraj::Int,
-)
+        ens_prob::TimeEvolutionProblem,
+        alg::Union{<:AbstractODEAlgorithm, <:AbstractSDEAlgorithm},
+        ensemblealg,
+        ntraj::Int,
+    )
     sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
     return sol
 end
@@ -500,18 +500,18 @@ end
 
 A struct to represent the diffusion operator. This is used to perform the diffusion process on N different Wiener processes.
 =#
-struct DiffusionOperator{T,OpType<:Tuple{Vararg{AbstractSciMLOperator}}}
+struct DiffusionOperator{T, OpType <: Tuple{Vararg{AbstractSciMLOperator}}}
     ops::OpType
     function DiffusionOperator(ops::OpType) where {OpType}
         T = mapreduce(eltype, promote_type, ops)
-        return new{T,OpType}(ops)
+        return new{T, OpType}(ops)
     end
 end
 
 @generated function (L::DiffusionOperator)(w, v, p, t)
     ops_types = L.parameters[2].parameters
     N = length(ops_types)
-    quote
+    return quote
         M = length(v)
         S = (size(w, 1), size(w, 2)) # This supports also `w` as a `Vector`
         (S[1] == M && S[2] == $N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
@@ -526,30 +526,30 @@ end
 #######################################
 
 function liouvillian_floquet(
-    L₀::QuantumObject{SuperOperator},
-    Lₚ::QuantumObject{SuperOperator},
-    Lₘ::QuantumObject{SuperOperator},
-    ω::Real;
-    n_max::Int = 3,
-    tol::Real = 1e-15,
-)
+        L₀::QuantumObject{SuperOperator},
+        Lₚ::QuantumObject{SuperOperator},
+        Lₘ::QuantumObject{SuperOperator},
+        ω::Real;
+        n_max::Int = 3,
+        tol::Real = 1.0e-15,
+    )
     check_dimensions(L₀, Lₚ, Lₘ)
     return _liouvillian_floquet(L₀, Lₚ, Lₘ, ω, n_max, tol)
 end
 
 function liouvillian_floquet(
-    H::QuantumObject{OpType1},
-    Hₚ::QuantumObject{OpType2},
-    Hₘ::QuantumObject{OpType3},
-    ω::Real,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    n_max::Int = 3,
-    tol::Real = 1e-15,
-) where {
-    OpType1<:Union{Operator,SuperOperator},
-    OpType2<:Union{Operator,SuperOperator},
-    OpType3<:Union{Operator,SuperOperator},
-}
+        H::QuantumObject{OpType1},
+        Hₚ::QuantumObject{OpType2},
+        Hₘ::QuantumObject{OpType3},
+        ω::Real,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        n_max::Int = 3,
+        tol::Real = 1.0e-15,
+    ) where {
+        OpType1 <: Union{Operator, SuperOperator},
+        OpType2 <: Union{Operator, SuperOperator},
+        OpType3 <: Union{Operator, SuperOperator},
+    }
     return liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
 end
 
@@ -584,13 +584,13 @@ Build the generalized Liouvillian for a system coupled to multiple bosonic baths
 - [Settineri2018](@cite)
 """
 function liouvillian_dressed_nonsecular(
-    H::QuantumObject{Operator},
-    fields::Vector,
-    T_list::Vector{<:Real};
-    N_trunc::Union{Int,Nothing} = nothing,
-    tol::Real = 1e-12,
-    σ_filter::Union{Nothing,Real} = nothing,
-)
+        H::QuantumObject{Operator},
+        fields::Vector,
+        T_list::Vector{<:Real};
+        N_trunc::Union{Int, Nothing} = nothing,
+        tol::Real = 1.0e-12,
+        σ_filter::Union{Nothing, Real} = nothing,
+    )
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
 
     dims = isnothing(N_trunc) ? H.dims : (N_trunc,)
@@ -612,7 +612,7 @@ function liouvillian_dressed_nonsecular(
 
     for i in eachindex(fields)
         # The operator that couples the system to the bath in the eigenbasis
-        X_op = to_sparse((U'*fields[i]*U).data, tol)
+        X_op = to_sparse((U' * fields[i] * U).data, tol)
         if ishermitian(fields[i])
             X_op = (X_op + X_op') / 2 # Make sure it's hermitian
         end
@@ -637,11 +637,11 @@ function liouvillian_dressed_nonsecular(
 end
 
 function _apply_liouville_filter(
-    L::QuantumObject{SuperOperator,DimsType,MT},
-    E::AbstractVector,
-    σ::Real,
-    tol::Real,
-) where {DimsType,MT<:AbstractSparseMatrix}
+        L::QuantumObject{SuperOperator, DimsType, MT},
+        E::AbstractVector,
+        σ::Real,
+        tol::Real,
+    ) where {DimsType, MT <: AbstractSparseMatrix}
     data = L.data
     N = length(E)
 
@@ -670,13 +670,13 @@ function _linear_to_subscript(idx::Int, N::Int)
 end
 
 function _liouvillian_floquet(
-    L₀::QuantumObject{SuperOperator},
-    Lₚ::QuantumObject{SuperOperator},
-    Lₘ::QuantumObject{SuperOperator},
-    ω::Real,
-    n_max::Int,
-    tol::Real,
-)
+        L₀::QuantumObject{SuperOperator},
+        Lₚ::QuantumObject{SuperOperator},
+        Lₘ::QuantumObject{SuperOperator},
+        ω::Real,
+        n_max::Int,
+        tol::Real,
+    )
     L_0 = L₀.data
     L_p = Lₚ.data
     L_m = Lₘ.data
@@ -686,7 +686,7 @@ function _liouvillian_floquet(
     S = -(L_0 - 1im * n_max * ω * I) \ L_p_dense
     T = -(L_0 + 1im * n_max * ω * I) \ L_m_dense
 
-    for n_i in (n_max-1):-1:1
+    for n_i in (n_max - 1):-1:1
         S = -(L_0 - 1im * n_i * ω * I + L_m * S) \ L_p_dense
         T = -(L_0 + 1im * n_i * ω * I + L_p * T) \ L_m_dense
     end
