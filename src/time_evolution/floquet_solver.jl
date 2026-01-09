@@ -1,4 +1,3 @@
-using Revise
 # script helper functions
 function _to_period_interval(tlist::AbstractVector, T::Real)
     # function maps all elements ``t`` in `tlist` outside the interval ``[0, T)`` to an equivalent
@@ -72,16 +71,19 @@ struct FloquetBasis{
                 ArgumentError(
                     "`T` must be a nonzero positive real number"
                               ))
-        else
-            tlist, precompute = _to_period_interval.([tlist, precompute], T) # enforce that all timepoints lie in interval [0,T)
-            tlist = union(tlist, precompute) # ensure all times in precompute are in tlist
-            tlist, precompute = [unique((0, tlist..., T)), unique((precompute..., T))] # ensure that period-propagator is calculated
         end
+        # enforce `tlist` and `precompute` rules
+        tlist, precompute = _to_period_interval.([tlist, precompute], T) # enforce that all timepoints lie in interval [0,T)
+        tlist = union(tlist, precompute) # ensure all times in precompute are in tlist
+        tlist, precompute = [unique([0, tlist..., T]), unique([precompute..., T])] # ensure that period-propagator is calculated
+        # solve for propagators
         kwargs[:saveat] = precompute
         Ulist = sesolve(H, qeye_like(H), tlist, kwargs=kwargs).states
         U_T = pop!(Ulist)
+        # solve for quasienergies
         period_phases = eigenenergies(U_T)
         equasi = angle.(period_phases) ./ T
+
         new{typeof(tlist), typeof(equasi), typeof(Ulist)}(H, T, tlist, precompute,  U_T, Ulist, equasi)
     end
 end
