@@ -51,15 +51,20 @@ jobs:
             else
                 VersionNumber(v.major, v.minor, v.patch + 1)
             end
-            println("Bump version from v$v to v$new_v")
 
-            # --- PART 2: Update Project.toml (using Regex to preserve formatting) ---
+            # --- PART 2: Output version number to GitHub Actions variables ---
+            println("Bump version from v$v to v$new_v")
+            open(ENV["GITHUB_OUTPUT"], "a") do io
+              println(io, "new_version=$new_v")
+            end
+
+            # --- PART 3: Update Project.toml (using Regex to preserve formatting) ---
             project_content = read(project_file, String)
             new_project_content = replace(project_content, r"version = \".*\"" => "version = \"$new_v\"")
             write(project_file, new_project_content)
             println("Updated $project_file")
 
-            # --- PART 3: Update CHANGELOG.md ---
+            # --- PART 4: Update CHANGELOG.md ---
             content = read(changelog_file, String)
             marker = "## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)"
             insertion = "$marker\n\n\n\n## [v$new_v]\nRelease date: $(Dates.format(now(), "yyyy-mm-dd"))"
