@@ -388,7 +388,7 @@ function eigsolve(
             if typeof(A) <: SparseMatrixCSC && isprimitivetype(T)
                 init(prob, UMFPACKFactorization(); kwargs2...)
             else
-                init(prob, LUFactorization(); kwargs2...)
+                init(prob; kwargs2...)
             end
         else
             init(prob, solver; kwargs2...)

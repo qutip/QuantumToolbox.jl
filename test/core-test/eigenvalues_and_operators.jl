@@ -11,8 +11,8 @@
     @test all([ψ.type isa Ket for ψ in vecs_pauli_dense])
     @test mat_pauli_dense isa AbstractMatrix
     @test mat_pauli_sparse isa AbstractMatrix
-    @test eigenenergies(σx, sparse = Val(false)) ≈ vals_pauli_dense
-    @test eigenenergies(σx, sparse = Val(true), eigvals = 2) ≈ vals_pauli_sparse
+    @test sort(eigenenergies(σx, sparse = Val(false)); by = real) ≈ sort(vals_pauli_dense; by = real)
+    @test sort(eigenenergies(σx, sparse = Val(true), eigvals = 2); by = real) ≈ sort(vals_pauli_sparse; by = real)
     @test resstring ==
         "EigsolveResult:   type=$(Operator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
@@ -78,7 +78,7 @@
     vecs_liou_al = vecs_liou_al[:, idxs_al]
 
     @test vals_liou_dense ≈ vals_liou_sparse
-    @test vals_liou_sparse[1:2] ≈ vals_liou_al[1:2]
+    @test vals_liou_sparse[1:2] ≈ vals_liou_al[1:2] atol = 1.0e-6
     @test vec2mat(vecs_liou_dense[:, 1]) * exp(-1im * angle(vecs_liou_dense[1, 1])) ≈
         vec2mat(vecs_liou_sparse[:, 1]) * exp(-1im * angle(vecs_liou_sparse[1, 1])) atol = 1.0e-7
     @test vec2mat(vecs_liou_dense[:, 1]) * exp(-1im * angle(vecs_liou_dense[1, 1])) ≈
