@@ -491,7 +491,7 @@ function eigsolve_al(
     # Generate random initial state if not provided
     Te = eltype(H)
     ρ0_vec = if isnothing(ρ0)
-        ρ0 = is_unitary_evo ? rand_ket(Te, H.dimensions) : operator_to_vector(rand_dm(Te, H.dimensions))
+        is_unitary_evo ? rand_ket(Te, H.dimensions) : operator_to_vector(rand_dm(Te, H.dimensions))
     else
         ρ0
     end
