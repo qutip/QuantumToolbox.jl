@@ -298,7 +298,6 @@ end
         sigma = 0.01,
         eigvals = 4,
         krylovdim = 30,
-        solver = LUFactorization(),
         v0 = normalize!(CUDA.rand(ComplexF64, size(L_gpu, 1))),
     )
 

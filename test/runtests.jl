@@ -77,7 +77,6 @@ if (GROUP == "CUDA_Ext")
     using CUDA
     using CUDA.CUSPARSE
     using CUDSS
-    using LinearSolve
 
     QuantumToolbox.about()
     CUDA.versioninfo()

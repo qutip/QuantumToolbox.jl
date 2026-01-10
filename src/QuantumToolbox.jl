@@ -55,7 +55,7 @@ import SciMLOperators:
     update_coefficients!,
     concretize
 import LinearSolve:
-    SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, OperatorAssumptions
+    SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, LUFactorization, OperatorAssumptions
 import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
 import OrdinaryDiffEqVerner: Vern7
 import OrdinaryDiffEqLowOrderRK: DP5
