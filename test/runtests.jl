@@ -73,7 +73,6 @@ if (GROUP == "CUDA_Ext")
 
     using QuantumToolbox
     import LinearAlgebra: Diagonal
-    import StaticArraysCore: SVector
     using CUDA
     using CUDA.CUSPARSE
     using CUDSS

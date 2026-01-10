@@ -225,8 +225,7 @@ end
     ρlist = [rand_dm(2), rand_dm(3), rand_dm(4), rand_dm(5)]
     ψtotal = tensor(ψlist...) |> cu
     ρtotal = tensor(ρlist...) |> cu
-    sel_tests = [
-        SVector{0, Int}(),
+    sel_tests = (
         1,
         2,
         3,
@@ -242,7 +241,7 @@ end
         (1, 3, 4),
         (2, 3, 4),
         (1, 2, 3, 4),
-    ]
+    )
     for sel in sel_tests
         if length(sel) == 0
             @test ptrace(ψtotal, sel) ≈ 1.0

@@ -73,7 +73,7 @@ rand_ket(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) = rand_ket(C
 rand_ket(::Type{T}, dimensions::Int) where {T <: Number} = rand_ket(T, SVector(dimensions))
 function rand_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number}
     N = prod(dimensions)
-    ψ = rand(T, N) .- T(1 + 1im) / 2
+    ψ = rand(T, N) .- (one(T) / 2 + one(T) * im / 2)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
 end
 
