@@ -89,6 +89,8 @@ if (GROUP == "Arbitrary-Precision")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.update()
 
+    setprecision(128) # Instead of 256. This speeds up the tests.
+
     using QuantumToolbox
     using LinearAlgebra
     using SparseArrays
