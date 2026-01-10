@@ -299,11 +299,35 @@ end
         eigvals = 4,
         krylovdim = 30,
         solver = LUFactorization(),
-        v0 = CUDA.rand(ComplexF64, size(L_gpu, 1)),
+        v0 = normalize!(CUDA.rand(ComplexF64, size(L_gpu, 1))),
     )
 
     @test vals_cpu ≈ vals_gpu atol = 1.0e-8
     @test all(zip(vecs_cpu, vecs_gpu)) do (v_cpu, v_gpu)
+        return isapprox(abs(dot(v_cpu.data, Array(v_gpu.data))), 1; atol = 1.0e-8)
+    end
+
+    # Arnoldi-Lindblad eigen solver for Liouvillian
+    vals_al_cpu, vecs_al_cpu = eigsolve_al(L, 1 \ (30 * κ); eigvals = 4, liouvillian_eigs = Val(false))
+    vals_al_gpu, vecs_al_gpu = eigsolve_al(
+        L_gpu,
+        1 \ (30 * κ);
+        eigvals = 4,
+        liouvillian_eigs = Val(false),
+        ρ0 = cu(operator_to_vector(rand_dm(N)) ),
+    )
+
+    sort_func = x -> (round(abs(x), digits = 6), round(real(x), digits = 6), round(imag(x), digits = 6))
+
+    idxs_al_cpu = sortperm(vals_al_cpu, by = sort_func, rev = false)
+    idxs_al_gpu = sortperm(vals_al_gpu, by = sort_func, rev = false)
+    vals_al_cpu = vals_al_cpu[idxs_al_cpu]
+    vecs_al_cpu = vecs_al_cpu[idxs_al_cpu]
+    vals_al_gpu = vals_al_gpu[idxs_al_gpu]
+    vecs_al_gpu = vecs_al_gpu[idxs_al_gpu]
+
+    @test vals_al_cpu ≈ vals_al_gpu atol = 1.0e-7
+    @test all(zip(vecs_al_cpu, vecs_al_gpu)) do (v_cpu, v_gpu)
         return isapprox(abs(dot(v_cpu.data, Array(v_gpu.data))), 1; atol = 1.0e-8)
     end
 end
