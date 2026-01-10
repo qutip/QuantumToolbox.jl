@@ -135,7 +135,8 @@ _dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
 
 _sparse_similar(A::AbstractArray, args...) = sparse(args...)
 
-_Ginibre_ensemble(n::Int, rank::Int = n) = randn(ComplexF64, n, rank) / sqrt(n)
+_Ginibre_ensemble(n::Int, rank::Int = n) = _Ginibre_ensemble(ComplexF64, n, rank)
+_Ginibre_ensemble(::Type{T}, n::Int, rank::Int = n) where {T <: Number} = randn(T, n, rank) / sqrt(n)
 
 _Boltzmann_weight(β::T, E::Int) where {T <: Real} = (E != 0 || isfinite(β)) ? exp(-β * E) : one(T)
 
