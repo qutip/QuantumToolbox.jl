@@ -314,7 +314,7 @@ end
         1 \ (30 * κ);
         eigvals = 4,
         liouvillian_eigs = Val(false),
-        ρ0 = cu(operator_to_vector(rand_dm(N)) ),
+        ρ0 = cu(operator_to_vector(rand_dm(N))),
     )
 
     sort_func = x -> (round(abs(x), digits = 6), round(real(x), digits = 6), round(imag(x), digits = 6))
