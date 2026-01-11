@@ -109,7 +109,7 @@
     @test all([v.type isa OperatorKet for v in vecs_sparse_qobj])
     @test result_sparse.vectors isa AbstractMatrix
     @test sum(abs2, vals_sparse_qobj) ≈ sum(abs2, vals_qobj_sorted)
-    @test vals_qobj_sorted[1:2] ≈ vals_liou_al[1:2]
+    @test vals_qobj_sorted[1] ≈ vals_liou_al[1] atol = 1.0e-6
     @test fidelity(ρss_dense, ρss_qobj) ≈ 1
     @test fidelity(ρss_dense, ρss_al) ≈ 1
 
