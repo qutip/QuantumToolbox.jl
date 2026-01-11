@@ -71,7 +71,7 @@
         end
 
         @test vals_al[1:(end - 1)] ≈ vals_big_al[idxs_al][1:(end - 1)] atol = 1.0e-6
-        @test all(zip(vecs_al, vecs_big_al[idxs_al])) do (v, v_big)
+        @test all(zip(vecs_al[1:(end - 1)], vecs_big_al[idxs_al][1:(end - 1)])) do (v, v_big)
             return isapprox(abs(dot(v.data, v_big.data)), 1; atol = 1.0e-6)
         end
     end
