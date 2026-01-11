@@ -94,15 +94,15 @@ function ssesolveProblem(
     sc_ops_list = _make_c_ops_list(sc_ops) # If it is an AbstractQuantumObject but we need to iterate
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
-    tlist = _check_tlist(tlist, _float_type(ψ0))
-
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
     check_dimensions(H_eff_evo, ψ0)
     dims = H_eff_evo.dimensions
 
+    T = _complex_float_type(Base.promote_eltype(H_eff_evo, ψ0))
+
     states_type = ψ0.type
-    ψ0 = to_dense(_complex_float_type(ψ0), get_data(ψ0))
+    ψ0 = to_dense(T, get_data(ψ0))
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
@@ -116,6 +116,8 @@ function ssesolveProblem(
 
     D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(prod(dims)), sc_ops_evo_data)
     D = DiffusionOperator(D_l)
+
+    tlist = _check_tlist(tlist, _float_type(T))
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(K), tlist)
