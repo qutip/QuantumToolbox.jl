@@ -54,7 +54,6 @@
         vals_big_al, vecs_big_al = eigsolve_al(
             L_big,
             1 \ (50 * BigFloat(κ)),
-            alg = Vern9(),
             eigvals = 7,
             krylovdim = 30,
             maxiter = 3,
