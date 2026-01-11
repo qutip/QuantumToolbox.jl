@@ -751,3 +751,12 @@ _dims_and_perm(::Operator, dims::SVector{2, SVector{N, Int}}, order::AbstractVec
 _order_dimensions(dimensions::Dimensions, order::AbstractVector{Int}) = Dimensions(dimensions.to[order])
 _order_dimensions(dimensions::GeneralDimensions, order::AbstractVector{Int}) =
     GeneralDimensions(dimensions.to[order], dimensions.from[order])
+
+
+_find_matrix(A::AbstractArray) = A
+_find_matrix(A::MatrixOperator) = A.A
+_find_matrix(A::ScaledOperator) = _find_matrix(A.L)
+function _find_matrix(A::Union{AddedOperator, ComposedOperator})
+    idx = findfirst(x -> _find_matrix(x) isa AbstractMatrix, A.ops)
+    return _find_matrix(A.ops[idx])
+end

@@ -115,7 +115,7 @@ Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same
 
 Note that this function is same as `one(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-qeye_like(A::AbstractQuantumObject{OpType}) where {OpType <: Union{Operator, SuperOperator}} = one(A)
+qeye_like(A::AbstractQuantumObject{OpType}) where {OpType <: Union{Operator, SuperOperator}} = QuantumObject(one(_find_matrix(A.data)), A.type, A.dimensions)
 
 @doc raw"""
     qzero_like(A::AbstractQuantumObject)
@@ -124,4 +124,4 @@ Return a similar [`AbstractQuantumObject`](@ref) with `dims` and `type` are same
 
 Note that this function is same as `zero(A)` and only supports for [`Operator`](@ref) and [`SuperOperator`](@ref).
 """
-qzero_like(A::AbstractQuantumObject{OpType}) where {OpType <: Union{Operator, SuperOperator}} = zero(A)
+qzero_like(A::AbstractQuantumObject{OpType}) where {OpType <: Union{Operator, SuperOperator}} = QuantumObject(zero(_find_matrix(A.data)), A.type, A.dimensions)
