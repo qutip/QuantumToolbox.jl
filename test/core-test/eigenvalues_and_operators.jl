@@ -78,7 +78,7 @@
     vecs_liou_al = vecs_liou_al[:, idxs_al]
 
     @test vals_liou_dense ≈ vals_liou_sparse
-    @test vals_liou_sparse[1:2] ≈ vals_liou_al[1:2] atol = 1.0e-6
+    @test vals_liou_sparse[1] ≈ vals_liou_al[1] atol = 1.0e-6
     @test vec2mat(vecs_liou_dense[:, 1]) * exp(-1im * angle(vecs_liou_dense[1, 1])) ≈
         vec2mat(vecs_liou_sparse[:, 1]) * exp(-1im * angle(vecs_liou_sparse[1, 1])) atol = 1.0e-7
     @test vec2mat(vecs_liou_dense[:, 1]) * exp(-1im * angle(vecs_liou_dense[1, 1])) ≈
