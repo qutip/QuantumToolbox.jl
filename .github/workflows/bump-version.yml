@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v2
@@ -96,5 +96,5 @@ jobs:
             --base main \
             --head $BRANCH_NAME \
             --title "Bump version to v${{ steps.updates.outputs.new_version }}" \
-            --body "This PR bumps the package version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md."
+            --body "This PR bumps the package version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md." \
             --label "Skip ChangeLog"
