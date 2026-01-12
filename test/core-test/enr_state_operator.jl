@@ -22,6 +22,18 @@
         @test s_enr.idx2state == qutip_idx2state
     end
 
+    @testset "Element type" begin
+        s_enr = EnrSpace((2, 2, 3), 3)
+        type_list = [ComplexF32, Complex{BigFloat}]
+        for T in type_list
+            @test T == eltype(enr_fock(T, s_enr, zeros(Int, 3)))
+            @test T == eltype(enr_thermal_dm(T, s_enr, rand(Float32); sparse = Val(true)))
+            @test T == eltype(enr_thermal_dm(T, s_enr, rand(Float32, 3); sparse = Val(false)))
+            @test all(==(T), eltype.(enr_destroy(T, s_enr)))
+            @test T == eltype(enr_identity(T, s_enr))
+        end
+    end
+
     @testset "kron" begin
         # normal Space
         D1 = 4
@@ -145,7 +157,7 @@
         dims = (2, 2, 3)
         excitations = 3
         @inferred enr_identity(dims, excitations)
-        @inferred enr_fock(dims, excitations, zeros(Int, N))
+        @inferred enr_fock(ComplexF64, dims, excitations, zeros(Int, N))
         @inferred enr_destroy(dims, excitations)
         @inferred enr_thermal_dm(dims, excitations, rand(N))
     end
