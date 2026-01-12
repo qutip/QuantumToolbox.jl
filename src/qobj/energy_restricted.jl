@@ -136,7 +136,7 @@ end
     enr_fock([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int, state::AbstractVector; sparse::Union{Bool,Val}=Val(false))
     enr_fock([T::Type=ComplexF64,] s_enr::EnrSpace, state::AbstractVector; sparse::Union{Bool,Val}=Val(false))
 
-Generate the Fock state representation ([`Ket`](@ref)) in an excitation number restricted state space ([`EnrSpace`](@ref)) with target element type `T = ComplexF64` (default).
+Generate the Fock state representation ([`Ket`](@ref)) in an excitation number restricted state space ([`EnrSpace`](@ref)) with element type `T = ComplexF64` (default).
 
 The arguments `dims` and `n_excitations` are used to generate [`EnrSpace`](@ref).
 
@@ -171,7 +171,7 @@ end
     enr_thermal_dm([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false))
     enr_thermal_dm([T::Type=ComplexF64,] s_enr::EnrSpace, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false))
 
-Generate the thermal state (density [`Operator`](@ref)) in an excitation number restricted state space ([`EnrSpace`](@ref)) with target element type `T = ComplexF64` (default).
+Generate the thermal state (density [`Operator`](@ref)) in an excitation number restricted state space ([`EnrSpace`](@ref)) with element type `T = ComplexF64` (default).
 
 The arguments `dims` and `n_excitations` are used to generate [`EnrSpace`](@ref).
 
@@ -225,7 +225,7 @@ end
     enr_destroy([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int)
     enr_destroy([T::Type=ComplexF64,] s_enr::EnrSpace)
 
-Generate a `Tuple` of annihilation operators for each sub-system in an excitation number restricted state space ([`EnrSpace`](@ref)) with target element type `T = ComplexF64` (default). Thus, the return `Tuple` will have the same length as `dims`.
+Generate a `Tuple` of annihilation operators for each sub-system in an excitation number restricted state space ([`EnrSpace`](@ref)) with element type `T = ComplexF64` (default). Thus, the return `Tuple` will have the same length as `dims`.
 
 The arguments `dims` and `n_excitations` are used to generate [`EnrSpace`](@ref).
 
@@ -269,7 +269,7 @@ end
     enr_identity([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int)
     enr_identity([T::Type=ComplexF64,] s_enr::EnrSpace)
 
-Generate the identity operator in an excitation number restricted state space ([`EnrSpace`](@ref)) with target element type `T = ComplexF64` (default).
+Generate the identity operator in an excitation number restricted state space ([`EnrSpace`](@ref)) with element type `T = ComplexF64` (default).
 
 The arguments `dims` and `n_excitations` are used to generate [`EnrSpace`](@ref).
 

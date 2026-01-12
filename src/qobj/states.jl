@@ -19,7 +19,7 @@ end
 @doc raw"""
     zero_ket([T::Type=ComplexF64,] dimensions)
 
-Returns a zero [`Ket`](@ref) vector with given argument `dimensions` and target element type `T = ComplexF64` (default).
+Returns a zero [`Ket`](@ref) vector with given argument `dimensions` and element type `T = ComplexF64` (default).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -36,7 +36,7 @@ zero_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) w
     fock([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
     basis([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
-Generates a fock state ``\ket{\psi}`` of dimension `N` with target element type `T = ComplexF64` (default).
+Generates a fock state ``\ket{\psi}`` of dimension `N` with element type `T = ComplexF64` (default).
 
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 
@@ -60,7 +60,7 @@ end
 @doc raw"""
     coherent([T::Type=ComplexF64,] N::Int, α::Number)
 
-Generates a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) ``|\alpha\rangle``, which is defined as an eigenvector of the bosonic annihilation operator ``\hat{a} |\alpha\rangle = \alpha |\alpha\rangle``. The target element type `T = ComplexF64` (default).
+Generates a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) ``|\alpha\rangle`` with element type `T = ComplexF64` (default). The coherent state is defined as an eigenvector of the bosonic annihilation operator ``\hat{a} |\alpha\rangle = \alpha |\alpha\rangle``.
 
 This state is constructed via the displacement operator [`displace`](@ref) and zero-fock state [`fock`](@ref): ``|\alpha\rangle = \hat{D}(\alpha) |0\rangle``
 """
@@ -72,7 +72,7 @@ end
 @doc raw"""
     rand_ket([T::Type=ComplexF64,] dimensions)
 
-Generate a random normalized [`Ket`](@ref) vector with given argument `dimensions` and target element type `T = ComplexF64` (default).
+Generate a random normalized [`Ket`](@ref) vector with given argument `dimensions` and element type `T = ComplexF64` (default).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -91,7 +91,7 @@ end
 @doc raw"""
     fock_dm([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
-Density matrix representation of a Fock state with target element type `T = ComplexF64` (default).
+Density matrix representation of a Fock state with element type `T = ComplexF64` (default).
 
 Constructed via outer product of [`fock`](@ref).
 
@@ -112,7 +112,7 @@ end
 @doc raw"""
     coherent_dm([T::Type=ComplexF64,] N::Int, α::Number)
 
-Density matrix representation of a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) with target element type `T = ComplexF64` (default).
+Density matrix representation of a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) with element type `T = ComplexF64` (default).
 
 Constructed via outer product of [`coherent`](@ref).
 """
@@ -121,7 +121,7 @@ coherent_dm(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number} = ket
 @doc raw"""
     thermal_dm([T::Type=ComplexF64,] N::Int, n::Real; sparse::Union{Bool,Val}=Val(false))
 
-Density matrix for a thermal state (generating thermal state probabilities) with target element type `T = ComplexF64` (default) and the following arguments:
+Density matrix for a thermal state (generating thermal state probabilities) with element type `T = ComplexF64` (default) and the following arguments:
 - `N::Int`: Number of basis states in the Hilbert space
 - `n::Real`: Expectation value for number of particles in the thermal state.
 - `sparse::Union{Bool,Val}`: If `true`, return a sparse matrix representation.
@@ -145,7 +145,7 @@ end
 @doc raw"""
     maximally_mixed_dm([T::Type=ComplexF64,] dimensions)
 
-Returns the maximally mixed density matrix with given argument `dimensions` and target element type `T = ComplexF64` (default).
+Returns the maximally mixed density matrix with given argument `dimensions` and element type `T = ComplexF64` (default).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -164,7 +164,7 @@ end
 @doc raw"""
     rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=prod(dimensions))
 
-Generate a random density matrix from Ginibre ensemble with given argument `dimensions`, `rank`, and target element type `T`, ensuring that it is positive semi-definite and trace equals to `1`.
+Generate a random density matrix from Ginibre ensemble with given argument `dimensions`, `rank`, and element type `T = ComplexF64` (default), ensuring that it is positive semi-definite and trace equals to `1`.
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -199,7 +199,7 @@ end
 @doc raw"""
     spin_state([T::Type=ComplexF64,] j::Real, m::Real)
 
-Generate the spin state: ``|j, m\rangle`` with target element type `T = ComplexF64` (default).
+Generate the spin state: ``|j, m\rangle`` with element type `T = ComplexF64` (default).
 
 The eigenstate of the Spin-`j` ``\hat{S}_z`` operator with eigenvalue `m`, where where `j` is the spin quantum number and can be a non-negative integer or half-integer
 
@@ -221,7 +221,7 @@ end
 @doc raw"""
     spin_coherent([T::Type=ComplexF64,] j::Real, θ::Real, ϕ::Real)
 
-Generate the coherent spin state (rotation of the ``|j, j\rangle`` state) with target element type `T = ComplexF64` (default), namely
+Generate the coherent spin state (rotation of the ``|j, j\rangle`` state) with element type `T = ComplexF64` (default), namely
 
 ```math
 |\theta, \phi \rangle = \hat{R}(\theta, \phi) |j, j\rangle
@@ -255,7 +255,7 @@ end
 @doc raw"""
     bell_state([T::Type=ComplexF64,] x::Union{Int}, z::Union{Int})
 
-Return the [Bell state](https://en.wikipedia.org/wiki/Bell_state) with target element type `T = ComplexF64` (default), depending on the arguments `(x, z)`:
+Return the [Bell state](https://en.wikipedia.org/wiki/Bell_state) with element type `T = ComplexF64` (default), depending on the arguments `(x, z)`:
 - `(0, 0)`: ``| \Phi^+ \rangle = ( |00\rangle + |11\rangle ) / \sqrt{2}``
 - `(0, 1)`: ``| \Phi^- \rangle = ( |00\rangle - |11\rangle ) / \sqrt{2}``
 - `(1, 0)`: ``| \Psi^+ \rangle = ( |01\rangle + |10\rangle ) / \sqrt{2}``
@@ -298,14 +298,14 @@ bell_state(::Type{T}, ::Val{T1}, ::Val{T2}) where {T <: Number, T1, T2} = throw(
 @doc raw"""
     singlet_state([T::Type=ComplexF64])
 
-Return the two particle singlet state with target element type `T = ComplexF64` (default): ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
+Return the two particle singlet state with element type `T = ComplexF64` (default): ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
 """
 singlet_state(::Type{T}) where {T <: Number} = QuantumObject(T[0, 1, -1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
 
 @doc raw"""
     triplet_states([T::Type=ComplexF64])
 
-Return a list of the two particle triplet states with target element type `T = ComplexF64` (default): 
+Return a list of the two particle triplet states with element type `T = ComplexF64` (default): 
 
 - ``|11\rangle``
 - ``( |01\rangle + |10\rangle ) / \sqrt{2}``
@@ -322,7 +322,7 @@ end
 @doc raw"""
     w_state([T::Type=ComplexF64,] n::Union{Int,Val})
 
-Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state) with target element type `T = ComplexF64` (default):
+Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state) with element type `T = ComplexF64` (default):
 
 ```math
 \frac{1}{\sqrt{n}} \left( |100...0\rangle + |010...0\rangle + \cdots + |00...01\rangle \right)
@@ -345,7 +345,7 @@ w_state(::Type{T}, n::Int) where {T <: Number} = w_state(T, Val(n))
 @doc raw"""
     ghz_state([T::Type=ComplexF64,] n::Union{Int,Val}; d::Int=2)
 
-Returns the generalized `n`-qudit [Greenberger–Horne–Zeilinger (GHZ) state](https://en.wikipedia.org/wiki/Greenberger%E2%80%93Horne%E2%80%93Zeilinger_state) with target element type `T = ComplexF64` (default):
+Returns the generalized `n`-qudit [Greenberger–Horne–Zeilinger (GHZ) state](https://en.wikipedia.org/wiki/Greenberger%E2%80%93Horne%E2%80%93Zeilinger_state) with element type `T = ComplexF64` (default):
 
 ```math
 \frac{1}{\sqrt{d}} \sum_{i=0}^{d-1} | i \rangle \otimes \cdots \otimes | i \rangle

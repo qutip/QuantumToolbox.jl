@@ -492,8 +492,8 @@
             @test T == eltype(ghz_state(T, N))
 
             # operators
-            # @test T == eltype(rand_unitary(T, N, Val(:haar)))
-            # @test T == eltype(rand_unitary(T, N, Val(:exp)))
+            @test T == eltype(rand_unitary(T, N, Val(:haar)))
+            @test T == eltype(rand_unitary(T, N, Val(:exp)))
             @test T == eltype(spin_Jx(T, 0.5))
             @test T == eltype(spin_Jy(T, 0.5))
             @test T == eltype(spin_Jz(T, 0.5))
@@ -515,8 +515,8 @@
             @test T == eltype(phase(T, N))
             @test T == eltype(position(T, N))
             @test T == eltype(momentum(T, N))
-            # @test T == eltype(fdestroy(T, N, 1))
-            # @test T == eltype(fcreate(T, N, 1))
+            @test T == eltype(fdestroy(T, N, 1))
+            @test T == eltype(fcreate(T, N, 1))
             @test T == eltype(tunneling(T, N))
             @test T == eltype(qft(T, N))
         end

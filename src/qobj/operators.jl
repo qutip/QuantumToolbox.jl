@@ -2,17 +2,14 @@
 Functions for generating (common) quantum operators.
 =#
 
-export rand_unitary
-export fdestroy, fcreate
-
 _gen_operator_func_list = (
-    #:rand_unitary,
+    :rand_unitary,
     :jmat, :spin_Jx, :spin_Jy, :spin_Jz, :spin_Jm, :spin_Jp, :spin_J_set,
     :sigmam, :sigmap, :sigmax, :sigmay, :sigmaz,
     :destroy, :create, :eye, :projection,
     :displace, :squeeze, :num, :phase,
     :position, :momentum,
-    #:fdestroy, :fcreate,
+    :fdestroy, :fcreate,
     :commutator,
     :tunneling,
     :qft,
@@ -26,9 +23,9 @@ for f in _gen_operator_func_list
 end
 
 @doc raw"""
-    rand_unitary(dimensions, distribution=Val(:haar))
+    rand_unitary([T::Type=ComplexF64,] dimensions, distribution=Val(:haar))
 
-Returns a random unitary [`QuantumObject`](@ref).
+Returns a random unitary [`QuantumObject`](@ref) with element type `T = ComplexF64` (default).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -44,15 +41,15 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_unitary(dimensions, Val(distribution))` instead of `rand_unitary(dimensions, distribution)`. Also, put `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl). See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-rand_unitary(dimensions::Int, distribution::Union{Symbol, Val} = Val(:haar)) =
-    rand_unitary(SVector(dimensions), makeVal(distribution))
-rand_unitary(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) =
-    rand_unitary(dimensions, makeVal(distribution))
-function rand_unitary(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:haar})
+rand_unitary(::Type{T}, dimensions::Int, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: Number} =
+    rand_unitary(T, SVector(dimensions), makeVal(distribution))
+rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: Number} =
+    rand_unitary(T, dimensions, makeVal(distribution))
+function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:haar}) where {T <: Number}
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
-    Z = randn(ComplexF64, N, N)
+    Z = randn(T, N, N)
 
     # find QR decomposition: Z = Q ⋅ R
     Q, R = LinearAlgebra.qr(Z)
@@ -63,19 +60,20 @@ function rand_unitary(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple},
     Λ ./= abs.(Λ) # rescaling the elements
     return QuantumObject(to_dense(Q * Diagonal(Λ)); type = Operator(), dims = dimensions)
 end
-function rand_unitary(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:exp})
+function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:exp}) where {T <: Number}
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
-    Z = randn(ComplexF64, N, N)
+    Z = randn(T, N, N)
 
     # generate Hermitian matrix
-    H = QuantumObject((Z + Z') / 2; type = Operator(), dims = dimensions)
+    # TODO: remove to_sparse, we make H sparse here because the following method currently does not exist : exp(::Matrix{Complex{BigFloat}})
+    H = QuantumObject(to_sparse((Z + Z') / 2); type = Operator(), dims = dimensions)
 
     return to_dense(exp(-im * H))
 end
-rand_unitary(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{T}) where {T} =
-    throw(ArgumentError("Invalid distribution: $(T)"))
+rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{Td}) where {T <: Number, Td} =
+    throw(ArgumentError("Invalid distribution: $(Td)"))
 
 @doc raw"""
     commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
@@ -91,7 +89,7 @@ commutator(A::QuantumObject{Operator}, B::QuantumObject{Operator}; anti::Bool = 
 @doc raw"""
     destroy([T::Type=ComplexF64,] N::Int)
 
-Bosonic annihilation operator with Hilbert space cutoff `N` with target element type `T = ComplexF64` (default).
+Bosonic annihilation operator with Hilbert space cutoff `N` and element type `T = ComplexF64` (default).
 
 This operator acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
 
@@ -121,7 +119,7 @@ end
 @doc raw"""
     create([T::Type=ComplexF64,] N::Int)
 
-Bosonic creation operator with Hilbert space cutoff `N` with target element type `T = ComplexF64` (default).
+Bosonic creation operator with Hilbert space cutoff `N` and element type `T = ComplexF64` (default).
 
 This operator acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ket{n+1}``.
 
@@ -151,7 +149,7 @@ end
 @doc raw"""
     displace([T::Type=ComplexF64,] N::Int, α::Number)
 
-Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator) with target element type `T = ComplexF64` (default):
+Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator) with element type `T = ComplexF64` (default):
 
 ```math
 \hat{D}(\alpha)=\exp\left( \alpha \hat{a}^\dagger - \alpha^* \hat{a} \right),
@@ -163,13 +161,13 @@ function displace(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number}
     T_new = Base.promote_type(T, Tα)
     a = destroy(T_new, N)
     α_new = T_new(α)
-    return exp(α_new * a' - conj(α) * a)
+    return exp(α_new * a' - conj(α_new) * a)
 end
 
 @doc raw"""
     squeeze([T::Type=ComplexF64,] N::Int, z::Number)
 
-Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_operator) with target element type `T = ComplexF64` (default):
+Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_operator) with element type `T = ComplexF64` (default):
 
 ```math
 \hat{S}(z)=\exp\left( \frac{1}{2} (z^* \hat{a}^2 - z(\hat{a}^\dagger)^2) \right),
@@ -181,13 +179,13 @@ function squeeze(::Type{T}, N::Int, z::Tz) where {T <: Number, Tz <: Number}
     T_new = Base.promote_type(T, Tz)
     z_new = T_new(z)
     a_sq = destroy(T_new, N)^2
-    return exp((conj(z_new) * a_sq - z * a_sq') / 2)
+    return exp((conj(z_new) * a_sq - z_new * a_sq') / 2)
 end
 
 @doc raw"""
     num([T::Type=ComplexF64,] N::Int)
 
-Bosonic number operator with Hilbert space cutoff `N` and target element type `T = ComplexF64` (default). 
+Bosonic number operator with Hilbert space cutoff `N` and element type `T = ComplexF64` (default). 
 
 This operator is defined as ``\hat{N}=\hat{a}^\dagger \hat{a}``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
@@ -196,7 +194,7 @@ num(::Type{T}, N::Int) where {T <: Number} = QuantumObject(spdiagm(0 => Array{T}
 @doc raw"""
     position([T::Type=ComplexF64,] N::Int)
 
-Position operator with Hilbert space cutoff `N` with target element type `T = ComplexF64` (default).
+Position operator with Hilbert space cutoff `N` and element type `T = ComplexF64` (default).
 
 This operator is defined as ``\hat{x}=\frac{1}{\sqrt{2}} (\hat{a}^\dagger + \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
@@ -208,7 +206,7 @@ end
 @doc raw"""
     momentum([T::Type=ComplexF64,] N::Int)
 
-Momentum operator with Hilbert space cutoff `N` with target element type `T = ComplexF64` (default).
+Momentum operator with Hilbert space cutoff `N` and element type `T = ComplexF64` (default).
 
 This operator is defined as ``\hat{p}= \frac{i}{\sqrt{2}} (\hat{a}^\dagger - \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
@@ -220,7 +218,7 @@ end
 @doc raw"""
     phase([T::Type=ComplexF64,] N::Int, ϕ0::Real=0)
 
-Single-mode Pegg-Barnett phase operator with Hilbert space cutoff ``N``, the reference phase ``\phi_0``, and target element type `T = ComplexF64` (default).
+Single-mode Pegg-Barnett phase operator with Hilbert space cutoff ``N``, the reference phase ``\phi_0``, and element type `T = ComplexF64` (default).
 
 This operator is defined as
 
@@ -257,7 +255,7 @@ end
 @doc raw"""
     jmat([T::Type=ComplexF64,] j::Real, which::Union{Symbol,Val})
 
-Generate higher-order Spin-`j` operators with target element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
+Generate higher-order Spin-`j` operators with element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 The parameter `which` specifies which of the following operator to return.
 - `:x`: ``\hat{S}_x``
@@ -357,7 +355,7 @@ end
 @doc raw"""
     spin_Jx([T::Type=ComplexF64,] j::Real)
 
-``\hat{S}_x`` operator for Spin-`j` with target element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
+``\hat{S}_x`` operator for Spin-`j` with element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -366,7 +364,7 @@ spin_Jx(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:x))
 @doc raw"""
     spin_Jy([T::Type=ComplexF64,] j::Real)
 
-``\hat{S}_y`` operator for Spin-`j` with target element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
+``\hat{S}_y`` operator for Spin-`j` with element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -375,7 +373,7 @@ spin_Jy(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:y))
 @doc raw"""
     spin_Jz([T::Type=ComplexF64,] j::Real)
 
-``\hat{S}_z`` operator for Spin-`j` with target element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
+``\hat{S}_z`` operator for Spin-`j` with element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -384,7 +382,7 @@ spin_Jz(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:z))
 @doc raw"""
     spin_Jm([T::Type=ComplexF64,] j::Real)
 
-``\hat{S}_-`` operator for Spin-`j` with target element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
+``\hat{S}_-`` operator for Spin-`j` with element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -393,7 +391,7 @@ spin_Jm(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:-))
 @doc raw"""
     spin_Jp([T::Type=ComplexF64,] j::Real)
 
-``\hat{S}_+`` operator for Spin-`j` with target element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
+``\hat{S}_+`` operator for Spin-`j` with element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 See also [`jmat`](@ref).
 """
@@ -402,7 +400,7 @@ spin_Jp(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:+))
 @doc raw"""
     spin_J_set([T::Type=ComplexF64,] j::Real)
 
-A set of Spin-`j` operators ``(\hat{S}_x, \hat{S}_y, \hat{S}_z)`` with target element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
+A set of Spin-`j` operators ``(\hat{S}_x, \hat{S}_y, \hat{S}_z)`` with element type `T = ComplexF64` (default). `j` is the spin quantum number and can be a non-negative integer or half-integer.
 
 Note that this functions is same as `jmat(j)`. See also [`jmat`](@ref).
 """
@@ -411,7 +409,7 @@ spin_J_set(::Type{T}, j::Real) where {T <: Number} = jmat(T, j)
 @doc raw"""
     sigmap([T::Type=ComplexF64])
 
-Pauli ladder operator ``\hat{\sigma}_+ = (\hat{\sigma}_x + i \hat{\sigma}_y) / 2`` with target element type `T = ComplexF64` (default).
+Pauli ladder operator ``\hat{\sigma}_+ = (\hat{\sigma}_x + i \hat{\sigma}_y) / 2`` with element type `T = ComplexF64` (default).
 
 See also [`jmat`](@ref).
 """
@@ -420,7 +418,7 @@ sigmap(::Type{T}) where {T <: Number} = jmat(T, 0.5, Val(:+))
 @doc raw"""
     sigmam([T::Type=ComplexF64])
 
-Pauli ladder operator ``\hat{\sigma}_- = (\hat{\sigma}_x - i \hat{\sigma}_y) / 2`` with target element type `T = ComplexF64` (default).
+Pauli ladder operator ``\hat{\sigma}_- = (\hat{\sigma}_x - i \hat{\sigma}_y) / 2`` with element type `T = ComplexF64` (default).
 
 See also [`jmat`](@ref).
 """
@@ -429,7 +427,7 @@ sigmam(::Type{T}) where {T <: Number} = jmat(T, 0.5, Val(:-))
 @doc raw"""
     sigmax([T::Type=ComplexF64])
 
-Pauli operator ``\hat{\sigma}_x = \hat{\sigma}_- + \hat{\sigma}_+`` with target element type `T = ComplexF64` (default).
+Pauli operator ``\hat{\sigma}_x = \hat{\sigma}_- + \hat{\sigma}_+`` with element type `T = ComplexF64` (default).
 
 See also [`jmat`](@ref).
 """
@@ -438,7 +436,7 @@ sigmax(::Type{T}) where {T <: Number} = rmul!(jmat(T, 0.5, Val(:x)), 2)
 @doc raw"""
     sigmay([T::Type=ComplexF64])
 
-Pauli operator ``\hat{\sigma}_y = i \left( \hat{\sigma}_- - \hat{\sigma}_+ \right)`` with target element type `T = ComplexF64` (default).
+Pauli operator ``\hat{\sigma}_y = i \left( \hat{\sigma}_- - \hat{\sigma}_+ \right)`` with element type `T = ComplexF64` (default).
 
 See also [`jmat`](@ref).
 """
@@ -447,7 +445,7 @@ sigmay(::Type{T}) where {T <: Number} = rmul!(jmat(T, 0.5, Val(:y)), 2)
 @doc raw"""
     sigmaz([T::Type=ComplexF64])
 
-Pauli operator ``\hat{\sigma}_z = \left[ \hat{\sigma}_+ , \hat{\sigma}_- \right]`` with target element type `T = ComplexF64` (default).
+Pauli operator ``\hat{\sigma}_z = \left[ \hat{\sigma}_+ , \hat{\sigma}_- \right]`` with element type `T = ComplexF64` (default).
 
 See also [`jmat`](@ref).
 """
@@ -457,7 +455,7 @@ sigmaz(::Type{T}) where {T <: Number} = rmul!(jmat(T, 0.5, Val(:z)), 2)
     eye([T::Type=ComplexF64,] N::Int; type=Operator, dims=nothing)
     qeye([T::Type=ComplexF64,] N::Int; type=Operator, dims=nothing)
 
-Identity operator ``\hat{\mathbb{1}}`` with size `N` and target element type `T = ComplexF64` (default).
+Identity operator ``\hat{\mathbb{1}}`` with size `N` and element type `T = ComplexF64` (default).
 
 It is also possible to specify the list of Hilbert dimensions `dims` if different subsystems are present.
 
@@ -474,9 +472,9 @@ function eye(::Type{T}, N::Int; type = Operator(), dims = nothing) where {T <: N
 end
 
 @doc raw"""
-    fdestroy(N::Union{Int,Val}, j::Int)
+    fdestroy([T::Type=ComplexF64,] N::Union{Int,Val}, j::Int)
 
-Construct a fermionic destruction operator acting on the `j`-th site, where the fock space has totally `N`-sites:
+Construct a fermionic destruction operator [with element type `T = ComplexF64` (default)] acting on the `j`-th site, where the fock space has totally `N`-sites:
 
 Here, we use the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
 ```math
@@ -490,12 +488,12 @@ Note that we put ``\hat{\sigma}_{+} = \begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatri
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fdestroy(Val(N), j)` instead of `fdestroy(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-fdestroy(N::Union{Int, Val}, j::Int) = _Jordan_Wigner(N, j, sigmap())
+fdestroy(::Type{T}, N::Union{Int, Val}, j::Int) where {T <: Number} = _Jordan_Wigner(T, N, j, sigmap(T))
 
 @doc raw"""
-    fcreate(N::Union{Int,Val}, j::Int)
+    fcreate([T::Type=ComplexF64,] N::Union{Int,Val}, j::Int)
 
-Construct a fermionic creation operator acting on the `j`-th site, where the fock space has totally `N`-sites:
+Construct a fermionic creation operator [with element type `T = ComplexF64` (default)] acting on the `j`-th site, where the fock space has totally `N`-sites:
 
 Here, we use the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
 ```math
@@ -509,19 +507,19 @@ Note that we put ``\hat{\sigma}_{-} = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatri
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fcreate(Val(N), j)` instead of `fcreate(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-fcreate(N::Union{Int, Val}, j::Int) = _Jordan_Wigner(N, j, sigmam())
+fcreate(::Type{T}, N::Union{Int, Val}, j::Int) where {T <: Number} = _Jordan_Wigner(T, N, j, sigmam(T))
 
-_Jordan_Wigner(N::Int, j::Int, op::QuantumObject{Operator}) = _Jordan_Wigner(Val(N), j, op)
+_Jordan_Wigner(::Type{T}, N::Int, j::Int, op::QuantumObject{Operator}) where {T <: Number} = _Jordan_Wigner(T, Val(N), j, op)
 
-function _Jordan_Wigner(::Val{N}, j::Int, op::QuantumObject{Operator}) where {N}
+function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}) where {T <: Number, N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
     (1 <= j <= N) || throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
-    σz = sigmaz().data
-    Z_tensor = kron(1, 1, fill(σz, j - 1)...)
+    σz = sigmaz(T).data
+    Z_tensor = kron(one(T), one(T), fill(σz, j - 1)...)
 
     S = 2^(N - j)
-    I_tensor = sparse((1.0 + 0.0im) * LinearAlgebra.I, S, S)
+    I_tensor = sparse(one(T) * LinearAlgebra.I, S, S)
 
     return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator(), dims = ntuple(i -> 2, Val(N)))
 end
@@ -529,7 +527,7 @@ end
 @doc raw"""
     projection([T::Type=ComplexF64,] N::Int, i::Int, j::Int)
 
-Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N` and target element type `T = ComplexF64` (default).
+Generates the projection operator ``\hat{O} = |i \rangle\langle j|`` with Hilbert space dimension `N` and element type `T = ComplexF64` (default).
 """
 function projection(::Type{T}, N::Int, i::Int, j::Int) where {T <: Number}
     (0 <= i < N) || throw(ArgumentError("Invalid argument i, must satisfy: 0 ≤ i ≤ N-1"))
@@ -541,7 +539,7 @@ end
 @doc raw"""
     tunneling([T::Type=ComplexF64,] N::Int, m::Int=1; sparse::Union{Bool,Val{<:Bool}}=Val(false))
 
-Generate a tunneling operator with target element type `T = ComplexF64` (default), defined as:
+Generate a tunneling operator with element type `T = ComplexF64` (default), defined as:
 
 ```math
 \sum_{n=0}^{N-m} | n \rangle\langle n+m | + | n+m \rangle\langle n |,
@@ -568,7 +566,7 @@ end
 @doc raw"""
     qft([T::Type=ComplexF64,] dimensions)
 
-Generates a discrete Fourier transform matrix ``\hat{F}_N`` for [Quantum Fourier Transform (QFT)](https://en.wikipedia.org/wiki/Quantum_Fourier_transform) with given argument `dimensions` and target element type `T = ComplexF64` (default).
+Generates a discrete Fourier transform matrix ``\hat{F}_N`` for [Quantum Fourier Transform (QFT)](https://en.wikipedia.org/wiki/Quantum_Fourier_transform) with given argument `dimensions` and element type `T = ComplexF64` (default).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
