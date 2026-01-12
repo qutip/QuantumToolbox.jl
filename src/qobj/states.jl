@@ -2,15 +2,11 @@
 Functions for generating (common) quantum states.
 =#
 
-export thermal_dm, maximally_mixed_dm, rand_dm
-export spin_state, spin_coherent
-export bell_state, singlet_state, triplet_states, w_state, ghz_state
-
 _gen_state_func_list = (
     :zero_ket, :fock, :coherent, :rand_ket,
-    :fock_dm, :coherent_dm, #=:thermal_dm, :maximally_mixed_dm, :rand_dm,
+    :fock_dm, :coherent_dm, :thermal_dm, :maximally_mixed_dm, :rand_dm,
     :spin_state, :spin_coherent,
-    :bell_state, :singlet_state, :triplet_states, :w_state, :ghz_state, =#
+    :bell_state, :singlet_state, :triplet_states, :w_state, :ghz_state,
 )
 
 for f in _gen_state_func_list
@@ -123,9 +119,9 @@ Constructed via outer product of [`coherent`](@ref).
 coherent_dm(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number} = ket2dm(coherent(T, N, α))
 
 @doc raw"""
-    thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val}=Val(false))
+    thermal_dm([T::Type=ComplexF64,] N::Int, n::Real; sparse::Union{Bool,Val}=Val(false))
 
-Density matrix for a thermal state (generating thermal state probabilities) with the following arguments:
+Density matrix for a thermal state (generating thermal state probabilities) with target element type `T = ComplexF64` (default) and the following arguments:
 - `N::Int`: Number of basis states in the Hilbert space
 - `n::Real`: Expectation value for number of particles in the thermal state.
 - `sparse::Union{Bool,Val}`: If `true`, return a sparse matrix representation.
@@ -133,9 +129,11 @@ Density matrix for a thermal state (generating thermal state probabilities) with
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `thermal_dm(N, n, sparse=Val(sparse))` instead of `thermal_dm(N, n, sparse=sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function thermal_dm(N::Int, n::T; sparse::Union{Bool, Val} = Val(false)) where {T <: Real}
-    β = log(1 + 1 / n)
-    P = _complex_float_type(T)[_Boltzmann_weight(β, j) for j in 0:(N - 1)]
+function thermal_dm(::Type{T}, N::Int, n::Tn; sparse::Union{Bool, Val} = Val(false)) where {T <: Number, Tn <: Real}
+    T_float = _float_type(Base.promote_type(T, Tn))
+    z0 = zero(T_float) # for 0.0 in imaginary part
+    β = log(1 + 1 / T_float(n))
+    P = [complex(_Boltzmann_weight(β, j), z0) for j in 0:(N - 1)]
     P /= sum(P)
     if getVal(sparse)
         return QuantumObject(spdiagm(0 => P), Operator(), N)
@@ -145,9 +143,9 @@ function thermal_dm(N::Int, n::T; sparse::Union{Bool, Val} = Val(false)) where {
 end
 
 @doc raw"""
-    maximally_mixed_dm(dimensions)
+    maximally_mixed_dm([T::Type=ComplexF64,] dimensions)
 
-Returns the maximally mixed density matrix with given argument `dimensions`.
+Returns the maximally mixed density matrix with given argument `dimensions` and target element type `T = ComplexF64` (default).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -156,11 +154,11 @@ The `dimensions` can be either the following types:
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-maximally_mixed_dm(dimensions::Int) =
-    QuantumObject(diagm(0 => fill(ComplexF64(1 / dimensions), dimensions)), Operator(), SVector(dimensions))
-function maximally_mixed_dm(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple})
+maximally_mixed_dm(::Type{T}, dimensions::Int) where {T <: Number} =
+    QuantumObject(diagm(0 => fill(1 / T(dimensions), dimensions)), Operator(), SVector(dimensions))
+function maximally_mixed_dm(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number}
     N = prod(dimensions)
-    return QuantumObject(diagm(0 => fill(ComplexF64(1 / N), N)), Operator(), dimensions)
+    return QuantumObject(diagm(0 => fill(1 / T(N), N)), Operator(), dimensions)
 end
 
 @doc raw"""
@@ -181,9 +179,6 @@ The default keyword argument `rank = prod(dimensions)` (full rank).
 - [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)
 - [K. Życzkowski, et al., Generating random density matrices, Journal of Mathematical Physics 52, 062201 (2011)](http://dx.doi.org/10.1063/1.3595693)
 """
-rand_dm(dimensions::Int; rank::Int = dimensions) = rand_dm(SVector(dimensions); rank = rank)
-rand_dm(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}; rank::Int = prod(dimensions)) =
-    rand_dm(ComplexF64, dimensions; rank = rank)
 rand_dm(::Type{T}, dimensions::Int; rank::Int = dimensions) where {T <: Number} =
     rand_dm(T, SVector(dimensions); rank = rank)
 function rand_dm(
@@ -202,15 +197,15 @@ function rand_dm(
 end
 
 @doc raw"""
-    spin_state(j::Real, m::Real)
+    spin_state([T::Type=ComplexF64,] j::Real, m::Real)
 
-Generate the spin state: ``|j, m\rangle``
+Generate the spin state: ``|j, m\rangle`` with target element type `T = ComplexF64` (default).
 
 The eigenstate of the Spin-`j` ``\hat{S}_z`` operator with eigenvalue `m`, where where `j` is the spin quantum number and can be a non-negative integer or half-integer
 
 See also [`jmat`](@ref).
 """
-function spin_state(j::Real, m::Real)
+function spin_state(::Type{T}, j::Real, m::Real) where {T <: Number}
     J = 2 * j + 1
     ((floor(J) != J) || (j < 0)) &&
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
@@ -220,13 +215,13 @@ function spin_state(j::Real, m::Real)
         throw(ArgumentError("Invalid eigenvalue m: (j - m) must be a non-negative integer."))
     (m < (-j)) && throw(ArgumentError("Invalid eigenvalue m, must satisfy: -j ≤ m ≤ j"))
 
-    return fock(Int(J), Int(Δ))
+    return fock(T, Int(J), Int(Δ))
 end
 
 @doc raw"""
-    spin_coherent(j::Real, θ::Real, ϕ::Real)
+    spin_coherent([T::Type=ComplexF64,] j::Real, θ::Real, ϕ::Real)
 
-Generate the coherent spin state (rotation of the ``|j, j\rangle`` state), namely
+Generate the coherent spin state (rotation of the ``|j, j\rangle`` state) with target element type `T = ComplexF64` (default), namely
 
 ```math
 |\theta, \phi \rangle = \hat{R}(\theta, \phi) |j, j\rangle
@@ -250,15 +245,17 @@ See also [`jmat`](@ref) and [`spin_state`](@ref).
 # Reference
 - [Robert Jones, Spin Coherent States and Statistical Physics](https://web.mit.edu/8.334/www/grades/projects/projects19/JonesRobert.pdf)
 """
-function spin_coherent(j::Real, θ::Real, ϕ::Real)
-    Sm = jmat(j, Val(:-))
-    return exp(0.5 * θ * (Sm * exp(1im * ϕ) - Sm' * exp(-1im * ϕ))) * spin_state(j, j)
+function spin_coherent(::Type{T}, j::Real, θ::Tθ, ϕ::Tϕ) where {T <: Number, Tθ <: Real, Tϕ <: Real}
+    T_new = Base.promote_type(T, Tθ, Tϕ)
+    iϕ = T_new(ϕ) * im
+    Sm = jmat(T_new, j, Val(:-))
+    return exp((T_new(θ) / 2) * (Sm * exp(iϕ) - Sm' * exp(-iϕ))) * spin_state(T_new, j, j)
 end
 
 @doc raw"""
-    bell_state(x::Union{Int}, z::Union{Int})
+    bell_state([T::Type=ComplexF64,] x::Union{Int}, z::Union{Int})
 
-Return the [Bell state](https://en.wikipedia.org/wiki/Bell_state) depending on the arguments `(x, z)`:
+Return the [Bell state](https://en.wikipedia.org/wiki/Bell_state) with target element type `T = ComplexF64` (default), depending on the arguments `(x, z)`:
 - `(0, 0)`: ``| \Phi^+ \rangle = ( |00\rangle + |11\rangle ) / \sqrt{2}``
 - `(0, 1)`: ``| \Phi^- \rangle = ( |00\rangle - |11\rangle ) / \sqrt{2}``
 - `(1, 0)`: ``| \Psi^+ \rangle = ( |01\rangle + |10\rangle ) / \sqrt{2}``
@@ -291,41 +288,41 @@ Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `bell_state(Val(x), Val(z))` instead of `bell_state(x, z)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
-bell_state(x::Int, z::Int) = bell_state(Val(x), Val(z))
-bell_state(::Val{0}, ::Val{0}) = QuantumObject(ComplexF64[1, 0, 0, 1] / sqrt(2), Ket(), (2, 2))
-bell_state(::Val{0}, ::Val{1}) = QuantumObject(ComplexF64[1, 0, 0, -1] / sqrt(2), Ket(), (2, 2))
-bell_state(::Val{1}, ::Val{0}) = QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket(), (2, 2))
-bell_state(::Val{1}, ::Val{1}) = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket(), (2, 2))
-bell_state(::Val{T1}, ::Val{T2}) where {T1, T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
+bell_state(::Type{T}, x::Int, z::Int) where {T <: Number} = bell_state(T, Val(x), Val(z))
+bell_state(::Type{T}, ::Val{0}, ::Val{0}) where {T <: Number} = QuantumObject(T[1, 0, 0, 1] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
+bell_state(::Type{T}, ::Val{0}, ::Val{1}) where {T <: Number} = QuantumObject(T[1, 0, 0, -1] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
+bell_state(::Type{T}, ::Val{1}, ::Val{0}) where {T <: Number} = QuantumObject(T[0, 1, 1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
+bell_state(::Type{T}, ::Val{1}, ::Val{1}) where {T <: Number} = QuantumObject(T[0, 1, -1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
+bell_state(::Type{T}, ::Val{T1}, ::Val{T2}) where {T <: Number, T1, T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
 
 @doc raw"""
-    singlet_state()
+    singlet_state([T::Type=ComplexF64])
 
-Return the two particle singlet state: ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
+Return the two particle singlet state with target element type `T = ComplexF64` (default): ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
 """
-singlet_state() = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket(), (2, 2))
+singlet_state(::Type{T}) where {T <: Number} = QuantumObject(T[0, 1, -1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
 
 @doc raw"""
-    triplet_states()
+    triplet_states([T::Type=ComplexF64])
 
-Return a list of the two particle triplet states: 
+Return a list of the two particle triplet states with target element type `T = ComplexF64` (default): 
 
 - ``|11\rangle``
 - ``( |01\rangle + |10\rangle ) / \sqrt{2}``
 - ``|00\rangle``
 """
-function triplet_states()
+function triplet_states(::Type{T}) where {T <: Number}
     return QuantumObject[
-        QuantumObject(ComplexF64[0, 0, 0, 1], Ket(), (2, 2)),
-        QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket(), (2, 2)),
-        QuantumObject(ComplexF64[1, 0, 0, 0], Ket(), (2, 2)),
+        QuantumObject(T[0, 0, 0, 1], Ket(), (2, 2)),
+        QuantumObject(T[0, 1, 1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2)),
+        QuantumObject(T[1, 0, 0, 0], Ket(), (2, 2)),
     ]
 end
 
 @doc raw"""
-    w_state(n::Union{Int,Val})
+    w_state([T::Type=ComplexF64,] n::Union{Int,Val})
 
-Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
+Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state) with target element type `T = ComplexF64` (default):
 
 ```math
 \frac{1}{\sqrt{n}} \left( |100...0\rangle + |010...0\rangle + \cdots + |00...01\rangle \right)
@@ -334,21 +331,21 @@ Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `w_state(Val(n))` instead of `w_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
-function w_state(::Val{n}) where {n}
+function w_state(::Type{T}, ::Val{n}) where {T <: Number, n}
     (n >= 2) || throw(ArgumentError("Invalid argument n, must satisfy: n ≥ 2"))
 
     nzind = 2 .^ (0:(n - 1)) .+ 1
-    nzval = fill(ComplexF64(1 / sqrt(n)), n)
-    data = zeros(ComplexF64, 2^n)
+    nzval = fill(1 / sqrt(_float_type(T)(n)), n)
+    data = zeros(T, 2^n)
     @inbounds data[nzind] .= nzval
     return QuantumObject(data, Ket(), ntuple(x -> 2, Val(n)))
 end
-w_state(n::Int) = w_state(Val(n))
+w_state(::Type{T}, n::Int) where {T <: Number} = w_state(T, Val(n))
 
 @doc raw"""
-    ghz_state(n::Union{Int,Val}; d::Int=2)
+    ghz_state([T::Type=ComplexF64,] n::Union{Int,Val}; d::Int=2)
 
-Returns the generalized `n`-qudit [Greenberger–Horne–Zeilinger (GHZ) state](https://en.wikipedia.org/wiki/Greenberger%E2%80%93Horne%E2%80%93Zeilinger_state):
+Returns the generalized `n`-qudit [Greenberger–Horne–Zeilinger (GHZ) state](https://en.wikipedia.org/wiki/Greenberger%E2%80%93Horne%E2%80%93Zeilinger_state) with target element type `T = ComplexF64` (default):
 
 ```math
 \frac{1}{\sqrt{d}} \sum_{i=0}^{d-1} | i \rangle \otimes \cdots \otimes | i \rangle
@@ -359,14 +356,14 @@ Here, `d` specifies the dimension of each qudit. Default to `d=2` (qubit).
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `ghz_state(Val(n))` instead of `ghz_state(n)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
-function ghz_state(::Val{n}; d::Int = 2) where {n}
+function ghz_state(::Type{T}, ::Val{n}; d::Int = 2) where {T <: Number, n}
     (n >= 2) || throw(ArgumentError("Invalid argument n, must satisfy: n ≥ 2"))
     (d >= 2) || throw(ArgumentError("Invalid argument d, must satisfy: d ≥ 2"))
 
     nzind = collect((0:(d - 1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
-    nzval = fill(ComplexF64(1 / sqrt(d)), d)
-    data = zeros(ComplexF64, d^n)
+    nzval = fill(1 / sqrt(_float_type(T)(d)), d)
+    data = zeros(T, d^n)
     @inbounds data[nzind] .= nzval
     return QuantumObject(data, Ket(), ntuple(x -> d, Val(n)))
 end
-ghz_state(n::Int; d::Int = 2) = ghz_state(Val(n), d = d)
+ghz_state(::Type{T}, n::Int; d::Int = 2) where {T <: Number} = ghz_state(T, Val(n), d = d)
