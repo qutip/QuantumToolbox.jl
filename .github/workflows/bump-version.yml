@@ -96,5 +96,5 @@ jobs:
             --base main \
             --head $BRANCH_NAME \
             --title "Bump version to v${{ steps.updates.outputs.new_version }}" \
-            --body "This PR bumps the package version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md."
+            --body "This PR bumps the package version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md." \
             --label "Skip ChangeLog"
