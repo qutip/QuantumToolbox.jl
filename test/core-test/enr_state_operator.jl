@@ -157,7 +157,7 @@
         dims = (2, 2, 3)
         excitations = 3
         @inferred enr_identity(dims, excitations)
-        @inferred enr_fock(ComplexF64, dims, excitations, zeros(Int, N))
+        @inferred enr_fock(dims, excitations, zeros(Int, N))
         @inferred enr_destroy(dims, excitations)
         @inferred enr_thermal_dm(dims, excitations, rand(N))
     end
