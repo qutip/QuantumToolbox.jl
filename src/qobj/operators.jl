@@ -15,13 +15,13 @@ export qft
 _gen_operator_func_list = (
     #= rand_unitary,
     jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set,
-sigmam, sigmap, sigmax, sigmay, sigmaz, =#
-:destroy, :create,# eye, projection,
-:displace, #squeeze, num, phase,
-#= fdestroy, fcreate,
-commutator,
-tunneling,
-qft, =#
+    sigmam, sigmap, sigmax, sigmay, sigmaz, =#
+    :destroy, :create, # eye, projection,
+    :displace, #squeeze, num, phase,
+    #=fdestroy, fcreate,
+    commutator,
+    tunneling,
+    qft, =#
 )
 
 for f in _gen_operator_func_list
@@ -118,7 +118,7 @@ julia> fock(20, 3)' * a * fock(20, 4)
 2.0 + 0.0im
 ```
 """
-destroy(::Type{T}, N::Int) where {T<:Number} = QuantumObject(spdiagm(1 => Array{T}(sqrt.(1:(N - 1)))), Operator(), N)
+destroy(::Type{T}, N::Int) where {T <: Number} = QuantumObject(spdiagm(1 => Array{T}(sqrt.(1:(N - 1)))), Operator(), N)
 
 @doc raw"""
     create([T::Type=ComplexF64,] N::Int)

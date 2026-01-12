@@ -470,10 +470,20 @@
         N = 2
         type_list = [ComplexF32, Complex{BigFloat}]
         for T in type_list
+            # states
             @test T == eltype(zero_ket(T, N))
             @test T == eltype(fock(T, N, 0; sparse = Val(true)))
             @test T == eltype(fock(T, N, 0; sparse = Val(false)))
+            @test T == eltype(coherent(T, N, rand(Float32)))
             @test T == eltype(rand_ket(T, N))
+            @test T == eltype(fock_dm(T, N, 0; sparse = Val(true)))
+            @test T == eltype(fock_dm(T, N, 0; sparse = Val(false)))
+            @test T == eltype(coherent_dm(T, N, rand(Float32)))
+
+            # operators
+            @test T == eltype(destroy(T, N))
+            @test T == eltype(create(T, N))
+            @test T == eltype(displace(T, N, rand(Float32)))
         end
     end
 end

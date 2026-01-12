@@ -2,22 +2,15 @@
 Functions for generating (common) quantum states.
 =#
 
-export fock_dm, thermal_dm, maximally_mixed_dm, rand_dm
+export thermal_dm, maximally_mixed_dm, rand_dm
 export spin_state, spin_coherent
 export bell_state, singlet_state, triplet_states, w_state, ghz_state
 
 _gen_state_func_list = (
     :zero_ket, :fock, :coherent, :rand_ket,
-    #=:fock_dm,=# :coherent_dm, #=:thermal_dm,
-    :maximally_mixed_dm,
-    :rand_dm,
-    :spin_state,
-    :spin_coherent,
-    :bell_state,
-    :singlet_state,
-    :triplet_states,
-    :w_state,
-    :ghz_state, =#
+    :fock_dm, :coherent_dm, #=:thermal_dm, :maximally_mixed_dm, :rand_dm,
+    :spin_state, :spin_coherent,
+    :bell_state, :singlet_state, :triplet_states, :w_state, :ghz_state, =#
 )
 
 for f in _gen_state_func_list
@@ -39,8 +32,8 @@ The `dimensions` can be either the following types:
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-zero_ket(::Type{T}, dimensions::Int) where {T<:Number} = QuantumObject(zeros(T, dimensions), Ket(), dimensions)
-zero_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T<:Number} =
+zero_ket(::Type{T}, dimensions::Int) where {T <: Number} = QuantumObject(zeros(T, dimensions), Ket(), dimensions)
+zero_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number} =
     QuantumObject(zeros(T, prod(dimensions)), Ket(), dimensions)
 
 @doc raw"""
@@ -100,9 +93,9 @@ function rand_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, 
 end
 
 @doc raw"""
-    fock_dm(N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
+    fock_dm([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
-Density matrix representation of a Fock state.
+Density matrix representation of a Fock state with target element type `T = ComplexF64` (default).
 
 Constructed via outer product of [`fock`](@ref).
 
@@ -110,12 +103,13 @@ Constructed via outer product of [`fock`](@ref).
     If you want to keep type stability, it is recommended to use `fock_dm(N, j, dims=dims, sparse=Val(sparse))` instead of `fock_dm(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function fock_dm(
+        ::Type{T},
         N::Int,
         j::Int = 0;
         dims::Union{Int, AbstractVector{Int}, Tuple} = N,
         sparse::Union{Bool, Val} = Val(false),
-    )
-    ψ = fock(N, j; dims = dims, sparse = sparse)
+    ) where {T <: Number}
+    ψ = fock(T, N, j; dims = dims, sparse = sparse)
     return ket2dm(ψ)
 end
 
