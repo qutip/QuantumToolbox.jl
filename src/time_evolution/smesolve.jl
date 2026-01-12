@@ -94,8 +94,6 @@ function smesolveProblem(
     sc_ops_list = _make_c_ops_list(sc_ops) # If it is an AbstractQuantumObject but we need to iterate
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
-    tlist = _check_tlist(tlist, _float_type(ψ0))
-
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
     check_dimensions(L_evo, ψ0)
     dims = L_evo.dimensions
@@ -119,6 +117,8 @@ function smesolveProblem(
         return AddedOperator(_spre(op), _spost(op'), _smesolve_ScalarOperator(op_vec) * Id_op)
     end
     D = DiffusionOperator(D_l)
+
+    tlist = _check_tlist(tlist, _float_type(T))
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(K), tlist)

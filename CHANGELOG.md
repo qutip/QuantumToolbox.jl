@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimize `liouvillian_dressed_nonsecular`: avoid O(N⁴) dense filter matrices. ([#627])
 - Restrict `CUDA.jl` version compatibility to < 5.9.6 due to breaking changes in that release. ([#630])
 - Move from `JuliaFormatter.jl` to `Runic.jl` for code formatting. ([#633])
+- Convert `tlist` to promoted type in all time evolution solvers. ([#638])
 
 ## [v0.40.0]
 Release date: 2025-12-21
@@ -407,3 +408,4 @@ Release date: 2024-11-13
 [#627]: https://github.com/qutip/QuantumToolbox.jl/issues/627
 [#630]: https://github.com/qutip/QuantumToolbox.jl/issues/630
 [#633]: https://github.com/qutip/QuantumToolbox.jl/issues/633
+[#638]: https://github.com/qutip/QuantumToolbox.jl/issues/638
