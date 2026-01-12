@@ -153,7 +153,7 @@ The `dimensions` can be either the following types:
     If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 maximally_mixed_dm(::Type{T}, dimensions::Int) where {T <: Number} =
-    QuantumObject(diagm(0 => fill(1 / T(dimensions), dimensions)), Operator(), SVector(dimensions))
+    QuantumObject(diagm(0 => fill(1 / T(dimensions), dimensions))::Matrix{T}, Operator(), SVector(dimensions)) # TODO: remove `::Matrix{T}` if JET.jl fix this issue.
 function maximally_mixed_dm(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number}
     N = prod(dimensions)
     return QuantumObject(diagm(0 => fill(1 / T(N), N)), Operator(), dimensions)
