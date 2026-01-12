@@ -2,19 +2,10 @@
 Functions for generating (common) quantum states.
 =#
 
-_gen_state_func_list = (
-    :zero_ket, :fock, :coherent, :rand_ket,
-    :fock_dm, :coherent_dm, :thermal_dm, :maximally_mixed_dm, :rand_dm,
-    :spin_state, :spin_coherent,
-    :bell_state, :singlet_state, :triplet_states, :w_state, :ghz_state,
-)
-
-for f in _gen_state_func_list
-    @eval begin
-        export $(f)
-        $(f)(args...; kwargs...) = $(f)(ComplexF64, args...; kwargs...)
-    end
-end
+export zero_ket, fock, coherent, rand_ket
+export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
+export spin_state, spin_coherent
+export bell_state, singlet_state, triplet_states, w_state, ghz_state
 
 @doc raw"""
     zero_ket([T::Type=ComplexF64,] dimensions)
@@ -31,6 +22,7 @@ The `dimensions` can be either the following types:
 zero_ket(::Type{T}, dimensions::Int) where {T <: Number} = QuantumObject(zeros(T, dimensions), Ket(), dimensions)
 zero_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number} =
     QuantumObject(zeros(T, prod(dimensions)), Ket(), dimensions)
+zero_ket(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = zero_ket(ComplexF64, dimensions)
 
 @doc raw"""
     fock([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -56,6 +48,7 @@ function fock(::Type{T}, N::Int, j::Int = 0; dims::Union{Int, AbstractVector{Int
     end
     return QuantumObject(array; type = Ket(), dims = dims)
 end
+fock(N::Int, j::Int = 0; dims::Union{Int, AbstractVector{Int}, Tuple} = N, sparse::Union{Bool, Val} = Val(false)) = fock(ComplexF64, N, j; dims, sparse)
 
 @doc raw"""
     coherent([T::Type=ComplexF64,] N::Int, α::Number)
@@ -68,6 +61,7 @@ function coherent(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number}
     T_new = Base.promote_type(T, Tα)
     return displace(T_new, N, α) * fock(T_new, N, 0)
 end
+coherent(N::Int, α::Tα) where {Tα <: Number} = coherent(ComplexF64, N, α)
 
 @doc raw"""
     rand_ket([T::Type=ComplexF64,] dimensions)
@@ -87,6 +81,7 @@ function rand_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, 
     ψ = rand(T, N) .- (one(T) / 2 + one(T) * im / 2)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
 end
+rand_ket(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = rand_ket(ComplexF64, dimensions)
 
 @doc raw"""
     fock_dm([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -105,9 +100,10 @@ function fock_dm(
         dims::Union{Int, AbstractVector{Int}, Tuple} = N,
         sparse::Union{Bool, Val} = Val(false),
     ) where {T <: Number}
-    ψ = fock(T, N, j; dims = dims, sparse = sparse)
+    ψ = fock(T, N, j; dims, sparse)
     return ket2dm(ψ)
 end
+fock_dm(N::Int, j::Int = 0; dims::Union{Int, AbstractVector{Int}, Tuple} = N, sparse::Union{Bool, Val} = Val(false)) = fock_dm(ComplexF64, N, j; dims, sparse)
 
 @doc raw"""
     coherent_dm([T::Type=ComplexF64,] N::Int, α::Number)
@@ -117,6 +113,7 @@ Density matrix representation of a [coherent state](https://en.wikipedia.org/wik
 Constructed via outer product of [`coherent`](@ref).
 """
 coherent_dm(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number} = ket2dm(coherent(T, N, α))
+coherent_dm(N::Int, α::Tα) where {Tα <: Number} = coherent_dm(ComplexF64, N, α)
 
 @doc raw"""
     thermal_dm([T::Type=ComplexF64,] N::Int, n::Real; sparse::Union{Bool,Val}=Val(false))
@@ -141,6 +138,7 @@ function thermal_dm(::Type{T}, N::Int, n::Tn; sparse::Union{Bool, Val} = Val(fal
         return QuantumObject(diagm(0 => P), Operator(), N)
     end
 end
+thermal_dm(N::Int, n::Tn; sparse::Union{Bool, Val} = Val(false)) where {Tn <: Real} = thermal_dm(ComplexF64, N, n; sparse)
 
 @doc raw"""
     maximally_mixed_dm([T::Type=ComplexF64,] dimensions)
@@ -160,6 +158,7 @@ function maximally_mixed_dm(::Type{T}, dimensions::Union{Dimensions, AbstractVec
     N = prod(dimensions)
     return QuantumObject(diagm(0 => fill(1 / T(N), N)), Operator(), dimensions)
 end
+maximally_mixed_dm(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = maximally_mixed_dm(ComplexF64, dimensions)
 
 @doc raw"""
     rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=prod(dimensions))
@@ -180,7 +179,7 @@ The default keyword argument `rank = prod(dimensions)` (full rank).
 - [K. Życzkowski, et al., Generating random density matrices, Journal of Mathematical Physics 52, 062201 (2011)](http://dx.doi.org/10.1063/1.3595693)
 """
 rand_dm(::Type{T}, dimensions::Int; rank::Int = dimensions) where {T <: Number} =
-    rand_dm(T, SVector(dimensions); rank = rank)
+    rand_dm(T, SVector(dimensions); rank)
 function rand_dm(
         ::Type{T},
         dimensions::Union{Dimensions, AbstractVector{Int}, Tuple};
@@ -195,6 +194,7 @@ function rand_dm(
     ρ /= tr(ρ)
     return QuantumObject(ρ; type = Operator(), dims = dimensions)
 end
+rand_dm(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}; rank::Int = prod(dimensions)) = rand_dm(ComplexF64, dimensions; rank)
 
 @doc raw"""
     spin_state([T::Type=ComplexF64,] j::Real, m::Real)
@@ -217,6 +217,7 @@ function spin_state(::Type{T}, j::Real, m::Real) where {T <: Number}
 
     return fock(T, Int(J), Int(Δ))
 end
+spin_state(j::Real, m::Real) = spin_state(ComplexF64, j, m)
 
 @doc raw"""
     spin_coherent([T::Type=ComplexF64,] j::Real, θ::Real, ϕ::Real)
@@ -251,6 +252,7 @@ function spin_coherent(::Type{T}, j::Real, θ::Tθ, ϕ::Tϕ) where {T <: Number,
     Sm = jmat(T_new, j, Val(:-))
     return exp((T_new(θ) / 2) * (Sm * exp(iϕ) - Sm' * exp(-iϕ))) * spin_state(T_new, j, j)
 end
+spin_coherent(j::Real, θ::Tθ, ϕ::Tϕ) where {Tθ <: Real, Tϕ <: Real} = spin_coherent(ComplexF64, j, θ, ϕ)
 
 @doc raw"""
     bell_state([T::Type=ComplexF64,] x::Union{Int}, z::Union{Int})
@@ -294,6 +296,7 @@ bell_state(::Type{T}, ::Val{0}, ::Val{1}) where {T <: Number} = QuantumObject(T[
 bell_state(::Type{T}, ::Val{1}, ::Val{0}) where {T <: Number} = QuantumObject(T[0, 1, 1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
 bell_state(::Type{T}, ::Val{1}, ::Val{1}) where {T <: Number} = QuantumObject(T[0, 1, -1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
 bell_state(::Type{T}, ::Val{T1}, ::Val{T2}) where {T <: Number, T1, T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
+bell_state(x::Union{Int, Val}, z::Union{Int, Val}) = bell_state(ComplexF64, x, z)
 
 @doc raw"""
     singlet_state([T::Type=ComplexF64])
@@ -301,6 +304,7 @@ bell_state(::Type{T}, ::Val{T1}, ::Val{T2}) where {T <: Number, T1, T2} = throw(
 Return the two particle singlet state with element type `T = ComplexF64` (default): ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
 """
 singlet_state(::Type{T}) where {T <: Number} = QuantumObject(T[0, 1, -1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
+singlet_state() = singlet_state(ComplexF64)
 
 @doc raw"""
     triplet_states([T::Type=ComplexF64])
@@ -318,6 +322,7 @@ function triplet_states(::Type{T}) where {T <: Number}
         QuantumObject(T[1, 0, 0, 0], Ket(), (2, 2)),
     ]
 end
+triplet_states() = triplet_states(ComplexF64)
 
 @doc raw"""
     w_state([T::Type=ComplexF64,] n::Union{Int,Val})
@@ -341,6 +346,7 @@ function w_state(::Type{T}, ::Val{n}) where {T <: Number, n}
     return QuantumObject(data, Ket(), ntuple(x -> 2, Val(n)))
 end
 w_state(::Type{T}, n::Int) where {T <: Number} = w_state(T, Val(n))
+w_state(n::Union{Int, Val}) = w_state(ComplexF64, n)
 
 @doc raw"""
     ghz_state([T::Type=ComplexF64,] n::Union{Int,Val}; d::Int=2)
@@ -366,4 +372,5 @@ function ghz_state(::Type{T}, ::Val{n}; d::Int = 2) where {T <: Number, n}
     @inbounds data[nzind] .= nzval
     return QuantumObject(data, Ket(), ntuple(x -> d, Val(n)))
 end
-ghz_state(::Type{T}, n::Int; d::Int = 2) where {T <: Number} = ghz_state(T, Val(n), d = d)
+ghz_state(::Type{T}, n::Int; d::Int = 2) where {T <: Number} = ghz_state(T, Val(n); d)
+ghz_state(n::Union{Int, Val}; d::Int = 2) = ghz_state(ComplexF64, n; d)

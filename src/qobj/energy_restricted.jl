@@ -3,14 +3,7 @@ This file defines the excitation number restricted space structure.
 =#
 
 export EnrSpace, enr_state_dictionaries
-
-_gen_enr_func_list = (:enr_fock, :enr_thermal_dm, :enr_destroy, :enr_identity)
-for f in _gen_enr_func_list
-    @eval begin
-        export $(f)
-        $(f)(args...; kwargs...) = $(f)(ComplexF64, args...; kwargs...)
-    end
-end
+export enr_fock, enr_thermal_dm, enr_destroy, enr_identity
 
 @doc raw"""
     struct EnrSpace{N} <: AbstractSpace
@@ -153,7 +146,7 @@ function enr_fock(
         sparse::Union{Bool, Val} = Val(false),
     ) where {T <: Number, Td <: Integer, N}
     s_enr = EnrSpace(dims, n_excitations)
-    return enr_fock(T, s_enr, state, sparse = sparse)
+    return enr_fock(T, s_enr, state; sparse)
 end
 function enr_fock(::Type{T}, s_enr::EnrSpace, state::AbstractVector{Td}; sparse::Union{Bool, Val} = Val(false)) where {T <: Number, Td <: Integer}
     if getVal(sparse)
@@ -166,6 +159,9 @@ function enr_fock(::Type{T}, s_enr::EnrSpace, state::AbstractVector{Td}; sparse:
 
     return QuantumObject(array, Ket(), s_enr)
 end
+enr_fock(dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int, state::AbstractVector{Td}; sparse::Union{Bool, Val} = Val(false)) where {Td <: Integer, N} =
+    enr_fock(ComplexF64, dims, n_excitations, state; sparse)
+enr_fock(s_enr::EnrSpace, state::AbstractVector{Td}; sparse::Union{Bool, Val} = Val(false)) where {Td <: Integer} = enr_fock(ComplexF64, s_enr, state; sparse)
 
 @doc raw"""
     enr_thermal_dm([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false))
@@ -188,7 +184,7 @@ function enr_thermal_dm(
         sparse::Union{Bool, Val} = Val(false),
     ) where {T <: Number, T1 <: Integer, T2 <: Real, N}
     s_enr = EnrSpace(dims, n_excitations)
-    return enr_thermal_dm(T, s_enr, n; sparse = sparse)
+    return enr_thermal_dm(T, s_enr, n; sparse)
 end
 function enr_thermal_dm(
         ::Type{T},
@@ -220,6 +216,9 @@ function enr_thermal_dm(
         return QuantumObject(diagm(0 => P), Operator(), s_enr)
     end
 end
+enr_thermal_dm(dims::Union{AbstractVector{T1}, NTuple{N, T1}}, n_excitations::Int, n::Union{T2, AbstractVector{T2}}; sparse::Union{Bool, Val} = Val(false)) where {T1 <: Integer, T2 <: Real, N} =
+    enr_thermal_dm(ComplexF64, dims, n_excitations, n; sparse)
+enr_thermal_dm(s_enr::EnrSpace{N}, n::Union{Tn, AbstractVector{Tn}}; sparse::Union{Bool, Val} = Val(false)) where {N, Tn <: Real} = enr_thermal_dm(ComplexF64, s_enr, n; sparse)
 
 @doc raw"""
     enr_destroy([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int)
@@ -264,6 +263,8 @@ function enr_destroy(::Type{T}, s_enr::EnrSpace{N}) where {T <: Number, N}
 
     return ntuple(i -> QuantumObject(sparse(I_list[i], J_list[i], V_list[i], D, D), Operator(), s_enr), Val(N))
 end
+enr_destroy(dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int) where {Td <: Integer, N} = enr_destroy(ComplexF64, dims, n_excitations)
+enr_destroy(s_enr::EnrSpace{N}) where {N} = enr_destroy(ComplexF64, s_enr)
 
 @doc raw"""
     enr_identity([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int)
@@ -281,3 +282,5 @@ function enr_identity(::Type{T}, dims::Union{AbstractVector{Td}, NTuple{N, Td}},
     return enr_identity(T, s_enr)
 end
 enr_identity(::Type{T}, s_enr::EnrSpace) where {T <: Number} = QuantumObject(Diagonal(ones(T, s_enr.size)), Operator(), s_enr)
+enr_identity(dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int) where {Td <: Integer, N} = enr_identity(ComplexF64, dims, n_excitations)
+enr_identity(s_enr::EnrSpace) = enr_identity(ComplexF64, s_enr)
