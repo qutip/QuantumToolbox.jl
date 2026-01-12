@@ -5,12 +5,31 @@ Functions for generating (common) quantum operators.
 export rand_unitary
 export jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set
 export sigmam, sigmap, sigmax, sigmay, sigmaz
-export destroy, create, eye, projection
-export displace, squeeze, num, phase
+export eye, projection
+export squeeze, num, phase
 export fdestroy, fcreate
 export commutator
 export tunneling
 export qft
+
+_gen_operator_func_list = (
+    #= rand_unitary,
+    jmat, spin_Jx, spin_Jy, spin_Jz, spin_Jm, spin_Jp, spin_J_set,
+sigmam, sigmap, sigmax, sigmay, sigmaz, =#
+:destroy, :create,# eye, projection,
+:displace, #squeeze, num, phase,
+#= fdestroy, fcreate,
+commutator,
+tunneling,
+qft, =#
+)
+
+for f in _gen_operator_func_list
+    @eval begin
+        export $(f)
+        $(f)(args...; kwargs...) = $(f)(ComplexF64, args...; kwargs...)
+    end
+end
 
 @doc raw"""
     rand_unitary(dimensions, distribution=Val(:haar))
@@ -76,9 +95,9 @@ Note that `A` and `B` must be [`Operator`](@ref)
 commutator(A::QuantumObject{Operator}, B::QuantumObject{Operator}; anti::Bool = false) = A * B - (-1)^anti * B * A
 
 @doc raw"""
-    destroy(N::Int)
+    destroy([T::Type=ComplexF64,] N::Int)
 
-Bosonic annihilation operator with Hilbert space cutoff `N`. 
+Bosonic annihilation operator with Hilbert space cutoff `N` with target element type `T = ComplexF64` (default).
 
 This operator acts on a fock state as ``\hat{a} \ket{n} = \sqrt{n} \ket{n-1}``.
 
@@ -99,12 +118,12 @@ julia> fock(20, 3)' * a * fock(20, 4)
 2.0 + 0.0im
 ```
 """
-destroy(N::Int) = QuantumObject(spdiagm(1 => Array{ComplexF64}(sqrt.(1:(N - 1)))), Operator(), N)
+destroy(::Type{T}, N::Int) where {T<:Number} = QuantumObject(spdiagm(1 => Array{T}(sqrt.(1:(N - 1)))), Operator(), N)
 
 @doc raw"""
-    create(N::Int)
+    create([T::Type=ComplexF64,] N::Int)
 
-Bosonic creation operator with Hilbert space cutoff `N`.
+Bosonic creation operator with Hilbert space cutoff `N` with target element type `T = ComplexF64` (default).
 
 This operator acts on a fock state as ``\hat{a}^\dagger \ket{n} = \sqrt{n+1} \ket{n+1}``.
 
@@ -125,12 +144,12 @@ julia> fock(20, 4)' * a_d * fock(20, 3)
 2.0 + 0.0im
 ```
 """
-create(N::Int) = QuantumObject(spdiagm(-1 => Array{ComplexF64}(sqrt.(1:(N - 1)))), Operator(), N)
+create(::Type{T}, N::Int) where {T <: Number} = QuantumObject(spdiagm(-1 => Array{T}(sqrt.(1:(N - 1)))), Operator(), N)
 
 @doc raw"""
-    displace(N::Int, α::Number)
+    displace([T::Type=ComplexF64,] N::Int, α::Number)
 
-Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator):
+Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator) with target element type `T = ComplexF64` (default):
 
 ```math
 \hat{D}(\alpha)=\exp\left( \alpha \hat{a}^\dagger - \alpha^* \hat{a} \right),
@@ -138,8 +157,8 @@ Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_op
 
 where ``\hat{a}`` is the bosonic annihilation operator, and ``\alpha`` is the amount of displacement in optical phase space.
 """
-function displace(N::Int, α::T) where {T <: Number}
-    a = destroy(N)
+function displace(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number}
+    a = destroy(Base.promote_type(T, Tα), N)
     return exp(α * a' - α' * a)
 end
 

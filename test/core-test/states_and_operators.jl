@@ -465,4 +465,15 @@
         @inferred qft(20)
         @inferred qft((2, 10))
     end
+
+    @testset "Element types" begin
+        N = 2
+        type_list = [ComplexF32, Complex{BigFloat}]
+        for T in type_list
+            @test T == eltype(zero_ket(T, N))
+            @test T == eltype(fock(T, N, 0; sparse = Val(true)))
+            @test T == eltype(fock(T, N, 0; sparse = Val(false)))
+            @test T == eltype(rand_ket(T, N))
+        end
+    end
 end

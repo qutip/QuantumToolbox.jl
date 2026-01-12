@@ -2,15 +2,35 @@
 Functions for generating (common) quantum states.
 =#
 
-export zero_ket, fock, coherent, rand_ket
-export fock_dm, coherent_dm, thermal_dm, maximally_mixed_dm, rand_dm
+export fock_dm, thermal_dm, maximally_mixed_dm, rand_dm
 export spin_state, spin_coherent
 export bell_state, singlet_state, triplet_states, w_state, ghz_state
 
-@doc raw"""
-    zero_ket(dimensions)
+_gen_state_func_list = (
+    :zero_ket, :fock, :coherent, :rand_ket,
+    #=:fock_dm,=# :coherent_dm, #=:thermal_dm,
+    :maximally_mixed_dm,
+    :rand_dm,
+    :spin_state,
+    :spin_coherent,
+    :bell_state,
+    :singlet_state,
+    :triplet_states,
+    :w_state,
+    :ghz_state, =#
+)
 
-Returns a zero [`Ket`](@ref) vector with given argument `dimensions`.
+for f in _gen_state_func_list
+    @eval begin
+        export $(f)
+        $(f)(args...; kwargs...) = $(f)(ComplexF64, args...; kwargs...)
+    end
+end
+
+@doc raw"""
+    zero_ket([T::Type=ComplexF64,] dimensions)
+
+Returns a zero [`Ket`](@ref) vector with given argument `dimensions` and target element type `T = ComplexF64` (default).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -19,15 +39,15 @@ The `dimensions` can be either the following types:
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket(), dimensions)
-zero_ket(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) =
-    QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket(), dimensions)
+zero_ket(::Type{T}, dimensions::Int) where {T<:Number} = QuantumObject(zeros(T, dimensions), Ket(), dimensions)
+zero_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T<:Number} =
+    QuantumObject(zeros(T, prod(dimensions)), Ket(), dimensions)
 
 @doc raw"""
-    fock(N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
-    basis(N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
+    fock([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
+    basis([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
 
-Generates a fock state ``\ket{\psi}`` of dimension `N`. 
+Generates a fock state ``\ket{\psi}`` of dimension `N` with target element type `T = ComplexF64` (default).
 
 It is also possible to specify the list of dimensions `dims` if different subsystems are present.
 
@@ -37,29 +57,33 @@ It is also possible to specify the list of dimensions `dims` if different subsys
 !!! note
     `basis(N, j; dims = dims, sparse = sparse)` is a synonym of `fock(N, j; dims = dims, sparse = sparse)`.
 """
-function fock(N::Int, j::Int = 0; dims::Union{Int, AbstractVector{Int}, Tuple} = N, sparse::Union{Bool, Val} = Val(false))
+function fock(::Type{T}, N::Int, j::Int = 0; dims::Union{Int, AbstractVector{Int}, Tuple} = N, sparse::Union{Bool, Val} = Val(false)) where {T <: Number}
     (0 <= j < N) || throw(ArgumentError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
     if getVal(sparse)
-        array = sparsevec([j + 1], [1.0 + 0im], N)
+        array = sparsevec([j + 1], [one(T) + zero(T) * im], N)
     else
-        array = [i == (j + 1) ? 1.0 + 0im : 0.0 + 0im for i in 1:N]
+        zero_imag = zero(T) * im
+        array = [i == (j + 1) ? one(T) + zero_imag : zero_imag for i in 1:N]
     end
     return QuantumObject(array; type = Ket(), dims = dims)
 end
 
 @doc raw"""
-    coherent(N::Int, α::Number)
+    coherent([T::Type=ComplexF64,] N::Int, α::Number)
 
-Generates a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) ``|\alpha\rangle``, which is defined as an eigenvector of the bosonic annihilation operator ``\hat{a} |\alpha\rangle = \alpha |\alpha\rangle``.
+Generates a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) ``|\alpha\rangle``, which is defined as an eigenvector of the bosonic annihilation operator ``\hat{a} |\alpha\rangle = \alpha |\alpha\rangle``. The target element type `T = ComplexF64` (default).
 
 This state is constructed via the displacement operator [`displace`](@ref) and zero-fock state [`fock`](@ref): ``|\alpha\rangle = \hat{D}(\alpha) |0\rangle``
 """
-coherent(N::Int, α::T) where {T <: Number} = displace(N, α) * fock(N, 0)
+function coherent(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number}
+    T_new = Base.promote_type(T, Tα)
+    return displace(T_new, N, α) * fock(T_new, N, 0)
+end
 
 @doc raw"""
     rand_ket([T::Type=ComplexF64,] dimensions)
 
-Generate a random normalized [`Ket`](@ref) vector with given argument `dimensions` and target element type `T`.
+Generate a random normalized [`Ket`](@ref) vector with given argument `dimensions` and target element type `T = ComplexF64` (default).
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -68,8 +92,6 @@ The `dimensions` can be either the following types:
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-rand_ket(dimensions::Int) = rand_ket(SVector(dimensions))
-rand_ket(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) = rand_ket(ComplexF64, dimensions)
 rand_ket(::Type{T}, dimensions::Int) where {T <: Number} = rand_ket(T, SVector(dimensions))
 function rand_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number}
     N = prod(dimensions)
@@ -98,16 +120,13 @@ function fock_dm(
 end
 
 @doc raw"""
-    coherent_dm(N::Int, α::Number)
+    coherent_dm([T::Type=ComplexF64,] N::Int, α::Number)
 
-Density matrix representation of a [coherent state](https://en.wikipedia.org/wiki/Coherent_state).
+Density matrix representation of a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) with target element type `T = ComplexF64` (default).
 
 Constructed via outer product of [`coherent`](@ref).
 """
-function coherent_dm(N::Int, α::T) where {T <: Number}
-    ψ = coherent(N, α)
-    return ket2dm(ψ)
-end
+coherent_dm(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number} = ket2dm(coherent(T, N, α))
 
 @doc raw"""
     thermal_dm(N::Int, n::Real; sparse::Union{Bool,Val}=Val(false))
