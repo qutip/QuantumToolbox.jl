@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restrict `CUDA.jl` version compatibility to < 5.9.6 due to breaking changes in that release. ([#630])
 - Move from `JuliaFormatter.jl` to `Runic.jl` for code formatting. ([#633])
 - Improve eigsolve_al initial state handling and returned values and vectors. ([#636])
+- Convert `tlist` to promoted type in all time evolution solvers. ([#638])
 
 ## [v0.40.0]
 Release date: 2025-12-21
@@ -409,3 +410,4 @@ Release date: 2024-11-13
 [#630]: https://github.com/qutip/QuantumToolbox.jl/issues/630
 [#633]: https://github.com/qutip/QuantumToolbox.jl/issues/633
 [#636]: https://github.com/qutip/QuantumToolbox.jl/issues/636
+[#638]: https://github.com/qutip/QuantumToolbox.jl/issues/638

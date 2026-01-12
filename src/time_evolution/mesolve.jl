@@ -105,8 +105,6 @@ function mesolveProblem(
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    tlist = _check_tlist(tlist, _float_type(ψ0))
-
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
     check_dimensions(L_evo, ψ0)
 
@@ -121,6 +119,8 @@ function mesolveProblem(
     end
 
     L = cache_operator(L_evo.data, ρ0)
+
+    tlist = _check_tlist(tlist, _float_type(T))
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(L), tlist)

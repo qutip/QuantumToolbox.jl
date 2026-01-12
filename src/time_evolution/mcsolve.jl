@@ -125,11 +125,11 @@ function mcsolveProblem(
     c_ops isa Nothing &&
         throw(ArgumentError("The list of collapse operators must be provided. Use sesolveProblem instead."))
 
-    tlist = _check_tlist(tlist, _float_type(ψ0))
-
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
 
-    T = Base.promote_eltype(H_eff_evo, ψ0)
+    T = _complex_float_type(Base.promote_eltype(H_eff_evo, ψ0))
+
+    tlist = _check_tlist(tlist, _float_type(T))
 
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
     default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., progress_bar = Val(false))
