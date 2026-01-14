@@ -81,5 +81,11 @@ end
     c_op_mesolve = _convert_c_ops(c_op_fmmesolve, spectrum, vp, ep)
 
     #Solve the floquet markov master equation
-    p_ex = fmmesolve()    
+    p_ex = fmmesolve(H, psi0, tlist, c_op_fmmesolve, spectrum, T; e_ops = [num(2)], saveat = tlist).expect
+    
+    #compare with mesolve
+    p_ex_ref = mesolve(H, psi0, tlist, c_op_mesolve; e_ops = [num(2)]).expect
+
+    @test real.p_ex ≈ real.p_ex_ref atol=1e-4
+
 end
