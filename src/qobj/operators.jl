@@ -57,14 +57,17 @@ function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{In
     Z = randn(T, N, N)
 
     # generate Hermitian matrix
-    # TODO: remove to_sparse, we make H sparse here because the following method currently does not exist : exp(::Matrix{Complex{BigFloat}})
-    H = QuantumObject(to_sparse((Z + Z') / 2); type = Operator(), dims = dimensions)
-
-    return to_dense(exp(-im * H))
+    # make it a Qobj first, cause we need Qobj-ver. of exp() for special case in _rand_unitary_exp later
+    H = QuantumObject((Z + Z') / 2; type = Operator(), dims = dimensions)
+    return to_dense(_rand_unitary_exp(H))
 end
 rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{Td}) where {T <: Number, Td} =
     throw(ArgumentError("Invalid distribution: $(Td)"))
 rand_unitary(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) = rand_unitary(ComplexF64, dimensions, distribution)
+
+# we make H sparse here because the following method currently does not exist : exp(::Matrix{Complex{BigFloat}})
+_rand_unitary_exp(H::QuantumObject{Operator, <:AbstractDimensions, Matrix{Complex{BigFloat}}}) = exp(-im * to_sparse(H))
+_rand_unitary_exp(H::QuantumObject{Operator, <:AbstractDimensions, <:AbstractArray}) = exp(-im * H)
 
 @doc raw"""
     commutator(A::QuantumObject, B::QuantumObject; anti::Bool=false)
@@ -101,11 +104,7 @@ julia> fock(20, 3)' * a * fock(20, 4)
 2.0 + 0.0im
 ```
 """
-function destroy(::Type{T}, N::Int) where {T <: Number}
-    T_float = _float_type(T)
-    data = T[sqrt(T_float(val)) for val in 1:(N - 1)]
-    return QuantumObject(spdiagm(1 => data), Operator(), N)
-end
+destroy(::Type{T}, N::Int) where {T <: Number} = QuantumObject(spdiagm(1 => T[sqrt(T(val)) for val in 1:(N - 1)]), Operator(), N)
 destroy(N::Int) = destroy(ComplexF64, N)
 
 @doc raw"""
@@ -132,11 +131,7 @@ julia> fock(20, 4)' * a_d * fock(20, 3)
 2.0 + 0.0im
 ```
 """
-function create(::Type{T}, N::Int) where {T <: Number}
-    T_float = _float_type(T)
-    data = T[sqrt(T_float(val)) for val in 1:(N - 1)]
-    return QuantumObject(spdiagm(-1 => data), Operator(), N)
-end
+create(::Type{T}, N::Int) where {T <: Number} = QuantumObject(spdiagm(-1 => T[sqrt(T(val)) for val in 1:(N - 1)]), Operator(), N)
 create(N::Int) = create(ComplexF64, N)
 
 @doc raw"""
@@ -151,10 +146,14 @@ Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_op
 where ``\hat{a}`` is the bosonic annihilation operator, and ``\alpha`` is the amount of displacement in optical phase space.
 """
 function displace(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number}
-    T_new = Base.promote_type(T, Tα)
-    a = destroy(T_new, N)
-    α_new = T_new(α)
-    return exp(α_new * a' - conj(α_new) * a)
+    Base.promote_type(T, Tα) == T || throw(
+        ArgumentError(
+            "Type mismatch: Input `α` has type `$Tα`, which cannot be converted to the requested element type `$T`.\n" *
+                "To resolve this, specify the element type to match the input precision: displace($(Base.promote_type(T, Tz)), N, α)"
+        )
+    )
+    a = destroy(T, N)
+    return exp(α * a' - conj(α) * a)
 end
 displace(N::Int, α::Tα) where {Tα <: Number} = displace(ComplexF64, N, α)
 
@@ -170,10 +169,14 @@ Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_
 where ``\hat{a}`` is the bosonic annihilation operator.
 """
 function squeeze(::Type{T}, N::Int, z::Tz) where {T <: Number, Tz <: Number}
-    T_new = Base.promote_type(T, Tz)
-    z_new = T_new(z)
-    a_sq = destroy(T_new, N)^2
-    return exp((conj(z_new) * a_sq - z_new * a_sq') / 2)
+    Base.promote_type(T, Tz) == T || throw(
+        ArgumentError(
+            "Type mismatch: Input `z` has type `$Tz`, which cannot be converted to the requested element type `$T`.\n" *
+                "To resolve this, specify the element type to match the input precision: squeeze($(Base.promote_type(T, Tz)), N, z)"
+        )
+    )
+    a_sq = destroy(T, N)^2
+    return exp((conj(z) * a_sq - z * a_sq') / 2)
 end
 squeeze(N::Int, z::Tz) where {Tz <: Number} = squeeze(ComplexF64, N, z)
 
@@ -196,7 +199,7 @@ This operator is defined as ``\hat{x}=\frac{1}{\sqrt{2}} (\hat{a}^\dagger + \hat
 """
 function position(::Type{T}, N::Int) where {T <: Number}
     a = destroy(T, N)
-    return (a' + a) / sqrt(_float_type(T)(2))
+    return (a' + a) / sqrt(T(2))
 end
 position(N::Int) = position(ComplexF64, N)
 
@@ -209,7 +212,7 @@ This operator is defined as ``\hat{p}= \frac{i}{\sqrt{2}} (\hat{a}^\dagger - \ha
 """
 function momentum(::Type{T}, N::Int) where {T <: Number}
     a = destroy(T, N)
-    return (a - a') / (im * sqrt(_float_type(T)(2)))
+    return (a - a') / (im * sqrt(T(2)))
 end
 momentum(N::Int) = momentum(ComplexF64, N)
 
@@ -240,13 +243,15 @@ and
 - [Michael Martin Nieto, QUANTUM PHASE AND QUANTUM PHASE OPERATORS: Some Physics and Some History, arXiv:hep-th/9304036](https://arxiv.org/abs/hep-th/9304036), Equation (30-32).
 """
 function phase(::Type{T}, N::Int, ϕ0::Tϕ = 0) where {T <: Number, Tϕ <: Real}
-    T_new = Base.promote_type(T, Tϕ)
-    T_float = _float_type(T_new)
-    N_float = T_float(N)
-    N_sqrt = sqrt(N_float)
+    Base.promote_type(T, Tϕ) == T || throw(
+        ArgumentError(
+            "Type mismatch: Input `ϕ0` has type `$Tϕ`, which cannot be converted to the requested element type `$T`.\n" *
+                "To resolve this, specify the element type to match the input precision: phase($(Base.promote_type(T, Tϕ)), N, ϕ0)"
+        )
+    )
     N_list = collect(0:(N - 1))
-    ϕ = T_new(ϕ0) .+ (2 * T_float(π) / N_float) .* N_list
-    states = [exp.(im * ϕ[m] .* N_list) ./ N_sqrt for m in 1:N]
+    ϕ = T(ϕ0) .+ (2 * T(π) / N) .* N_list
+    states = [exp.(im * ϕ[m] .* N_list) ./ sqrt(T(N)) for m in 1:N]
     return QuantumObject(sum([ϕ[m] * states[m] * states[m]' for m in 1:N]); type = Operator(), dims = N)
 end
 phase(N::Int, ϕ0::Tϕ = 0) where {Tϕ <: Real} = phase(ComplexF64, N, ϕ0)
@@ -338,18 +343,12 @@ jmat(j::Real, which::Union{Symbol, Val}) = jmat(ComplexF64, j, which)
 jmat(j::Real) = jmat(ComplexF64, j)
 
 function _jm(::Type{T}, j::Real) where {T <: Number}
-    T_float = _float_type(T)
-    j_float = T_float(j)
-    m = j_float:(-1):(-j_float)
-    z0 = zero(T_float) # for 0.0 in imaginary part
-    data = @. complex(sqrt(j_float * (j_float + 1) - m * (m - 1)), z0)
+    m = T.(j:(-1):(-j))
+    data = @. sqrt(T(j * (j + 1)) - m * (m - 1))
     return spdiagm(-1 => data[1:(end - 1)])
 end
 function _jz(::Type{T}, j::Real) where {T <: Number}
-    T_float = _float_type(T)
-    j_float = T_float(j)
-    z0 = zero(T_float) # for 0.0 in imaginary part
-    data = @. complex(j_float - (0:Int(2 * j)), z0)
+    data = @. T(j) - (0:Int(2 * j))
     return spdiagm(0 => data)
 end
 
@@ -613,10 +612,9 @@ qft(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where 
 qft(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = qft(ComplexF64, dimensions)
 
 function _qft_op(::Type{T}, N::Int) where {T <: Number}
-    T_float = _float_type(T)
-    N_float = T_float(N)
-    ω = exp(2im * T_float(π) / N_float)
+    N_T = T(N)
+    ω = exp(T(2) * im * T(π) / N_T)
     arr = 0:(N - 1)
     L, M = meshgrid(arr, arr)
-    return ω .^ (L .* M) / sqrt(N_float)
+    return ω .^ (L .* M) / sqrt(N_T)
 end

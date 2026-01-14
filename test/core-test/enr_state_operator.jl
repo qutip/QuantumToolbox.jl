@@ -62,8 +62,8 @@
 
         # general case (also test BigFloat)
         nvec = BigFloat[0.123, 0.456, 0.789]
-        ρTd = enr_thermal_dm(space_enr, nvec)
-        ρTs = enr_thermal_dm(space_enr, nvec; sparse = Val(true))
+        ρTd = enr_thermal_dm(Complex{BigFloat}, space_enr, nvec)
+        ρTs = enr_thermal_dm(Complex{BigFloat}, space_enr, nvec; sparse = Val(true))
         @test isoper(ρTd)
         @test tr(ρTd) ≈ tr(ρTs) ≈ 1.0
         @test diag(ρTd) ≈ Float64[

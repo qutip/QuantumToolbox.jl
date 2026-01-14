@@ -192,8 +192,14 @@ function enr_thermal_dm(
         n::Union{Tn, AbstractVector{Tn}};
         sparse::Union{Bool, Val} = Val(false),
     ) where {T <: Number, N, Tn <: Real}
-    T_float = _float_type(Base.promote_type(T, Tn))
+    Base.promote_type(T, Tn) == T || throw(
+        ArgumentError(
+            "Type mismatch: Input `n` has type `$Tn`, which cannot be converted to the requested element type `$T`.\n" *
+                "To resolve this, specify the element type to match the input precision: enr_thermal_dm($(Base.promote_type(T, Tn)), ...)"
+        )
+    )
 
+    T_float = _float_type(T) # we need float type for logarithm calculation
     if n isa Real
         nvec = fill(T_float(n), N)
     else
@@ -204,10 +210,9 @@ function enr_thermal_dm(
     D = s_enr.size
     idx2state = s_enr.idx2state
 
-    z0 = zero(T_float) # for 0.0 in imaginary part
     β = @. log(1 + 1 / nvec)
-    P = [
-        complex(prod(_Boltzmann_weight(β[k], n_excite) for (k, n_excite) in pairs(idx2state[idx])), z0) for idx in 1:D
+    P = T[
+        prod(_Boltzmann_weight(β[k], n_excite) for (k, n_excite) in pairs(idx2state[idx])) for idx in 1:D
     ]
     P /= sum(P)
     if getVal(sparse)
@@ -244,8 +249,6 @@ function enr_destroy(::Type{T}, s_enr::EnrSpace{N}) where {T <: Number, N}
     J_list = [Int64[] for _ in 1:N]
     V_list = [T[] for _ in 1:N]
 
-    T_float = _float_type(T)
-    z0 = zero(T_float) # for 0.0 in imaginary part
     for (n1, state1) in idx2state
         for (idx, s) in pairs(state1)
             # if s > 0, the annihilation operator of mode idx has a non-zero
@@ -256,7 +259,7 @@ function enr_destroy(::Type{T}, s_enr::EnrSpace{N}) where {T <: Number, N}
                 n2 = state2idx[state2]
                 push!(I_list[idx], n2)
                 push!(J_list[idx], n1)
-                push!(V_list[idx], complex(sqrt(T_float(s)), z0))
+                push!(V_list[idx], sqrt(T(s)))
             end
         end
     end

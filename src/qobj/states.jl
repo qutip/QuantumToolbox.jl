@@ -41,10 +41,10 @@ It is also possible to specify the list of dimensions `dims` if different subsys
 function fock(::Type{T}, N::Int, j::Int = 0; dims::Union{Int, AbstractVector{Int}, Tuple} = N, sparse::Union{Bool, Val} = Val(false)) where {T <: Number}
     (0 <= j < N) || throw(ArgumentError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
     if getVal(sparse)
-        array = sparsevec([j + 1], [one(T) + zero(T) * im], N)
+        array = sparsevec([j + 1], [one(T)], N)
     else
-        zero_imag = zero(T) * im
-        array = [i == (j + 1) ? one(T) + zero_imag : zero_imag for i in 1:N]
+        z0 = zero(T)
+        array = [i == (j + 1) ? one(T) : z0 for i in 1:N]
     end
     return QuantumObject(array; type = Ket(), dims = dims)
 end
@@ -58,8 +58,13 @@ Generates a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) ``|\a
 This state is constructed via the displacement operator [`displace`](@ref) and zero-fock state [`fock`](@ref): ``|\alpha\rangle = \hat{D}(\alpha) |0\rangle``
 """
 function coherent(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number}
-    T_new = Base.promote_type(T, Tα)
-    return displace(T_new, N, α) * fock(T_new, N, 0)
+    Base.promote_type(T, Tα) == T || throw(
+        ArgumentError(
+            "Type mismatch: Input `α` has type `$Tα`, which cannot be converted to the requested element type `$T`.\n" *
+                "To resolve this, specify the element type to match the input precision: coherent($(Base.promote_type(T, Tα)), N, α)"
+        )
+    )
+    return displace(T, N, α) * fock(T, N, 0)
 end
 coherent(N::Int, α::Tα) where {Tα <: Number} = coherent(ComplexF64, N, α)
 
@@ -127,10 +132,14 @@ Density matrix for a thermal state (generating thermal state probabilities) with
     If you want to keep type stability, it is recommended to use `thermal_dm(N, n, sparse=Val(sparse))` instead of `thermal_dm(N, n, sparse=sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function thermal_dm(::Type{T}, N::Int, n::Tn; sparse::Union{Bool, Val} = Val(false)) where {T <: Number, Tn <: Real}
-    T_float = _float_type(Base.promote_type(T, Tn))
-    z0 = zero(T_float) # for 0.0 in imaginary part
-    β = log(1 + 1 / T_float(n))
-    P = [complex(_Boltzmann_weight(β, j), z0) for j in 0:(N - 1)]
+    Base.promote_type(T, Tn) == T || throw(
+        ArgumentError(
+            "Type mismatch: Input `n` has type `$Tn`, which cannot be converted to the requested element type `$T`.\n" *
+                "To resolve this, specify the element type to match the input precision: thermal_dm($(Base.promote_type(T, Tn)), ...)"
+        )
+    )
+    β = log(1 + 1 / _float_type(T)(n)) # we need float type for logarithm calculation
+    P = T[_Boltzmann_weight(β, j) for j in 0:(N - 1)]
     P /= sum(P)
     if getVal(sparse)
         return QuantumObject(spdiagm(0 => P), Operator(), N)
@@ -153,7 +162,7 @@ The `dimensions` can be either the following types:
     If you want to keep type stability, it is recommended to use `maximally_mixed_dm(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 maximally_mixed_dm(::Type{T}, dimensions::Int) where {T <: Number} =
-    QuantumObject(diagm(0 => fill(1 / T(dimensions), dimensions))::Matrix{T}, Operator(), SVector(dimensions)) # TODO: remove `::Matrix{T}` if JET.jl fix this issue.
+    QuantumObject(diagm(0 => fill(1 / T(dimensions), dimensions))::Matrix{T}, Operator(), SVector(dimensions)) # TODO: remove `::Matrix{T}` if JET.jl fix https://github.com/aviatesk/JET.jl/issues/790
 function maximally_mixed_dm(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number}
     N = prod(dimensions)
     return QuantumObject(diagm(0 => fill(1 / T(N), N)), Operator(), dimensions)
@@ -247,10 +256,15 @@ See also [`jmat`](@ref) and [`spin_state`](@ref).
 - [Robert Jones, Spin Coherent States and Statistical Physics](https://web.mit.edu/8.334/www/grades/projects/projects19/JonesRobert.pdf)
 """
 function spin_coherent(::Type{T}, j::Real, θ::Tθ, ϕ::Tϕ) where {T <: Number, Tθ <: Real, Tϕ <: Real}
-    T_new = Base.promote_type(T, Tθ, Tϕ)
-    iϕ = T_new(ϕ) * im
-    Sm = jmat(T_new, j, Val(:-))
-    return exp((T_new(θ) / 2) * (Sm * exp(iϕ) - Sm' * exp(-iϕ))) * spin_state(T_new, j, j)
+    Base.promote_type(T, Tθ, Tϕ) == T || throw(
+        ArgumentError(
+            "Type mismatch: Input `θ` and `ϕ` has type `$Tθ` and `$Tϕ`, which cannot be converted to the requested element type `$T`.\n" *
+                "To resolve this, specify the element type to match the input precision: spin_coherent($(Base.promote_type(T, Tθ, Tϕ)), N, j, θ, ϕ)"
+        )
+    )
+    iϕ = T(ϕ) * im
+    Sm = jmat(T, j, Val(:-))
+    return exp((T(θ) / 2) * (Sm * exp(iϕ) - Sm' * exp(-iϕ))) * spin_state(T, j, j)
 end
 spin_coherent(j::Real, θ::Tθ, ϕ::Tϕ) where {Tθ <: Real, Tϕ <: Real} = spin_coherent(ComplexF64, j, θ, ϕ)
 
@@ -291,10 +305,10 @@ Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
     If you want to keep type stability, it is recommended to use `bell_state(Val(x), Val(z))` instead of `bell_state(x, z)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) for more details.
 """
 bell_state(::Type{T}, x::Int, z::Int) where {T <: Number} = bell_state(T, Val(x), Val(z))
-bell_state(::Type{T}, ::Val{0}, ::Val{0}) where {T <: Number} = QuantumObject(T[1, 0, 0, 1] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
-bell_state(::Type{T}, ::Val{0}, ::Val{1}) where {T <: Number} = QuantumObject(T[1, 0, 0, -1] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
-bell_state(::Type{T}, ::Val{1}, ::Val{0}) where {T <: Number} = QuantumObject(T[0, 1, 1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
-bell_state(::Type{T}, ::Val{1}, ::Val{1}) where {T <: Number} = QuantumObject(T[0, 1, -1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
+bell_state(::Type{T}, ::Val{0}, ::Val{0}) where {T <: Number} = QuantumObject(T[1, 0, 0, 1] / sqrt(T(2)), Ket(), (2, 2))
+bell_state(::Type{T}, ::Val{0}, ::Val{1}) where {T <: Number} = QuantumObject(T[1, 0, 0, -1] / sqrt(T(2)), Ket(), (2, 2))
+bell_state(::Type{T}, ::Val{1}, ::Val{0}) where {T <: Number} = QuantumObject(T[0, 1, 1, 0] / sqrt(T(2)), Ket(), (2, 2))
+bell_state(::Type{T}, ::Val{1}, ::Val{1}) where {T <: Number} = QuantumObject(T[0, 1, -1, 0] / sqrt(T(2)), Ket(), (2, 2))
 bell_state(::Type{T}, ::Val{T1}, ::Val{T2}) where {T <: Number, T1, T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
 bell_state(x::Union{Int, Val}, z::Union{Int, Val}) = bell_state(ComplexF64, x, z)
 
@@ -303,7 +317,7 @@ bell_state(x::Union{Int, Val}, z::Union{Int, Val}) = bell_state(ComplexF64, x, z
 
 Return the two particle singlet state with element type `T = ComplexF64` (default): ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
 """
-singlet_state(::Type{T}) where {T <: Number} = QuantumObject(T[0, 1, -1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2))
+singlet_state(::Type{T}) where {T <: Number} = QuantumObject(T[0, 1, -1, 0] / sqrt(T(2)), Ket(), (2, 2))
 singlet_state() = singlet_state(ComplexF64)
 
 @doc raw"""
@@ -318,7 +332,7 @@ Return a list of the two particle triplet states with element type `T = ComplexF
 function triplet_states(::Type{T}) where {T <: Number}
     return QuantumObject[
         QuantumObject(T[0, 0, 0, 1], Ket(), (2, 2)),
-        QuantumObject(T[0, 1, 1, 0] / sqrt(_float_type(T)(2)), Ket(), (2, 2)),
+        QuantumObject(T[0, 1, 1, 0] / sqrt(T(2)), Ket(), (2, 2)),
         QuantumObject(T[1, 0, 0, 0], Ket(), (2, 2)),
     ]
 end
@@ -340,7 +354,7 @@ function w_state(::Type{T}, ::Val{n}) where {T <: Number, n}
     (n >= 2) || throw(ArgumentError("Invalid argument n, must satisfy: n ≥ 2"))
 
     nzind = 2 .^ (0:(n - 1)) .+ 1
-    nzval = fill(1 / sqrt(_float_type(T)(n)), n)
+    nzval = fill(1 / sqrt(T(n)), n)
     data = zeros(T, 2^n)
     @inbounds data[nzind] .= nzval
     return QuantumObject(data, Ket(), ntuple(x -> 2, Val(n)))
@@ -367,7 +381,7 @@ function ghz_state(::Type{T}, ::Val{n}; d::Int = 2) where {T <: Number, n}
     (d >= 2) || throw(ArgumentError("Invalid argument d, must satisfy: d ≥ 2"))
 
     nzind = collect((0:(d - 1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
-    nzval = fill(1 / sqrt(_float_type(T)(d)), d)
+    nzval = fill(1 / sqrt(T(d)), d)
     data = zeros(T, d^n)
     @inbounds data[nzind] .= nzval
     return QuantumObject(data, Ket(), ntuple(x -> d, Val(n)))
