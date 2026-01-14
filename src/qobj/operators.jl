@@ -149,7 +149,7 @@ function displace(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number}
     Base.promote_type(T, Tα) == T || throw(
         ArgumentError(
             "Type mismatch: Input `α` has type `$Tα`, which cannot be converted to the requested element type `$T`.\n" *
-                "To resolve this, specify the element type to match the input precision: displace($(Base.promote_type(T, Tz)), N, α)"
+                "To resolve this, specify the element type to match the input precision: displace($(Base.promote_type(T, Tα)), N, α)"
         )
     )
     a = destroy(T, N)
