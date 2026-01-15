@@ -23,14 +23,14 @@ end
 _generate_se_me_kwargs(e_ops::Nothing, progress_bar::Val{false}, tlist, kwargs, method) = kwargs
 
 function _generate_stochastic_kwargs(
-    e_ops,
-    sc_ops,
-    progress_bar,
-    tlist,
-    store_measurement,
-    kwargs,
-    method::Type{SF},
-) where {SF<:AbstractSaveFunc}
+        e_ops,
+        sc_ops,
+        progress_bar,
+        tlist,
+        store_measurement,
+        kwargs,
+        method::Type{SF},
+    ) where {SF <: AbstractSaveFunc}
     cb_save = _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
 
     # Ensure that the noise is stored in tlist. # TODO: Fix this directly in DiffEqNoiseProcess.jl
@@ -52,7 +52,7 @@ _generate_stochastic_kwargs(
     store_measurement::Val{false},
     kwargs,
     method::Type{SF},
-) where {SF<:AbstractSaveFunc} = kwargs
+) where {SF <: AbstractSaveFunc} = kwargs
 
 function _merge_kwargs_with_callback(kwargs, cb)
     kwargs2 =
@@ -117,7 +117,7 @@ end
 #=
     To extract the measurement outcomes of a stochastic solver
 =#
-function _get_m_expvals(integrator::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
+function _get_m_expvals(integrator::AbstractODESolution, method::Type{SF}) where {SF <: AbstractSaveFunc}
     cb = _get_save_callback(integrator, method)
     if cb isa Nothing
         return nothing
@@ -130,7 +130,7 @@ end
     With this function we extract the e_ops from the SaveFuncMCSolve `affect!` function of the callback of the integrator.
     This callback can only be a FunctionCallingCallback (DiscreteCallback).
 =#
-function _get_e_ops(integrator::AbstractODEIntegrator, method::Type{SF}) where {SF<:AbstractSaveFunc}
+function _get_e_ops(integrator::AbstractODEIntegrator, method::Type{SF}) where {SF <: AbstractSaveFunc}
     cb = _get_save_callback(integrator, method)
     if cb isa Nothing
         return nothing
@@ -140,7 +140,7 @@ function _get_e_ops(integrator::AbstractODEIntegrator, method::Type{SF}) where {
 end
 
 # Get the e_ops from a given AbstractODESolution. Valid for `sesolve`, `mesolve` and `ssesolve`.
-function _get_expvals(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
+function _get_expvals(sol::AbstractODESolution, method::Type{SF}) where {SF <: AbstractSaveFunc}
     cb = _get_save_callback(sol, method)
     if cb isa Nothing
         return nothing
@@ -154,7 +154,7 @@ end
 
 Return the Callback that is responsible for saving the expectation values of the system.
 =#
-function _get_save_callback(sol::AbstractODESolution, method::Type{SF}) where {SF<:AbstractSaveFunc}
+function _get_save_callback(sol::AbstractODESolution, method::Type{SF}) where {SF <: AbstractSaveFunc}
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple to support Zygote.jl
     if hasproperty(kwargs, :callback) && !isnothing(kwargs.callback)
         return _get_save_callback(kwargs.callback, method)
@@ -162,9 +162,9 @@ function _get_save_callback(sol::AbstractODESolution, method::Type{SF}) where {S
         return nothing
     end
 end
-_get_save_callback(integrator::AbstractODEIntegrator, method::Type{SF}) where {SF<:AbstractSaveFunc} =
+_get_save_callback(integrator::AbstractODEIntegrator, method::Type{SF}) where {SF <: AbstractSaveFunc} =
     _get_save_callback(integrator.opts.callback, method)
-function _get_save_callback(cb::CallbackSet, method::Type{SF}) where {SF<:AbstractSaveFunc}
+function _get_save_callback(cb::CallbackSet, method::Type{SF}) where {SF <: AbstractSaveFunc}
     cbs_discrete = cb.discrete_callbacks
     if length(cbs_discrete) > 0
         idx = _get_save_callback_idx(cb, method)
@@ -174,13 +174,13 @@ function _get_save_callback(cb::CallbackSet, method::Type{SF}) where {SF<:Abstra
         return nothing
     end
 end
-function _get_save_callback(cb::DiscreteCallback, ::Type{SF}) where {SF<:AbstractSaveFunc}
+function _get_save_callback(cb::DiscreteCallback, ::Type{SF}) where {SF <: AbstractSaveFunc}
     if typeof(cb.affect!) <: FunctionCallingAffect && typeof(cb.affect!.func) <: AbstractSaveFunc
         return cb
     end
     return nothing
 end
-_get_save_callback(cb::ContinuousCallback, ::Type{SF}) where {SF<:AbstractSaveFunc} = nothing
+_get_save_callback(cb::ContinuousCallback, ::Type{SF}) where {SF <: AbstractSaveFunc} = nothing
 
 _get_save_callback_idx(cb, method) = 1
 
@@ -188,7 +188,7 @@ _get_save_callback_idx(cb, method) = 1
 
 # TODO: To improve. See https://github.com/SciML/DiffEqNoiseProcess.jl/issues/214
 function _homodyne_dWdt!(dWdt_cache, integrator, tlist, iter)
-    idx = findfirst(>=(tlist[iter[]-1]), integrator.W.t)
+    idx = findfirst(>=(tlist[iter[] - 1]), integrator.W.t)
 
     # We are assuming that the last element is tlist[iter[]]
     @inbounds dWdt_cache .= (integrator.W.u[end] .- integrator.W.u[idx]) ./ (integrator.W.t[end] - integrator.W.t[idx])

@@ -27,10 +27,10 @@
         # a separable state with subsystem dimension (3, 2)
         rho3_d = tensor(rand_dm(3), rand_dm(2))
         rho3_s = to_sparse(rho3_d)
-        @test abs(negativity(rho3_d, 1)) < 1e-10
-        @test abs(negativity(rho3_d, 2)) < 1e-10
-        @test abs(negativity(rho3_s, 1)) < 1e-10
-        @test abs(negativity(rho3_s, 2)) < 1e-10
+        @test abs(negativity(rho3_d, 1)) < 1.0e-10
+        @test abs(negativity(rho3_d, 2)) < 1.0e-10
+        @test abs(negativity(rho3_s, 1)) < 1.0e-10
+        @test abs(negativity(rho3_s, 2)) < 1.0e-10
 
         @testset "Type Inference (negativity)" begin
             @inferred negativity(rho1, 1)

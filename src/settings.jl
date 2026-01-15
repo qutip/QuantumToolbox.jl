@@ -1,5 +1,5 @@
 Base.@kwdef mutable struct Settings
-    tidyup_tol::Float64 = 1e-14
+    tidyup_tol::Float64 = 1.0e-14
     auto_tidyup::Bool = true
     ProgressMeterKWARGS::NamedTuple = (showspeed = true, printed = true)
 end

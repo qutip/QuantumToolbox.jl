@@ -5,7 +5,7 @@ export Lattice, multisite_operator, DissipativeIsing
 
 A Julia constructor for a lattice object. The lattice object is used to define the geometry of the lattice. `Nx` and `Ny` are the number of sites in the x and y directions, respectively. `N` is the total number of sites. `lin_idx` is a `LinearIndices` object and `car_idx` is a `CartesianIndices` object, and they are used to efficiently select sites on the lattice.
 """
-Base.@kwdef struct Lattice{TN<:Integer,TLI<:LinearIndices,TCI<:CartesianIndices}
+Base.@kwdef struct Lattice{TN <: Integer, TLI <: LinearIndices, TCI <: CartesianIndices}
     Nx::TN
     Ny::TN
     N::TN = Nx * Ny
@@ -42,7 +42,7 @@ julia> op.dims
  2
 ```
 """
-function multisite_operator(dims::Union{AbstractVector,Tuple}, pairs::Pair{<:Integer,<:QuantumObject}...)
+function multisite_operator(dims::Union{AbstractVector, Tuple}, pairs::Pair{<:Integer, <:QuantumObject}...)
     sites_unsorted = collect(first.(pairs))
     idxs = sortperm(sites_unsorted)
     _sites = sites_unsorted[idxs]
@@ -53,20 +53,20 @@ function multisite_operator(dims::Union{AbstractVector,Tuple}, pairs::Pair{<:Int
 
     _dims[sites] == [get_dimensions_to(op)[1].size for op in ops] || throw(ArgumentError("The dimensions of the operators do not match the dimensions of the lattice."))
 
-    data = kron(Eye(prod(_dims[1:(sites[1]-1)])), ops[1].data)
+    data = kron(Eye(prod(_dims[1:(sites[1] - 1)])), ops[1].data)
     for i in 2:length(sites)
-        data = kron(data, Eye(prod(_dims[(sites[i-1]+1):(sites[i]-1)])), ops[i].data)
+        data = kron(data, Eye(prod(_dims[(sites[i - 1] + 1):(sites[i] - 1)])), ops[i].data)
     end
-    data = kron(data, Eye(prod(_dims[(sites[end]+1):end])))
+    data = kron(data, Eye(prod(_dims[(sites[end] + 1):end])))
 
     return QuantumObject(data; type = Operator(), dims = dims)
 end
-function multisite_operator(N::Union{Integer,Val}, pairs::Pair{<:Integer,<:QuantumObject}...)
+function multisite_operator(N::Union{Integer, Val}, pairs::Pair{<:Integer, <:QuantumObject}...)
     dims = ntuple(j -> 2, makeVal(N))
 
     return multisite_operator(dims, pairs...)
 end
-function multisite_operator(latt::Lattice, pairs::Pair{<:Integer,<:QuantumObject}...)
+function multisite_operator(latt::Lattice, pairs::Pair{<:Integer, <:QuantumObject}...)
     return multisite_operator(makeVal(latt.N), pairs...)
 end
 
@@ -116,17 +116,17 @@ and the collapse operators
 - `order::Integer`: The order of the nearest-neighbour sites. The default value is 1.
 """
 function DissipativeIsing(
-    Jx::Real,
-    Jy::Real,
-    Jz::Real,
-    hx::Real,
-    hy::Real,
-    hz::Real,
-    γ::Real,
-    latt::Lattice;
-    boundary_condition::Union{Symbol,Val} = Val(:periodic_bc),
-    order::Integer = 1,
-)
+        Jx::Real,
+        Jy::Real,
+        Jz::Real,
+        hx::Real,
+        hy::Real,
+        hz::Real,
+        γ::Real,
+        latt::Lattice;
+        boundary_condition::Union{Symbol, Val} = Val(:periodic_bc),
+        order::Integer = 1,
+    )
     S = [multisite_operator(latt, i => sigmam()) for i in 1:latt.N]
     c_ops = sqrt(γ) .* S
 

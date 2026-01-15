@@ -35,7 +35,7 @@ A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillia
 # Note
 Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more details about the available algorithms. For example, the preconditioners can be defined directly in the solver like: `SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (I, Diagonal(A))))`.
 """
-Base.@kwdef struct SteadyStateLinearSolver{MT<:Union{SciMLLinearSolveAlgorithm,Nothing}} <: SteadyStateSolver
+Base.@kwdef struct SteadyStateLinearSolver{MT <: Union{SciMLLinearSolveAlgorithm, Nothing}} <: SteadyStateSolver
     alg::MT = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
 end
 
@@ -50,16 +50,16 @@ end
 
 An ordinary differential equation (ODE) solver for solving [`steadystate`](@ref). It solves the stationary state based on [`mesolve`](@ref) with a termination condition.
 
-The termination condition of the stationary state ``|\rho\rangle\rangle`` is that either the following condition is `true`:
+The termination condition of the stationary state ``|\rho\rangle\!\rangle`` is that either the following condition is `true`:
 
 ```math
-\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}+|\hat{\rho}\rangle\rangle\rVert
+\lVert\frac{\partial |\hat{\rho}\rangle\!\rangle}{\partial t}\rVert \leq \textrm{reltol} \times\lVert\frac{\partial |\hat{\rho}\rangle\!\rangle}{\partial t}+|\hat{\rho}\rangle\!\rangle\rVert
 ```
 
 or
 
 ```math
-\lVert\frac{\partial |\hat{\rho}\rangle\rangle}{\partial t}\rVert \leq \textrm{abstol}
+\lVert\frac{\partial |\hat{\rho}\rangle\!\rangle}{\partial t}\rVert \leq \textrm{abstol}
 ```
 
 # Arguments
@@ -75,17 +75,17 @@ or
 For more details about the solving `alg`orithms, please refer to [`OrdinaryDiffEq.jl`](https://docs.sciml.ai/OrdinaryDiffEq/stable/).
 """
 Base.@kwdef struct SteadyStateODESolver{
-    MT<:AbstractODEAlgorithm,
-    ST<:Union{Nothing,QuantumObject},
-    TT<:Real,
-    RT<:Real,
-    AT<:Real,
-} <: SteadyStateSolver
+        MT <: AbstractODEAlgorithm,
+        ST <: Union{Nothing, QuantumObject},
+        TT <: Real,
+        RT <: Real,
+        AT <: Real,
+    } <: SteadyStateSolver
     alg::MT = DP5()
     ψ0::ST = nothing
     tmax::TT = Inf
-    terminate_reltol::RT = 1e-4
-    terminate_abstol::AT = 1e-6
+    terminate_reltol::RT = 1.0e-4
+    terminate_abstol::AT = 1.0e-6
 end
 
 @doc raw"""
@@ -99,7 +99,7 @@ A solver which solves [`steadystate_fourier`](@ref) by first extracting an effec
 !!! note
     This solver is only available for [`steadystate_fourier`](@ref).
 """
-Base.@kwdef struct SSFloquetEffectiveLiouvillian{SSST<:SteadyStateSolver} <: SteadyStateSolver
+Base.@kwdef struct SSFloquetEffectiveLiouvillian{SSST <: SteadyStateSolver} <: SteadyStateSolver
     steadystate_solver::SSST = SteadyStateDirectSolver()
 end
 
@@ -120,11 +120,11 @@ Solve the stationary state based on different solvers.
 - `kwargs`: The keyword arguments for the solver.
 """
 function steadystate(
-    H::AbstractQuantumObject{OpType},
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    solver::SteadyStateSolver = SteadyStateDirectSolver(),
-    kwargs...,
-) where {OpType<:Union{Operator,SuperOperator}}
+        H::AbstractQuantumObject{OpType},
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        solver::SteadyStateSolver = SteadyStateDirectSolver(),
+        kwargs...,
+    ) where {OpType <: Union{Operator, SuperOperator}}
     solver isa SSFloquetEffectiveLiouvillian && throw(
         ArgumentError(
             "The solver `SSFloquetEffectiveLiouvillian` is only available for the `steadystate_fourier` function.",
@@ -168,7 +168,7 @@ end
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateEigenSolver; kwargs...)
     N = prod(L.dimensions)
 
-    kwargs = merge((sigma = 1e-8, eigvals = 1), (; kwargs...))
+    kwargs = merge((sigma = 1.0e-8, eigvals = 1), (; kwargs...))
 
     ρss_vec = eigsolve(L; kwargs...).vectors[:, 1]
     ρss = reshape(ρss_vec, N, N)
@@ -233,10 +233,10 @@ _steadystate(
     L::QuantumObjectEvolution{SuperOperator},
     solver::T;
     kwargs...,
-) where {T<:Union{SteadyStateDirectSolver,SteadyStateEigenSolver,SteadyStateLinearSolver}} =
+) where {T <: Union{SteadyStateDirectSolver, SteadyStateEigenSolver, SteadyStateLinearSolver}} =
     throw(ArgumentError("$(get_typename_wrapper(solver)) does not support QobjEvo."))
 
-struct SteadyStateODECondition{CT<:AbstractArray}
+struct SteadyStateODECondition{CT <: AbstractArray}
     cache::CT
 end
 
@@ -336,22 +336,22 @@ In the case of `SSFloquetEffectiveLiouvillian`, instead, the effective Liouvilli
 - `kwargs...`: Additional keyword arguments to be passed to the solver.
 """
 function steadystate_fourier(
-    H_0::QuantumObject{OpType1},
-    H_p::QuantumObject{OpType2},
-    H_m::QuantumObject{OpType3},
-    ωd::Number,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    n_max::Integer = 2,
-    tol::R = 1e-8,
-    solver::FSolver = SteadyStateLinearSolver(),
-    kwargs...,
-) where {
-    OpType1<:Union{Operator,SuperOperator},
-    OpType2<:Union{Operator,SuperOperator},
-    OpType3<:Union{Operator,SuperOperator},
-    R<:Real,
-    FSolver<:SteadyStateSolver,
-}
+        H_0::QuantumObject{OpType1},
+        H_p::QuantumObject{OpType2},
+        H_m::QuantumObject{OpType3},
+        ωd::Number,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        n_max::Integer = 2,
+        tol::R = 1.0e-8,
+        solver::FSolver = SteadyStateLinearSolver(),
+        kwargs...,
+    ) where {
+        OpType1 <: Union{Operator, SuperOperator},
+        OpType2 <: Union{Operator, SuperOperator},
+        OpType3 <: Union{Operator, SuperOperator},
+        R <: Real,
+        FSolver <: SteadyStateSolver,
+    }
     L_0 = liouvillian(H_0, c_ops)
     L_p = liouvillian(H_p)
     L_m = liouvillian(H_m)
@@ -359,15 +359,15 @@ function steadystate_fourier(
 end
 
 function _steadystate_fourier(
-    L_0::QuantumObject{SuperOperator},
-    L_p::QuantumObject{SuperOperator},
-    L_m::QuantumObject{SuperOperator},
-    ωd::Number,
-    solver::SteadyStateLinearSolver;
-    n_max::Integer = 1,
-    tol::R = 1e-8,
-    kwargs...,
-) where {R<:Real}
+        L_0::QuantumObject{SuperOperator},
+        L_p::QuantumObject{SuperOperator},
+        L_m::QuantumObject{SuperOperator},
+        ωd::Number,
+        solver::SteadyStateLinearSolver;
+        n_max::Integer = 1,
+        tol::R = 1.0e-8,
+        kwargs...,
+    ) where {R <: Real}
     T1 = eltype(L_0)
     T2 = eltype(L_p)
     T3 = eltype(L_m)
@@ -395,7 +395,7 @@ function _steadystate_fourier(
     end
 
     v0 = zeros(T, n_fourier * N)
-    v0[n_max*N+1] = weight
+    v0[n_max * N + 1] = weight
 
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
     !haskey(kwargs, :abstol) && (kwargs = merge((; kwargs...), (abstol = tol,)))
@@ -406,15 +406,15 @@ function _steadystate_fourier(
 
     offset1 = n_max * N
     offset2 = (n_max + 1) * N
-    ρ0 = reshape(ρtot[(offset1+1):offset2], Ns, Ns)
+    ρ0 = reshape(ρtot[(offset1 + 1):offset2], Ns, Ns)
     ρ0_tr = tr(ρ0)
     ρ0 = ρ0 / ρ0_tr
     ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator(), dims = L_0.dimensions)
     ρtot = ρtot / ρ0_tr
 
     ρ_list = [ρ0]
-    for i in 0:(n_max-1)
-        ρi_m = reshape(ρtot[(offset1-(i+1)*N+1):(offset1-i*N)], Ns, Ns)
+    for i in 0:(n_max - 1)
+        ρi_m = reshape(ρtot[(offset1 - (i + 1) * N + 1):(offset1 - i * N)], Ns, Ns)
         ρi_m = QuantumObject(ρi_m, type = Operator(), dims = L_0.dimensions)
         push!(ρ_list, ρi_m)
     end
@@ -423,15 +423,15 @@ function _steadystate_fourier(
 end
 
 function _steadystate_fourier(
-    L_0::QuantumObject{SuperOperator},
-    L_p::QuantumObject{SuperOperator},
-    L_m::QuantumObject{SuperOperator},
-    ωd::Number,
-    solver::SSFloquetEffectiveLiouvillian;
-    n_max::Integer = 1,
-    tol::R = 1e-8,
-    kwargs...,
-) where {R<:Real}
+        L_0::QuantumObject{SuperOperator},
+        L_p::QuantumObject{SuperOperator},
+        L_m::QuantumObject{SuperOperator},
+        ωd::Number,
+        solver::SSFloquetEffectiveLiouvillian;
+        n_max::Integer = 1,
+        tol::R = 1.0e-8,
+        kwargs...,
+    ) where {R <: Real}
     check_dimensions(L_0, L_p, L_m)
 
     L_eff = liouvillian_floquet(L_0, L_p, L_m, ωd; n_max = n_max, tol = tol)

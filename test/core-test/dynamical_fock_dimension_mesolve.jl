@@ -41,7 +41,7 @@
         saveat = t_l,
     )
 
-    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
+    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1.0e-16))) < 0.01
     @test length(sol.states) == length(t_l)
     @test all(
         diff(getindex.(QuantumToolbox.dimensions_to_dims.(QuantumToolbox.get_dimensions_to.(sol.states)), 1)) .>= 0,
@@ -76,7 +76,7 @@
     dfd_params = (Δ = Δ, F = F, κ = κ)
     sol = dfd_mesolve(H_dfd1, ψ0, t_l, c_ops_dfd1, maxdims, dfd_params, e_ops = e_ops_dfd1, progress_bar = Val(false))
 
-    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) < 0.01
+    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1.0e-16))) < 0.01
 
     ######################
 
@@ -115,6 +115,6 @@
     dfd_params = (Δ = Δ, F = F, κ = κ, J = J)
     sol = dfd_mesolve(H_dfd2, ψ0, t_l, c_ops_dfd2, maxdims, dfd_params, e_ops = e_ops_dfd2, progress_bar = Val(false))
 
-    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1e-16))) +
-          sum(abs.((sol.expect[2, :] .- sol0.expect[2, :]) ./ (sol0.expect[2, :] .+ 1e-16))) < 0.01
+    @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1.0e-16))) +
+        sum(abs.((sol.expect[2, :] .- sol0.expect[2, :]) ./ (sol0.expect[2, :] .+ 1.0e-16))) < 0.01
 end

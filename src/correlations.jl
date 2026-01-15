@@ -24,16 +24,16 @@ Returns the two-time correlation function of three operators ``\hat{A}``, ``\hat
 If the initial state `ψ0` is given as `nothing`, then the [`steadystate`](@ref) will be used as the initial state. Note that this is only implemented if `H` is constant ([`QuantumObject`](@ref)).
 """
 function correlation_3op_2t(
-    H::AbstractQuantumObject{HOpType},
-    ψ0::Union{Nothing,QuantumObject{StateOpType}},
-    tlist::AbstractVector,
-    τlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator},
-    C::QuantumObject{Operator};
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}}
+        H::AbstractQuantumObject{HOpType},
+        ψ0::Union{Nothing, QuantumObject{StateOpType}},
+        tlist::AbstractVector,
+        τlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple},
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator},
+        C::QuantumObject{Operator};
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     # check tlist and τlist
     _check_correlation_time_list(tlist)
     _check_correlation_time_list(τlist)
@@ -71,15 +71,15 @@ Returns the two-time correlation function (with only one time coordinate ``\tau`
 If the initial state `ψ0` is given as `nothing`, then the [`steadystate`](@ref) will be used as the initial state. Note that this is only implemented if `H` is constant ([`QuantumObject`](@ref)).
 """
 function correlation_3op_1t(
-    H::AbstractQuantumObject{HOpType},
-    ψ0::Union{Nothing,QuantumObject{StateOpType}},
-    τlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator},
-    C::QuantumObject{Operator};
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}}
+        H::AbstractQuantumObject{HOpType},
+        ψ0::Union{Nothing, QuantumObject{StateOpType}},
+        τlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple},
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator},
+        C::QuantumObject{Operator};
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     corr = correlation_3op_2t(H, ψ0, [0], τlist, c_ops, A, B, C; kwargs...)
 
     return corr[1, :] # 1 means tlist[1] = 0
@@ -103,16 +103,16 @@ If the initial state `ψ0` is given as `nothing`, then the [`steadystate`](@ref)
 When `reverse=true`, the correlation function is calculated as ``\left\langle \hat{A}(t) \hat{B}(t + \tau) \right\rangle``.
 """
 function correlation_2op_2t(
-    H::AbstractQuantumObject{HOpType},
-    ψ0::Union{Nothing,QuantumObject{StateOpType}},
-    tlist::AbstractVector,
-    τlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator};
-    reverse::Bool = false,
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}}
+        H::AbstractQuantumObject{HOpType},
+        ψ0::Union{Nothing, QuantumObject{StateOpType}},
+        tlist::AbstractVector,
+        τlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple},
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator};
+        reverse::Bool = false,
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     C = eye(prod(H.dimensions), dims = H.dimensions)
     if reverse
         corr = correlation_3op_2t(H, ψ0, tlist, τlist, c_ops, A, B, C; kwargs...)
@@ -140,15 +140,15 @@ If the initial state `ψ0` is given as `nothing`, then the [`steadystate`](@ref)
 When `reverse=true`, the correlation function is calculated as ``\left\langle \hat{A}(0) \hat{B}(\tau) \right\rangle``.
 """
 function correlation_2op_1t(
-    H::AbstractQuantumObject{HOpType},
-    ψ0::Union{Nothing,QuantumObject{StateOpType}},
-    τlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple},
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator};
-    reverse::Bool = false,
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}}
+        H::AbstractQuantumObject{HOpType},
+        ψ0::Union{Nothing, QuantumObject{StateOpType}},
+        τlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple},
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator};
+        reverse::Bool = false,
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     corr = correlation_2op_2t(H, ψ0, [0], τlist, c_ops, A, B; reverse = reverse, kwargs...)
 
     return corr[1, :] # 1 means tlist[1] = 0

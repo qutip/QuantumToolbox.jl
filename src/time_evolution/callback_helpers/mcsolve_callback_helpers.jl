@@ -2,7 +2,7 @@
 Helper functions for the mcsolve callbacks.
 =#
 
-struct SaveFuncMCSolve{TE,IT,TEXPV} <: AbstractSaveFunc
+struct SaveFuncMCSolve{TE, IT, TEXPV} <: AbstractSaveFunc
     e_ops::TE
     iter::IT
     expvals::TEXPV
@@ -14,16 +14,16 @@ _get_save_callback_idx(cb, ::Type{SaveFuncMCSolve}) = _mcsolve_has_continuous_ju
 
 ##
 struct LindbladJump{
-    T1,
-    T2,
-    RNGType<:AbstractRNG,
-    RandT,
-    CT<:AbstractVector,
-    WT<:AbstractVector,
-    JTT<:AbstractVector,
-    JWT<:AbstractVector,
-    JTWIT,
-}
+        T1,
+        T2,
+        RNGType <: AbstractRNG,
+        RandT,
+        CT <: AbstractVector,
+        WT <: AbstractVector,
+        JTT <: AbstractVector,
+        JWT <: AbstractVector,
+        JTWIT,
+    }
     c_ops::T1
     c_ops_herm::T2
     traj_rng::RNGType
@@ -119,18 +119,18 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rn
 end
 
 function _lindblad_jump_affect!(
-    integrator,
-    c_ops,
-    c_ops_herm,
-    traj_rng,
-    random_n,
-    cache_mc,
-    weights_mc,
-    cumsum_weights_mc,
-    col_times,
-    col_which,
-    col_times_which_idx,
-)
+        integrator,
+        c_ops,
+        c_ops_herm,
+        traj_rng,
+        random_n,
+        cache_mc,
+        weights_mc,
+        cumsum_weights_mc,
+        col_times,
+        col_which,
+        col_times_which_idx,
+    )
     ψ = integrator.u
 
     @inbounds for i in eachindex(weights_mc)
@@ -171,11 +171,11 @@ function _mc_get_jump_callback(sol::AbstractODESolution)
 end
 _mc_get_jump_callback(integrator::AbstractODEIntegrator) = _mc_get_jump_callback(integrator.opts.callback)
 _mc_get_jump_callback(cb::CallbackSet) =
-    if _mcsolve_has_continuous_jump(cb)
-        return cb.continuous_callbacks[1]
-    else
-        return cb.discrete_callbacks[1]
-    end
+if _mcsolve_has_continuous_jump(cb)
+    return cb.continuous_callbacks[1]
+else
+    return cb.discrete_callbacks[1]
+end
 _mc_get_jump_callback(cb::ContinuousCallback) = cb
 _mc_get_jump_callback(cb::DiscreteCallback) = cb
 
@@ -239,7 +239,7 @@ function _mcsolve_initialize_callbacks(cb::CallbackSet, tlist, traj_rng)
         return CallbackSet(cb_continuous, (cb_jump, cb_save..., cb_discrete[3:end]...))
     end
 end
-function _mcsolve_initialize_callbacks(cb::CBT, tlist, traj_rng) where {CBT<:Union{ContinuousCallback,DiscreteCallback}}
+function _mcsolve_initialize_callbacks(cb::CBT, tlist, traj_rng) where {CBT <: Union{ContinuousCallback, DiscreteCallback}}
     _jump_affect! = _similar_affect!(cb.affect!, traj_rng)
     return _modify_field(cb, :affect!, _jump_affect!)
 end

@@ -11,14 +11,14 @@ A type for storing a block-diagonal form of a matrix.
 - `blocks::AbstractVector`: The blocks of the block-diagonal matrix.
 - `block_sizes::AbstractVector`: The sizes of the blocks.
 """
-struct BlockDiagonalForm{DT,BT<:AbstractVector,BST<:AbstractVector}
+struct BlockDiagonalForm{DT, BT <: AbstractVector, BST <: AbstractVector}
     B::DT
     P::DT
     blocks::BT
     block_sizes::BST
 end
 
-function block_diagonal_form(A::MT) where {MT<:AbstractSparseMatrix}
+function block_diagonal_form(A::MT) where {MT <: AbstractSparseMatrix}
     n = LinearAlgebra.checksquare(A)
 
     G = DiGraph(abs.(A))
@@ -50,7 +50,7 @@ Return the block-diagonal form of a [`QuantumObject`](@ref). This is very useful
 # Returns
 The [`BlockDiagonalForm`](@ref) of `A`.
 """
-function block_diagonal_form(A::QuantumObject{OpType}) where {OpType<:Union{Operator,SuperOperator}}
+function block_diagonal_form(A::QuantumObject{OpType}) where {OpType <: Union{Operator, SuperOperator}}
     bdf = block_diagonal_form(A.data)
     B = QuantumObject(bdf.B, type = A.type, dims = A.dimensions)
     P = QuantumObject(bdf.P, type = A.type, dims = A.dimensions)

@@ -20,16 +20,16 @@ A structure storing the results and some information from solving low-rank maste
 - `B::Vector{QuantumObject}`: The `B` matrix of the low-rank algorithm at each time point.
 """
 struct TimeEvolutionLRSol{
-    TT1<:AbstractVector{<:Real},
-    TT2<:AbstractVector{<:Real},
-    TS<:AbstractVector,
-    TE<:Matrix{ComplexF64},
-    RetT<:Enum,
-    AlgT<:AbstractODEAlgorithm,
-    TolT<:Real,
-    TSZB<:AbstractVector,
-    TM<:Vector{<:Integer},
-}
+        TT1 <: AbstractVector{<:Real},
+        TT2 <: AbstractVector{<:Real},
+        TS <: AbstractVector,
+        TE <: Matrix{ComplexF64},
+        RetT <: Enum,
+        AlgT <: AbstractODEAlgorithm,
+        TolT <: Real,
+        TSZB <: AbstractVector,
+        TM <: Vector{<:Integer},
+    }
     times::TT1
     times_states::TT2
     states::TS
@@ -49,7 +49,7 @@ lr_mesolve_options_default = (
     progress = true,
     err_max = 0.0,
     p0 = 0.0,
-    atol_inv = 1e-4,
+    atol_inv = 1.0e-4,
     M_max = typemax(Int),
     compute_Si = true,
     is_dynamical = false,
@@ -79,12 +79,12 @@ The difference with respect to the original function is that the cutoff is done 
   - `rtol::Real`: The relative tolerance.
 =#
 function _pinv_smooth!(
-    A::AbstractMatrix{T},
-    T1::AbstractMatrix{T},
-    T2::AbstractMatrix{T};
-    atol::Real = 0.0,
-    rtol::Real = (eps(real(float(oneunit(T)))) * min(size(A)...)) * iszero(atol),
-) where {T}
+        A::AbstractMatrix{T},
+        T1::AbstractMatrix{T},
+        T2::AbstractMatrix{T};
+        atol::Real = 0.0,
+        rtol::Real = (eps(real(float(oneunit(T)))) * min(size(A)...)) * iszero(atol),
+    ) where {T}
     if isdiag(A)
         idxA = diagind(A)
         diagA = view(A, idxA)
@@ -130,7 +130,7 @@ function _calculate_expectation!(p, z, B, idx)
     end
 
     #Function values
-    @inbounds for (i, f) in enumerate(f_ops)
+    return @inbounds for (i, f) in enumerate(f_ops)
         funvals[i, idx] = f(p, z, B)
     end
 end
@@ -153,12 +153,12 @@ function _save_affect_lr_mesolve!(integrator)
     N, M = ip.N, ip.M
     idx = select(integrator.t, ip.times)
 
-    @views z = reshape(integrator.u[1:(N*M)], N, M)
-    @views B = reshape(integrator.u[(N*M+1):end], M, M)
+    @views z = reshape(integrator.u[1:(N * M)], N, M)
+    @views B = reshape(integrator.u[(N * M + 1):end], M, M)
     _calculate_expectation!(ip, z, B, idx)
 
     if integrator.p.opt.progress
-        print("\rProgress: $(round(Int, 100*idx/length(ip.times)))%")
+        print("\rProgress: $(round(Int, 100 * idx / length(ip.times)))%")
         flush(stdout)
     end
     return u_modified!(integrator, false)
@@ -187,8 +187,8 @@ function _adjM_condition_ratio(u, t, integrator)
 
     C = ip.A0
     σ = ip.temp_MM
-    @views z = reshape(u[1:(N*M)], N, M)
-    @views B = reshape(u[(N*M+1):end], M, M)
+    @views z = reshape(u[1:(N * M)], N, M)
+    @views B = reshape(u[(N * M + 1):end], M, M)
     mul!(C, z, sqrt(B))
     mul!(σ, C', C)
     p = abs.(eigvals(σ))
@@ -234,8 +234,8 @@ function _adjM_affect!(integrator)
     N, M = ip.N, ip.M
 
     @views begin
-        z = Δt > 0 ? reshape(ip.u_save[1:(N*M)], N, M) : reshape(integrator.u[1:(N*M)], N, M)
-        B = Δt > 0 ? reshape(ip.u_save[(N*M+1):end], M, M) : reshape(integrator.u[(N*M+1):end], M, M)
+        z = Δt > 0 ? reshape(ip.u_save[1:(N * M)], N, M) : reshape(integrator.u[1:(N * M)], N, M)
+        B = Δt > 0 ? reshape(ip.u_save[(N * M + 1):end], M, M) : reshape(integrator.u[(N * M + 1):end], M, M)
         ψ = ip.L_tilde[:, 1]
         normalize!(ψ)
 
@@ -243,7 +243,7 @@ function _adjM_affect!(integrator)
         B = cat(B, opt.p0, dims = (1, 2))
         resize!(integrator, length(z) + length(B))
         integrator.u[1:length(z)] .= z[:]
-        integrator.u[(length(z)+1):end] .= B[:]
+        integrator.u[(length(z) + 1):end] .= B[:]
     end
 
     integrator.p = merge(
@@ -265,7 +265,7 @@ function _adjM_affect!(integrator)
             _pinv_smooth!(Hermitian(integrator.p.S), integrator.temp_MM, integrator.L, atol = opt.atol_inv)
     )
 
-    if Δt > 0
+    return if Δt > 0
         integrator.p = merge(integrator.p, (u_save = copy(integrator.u),))
         t0 = ip.scalars[2]
         reinit!(integrator, integrator.u; t0 = t0, erase_sol = false)
@@ -307,10 +307,10 @@ function dBdz!(du, u, p, t)
     N, M = p.N, p.M
     opt = p.opt
 
-    @views z = reshape(u[1:(N*M)], N, M)
-    @views dz = reshape(du[1:(N*M)], N, M)
-    @views B = reshape(u[(N*M+1):end], M, M)
-    @views dB = reshape(du[(N*M+1):end], M, M)
+    @views z = reshape(u[1:(N * M)], N, M)
+    @views dz = reshape(du[1:(N * M)], N, M)
+    @views B = reshape(u[(N * M + 1):end], M, M)
+    @views dB = reshape(du[(N * M + 1):end], M, M)
 
     #Assign A0 and S
     mul!(S, z', z)
@@ -358,9 +358,9 @@ end
                   OUTPUT GENNERATION
 =#
 
-get_z(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, 1:(M*N)), N, M)
+get_z(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, 1:(M * N)), N, M)
 
-get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (M*N+1):length(u)), M, M)
+get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (M * N + 1):length(u)), M, M)
 
 #=
                     PROBLEM FORMULATION
@@ -393,16 +393,16 @@ Formulates the ODEproblem for the low-rank time evolution of the system. The fun
 - `kwargs`: Additional keyword arguments.
 """
 function lr_mesolveProblem(
-    H::QuantumObject{Operator},
-    z::AbstractArray{T,2},
-    B::AbstractArray{T,2},
-    tlist::AbstractVector,
-    c_ops::Union{AbstractVector,Tuple} = ();
-    e_ops::Union{AbstractVector,Tuple} = (),
-    f_ops::Union{AbstractVector,Tuple} = (),
-    opt::NamedTuple = lr_mesolve_options_default,
-    kwargs...,
-) where {T}
+        H::QuantumObject{Operator},
+        z::AbstractArray{T, 2},
+        B::AbstractArray{T, 2},
+        tlist::AbstractVector,
+        c_ops::Union{AbstractVector, Tuple} = ();
+        e_ops::Union{AbstractVector, Tuple} = (),
+        f_ops::Union{AbstractVector, Tuple} = (),
+        opt::NamedTuple = lr_mesolve_options_default,
+        kwargs...,
+    ) where {T}
     Hdims = H.dimensions
 
     # Formulation of problem
@@ -462,7 +462,7 @@ function lr_mesolveProblem(
         kwargs2 = merge(
             kwargs2,
             haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_save, kwargs2[:callback])) :
-            Dict(:callback => cb_save),
+                Dict(:callback => cb_save),
         )
     end
 
@@ -473,7 +473,7 @@ function lr_mesolveProblem(
             kwargs2 = merge(
                 kwargs2,
                 haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_periodicsave, kwargs2[:callback])) :
-                Dict(:callback => cb_periodicsave),
+                    Dict(:callback => cb_periodicsave),
             )
         end
 
@@ -488,7 +488,7 @@ function lr_mesolveProblem(
         kwargs2 = merge(
             kwargs2,
             haskey(kwargs2, :callback) ? Dict(:callback => CallbackSet(cb_adjM, kwargs2[:callback])) :
-            Dict(:callback => cb_adjM),
+                Dict(:callback => cb_adjM),
         )
     end
 
@@ -524,16 +524,16 @@ Time evolution of an open quantum system using the low-rank master equation. For
 - `kwargs`: Additional keyword arguments.
 """
 function lr_mesolve(
-    H::QuantumObject{Operator},
-    z::AbstractArray{T2,2},
-    B::AbstractArray{T2,2},
-    tlist::AbstractVector,
-    c_ops::Union{AbstractVector,Tuple} = ();
-    e_ops::Union{AbstractVector,Tuple} = (),
-    f_ops::Union{AbstractVector,Tuple} = (),
-    opt::NamedTuple = lr_mesolve_options_default,
-    kwargs...,
-) where {T2}
+        H::QuantumObject{Operator},
+        z::AbstractArray{T2, 2},
+        B::AbstractArray{T2, 2},
+        tlist::AbstractVector,
+        c_ops::Union{AbstractVector, Tuple} = ();
+        e_ops::Union{AbstractVector, Tuple} = (),
+        f_ops::Union{AbstractVector, Tuple} = (),
+        opt::NamedTuple = lr_mesolve_options_default,
+        kwargs...,
+    ) where {T2}
     prob = lr_mesolveProblem(H, z, B, tlist, c_ops; e_ops = e_ops, f_ops = f_ops, opt = opt, kwargs...)
     return lr_mesolve(prob; kwargs...)
 end

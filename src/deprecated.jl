@@ -48,16 +48,16 @@ function dense_to_sparse(args...)
 end
 
 function correlation_3op_2t(
-    H::QuantumObject{HOpType},
-    ψ0::QuantumObject{StateOpType},
-    t_l::AbstractVector,
-    τ_l::AbstractVector,
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator},
-    C::QuantumObject{Operator},
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}}
+        H::QuantumObject{HOpType},
+        ψ0::QuantumObject{StateOpType},
+        t_l::AbstractVector,
+        τ_l::AbstractVector,
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator},
+        C::QuantumObject{Operator},
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     Base.depwarn(
         "The argument order of `correlation_3op_2t(H, ψ0, t_l, τ_l, A, B, C, c_ops)` is changed to `correlation_3op_2t(H, ψ0, t_l, τ_l, c_ops, A, B, C)`, use `?correlation_3op_2t` to check the updated docstring.",
         :correlation_3op_2t,
@@ -67,15 +67,15 @@ function correlation_3op_2t(
 end
 
 function correlation_3op_1t(
-    H::QuantumObject{HOpType},
-    ψ0::QuantumObject{StateOpType},
-    τ_l::AbstractVector,
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator},
-    C::QuantumObject{Operator},
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}}
+        H::QuantumObject{HOpType},
+        ψ0::QuantumObject{StateOpType},
+        τ_l::AbstractVector,
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator},
+        C::QuantumObject{Operator},
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     Base.depwarn(
         "The argument order of `correlation_3op_1t(H, ψ0, τ_l, A, B, C, c_ops)` is changed to `correlation_3op_1t(H, ψ0, τ_l, c_ops, A, B, C)`, use `?correlation_3op_1t` to check the updated docstring.",
         :correlation_3op_1t,
@@ -85,16 +85,16 @@ function correlation_3op_1t(
 end
 
 function correlation_2op_2t(
-    H::QuantumObject{HOpType},
-    ψ0::QuantumObject{StateOpType},
-    t_l::AbstractVector,
-    τ_l::AbstractVector,
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator},
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    reverse::Bool = false,
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}}
+        H::QuantumObject{HOpType},
+        ψ0::QuantumObject{StateOpType},
+        t_l::AbstractVector,
+        τ_l::AbstractVector,
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator},
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        reverse::Bool = false,
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     Base.depwarn(
         "The argument order of `correlation_2op_2t(H, ψ0, t_l, τ_l, A, B, c_ops)` is changed to `correlation_2op_2t(H, ψ0, t_l, τ_l, c_ops, A, B)`, use `?correlation_2op_2t` to check the updated docstring.",
         :correlation_2op_2t,
@@ -104,15 +104,15 @@ function correlation_2op_2t(
 end
 
 function correlation_2op_1t(
-    H::QuantumObject{HOpType},
-    ψ0::QuantumObject{StateOpType},
-    τ_l::AbstractVector,
-    A::QuantumObject{Operator},
-    B::QuantumObject{Operator},
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    reverse::Bool = false,
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator},StateOpType<:Union{Ket,Operator}}
+        H::QuantumObject{HOpType},
+        ψ0::QuantumObject{StateOpType},
+        τ_l::AbstractVector,
+        A::QuantumObject{Operator},
+        B::QuantumObject{Operator},
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        reverse::Bool = false,
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     Base.depwarn(
         "The argument order of `correlation_2op_1t(H, ψ0, τ_l, A, B, c_ops)` is changed to `correlation_2op_1t(H, ψ0, τ_l, c_ops, A, B)`, use `?correlation_2op_1t` to check the updated docstring.",
         :correlation_2op_1t,
@@ -167,15 +167,25 @@ function lindblad_dissipator(C::QuantumObject{Operator}, Id_cache)
 end
 
 function liouvillian(
-    H::QuantumObject{HOpType},
-    c_ops::AbstractVector,
-    Id_cache;
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator}}
+        H::QuantumObject{HOpType},
+        c_ops::AbstractVector,
+        Id_cache;
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}}
     Base.depwarn(
         "The argument `Id_cache` for `liouvillian` is now deprecated, as we now internally use FillArrays.jl, which preserves the same efficiency without requiring this parameter.",
         :liouvillian,
         force = true,
     )
     return liouvillian(H, c_ops; kwargs...)
+end
+
+export liouvillian_generalized
+function liouvillian_generalized(args...; kwargs...)
+    Base.depwarn(
+        "`liouvillian_generalized` is deprecated and will be removed in next major release, use `liouvillian_dressed_nonsecular` instead.",
+        :liouvillian_generalized,
+        force = true,
+    )
+    return liouvillian_dressed_nonsecular(args...; kwargs...)
 end

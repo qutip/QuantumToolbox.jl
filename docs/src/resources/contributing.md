@@ -40,7 +40,7 @@ to install necessary dependencies. Here are several other common commands:
 
 ```shell
 make test      # run the tests
-make format    # format codes with JuliaFormatter
+make format    # format codes with Runic
 make docs      # instantiate and build the documentation
 make changelog # generate changelog
 make help      # view all commands
@@ -76,7 +76,7 @@ The [VS Code](https://code.visualstudio.com/) and its [Julia extension](https://
 
 ### [Julia Code Format](@id doc-Contribute:Julia-Code-Format)
 
-We use [`JuliaFormatter.jl`](https://github.com/domluna/JuliaFormatter.jl) to format all the source codes. The code style and extra formatting options is defined in the file `.JuliaFormatter.toml` in the repository.
+We use [`Runic.jl`](https://github.com/fredrikekre/Runic.jl) to format all the source codes.
 
 To format the changed codes, use the following command under the *__root directory of the repository__* you are working on:
 

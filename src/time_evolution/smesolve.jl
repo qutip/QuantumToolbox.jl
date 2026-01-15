@@ -74,18 +74,18 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the `SDEProblem` for the Stochastic Master Equation time evolution.
 """
 function smesolveProblem(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{StateOpType},
-    tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    rng::AbstractRNG = default_rng(),
-    progress_bar::Union{Val,Bool} = Val(true),
-    store_measurement::Union{Val,Bool} = Val(false),
-    kwargs...,
-) where {StateOpType<:Union{Ket,Operator,OperatorKet}}
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{StateOpType},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        store_measurement::Union{Val, Bool} = Val(false),
+        kwargs...,
+    ) where {StateOpType <: Union{Ket, Operator, OperatorKet}}
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -93,8 +93,6 @@ function smesolveProblem(
         throw(ArgumentError("The list of stochastic collapse operators must be provided. Use mesolveProblem instead."))
     sc_ops_list = _make_c_ops_list(sc_ops) # If it is an AbstractQuantumObject but we need to iterate
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
-
-    tlist = _check_tlist(tlist, _float_type(ψ0))
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
     check_dimensions(L_evo, ψ0)
@@ -119,6 +117,8 @@ function smesolveProblem(
         return AddedOperator(_spre(op), _spost(op'), _smesolve_ScalarOperator(op_vec) * Id_op)
     end
     D = DiffusionOperator(D_l)
+
+    tlist = _check_tlist(tlist, _float_type(T))
 
     kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(K), tlist)
@@ -221,22 +221,22 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `prob`: The [`TimeEvolutionProblem`](@ref) containing the Ensemble `SDEProblem` for the Stochastic Master Equation time evolution.
 """
 function smesolveEnsembleProblem(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{StateOpType},
-    tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    rng::AbstractRNG = default_rng(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    prob_func::Union{Function,Nothing} = nothing,
-    output_func::Union{Tuple,Nothing} = nothing,
-    progress_bar::Union{Val,Bool} = Val(true),
-    store_measurement::Union{Val,Bool} = Val(false),
-    kwargs...,
-) where {StateOpType<:Union{Ket,Operator,OperatorKet}}
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{StateOpType},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple, Nothing} = nothing,
+        progress_bar::Union{Val, Bool} = Val(true),
+        store_measurement::Union{Val, Bool} = Val(false),
+        kwargs...,
+    ) where {StateOpType <: Union{Ket, Operator, OperatorKet}}
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
@@ -358,24 +358,24 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `sol::TimeEvolutionStochasticSol`: The solution of the time evolution. See [`TimeEvolutionStochasticSol`](@ref).
 """
 function smesolve(
-    H::Union{AbstractQuantumObject{Operator},Tuple},
-    ψ0::QuantumObject{StateOpType},
-    tlist::AbstractVector,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    sc_ops::Union{Nothing,AbstractVector,Tuple,AbstractQuantumObject} = nothing;
-    alg::Union{Nothing,AbstractSDEAlgorithm} = nothing,
-    e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
-    params = NullParameters(),
-    rng::AbstractRNG = default_rng(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    prob_func::Union{Function,Nothing} = nothing,
-    output_func::Union{Tuple,Nothing} = nothing,
-    progress_bar::Union{Val,Bool} = Val(true),
-    keep_runs_results::Union{Val,Bool} = Val(false),
-    store_measurement::Union{Val,Bool} = Val(false),
-    kwargs...,
-) where {StateOpType<:Union{Ket,Operator,OperatorKet}}
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::QuantumObject{StateOpType},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
+        alg::Union{Nothing, AbstractSDEAlgorithm} = nothing,
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple, Nothing} = nothing,
+        progress_bar::Union{Val, Bool} = Val(true),
+        keep_runs_results::Union{Val, Bool} = Val(false),
+        store_measurement::Union{Val, Bool} = Val(false),
+        kwargs...,
+    ) where {StateOpType <: Union{Ket, Operator, OperatorKet}}
     ensemble_prob = smesolveEnsembleProblem(
         H,
         ψ0,
@@ -404,12 +404,12 @@ function smesolve(
 end
 
 function smesolve(
-    ens_prob::TimeEvolutionProblem,
-    alg::AbstractSDEAlgorithm = SRA2(),
-    ntraj::Int = 500,
-    ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-    keep_runs_results = Val(false),
-)
+        ens_prob::TimeEvolutionProblem,
+        alg::AbstractSDEAlgorithm = SRA2(),
+        ntraj::Int = 500,
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        keep_runs_results = Val(false),
+    )
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     _sol_1 = sol[:, 1]

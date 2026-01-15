@@ -72,7 +72,7 @@ function benchmark_autodiff!(SUITE)
         Const($my_f_sesolve),
         Active,
         Duplicated($params_sesolve, dparams_sesolve),
-    ) setup=(dparams_sesolve = Enzyme.make_zero($params_sesolve))
+    ) setup = (dparams_sesolve = Enzyme.make_zero($params_sesolve))
 
     # Benchmark mesolve - Forward
     SUITE["Autodiff"]["mesolve"]["Forward"] = @benchmarkable ForwardDiff.gradient($my_f_mesolve_direct, $params_mesolve)
@@ -86,7 +86,7 @@ function benchmark_autodiff!(SUITE)
         Const($my_f_mesolve),
         Active,
         Duplicated($params_mesolve, dparams_mesolve),
-    ) setup=(dparams_mesolve = Enzyme.make_zero($params_mesolve))
+    ) setup = (dparams_mesolve = Enzyme.make_zero($params_mesolve))
 
     return nothing
 end

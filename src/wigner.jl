@@ -9,7 +9,7 @@ struct WignerLaguerre <: WignerSolver
     tol::Float64
 end
 
-WignerLaguerre(; parallel = false, tol = 1e-14) = WignerLaguerre(parallel, tol)
+WignerLaguerre(; parallel = false, tol = 1.0e-14) = WignerLaguerre(parallel, tol)
 
 @doc raw"""
     wigner(
@@ -67,24 +67,24 @@ julia> wig = wigner(ρ, xvec, xvec, method=WignerLaguerre(parallel=true));
 ```
 """
 function wigner(
-    state::QuantumObject{OpType},
-    xvec::AbstractVector,
-    yvec::AbstractVector;
-    g::Real = √2,
-    method::WignerSolver = WignerClenshaw(),
-) where {OpType<:Union{Bra,Ket,Operator}}
+        state::QuantumObject{OpType},
+        xvec::AbstractVector,
+        yvec::AbstractVector;
+        g::Real = √2,
+        method::WignerSolver = WignerClenshaw(),
+    ) where {OpType <: Union{Bra, Ket, Operator}}
     ρ = ket2dm(state).data
 
     return _wigner(ρ, xvec, yvec, g, method)
 end
 
 function _wigner(
-    ρ::AbstractArray,
-    xvec::AbstractVector{T},
-    yvec::AbstractVector{T},
-    g::Real,
-    method::WignerLaguerre,
-) where {T<:Number}
+        ρ::AbstractArray,
+        xvec::AbstractVector{T},
+        yvec::AbstractVector{T},
+        g::Real,
+        method::WignerLaguerre,
+    ) where {T <: Number}
     g = convert(T, g)
     X, Y = meshgrid(xvec, yvec)
     A = g / 2 * (X + 1im * Y)
@@ -95,12 +95,12 @@ function _wigner(
 end
 
 function _wigner(
-    ρ::AbstractArray{T1},
-    xvec::AbstractVector{T},
-    yvec::AbstractVector{T},
-    g::Real,
-    method::WignerClenshaw,
-) where {T1<:Number,T<:Number}
+        ρ::AbstractArray{T1},
+        xvec::AbstractVector{T},
+        yvec::AbstractVector{T},
+        g::Real,
+        method::WignerClenshaw,
+    ) where {T1 <: Number, T <: Number}
     g = convert(T, g)
     M = size(ρ, 1)
     X, Y = meshgrid(xvec, yvec)
@@ -166,11 +166,11 @@ function _wigner_laguerre(ρ::AbstractArray, A::AbstractArray, W::AbstractArray,
     if method.parallel
         throw(ArgumentError("Parallel version is not implemented for dense matrices"))
     else
-        for m in 0:(M-1)
-            ρmn = ρ[m+1, m+1]
+        for m in 0:(M - 1)
+            ρmn = ρ[m + 1, m + 1]
             abs(ρmn) > tol && (@. W += real(ρmn * (-1)^m * _genlaguerre(m, 0, B)))
-            for n in (m+1):(M-1)
-                ρmn = ρ[m+1, n+1]
+            for n in (m + 1):(M - 1)
+                ρmn = ρ[m + 1, n + 1]
                 # Γ_mn = sqrt(gamma(m+1) / gamma(n+1))
                 Γ_mn = sqrt(exp(loggamma(m + 1) - loggamma(n + 1))) # Is this a good trick?
                 Γ_mn = check_inf(Γ_mn)
@@ -193,35 +193,35 @@ end
 #     return L
 # end
 # This is a little bit slower, but it supports GPU
-function _genlaguerre(n::Int, α::Number, x::T) where {T<:Number}
+function _genlaguerre(n::Int, α::Number, x::T) where {T <: Number}
     α = convert(T, α)
     p0, p1 = one(T), -x + (α + 1)
     n == 0 && return p0
-    for k in 1:(n-1)
+    for k in 1:(n - 1)
         p1, p0 = ((2k + α + 1) / (k + 1) - x / (k + 1)) * p1 - (k + α) / (k + 1) * p0, p1
     end
     return p1
 end
 
 check_inf(x::T) where {T} =
-    if isinf(x)
-        return x > zero(T) ? floatmax(T) : -floatmax(T)
-    else
-        return x
-    end
+if isinf(x)
+    return x > zero(T) ? floatmax(T) : -floatmax(T)
+else
+    return x
+end
 
 function _wig_laguerre_clenshaw!(res, L::Int, x, c, y0, y1, y0_old)
     length(c) == 1 && return c[1]
     length(c) == 2 && return @. c[1] - c[2] * (L + 1 - x) / sqrt(L + 1)
 
-    y0 .= c[end-1]
+    y0 .= c[end - 1]
     y1 .= c[end]
 
     k = length(c)
     for i in range(3, length(c), step = 1)
         k -= 1
         copyto!(y0_old, y0)
-        @. y0 = c[end+1-i] - y1 * sqrt((k - 1) * (L + k - 1) / ((L + k) * k))
+        @. y0 = c[end + 1 - i] - y1 * sqrt((k - 1) * (L + k - 1) / ((L + k) * k))
         @. y1 = y0_old - y1 * ((L + 2 * k - 1) - x) / sqrt((L + k) * k)
     end
 

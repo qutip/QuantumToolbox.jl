@@ -14,7 +14,7 @@ if (GROUP == "All") || (GROUP == "Core")
     QuantumToolbox.about()
 
     println("\nStart running Core tests...\n")
-    @run_package_tests verbose=true
+    @run_package_tests verbose = true
 end
 
 ########################################################################
@@ -73,7 +73,6 @@ if (GROUP == "CUDA_Ext")
 
     using QuantumToolbox
     import LinearAlgebra: Diagonal
-    import StaticArraysCore: SVector
     using CUDA
     using CUDA.CUSPARSE
     using CUDSS
@@ -89,6 +88,8 @@ if (GROUP == "Arbitrary-Precision")
     Pkg.activate("ext-test/cpu/arbitrary_precision")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.update()
+
+    setprecision(128) # Instead of 256. This speeds up the tests.
 
     using QuantumToolbox
     using LinearAlgebra

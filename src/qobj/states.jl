@@ -20,7 +20,7 @@ The `dimensions` can be either the following types:
     It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 zero_ket(dimensions::Int) = QuantumObject(zeros(ComplexF64, dimensions), Ket(), dimensions)
-zero_ket(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}) =
+zero_ket(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) =
     QuantumObject(zeros(ComplexF64, prod(dimensions)), Ket(), dimensions)
 
 @doc raw"""
@@ -37,7 +37,7 @@ It is also possible to specify the list of dimensions `dims` if different subsys
 !!! note
     `basis(N, j; dims = dims, sparse = sparse)` is a synonym of `fock(N, j; dims = dims, sparse = sparse)`.
 """
-function fock(N::Int, j::Int = 0; dims::Union{Int,AbstractVector{Int},Tuple} = N, sparse::Union{Bool,Val} = Val(false))
+function fock(N::Int, j::Int = 0; dims::Union{Int, AbstractVector{Int}, Tuple} = N, sparse::Union{Bool, Val} = Val(false))
     (0 <= j < N) || throw(ArgumentError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
     if getVal(sparse)
         array = sparsevec([j + 1], [1.0 + 0im], N)
@@ -54,12 +54,12 @@ Generates a [coherent state](https://en.wikipedia.org/wiki/Coherent_state) ``|\a
 
 This state is constructed via the displacement operator [`displace`](@ref) and zero-fock state [`fock`](@ref): ``|\alpha\rangle = \hat{D}(\alpha) |0\rangle``
 """
-coherent(N::Int, α::T) where {T<:Number} = displace(N, α) * fock(N, 0)
+coherent(N::Int, α::T) where {T <: Number} = displace(N, α) * fock(N, 0)
 
 @doc raw"""
-    rand_ket(dimensions)
+    rand_ket([T::Type=ComplexF64,] dimensions)
 
-Generate a random normalized [`Ket`](@ref) vector with given argument `dimensions`.
+Generate a random normalized [`Ket`](@ref) vector with given argument `dimensions` and target element type `T`.
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -69,9 +69,11 @@ The `dimensions` can be either the following types:
     If you want to keep type stability, it is recommended to use `rand_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 rand_ket(dimensions::Int) = rand_ket(SVector(dimensions))
-function rand_ket(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
+rand_ket(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) = rand_ket(ComplexF64, dimensions)
+rand_ket(::Type{T}, dimensions::Int) where {T <: Number} = rand_ket(T, SVector(dimensions))
+function rand_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number}
     N = prod(dimensions)
-    ψ = rand(ComplexF64, N) .- (0.5 + 0.5im)
+    ψ = rand(T, N) .- (one(T) / 2 + one(T) * im / 2)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
 end
 
@@ -86,11 +88,11 @@ Constructed via outer product of [`fock`](@ref).
     If you want to keep type stability, it is recommended to use `fock_dm(N, j, dims=dims, sparse=Val(sparse))` instead of `fock_dm(N, j, dims=dims, sparse=sparse)`. Consider also to use `dims` as a `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function fock_dm(
-    N::Int,
-    j::Int = 0;
-    dims::Union{Int,AbstractVector{Int},Tuple} = N,
-    sparse::Union{Bool,Val} = Val(false),
-)
+        N::Int,
+        j::Int = 0;
+        dims::Union{Int, AbstractVector{Int}, Tuple} = N,
+        sparse::Union{Bool, Val} = Val(false),
+    )
     ψ = fock(N, j; dims = dims, sparse = sparse)
     return ket2dm(ψ)
 end
@@ -102,7 +104,7 @@ Density matrix representation of a [coherent state](https://en.wikipedia.org/wik
 
 Constructed via outer product of [`coherent`](@ref).
 """
-function coherent_dm(N::Int, α::T) where {T<:Number}
+function coherent_dm(N::Int, α::T) where {T <: Number}
     ψ = coherent(N, α)
     return ket2dm(ψ)
 end
@@ -118,9 +120,9 @@ Density matrix for a thermal state (generating thermal state probabilities) with
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `thermal_dm(N, n, sparse=Val(sparse))` instead of `thermal_dm(N, n, sparse=sparse)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function thermal_dm(N::Int, n::T; sparse::Union{Bool,Val} = Val(false)) where {T<:Real}
+function thermal_dm(N::Int, n::T; sparse::Union{Bool, Val} = Val(false)) where {T <: Real}
     β = log(1 + 1 / n)
-    P = _complex_float_type(T)[_Boltzmann_weight(β, j) for j in 0:(N-1)]
+    P = _complex_float_type(T)[_Boltzmann_weight(β, j) for j in 0:(N - 1)]
     P /= sum(P)
     if getVal(sparse)
         return QuantumObject(spdiagm(0 => P), Operator(), N)
@@ -143,15 +145,15 @@ The `dimensions` can be either the following types:
 """
 maximally_mixed_dm(dimensions::Int) =
     QuantumObject(diagm(0 => fill(ComplexF64(1 / dimensions), dimensions)), Operator(), SVector(dimensions))
-function maximally_mixed_dm(dimensions::Union{Dimensions,AbstractVector{Int},Tuple})
+function maximally_mixed_dm(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple})
     N = prod(dimensions)
     return QuantumObject(diagm(0 => fill(ComplexF64(1 / N), N)), Operator(), dimensions)
 end
 
 @doc raw"""
-    rand_dm(dimensions; rank::Int=prod(dimensions))
+    rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=prod(dimensions))
 
-Generate a random density matrix from Ginibre ensemble with given argument `dimensions` and `rank`, ensuring that it is positive semi-definite and trace equals to `1`.
+Generate a random density matrix from Ginibre ensemble with given argument `dimensions`, `rank`, and target element type `T`, ensuring that it is positive semi-definite and trace equals to `1`.
 
 The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
@@ -166,13 +168,21 @@ The default keyword argument `rank = prod(dimensions)` (full rank).
 - [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)
 - [K. Życzkowski, et al., Generating random density matrices, Journal of Mathematical Physics 52, 062201 (2011)](http://dx.doi.org/10.1063/1.3595693)
 """
-rand_dm(dimensions::Int; rank::Int = prod(dimensions)) = rand_dm(SVector(dimensions), rank = rank)
-function rand_dm(dimensions::Union{Dimensions,AbstractVector{Int},Tuple}; rank::Int = prod(dimensions))
+rand_dm(dimensions::Int; rank::Int = dimensions) = rand_dm(SVector(dimensions); rank = rank)
+rand_dm(dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}; rank::Int = prod(dimensions)) =
+    rand_dm(ComplexF64, dimensions; rank = rank)
+rand_dm(::Type{T}, dimensions::Int; rank::Int = dimensions) where {T <: Number} =
+    rand_dm(T, SVector(dimensions); rank = rank)
+function rand_dm(
+        ::Type{T},
+        dimensions::Union{Dimensions, AbstractVector{Int}, Tuple};
+        rank::Int = prod(dimensions),
+    ) where {T <: Number}
     N = prod(dimensions)
     (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
     (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))
 
-    X = _Ginibre_ensemble(N, rank)
+    X = _Ginibre_ensemble(T, N, rank)
     ρ = X * X'
     ρ /= tr(ρ)
     return QuantumObject(ρ; type = Operator(), dims = dimensions)
@@ -273,7 +283,7 @@ bell_state(::Val{0}, ::Val{0}) = QuantumObject(ComplexF64[1, 0, 0, 1] / sqrt(2),
 bell_state(::Val{0}, ::Val{1}) = QuantumObject(ComplexF64[1, 0, 0, -1] / sqrt(2), Ket(), (2, 2))
 bell_state(::Val{1}, ::Val{0}) = QuantumObject(ComplexF64[0, 1, 1, 0] / sqrt(2), Ket(), (2, 2))
 bell_state(::Val{1}, ::Val{1}) = QuantumObject(ComplexF64[0, 1, -1, 0] / sqrt(2), Ket(), (2, 2))
-bell_state(::Val{T1}, ::Val{T2}) where {T1,T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
+bell_state(::Val{T1}, ::Val{T2}) where {T1, T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
 
 @doc raw"""
     singlet_state()
@@ -314,7 +324,7 @@ Returns the `n`-qubit [W-state](https://en.wikipedia.org/wiki/W_state):
 function w_state(::Val{n}) where {n}
     (n >= 2) || throw(ArgumentError("Invalid argument n, must satisfy: n ≥ 2"))
 
-    nzind = 2 .^ (0:(n-1)) .+ 1
+    nzind = 2 .^ (0:(n - 1)) .+ 1
     nzval = fill(ComplexF64(1 / sqrt(n)), n)
     data = zeros(ComplexF64, 2^n)
     @inbounds data[nzind] .= nzval
@@ -340,7 +350,7 @@ function ghz_state(::Val{n}; d::Int = 2) where {n}
     (n >= 2) || throw(ArgumentError("Invalid argument n, must satisfy: n ≥ 2"))
     (d >= 2) || throw(ArgumentError("Invalid argument d, must satisfy: d ≥ 2"))
 
-    nzind = collect((0:(d-1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
+    nzind = collect((0:(d - 1)) .* Int((d^n - 1) / (d - 1)) .+ 1)
     nzval = fill(ComplexF64(1 / sqrt(d)), d)
     data = zeros(ComplexF64, d^n)
     @inbounds data[nzind] .= nzval

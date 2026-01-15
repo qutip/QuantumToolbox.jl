@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+
+
+## [v0.41.0]
+Release date: 2026-01-12
+
+- Introduce `matrix_heatmap` and `matrix_histogram` for visualizing operators. ([#621])
+- Allow rectangular eigenvector matrices in `liouvillian_generalized` and expand its documentation with proper citation. Rename it to `liouvillian_dressed_nonsecular`. ([#624])
+- Optimize `liouvillian_dressed_nonsecular`: avoid O(N⁴) dense filter matrices. ([#627])
+- Restrict `CUDA.jl` version compatibility to < 5.9.6 due to breaking changes in that release. ([#630])
+- Move from `JuliaFormatter.jl` to `Runic.jl` for code formatting. ([#633])
+- Improve eigsolve_al initial state handling and returned values and vectors. ([#636])
+- Convert `tlist` to promoted type in all time evolution solvers. ([#638])
+
 ## [v0.40.0]
 Release date: 2025-12-21
 
@@ -280,6 +293,7 @@ Release date: 2024-11-13
 [v0.39.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.39.0
 [v0.39.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.39.1
 [v0.40.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.40.0
+[v0.41.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.41.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -396,3 +410,10 @@ Release date: 2024-11-13
 [#613]: https://github.com/qutip/QuantumToolbox.jl/issues/613
 [#614]: https://github.com/qutip/QuantumToolbox.jl/issues/614
 [#619]: https://github.com/qutip/QuantumToolbox.jl/issues/619
+[#621]: https://github.com/qutip/QuantumToolbox.jl/issues/621
+[#624]: https://github.com/qutip/QuantumToolbox.jl/issues/624
+[#627]: https://github.com/qutip/QuantumToolbox.jl/issues/627
+[#630]: https://github.com/qutip/QuantumToolbox.jl/issues/630
+[#633]: https://github.com/qutip/QuantumToolbox.jl/issues/633
+[#636]: https://github.com/qutip/QuantumToolbox.jl/issues/636
+[#638]: https://github.com/qutip/QuantumToolbox.jl/issues/638

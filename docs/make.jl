@@ -1,6 +1,3 @@
-#! format: off
-# turns off the julia formatting of this file
-
 using QuantumToolbox
 using Documenter
 using DocumenterVitepress
@@ -23,8 +20,8 @@ const DOCTEST = get(ENV, "DOCTEST", true) == true # `DOCTEST = false` skips doc 
 
 # generate bibliography
 bib = CitationBibliography(
-    joinpath(@__DIR__, "src", "resources", "bibliography.bib"), 
-    style=:authoryear,
+    joinpath(@__DIR__, "src", "resources", "bibliography.bib"),
+    style = :authoryear,
 )
 
 # generate changelog
@@ -68,10 +65,11 @@ const PAGES = [
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
         "Plotting on the Bloch Sphere" => "users_guide/plotting_the_bloch_sphere.md",
+        "Visualization of quantum states and operators" => "users_guide/visualization.md",
         "QuantumToolbox Settings" => "users_guide/settings.md",
         "Extensions" => [
             "Extension for CUDA.jl" => "users_guide/extensions/cuda.md",
-            "Extension for the Makie.jl ecosystem" => "users_guide/extensions/cairomakie.md",
+            "Extension for the Makie.jl ecosystem" => "users_guide/extensions/makie.md",
         ],
     ],
     "Resources" => [
@@ -85,7 +83,7 @@ const PAGES = [
 
 makedocs(;
     modules = [
-        QuantumToolbox, 
+        QuantumToolbox,
         Base.get_extension(QuantumToolbox, :QuantumToolboxMakieExt),
     ],
     authors = "Alberto Mercurio and Yi-Te Huang",

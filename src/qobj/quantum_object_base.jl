@@ -17,7 +17,7 @@ julia> sigmax() isa AbstractQuantumObject
 true
 ```
 """
-abstract type AbstractQuantumObject{ObjType,DimType,DataType} end
+abstract type AbstractQuantumObject{ObjType, DimType, DataType} end
 
 abstract type QuantumObjectType end
 
@@ -62,7 +62,7 @@ Base.show(io::IO, ::SuperOperator) = print(io, "SuperOperator()")
 @doc raw"""
     OperatorBra <: QuantumObjectType
 
-Constructor representing a bra state in the [`SuperOperator`](@ref) formalism ``\langle\langle\rho|``.
+Constructor representing a bra state in the [`SuperOperator`](@ref) formalism ``\langle\!\langle\rho|``.
 """
 struct OperatorBra <: QuantumObjectType end
 
@@ -71,7 +71,7 @@ Base.show(io::IO, ::OperatorBra) = print(io, "OperatorBra()")
 @doc raw"""
     OperatorKet <: QuantumObjectType
 
-Constructor representing a ket state in the [`SuperOperator`](@ref) formalism ``|\rho\rangle\rangle``.
+Constructor representing a ket state in the [`SuperOperator`](@ref) formalism ``|\rho\rangle\!\rangle``.
 """
 struct OperatorKet <: QuantumObjectType end
 
@@ -119,12 +119,12 @@ Base.isapprox(A::AbstractQuantumObject, B::AbstractQuantumObject; kwargs...) =
 Base.:(==)(A::AbstractQuantumObject, B::AbstractQuantumObject) =
     (A.type == B.type) && (A.dimensions == B.dimensions) && (A.data == B.data)
 
-function check_dimensions(dimensions_list::NTuple{N,AbstractDimensions}) where {N}
+function check_dimensions(dimensions_list::NTuple{N, AbstractDimensions}) where {N}
     allequal(dimensions_list) ||
         throw(DimensionMismatch("The quantum objects should have the same Hilbert `dimensions`."))
     return nothing
 end
-check_dimensions(Qobj_tuple::NTuple{N,AbstractQuantumObject}) where {N} =
+check_dimensions(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N} =
     check_dimensions(getfield.(Qobj_tuple, :dimensions))
 check_dimensions(A::AbstractQuantumObject...) = check_dimensions(A)
 
@@ -133,7 +133,7 @@ _check_QuantumObject(
     dimensions::GeneralDimensions,
     m::Int,
     n::Int,
-) where {ObjType<:Union{Ket,Bra,SuperOperator,OperatorBra,OperatorKet}} = throw(
+) where {ObjType <: Union{Ket, Bra, SuperOperator, OperatorBra, OperatorKet}} = throw(
     DomainError(
         _get_dims_string(dimensions),
         "The given `dims` is not compatible with type = $type, should be a single list of integers.",
@@ -206,7 +206,7 @@ function _check_QuantumObject(type::OperatorBra, dimensions::Dimensions, m::Int,
     return nothing
 end
 
-_check_type(::T) where {T<:Union{Nothing,<:QuantumObjectType}} = T
+_check_type(::T) where {T <: Union{Nothing, <:QuantumObjectType}} = T
 _check_type(::Type{T}) where {T} =
     throw(ArgumentError("The argument `$T` is not valid. You may probably want to use `$T()` instead."))
 _check_type(t) = throw(ArgumentError("The argument $t is not valid. It should be a subtype of `QuantumObjectType`."))
@@ -221,25 +221,25 @@ function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
 end
 
 # this returns `to` in GeneralDimensions representation
-get_dimensions_to(A::AbstractQuantumObject{Ket,<:Dimensions}) = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{Bra,<:Dimensions}) = space_one_list(A.dimensions.to)
-get_dimensions_to(A::AbstractQuantumObject{Operator,<:Dimensions}) = A.dimensions.to
-get_dimensions_to(A::AbstractQuantumObject{Operator,<:GeneralDimensions}) = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{Ket, <:Dimensions}) = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{Bra, <:Dimensions}) = space_one_list(A.dimensions.to)
+get_dimensions_to(A::AbstractQuantumObject{Operator, <:Dimensions}) = A.dimensions.to
+get_dimensions_to(A::AbstractQuantumObject{Operator, <:GeneralDimensions}) = A.dimensions.to
 get_dimensions_to(
-    A::AbstractQuantumObject{ObjType,<:Dimensions},
-) where {ObjType<:Union{SuperOperator,OperatorBra,OperatorKet}} = A.dimensions.to
+    A::AbstractQuantumObject{ObjType, <:Dimensions},
+) where {ObjType <: Union{SuperOperator, OperatorBra, OperatorKet}} = A.dimensions.to
 
 # this returns `from` in GeneralDimensions representation
-get_dimensions_from(A::AbstractQuantumObject{Ket,<:Dimensions}) = space_one_list(A.dimensions.to)
-get_dimensions_from(A::AbstractQuantumObject{Bra,<:Dimensions}) = A.dimensions.to
-get_dimensions_from(A::AbstractQuantumObject{Operator,<:Dimensions}) = A.dimensions.to
-get_dimensions_from(A::AbstractQuantumObject{Operator,<:GeneralDimensions}) = A.dimensions.from
+get_dimensions_from(A::AbstractQuantumObject{Ket, <:Dimensions}) = space_one_list(A.dimensions.to)
+get_dimensions_from(A::AbstractQuantumObject{Bra, <:Dimensions}) = A.dimensions.to
+get_dimensions_from(A::AbstractQuantumObject{Operator, <:Dimensions}) = A.dimensions.to
+get_dimensions_from(A::AbstractQuantumObject{Operator, <:GeneralDimensions}) = A.dimensions.from
 get_dimensions_from(
-    A::AbstractQuantumObject{ObjType,<:Dimensions},
-) where {ObjType<:Union{SuperOperator,OperatorBra,OperatorKet}} = A.dimensions.to
+    A::AbstractQuantumObject{ObjType, <:Dimensions},
+) where {ObjType <: Union{SuperOperator, OperatorBra, OperatorKet}} = A.dimensions.to
 
 # this creates a list of Space(1), it is used to generate `from` for Ket, and `to` for Bra
-space_one_list(dimensions::NTuple{N,AbstractSpace}) where {N} =
+space_one_list(dimensions::NTuple{N, AbstractSpace}) where {N} =
     ntuple(i -> Space(1), Val(sum(_get_dims_length, dimensions)))
 _get_dims_length(::Space) = 1
 _get_dims_length(::EnrSpace{N}) where {N} = N

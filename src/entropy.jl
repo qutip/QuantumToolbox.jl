@@ -44,14 +44,14 @@ julia> entropy_vn(ρ, base=2)
 1.0
 ```
 """
-function entropy_vn(ρ::QuantumObject{ObjType}; base::Int = 0, tol::Real = 1e-15) where {ObjType<:Union{Ket,Operator}}
+function entropy_vn(ρ::QuantumObject{ObjType}; base::Int = 0, tol::Real = 1.0e-15) where {ObjType <: Union{Ket, Operator}}
     T = eltype(ρ)
     vals = eigenenergies(ket2dm(ρ))
     indexes = findall(x -> abs(x) > tol, vals)
     length(indexes) == 0 && return zero(real(T))
     nzvals = vals[indexes]
     logvals = base != 0 ? log.(base, Complex.(nzvals)) : log.(Complex.(nzvals))
-    return -real(mapreduce(*,+,nzvals,logvals))
+    return -real(mapreduce(*, +, nzvals, logvals))
 end
 
 @doc raw"""
@@ -70,11 +70,11 @@ Calculates the [quantum relative entropy](https://en.wikipedia.org/wiki/Quantum_
 - [Nielsen-Chuang2011; section 11.3.1, page 511](@citet)
 """
 function entropy_relative(
-    ρ::QuantumObject{ObjType1},
-    σ::QuantumObject{ObjType2};
-    base::Int = 0,
-    tol::Real = 1e-15,
-) where {ObjType1<:Union{Ket,Operator},ObjType2<:Union{Ket,Operator}}
+        ρ::QuantumObject{ObjType1},
+        σ::QuantumObject{ObjType2};
+        base::Int = 0,
+        tol::Real = 1.0e-15,
+    ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
     check_dimensions(ρ, σ)
 
     # the logic of this code follows the detail given in the reference of the docstring
@@ -124,7 +124,7 @@ Calculates the quantum linear entropy ``S_L = 1 - \textrm{Tr} \left[ \hat{\rho}^
 
 Note that `ρ` can be either a [`Ket`](@ref) or an [`Operator`](@ref).
 """
-entropy_linear(ρ::QuantumObject{ObjType}) where {ObjType<:Union{Ket,Operator}} = 1.0 - purity(ρ) # use 1.0 to make sure it always return value in Float-type
+entropy_linear(ρ::QuantumObject{ObjType}) where {ObjType <: Union{Ket, Operator}} = 1.0 - purity(ρ) # use 1.0 to make sure it always return value in Float-type
 
 @doc raw"""
     entropy_mutual(ρAB::QuantumObject, selA, selB; kwargs...)
@@ -141,11 +141,11 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
 function entropy_mutual(
-    ρAB::QuantumObject{ObjType,<:AbstractDimensions{N,N}},
-    selA::Union{Int,AbstractVector{Int},Tuple},
-    selB::Union{Int,AbstractVector{Int},Tuple};
-    kwargs...,
-) where {ObjType<:Union{Ket,Operator},N}
+        ρAB::QuantumObject{ObjType, <:AbstractDimensions{N, N}},
+        selA::Union{Int, AbstractVector{Int}, Tuple},
+        selB::Union{Int, AbstractVector{Int}, Tuple};
+        kwargs...,
+    ) where {ObjType <: Union{Ket, Operator}, N}
     # check if selA and selB matches the dimensions of ρAB
     sel_A_B = (selA..., selB...)
     (length(sel_A_B) != N) && throw(
@@ -174,10 +174,10 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
 entropy_conditional(
-    ρAB::QuantumObject{ObjType,<:AbstractDimensions{N,N}},
-    selB::Union{Int,AbstractVector{Int},Tuple};
+    ρAB::QuantumObject{ObjType, <:AbstractDimensions{N, N}},
+    selB::Union{Int, AbstractVector{Int}, Tuple};
     kwargs...,
-) where {ObjType<:Union{Ket,Operator},N} = entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
+) where {ObjType <: Union{Ket, Operator}, N} = entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
 
 @doc raw"""
     entanglement(ρ::QuantumObject, sel; kwargs...)
@@ -191,12 +191,12 @@ Calculates the [entanglement entropy](https://en.wikipedia.org/wiki/Entropy_of_e
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
 function entanglement(
-    ρ::QuantumObject{OpType},
-    sel::Union{Int,AbstractVector{Int},Tuple},
-    kwargs...,
-) where {OpType<:Union{Ket,Operator}}
+        ρ::QuantumObject{OpType},
+        sel::Union{Int, AbstractVector{Int}, Tuple},
+        kwargs...,
+    ) where {OpType <: Union{Ket, Operator}}
     p = purity(ρ)
-    isapprox(p, 1; atol = 1e-2) || throw(
+    isapprox(p, 1; atol = 1.0e-2) || throw(
         ArgumentError(
             "The entanglement entropy only works for normalized pure state, the purity of the given state: $(p) ≉ 1",
         ),
@@ -220,7 +220,7 @@ Calculate the [concurrence](https://en.wikipedia.org/wiki/Concurrence_(quantum_c
 
 - [Hill-Wootters1997](@citet)
 """
-function concurrence(ρ::QuantumObject{OpType}) where {OpType<:Union{Ket,Operator}}
+function concurrence(ρ::QuantumObject{OpType}) where {OpType <: Union{Ket, Operator}}
     (ρ.dimensions == Dimensions((Space(2), Space(2)))) || throw(
         ArgumentError(
             "The `concurrence` only works for a two-qubit state, invalid dims = $(_get_dims_string(ρ.dimensions)).",

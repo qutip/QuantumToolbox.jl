@@ -92,10 +92,10 @@ function _partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     #   2 - the subsystem (in reversed order) need to be transposed
 
     dims_rev = reverse(dimensions_to_dims(get_dimensions_to(ρ)))
-    pt_dims = reshape(Vector(1:(2*nsys)), (nsys, 2))
+    pt_dims = reshape(Vector(1:(2 * nsys)), (nsys, 2))
     pt_idx = [
         [pt_dims[n, mask2[n]] for n in 1:nsys]   # origin   value in mask2
-        [pt_dims[n, 3-mask2[n]] for n in 1:nsys] # opposite value in mask2 (1 -> 2, and 2 -> 1)
+        [pt_dims[n, 3 - mask2[n]] for n in 1:nsys] # opposite value in mask2 (1 -> 2, and 2 -> 1)
     ]
     return QuantumObject(
         reshape(permutedims(reshape(ρ.data, (dims_rev..., dims_rev...)), pt_idx), size(ρ)),
@@ -106,9 +106,9 @@ end
 
 # for sparse matrices
 function _partial_transpose(
-    ρ::QuantumObject{Operator,DimsType,<:AbstractSparseArray},
-    mask::Vector{Bool},
-) where {DimsType<:AbstractDimensions}
+        ρ::QuantumObject{Operator, DimsType, <:AbstractSparseArray},
+        mask::Vector{Bool},
+    ) where {DimsType <: AbstractDimensions}
     M, N = size(ρ)
     dims_rev = reverse(Tuple(dimensions_to_dims(get_dimensions_to(ρ))))
     mask_rev = reverse(mask)
@@ -123,8 +123,8 @@ function _partial_transpose(
     V_pt = Vector{eltype(ρ)}(undef, len)
 
     n = 0
-    for j in 1:(length(colptr)-1)
-        for p in colptr[j]:(colptr[j+1]-1)
+    for j in 1:(length(colptr) - 1)
+        for p in colptr[j]:(colptr[j + 1] - 1)
             n += 1
             i = rowval[p]
             if i == j

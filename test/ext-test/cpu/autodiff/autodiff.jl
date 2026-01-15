@@ -84,7 +84,7 @@ end
 # Analytical solution
 n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
-@testset "Autodiff" verbose=true begin
+@testset "Autodiff" verbose = true begin
     @testset "ForwardDiff for thermal_dm" begin
         N = 100  # dimension of the system
         N_op = num(N) # number operator
@@ -102,10 +102,10 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
         grad = ForwardDiff.gradient(N_expect, p)[1]
 
         # Compare the result
-        @test isapprox(grad, 1.0; atol = 1e-6)
+        @test isapprox(grad, 1.0; atol = 1.0e-6)
     end
 
-    @testset "sesolve" verbose=true begin
+    @testset "sesolve" verbose = true begin
         Ω = 1.0
         params = [Ω]
 
@@ -117,13 +117,13 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
         @testset "ForwardDiff.jl" begin
             grad_qt = ForwardDiff.gradient(my_f_sesolve_direct, params)
 
-            @test grad_qt ≈ grad_exact atol=1e-6
+            @test grad_qt ≈ grad_exact atol = 1.0e-6
         end
 
         @testset "Zygote.jl" begin
             grad_qt = Zygote.gradient(my_f_sesolve, params)[1]
 
-            @test grad_qt ≈ grad_exact atol=1e-6
+            @test grad_qt ≈ grad_exact atol = 1.0e-6
         end
 
         @testset "Enzyme.jl" begin
@@ -135,11 +135,11 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
                 Duplicated(params, dparams),
             )[1]
 
-            @test dparams ≈ grad_exact atol=1e-6
+            @test dparams ≈ grad_exact atol = 1.0e-6
         end
     end
 
-    @testset "mesolve" verbose=true begin
+    @testset "mesolve" verbose = true begin
         Δ = 1.0
         F = 1.0
         γ = 1.0
@@ -153,14 +153,14 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
         @testset "ForwardDiff.jl" begin
             grad_qt = ForwardDiff.gradient(my_f_mesolve_direct, params)
-            @test grad_qt ≈ grad_exact atol=1e-6
+            @test grad_qt ≈ grad_exact atol = 1.0e-6
         end
 
         @testset "Zygote.jl" begin
             grad_qt1 = Zygote.gradient(my_f_mesolve, params)[1]
             grad_qt2 = Zygote.gradient(my_f_mesolve_assume_non_herm, params)[1]
-            @test grad_qt1 ≈ grad_exact atol=1e-6
-            @test grad_qt2 ≈ grad_exact atol=1e-6
+            @test grad_qt1 ≈ grad_exact atol = 1.0e-6
+            @test grad_qt2 ≈ grad_exact atol = 1.0e-6
         end
 
         @testset "Enzyme.jl" begin
@@ -180,8 +180,8 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
                 Duplicated(params, dparams2),
             )[1]
 
-            @test dparams1 ≈ grad_exact atol=1e-6
-            @test dparams2 ≈ grad_exact atol=1e-6
+            @test dparams1 ≈ grad_exact atol = 1.0e-6
+            @test dparams2 ≈ grad_exact atol = 1.0e-6
         end
     end
 end

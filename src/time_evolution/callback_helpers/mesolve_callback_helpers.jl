@@ -2,7 +2,7 @@
 Helper functions for the mesolve callbacks.
 =#
 
-struct SaveFuncMESolve{TE,PT<:Union{Nothing,Progress},IT,TEXPV<:Union{Nothing,AbstractMatrix}} <: AbstractSaveFunc
+struct SaveFuncMESolve{TE, PT <: Union{Nothing, Progress}, IT, TEXPV <: Union{Nothing, AbstractMatrix}} <: AbstractSaveFunc
     e_ops::TE
     progr::PT
     iter::IT

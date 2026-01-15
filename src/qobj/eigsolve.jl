@@ -64,11 +64,11 @@ julia> U
 ```
 """
 struct EigsolveResult{
-    T1<:AbstractVector{<:Number},
-    T2<:AbstractMatrix{<:Number},
-    ObjType<:Union{Nothing,Operator,SuperOperator},
-    DimType<:Union{Nothing,AbstractDimensions},
-}
+        T1 <: AbstractVector{<:Number},
+        T2 <: AbstractMatrix{<:Number},
+        ObjType <: Union{Nothing, Operator, SuperOperator},
+        DimType <: Union{Nothing, AbstractDimensions},
+    }
     values::T1
     vectors::T2
     type::ObjType
@@ -88,11 +88,11 @@ function Base.getproperty(res::EigsolveResult, key::Symbol)
 end
 
 Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
-Base.iterate(res::EigsolveResult{T1,T2,Nothing}, ::Val{:vector_list}) where {T1,T2} =
+Base.iterate(res::EigsolveResult{T1, T2, Nothing}, ::Val{:vector_list}) where {T1, T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
-Base.iterate(res::EigsolveResult{T1,T2,Operator}, ::Val{:vector_list}) where {T1,T2} =
+Base.iterate(res::EigsolveResult{T1, T2, Operator}, ::Val{:vector_list}) where {T1, T2} =
     ([QuantumObject(res.vectors[:, k], Ket(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
-Base.iterate(res::EigsolveResult{T1,T2,SuperOperator}, ::Val{:vector_list}) where {T1,T2} =
+Base.iterate(res::EigsolveResult{T1, T2, SuperOperator}, ::Val{:vector_list}) where {T1, T2} =
     ([QuantumObject(res.vectors[:, k], OperatorKet(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
@@ -106,7 +106,7 @@ function Base.show(io::IO, res::EigsolveResult)
     return show(io, MIME("text/plain"), res.vectors)
 end
 
-struct ArnoldiLindbladIntegratorMap{T,TS,TI} <: AbstractLinearMap{T,TS}
+struct ArnoldiLindbladIntegratorMap{T, TS, TI} <: AbstractLinearMap{T, TS}
     elty::Type{T}
     size::TS
     integrator::TI
@@ -118,7 +118,7 @@ function LinearAlgebra.mul!(y::AbstractVector, A::ArnoldiLindbladIntegratorMap, 
     return copyto!(y, A.integrator.u)
 end
 
-struct EigsolveInverseMap{T,TS,TI} <: AbstractLinearMap{T,TS}
+struct EigsolveInverseMap{T, TS, TI} <: AbstractLinearMap{T, TS}
     elty::Type{T}
     size::TS
     linsolve::TI
@@ -161,9 +161,9 @@ function _schur_right_eigenvectors(Tₘ::AbstractMatrix, k::Integer)
         vec[col] = one(eltype(Tₘ))
         λ = Tₘ[col, col]
 
-        for row in (col-1):-1:1
+        for row in (col - 1):-1:1
             acc = zero(eltype(Tₘ))
-            for inner in (row+1):col
+            for inner in (row + 1):col
                 acc += Tₘ[row, inner] * vec[inner]
             end
             denom = Tₘ[row, row] - λ
@@ -181,17 +181,17 @@ function _schur_right_eigenvectors(Tₘ::AbstractMatrix, k::Integer)
 end
 
 function _eigsolve(
-    A,
-    b::AbstractVector{T},
-    type::ObjType,
-    dimensions::Union{Nothing,AbstractDimensions},
-    k::Int = 1,
-    m::Int = max(20, 2 * k + 1);
-    tol::Real = 1e-8,
-    maxiter::Int = 200,
-    sortby::Function = abs2,
-    rev = true,
-) where {T<:Number,ObjType<:Union{Nothing,Operator,SuperOperator}}
+        A,
+        b::AbstractVector{T},
+        type::ObjType,
+        dimensions::Union{Nothing, AbstractDimensions},
+        k::Int = 1,
+        m::Int = max(20, 2 * k + 1);
+        tol::Real = 1.0e-8,
+        maxiter::Int = 200,
+        sortby::Function = abs2,
+        rev = true,
+    ) where {T <: Number, ObjType <: Union{Nothing, Operator, SuperOperator}}
     n = size(A, 2)
     V = similar(b, n, m + 1)
     H = zeros(T, m + 1, m)
@@ -212,7 +212,7 @@ function _eigsolve(
     Hₘ = view(H, 1:m, 1:m)
     qₘ = view(V, :, m + 1)
     βeₘ = view(H, m + 1, 1:m)
-    β = real(H[m+1, m])
+    β = real(H[m + 1, m])
     Uₘ = one(Hₘ)
 
     Uₘᵥ = view(Uₘ, m, 1:m)
@@ -246,7 +246,7 @@ function _eigsolve(
 
         # println( A * view(V, :, 1:k) ≈ view(V, :, 1:k) * M(view(H, 1:k, 1:k)) + qₘ * M(transpose(view(transpose(βeₘ) * Uₘ, 1:k))) )     # SHOULD BE TRUE
 
-        for j in (k+1):m
+        for j in (k + 1):m
             β = arnoldi_step!(A, V, H, j)
             if β < tol
                 numops += j - k - 1
@@ -312,18 +312,18 @@ Solve for the eigenvalues and eigenvectors of a matrix `A` using the Arnoldi met
 - `EigsolveResult`: A struct containing the eigenvalues, the eigenvectors, and some information about the eigsolver
 """
 function eigsolve(
-    A::QuantumObject;
-    v0::Union{Nothing,AbstractVector} = nothing,
-    sigma::Union{Nothing,Number} = nothing,
-    eigvals::Int = 1,
-    krylovdim::Int = max(20, 2 * eigvals + 1),
-    tol::Real = 1e-8,
-    maxiter::Int = 200,
-    solver::Union{Nothing,SciMLLinearSolveAlgorithm} = nothing,
-    sortby::Function = abs2,
-    rev::Bool = true,
-    kwargs...,
-)
+        A::QuantumObject;
+        v0::Union{Nothing, AbstractVector} = nothing,
+        sigma::Union{Nothing, Number} = nothing,
+        eigvals::Int = 1,
+        krylovdim::Int = max(20, 2 * eigvals + 1),
+        tol::Real = 1.0e-8,
+        maxiter::Int = 200,
+        solver::Union{Nothing, SciMLLinearSolveAlgorithm} = nothing,
+        sortby::Function = abs2,
+        rev::Bool = true,
+        kwargs...,
+    )
     return eigsolve(
         A.data;
         v0 = v0,
@@ -342,20 +342,20 @@ function eigsolve(
 end
 
 function eigsolve(
-    A;
-    v0::Union{Nothing,AbstractVector} = nothing,
-    type::Union{Nothing,Operator,SuperOperator} = nothing,
-    dimensions = nothing,
-    sigma::Union{Nothing,Number} = nothing,
-    eigvals::Int = 1,
-    krylovdim::Int = max(20, 2 * eigvals + 1),
-    tol::Real = 1e-8,
-    maxiter::Int = 200,
-    solver::Union{Nothing,SciMLLinearSolveAlgorithm} = nothing,
-    sortby::Function = abs2,
-    rev::Bool = true,
-    kwargs...,
-)
+        A;
+        v0::Union{Nothing, AbstractVector} = nothing,
+        type::Union{Nothing, Operator, SuperOperator} = nothing,
+        dimensions = nothing,
+        sigma::Union{Nothing, Number} = nothing,
+        eigvals::Int = 1,
+        krylovdim::Int = max(20, 2 * eigvals + 1),
+        tol::Real = 1.0e-8,
+        maxiter::Int = 200,
+        solver::Union{Nothing, SciMLLinearSolveAlgorithm} = nothing,
+        sortby::Function = abs2,
+        rev::Bool = true,
+        kwargs...,
+    )
     T = eltype(A)
     isnothing(v0) && (v0 = normalize!(rand(T, size(A, 1))))
 
@@ -378,8 +378,8 @@ function eigsolve(
 
         kwargs2 = (; kwargs...)
 
-        !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, (abstol = tol * 1e-6,)))
-        !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, (reltol = tol * 1e-6,)))
+        !haskey(kwargs2, :abstol) && (kwargs2 = merge(kwargs2, (abstol = tol * 1.0e-6,)))
+        !haskey(kwargs2, :reltol) && (kwargs2 = merge(kwargs2, (reltol = tol * 1.0e-6,)))
         !haskey(kwargs2, :assumptions) && (kwargs2 = merge(kwargs2, (assumptions = OperatorAssumptions(true),)))
 
         prob = LinearProblem{true}(Aₛ, v0)
@@ -419,81 +419,94 @@ end
 
 @doc raw"""
     eigsolve_al(
-        H::Union{AbstractQuantumObject{HOpType},Tuple},
+        H::AbstractQuantumObject{HOpType},
         T::Real,
         c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
         alg::AbstractODEAlgorithm = DP5(),
-        params::NamedTuple = NamedTuple(),
-        ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
+        params = NullParameters(),
+        ρ0::Union{Nothing,QuantumObject{SOpType}} = nothing,
         eigvals::Int = 1,
-        krylovdim::Int = min(10, size(H, 1)),
+        krylovdim::Int = max(20, 2 * eigvals + 1),
         maxiter::Int = 200,
-        eigstol::Real = 1e-6,
+        eigstol::Real = 1e-8,
+        liouvillian_eigs::Union{Val,Bool} = Val(false),
         sortby::Function = abs2,
         rev::Bool = true,
         kwargs...,
     )
 
-Solve the eigenvalue problem for a Liouvillian superoperator `L` using the Arnoldi-Lindblad method.
+Solve the eigenvalue problem for a Liouvillian superoperator ``\mathcal{L}`` (or Hamiltonian ``\hat{H}``) using the Arnoldi-Lindblad method.
+
+This method finds eigenvalues and eigenvectors of the time-ordered propagator ``\mathcal{G}(T) = \mathcal{T} e^{\int_0^T \mathcal{L}(t) dt}`` by iteratively applying time evolution to build a Krylov subspace. For closed systems (when `c_ops` is `nothing` and `H` is an [`Operator`](@ref)), it instead solves for the unitary propagator ``\hat{U}(T) = \mathcal{T} e^{-i \int_0^T \hat{H}(t) dt}``.
 
 # Arguments
-- `H`: The Hamiltonian (or directly the Liouvillian) of the system. It can be a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a tuple of the form supported by [`mesolve`](@ref).
-- `T`: The time at which to evaluate the time evolution.
-- `c_ops`: A vector of collapse operators. Default is `nothing` meaning the system is closed.
+- `H`: The Hamiltonian (or directly the Liouvillian) of the system. It can be either a [`QuantumObject`](@ref) or a [`QuantumObjectEvolution`](@ref).
+- `T`: The time at which to evaluate the time evolution propagator.
+- `c_ops`: A vector of collapse operators. Default is `nothing`, meaning the system is closed.
 - `alg`: The differential equation solver algorithm. Default is `DP5()`.
-- `params`: A `NamedTuple` containing the parameters of the system.
-- `ρ0`: The initial density matrix. If not specified, a random density matrix is used.
+- `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
+- `ρ0`: The initial state. If not specified, a random initial state is used (a random [`Ket`](@ref) for closed systems or a random [`OperatorKet`](@ref) for open systems). The initial state type should match the system type.
 - `eigvals`: The number of eigenvalues to compute.
 - `krylovdim`: The dimension of the Krylov subspace.
 - `maxiter`: The maximum number of iterations for the eigsolver.
 - `eigstol`: The tolerance for the eigsolver.
-- `sortby::Function`: the function to sort eigenvalues. Default is `abs2`.
-- `rev::Bool`: whether to sort in descending order. Default is `true`.
+- `liouvillian_eigs`: If `Val(true)`, return the eigenvalues of the Liouvillian (or Hamiltonian) obtained via ``\lambda = \log(\mu) / T`` where ``\mu`` are the propagator eigenvalues. If `Val(false)` (default), return the propagator eigenvalues directly. Using non-`Val` types might lead to type instabilities.
+- `sortby::Function`: The function to sort eigenvalues. Default is `abs2`.
+- `rev::Bool`: Whether to sort in descending order. Default is `true`.
 - `kwargs`: Additional keyword arguments passed to the differential equation solver.
 
 # Notes
-- For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
-- For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
+- For closed systems (`c_ops = nothing` with `H` as an [`Operator`](@ref)), the method internally uses [`sesolve`](@ref) via [`mesolveProblem`](@ref).
+- For open systems, the method uses [`mesolve`](@ref) internally.
+- For more details about `alg`, please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/).
+- For more details about `kwargs`, please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/).
+
+!!! warning "Beware of type-stability!"
+    If you want to keep type stability, it is recommended to use `eigsolve_al(...; liouvillian_eigs=Val(liouvillian_eigs))` instead of `eigsolve_al(...; liouvillian_eigs=liouvillian_eigs)`. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 
 # Returns
-- `EigsolveResult`: A struct containing the eigenvalues, the eigenvectors, and some information about the eigsolver
+- `EigsolveResult`: A struct containing the eigenvalues, the eigenvectors, and some information about the eigsolver. See also [`EigsolveResult`](@ref).
 
 # References
-- [1] Minganti, F., & Huybrechts, D. (2022). Arnoldi-Lindblad time evolution: Faster-than-the-clock algorithm for the spectrum of time-independent and Floquet open quantum systems. Quantum, 6, 649.
+- [Minganti-Huybrechts2022](@citet)
 """
 function eigsolve_al(
-    H::Union{AbstractQuantumObject{HOpType},Tuple},
-    T::Real,
-    c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
-    alg::AbstractODEAlgorithm = DP5(),
-    params::NamedTuple = NamedTuple(),
-    ρ0::AbstractMatrix = rand_dm(prod(H.dimensions)).data,
-    eigvals::Int = 1,
-    krylovdim::Int = min(10, size(H, 1)),
-    maxiter::Int = 200,
-    eigstol::Real = 1e-6,
-    sortby::Function = abs2,
-    rev::Bool = true,
-    kwargs...,
-) where {HOpType<:Union{Operator,SuperOperator}}
-    L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
-    prob = mesolveProblem(
-        L_evo,
-        QuantumObject(ρ0, type = Operator(), dims = H.dimensions),
-        [zero(T), T];
-        params = params,
-        progress_bar = Val(false),
+        H::AbstractQuantumObject{HOpType},
+        T::Real,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        alg::AbstractODEAlgorithm = DP5(),
+        params = NullParameters(),
+        ρ0::Union{Nothing, QuantumObject{SOpType}} = nothing,
+        eigvals::Int = 1,
+        krylovdim::Int = max(20, 2 * eigvals + 1),
+        maxiter::Int = 200,
+        eigstol::Real = 1.0e-8,
+        liouvillian_eigs::Union{Val, Bool} = Val(false),
+        sortby::Function = abs2,
+        rev::Bool = true,
         kwargs...,
-    ).prob
-    integrator = init(prob, alg)
+    ) where {HOpType <: Union{Operator, SuperOperator}, SOpType <: Union{Ket, OperatorKet}}
+    is_unitary_evo = isoper(H) && isnothing(c_ops)
 
-    Lmap = ArnoldiLindbladIntegratorMap(eltype(H), size(L_evo), integrator)
+    # Generate random initial state if not provided
+    Te = eltype(H)
+    ρ0_vec = if isnothing(ρ0)
+        is_unitary_evo ? rand_ket(Te, H.dimensions) : operator_to_vector(rand_dm(Te, H.dimensions))
+    else
+        ρ0
+    end
 
+    prob = mesolveProblem(H, ρ0_vec, [zero(T), T], c_ops; params = params, progress_bar = Val(false), kwargs...)
+    integrator = init(prob.prob, alg)
+
+    Lmap = ArnoldiLindbladIntegratorMap(Te, size(prob.prob.f.f), integrator)
+
+    res_type = is_unitary_evo ? Operator() : SuperOperator()
     res = _eigsolve(
         Lmap,
-        mat2vec(ρ0),
-        L_evo.type,
-        L_evo.dimensions,
+        ρ0_vec.data,
+        res_type,
+        H.dimensions,
         eigvals,
         krylovdim,
         maxiter = maxiter,
@@ -502,13 +515,11 @@ function eigsolve_al(
         rev = rev,
     )
 
-    vals = similar(res.values)
-    vecs = similar(res.vectors)
-
-    for i in eachindex(res.values)
-        vec = view(res.vectors, :, i)
-        vals[i] = dot(vec, L_evo.data, vec)
-        @. vecs[:, i] = vec * exp(-1im * angle(vec[1]))
+    vecs = res.vectors
+    vals = if getVal(liouvillian_eigs)
+        log.(complex.(res.values)) ./ T
+    else
+        res.values
     end
 
     settings.auto_tidyup && tidyup!(vecs)
@@ -550,7 +561,7 @@ julia> expect(H, ψ[1]) ≈ E[1]
 true
 ```
 """
-function LinearAlgebra.eigen(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Operator,SuperOperator}}
+function LinearAlgebra.eigen(A::QuantumObject{OpType}; kwargs...) where {OpType <: Union{Operator, SuperOperator}}
     # This creates a weak Union type on CPU. See https://github.com/JuliaLang/LinearAlgebra.jl/issues/1498
     F = eigen(to_dense(A.data); kwargs...)
 
@@ -566,7 +577,7 @@ end
 
 Same as [`eigen(A::QuantumObject; kwargs...)`](@ref) but for only the eigenvalues.
 """
-LinearAlgebra.eigvals(A::QuantumObject{OpType}; kwargs...) where {OpType<:Union{Operator,SuperOperator}} =
+LinearAlgebra.eigvals(A::QuantumObject{OpType}; kwargs...) where {OpType <: Union{Operator, SuperOperator}} =
     eigvals(to_dense(A.data); kwargs...)
 
 @doc raw"""
@@ -586,10 +597,10 @@ Calculate the eigenenergies
 - `::Vector{<:Number}`: a list of eigenvalues
 """
 function eigenenergies(
-    A::QuantumObject{OpType};
-    sparse::Union{Bool,Val} = Val(false),
-    kwargs...,
-) where {OpType<:Union{Operator,SuperOperator}}
+        A::QuantumObject{OpType};
+        sparse::Union{Bool, Val} = Val(false),
+        kwargs...,
+    ) where {OpType <: Union{Operator, SuperOperator}}
     if getVal(sparse)
         return eigsolve(A; kwargs...).values
     else
@@ -614,10 +625,10 @@ Calculate the eigenvalues and corresponding eigenvectors
 - `::EigsolveResult`: containing the eigenvalues, the eigenvectors, and some information from the solver. see also [`EigsolveResult`](@ref)
 """
 function eigenstates(
-    A::QuantumObject{OpType};
-    sparse::Union{Bool,Val} = Val(false),
-    kwargs...,
-) where {OpType<:Union{Operator,SuperOperator}}
+        A::QuantumObject{OpType};
+        sparse::Union{Bool, Val} = Val(false),
+        kwargs...,
+    ) where {OpType <: Union{Operator, SuperOperator}}
     if getVal(sparse)
         return eigsolve(A; kwargs...)
     else

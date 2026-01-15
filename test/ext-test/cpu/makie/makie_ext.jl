@@ -3,26 +3,36 @@
     xvec = yvec = -15.0:0.1:15.0
     wig = transpose(wigner(ψ, xvec, yvec))
 
+    a = tensor(destroy(5), qeye(2))
+    σm = tensor(qeye(5), destroy(2))
+    sx = tensor(qeye(5), sigmax())
+    H = a' * a + sx - 0.5 * (a * σm' + a' * σm)
+    L = liouvillian(H)
+
     # Makie unload errors
     @test_throws ArgumentError plot_wigner(ψ; library = :Makie, xvec = xvec, yvec = yvec)
     @test_throws ArgumentError plot_fock_distribution(ψ; library = :Makie)
     @test_throws ArgumentError plot_bloch(ψ; library = :Makie)
+    @test_throws ArgumentError matrix_heatmap(H; library = :Makie)
+    @test_throws ArgumentError matrix_histogram(H; library = :Makie)
 
     using Makie
 
+    #############################################
+    # plot_wigner
     fig, ax, hm =
         plot_wigner(ψ; library = Val(:Makie), xvec = xvec, yvec = yvec, projection = Val(:two_dim), colorbar = true)
     @test fig isa Figure
     @test ax isa Axis
     @test hm isa Heatmap
-    @test all(isapprox.(hm[3].value.x, wig, atol = 1e-6))
+    @test all(isapprox.(hm[3].value.x, wig, atol = 1.0e-6))
 
     fig, ax, surf =
         plot_wigner(ψ; library = Val(:Makie), xvec = xvec, yvec = yvec, projection = Val(:three_dim), colorbar = true)
     @test fig isa Figure
     @test ax isa Axis3
     @test surf isa Surface
-    @test all(isapprox.(surf[3].value.x, wig, atol = 1e-6))
+    @test all(isapprox.(surf[3].value.x, wig, atol = 1.0e-6))
 
     fig = Figure()
     pos = fig[2, 3]
@@ -52,6 +62,8 @@
     @test fig1 === fig
     @test fig[2, 3].layout.content[1].content[1, 1].layout.content[1].content === ax
 
+    #############################################
+    # plot_fock_distribution
     fig = Figure()
     pos = fig[2, 3]
     fig1, ax = plot_fock_distribution(ψ; library = Val(:Makie), location = pos)
@@ -61,6 +73,36 @@
     fig = Figure()
     pos = fig[2, 3]
     fig1, ax = @test_logs (:warn,) plot_fock_distribution(ψ * 2; library = Val(:Makie), location = pos)
+
+    #############################################
+    # matrix_heatmap and matrix_histogram
+    for op in (H, L)
+        for method in (Val(:real), Val(:imag), Val(:abs), Val(:angle))
+            fig, ax, hm = matrix_heatmap(op; method = method)
+            @test fig isa Figure
+            @test ax isa Axis
+            @test hm isa Heatmap
+
+            fig, ax, ms = matrix_histogram(op; method = method)
+            @test fig isa Figure
+            @test ax isa Axis3
+            @test ms isa MeshScatter
+        end
+    end
+    @test_throws ArgumentError matrix_heatmap(H; method = Val(:wrong))
+    @test_throws ArgumentError matrix_histogram(H; method = Val(:wrong))
+
+    fig = Figure()
+    pos = fig[2, 3]
+    fig1, ax = matrix_heatmap(H; library = Val(:Makie), location = pos)
+    @test fig1 === fig
+    @test fig[2, 3].layout.content[1].content[1, 1].layout.content[1].content === ax
+
+    fig = Figure()
+    pos = fig[2, 3]
+    fig1, ax = matrix_histogram(H; library = Val(:Makie), location = pos)
+    @test fig1 === fig
+    @test fig[2, 3].layout.content[1].content[1, 1].layout.content[1].content === ax
 end
 
 @testset "Makie Bloch sphere" begin
@@ -148,7 +190,7 @@ end
         @test !isnothing(lscene)
     catch e
         @test false
-        @info "Render threw unexpected error" exception=e
+        @info "Render threw unexpected error" exception = e
     end
 
     b = Bloch()
@@ -161,7 +203,7 @@ end
         @test !isnothing(lscene)
     catch e
         @test false
-        @info "Render threw unexpected error" exception=e
+        @info "Render threw unexpected error" exception = e
     end
 
     # test `state to Bloch vector` conversion and `add_states!` function
@@ -185,14 +227,14 @@ end
     @test_throws ArgumentError add_states!(b, states, kind = :wrong)
 
     th = range(0, 2π; length = 20)
-    xp = cos.(th);
-    yp = sin.(th);
-    zp = zeros(20);
-    pnts = [xp, yp, zp];
-    pnts = Matrix(hcat(xp, yp, zp)');
-    add_points!(b, pnts);
-    vec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
-    add_vectors!(b, vec);
+    xp = cos.(th)
+    yp = sin.(th)
+    zp = zeros(20)
+    pnts = [xp, yp, zp]
+    pnts = Matrix(hcat(xp, yp, zp)')
+    add_points!(b, pnts)
+    vec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    add_vectors!(b, vec)
     add_line!(b, [1, 0, 0], [0, 1, 0])
     add_arc!(b, [1, 0, 0], [0, 1, 0], [0, 0, 1])
     try
@@ -201,7 +243,7 @@ end
         @test !isnothing(lscene)
     catch e
         @test false
-        @info "Render threw unexpected error" exception=e
+        @info "Render threw unexpected error" exception = e
     end
 
     b = Bloch()
@@ -218,7 +260,7 @@ end
         @test !isnothing(lscene)
     catch e
         @test false
-        @info "Render threw unexpected error" exception=e
+        @info "Render threw unexpected error" exception = e
     end
 
     # if render location is given as lscene, should return the same Figure and LScene

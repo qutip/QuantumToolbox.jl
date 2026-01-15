@@ -219,7 +219,7 @@ sesolve_map
 mesolve_map
 dfd_mesolve
 liouvillian
-liouvillian_generalized
+liouvillian_dressed_nonsecular
 bloch_redfield_tensor
 brterm
 brmesolve
@@ -333,6 +333,8 @@ enr_state_dictionaries
 ```@docs
 plot_wigner
 plot_fock_distribution
+matrix_heatmap
+matrix_histogram
 ```
 
 ### [Bloch Sphere](@id doc-API:Bloch-Sphere)

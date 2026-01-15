@@ -1,22 +1,22 @@
 export ArnoldiSpace, arnoldi, arnoldi!, arnoldi_init!, arnoldi_step!
 export expv!, expv
 
-struct ArnoldiSpace{VT<:AbstractMatrix{<:Number},HT<:AbstractMatrix{<:Number},mT<:Integer}
+struct ArnoldiSpace{VT <: AbstractMatrix{<:Number}, HT <: AbstractMatrix{<:Number}, mT <: Integer}
     V::VT
     H::HT
     Hcopy::HT
     m::mT
 end
 
-function Base.copy(AS::ArnoldiSpace{<:AbstractMatrix{T1},<:AbstractMatrix{T1}}) where {T1<:Number}
+function Base.copy(AS::ArnoldiSpace{<:AbstractMatrix{T1}, <:AbstractMatrix{T1}}) where {T1 <: Number}
     return ArnoldiSpace(copy(AS.V), copy(AS.H), copy(AS.Hcopy), AS.m)
 end
 
-function Base.deepcopy(AS::ArnoldiSpace{<:AbstractMatrix{T1},<:AbstractMatrix{T1}}) where {T1<:Number}
+function Base.deepcopy(AS::ArnoldiSpace{<:AbstractMatrix{T1}, <:AbstractMatrix{T1}}) where {T1 <: Number}
     return ArnoldiSpace(deepcopy(AS.V), deepcopy(AS.H), deepcopy(AS.Hcopy), AS.m)
 end
 
-function arnoldi_init!(A, b::AbstractVector{T}, V::AbstractMatrix{T}, H::AbstractMatrix{T}) where {T<:Number}
+function arnoldi_init!(A, b::AbstractVector{T}, V::AbstractMatrix{T}, H::AbstractMatrix{T}) where {T <: Number}
     v₁ = view(V, :, 1)
     v₂ = view(V, :, 2)
     v₁ .= b
@@ -29,7 +29,7 @@ function arnoldi_init!(A, b::AbstractVector{T}, V::AbstractMatrix{T}, H::Abstrac
     return v₂ ./= H[2, 1]
 end
 
-function arnoldi_step!(A, V::AbstractMatrix{T}, H::AbstractMatrix{T}, i::TI) where {T<:Number,TI<:Integer}
+function arnoldi_step!(A, V::AbstractMatrix{T}, H::AbstractMatrix{T}, i::TI) where {T <: Number, TI <: Integer}
     vᵢ = view(V, :, i)
     vᵢ₊₁ = view(V, :, i + 1)
     mul!(vᵢ₊₁, A, vᵢ)
@@ -38,16 +38,16 @@ function arnoldi_step!(A, V::AbstractMatrix{T}, H::AbstractMatrix{T}, i::TI) whe
         H[j, i] = dot(vⱼ, vᵢ₊₁)
         axpy!(-H[j, i], vⱼ, vᵢ₊₁)
     end
-    β = H[i+1, i] = norm(vᵢ₊₁)
-    vᵢ₊₁ ./= H[i+1, i]
+    β = H[i + 1, i] = norm(vᵢ₊₁)
+    vᵢ₊₁ ./= H[i + 1, i]
     return β
 end
 
 function arnoldi!(
-    AS::ArnoldiSpace{<:AbstractMatrix{T1},<:AbstractMatrix{T1}},
-    A,
-    b::AbstractVector{T2},
-) where {T1<:Number,T2<:Number}
+        AS::ArnoldiSpace{<:AbstractMatrix{T1}, <:AbstractMatrix{T1}},
+        A,
+        b::AbstractVector{T2},
+    ) where {T1 <: Number, T2 <: Number}
     n = size(A, 2)
     V = AS.V
     H = AS.H
@@ -63,7 +63,7 @@ function arnoldi!(
     return AS
 end
 
-function arnoldi(A, b::AbstractVector{T}, m::Integer) where {T<:Number}
+function arnoldi(A, b::AbstractVector{T}, m::Integer) where {T <: Number}
     n = size(A, 2)
     V = similar(b, n, m + 1)
     H = zeros(T, m + 1, m)
@@ -74,11 +74,11 @@ end
 ### EXPV TOOLS ###
 
 function expv!(
-    x::AbstractVector{T1},
-    AS::ArnoldiSpace{<:AbstractMatrix{T1},<:AbstractMatrix{T1}},
-    t::T2,
-    b::AbstractVector{T1},
-) where {T1<:Number,T2<:Union{Number,Integer}}
+        x::AbstractVector{T1},
+        AS::ArnoldiSpace{<:AbstractMatrix{T1}, <:AbstractMatrix{T1}},
+        t::T2,
+        b::AbstractVector{T1},
+    ) where {T1 <: Number, T2 <: Union{Number, Integer}}
     H = AS.H
     Hcopy = AS.Hcopy
     V = AS.V
@@ -104,17 +104,17 @@ function expv!(
 end
 
 function expv!(
-    x::AbstractVector{T1},
-    A,
-    t::T2,
-    b::AbstractVector{T1};
-    m::Int = min(30, cld(2 * length(b), 3)),
-) where {T1<:Number,T2<:Union{Number,Integer}}
+        x::AbstractVector{T1},
+        A,
+        t::T2,
+        b::AbstractVector{T1};
+        m::Int = min(30, cld(2 * length(b), 3)),
+    ) where {T1 <: Number, T2 <: Union{Number, Integer}}
     AS = arnoldi(A, b, m)
     return expv!(x, AS, t, b)
 end
 
-function expv(A, t::T1, b::AbstractVector{T2}; m::Int = min(30, cld(2 * length(b), 3))) where {T1<:Number,T2<:Number}
+function expv(A, t::T1, b::AbstractVector{T2}; m::Int = min(30, cld(2 * length(b), 3))) where {T1 <: Number, T2 <: Number}
     x = similar(b)
     return expv!(x, A, t, b, m = m)
 end

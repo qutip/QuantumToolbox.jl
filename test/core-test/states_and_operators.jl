@@ -101,8 +101,8 @@
         @test all(eigenenergies(ρ_AB) .>= 0)
         @test all(eigenenergies(ρ_A) .>= 0)
         @test all(eigenenergies(ρ_B) .>= 0)
-        @test all(isapprox.(eig_val[1:rank], 0.0, atol = 1e-10))
-        @test all(eig_val[(rank+1):10] .>= 0)
+        @test all(isapprox.(eig_val[1:rank], 0.0, atol = 1.0e-10))
+        @test all(eig_val[(rank + 1):10] .>= 0)
         @test_throws DomainError rand_dm(4, rank = rank)
         @test_throws DomainError rand_dm(4, rank = 0)
     end
@@ -140,7 +140,7 @@
     @testset "bosonic operators" begin
         # destroy, create, num, position, momentum
         n = 10
-        i, j = rand(0:(n-1), 2)
+        i, j = rand(0:(n - 1), 2)
         a = destroy(n)
         ad = create(n)
         N = num(n)
@@ -150,10 +150,10 @@
         @test isoper(x)
         @test isoper(p)
         @test a.dims == ad.dims == N.dims == x.dims == p.dims == [n]
-        @test eigenenergies(ad * a) ≈ 0:(n-1)
+        @test eigenenergies(ad * a) ≈ 0:(n - 1)
         @test commutator(N, a) ≈ -a
         @test commutator(N, ad) ≈ ad
-        @test all(diag(commutator(x, p))[1:(n-1)] .≈ 1.0im)
+        @test all(diag(commutator(x, p))[1:(n - 1)] .≈ 1.0im)
         @test fock(n, i) == Pij * fock(n, j)
         @test_throws ArgumentError projection(n, n, 0)
         @test_throws ArgumentError projection(n, 0, n)
@@ -171,7 +171,7 @@
     end
 
     @testset "phase" begin
-        # verify Equation (33) in: 
+        # verify Equation (33) in:
         # Michael Martin Nieto, QUANTUM PHASE AND QUANTUM PHASE OPERATORS: Some Physics and Some History
         s = 10
         ϕ0 = 2 * π * rand()
@@ -182,11 +182,11 @@
             for k in 0:s
                 (j != k) && (
                     SUM +=
-                        (exp(1im * (j - k) * ϕ0) / (exp(1im * (j - k) * 2 * π / (s + 1)) - 1)) * ket[j+1] * ket[k+1]'
+                        (exp(1im * (j - k) * ϕ0) / (exp(1im * (j - k) * 2 * π / (s + 1)) - 1)) * ket[j + 1] * ket[k + 1]'
                 )
             end
         end
-        @test isapprox((ϕ0 + s * π / (s + 1)) * II + (2 * π / (s + 1)) * SUM, phase(s + 1, ϕ0); atol = 1e-8)
+        @test isapprox((ϕ0 + s * π / (s + 1)) * II + (2 * π / (s + 1)) * SUM, phase(s + 1, ϕ0); atol = 1.0e-8)
     end
 
     @testset "tunneling" begin
@@ -204,9 +204,9 @@
         F_9 = qft(N)
         F_3_3 = qft(dims)
         y = F_9 * x
-        for k in 0:(N-1)
-            nk = collect(0:(N-1)) * k
-            @test y[k+1] ≈ sum(x.data .* (ω .^ nk)) / sqrt(N)
+        for k in 0:(N - 1)
+            nk = collect(0:(N - 1)) * k
+            @test y[k + 1] ≈ sum(x.data .* (ω .^ nk)) / sqrt(N)
         end
         @test ψk ≈ F_3_3 * ψx
         @test ψx ≈ F_3_3' * ψk
@@ -285,7 +285,7 @@
         ϕ = 2 * π * rand()
         @test spin_coherent(s, θ, ϕ) ≈ cos(θ / 2) * basis(2, 0) + exp(1im * ϕ) * sin(θ / 2) * basis(2, 1)
 
-        # also verify the equation in: 
+        # also verify the equation in:
         # Robert Jones, Spin Coherent States and Statistical Physics, page 3
         s = 1.5
         θ1 = π * rand()
@@ -298,7 +298,7 @@
         n2 = spin_coherent(s, θ2, ϕ2)
         @test dot(n1, n2) ≈ (cos(θ1 / 2) * cos(θ2 / 2) + exp(1im * (ϕ2 - ϕ1)) * sin(θ1 / 2) * sin(θ2 / 2))^(2 * s)
         @test dot(n1, exp(-γ * Sz), n2) ≈
-              (
+            (
             exp(-γ / 2) * cos(θ1 / 2) * cos(θ2 / 2) + exp(1im * (ϕ2 - ϕ1) + γ / 2) * sin(θ1 / 2) * sin(θ2 / 2)
         )^(2 * s)
 

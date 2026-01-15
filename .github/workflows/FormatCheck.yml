@@ -5,14 +5,12 @@ on:
       - 'main'
     paths:
       - '.github/workflows/FormatCheck.yml'
-      - '.JuliaFormatter.toml'
       - '**.jl'
   pull_request:
     branches:
       - 'main'
     paths:
       - '.github/workflows/FormatCheck.yml'
-      - '.JuliaFormatter.toml'
       - '**.jl'
     types:
       - opened
@@ -21,7 +19,8 @@ on:
       - ready_for_review
 
 jobs:
-  build:
+  runic:
+    name: Runic
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     steps:
@@ -29,22 +28,7 @@ jobs:
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
-      - name: Install and Run JuliaFormatter
-        run: |
-          julia -e 'import Pkg; Pkg.add("JuliaFormatter")'
-          julia -e 'using JuliaFormatter; format(".", verbose=true)'
-
-      - name: Format Check
-        run: |
-          julia -e '
-            output = Cmd(`git diff --name-only`) |> read |> String
-            if output == ""
-                exit(0)
-            else
-                @error "The following files have not been formatted !!!"
-                write(stdout, output)
-                write(stdout, "-----\n")
-                write(stdout, "Please format them by running the following command:\n")
-                write(stdout, "make format")
-                exit(1)
-            end'
+      - uses: julia-actions/cache@v2
+      - uses: fredrikekre/runic-action@v1
+        with:
+          version: '1'
