@@ -72,7 +72,7 @@ end
     c_op_fmmesolve = sigmax()
 
     #collapse operator for Lindblad master equation
-    @inline spectrum(omega::Real) = ifelse(ω>0, ω * 0.5 * gamma1 / (2π), zero(ω))
+    @inline spectrum(ω::Real) = ifelse(ω>0, ω * 0.5 * gamma1 / (2π), zero(ω))
 
     (ep, vp) = eigenstates(H0)
     op0 = vp[1] * vp[1]'
@@ -110,7 +110,7 @@ end
     c_op_fmmesolve = sigmax()
 
     # Collapse operator for Lindblad Master Equation
-    @inline spectrum(omega::Real) = ifelse(ω>0, ω * 0.5 * gamma1 / (2π), zero(ω))
+    @inline spectrum(ω::Real) = ifelse(ω>0, ω * 0.5 * gamma1 / (2π), zero(ω))
 
     (ep, vp) = eigenstates(H0)
     op0 = vp[1] * vp[1]'
