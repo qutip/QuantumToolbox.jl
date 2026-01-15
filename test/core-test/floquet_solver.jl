@@ -89,3 +89,49 @@ end
     @test real.p_ex ≈ real.p_ex_ref atol=1e-4
 
 end
+
+# Test Floquet master equation with dissipation for two-level system
+
+@testitem "FME 2level dissipation" begin
+    delta = 1.0 * 2π
+    eps0 = 1.0 * 2π
+    A = 0.0 * 2π
+    omega = sqrt(delta^2 + eps0^2)
+    T = 2π / omega
+    tlist = range(0.0, 2 * T, 101)
+    psi0 = rand_ket(2)
+    H0 = - eps0 / 2 * sigmaz() - delta / 2 * sigmax()
+    H1 = A/2.0 * sigmax()
+    H = (H0, (H1, t -> sin(omega * t)))
+    e_ops = [num(2)]
+    gamma1 = 1.0
+
+    # Collapse operator for Floquet-Markov Master Equation
+    c_op_fmmesolve = sigmax()
+
+    # Collapse operator for Lindblad Master Equation
+    @inline spectrum(omega::Real) = ifelse(ω>0, ω * 0.5 * gamma1 / (2π), zero(ω))
+
+    (ep, vp) = eigenstates(H0)
+    op0 = vp[1] * vp[1]'
+    op1 = vp[2] * vp[2]'
+
+    c_op_mesolve = _convert_c_ops(c_op_fmmesolve, spectrum, vp, ep)
+
+    #Solve the floquet markov master equation
+    p_ex = fmmesolve(H, psi0, tlist, c_op_fmmesolve, spectrum, T; e_ops = [num(2)], saveat = tlist).expect
+    
+    #compare with mesolve
+    p_ex_ref = mesolve(H, psi0, tlist, c_op_mesolve; e_ops = [num(2)]).expect
+
+    @test real.p_ex ≈ real.p_ex_ref atol=1e-4
+
+end
+
+#   NEXT:  Test Floquet-Markov Master Equation for a two-level system 
+#         subject to dissipation with internal transform of fmmesolve
+
+
+
+
+
