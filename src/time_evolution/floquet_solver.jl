@@ -355,11 +355,68 @@ function _state_list(fb::FloquetBasis)
 end
 
 function _state_list(fb::FloquetBasis, t::TP, pfunc::Function) where {TP<:Real}
-    _, ψ0, U0_mat = _mode_list(fb)
+    if t==0
+        return _state_list(fb)
+    end
+    _, ψ0, U0_mat = _state_list(fb)
     Ut_mat = (pfunc(fb, t).data * U0_mat)
     Ut_list = eachcol(Ut_mat) |> collect
-    ψt = Qobj.(Ut_list, dims=ψ0[1].dims)
-    return ψt, Ut_mat
+    ψt_list = Qobj.(Ut_list, dims=ψ0[1].dims)
+    return ψt_list, Ut_mat
+end
+
+
+function state(fb::FloquetBasis, t::TP=0, data::Val{false}=Val(false)) where {TP<:Real}
+    data
+    ψt_list, _ = _state_list(fb, t, propagator)
+    return ψt_list
+end
+
+function state(fb::FloquetBasis, t::TP=0, data::Val{true}) where {TP<:Real}
+    data
+    _, Ut_mat = _state_list(fb, t, propagator)
+    return Ut_mat
+end
+
+function state!(fb::FloquetBasis, t::TP=0, data::Val{false}=Val(false)) where {TP<:Real}
+    data
+    ψt_list, _ = _state_list(fb, t, propagator!)
+    return ψt_list
+end
+
+function state!(fb::FloquetBasis, t::TP=0, data::Val{true}) where {TP<:Real}
+    data
+    _, Ut_mat = _state_list(fb, t, propagator!)
+    return Ut_mat
+end
+
+function mode(fb::FloquetBasis, t::TP=0, data::Val{false}=Val(false)) where {TP<:Real}
+    data
+    ψt_list, _ = _state_list(fb, t, propagator)
+    phases = exp.(1im * t .* fb.equasi)
+    return phases .* ψt_list
+end
+
+function mode(fb::FloquetBasis, t::TP=0, data::Val{true}) where {TP<:Real}
+    data
+    _, Ut_mat = _state_list(fb, t, propagator)
+    phases_mat = exp.(1im * t .* fb.equasi) |> Diagonal
+    return phases_mat * Ut_mat
+end
+
+
+function mode!(fb::FloquetBasis, t::TP=0, data::Val{false}=Val(false)) where {TP<:Real}
+    data
+    ψt_list, _ = _state_list(fb, t, propagator!)
+    phases = exp.(1im * t .* fb.equasi)
+    return phases .* ψt_list
+end
+
+function mode!(fb::FloquetBasis, t::TP=0, data::Val{true}) where {TP<:Real}
+    data
+    _, Ut_mat = _state_list(fb, t, propagator!)
+    phases_mat = exp.(1im * t .* fb.equasi) |> Diagonal
+    return phases_mat * Ut_mat
 end
 
 """

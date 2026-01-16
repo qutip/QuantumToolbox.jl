@@ -1,6 +1,7 @@
 module QuantumToolbox
-using Revise
+
 ## Standard Julia libraries
+using Revise
 using LinearAlgebra
 using SparseArrays
 
@@ -124,7 +125,6 @@ include("time_evolution/mcsolve.jl")
 include("time_evolution/ssesolve.jl")
 include("time_evolution/smesolve.jl")
 include("time_evolution/time_evolution_dynamical.jl")
-include("time_evolution/floquet_solver.jl")
 
 ## Other functionalities
 include("correlations.jl")
