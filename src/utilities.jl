@@ -135,7 +135,7 @@ _dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
 
 _sparse_similar(A::AbstractArray, args...) = sparse(args...)
 
-_Ginibre_ensemble(::Type{T}, n::Int, rank::Int = n) where {T <: Number} = randn(T, n, rank) / sqrt(_float_type(T)(n))
+_Ginibre_ensemble(::Type{T}, n::Int, rank::Int = n) where {T <: Complex} = randn(T, n, rank) / sqrt(T(n))
 
 _Boltzmann_weight(β::T, E::Int) where {T <: Real} = (E != 0 || isfinite(β)) ? exp(-β * E) : one(T)
 
@@ -174,6 +174,8 @@ for AType in (:AbstractArray, :AbstractSciMLOperator)
         end
     end
 end
+
+const FloatOrComplex = Union{AbstractFloat, Complex}
 
 # functions for getting Float or Complex element type
 _float_type(::AbstractArray{T}) where {T <: Number} = _float_type(T)

@@ -31,11 +31,11 @@ The `distribution` specifies which of the method used to obtain the unitary matr
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_unitary(dimensions, Val(distribution))` instead of `rand_unitary(dimensions, distribution)`. Also, put `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl). See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-rand_unitary(::Type{T}, dimensions::Int, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: Number} =
+rand_unitary(::Type{T}, dimensions::Int, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: FloatOrComplex} =
     rand_unitary(T, SVector(dimensions), makeVal(distribution))
-rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: Number} =
+rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) where {T <: FloatOrComplex} =
     rand_unitary(T, dimensions, makeVal(distribution))
-function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:haar}) where {T <: Number}
+function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:haar}) where {T <: FloatOrComplex}
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -50,7 +50,7 @@ function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{In
     Λ ./= abs.(Λ) # rescaling the elements
     return QuantumObject(to_dense(Q * Diagonal(Λ)); type = Operator(), dims = dimensions)
 end
-function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:exp}) where {T <: Number}
+function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:exp}) where {T <: FloatOrComplex}
     N = prod(dimensions)
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -61,7 +61,7 @@ function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{In
     H = QuantumObject((Z + Z') / 2; type = Operator(), dims = dimensions)
     return to_dense(_rand_unitary_exp(H))
 end
-rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{Td}) where {T <: Number, Td} =
+rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{Td}) where {T <: FloatOrComplex, Td} =
     throw(ArgumentError("Invalid distribution: $(Td)"))
 rand_unitary(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) = rand_unitary(ComplexF64, dimensions, distribution)
 
@@ -104,7 +104,7 @@ julia> fock(20, 3)' * a * fock(20, 4)
 2.0 + 0.0im
 ```
 """
-destroy(::Type{T}, N::Int) where {T <: Number} = QuantumObject(spdiagm(1 => T[sqrt(T(val)) for val in 1:(N - 1)]), Operator(), N)
+destroy(::Type{T}, N::Int) where {T <: FloatOrComplex} = QuantumObject(spdiagm(1 => T[sqrt(T(val)) for val in 1:(N - 1)]), Operator(), N)
 destroy(N::Int) = destroy(ComplexF64, N)
 
 @doc raw"""
@@ -131,13 +131,13 @@ julia> fock(20, 4)' * a_d * fock(20, 3)
 2.0 + 0.0im
 ```
 """
-create(::Type{T}, N::Int) where {T <: Number} = QuantumObject(spdiagm(-1 => T[sqrt(T(val)) for val in 1:(N - 1)]), Operator(), N)
+create(::Type{T}, N::Int) where {T <: FloatOrComplex} = QuantumObject(spdiagm(-1 => T[sqrt(T(val)) for val in 1:(N - 1)]), Operator(), N)
 create(N::Int) = create(ComplexF64, N)
 
 @doc raw"""
-    displace([T::Type=ComplexF64,] N::Int, α::Number)
+    displace(N::Int, α::Number)
 
-Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator) with element type `T = ComplexF64` (default):
+Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_operator) with element precision same as `α`:
 
 ```math
 \hat{D}(\alpha)=\exp\left( \alpha \hat{a}^\dagger - \alpha^* \hat{a} \right),
@@ -145,22 +145,15 @@ Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_op
 
 where ``\hat{a}`` is the bosonic annihilation operator, and ``\alpha`` is the amount of displacement in optical phase space.
 """
-function displace(::Type{T}, N::Int, α::Tα) where {T <: Number, Tα <: Number}
-    Base.promote_type(T, Tα) == T || throw(
-        ArgumentError(
-            "Type mismatch: Input `α` has type `$Tα`, which cannot be converted to the requested element type `$T`.\n" *
-                "To resolve this, specify the element type to match the input precision: displace($(Base.promote_type(T, Tα)), N, α)"
-        )
-    )
-    a = destroy(T, N)
+function displace(N::Int, α::T) where {T <: Number}
+    a = destroy(_complex_float_type(T), N) # use complex float type to handle integer, float, and complex α
     return exp(α * a' - conj(α) * a)
 end
-displace(N::Int, α::Tα) where {Tα <: Number} = displace(ComplexF64, N, α)
 
 @doc raw"""
-    squeeze([T::Type=ComplexF64,] N::Int, z::Number)
+    squeeze(N::Int, z::Number)
 
-Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_operator) with element type `T = ComplexF64` (default):
+Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_operator) with element precision same as `z`:
 
 ```math
 \hat{S}(z)=\exp\left( \frac{1}{2} (z^* \hat{a}^2 - z(\hat{a}^\dagger)^2) \right),
@@ -168,17 +161,10 @@ Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_
 
 where ``\hat{a}`` is the bosonic annihilation operator.
 """
-function squeeze(::Type{T}, N::Int, z::Tz) where {T <: Number, Tz <: Number}
-    Base.promote_type(T, Tz) == T || throw(
-        ArgumentError(
-            "Type mismatch: Input `z` has type `$Tz`, which cannot be converted to the requested element type `$T`.\n" *
-                "To resolve this, specify the element type to match the input precision: squeeze($(Base.promote_type(T, Tz)), N, z)"
-        )
-    )
-    a_sq = destroy(T, N)^2
+function squeeze(N::Int, z::T) where {T <: Number}
+    a_sq = destroy(_complex_float_type(T), N)^2 # use complex float type to handle integer, float, and complex z
     return exp((conj(z) * a_sq - z * a_sq') / 2)
 end
-squeeze(N::Int, z::Tz) where {Tz <: Number} = squeeze(ComplexF64, N, z)
 
 @doc raw"""
     num([T::Type=ComplexF64,] N::Int)
@@ -197,7 +183,7 @@ Position operator with Hilbert space cutoff `N` and element type `T = ComplexF64
 
 This operator is defined as ``\hat{x}=\frac{1}{\sqrt{2}} (\hat{a}^\dagger + \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
-function position(::Type{T}, N::Int) where {T <: Number}
+function position(::Type{T}, N::Int) where {T <: FloatOrComplex}
     a = destroy(T, N)
     return (a' + a) / sqrt(T(2))
 end
@@ -210,16 +196,16 @@ Momentum operator with Hilbert space cutoff `N` and element type `T = ComplexF64
 
 This operator is defined as ``\hat{p}= \frac{i}{\sqrt{2}} (\hat{a}^\dagger - \hat{a})``, where ``\hat{a}`` is the bosonic annihilation operator.
 """
-function momentum(::Type{T}, N::Int) where {T <: Number}
+function momentum(::Type{T}, N::Int) where {T <: Complex}
     a = destroy(T, N)
     return (a - a') / (im * sqrt(T(2)))
 end
 momentum(N::Int) = momentum(ComplexF64, N)
 
 @doc raw"""
-    phase([T::Type=ComplexF64,] N::Int, ϕ0::Real=0)
+    phase(N::Int, ϕ0::Real=0)
 
-Single-mode Pegg-Barnett phase operator with Hilbert space cutoff ``N``, the reference phase ``\phi_0``, and element type `T = ComplexF64` (default).
+Single-mode Pegg-Barnett phase operator with Hilbert space cutoff ``N``, the reference phase ``\phi_0``, and element precision same as `ϕ0`.
 
 This operator is defined as
 
@@ -242,19 +228,12 @@ and
 # Reference
 - [Michael Martin Nieto, QUANTUM PHASE AND QUANTUM PHASE OPERATORS: Some Physics and Some History, arXiv:hep-th/9304036](https://arxiv.org/abs/hep-th/9304036), Equation (30-32).
 """
-function phase(::Type{T}, N::Int, ϕ0::Tϕ = 0) where {T <: Number, Tϕ <: Real}
-    Base.promote_type(T, Tϕ) == T || throw(
-        ArgumentError(
-            "Type mismatch: Input `ϕ0` has type `$Tϕ`, which cannot be converted to the requested element type `$T`.\n" *
-                "To resolve this, specify the element type to match the input precision: phase($(Base.promote_type(T, Tϕ)), N, ϕ0)"
-        )
-    )
+function phase(N::Int, ϕ0::T = 0) where {T <: Real}
     N_list = collect(0:(N - 1))
-    ϕ = T(ϕ0) .+ (2 * T(π) / N) .* N_list
-    states = [exp.(im * ϕ[m] .* N_list) ./ sqrt(T(N)) for m in 1:N]
+    ϕ = ϕ0 .+ (2 * _float_type(T)(π) / N) .* N_list # _float_type(T) can deal with T = Int and BigFloat
+    states = [exp.(im * ϕ[m] .* N_list) ./ sqrt(T(N)) for m in 1:N] # here promotes element type to complex
     return QuantumObject(sum([ϕ[m] * states[m] * states[m]' for m in 1:N]); type = Operator(), dims = N)
 end
-phase(N::Int, ϕ0::Tϕ = 0) where {Tϕ <: Real} = phase(ComplexF64, N, ϕ0)
 
 @doc raw"""
     jmat([T::Type=ComplexF64,] j::Real, which::Union{Symbol,Val})
@@ -299,9 +278,9 @@ Quantum Object:   type=Operator()   dims=[4]   size=(4, 4)   ishermitian=true
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `jmat(j, Val(which))` instead of `jmat(j, which)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-jmat(::Type{T}, j::Real, which::Symbol) where {T <: Number} = jmat(T, j, Val(which))
-jmat(::Type{T}, j::Real) where {T <: Number} = (jmat(T, j, Val(:x)), jmat(T, j, Val(:y)), jmat(T, j, Val(:z)))
-function jmat(::Type{T}, j::Real, ::Val{:x}) where {T <: Number}
+jmat(::Type{T}, j::Real, which::Symbol) where {T <: FloatOrComplex} = jmat(T, j, Val(which))
+jmat(::Type{T}, j::Real) where {T <: FloatOrComplex} = (jmat(T, j, Val(:x)), jmat(T, j, Val(:y)), jmat(T, j, Val(:z)))
+function jmat(::Type{T}, j::Real, ::Val{:x}) where {T <: FloatOrComplex}
     J = 2 * j + 1
     ((floor(J) != J) || (j < 0)) &&
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
@@ -309,7 +288,7 @@ function jmat(::Type{T}, j::Real, ::Val{:x}) where {T <: Number}
     σ = _jm(T, j)
     return QuantumObject((σ' + σ) / 2, Operator(), Int(J))
 end
-function jmat(::Type{T}, j::Real, ::Val{:y}) where {T <: Number}
+function jmat(::Type{T}, j::Real, ::Val{:y}) where {T <: FloatOrComplex}
     J = 2 * j + 1
     ((floor(J) != J) || (j < 0)) &&
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
@@ -317,37 +296,37 @@ function jmat(::Type{T}, j::Real, ::Val{:y}) where {T <: Number}
     σ = _jm(T, j)
     return QuantumObject((σ' - σ) / 2im, Operator(), Int(J))
 end
-function jmat(::Type{T}, j::Real, ::Val{:z}) where {T <: Number}
+function jmat(::Type{T}, j::Real, ::Val{:z}) where {T <: FloatOrComplex}
     J = 2 * j + 1
     ((floor(J) != J) || (j < 0)) &&
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
     return QuantumObject(_jz(T, j), Operator(), Int(J))
 end
-function jmat(::Type{T}, j::Real, ::Val{:+}) where {T <: Number}
+function jmat(::Type{T}, j::Real, ::Val{:+}) where {T <: FloatOrComplex}
     J = 2 * j + 1
     ((floor(J) != J) || (j < 0)) &&
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
     return QuantumObject(adjoint(_jm(T, j)), Operator(), Int(J))
 end
-function jmat(::Type{T}, j::Real, ::Val{:-}) where {T <: Number}
+function jmat(::Type{T}, j::Real, ::Val{:-}) where {T <: FloatOrComplex}
     J = 2 * j + 1
     ((floor(J) != J) || (j < 0)) &&
         throw(ArgumentError("The spin quantum number (j) must be a non-negative integer or half-integer."))
 
     return QuantumObject(_jm(T, j), Operator(), Int(J))
 end
-jmat(::Type{T}, j::Real, ::Val{T2}) where {T <: Number, T2} = throw(ArgumentError("Invalid spin operator: $(T2)"))
+jmat(::Type{T}, j::Real, ::Val{T2}) where {T <: FloatOrComplex, T2} = throw(ArgumentError("Invalid spin operator: $(T2)"))
 jmat(j::Real, which::Union{Symbol, Val}) = jmat(ComplexF64, j, which)
 jmat(j::Real) = jmat(ComplexF64, j)
 
-function _jm(::Type{T}, j::Real) where {T <: Number}
+function _jm(::Type{T}, j::Real) where {T <: FloatOrComplex}
     m = T.(j:(-1):(-j))
     data = @. sqrt(T(j * (j + 1)) - m * (m - 1))
     return spdiagm(-1 => data[1:(end - 1)])
 end
-function _jz(::Type{T}, j::Real) where {T <: Number}
+function _jz(::Type{T}, j::Real) where {T <: FloatOrComplex}
     data = @. T(j) - (0:Int(2 * j))
     return spdiagm(0 => data)
 end
@@ -359,7 +338,7 @@ end
 
 See also [`jmat`](@ref).
 """
-spin_Jx(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:x))
+spin_Jx(::Type{T}, j::Real) where {T <: FloatOrComplex} = jmat(T, j, Val(:x))
 spin_Jx(j::Real) = spin_Jx(ComplexF64, j)
 
 @doc raw"""
@@ -369,7 +348,7 @@ spin_Jx(j::Real) = spin_Jx(ComplexF64, j)
 
 See also [`jmat`](@ref).
 """
-spin_Jy(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:y))
+spin_Jy(::Type{T}, j::Real) where {T <: FloatOrComplex} = jmat(T, j, Val(:y))
 spin_Jy(j::Real) = spin_Jy(ComplexF64, j)
 
 @doc raw"""
@@ -379,7 +358,7 @@ spin_Jy(j::Real) = spin_Jy(ComplexF64, j)
 
 See also [`jmat`](@ref).
 """
-spin_Jz(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:z))
+spin_Jz(::Type{T}, j::Real) where {T <: FloatOrComplex} = jmat(T, j, Val(:z))
 spin_Jz(j::Real) = spin_Jz(ComplexF64, j)
 
 @doc raw"""
@@ -389,7 +368,7 @@ spin_Jz(j::Real) = spin_Jz(ComplexF64, j)
 
 See also [`jmat`](@ref).
 """
-spin_Jm(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:-))
+spin_Jm(::Type{T}, j::Real) where {T <: FloatOrComplex} = jmat(T, j, Val(:-))
 spin_Jm(j::Real) = spin_Jm(ComplexF64, j)
 
 @doc raw"""
@@ -399,7 +378,7 @@ spin_Jm(j::Real) = spin_Jm(ComplexF64, j)
 
 See also [`jmat`](@ref).
 """
-spin_Jp(::Type{T}, j::Real) where {T <: Number} = jmat(T, j, Val(:+))
+spin_Jp(::Type{T}, j::Real) where {T <: FloatOrComplex} = jmat(T, j, Val(:+))
 spin_Jp(j::Real) = spin_Jp(ComplexF64, j)
 
 @doc raw"""
@@ -409,7 +388,7 @@ A set of Spin-`j` operators ``(\hat{S}_x, \hat{S}_y, \hat{S}_z)`` with element t
 
 Note that this functions is same as `jmat(j)`. See also [`jmat`](@ref).
 """
-spin_J_set(::Type{T}, j::Real) where {T <: Number} = jmat(T, j)
+spin_J_set(::Type{T}, j::Real) where {T <: FloatOrComplex} = jmat(T, j)
 spin_J_set(j::Real) = spin_J_set(ComplexF64, j)
 
 @doc raw"""
@@ -419,7 +398,7 @@ Pauli ladder operator ``\hat{\sigma}_+ = (\hat{\sigma}_x + i \hat{\sigma}_y) / 2
 
 See also [`jmat`](@ref).
 """
-sigmap(::Type{T}) where {T <: Number} = jmat(T, 0.5, Val(:+))
+sigmap(::Type{T}) where {T <: FloatOrComplex} = jmat(T, 0.5, Val(:+))
 sigmap() = sigmap(ComplexF64)
 
 @doc raw"""
@@ -429,7 +408,7 @@ Pauli ladder operator ``\hat{\sigma}_- = (\hat{\sigma}_x - i \hat{\sigma}_y) / 2
 
 See also [`jmat`](@ref).
 """
-sigmam(::Type{T}) where {T <: Number} = jmat(T, 0.5, Val(:-))
+sigmam(::Type{T}) where {T <: FloatOrComplex} = jmat(T, 0.5, Val(:-))
 sigmam() = sigmam(ComplexF64)
 
 @doc raw"""
@@ -439,7 +418,7 @@ Pauli operator ``\hat{\sigma}_x = \hat{\sigma}_- + \hat{\sigma}_+`` with element
 
 See also [`jmat`](@ref).
 """
-sigmax(::Type{T}) where {T <: Number} = rmul!(jmat(T, 0.5, Val(:x)), 2)
+sigmax(::Type{T}) where {T <: FloatOrComplex} = rmul!(jmat(T, 0.5, Val(:x)), 2)
 sigmax() = sigmax(ComplexF64)
 
 @doc raw"""
@@ -449,7 +428,7 @@ Pauli operator ``\hat{\sigma}_y = i \left( \hat{\sigma}_- - \hat{\sigma}_+ \righ
 
 See also [`jmat`](@ref).
 """
-sigmay(::Type{T}) where {T <: Number} = rmul!(jmat(T, 0.5, Val(:y)), 2)
+sigmay(::Type{T}) where {T <: FloatOrComplex} = rmul!(jmat(T, 0.5, Val(:y)), 2)
 sigmay() = sigmay(ComplexF64)
 
 @doc raw"""
@@ -459,7 +438,7 @@ Pauli operator ``\hat{\sigma}_z = \left[ \hat{\sigma}_+ , \hat{\sigma}_- \right]
 
 See also [`jmat`](@ref).
 """
-sigmaz(::Type{T}) where {T <: Number} = rmul!(jmat(T, 0.5, Val(:z)), 2)
+sigmaz(::Type{T}) where {T <: FloatOrComplex} = rmul!(jmat(T, 0.5, Val(:z)), 2)
 sigmaz() = sigmaz(ComplexF64)
 
 @doc raw"""
@@ -500,7 +479,7 @@ Note that we put ``\hat{\sigma}_{+} = \begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatri
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fdestroy(Val(N), j)` instead of `fdestroy(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-fdestroy(::Type{T}, N::Union{Int, Val}, j::Int) where {T <: Number} = _Jordan_Wigner(T, N, j, sigmap(T))
+fdestroy(::Type{T}, N::Union{Int, Val}, j::Int) where {T <: FloatOrComplex} = _Jordan_Wigner(T, N, j, sigmap(T))
 fdestroy(N::Union{Int, Val}, j::Int) = fdestroy(ComplexF64, N, j)
 
 @doc raw"""
@@ -520,12 +499,12 @@ Note that we put ``\hat{\sigma}_{-} = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatri
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fcreate(Val(N), j)` instead of `fcreate(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-fcreate(::Type{T}, N::Union{Int, Val}, j::Int) where {T <: Number} = _Jordan_Wigner(T, N, j, sigmam(T))
+fcreate(::Type{T}, N::Union{Int, Val}, j::Int) where {T <: FloatOrComplex} = _Jordan_Wigner(T, N, j, sigmam(T))
 fcreate(N::Union{Int, Val}, j::Int) = fcreate(ComplexF64, N, j)
 
-_Jordan_Wigner(::Type{T}, N::Int, j::Int, op::QuantumObject{Operator}) where {T <: Number} = _Jordan_Wigner(T, Val(N), j, op)
+_Jordan_Wigner(::Type{T}, N::Int, j::Int, op::QuantumObject{Operator}) where {T <: FloatOrComplex} = _Jordan_Wigner(T, Val(N), j, op)
 
-function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}) where {T <: Number, N}
+function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}) where {T <: FloatOrComplex, N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
     (1 <= j <= N) || throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
@@ -606,14 +585,14 @@ where ``\omega = \exp(\frac{2 \pi i}{N})``.
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-qft(::Type{T}, dimensions::Int) where {T <: Number} = QuantumObject(_qft_op(T, dimensions), Operator(), dimensions)
-qft(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Number} =
+qft(::Type{T}, dimensions::Int) where {T <: Complex} = QuantumObject(_qft_op(T, dimensions), Operator(), dimensions)
+qft(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Complex} =
     QuantumObject(_qft_op(T, prod(dimensions)), Operator(), dimensions)
 qft(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = qft(ComplexF64, dimensions)
 
-function _qft_op(::Type{T}, N::Int) where {T <: Number}
+function _qft_op(::Type{T}, N::Int) where {T <: Complex}
     N_T = T(N)
-    ω = exp(T(2) * im * T(π) / N_T)
+    ω = exp(2 * im * T(π) / N_T)
     arr = 0:(N - 1)
     L, M = meshgrid(arr, arr)
     return ω .^ (L .* M) / sqrt(N_T)

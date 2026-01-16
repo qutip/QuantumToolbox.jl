@@ -164,10 +164,10 @@ enr_fock(dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int, sta
 enr_fock(s_enr::EnrSpace, state::AbstractVector{Td}; sparse::Union{Bool, Val} = Val(false)) where {Td <: Integer} = enr_fock(ComplexF64, s_enr, state; sparse)
 
 @doc raw"""
-    enr_thermal_dm([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false))
-    enr_thermal_dm([T::Type=ComplexF64,] s_enr::EnrSpace, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false))
+    enr_thermal_dm(dims::Union{AbstractVector,Tuple}, n_excitations::Int, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false))
+    enr_thermal_dm(s_enr::EnrSpace, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false))
 
-Generate the thermal state (density [`Operator`](@ref)) in an excitation number restricted state space ([`EnrSpace`](@ref)) with element type `T = ComplexF64` (default).
+Generate the thermal state (density [`Operator`](@ref)) in an excitation number restricted state space ([`EnrSpace`](@ref)) with element type same as `n`.
 
 The arguments `dims` and `n_excitations` are used to generate [`EnrSpace`](@ref).
 
@@ -177,41 +177,31 @@ The argument `n` is a list that specifies the expectation values for number of p
     It is highly recommended to use `enr_thermal_dm(dims, n_excitations, n)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function enr_thermal_dm(
-        ::Type{T},
         dims::Union{AbstractVector{T1}, NTuple{N, T1}},
         n_excitations::Int,
         n::Union{T2, AbstractVector{T2}};
         sparse::Union{Bool, Val} = Val(false),
-    ) where {T <: Number, T1 <: Integer, T2 <: Real, N}
+    ) where {T1 <: Integer, T2 <: Real, N}
     s_enr = EnrSpace(dims, n_excitations)
-    return enr_thermal_dm(T, s_enr, n; sparse)
+    return enr_thermal_dm(s_enr, n; sparse)
 end
 function enr_thermal_dm(
-        ::Type{T},
         s_enr::EnrSpace{N},
-        n::Union{Tn, AbstractVector{Tn}};
+        n::Union{T, AbstractVector{T}};
         sparse::Union{Bool, Val} = Val(false),
-    ) where {T <: Number, N, Tn <: Real}
-    Base.promote_type(T, Tn) == T || throw(
-        ArgumentError(
-            "Type mismatch: Input `n` has type `$Tn`, which cannot be converted to the requested element type `$T`.\n" *
-                "To resolve this, specify the element type to match the input precision: enr_thermal_dm($(Base.promote_type(T, Tn)), ...)"
-        )
-    )
-
-    T_float = _float_type(T) # we need float type for logarithm calculation
+    ) where {N, T <: Real}
     if n isa Real
-        nvec = fill(T_float(n), N)
+        nvec = fill(n, N)
     else
         (length(n) == N) || throw(ArgumentError("The length of the vector `n` should be the same as `dims`."))
-        nvec = convert(Vector{T_float}, n)
+        nvec = n
     end
 
     D = s_enr.size
     idx2state = s_enr.idx2state
 
-    β = @. log(1 + 1 / nvec)
-    P = T[
+    β = @. log(1 + 1 / nvec) # here makes element type become float
+    P = [
         prod(_Boltzmann_weight(β[k], n_excite) for (k, n_excite) in pairs(idx2state[idx])) for idx in 1:D
     ]
     P /= sum(P)
@@ -221,9 +211,6 @@ function enr_thermal_dm(
         return QuantumObject(diagm(0 => P), Operator(), s_enr)
     end
 end
-enr_thermal_dm(dims::Union{AbstractVector{T1}, NTuple{N, T1}}, n_excitations::Int, n::Union{T2, AbstractVector{T2}}; sparse::Union{Bool, Val} = Val(false)) where {T1 <: Integer, T2 <: Real, N} =
-    enr_thermal_dm(ComplexF64, dims, n_excitations, n; sparse)
-enr_thermal_dm(s_enr::EnrSpace{N}, n::Union{Tn, AbstractVector{Tn}}; sparse::Union{Bool, Val} = Val(false)) where {N, Tn <: Real} = enr_thermal_dm(ComplexF64, s_enr, n; sparse)
 
 @doc raw"""
     enr_destroy([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int)
@@ -236,11 +223,11 @@ The arguments `dims` and `n_excitations` are used to generate [`EnrSpace`](@ref)
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `enr_destroy(dims, n_excitations)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function enr_destroy(::Type{T}, dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int) where {T <: Number, Td <: Integer, N}
+function enr_destroy(::Type{T}, dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int) where {T <: FloatOrComplex, Td <: Integer, N}
     s_enr = EnrSpace(dims, n_excitations)
     return enr_destroy(T, s_enr)
 end
-function enr_destroy(::Type{T}, s_enr::EnrSpace{N}) where {T <: Number, N}
+function enr_destroy(::Type{T}, s_enr::EnrSpace{N}) where {T <: FloatOrComplex, N}
     D = s_enr.size
     idx2state = s_enr.idx2state
     state2idx = s_enr.state2idx
