@@ -3,9 +3,7 @@ function _to_period_interval(tlist::AbstractVector, T::Real)
     # function maps all elements ``t`` in `tlist` outside the interval ``[0, T)`` to an equivalent
     # time ``\tau`` such that ``mod(t, T) = \tau``
     if !isempty(tlist)
-        tlist = mod.(tlist, T)
-        unique!(tlist)
-        sort!(tlist)
+        tlist = mod.(tlist, T) |> unique |> sort
     end
     return tlist
 end
@@ -18,7 +16,7 @@ struct FloquetEvolutionSol{
     TE<:Union{AbstractMatrix{<:Real}, Nothing},
     AlgT<:AbstractODEAlgorithm,
     TolT<:Real
-} <: TimeEvolutionSol
+}
     times::TT1
     times_states::TT2
     states::TS
@@ -29,6 +27,45 @@ struct FloquetEvolutionSol{
 end
 
 
+function _init_FloquetEvolutionSol(
+    fb::FloquetBasis,
+    tlist::AbstractVector{<:Real},
+    e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+    kwargs...
+)
+    # determine if expectation values need to be calculated
+    has_eops = !(isnothing(e_ops) || isempty(e_ops))
+    # determine timesteps at which to store propagated state
+    nsteps = length(tlist)
+    if haskey(kwargs, :saveat)
+        # entry not checked by multiple dispatch, check if of correct type
+        if !(kwargs[:saveat] isa AbstractVector{<:Real})
+            throw(
+                TypeError(:fsesolve, "saveat", AbstractVector{<:Real}, typeof(kwargs[:saveat]))
+            )
+        end
+    elseif !has_eops
+        kwargs[:saveat] = tlist
+    else
+        kwargs[:saveat] = [tlist[end]]
+    end
+    nstates = length(kwargs[:saveat])
+
+    # determine whether expectation values must be collected
+    #  if so, determine size
+    n_eops = has_eops ? length(e_ops) : 0
+    # pre-allocate solution memory
+    sol = FloquetEvolutionSol(
+        tlist,
+        kwargs[:saveat],
+        Vector{QuantumObject{Ket}}(undef, nstates),
+        has_eops ? Array{ComplexF64}(undef, nsteps, n_eops) : nothing,
+        fb.alg,
+        fb.abstol,
+        fb.reltol
+    )
+    return sol
+end
 
 @doc raw"""
    struct FloquetBasis
@@ -41,18 +78,17 @@ Julia struct containing propagators, quasienergies, and Floquet states for a sys
 - `tlist::TT`: Time array fed to `sesolve` to compute propagators and Floquet states. First and final elements are always `0, T`. All elements lie in range `[0,T]`, see notes for behavior when field is set to an array with points outside this range.
 - `precompute::TT`: Times for which the micromotion propagator and Floquet modes are precomputed. When initializing this struct, this field may be left blank, set to a Bool, or set to a list of timepoints. If set to `false`, no propagators will be stored except for the final period Hamiltonian. If left blank or set to `true`, this field will be set to the same value as `tlist`.  All elements  lie in range `[0,T]`. See notes for behavior when field is set to an array with points outside this range.
 - `U_T::Qobj`: System propagator at time ``T``
-- `Ulist::AbstractVector{Qobj}`: List of system propagators at times `tlist`
+- `Ulist::AbstractVector{Qobj}`: List of micromotion propagators at times `tlist`
 - `equasi::TE`: Time-independent quasienergies
 """
 struct FloquetBasis{
-    TT<:AbstractVector,
-    TE<:AbstractVector,
+    TT<:AbstractVector{<:Real},
+    TE<:AbstractVector{<:Real},
     TQ<:AbstractVector{<:AbstractQuantumObject},
     TolT<:Real
 }
     H::AbstractQuantumObject
     T::Real
-    tlist::TT
     precompute::TT
     U_T::Qobj
     Ulist::TQ
@@ -60,6 +96,7 @@ struct FloquetBasis{
     alg::AbstractODEAlgorithm
     abstol::TolT
     reltol::TolT
+    kwargs::Dict
 
     @doc raw"""
         FloquetBasis(H::AbstractQuantumObject, T::Real, tlist::AbstractVector{Real}, precompute::Bool = true; kwargs::Dict = Dict())
@@ -69,14 +106,11 @@ struct FloquetBasis{
         # Arguments:
         - `H`: Time-dependent system Hamiltonian.
         - `T`: Hamiltonian period such that ``\hat{H}(T+\tau_0) = \hat{H}(\tau_0)``.
-        - `tlist`: Time vector to use internally in sesolve to calculate the period-propagator and quasienergies.
         - `precompute`: Time vector containing points ``t`` at which to store the system propagator ``U(t)``.
         - `kwargs`: Additional keyword arguments to pass to ssesolve.
 
         # Notes:
-        - If `tlist` or `precompute` contain elements outside the interval ``[0,T]``, a new time vector will be produced with all times ``t_k`` not in the interval mapped to an equivalent time ``\tau_k`` in the interval such that ``\hat{H}(t_k) = \hat{H}(\tau_k)``.
-        - If the first and final elements of `tlist` are not 0 and T, then 0 and T will be prepended and appended to `tlist`.
-        - If all elements of `precompute` are not in `tlist`, `tlist` will be set to the union of the two vectors.
+        - If `precompute` contains elements outside the interval ``[0,T]``, a new time vector will be produced with all times ``t_k`` not in the interval mapped to an equivalent time ``\tau_k`` in the interval such that ``\hat{H}(t_k) = \hat{H}(\tau_k)``.
 
         # Returns:
         - `fbasis::FloquetBasis`: FloquetBasis object for the system evolving under the ``T``-periodic Hamiltonian `H`.
@@ -84,41 +118,39 @@ struct FloquetBasis{
     function FloquetBasis(
         H::AbstractQuantumObject,
         T::Real,
-        tlist::TT,
-        precompute::TT;
+        precompute::TL;
         alg::AbstractODEAlgorithm = Vern7(lazy = false),
         kwargs::Dict=Dict()
-        ) where {TT<:AbstractVector}
+        ) where {TL<:AbstractVector{<:Real}}
         if T<=0
             throw(
                 ArgumentError("`T` must be a nonzero positive real number")
             )
         end
-        # enforce `tlist` and `precompute` rules
-        tlist, precompute = _to_period_interval.([tlist, precompute], T) # enforce that all timepoints lie in interval [0,T)
+        # enforce `precompute` interval rule
+        precompute = _to_period_interval(precompute, T)
+        tlist = [0, precompute..., T] |> unique
         tlist = union(tlist, precompute) # ensure all times in precompute are in tlist
-        tlist, precompute = [unique([0, tlist..., T]), unique([precompute..., T])] # ensure that period-propagator is calculated
         # solve for propagators
         kwargs[:saveat] = precompute
         sol = sesolve(H, qeye_like(H), tlist, alg=alg, kwargs=kwargs)
-        sol_kwargs = sol.prob.kwargs
         Ulist = sol.states
         U_T = pop!(Ulist)
         # solve for quasienergies
         period_phases = eigenenergies(U_T)
         equasi = angle.(period_phases) ./ T
 
-        new{typeof(tlist), typeof(equasi), typeof(Ulist)}(
+        new{typeof(tlist), typeof(equasi), typeof(Ulist), typeof(sol.abstol)}(
             H,
             T,
-            tlist,
             precompute,
             U_T,
             Ulist,
             equasi,
             sol.alg,
-            sol_kwargs.abstol,
-            sol_kwargs.reltol,
+            sol.abstol,
+            sol.reltol,
+            kwargs,
         )
     end
 end
@@ -131,7 +163,6 @@ DOCSTRING
 # Arguments:
 - `H`: Time-dependent system Hamiltonian.
 - `T`: Hamiltonian period such that ``\hat{H}(T+\tau_0) = \hat{H}(\tau_0)``.
-- `precompute`: If true, resulting FloquetBasis object will store precomputed propagators for all times in `range(start:0, stop:T, length:101)`. If false, only the final period propagator ``U(T)`` will be stored. Default is `true`.
 - `kwargs`: Additional keyword arguments to pass to ssesolve.
 
 # Notes
@@ -142,131 +173,93 @@ DOCSTRING
 """
 function FloquetBasis(
     H::AbstractQuantumObject,
-    T::Real,
-    precompute::Bool=true;
+    T::TP,
     alg::AbstractODEAlgorithm = Vern7(lazy = false),
     kwargs::Dict=Dict()
+    ) where {TP<:Real}
+    precompute = Float64[]
+    return FloquetBasis(H, T, precompute; alg=alg, kwargs=kwargs)
+end
+
+
+function memoize_micromotion!(
+    fb::FloquetBasis,
+    tlist::AbstractVector{<:Real};
+    kwargs...
     )
-    tlist = range(0, T, 101)
-    return FloquetBasis(H, T, tlist, precompute; alg=alg, kwargs=kwargs)
+    tlist = _to_period_interval(tlist, fb.T)
+    propagator!(fb, tlist, kwargs...)
 end
 
-@doc raw"""
-    FloquetBasis(H::AbstractQuantumObject, T::Real, tlist::AbstractVector{Real}, precompute::Bool = true; kwargs::Dict = Dict())
-
-DOCSTRING
-
-# Arguments:
-- `H`: Time-dependent system Hamiltonian.
-- `T`: Hamiltonian period such that ``\hat{H}(T+\tau_0) = \hat{H}(\tau_0)``.
-- `tlist`: Time vector to use internally in sesolve to calculate Period and intra-period propagators (if `precompute` is not `false`)
-- `precompute`: If true, resulting FloquetBasis object will store precomputed propagators for all times in `tlist`. If false, only the final period propagator ``U(T)`` will be stored. Default is `true`.
-- `kwargs`: Additional keyword arguments to pass to ssesolve.
-
-# Notes:
-- If `tlist` contains elements outside the interval ``[0,T]``, a new `tlist` will be produced with all times ``t_k`` not in the interval mapped to an equivalent time ``\tau_k`` in the interval such that ``\hat{H}(t_k) = \hat{H}(\tau_k)``.
-- If the first and final elements of `tlist` are not 0 and T, then 0 and T will be prepended and appended to `tlist`.
-
-# Returns:
-- `fbasis::FloquetBasis`: Floquet basis object for the system evolving under the time-dependent Hamiltonian `H`.
-"""
-function FloquetBasis(
-    H::AbstractQuantumObject,
-    T::Real,
-    tlist::AbstractVector,
-    precompute::Bool=true;
-    alg::AbstractODEAlgorithm = Vern7(lazy = false),
-    kwargs::Dict=Dict())
-    if precompute
-        return FloquetBasis(H, T, tlist, tlist; alg=alg, kwargs=kwargs)
-    else
-        return FloquetBasis(H, T, tlist, Float64[]; alg=alg, kwargs=kwargs)
-    end
+function memoize_micromotion!(fb::FloquetBasis, t::TP, U::QuantumObject{Operator}) where {TP<:Real}
+    t = _to_period_interval(t, fb.T)
+    t_idx = findfirst(x -> x>t, fb.precompute)
+    t_idx = isnothing(t_idx) ? length(fb.precompute) + 1 : t_idx
+    insert!(fb.precompute, t_idx, t)
+    insert!(fb.Ulist, t_idx, U)
 end
 
-function memoize_micromotion!(fb::FloquetBasis, tlist::AbstractVector, Ulist::AbstractVector{AbstractQuantumObject})
-    length(tlist) == length(Ulist) ? nothing : throw(
-        ArgumentError("tlist must be of same length as Ulist")
+
+
+function memoize_micromotion!(
+    fb::FloquetBasis,
+    tlist::AbstractVector{<:Real},
+    Ulist::AbstractVector{QuantumObject{Operator}}
     )
-    fb.precompute = [fb.precompute..., tlist...] |> unique |> sort
-    insert_idxs = findall(x -> x∈tlist, fb.precompute)
-    for (i_Ulist, i_fb) in enumerate(insert_idxs)
-        insert!(fb.Ulist, i_fb, Ulist[i_Ulist])
+    for (t, U) in zip(tlist, Ulist)
+        memoize_micromotion!(fb, t, U)
     end
 end
 
-function propagator(fb::FloquetBasis, tlist::AbstractVector)
-    # if tlist does not start at 0, propagate the system to tlist[1]
-    #  at end of computation, the inverse of U(0, tlist[1]) will be right-multiplied to U(0, tlist[end])
-    #  to obtain U(tlist[1], tlist[end])
-    if tlist[1] != 0
-        U_0 = propagator(fb, 0, tlist[1])
-    else
-        U_0 = qeye_like(fb.H)
+function propagator(fb::FloquetBasis, t::TP; kwargs...) where {TP<:Real}
+    return propagator(fb, 0, t, kwargs...)
+end
+
+function propagator!(fb::FloquetBasis, t::TP; kwargs...) where {TP<:Real}
+    return propagator!(fb, 0, t; kwargs...)
+end
+
+function propagator(fb::FloquetBasis, t0::TP, tf::TP; kwargs...) where {TP<:Real}
+    U0, U_nT, U_intra = _prop_list(fb, t0, tf; kwargs...)
+    return U_intra * U_nT * U0'
+end
+
+function propagator!(fb::FloquetBasis, t0::TP, tf::TP; kwargs) where{TP<:Real}
+    U0, U_nT, U_intra = _prop_list(fb, t0, tf; kwargs...)
+    t0_T, tf_T = mod.([t0, tf], fb.T)
+    for (tp, U) in [(t0_T, U0), (tf_T, U_intra)]
+        if !(tp==0 || tp∈fb.precompute)
+            memoize_micromotion!(fb, tp, U)
+        end
     end
-    kwargs = Dict([fb.kwargs... , :saveat=>:t_f])
-    U_nT, Ulist_intra, _ = _compute_prop_list(fb, tlist, kwargs)
-    return Ulist_intra[end] * U_nT * U_0^(-1)
+    return U_intra * U_nT * U0'
 end
 
-function propagator!(fb::FloquetBasis, tlist::AbstractVector, kwargs::Dict=Dict())
-    # tell _compute_prop_list to return micromotion propagators for every unmemoized timestep
-    if tlist[1] !=0
-        U_0 = propagator!(fb, 0, tlist[1], kwargs=kwargs)
-    else
-        U_0 = qeye_like(fb.H)
-    end
-    kwargs = Dict([kwargs..., :saveat=>:all_t])
-    U_nT, Ulist_intra, tlist_intra = _compute_prop_list(fb, tlist, kwargs)
-    memoize_micromotion!(fb, tlist_intra, Ulist_intra)
-    return Ulist_intra[end] * U_nT * U_0^(-1)
-end
-
-function propagator(fb::FloquetBasis, t_0::Real, t_f::Real, n_timestep::Int64=100, kwargs::Dict=Dict())
-    tlist = range(t_0, t_f, n_timestep)
-    return propagator(fb, tlist, kwargs)
-end
-
-function propagator!(fb::FloquetBasis, t_0::Real, t_f::Real, n_timestep::Int64=100, kwargs::Dict=Dict())
-    tlist = range(t_0, t_f, n_timestep)
-    return propagator!(fb, tlist, kwargs)
-end
-
-function propagator(fb::FloquetBasis, t_f::Real, n_timestep::Int64=100, kwargs::Dict=Dict())
-    return propagator(fb, 0, t_f, n_timestep, kwargs)
-end
-
-function propagator!(fb::FloquetBasis, t_f::Real, n_timestep::Int64=100, kwargs::Dict=Dict())
-    return propagator!(fb, 0, t_f, n_timestep, kwargs)
-end
-
-function _compute_prop_list(fb::FloquetBasis, tlist::AbstractVector, kwargs::Dict)
-    # find number of periods inside tlist
-    nT, t_rem = fldmod(tlist[end], fb.T)
-    # propagate by nT periods
+function _prop_list(fb::FloquetBasis, t0::TP, tf::TP; kwargs...) where {TP<:Real}
+    U0 = (t0 == 0) ? qeye_like(fb.H) : propagator(fb, 0, t0, kwargs...)
+    nT, t_rem = fldmod(tf, fb.T)
     U_nT = fb.U_T^nT
-    # propagate intra-period dynamics
-    if t_rem==0 # if t_final is a multiple of T
-        Ulist_intra = [qeye_like(fb.H)]
-    elseif t_rem∈fb.precompute # if the correct micromotion propagator is memoized
-        Ulist_intra = [fb.Ulist[findfirst(x->x==t_rem, fb.precompute)]]
-    else # calculate micromotion operator from sesolve
-        # calculate intra-period interval
-        # TODO: Overide default progress bar to show number of micromotion propagators to memoize
-        i_0 = findfirst(x -> x >= nT*fb.T, tlist)
-        tlist_intra = _to_period_interval(tlist[i_0:end;], fb.T)
-        tlist_intra =  tlist_intra[1] == 0 ? tlist_intra : [0, tlist_intra...]
-        # Determine if all intra-period unitaries should be returned, or only final unitary
-        kwargs[:saveat] = kwargs[:saveat] == :t_f ? (t_rem,) : tlist_intra
-        Ulist_intra = sesolve(fb.H,
-                              qeye_like(fb.H),
-                              tlist,
-                              alg=fb.alg,
-                              kwargs=kwargs).states
+    if t_rem == 0
+        U_intra = qeye_like(fb.H)
+    elseif t_rem∈fb.precompute
+        t_idx = findfirst(x->x==t_rem, fb.precompute)
+        U_intra = fb.Ulist[t_idx]
+    else
+        if haskey(kwargs, :memoized_only) && kwargs[:memoized_only]
+            throw(
+                ErrorException(
+                    "`memoized_only` keyword argument set to `true`, but "*
+                        "the micromotion propagator corresponding to `tf=$tf` "*
+                        "is not memoized in fb."
+                )
+            )
+        end
+        tlist = (0, t_rem)
+        kwargs = Dict(fb.kwargs..., kwargs...)
+        U_intra = sesolve(fb.H, qeye_like(fb.H), tlist; alg=fb.alg, kwargs...).states[end]
     end
-    return U_nT, Ulist_intra, tlist_intra
+    return U0, U_nT, U_intra
 end
-
 
 """
     fsesolve(
@@ -288,33 +281,87 @@ function fsesolve(
     fb::FloquetBasis,
     ψ0::QuantumObject{Ket},
     tlist::AbstractVector{TS},
-    alg::AbstractODEAlgorithm = Vern7(lazy=false),
     e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
-    params=NullParameters(),
     progress_bar::Union{Val, Bool} = Val(true),
-    inplace::Union{Val,Bool}=Val(true),
-    kwargs...;
-    efficient::Bool = false,
+    kwargs...,
 ) where {TS<:Real}
-    nsteps = length(tlist)
-    if :saveat ∈ kwargs
-        nstates = kwargs[:saveat]
-    elseif isnothing(e_ops) || isempty(e_ops)
-        kwargs[:saveat] = tlist
-        nstates = length(tlist)
-    else
-        kwargs[:saveat] = tlist[end]
-        nstates = 1
-    end
-    # pre-allocate solution memory
-    sol = FloquetEvolutionSol(
-        Vector{Float64}(undef, nsteps),
-        Vector{Float64}(undef, nstates),
-        Vector{QuantumObject{Ket}}(undef, nstates),
-        isnothing(e_ops) || isempty(e_ops) ? nothing : Vector{Float64}(undef, nsteps),
-        fb.alg,
-        fb.abstol,
-        fb.reltol
-    )
-    nothing
+    return _fsesolve(fb, ψ0, tlist, propagator, e_ops, progress_bar; kwargs...)
 end
+
+
+function fsesolve!(
+    fb::FloquetBasis,
+    ψ0::QuantumObject{Ket},
+    tlist::AbstractVector{TS},
+    e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+    progress_bar::Union{Val, Bool} = Val(true),
+    kwargs...,
+) where {TS<:Real}
+    return _fsesolve(fb, ψ0, tlist, propagator!, e_ops, progress_bar; kwargs...)
+end
+
+
+function _fsesolve(
+    fb::FloquetBasis,
+    ψ0::QuantumObject{Ket},
+    tlist::AbstractVector{TS},
+    pfunc::Function,
+    e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+    progress_bar::Union{Val, Bool} = Val(true),
+    kwargs...,
+) where {TS<:Real}
+    sol = _init_FloquetEvolutionSol(
+        fb,
+        tlist,
+        e_ops,
+        kwargs...
+    )
+    # convert progress_bar to boolean type
+    if !(progress_bar isa Bool)
+        progress_bar = typeof(progress_bar).parameters[1]
+    end
+    if progress_bar
+        pbar = Progress(length(tlist), showspeed=true)
+    end
+    for (step, t) in enumerate(tlist)
+        if t==0
+            U = qeye_like(fb.H)
+        else
+            U = pfunc(fb, 0, t; kwargs...)
+        end
+        ψt = U * ψ0
+        if haskey(kwargs, :saveat)
+            state_idx = findfirst(x->x==t, kwargs[:saveat])
+            if !isnothing(state_idx)
+                sol.states[state_idx] = ψt
+            end
+        end
+        if !isnothing(sol.expect)
+            sol.expect[step,:] = expect.(e_ops, ψt)
+        end
+        progress_bar ? next!(pbar) : nothing
+    end
+    progress_bar ? finish!(pbar) : nothing
+    return sol
+end
+
+function _state_list(fb::FloquetBasis)
+    phases = exp.( fb.T * 1im .* fb.equasi) |>
+        Diagonal |>
+        x -> Qobj(x, dims=fb.U_T.dims)
+    U = phases * fb.U_T
+    _, ψ0, U0 = eigenstates(U)
+    return ψ0, U0.data
+end
+
+function _state_list(fb::FloquetBasis, t::TP, pfunc::Function) where {TP<:Real}
+    _, ψ0, U0_mat = _mode_list(fb)
+    Ut_mat = (pfunc(fb, t).data * U0_mat)
+    Ut_list = eachcol(Ut_mat) |> collect
+    ψt = Qobj.(Ut_list, dims=ψ0[1].dims)
+    return ψt, Ut_mat
+end
+
+"""
+TODO: mode, state, from_floquet_basis, to_floquet_basis
+"""
