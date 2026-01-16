@@ -13,4 +13,3 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
 DocumenterVitepress = "0.2"
-Enzyme = "0 - 0.13.108"
