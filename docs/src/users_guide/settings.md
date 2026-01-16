@@ -11,7 +11,7 @@ All settings are stored in [`QuantumToolbox.settings`](@ref).
 
 Here, we list out each setting along with the specific functions that will use it.
 
-- `tidyup_tol::Real = 1.0e-14` : tolerance for [`tidyup`](@ref) and [`tidyup!`](@ref).
+- `tidyup_tol::Float64 = 1.0e-14` : tolerance for [`tidyup`](@ref) and [`tidyup!`](@ref).
 - `auto_tidyup::Bool = true` : Automatically tidyup during the following situations:
     * Solving for eigenstates, including [`eigenstates`](@ref), [`eigsolve`](@ref), [`eigsolve_al`](@ref)
     * Creating [`bloch_redfield_tensor`](@ref) or [`brterm`](@ref), and solving [`brmesolve`](@ref).
