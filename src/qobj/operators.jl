@@ -146,8 +146,8 @@ Generate a [displacement operator](https://en.wikipedia.org/wiki/Displacement_op
 where ``\hat{a}`` is the bosonic annihilation operator, and ``\alpha`` is the amount of displacement in optical phase space.
 """
 function displace(N::Int, α::T) where {T <: Number}
-    a = destroy(_complex_float_type(T), N) # use complex float type to handle integer, float, and complex α
-    return exp(α * a' - conj(α) * a)
+    a = destroy(_float_type(T), N) # use float type to handle integer α
+    return exp(α * a' - conj(α) * a) # the return eltype will be promoted to complex if α is complex
 end
 
 @doc raw"""
@@ -162,8 +162,8 @@ Generate a single-mode [squeeze operator](https://en.wikipedia.org/wiki/Squeeze_
 where ``\hat{a}`` is the bosonic annihilation operator.
 """
 function squeeze(N::Int, z::T) where {T <: Number}
-    a_sq = destroy(_complex_float_type(T), N)^2 # use complex float type to handle integer, float, and complex z
-    return exp((conj(z) * a_sq - z * a_sq') / 2)
+    a_sq = destroy(_float_type(T), N)^2 # use float type to handle integer z
+    return exp((conj(z) * a_sq - z * a_sq') / 2) # the return eltype will be promoted to complex if z is complex
 end
 
 @doc raw"""
