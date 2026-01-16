@@ -14,3 +14,6 @@ H = (H0, (H1, t -> cos(ω * t)))
 
 T = 2π / ω
 floquet_basis = FloquetBasis(H,T)
+f_energies = equasi(floquet_basis)
+f_energies
+
