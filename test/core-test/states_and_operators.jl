@@ -465,4 +465,75 @@
         @inferred qft(20)
         @inferred qft((2, 10))
     end
+
+    @testset "Element types" begin
+        N = 2
+        float_type_list = [Float32, BigFloat]
+        for FT in float_type_list
+            CT = Complex{FT}
+
+            # states
+            @test CT == eltype(zero_ket(CT, N))
+            @test CT == eltype(fock(CT, N, 0; sparse = Val(true)))
+            @test CT == eltype(fock(CT, N, 0; sparse = Val(false)))
+            @test FT == eltype(coherent(N, rand(FT)))
+            @test CT == eltype(coherent(N, rand(CT)))
+            @test CT == eltype(rand_ket(CT, N))
+            @test CT == eltype(fock_dm(CT, N, 0; sparse = Val(true)))
+            @test CT == eltype(fock_dm(CT, N, 0; sparse = Val(false)))
+            @test FT == eltype(coherent_dm(N, rand(FT)))
+            @test CT == eltype(coherent_dm(N, rand(CT)))
+            @test FT == eltype(thermal_dm(N, rand(FT); sparse = Val(true)))
+            @test FT == eltype(thermal_dm(N, rand(FT); sparse = Val(false)))
+            @test CT == eltype(maximally_mixed_dm(CT, N))
+            @test CT == eltype(rand_dm(CT, N))
+            @test CT == eltype(spin_state(CT, 0.5, 0.5))
+            @test CT == eltype(spin_coherent(0.5, rand(FT), rand(FT)))
+            @test CT == eltype(bell_state(CT, 0, 0))
+            @test CT == eltype(singlet_state(CT))
+            @test all(==(CT), eltype.(triplet_states(CT)))
+            @test CT == eltype(w_state(CT, N))
+            @test CT == eltype(ghz_state(CT, N))
+
+            # operators
+            @test CT == eltype(rand_unitary(CT, N, Val(:haar)))
+            @test CT == eltype(rand_unitary(CT, N, Val(:exp)))
+            @test CT == eltype(spin_Jx(CT, 0.5))
+            @test CT == eltype(spin_Jy(CT, 0.5))
+            @test CT == eltype(spin_Jz(CT, 0.5))
+            @test CT == eltype(spin_Jm(CT, 0.5))
+            @test CT == eltype(spin_Jp(CT, 0.5))
+            @test all(==(CT), eltype.(spin_J_set(CT, 0.5)))
+            @test CT == eltype(sigmam(CT))
+            @test CT == eltype(sigmap(CT))
+            @test CT == eltype(sigmax(CT))
+            @test CT == eltype(sigmay(CT))
+            @test CT == eltype(sigmaz(CT))
+            @test CT == eltype(destroy(CT, N))
+            @test CT == eltype(create(CT, N))
+            @test CT == eltype(eye(CT, N))
+            @test CT == eltype(projection(CT, N, 0, 0))
+            @test FT == eltype(displace(N, rand(FT)))
+            @test CT == eltype(displace(N, rand(CT)))
+            @test FT == eltype(squeeze(N, rand(FT)))
+            @test CT == eltype(squeeze(N, rand(CT)))
+            @test CT == eltype(num(CT, N))
+            @test CT == eltype(phase(N, rand(FT)))
+            @test CT == eltype(position(CT, N))
+            @test CT == eltype(momentum(CT, N))
+            @test CT == eltype(fdestroy(CT, N, 1))
+            @test CT == eltype(fcreate(CT, N, 1))
+            @test CT == eltype(tunneling(CT, N))
+            @test CT == eltype(qft(CT, N))
+        end
+
+        # check default parameter to be Int64 (1)
+        @test Float64 == eltype(coherent(N, 1))
+        @test Float64 == eltype(coherent_dm(N, 1))
+        @test Float64 == eltype(thermal_dm(N, 1; sparse = Val(true)))
+        @test Float64 == eltype(thermal_dm(N, 1; sparse = Val(false)))
+        @test Float64 == eltype(displace(N, 1))
+        @test Float64 == eltype(squeeze(N, 1))
+        @test ComplexF64 == eltype(phase(N)) # since default ϕ0 = 0 (also Int64)
+    end
 end

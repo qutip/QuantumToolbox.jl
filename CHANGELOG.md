@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Allow specifying element types (`eltype`) for states and operators generating functions. ([#641])
 
 ## [v0.41.0]
 Release date: 2026-01-12
@@ -417,3 +417,4 @@ Release date: 2024-11-13
 [#633]: https://github.com/qutip/QuantumToolbox.jl/issues/633
 [#636]: https://github.com/qutip/QuantumToolbox.jl/issues/636
 [#638]: https://github.com/qutip/QuantumToolbox.jl/issues/638
+[#641]: https://github.com/qutip/QuantumToolbox.jl/issues/641

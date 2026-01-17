@@ -22,6 +22,19 @@
         @test s_enr.idx2state == qutip_idx2state
     end
 
+    @testset "Element type" begin
+        s_enr = EnrSpace((2, 2, 3), 3)
+        float_type_list = [Float32, BigFloat]
+        for FT in float_type_list
+            CT = Complex{FT}
+            @test CT == eltype(enr_fock(CT, s_enr, zeros(Int, 3)))
+            @test FT == eltype(enr_thermal_dm(s_enr, rand(FT); sparse = Val(true)))
+            @test FT == eltype(enr_thermal_dm(s_enr, rand(FT, 3); sparse = Val(false)))
+            @test all(==(CT), eltype.(enr_destroy(CT, s_enr)))
+            @test CT == eltype(enr_identity(CT, s_enr))
+        end
+    end
+
     @testset "kron" begin
         # normal Space
         D1 = 4
@@ -48,10 +61,12 @@
         @test ρTd0.data ≈ ρTs0.data ≈ fock_dm(size_enr, 0).data
         @test ρTd∞.data ≈ ρTs∞.data ≈ maximally_mixed_dm(size_enr).data
 
-        # general case (also test BigFloat)
+        # general case (also test Int and BigFloat)
         nvec = BigFloat[0.123, 0.456, 0.789]
+        ρTI = enr_thermal_dm(space_enr, Int64[1, 2, 3]; sparse = Val(false))
         ρTd = enr_thermal_dm(space_enr, nvec)
         ρTs = enr_thermal_dm(space_enr, nvec; sparse = Val(true))
+        @test eltype(ρTI.data) == Float64
         @test isoper(ρTd)
         @test tr(ρTd) ≈ tr(ρTs) ≈ 1.0
         @test diag(ρTd) ≈ Float64[
