@@ -66,7 +66,7 @@ function rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVe
 end
 rand_unitary(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}, ::Val{Td}) where {T <: FloatOrComplex, Td} =
     throw(ArgumentError("Invalid distribution: $(Td)"))
-rand_unitary(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) = rand_unitary(ComplexF64, dimensions, distribution)
+rand_unitary(dimensions::Union{Int, ProductDimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) = rand_unitary(ComplexF64, dimensions, distribution)
 
 # we make H sparse here because the following method currently does not exist : exp(::Matrix{Complex{BigFloat}})
 _rand_unitary_exp(H::QuantumObject{Operator, <:AbstractDimensions, Matrix{Complex{BigFloat}}}) = exp(-im * to_sparse(H))
@@ -591,7 +591,7 @@ where ``\omega = \exp(\frac{2 \pi i}{N})``.
 qft(::Type{T}, dimensions::Int) where {T <: Complex} = QuantumObject(_qft_op(T, dimensions), Operator(), dimensions)
 qft(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: Complex} =
     QuantumObject(_qft_op(T, get_hilbert_size(dimensions)[1]), Operator(), dimensions)
-qft(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = qft(ComplexF64, dimensions)
+qft(dimensions::Union{Int, ProductDimensions, AbstractVector{Int}, Tuple}) = qft(ComplexF64, dimensions)
 
 function _qft_op(::Type{T}, N::Int) where {T <: Complex}
     N_T = T(N)

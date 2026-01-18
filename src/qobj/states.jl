@@ -22,7 +22,7 @@ The `dimensions` can be either the following types:
 zero_ket(::Type{T}, dimensions::Int) where {T <: Number} = QuantumObject(zeros(T, dimensions), Ket(), dimensions)
 zero_ket(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple}) where {T <: Number} =
     QuantumObject(zeros(T, get_hilbert_size(dimensions)[1]), Ket(), dimensions)
-zero_ket(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = zero_ket(ComplexF64, dimensions)
+zero_ket(dimensions::Union{Int, ProductDimensions, AbstractVector{Int}, Tuple}) = zero_ket(ComplexF64, dimensions)
 
 @doc raw"""
     fock([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -77,7 +77,7 @@ function rand_ket(::Type{T}, dimensions::Union{ProductDimensions, AbstractVector
     ψ = rand(T, N) .- (one(T) / 2 + one(T) * im / 2)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
 end
-rand_ket(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = rand_ket(ComplexF64, dimensions)
+rand_ket(dimensions::Union{Int, ProductDimensions, AbstractVector{Int}, Tuple}) = rand_ket(ComplexF64, dimensions)
 
 @doc raw"""
     fock_dm([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -150,7 +150,7 @@ function maximally_mixed_dm(::Type{T}, dimensions::Union{ProductDimensions, Abst
     N = get_hilbert_size(dimensions)[1]
     return QuantumObject(diagm(0 => fill(1 / T(N), N)), Operator(), dimensions)
 end
-maximally_mixed_dm(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = maximally_mixed_dm(ComplexF64, dimensions)
+maximally_mixed_dm(dimensions::Union{Int, ProductDimensions, AbstractVector{Int}, Tuple}) = maximally_mixed_dm(ComplexF64, dimensions)
 
 @doc raw"""
     rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=get_hilbert_size(dimensions)[1])
@@ -186,7 +186,7 @@ function rand_dm(
     ρ /= tr(ρ)
     return QuantumObject(ρ; type = Operator(), dims = dimensions)
 end
-rand_dm(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}; rank::Int = prod(dimensions)) = rand_dm(ComplexF64, dimensions; rank)
+rand_dm(dimensions::Union{Int, ProductDimensions, AbstractVector{Int}, Tuple}; rank::Int = prod(dimensions)) = rand_dm(ComplexF64, dimensions; rank)
 
 @doc raw"""
     spin_state([T::Type=ComplexF64,] j::Real, m::Real)
