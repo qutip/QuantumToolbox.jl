@@ -174,9 +174,9 @@ rand_dm(::Type{T}, dimensions::Int; rank::Int = dimensions) where {T <: Complex}
     rand_dm(T, SVector(dimensions); rank)
 function rand_dm(
         ::Type{T},
-            dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple};
-            rank::Int = get_hilbert_size(dimensions)[1],
-        ) where {T <: Complex}
+        dimensions::Union{ProductDimensions, AbstractVector{Int}, Tuple};
+        rank::Int = get_hilbert_size(dimensions)[1],
+    ) where {T <: Complex}
     N = get_hilbert_size(dimensions)[1]
     (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
     (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))
