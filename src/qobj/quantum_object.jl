@@ -51,7 +51,21 @@ struct QuantumObject{ObjType <: QuantumObjectType, DimType <: AbstractDimensions
     dimensions::DimType
 
     function QuantumObject(data::DT, type, dims) where {DT <: AbstractArray}
-        dimensions = _gen_dimensions(dims)
+        # Convert dims to ProductDimensions, handling type-specific requirements
+        if dims isa ProductDimensions
+            dimensions = dims
+        else
+            raw_dimensions = _gen_dimensions(dims)  # creates square ProductDimensions
+            # For Ket/OperatorKet: from should be one-list
+            # For Bra/OperatorBra: to should be one-list
+            if type isa Ket || type isa OperatorKet
+                dimensions = ProductDimensions(raw_dimensions.to, hilbertspace_one_list(raw_dimensions.to))
+            elseif type isa Bra || type isa OperatorBra
+                dimensions = ProductDimensions(hilbertspace_one_list(raw_dimensions.from), raw_dimensions.from)
+            else
+                dimensions = raw_dimensions
+            end
+        end
 
         ObjType = _check_type(type)
 
@@ -85,13 +99,23 @@ function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) whe
 
     if dims isa Nothing
         if type isa Bra
-            dims = ProductDimensions(size(A, 2))
+            from_dims = (HilbertSpace(size(A, 2)),)
+            dims = ProductDimensions(hilbertspace_one_list(from_dims), from_dims)
         elseif type isa Operator
-            dims =
-                (size(A, 1) == size(A, 2)) ? ProductDimensions(size(A, 1)) :
-                GeneralProductDimensions(SVector{2}(SVector{1}(size(A, 1)), SVector{1}(size(A, 2))))
-        elseif type isa SuperOperator || type isa OperatorBra
-            dims = ProductDimensions(isqrt(size(A, 2)))
+            dims = ProductDimensions((HilbertSpace(size(A, 1)),), (HilbertSpace(size(A, 2)),))
+        elseif type isa SuperOperator
+            dims = ProductDimensions((HilbertSpace(isqrt(size(A, 1))),), (HilbertSpace(isqrt(size(A, 2))),))
+        elseif type isa OperatorBra
+            from_dims = (HilbertSpace(isqrt(size(A, 2))),)
+            dims = ProductDimensions(hilbertspace_one_list(from_dims), from_dims)
+        end
+    elseif !(dims isa ProductDimensions)
+        # User provided dims as integer/tuple, need to convert properly for Bra/OperatorBra
+        dimensions = _gen_dimensions(dims)  # creates square ProductDimensions
+        if type isa Bra || type isa OperatorBra
+            dims = ProductDimensions(hilbertspace_one_list(dimensions.from), dimensions.from)
+        else
+            dims = dimensions
         end
     end
 
@@ -108,9 +132,19 @@ function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) whe
 
     if dims isa Nothing
         if type isa Ket
-            dims = ProductDimensions(size(A, 1))
+            to_dims = (HilbertSpace(size(A, 1)),)
+            dims = ProductDimensions(to_dims, hilbertspace_one_list(to_dims))
         elseif type isa OperatorKet
-            dims = ProductDimensions(isqrt(size(A, 1)))
+            to_dims = (HilbertSpace(isqrt(size(A, 1))),)
+            dims = ProductDimensions(to_dims, hilbertspace_one_list(to_dims))
+        end
+    elseif !(dims isa ProductDimensions)
+        # User provided dims as integer/tuple, need to convert properly for Ket/OperatorKet
+        dimensions = _gen_dimensions(dims)  # creates square ProductDimensions
+        if type isa Ket || type isa OperatorKet
+            dims = ProductDimensions(dimensions.to, hilbertspace_one_list(dimensions.to))
+        else
+            dims = dimensions
         end
     end
 
@@ -138,7 +172,7 @@ function Base.show(
         "\nQuantum Object:   type=",
         QO.type,
         "   dims=",
-        _get_dims_string(QO.dimensions),
+        QO.dims,
         "   size=",
         size(op_data),
     )
@@ -152,7 +186,7 @@ function Base.show(io::IO, QO::QuantumObject)
         "\nQuantum Object:   type=",
         QO.type,
         "   dims=",
-        _get_dims_string(QO.dimensions),
+        QO.dims,
         "   size=",
         size(op_data),
         "   ishermitian=",

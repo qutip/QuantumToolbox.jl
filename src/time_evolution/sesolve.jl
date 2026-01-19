@@ -62,7 +62,7 @@ Generate the ODEProblem for the Schrödinger time evolution of a quantum system:
 """
 function sesolveProblem(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
-        ψ0::QuantumObject{ST},
+        ψ0_input::QuantumObject{ST},
         tlist::AbstractVector;
         e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
@@ -73,14 +73,17 @@ function sesolveProblem(
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    states_type = ψ0.type
+    states_type = ψ0_input.type
+    # Store initial state dimensions for proper reconstruction
+    # (for Ket this includes the proper from=one_list structure)
+    state_dimensions = ψ0_input.dimensions
 
     H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
-    check_dimensions(H_evo, ψ0)
+    check_dimensions(H_evo, ψ0_input)
 
-    T = _complex_float_type(Base.promote_eltype(H_evo, ψ0))
-    ψ0 = to_dense(T, get_data(ψ0)) # Convert it to dense vector with complex element type
+    T = _complex_float_type(Base.promote_eltype(H_evo, ψ0_input))
+    ψ0 = to_dense(T, get_data(ψ0_input)) # Convert it to dense vector with complex element type
     U = cache_operator(H_evo.data, ψ0)
 
     tlist = _check_tlist(tlist, _float_type(T))
@@ -93,7 +96,7 @@ function sesolveProblem(
 
     prob = ODEProblem{getVal(inplace), FullSpecialize}(U, ψ0, tspan, params; kwargs4...)
 
-    return TimeEvolutionProblem(prob, tlist, states_type, H_evo.dimensions)
+    return TimeEvolutionProblem(prob, tlist, states_type, state_dimensions)
 end
 
 @doc raw"""

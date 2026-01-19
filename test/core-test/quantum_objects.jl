@@ -17,27 +17,37 @@
     # DomainError: incompatible between size of array and type
     @testset "DomainError" begin
         a = rand(ComplexF64, 3, 2)
-        for t in [SuperOperator(), Bra(), OperatorBra()]
-            @test_throws DomainError Qobj(a, type = t)
-        end
+        # SuperOperator requires sqrt-able dimensions (e.g., 4x4 for 2-dim system)
+        @test_throws DimensionMismatch Qobj(a, type = SuperOperator())
+        # Bra requires row vector (1xN)
+        @test_throws DomainError Qobj(a, type = Bra())
+        # OperatorBra requires row vector
+        @test_throws DomainError Qobj(a, type = OperatorBra())
 
         a = rand(ComplexF64, 2, 2, 2)
         for t in (nothing, Ket(), Bra(), Operator(), SuperOperator(), OperatorBra(), OperatorKet())
             @test_throws DomainError Qobj(a, type = t)
         end
 
+        # Note: (1,2) and (2,1) matrices are now allowed as non-square Operators
+        # Only check SuperOperator which requires sqrt-able dimensions
         a = rand(ComplexF64, 1, 2)
-        @test_throws DomainError Qobj(a, type = Operator())
-        @test_throws DomainError Qobj(a, type = SuperOperator())
+        @test_throws DimensionMismatch Qobj(a, type = SuperOperator())
 
-        @test_throws DomainError Qobj(rand(ComplexF64, 2, 1), type = Operator()) # should be type = Bra
+        # (1,2) becomes a valid Operator with to=(1,), from=(2,)
+        @test Qobj(a, type = Operator()).dimensions.to == (HilbertSpace(1),)
+        @test Qobj(a, type = Operator()).dimensions.from == (HilbertSpace(2),)
 
-        # check that Ket, Bra, SuperOperator, OperatorKet, and OperatorBra don't support GeneralProductDimensions
-        @test_throws DomainError Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 1, 2), type = Bra(), dims = ((1,), (2,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 4, 4), type = SuperOperator(), dims = ((2,), (2,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 4), type = OperatorKet(), dims = ((2,), (1,)))
-        @test_throws DomainError Qobj(rand(ComplexF64, 1, 4), type = OperatorBra(), dims = ((1,), (2,)))
+        # (2,1) becomes a valid Operator with to=(2,), from=(1,)
+        @test Qobj(rand(ComplexF64, 2, 1), type = Operator()).dimensions.to == (HilbertSpace(2),)
+        @test Qobj(rand(ComplexF64, 2, 1), type = Operator()).dimensions.from == (HilbertSpace(1),)
+
+        # check non-square dimensions work for all types
+        @test Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,))).dimensions.to == (HilbertSpace(2),)
+        @test Qobj(rand(ComplexF64, 1, 2), type = Bra(), dims = ((1,), (2,))).dimensions.from == (HilbertSpace(2),)
+        @test Qobj(rand(ComplexF64, 4, 9), type = SuperOperator(), dims = ((2,), (3,))).dimensions.to == (HilbertSpace(2),)
+        @test Qobj(rand(ComplexF64, 4), type = OperatorKet(), dims = ((2,), (1,))).dimensions.to == (HilbertSpace(2),)
+        @test Qobj(rand(ComplexF64, 1, 4), type = OperatorBra(), dims = ((1,), (2,))).dimensions.from == (HilbertSpace(2),)
     end
 
     # unsupported type of dims
@@ -89,7 +99,7 @@
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator())
-        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # GeneralProductDimensions
+        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # non-square ProductDimensions
         a5 = QuantumObject(rand(ComplexF64, 2 * 3 * 4, 5), dims = ((2, 3, 4), (5,)))
         @test isket(a2) == false
         @test isbra(a2) == false
@@ -120,9 +130,9 @@
         @test iscached(a4) == true
         @test isconstant(a4) == true
         @test isunitary(a4) == false
-        @test a4.dims == [[100], [10]]
+        @test a4.dims == ([100], [10])
         @test isoper(a5) == true
-        @test a5.dims == [[2, 3, 4], [5]]
+        @test a5.dims == ([2, 3, 4], [5])
         @test_throws DimensionMismatch Qobj(a, dims = 2)
         @test_throws DimensionMismatch Qobj(a4.data, dims = 2)
         @test_throws DimensionMismatch Qobj(a4.data, dims = ((100,), (2,)))
@@ -134,7 +144,7 @@
         ρ = Qobj(rand(ComplexF64, 2, 2))
         ρ_ket = operator_to_vector(ρ)
         ρ_bra = ρ_ket'
-        @test ρ_bra == Qobj(operator_to_vector(ρ.data)', type = OperatorBra())
+        @test ρ_bra == Qobj(operator_to_vector(ρ.data)', type = OperatorBra(), dims = ρ.dimensions)
         @test ρ == vector_to_operator(ρ_ket)
         @test isket(ρ_ket) == false
         @test isbra(ρ_ket) == false
@@ -271,11 +281,11 @@
         @test opstring ==
             "\nQuantum Object:   type=Operator()   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
-        # GeneralProductDimensions
+        # non-square ProductDimensions
         Gop = tensor(a, ψ)
         opstring = sprint((t, s) -> show(t, "text/plain", s), Gop)
         datastring = sprint((t, s) -> show(t, "text/plain", s), Gop.data)
-        Gop_dims = [[N, N], [N, 1]]
+        Gop_dims = ([N, N], [N, 1])  # Tuple of vectors for non-square operator
         Gop_size = size(Gop)
         Gop_isherm = isherm(Gop)
         @test opstring ==
@@ -367,8 +377,8 @@
             end
 
             UnionType = Union{
-                QuantumObject{Bra, ProductDimensions{1, Tuple{HilbertSpace}}, Matrix{T}},
-                QuantumObject{Operator, ProductDimensions{1, Tuple{HilbertSpace}}, Matrix{T}},
+                QuantumObject{Bra, ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Matrix{T}},
+                QuantumObject{Operator, ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
@@ -376,13 +386,9 @@
                 @inferred Qobj(a, type = type)
             end
 
-            UnionType2 = Union{
-                QuantumObject{Operator, GeneralProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Matrix{T}},
-                QuantumObject{Operator, ProductDimensions{1, Tuple{HilbertSpace}}, Matrix{T}},
-            }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)
-            @inferred UnionType2 Qobj(a, type = Operator())
+            @inferred Qobj(a, type = Operator())
             @inferred Qobj(a, type = SuperOperator())
         end
 
@@ -670,7 +676,7 @@
         ρ1_ptr = ptrace(ρ, 1)
         ρ2_ptr = ptrace(ρ, 2)
 
-        # use GeneralProductDimensions to do partial trace
+        # use non-square ProductDimensions to do partial trace
         ρ1_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((2, 1), (2, 1)))
         II = qeye(2)
         basis_list = [basis(2, i) for i in 0:1]
@@ -741,7 +747,7 @@
         @test_throws ArgumentError ptrace(ρtotal, (0, 2))
         @test_throws ArgumentError ptrace(ρtotal, (2, 5))
         @test_throws ArgumentError ptrace(ρtotal, (2, 2, 3))
-        @test_throws ArgumentError ptrace(Qobj(zeros(ComplexF64, 3, 2)), 1) # invalid GeneralProductDimensions
+        @test_throws ArgumentError ptrace(Qobj(zeros(ComplexF64, 3, 2)), 1) # invalid non-square ProductDimensions
 
         @testset "Type Inference (ptrace)" begin
             @inferred ptrace(ρ, 1)
@@ -789,14 +795,14 @@
         @test_throws ArgumentError permute(op_bdca, wrong_order1)
         @test_throws ArgumentError permute(op_bdca, wrong_order2)
 
-        # GeneralProductDimensions
+        # non-square ProductDimensions
         Gop_d = Qobj(rand(ComplexF64, 5, 6))
         compound_bdca = permute(tensor(ket_a, op_b, bra_c, Gop_d), (2, 4, 3, 1))
         compound_dacb = permute(tensor(ket_a, op_b, bra_c, Gop_d), (4, 1, 3, 2))
         @test compound_bdca ≈ tensor(op_b, Gop_d, bra_c, ket_a)
         @test compound_dacb ≈ tensor(Gop_d, ket_a, bra_c, op_b)
-        @test compound_bdca.dims == [[3, 5, 1, 2], [3, 6, 4, 1]]
-        @test compound_dacb.dims == [[5, 2, 1, 3], [6, 1, 4, 3]]
+        @test compound_bdca.dims == ([3, 5, 1, 2], [3, 6, 4, 1])
+        @test compound_dacb.dims == ([5, 2, 1, 3], [6, 1, 4, 3])
         @test isoper(compound_bdca)
         @test isoper(compound_dacb)
 

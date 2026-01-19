@@ -161,11 +161,9 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type = Operator(), 
 
     if dims isa Nothing
         if type isa Operator
-            dims =
-                (size(data, 1) == size(data, 2)) ? ProductDimensions(size(data, 1)) :
-                GeneralProductDimensions(SVector{2}(SVector{1}(size(data, 1)), SVector{1}(size(data, 2))))
+            dims = ProductDimensions((HilbertSpace(size(data, 1)),), (HilbertSpace(size(data, 2)),))
         elseif type isa SuperOperator
-            dims = ProductDimensions(isqrt(size(data, 2)))
+            dims = ProductDimensions((HilbertSpace(isqrt(size(data, 1))),), (HilbertSpace(isqrt(size(data, 2))),))
         end
     end
 

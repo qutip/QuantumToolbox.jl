@@ -51,7 +51,7 @@ function multisite_operator(dims::Union{AbstractVector, Tuple}, pairs::Pair{<:In
 
     sites, ops = _get_unique_sites_ops(_sites, _ops)
 
-    _dims[sites] == [get_dimensions_to(op)[1].size for op in ops] || throw(ArgumentError("The dimensions of the operators do not match the dimensions of the lattice."))
+    _dims[sites] == [op.dimensions.to[1].size for op in ops] || throw(ArgumentError("The dimensions of the operators do not match the dimensions of the lattice."))
 
     data = kron(Eye(prod(_dims[1:(sites[1] - 1)])), ops[1].data)
     for i in 2:length(sites)
