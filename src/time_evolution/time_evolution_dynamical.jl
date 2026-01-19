@@ -363,7 +363,7 @@ function dsf_mesolveProblem(
     αt_list = convert(Vector{T}, α0_l)
     op_l_vec = map(op -> mat2vec(get_data(op)'), op_list)
 
-    dsf_identity = Eye(prod(H₀.dimensions))
+    dsf_identity = Eye(get_hilbert_size(H₀.dimensions)[1])
 
     # Create the Krylov subspace just for initialize
     expv_cache = arnoldi(kron(dsf_identity, dsf_identity), mat2vec(ket2dm(ψ0).data), krylov_dim)

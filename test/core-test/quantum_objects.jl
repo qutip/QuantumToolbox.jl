@@ -32,7 +32,7 @@
 
         @test_throws DomainError Qobj(rand(ComplexF64, 2, 1), type = Operator()) # should be type = Bra
 
-        # check that Ket, Bra, SuperOperator, OperatorKet, and OperatorBra don't support GeneralDimensions
+        # check that Ket, Bra, SuperOperator, OperatorKet, and OperatorBra don't support GeneralProductDimensions
         @test_throws DomainError Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,)))
         @test_throws DomainError Qobj(rand(ComplexF64, 1, 2), type = Bra(), dims = ((1,), (2,)))
         @test_throws DomainError Qobj(rand(ComplexF64, 4, 4), type = SuperOperator(), dims = ((2,), (2,)))
@@ -89,7 +89,7 @@
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator())
-        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # GeneralDimensions
+        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # GeneralProductDimensions
         a5 = QuantumObject(rand(ComplexF64, 2 * 3 * 4, 5), dims = ((2, 3, 4), (5,)))
         @test isket(a2) == false
         @test isbra(a2) == false
@@ -271,7 +271,7 @@
         @test opstring ==
             "\nQuantum Object:   type=Operator()   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
-        # GeneralDimensions
+        # GeneralProductDimensions
         Gop = tensor(a, ψ)
         opstring = sprint((t, s) -> show(t, "text/plain", s), Gop)
         datastring = sprint((t, s) -> show(t, "text/plain", s), Gop.data)
@@ -367,8 +367,8 @@
             end
 
             UnionType = Union{
-                QuantumObject{Bra, Dimensions{1, Tuple{Space}}, Matrix{T}},
-                QuantumObject{Operator, Dimensions{1, Tuple{Space}}, Matrix{T}},
+                QuantumObject{Bra, ProductDimensions{1, Tuple{HilbertSpace}}, Matrix{T}},
+                QuantumObject{Operator, ProductDimensions{1, Tuple{HilbertSpace}}, Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
@@ -377,8 +377,8 @@
             end
 
             UnionType2 = Union{
-                QuantumObject{Operator, GeneralDimensions{1, 1, Tuple{Space}, Tuple{Space}}, Matrix{T}},
-                QuantumObject{Operator, Dimensions{1, Tuple{Space}}, Matrix{T}},
+                QuantumObject{Operator, GeneralProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Matrix{T}},
+                QuantumObject{Operator, ProductDimensions{1, Tuple{HilbertSpace}}, Matrix{T}},
             }
             a = rand(T, N, N)
             @inferred UnionType Qobj(a)
@@ -670,7 +670,7 @@
         ρ1_ptr = ptrace(ρ, 1)
         ρ2_ptr = ptrace(ρ, 2)
 
-        # use GeneralDimensions to do partial trace
+        # use GeneralProductDimensions to do partial trace
         ρ1_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((2, 1), (2, 1)))
         II = qeye(2)
         basis_list = [basis(2, i) for i in 0:1]
@@ -741,7 +741,7 @@
         @test_throws ArgumentError ptrace(ρtotal, (0, 2))
         @test_throws ArgumentError ptrace(ρtotal, (2, 5))
         @test_throws ArgumentError ptrace(ρtotal, (2, 2, 3))
-        @test_throws ArgumentError ptrace(Qobj(zeros(ComplexF64, 3, 2)), 1) # invalid GeneralDimensions
+        @test_throws ArgumentError ptrace(Qobj(zeros(ComplexF64, 3, 2)), 1) # invalid GeneralProductDimensions
 
         @testset "Type Inference (ptrace)" begin
             @inferred ptrace(ρ, 1)
@@ -754,7 +754,7 @@
     end
 
     @testset "permute" begin
-        # standard Dimensions
+        # standard ProductDimensions
         ket_a = Qobj(rand(ComplexF64, 2))
         ket_b = Qobj(rand(ComplexF64, 3))
         ket_c = Qobj(rand(ComplexF64, 4))
@@ -789,7 +789,7 @@
         @test_throws ArgumentError permute(op_bdca, wrong_order1)
         @test_throws ArgumentError permute(op_bdca, wrong_order2)
 
-        # GeneralDimensions
+        # GeneralProductDimensions
         Gop_d = Qobj(rand(ComplexF64, 5, 6))
         compound_bdca = permute(tensor(ket_a, op_b, bra_c, Gop_d), (2, 4, 3, 1))
         compound_dacb = permute(tensor(ket_a, op_b, bra_c, Gop_d), (4, 1, 3, 2))

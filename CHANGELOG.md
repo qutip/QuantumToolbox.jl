@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Restructure `Dimensions` and `Space`. Avoid using `prod(::Dimensions)` for getting matrix sizes, and instead use `get_hilbert_size` and `get_liouville_size`. ([#600])
 
 ## [v0.42.0]
 Release date: 2026-01-17
@@ -410,6 +410,7 @@ Release date: 2024-11-13
 [#589]: https://github.com/qutip/QuantumToolbox.jl/issues/589
 [#591]: https://github.com/qutip/QuantumToolbox.jl/issues/591
 [#596]: https://github.com/qutip/QuantumToolbox.jl/issues/596
+[#600]: https://github.com/qutip/QuantumToolbox.jl/issues/600
 [#603]: https://github.com/qutip/QuantumToolbox.jl/issues/603
 [#606]: https://github.com/qutip/QuantumToolbox.jl/issues/606
 [#610]: https://github.com/qutip/QuantumToolbox.jl/issues/610
