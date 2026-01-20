@@ -19,10 +19,10 @@
         a = rand(ComplexF64, 3, 2)
         # SuperOperator requires sqrt-able dimensions (e.g., 4x4 for 2-dim system)
         @test_throws DimensionMismatch Qobj(a, type = SuperOperator())
-        # Bra requires row vector (1xN)
-        @test_throws DomainError Qobj(a, type = Bra())
-        # OperatorBra requires row vector
-        @test_throws DomainError Qobj(a, type = OperatorBra())
+        # Bra requires row vector (1xN), DimensionMismatch when dimensions don't match array size
+        @test_throws DimensionMismatch Qobj(a, type = Bra())
+        # OperatorBra requires row vector, DimensionMismatch when dimensions don't match array size
+        @test_throws DimensionMismatch Qobj(a, type = OperatorBra())
 
         a = rand(ComplexF64, 2, 2, 2)
         for t in (nothing, Ket(), Bra(), Operator(), SuperOperator(), OperatorBra(), OperatorKet())
@@ -110,7 +110,7 @@
         @test iscached(a2) == true
         @test isconstant(a2) == true
         @test isunitary(a2) == false
-        @test a2.dims == [100]
+        @test a2.dims == ([100], [100])
         @test isket(a3) == false
         @test isbra(a3) == false
         @test isoper(a3) == false
@@ -120,7 +120,7 @@
         @test iscached(a3) == true
         @test isconstant(a3) == true
         @test isunitary(a3) == false
-        @test a3.dims == [10]
+        @test a3.dims == ([10], [10])
         @test isket(a4) == false
         @test isbra(a4) == false
         @test isoper(a4) == true
@@ -160,12 +160,12 @@
         @test isoperket(ρ_bra) == false
         @test isoperbra(ρ_bra) == true
         @test isunitary(ρ_bra) == false
-        @test ρ_bra.dims == [2]
-        @test ρ_ket.dims == [2]
+        @test ρ_bra.dims == ([1], [2])
+        @test ρ_ket.dims == ([2], [1])
         @test H * ρ ≈ spre(H) * ρ
         @test ρ * H ≈ spost(H) * ρ
         @test H * ρ * H ≈ sprepost(H, H) * ρ
-        @test (L * ρ_ket).dims == [2]
+        @test (L * ρ_ket).dims == ([2], [1])
         @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
         @test (ρ_bra * L')' == L * ρ_ket
         @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
@@ -782,9 +782,9 @@
         @test ket_bdca ≈ tensor(ket_b, ket_d, ket_c, ket_a)
         @test bra_bdca ≈ tensor(bra_b, bra_d, bra_c, bra_a)
         @test op_bdca ≈ tensor(op_b, op_d, op_c, op_a)
-        @test ket_bdca.dims == correct_dims
-        @test bra_bdca.dims == correct_dims
-        @test op_bdca.dims == correct_dims
+        @test ket_bdca.dims == (correct_dims, [1, 1, 1, 1])
+        @test bra_bdca.dims == ([1, 1, 1, 1], correct_dims)
+        @test op_bdca.dims == (correct_dims, correct_dims)
         @test isket(ket_bdca)
         @test isbra(bra_bdca)
         @test isoper(op_bdca)

@@ -125,27 +125,37 @@ function check_dimensions(dimensions_list::NTuple{N, AbstractDimensions}) where 
     return nothing
 end
 
-# Helper to get the meaningful Hilbert space for dimension checking
-_get_check_space(A::AbstractQuantumObject{Ket}) = A.dimensions.to
-_get_check_space(A::AbstractQuantumObject{Bra}) = A.dimensions.from
-_get_check_space(A::AbstractQuantumObject{OperatorKet}) = A.dimensions.to
-_get_check_space(A::AbstractQuantumObject{OperatorBra}) = A.dimensions.from
-_get_check_space(A::AbstractQuantumObject{Operator}) = A.dimensions.to  # assume square for most checks
-_get_check_space(A::AbstractQuantumObject{SuperOperator}) = A.dimensions.to  # assume square for most checks
-
-# For quantum objects, compare the meaningful Hilbert space parts
 function check_dimensions(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N}
-    spaces = map(_get_check_space, Qobj_tuple)
-    allequal(spaces) ||
+    dimensions_list = map(A -> A.dimensions, Qobj_tuple)
+    allequal(dimensions_list) ||
         throw(DimensionMismatch("The quantum objects should have the same Hilbert `dimensions`."))
     return nothing
 end
 check_dimensions(A::AbstractQuantumObject...) = check_dimensions(A)
 
+@doc raw"""
+    check_hilbert_space(A::AbstractQuantumObject...)
+
+Check that multiple quantum objects live in the same Hilbert space. This compares only the 'to' part of the dimensions.
+
+This is useful for functions that accept both Ket and Operator inputs, where:
+- Ket has dimensions `([N], [1])`
+- Operator has dimensions `([N], [N])`
+
+Both should be considered compatible if they represent states/operators in the same Hilbert space `[N]`.
+"""
+function check_hilbert_space(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N}
+    hilbert_dims_list = map(A -> A.dimensions.to, Qobj_tuple)
+    allequal(hilbert_dims_list) ||
+        throw(DimensionMismatch("The quantum objects should live in the same Hilbert space."))
+    return nothing
+end
+check_hilbert_space(A::AbstractQuantumObject...) = check_hilbert_space(A)
+
 function _check_QuantumObject(::Ket, dimensions::ProductDimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
     obj_size = get_hilbert_size(dimensions)
-    (obj_size[1] == m) || throw(
+    (obj_size == (m, n)) || throw(
         DimensionMismatch("Ket with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
     )
     return nothing
@@ -154,7 +164,7 @@ end
 function _check_QuantumObject(::Bra, dimensions::ProductDimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Bra"))
     obj_size = get_hilbert_size(dimensions)
-    (obj_size[2] == n) || throw(
+    (obj_size == (m, n)) || throw(
         DimensionMismatch("Bra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
     )
     return nothing
@@ -183,7 +193,7 @@ end
 function _check_QuantumObject(::OperatorKet, dimensions::ProductDimensions, m::Int, n::Int)
     (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorKet"))
     obj_size = get_liouville_size(dimensions)
-    (obj_size[1] == m) || throw(
+    (obj_size == (m, n)) || throw(
         DimensionMismatch(
             "OperatorKet with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
         ),
@@ -194,7 +204,7 @@ end
 function _check_QuantumObject(::OperatorBra, dimensions::ProductDimensions, m::Int, n::Int)
     (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorBra"))
     obj_size = get_liouville_size(dimensions)
-    (obj_size[2] == n) || throw(
+    (obj_size == (m, n)) || throw(
         DimensionMismatch(
             "OperatorBra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
         ),
@@ -210,35 +220,11 @@ _check_type(t) = throw(ArgumentError("The argument $t is not valid. It should be
 function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
     # a comment here to avoid bad render by JuliaFormatter
     if key === :dims
-        return _get_qobj_dims(A)
+        return dimensions_to_dims(A.dimensions)
     else
         return getfield(A, key)
     end
 end
-
-# Get dims representation for quantum objects
-# For Ket/OperatorKet: return just the to-space dims (the meaningful Hilbert space)
-# For Bra/OperatorBra: return just the from-space dims (the meaningful Hilbert space)
-# For Operator/SuperOperator: return both if non-square, or just one if square
-_get_qobj_dims(A::AbstractQuantumObject{Ket}) = dimensions_to_dims(A.dimensions.to)
-_get_qobj_dims(A::AbstractQuantumObject{Bra}) = dimensions_to_dims(A.dimensions.from)
-_get_qobj_dims(A::AbstractQuantumObject{OperatorKet}) = dimensions_to_dims(A.dimensions.to)
-_get_qobj_dims(A::AbstractQuantumObject{OperatorBra}) = dimensions_to_dims(A.dimensions.from)
-_get_qobj_dims(A::AbstractQuantumObject{<:Union{Operator, SuperOperator}}) = dimensions_to_dims(A.dimensions)
-
-# this creates a list of HilbertSpace(1), it is used to generate `from` for Ket, and `to` for Bra
-space_one_list(dimensions::NTuple{N, AbstractSpace}) where {N} =
-    ntuple(i -> HilbertSpace(1), Val(sum(length, dimensions)))
-
-# Helper functions to get the "real" Hilbert space dimensions for kron operations
-# These return the meaningful space for each type, and a list of HilbertSpace(1) for the trivial dimension
-_get_kron_to(A::AbstractQuantumObject{Ket}) = A.dimensions.to
-_get_kron_to(A::AbstractQuantumObject{Bra}) = space_one_list(A.dimensions.from) # Bra maps TO scalar-like space
-_get_kron_to(A::AbstractQuantumObject{<:Union{Operator, SuperOperator, OperatorKet, OperatorBra}}) = A.dimensions.to
-
-_get_kron_from(A::AbstractQuantumObject{Ket}) = space_one_list(A.dimensions.to) # Ket maps FROM scalar-like space
-_get_kron_from(A::AbstractQuantumObject{Bra}) = A.dimensions.from
-_get_kron_from(A::AbstractQuantumObject{<:Union{Operator, SuperOperator, OperatorKet, OperatorBra}}) = A.dimensions.from
 
 # functions for getting Float or Complex element type
 _float_type(A::AbstractQuantumObject) = _float_type(eltype(A))

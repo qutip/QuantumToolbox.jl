@@ -95,7 +95,8 @@ function smesolveProblem(
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
-    check_dimensions(L_evo, ψ0)
+    # Check Hilbert space compatibility using multiplication dimensions
+    check_mul_dimensions(L_evo, ψ0)
     dims = L_evo.dimensions
 
     T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))

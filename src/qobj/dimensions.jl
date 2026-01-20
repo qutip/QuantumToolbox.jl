@@ -106,11 +106,7 @@ dimensions_to_dims(dimensions::NTuple{N, AbstractSpace}) where {N} = vcat(map(di
 function dimensions_to_dims(dimensions::ProductDimensions)
     to_dims = dimensions_to_dims(dimensions.to)
     from_dims = dimensions_to_dims(dimensions.from)
-    if dimensions.to == dimensions.from
-        return to_dims
-    else
-        return (to_dims, from_dims)
-    end
+    return (to_dims, from_dims)
 end
 
 dimensions_to_dims(::Nothing) = nothing # for EigsolveResult.dimensions = nothing
@@ -159,12 +155,8 @@ Base.adjoint(dimensions::AbstractDimensions) = transpose(dimensions)
 
 # this is used to show `dims` for Qobj and QobjEvo
 function _get_dims_string(dimensions::ProductDimensions)
-    if issquare(dimensions)
-        return string(dimensions_to_dims(dimensions.to))
-    else
-        dims = dimensions_to_dims(dimensions)
-        return "[$(string(dims[1])), $(string(dims[2]))]"
-    end
+    dims = dimensions_to_dims(dimensions)
+    return "($(string(dims[1])), $(string(dims[2])))"
 end
 _get_dims_string(::Nothing) = "nothing" # for EigsolveResult.dimensions = nothing
 

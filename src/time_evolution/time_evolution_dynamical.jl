@@ -152,7 +152,8 @@ function dfd_mesolveProblem(
     length(ψ0.dimensions) != length(maxdims) &&
         throw(DimensionMismatch("`dim_list` and `maxdims` do not have the same dimension."))
 
-    dim_list = MVector(ψ0.dims)
+    # Use the "to" dimensions for the dim_list (Hilbert space dimensions)
+    dim_list = MVector(dimensions_to_dims(ψ0.dimensions.to))
     H₀ = H(dim_list, dfd_params)
     c_ops₀ = c_ops(dim_list, dfd_params)
     e_ops₀ = e_ops(dim_list, dfd_params)

@@ -51,20 +51,15 @@ struct QuantumObject{ObjType <: QuantumObjectType, DimType <: AbstractDimensions
     dimensions::DimType
 
     function QuantumObject(data::DT, type, dims) where {DT <: AbstractArray}
-        # Convert dims to ProductDimensions, handling type-specific requirements
-        if dims isa ProductDimensions
-            dimensions = dims
+        raw_dimensions = _gen_dimensions(dims)
+        
+        # TODO: Improve this. We should not chenge the dimensions if already set.
+        if type isa Ket || type isa OperatorKet
+            dimensions = ProductDimensions(raw_dimensions.to, hilbertspace_one_list(raw_dimensions.to))
+        elseif type isa Bra || type isa OperatorBra
+            dimensions = ProductDimensions(hilbertspace_one_list(raw_dimensions.from), raw_dimensions.from)
         else
-            raw_dimensions = _gen_dimensions(dims)  # creates square ProductDimensions
-            # For Ket/OperatorKet: from should be one-list
-            # For Bra/OperatorBra: to should be one-list
-            if type isa Ket || type isa OperatorKet
-                dimensions = ProductDimensions(raw_dimensions.to, hilbertspace_one_list(raw_dimensions.to))
-            elseif type isa Bra || type isa OperatorBra
-                dimensions = ProductDimensions(hilbertspace_one_list(raw_dimensions.from), raw_dimensions.from)
-            else
-                dimensions = raw_dimensions
-            end
+            dimensions = raw_dimensions
         end
 
         ObjType = _check_type(type)
@@ -226,7 +221,7 @@ function SciMLOperators.cache_operator(
         L::AbstractQuantumObject{OpType},
         u::QuantumObject{SType},
     ) where {OpType <: Union{Operator, SuperOperator}, SType <: Union{Ket, OperatorKet}}
-    check_dimensions(L, u)
+    check_mul_dimensions(L, u)
 
     if isoper(L) && isoperket(u)
         throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))

@@ -96,7 +96,7 @@ function ssesolveProblem(
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
-    check_dimensions(H_eff_evo, ψ0)
+    check_mul_dimensions(H_eff_evo, ψ0)
     dims = H_eff_evo.dimensions
 
     T = _complex_float_type(Base.promote_eltype(H_eff_evo, ψ0))

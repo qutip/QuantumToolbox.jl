@@ -106,7 +106,8 @@ function mesolveProblem(
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
-    check_dimensions(L_evo, ψ0)
+
+    check_mul_dimensions(L_evo, ψ0)
 
     # Convert to dense vector with complex element type
 

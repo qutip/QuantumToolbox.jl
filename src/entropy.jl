@@ -75,7 +75,7 @@ function entropy_relative(
         base::Int = 0,
         tol::Real = 1.0e-15,
     ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
-    check_dimensions(ρ, σ)
+    check_hilbert_space(ρ, σ)
 
     # the logic of this code follows the detail given in the reference of the docstring
     # consider the eigen decompositions:

@@ -43,7 +43,9 @@ function correlation_3op_2t(
         ψ0 = steadystate(L)
     end
 
-    check_dimensions(L, ψ0, A, B, C)
+    # Check that all objects operate on the same Hilbert space
+    check_mul_dimensions(L, ψ0)
+    check_dimensions(L, A, B, C)
 
     kwargs2 = merge((saveat = collect(tlist),), (; kwargs...))
     ρt_list = mesolve(L, ψ0, tlist; kwargs2...).states

@@ -50,56 +50,52 @@ for op in (:(+), :(-), :(*))
     end
 end
 
-function check_mul_dimensions(from::NTuple{NA, AbstractSpace}, to::NTuple{NB, AbstractSpace}) where {NA, NB}
-    (from != to) && throw(
+function check_mul_dimensions(A::AbstractQuantumObject, B::AbstractQuantumObject)
+    (A.dimensions.from != B.dimensions.to) && throw(
         DimensionMismatch(
-            "The quantum object with (right) dims = $(dimensions_to_dims(from)) can not multiply a quantum object with (left) dims = $(dimensions_to_dims(to)) on the right-hand side.",
+            "The quantum object with dims = $(A.dims) can not multiply a quantum object with dims = $(B.dims) on the right-hand side.",
         ),
     )
     return nothing
 end
 
 function Base.:(*)(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
-    check_mul_dimensions(A.dimensions.from, B.dimensions.to)
+    check_mul_dimensions(A, B)
     QType = promote_op_type(A, B)
     return QType(A.data * B.data, Operator(), ProductDimensions(A.dimensions.to, B.dimensions.from))
 end
 
 function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket})
-    check_mul_dimensions(A.dimensions.from, B.dimensions.to)
+    check_mul_dimensions(A, B)
     return QuantumObject(A.data * B.data, Ket(), ProductDimensions(A.dimensions.to, B.dimensions.from))
 end
 function Base.:(*)(A::QuantumObject{Bra}, B::AbstractQuantumObject{Operator})
-    check_mul_dimensions(A.dimensions.from, B.dimensions.to)
+    check_mul_dimensions(A, B)
     return QuantumObject(A.data * B.data, Bra(), ProductDimensions(A.dimensions.to, B.dimensions.from))
 end
 function Base.:(*)(A::QuantumObject{Ket}, B::QuantumObject{Bra})
-    # For Ket × Bra -> Operator, check that the Ket's to matches Bra's from
-    (A.dimensions.to == B.dimensions.from) ||
-        throw(DimensionMismatch("The quantum objects should have compatible Hilbert `dimensions`."))
+    check_mul_dimensions(A, B)
     return QuantumObject(A.data * B.data, Operator(), ProductDimensions(A.dimensions.to, B.dimensions.from))
 end
 function Base.:(*)(A::QuantumObject{Bra}, B::QuantumObject{Ket})
-    # For Bra × Ket -> scalar, check that Bra's from matches Ket's to
-    (A.dimensions.from == B.dimensions.to) ||
-        throw(DimensionMismatch("The quantum objects should have compatible Hilbert `dimensions`."))
+    check_mul_dimensions(A, B)
     return A.data * B.data
 end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{Operator})
-    check_dimensions(A, B)
-    return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator(), A.dimensions)
+    check_mul_dimensions(A, B)
+    return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator(), A.dimensions.to)
 end
 function Base.:(*)(A::QuantumObject{OperatorBra}, B::QuantumObject{OperatorKet})
-    check_dimensions(A, B)
+    check_mul_dimensions(A, B)
     return A.data * B.data
 end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{OperatorKet})
-    check_dimensions(A, B)
-    return QuantumObject(A.data * B.data, OperatorKet(), A.dimensions)
+    check_mul_dimensions(A, B)
+    return QuantumObject(A.data * B.data, OperatorKet(), A.dimensions.to)
 end
 function Base.:(*)(A::QuantumObject{OperatorBra}, B::AbstractQuantumObject{SuperOperator})
-    check_dimensions(A, B)
-    return QuantumObject(A.data * B.data, OperatorBra(), A.dimensions)
+    check_mul_dimensions(A, B)
+    return QuantumObject(A.data * B.data, OperatorBra(), B.dimensions.from)
 end
 
 Base.:(^)(A::QuantumObject, n::T) where {T <: Number} = QuantumObject(^(A.data, n), A.type, A.dimensions)
@@ -135,7 +131,8 @@ Supports the following inputs:
     `matrix_element(i, A, j)` is a synonym of `dot(i, A, j)`.
 """
 function LinearAlgebra.dot(i::QuantumObject{Ket}, A::AbstractQuantumObject{Operator}, j::QuantumObject{Ket})
-    check_dimensions(i, A, j)
+    (i.dimensions.to == A.dimensions.to && A.dimensions.from == j.dimensions.to) ||
+        throw(DimensionMismatch("The quantum objects have incompatible dimensions for dot product."))
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 function LinearAlgebra.dot(
@@ -143,7 +140,8 @@ function LinearAlgebra.dot(
         A::AbstractQuantumObject{SuperOperator},
         j::QuantumObject{OperatorKet},
     )
-    check_dimensions(i, A, j)
+    (i.dimensions.to == A.dimensions.to && A.dimensions.from == j.dimensions.to) ||
+        throw(DimensionMismatch("The quantum objects have incompatible dimensions for dot product."))
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 
@@ -500,7 +498,8 @@ function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int}, Tuple})
     end
 
     _sort_sel = sort(SVector{length(sel), Int}(sel))
-    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, _sort_sel)
+    dims = dimensions_to_dims(QO.dimensions.to)
+    ρtr, dkeep = _ptrace_ket(QO.data, dims, _sort_sel)
     return QuantumObject(ρtr, type = Operator(), dims = ProductDimensions(dkeep))
 end
 

@@ -198,8 +198,8 @@ function Base.kron(
         kron(A.data, B.data),
         A.type,
         ProductDimensions(
-            (_get_kron_to(A)..., _get_kron_to(B)...),
-            (_get_kron_from(A)..., _get_kron_from(B)...),
+            (A.dimensions.to..., B.dimensions.to...),
+            (A.dimensions.from..., B.dimensions.from...),
         ),
     )
 end
@@ -216,8 +216,8 @@ for AOpType in (:Ket, :Bra, :Operator)
                         kron(A.data, B.data),
                         Operator(),
                         ProductDimensions(
-                            (_get_kron_to(A)..., _get_kron_to(B)...),
-                            (_get_kron_from(A)..., _get_kron_from(B)...),
+                            (A.dimensions.to..., B.dimensions.to...),
+                            (A.dimensions.from..., B.dimensions.from...),
                         ),
                     )
                 end
@@ -251,7 +251,7 @@ Convert a quantum object from vector ([`OperatorKet`](@ref)-type) to matrix ([`O
 !!! note
     `vector_to_operator` is a synonym of `vec2mat`.
 """
-vec2mat(A::QuantumObject{OperatorKet}) = QuantumObject(vec2mat(A.data), Operator(), A.dimensions)
+vec2mat(A::QuantumObject{OperatorKet}) = QuantumObject(vec2mat(A.data), Operator(), A.dimensions.to)
 
 @doc raw"""
     mat2vec(A::QuantumObject)
@@ -262,7 +262,10 @@ Convert a quantum object from matrix ([`Operator`](@ref)-type) to vector ([`Oper
 !!! note
     `operator_to_vector` is a synonym of `mat2vec`.
 """
-mat2vec(A::QuantumObject{Operator}) = QuantumObject(mat2vec(A.data), OperatorKet(), A.dimensions)
+function mat2vec(A::QuantumObject{Operator})
+    issquare(A.dimensions) || throw(ArgumentError("mat2vec requires a square Operator (same to and from dimensions)."))
+    return QuantumObject(mat2vec(A.data), OperatorKet(), A.dimensions.to)
+end
 
 @doc raw"""
     mat2vec(A::AbstractMatrix)

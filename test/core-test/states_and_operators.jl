@@ -12,8 +12,8 @@
         @test v1 != v2
         @test isket(v1)
         @test isket(v2)
-        @test v1.dims == [4]
-        @test v2.dims == [2, 2]
+        @test v1.dims == ([4], [1])
+        @test v2.dims == ([2, 2], [1, 1])
     end
 
     @testset "fock state" begin
@@ -51,7 +51,7 @@
         ρTd = thermal_dm(N, big(0.123))
         ρTs = thermal_dm(N, big(0.123); sparse = Val(true))
         @test isoper(ρTd)
-        @test ρTd.dims == [N]
+        @test ρTd.dims == ([N], [N])
         @test tr(ρTd) ≈ tr(ρTs) ≈ 1.0
         @test diag(ρTd) ≈ Float64[
             0.8904859864731106,
@@ -74,8 +74,8 @@
         @test ρ1 != ρ2
         @test isoper(ρ1)
         @test isoper(ρ2)
-        @test ρ1.dims == [4]
-        @test ρ2.dims == [2, 2]
+        @test ρ1.dims == ([4], [4])
+        @test ρ2.dims == ([2, 2], [2, 2])
         @test entropy_vn(ρ1, base = 2) ≈ log(2, 4)
     end
 
@@ -149,7 +149,7 @@
         Pij = projection(n, i, j)
         @test isoper(x)
         @test isoper(p)
-        @test a.dims == ad.dims == N.dims == x.dims == p.dims == [n]
+        @test a.dims == ad.dims == N.dims == x.dims == p.dims == ([n], [n])
         @test eigenenergies(ad * a) ≈ 0:(n - 1)
         @test commutator(N, a) ≈ -a
         @test commutator(N, ad) ≈ ad
@@ -221,8 +221,8 @@
         @test isunitary(U2)
         @test isunitary(U3)
         @test isunitary(U4)
-        @test U1.dims == U2.dims == [20]
-        @test U3.dims == U4.dims == [5, 5]
+        @test U1.dims == U2.dims == ([20], [20])
+        @test U3.dims == U4.dims == ([5, 5], [5, 5])
 
         @test_throws ArgumentError rand_unitary(20, :wrong)
     end
@@ -244,7 +244,7 @@
         @test isunitary(Sy)
         @test isunitary(Sz)
         for which in [:x, :y, :z, :+, :-]
-            @test jmat(2.5, which).dims == [6] # 2.5 * 2 + 1 = 6
+            @test jmat(2.5, which).dims == ([6], [6]) # 2.5 * 2 + 1 = 6
 
             for j_wrong in [-1, 8.7]  # Invalid j
                 @test_throws ArgumentError jmat(j_wrong, which)
