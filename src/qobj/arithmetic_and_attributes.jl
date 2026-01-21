@@ -36,7 +36,7 @@ end
 
 for op in (:(+), :(-), :(*))
     @eval begin
-        function Base.$op(A::AbstractQuantumObject{ObjType}, B::AbstractQuantumObject{ObjType}) where {ObjType <: QuantumObjectType}
+        function Base.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
             check_dimensions(A, B)
             QType = promote_op_type(A, B)
             return QType($(op)(A.data, B.data), A.type, A.dimensions)
@@ -336,7 +336,7 @@ Matrix square root of [`QuantumObject`](@ref)
 !!! note
     `√(A)` (where `√` can be typed by tab-completing `\sqrt` in the REPL) is a synonym of `sqrt(A)`.
 """
-Base.sqrt(A::QuantumObject) = QuantumObject(sqrt(to_dense(A.data)), A.type, A.dimensions)
+Base.sqrt(A::QuantumObject{ObjType}) where {ObjType <: Union{Operator, SuperOperator}} = QuantumObject(sqrt(to_dense(A.data)), A.type, A.dimensions)
 
 @doc raw"""
     log(A::QuantumObject)

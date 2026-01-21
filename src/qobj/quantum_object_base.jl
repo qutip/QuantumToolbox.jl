@@ -223,7 +223,7 @@ _check_type(t) = throw(ArgumentError("The argument $t is not valid. It should be
 function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
     # a comment here to avoid bad render by JuliaFormatter
     if key === :dims
-        return dimensions_to_dims(A.dimensions)
+        return dimensions_to_dims(getfield(A, :dimensions))
     else
         return getfield(A, key)
     end
