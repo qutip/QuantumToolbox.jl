@@ -25,7 +25,7 @@ Julia structure representing any time-independent quantum objects. For time-depe
 ```jldoctest
 julia> a = destroy(20)
 
-Quantum Object:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=([20], [20])   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
@@ -37,11 +37,10 @@ julia> a isa QuantumObject
 true
 
 julia> a.dims
-1-element StaticArraysCore.SVector{1, Int64} with indices SOneTo(1):
- 20
+([20], [20])
 
 julia> a.dimensions
-ProductDimensions{1, Tuple{HilbertSpace}}((HilbertSpace(20),))
+ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}((HilbertSpace(20),), (HilbertSpace(20),))
 ```
 """
 struct QuantumObject{ObjType <: QuantumObjectType, DimType <: AbstractDimensions, DataType <: AbstractArray} <:

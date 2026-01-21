@@ -27,7 +27,7 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-type eigenvectors by:
 ```jldoctest
 julia> result = eigenstates(sigmax())
-EigsolveResult:   type=Operator()   dims=[2]
+EigsolveResult:   type=Operator()   dims=([2], [2])
 values:
 2-element Vector{Float64}:
  -1.0
@@ -45,14 +45,14 @@ julia> λ
   1.0
 
 julia> ψ
-2-element Vector{QuantumObject{Ket, ProductDimensions{1, Tuple{HilbertSpace}}, Vector{ComplexF64}}}:
+2-element Vector{QuantumObject{Ket, ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Vector{ComplexF64}}}:
 
-Quantum Object:   type=Ket()   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
 2-element Vector{ComplexF64}:
  -0.7071067811865475 + 0.0im
   0.7071067811865475 + 0.0im
 
-Quantum Object:   type=Ket()   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
 2-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
@@ -541,21 +541,21 @@ julia> H = a + a';
 julia> using LinearAlgebra;
 
 julia> E, ψ, U = eigen(H)
-EigsolveResult:   type=Operator()   dims=[5]
+EigsolveResult:   type=Operator()   dims=([5], [5])
 values:
 5-element Vector{Float64}:
- -2.8569700138728
- -1.3556261799742608
-  1.3322676295501878e-15
-  1.3556261799742677
+ -2.8569700138728016
+ -1.3556261799742617
+  8.881784197001252e-16
+  1.3556261799742675
   2.8569700138728056
 vectors:
 5×5 Matrix{ComplexF64}:
-  0.106101+0.0im  -0.471249-0.0im  …   0.471249+0.0im  0.106101+0.0im
- -0.303127-0.0im   0.638838+0.0im      0.638838+0.0im  0.303127+0.0im
-  0.537348+0.0im  -0.279149-0.0im      0.279149+0.0im  0.537348+0.0im
- -0.638838-0.0im  -0.303127-0.0im     -0.303127-0.0im  0.638838+0.0im
-  0.447214+0.0im   0.447214+0.0im     -0.447214-0.0im  0.447214+0.0im
+ -0.106101-0.0im   0.471249+0.0im  …   0.471249+0.0im  0.106101+0.0im
+  0.303127+0.0im  -0.638838-0.0im      0.638838+0.0im  0.303127+0.0im
+ -0.537348-0.0im   0.279149+0.0im      0.279149+0.0im  0.537348+0.0im
+  0.638838+0.0im   0.303127+0.0im     -0.303127-0.0im  0.638838+0.0im
+ -0.447214-0.0im  -0.447214-0.0im     -0.447214-0.0im  0.447214+0.0im
 
 julia> expect(H, ψ[1]) ≈ E[1]
 true

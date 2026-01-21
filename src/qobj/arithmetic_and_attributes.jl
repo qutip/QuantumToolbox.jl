@@ -217,7 +217,7 @@ Note that this function only supports for [`Operator`](@ref) and [`SuperOperator
 ```jldoctest
 julia> a = destroy(20)
 
-Quantum Object:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=([20], [20])   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
@@ -254,7 +254,7 @@ Return the standard vector `p`-norm or [Schatten](https://en.wikipedia.org/wiki/
 ```jldoctest
 julia> ψ = fock(10, 2)
 
-Quantum Object:   type=Ket()   dims=[10]   size=(10,)
+Quantum Object:   type=Ket()   dims=([10], [1])   size=(10,)
 10-element Vector{ComplexF64}:
  0.0 + 0.0im
  0.0 + 0.0im
@@ -446,7 +446,7 @@ Two qubits in the state ``\ket{\psi} = \ket{e,g}``:
 ```jldoctest
 julia> ψ = kron(fock(2,0), fock(2,1))
 
-Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
+Quantum Object:   type=Ket()   dims=([2, 2], [1, 1])   size=(4,)
 4-element Vector{ComplexF64}:
  0.0 + 0.0im
  1.0 + 0.0im
@@ -455,7 +455,7 @@ Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
 
 julia> ptrace(ψ, 2)
 
-Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=([2], [2])   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
  0.0+0.0im  0.0+0.0im
  0.0+0.0im  1.0+0.0im
@@ -465,7 +465,7 @@ or in an entangled state ``\ket{\psi} = \frac{1}{\sqrt{2}} \left( \ket{e,e} + \k
 ```jldoctest
 julia> ψ = 1 / √2 * (kron(fock(2,0), fock(2,0)) + kron(fock(2,1), fock(2,1)))
 
-Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
+Quantum Object:   type=Ket()   dims=([2, 2], [1, 1])   size=(4,)
 4-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
                 0.0 + 0.0im
@@ -474,7 +474,7 @@ Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
 
 julia> ptrace(ψ, 1)
 
-Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=([2], [2])   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
  0.5+0.0im  0.0+0.0im
  0.0+0.0im  0.5+0.0im

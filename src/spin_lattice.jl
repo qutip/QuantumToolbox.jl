@@ -31,15 +31,7 @@ A Julia function for generating a multi-site operator ``\\hat{O} = \\hat{O}_i \\
 julia> op = multisite_operator(Val(8), 5=>sigmax(), 7=>sigmaz());
 
 julia> op.dims
-8-element StaticArraysCore.SVector{8, Int64} with indices SOneTo(8):
- 2
- 2
- 2
- 2
- 2
- 2
- 2
- 2
+([2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2])
 ```
 """
 function multisite_operator(dims::Union{AbstractVector, Tuple}, pairs::Pair{<:Integer, <:QuantumObject}...)
