@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Restructure `Dimensions` and `Space`. Avoid using `prod(::Dimensions)` for getting matrix sizes, and instead use `get_hilbert_size` and `get_liouville_size`. ([#600])
+- Merge `ProductDimensions` and `GeneralProductDimensions` into `ProductDimensions`. The dimensions are now assumed to be always general. This simplifies the sructure and usage of dimensions. ([#649])
 - Add support to time-dependent Hamiltonian and collapse operators in `lr_mesolve`. ([#650])
 
 ## [v0.42.0]
@@ -426,4 +427,5 @@ Release date: 2024-11-13
 [#636]: https://github.com/qutip/QuantumToolbox.jl/issues/636
 [#638]: https://github.com/qutip/QuantumToolbox.jl/issues/638
 [#641]: https://github.com/qutip/QuantumToolbox.jl/issues/641
+[#649]: https://github.com/qutip/QuantumToolbox.jl/issues/649
 [#650]: https://github.com/qutip/QuantumToolbox.jl/issues/650
