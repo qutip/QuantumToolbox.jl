@@ -14,8 +14,8 @@
         @test_throws ArgumentError Qobj(a, type = OperatorKet())
     end
 
-    # DomainError: incompatible between size of array and type
-    @testset "DomainError" begin
+    # DimensionMismatch: incompatible between size of array and type
+    @testset "DimensionMismatch" begin
         a = rand(ComplexF64, 3, 2)
         # SuperOperator requires sqrt-able dimensions (e.g., 4x4 for 2-dim system)
         @test_throws DimensionMismatch Qobj(a, type = SuperOperator())
@@ -26,7 +26,7 @@
 
         a = rand(ComplexF64, 2, 2, 2)
         for t in (nothing, Ket(), Bra(), Operator(), SuperOperator(), OperatorBra(), OperatorKet())
-            @test_throws DomainError Qobj(a, type = t)
+            @test_throws DimensionMismatch Qobj(a, type = t)
         end
 
         # Note: (1,2) and (2,1) matrices are now allowed as non-square Operators

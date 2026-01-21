@@ -147,7 +147,7 @@ function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) whe
 end
 
 function QuantumObject(A::AbstractArray{T, N}; type = nothing, dims = nothing) where {T, N}
-    throw(DomainError(size(A), "The size of the array is not compatible with vector or matrix."))
+    throw(DimensionMismatch("The array with size $(size(A)) is not compatible with vector or matrix."))
 end
 
 function QuantumObject(A::QuantumObject; type = A.type, dims = A.dimensions)

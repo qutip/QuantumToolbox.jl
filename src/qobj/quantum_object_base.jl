@@ -153,7 +153,7 @@ end
 check_hilbert_space(A::AbstractQuantumObject...) = check_hilbert_space(A)
 
 function _check_QuantumObject(::Ket, dimensions::ProductDimensions, m::Int, n::Int)
-    (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Ket"))
+    (n != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with Ket")))
     obj_size = get_hilbert_size(dimensions)
     (obj_size == (m, n)) || throw(
         DimensionMismatch("Ket with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
@@ -162,7 +162,7 @@ function _check_QuantumObject(::Ket, dimensions::ProductDimensions, m::Int, n::I
 end
 
 function _check_QuantumObject(::Bra, dimensions::ProductDimensions, m::Int, n::Int)
-    (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with Bra"))
+    (m != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with Bra")))
     obj_size = get_hilbert_size(dimensions)
     (obj_size == (m, n)) || throw(
         DimensionMismatch("Bra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
@@ -191,7 +191,7 @@ function _check_QuantumObject(::SuperOperator, dimensions::ProductDimensions, m:
 end
 
 function _check_QuantumObject(::OperatorKet, dimensions::ProductDimensions, m::Int, n::Int)
-    (n != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorKet"))
+    (n != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with OperatorKet")))
     obj_size = get_liouville_size(dimensions)
     (obj_size == (m, n)) || throw(
         DimensionMismatch(
@@ -202,7 +202,7 @@ function _check_QuantumObject(::OperatorKet, dimensions::ProductDimensions, m::I
 end
 
 function _check_QuantumObject(::OperatorBra, dimensions::ProductDimensions, m::Int, n::Int)
-    (m != 1) && throw(DomainError((m, n), "The size of the array is not compatible with OperatorBra"))
+    (m != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with OperatorBra")))
     obj_size = get_liouville_size(dimensions)
     (obj_size == (m, n)) || throw(
         DimensionMismatch(
