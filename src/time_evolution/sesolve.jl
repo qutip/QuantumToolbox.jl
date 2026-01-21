@@ -3,7 +3,7 @@ export sesolveProblem, sesolve, sesolve_map
 _sesolve_make_U_QobjEvo(H) = -1im * QuantumObjectEvolution(H, type = Operator())
 
 function _gen_sesolve_solution(sol, prob::TimeEvolutionProblem{ST}) where {ST <: Union{Ket, Operator}}
-    ψt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
+    ψt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions.to), sol.u)
 
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
 
@@ -77,6 +77,10 @@ function sesolveProblem(
 
     H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
+
+    issquare(H_evo.dimensions) || throw(
+        ArgumentError("The Hamiltonian operator must have square dimensions, but got $(H_evo.dims)."),
+    )
     check_mul_dimensions(H_evo, ψ0)
 
     T = _complex_float_type(Base.promote_eltype(H_evo, ψ0))

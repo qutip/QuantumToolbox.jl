@@ -35,7 +35,7 @@ ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}((HilbertSpace(
 julia> ProductDimensions((2, 3))  # Composite 2⊗3 Hilbert space (square)
 ProductDimensions{2, 2, Tuple{HilbertSpace, HilbertSpace}, Tuple{HilbertSpace, HilbertSpace}}((HilbertSpace(2), HilbertSpace(3)), (HilbertSpace(2), HilbertSpace(3)))
 
-julia> ProductDimensions(([2, 3], [4]))  # Non-square: maps from 4-dim to 2⊗3=6-dim
+julia> ProductDimensions(((2, 3), (4,)))  # Non-square: maps from 4-dim to 2⊗3=6-dim
 ProductDimensions{2, 1, Tuple{HilbertSpace, HilbertSpace}, Tuple{HilbertSpace}}((HilbertSpace(2), HilbertSpace(3)), (HilbertSpace(4),))
 ```
 """
@@ -94,12 +94,6 @@ ProductDimensions(dims::Any) = throw(
 
 # Check if dimensions are square (to == from)
 issquare(dimensions::ProductDimensions) = dimensions.to == dimensions.from
-
-_gen_dimensions(dims::AbstractDimensions) = dims
-_gen_dimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Integer, N} = ProductDimensions(dims)
-_gen_dimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Union{AbstractVector, NTuple}, N} =
-    ProductDimensions(dims)
-_gen_dimensions(dims::Any) = ProductDimensions(dims)
 
 # obtain dims in the type of SVector with integers
 dimensions_to_dims(dimensions::NTuple{N, AbstractSpace}) where {N} = vcat(map(dimensions_to_dims, dimensions)...)

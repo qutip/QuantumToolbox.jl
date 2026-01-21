@@ -36,7 +36,7 @@ end
 
 for op in (:(+), :(-), :(*))
     @eval begin
-        function Base.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
+        function Base.$op(A::AbstractQuantumObject{ObjType}, B::AbstractQuantumObject{ObjType}) where {ObjType <: QuantumObjectType}
             check_dimensions(A, B)
             QType = promote_op_type(A, B)
             return QType($(op)(A.data, B.data), A.type, A.dimensions)

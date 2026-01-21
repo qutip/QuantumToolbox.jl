@@ -91,9 +91,9 @@ Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1, T2, Nothing}, ::Val{:vector_list}) where {T1, T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1, T2, Operator}, ::Val{:vector_list}) where {T1, T2} =
-    ([QuantumObject(res.vectors[:, k], Ket(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], Ket(), res.dimensions.to) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1, T2, SuperOperator}, ::Val{:vector_list}) where {T1, T2} =
-    ([QuantumObject(res.vectors[:, k], OperatorKet(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], OperatorKet(), res.dimensions.to) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 

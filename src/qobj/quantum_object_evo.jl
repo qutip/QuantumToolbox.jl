@@ -122,7 +122,7 @@ struct QuantumObjectEvolution{
         (type isa Operator || type isa SuperOperator) ||
             throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
 
-        dimensions = _gen_dimensions(dims)
+        dimensions = _gen_dimensions(type, dims)
 
         _check_QuantumObject(type, dimensions, size(data, 1), size(data, 2))
 

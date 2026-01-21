@@ -186,7 +186,7 @@ function rand_dm(
     ρ /= tr(ρ)
     return QuantumObject(ρ; type = Operator(), dims = dimensions)
 end
-rand_dm(dimensions::Union{Int, ProductDimensions, AbstractVector{Int}, Tuple}; rank::Int = prod(dimensions)) = rand_dm(ComplexF64, dimensions; rank)
+rand_dm(dimensions::Union{Int, ProductDimensions, AbstractVector{Int}, Tuple}; rank::Int = get_hilbert_size(dimensions)[1]) = rand_dm(ComplexF64, dimensions; rank)
 
 @doc raw"""
     spin_state([T::Type=ComplexF64,] j::Real, m::Real)

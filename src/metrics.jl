@@ -53,7 +53,7 @@ function hilbert_dist(
         ρ::QuantumObject{ObjType1},
         σ::QuantumObject{ObjType2},
     ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
-    check_hilbert_space(ρ, σ)
+    _check_dims_to(ρ, σ)
 
     A = ket2dm(ρ) - ket2dm(σ)
     return tr(A' * A)

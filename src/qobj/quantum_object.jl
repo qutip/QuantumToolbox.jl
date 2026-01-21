@@ -51,16 +51,7 @@ struct QuantumObject{ObjType <: QuantumObjectType, DimType <: AbstractDimensions
     dimensions::DimType
 
     function QuantumObject(data::DT, type, dims) where {DT <: AbstractArray}
-        raw_dimensions = _gen_dimensions(dims)
-        
-        # TODO: Improve this. We should not chenge the dimensions if already set.
-        if type isa Ket || type isa OperatorKet
-            dimensions = ProductDimensions(raw_dimensions.to, hilbertspace_one_list(raw_dimensions.to))
-        elseif type isa Bra || type isa OperatorBra
-            dimensions = ProductDimensions(hilbertspace_one_list(raw_dimensions.from), raw_dimensions.from)
-        else
-            dimensions = raw_dimensions
-        end
+        dimensions = _gen_dimensions(type, dims)
 
         ObjType = _check_type(type)
 
@@ -92,25 +83,15 @@ function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) whe
         )
     end
 
-    if dims isa Nothing
+    if isnothing(dims)
         if type isa Bra
-            from_dims = (HilbertSpace(size(A, 2)),)
-            dims = ProductDimensions(hilbertspace_one_list(from_dims), from_dims)
-        elseif type isa Operator
-            dims = ProductDimensions((HilbertSpace(size(A, 1)),), (HilbertSpace(size(A, 2)),))
-        elseif type isa SuperOperator
-            dims = ProductDimensions((HilbertSpace(isqrt(size(A, 1))),), (HilbertSpace(isqrt(size(A, 2))),))
+            dims = (size(A, 2),)
         elseif type isa OperatorBra
-            from_dims = (HilbertSpace(isqrt(size(A, 2))),)
-            dims = ProductDimensions(hilbertspace_one_list(from_dims), from_dims)
-        end
-    elseif !(dims isa ProductDimensions)
-        # User provided dims as integer/tuple, need to convert properly for Bra/OperatorBra
-        dimensions = _gen_dimensions(dims)  # creates square ProductDimensions
-        if type isa Bra || type isa OperatorBra
-            dims = ProductDimensions(hilbertspace_one_list(dimensions.from), dimensions.from)
-        else
-            dims = dimensions
+            dims = (isqrt(size(A, 2)),)
+        elseif type isa Operator
+            dims = ((size(A, 1),), (size(A, 2),))
+        elseif type isa SuperOperator
+            dims = ((isqrt(size(A, 1)),), (isqrt(size(A, 2)),))
         end
     end
 
@@ -125,21 +106,11 @@ function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) whe
         throw(ArgumentError("The argument type must be Ket() or OperatorKet() if the input array is a vector."))
     end
 
-    if dims isa Nothing
+    if isnothing(dims)
         if type isa Ket
-            to_dims = (HilbertSpace(size(A, 1)),)
-            dims = ProductDimensions(to_dims, hilbertspace_one_list(to_dims))
+            dims = (size(A, 1),)
         elseif type isa OperatorKet
-            to_dims = (HilbertSpace(isqrt(size(A, 1))),)
-            dims = ProductDimensions(to_dims, hilbertspace_one_list(to_dims))
-        end
-    elseif !(dims isa ProductDimensions)
-        # User provided dims as integer/tuple, need to convert properly for Ket/OperatorKet
-        dimensions = _gen_dimensions(dims)  # creates square ProductDimensions
-        if type isa Ket || type isa OperatorKet
-            dims = ProductDimensions(dimensions.to, hilbertspace_one_list(dimensions.to))
-        else
-            dims = dimensions
+            dims = (isqrt(size(A, 1)),)
         end
     end
 
@@ -151,7 +122,7 @@ function QuantumObject(A::AbstractArray{T, N}; type = nothing, dims = nothing) w
 end
 
 function QuantumObject(A::QuantumObject; type = A.type, dims = A.dimensions)
-    dimensions = _gen_dimensions(dims)
+    dimensions = _gen_dimensions(type, dims)
     _check_type(type)
     _check_QuantumObject(type, dimensions, size(A.data, 1), size(A.data, 2))
     return QuantumObject(copy(A.data), type, dimensions)

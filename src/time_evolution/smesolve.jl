@@ -1,7 +1,7 @@
 export smesolveProblem, smesolveEnsembleProblem, smesolve
 
-_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
-_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
+_smesolve_generate_state(u, dims, ::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
+_smesolve_generate_state(u, dims, ::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
 
 function _smesolve_update_coeff(u, p, t, op_vec)
     return 2 * real(dot(op_vec, u)) #this is Tr[Sn * ρ + ρ * Sn']
@@ -96,6 +96,9 @@ function smesolveProblem(
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
     # Check Hilbert space compatibility using multiplication dimensions
+
+    issquare(L_evo.dimensions) ||
+        throw(ArgumentError("The Liouvillian superoperator must have square dimensions, but got $(L_evo.dims)."))
     check_mul_dimensions(L_evo, ψ0)
     dims = L_evo.dimensions
 
@@ -417,7 +420,7 @@ function smesolve(
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMESolve)
     _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSMESolve)
 
-    dims = ens_prob.dimensions
+    dims = ens_prob.dimensions.to
     _expvals_all =
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMESolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP

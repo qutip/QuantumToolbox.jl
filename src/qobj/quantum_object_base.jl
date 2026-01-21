@@ -133,24 +133,27 @@ function check_dimensions(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N
 end
 check_dimensions(A::AbstractQuantumObject...) = check_dimensions(A)
 
-@doc raw"""
-    check_hilbert_space(A::AbstractQuantumObject...)
+#=
+This checks the dimensions.to of the objects. In order to this to make sense,
+we need to check that the diemensions are square, and that we don't have `Bra` or `OperatorBra`
+as arguments.
+=#
+function _check_dims_to(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N}
 
-Check that multiple quantum objects live in the same Hilbert space. This compares only the 'to' part of the dimensions.
+    function _check_square_dims_and_get_to(A::AbstractQuantumObject)
+        ((isoper(A) || issuper(A)) && !issquare(A.dimensions)) && throw(ErrorException("The dimensions $(A.dims) are not square."))
 
-This is useful for functions that accept both Ket and Operator inputs, where:
-- Ket has dimensions `([N], [1])`
-- Operator has dimensions `([N], [N])`
+        (isbra(A) || isoperbra(A)) && throw(ArgumentError("Cannot check the dimensions of a `$(A.type)` object in a general sense."))
 
-Both should be considered compatible if they represent states/operators in the same Hilbert space `[N]`.
-"""
-function check_hilbert_space(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N}
-    hilbert_dims_list = map(A -> A.dimensions.to, Qobj_tuple)
+        return A.dimensions.to
+    end
+
+    hilbert_dims_list = map(_check_square_dims_and_get_to, Qobj_tuple)
     allequal(hilbert_dims_list) ||
         throw(DimensionMismatch("The quantum objects should live in the same Hilbert space."))
     return nothing
 end
-check_hilbert_space(A::AbstractQuantumObject...) = check_hilbert_space(A)
+_check_dims_to(A::AbstractQuantumObject...) = _check_dims_to(A)
 
 function _check_QuantumObject(::Ket, dimensions::ProductDimensions, m::Int, n::Int)
     (n != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with Ket")))
@@ -225,6 +228,21 @@ function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
         return getfield(A, key)
     end
 end
+
+_gen_dimensions(type::QuantumObjectType, dims::AbstractDimensions) = dims
+function _gen_dimensions(::ObjType, dims::Union{T, AbstractVector{T}, NTuple{N, T}}) where {ObjType <: QuantumObjectType, T <: Union{<:Integer, <:AbstractSpace}, N}
+    raw_dimensions = ProductDimensions(dims)
+    if ObjType <: Union{Ket, OperatorKet}
+        return ProductDimensions(raw_dimensions.to, hilbertspace_one_list(raw_dimensions.to))
+    elseif ObjType <: Union{Bra, OperatorBra}
+        return ProductDimensions(hilbertspace_one_list(raw_dimensions.from), raw_dimensions.from)
+    else
+        return raw_dimensions
+    end
+end
+_gen_dimensions(type::QuantumObjectType, dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Union{AbstractVector, NTuple}, N} =
+    ProductDimensions(dims)
+_gen_dimensions(type, dims) = throw(ArgumentError("The argument `dims` with value $dims is not valid for object type $type."))
 
 # functions for getting Float or Complex element type
 _float_type(A::AbstractQuantumObject) = _float_type(eltype(A))

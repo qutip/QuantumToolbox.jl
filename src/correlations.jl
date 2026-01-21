@@ -43,7 +43,6 @@ function correlation_3op_2t(
         ψ0 = steadystate(L)
     end
 
-    # Check that all objects operate on the same Hilbert space
     check_mul_dimensions(L, ψ0)
     check_dimensions(L, A, B, C)
 

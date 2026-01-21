@@ -407,7 +407,7 @@ function mcsolve(
     )
     sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj)
 
-    dims = ens_prob_mc.dimensions
+    dims = ens_prob_mc.dimensions.to
     _sol_1 = sol[:, 1]
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMCSolve)
 

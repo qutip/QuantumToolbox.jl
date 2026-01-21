@@ -144,7 +144,7 @@
         ρ = Qobj(rand(ComplexF64, 2, 2))
         ρ_ket = operator_to_vector(ρ)
         ρ_bra = ρ_ket'
-        @test ρ_bra == Qobj(operator_to_vector(ρ.data)', type = OperatorBra(), dims = ρ.dimensions)
+        @test ρ_bra == Qobj(operator_to_vector(ρ.data)', type = OperatorBra())
         @test ρ == vector_to_operator(ρ_ket)
         @test isket(ρ_ket) == false
         @test isbra(ρ_ket) == false
