@@ -141,7 +141,7 @@ as arguments.
 function _check_dims_to(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N}
 
     function _check_square_dims_and_get_to(A::AbstractQuantumObject)
-        ((isoper(A) || issuper(A)) && !issquare(A.dimensions)) && throw(ErrorException("The dimensions $(A.dims) are not square."))
+        ((isoper(A) || issuper(A)) && !isendomorphism(A.dimensions)) && throw(ErrorException("The dimensions $(A.dims) are not square."))
 
         (isbra(A) || isoperbra(A)) && throw(ArgumentError("Cannot check the `to` dimensions of a `$(A.type)` object."))
 
