@@ -15,10 +15,7 @@ abstract type AbstractDimensions{M, N} end
 
 A structure that embodies the left-hand side (`to`) and right-hand side (`from`) [`AbstractSpace`](@ref) of a quantum object.
 
-For square quantum objects (where `to == from`), such as standard operators, kets, bras, superoperators, etc.,
-the `to` and `from` fields will be identical.
-
-For non-square operators, `to` represents the row dimensions and `from` represents the column dimensions.
+For non-square operators, `to` is related to the row dimensions and `from` is related to the column dimensions.
 
 # Constructors
 

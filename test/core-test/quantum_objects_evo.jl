@@ -11,10 +11,6 @@
         # SuperOperator requires sqrt-able dimensions
         @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator())
 
-        # 4x4 with dims=((2,), (2,)) is now valid - Liouville dimension is 4 for each side
-        a = MatrixOperator(rand(ComplexF64, 4, 4))
-        @test QobjEvo(a, type = SuperOperator(), dims = ((2,), (2,))).dimensions.to == (HilbertSpace(2),)
-
         a = MatrixOperator(rand(ComplexF64, 3, 2))
         for t in (Ket(), Bra(), OperatorKet(), OperatorBra())
             @test_throws ArgumentError QobjEvo(a, type = t)
@@ -61,6 +57,9 @@
         @test isoperket(a3) == false
         @test isoperbra(a3) == false
         @test_throws DimensionMismatch QobjEvo(a, dims = 2)
+
+        a = MatrixOperator(rand(ComplexF64, 4, 4))
+        @test QobjEvo(a, type = SuperOperator(), dims = ((2,), (2,))).dimensions.to == (HilbertSpace(2),)
     end
 
     @testset "Promote Operators Type" begin
