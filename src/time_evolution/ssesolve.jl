@@ -97,8 +97,6 @@ function ssesolveProblem(
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
 
-    issquare(H_eff_evo.dimensions) ||
-        throw(ArgumentError("The Hamiltonian must have square dimensions, but got $(H_eff_evo.dims)."))
     check_mul_dimensions(H_eff_evo, ψ0)
     dims = H_eff_evo.dimensions
 

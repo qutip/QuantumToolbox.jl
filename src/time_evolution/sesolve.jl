@@ -78,9 +78,6 @@ function sesolveProblem(
     H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
 
-    issquare(H_evo.dimensions) || throw(
-        ArgumentError("The Hamiltonian operator must have square dimensions, but got $(H_evo.dims)."),
-    )
     check_mul_dimensions(H_evo, ψ0)
 
     T = _complex_float_type(Base.promote_eltype(H_evo, ψ0))

@@ -90,7 +90,7 @@ ProductDimensions(dims::Any) = throw(
 )
 
 # Check if dimensions are square (to == from)
-issquare(dimensions::ProductDimensions) = dimensions.to == dimensions.from
+isendomorphism(dimensions::ProductDimensions) = dimensions.to == dimensions.from
 
 # obtain dims in the type of SVector with integers
 dimensions_to_dims(dimensions::NTuple{N, AbstractSpace}) where {N} = vcat(map(dimensions_to_dims, dimensions)...)

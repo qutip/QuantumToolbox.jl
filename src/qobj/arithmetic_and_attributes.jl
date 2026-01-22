@@ -140,8 +140,8 @@ function LinearAlgebra.dot(
         A::AbstractQuantumObject{SuperOperator},
         j::QuantumObject{OperatorKet},
     )
-    (i.dimensions.to == A.dimensions.to && A.dimensions.from == j.dimensions.to) ||
-        throw(DimensionMismatch("The quantum objects have incompatible dimensions for dot product."))
+    check_mul_dimensions(i', A)
+    check_mul_dimensions(A, j)
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 
@@ -509,7 +509,7 @@ function ptrace(QO::QuantumObject{Operator}, sel::Union{AbstractVector{Int}, Tup
     any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("ptrace does not support EnrSpace"))
 
     # TODO: support for special cases when some of the subsystems have same `to` and `from` space
-    !issquare(QO.dimensions) &&
+    !isendomorphism(QO.dimensions) &&
         throw(ArgumentError("Invalid partial trace for dims = $(_get_dims_string(QO.dimensions))"))
 
     _non_static_array_warning("sel", sel)

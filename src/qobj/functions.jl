@@ -263,7 +263,7 @@ Convert a quantum object from matrix ([`Operator`](@ref)-type) to vector ([`Oper
     `operator_to_vector` is a synonym of `mat2vec`.
 """
 function mat2vec(A::QuantumObject{Operator})
-    issquare(A.dimensions) || throw(ArgumentError("mat2vec requires a square Operator (same to and from dimensions)."))
+    isendomorphism(A.dimensions) || throw(ArgumentError("mat2vec requires a square Operator (same to and from dimensions)."))
     return QuantumObject(mat2vec(A.data), OperatorKet(), A.dimensions.to)
 end
 

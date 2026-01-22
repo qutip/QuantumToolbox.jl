@@ -222,7 +222,7 @@ Calculate the [concurrence](https://en.wikipedia.org/wiki/Concurrence_(quantum_c
 """
 function concurrence(ρ::QuantumObject{OpType}) where {OpType <: Union{Ket, Operator}}
     two_qubit_dims = (HilbertSpace(2), HilbertSpace(2))
-    is_two_qubit = (isket(ρ) || issquare(ρ.dimensions)) && ρ.dimensions.to == two_qubit_dims
+    is_two_qubit = (isket(ρ) || isendomorphism(ρ.dimensions)) && ρ.dimensions.to == two_qubit_dims
     is_two_qubit || throw(
         ArgumentError(
             "The `concurrence` only works for a two-qubit state, invalid dims = $(_get_dims_string(ρ.dimensions)).",

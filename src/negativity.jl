@@ -76,7 +76,8 @@ function partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     (length(mask) != length(ρ.dimensions)) &&
         throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
 
-    !issquare(ρ.dimensions) &&
+    # TODO: Extend partial_transpose to non-endomorphism dimensions
+    !isendomorphism(ρ.dimensions) &&
         throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
 
     return _partial_transpose(ρ, mask)

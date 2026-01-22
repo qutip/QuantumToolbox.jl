@@ -97,8 +97,6 @@ function smesolveProblem(
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
     # Check Hilbert space compatibility using multiplication dimensions
 
-    issquare(L_evo.dimensions) ||
-        throw(ArgumentError("The Liouvillian superoperator must have square dimensions, but got $(L_evo.dims)."))
     check_mul_dimensions(L_evo, ψ0)
     dims = L_evo.dimensions
 

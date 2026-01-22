@@ -35,12 +35,10 @@
         @test_throws DimensionMismatch Qobj(a, type = SuperOperator())
 
         # (1,2) becomes a valid Operator with to=(1,), from=(2,)
-        @test Qobj(a, type = Operator()).dimensions.to == (HilbertSpace(1),)
-        @test Qobj(a, type = Operator()).dimensions.from == (HilbertSpace(2),)
+        @test Qobj(a, type = Operator()).dimensions == ProductDimensions((HilbertSpace(1),), (HilbertSpace(2),))
 
         # (2,1) becomes a valid Operator with to=(2,), from=(1,)
-        @test Qobj(rand(ComplexF64, 2, 1), type = Operator()).dimensions.to == (HilbertSpace(2),)
-        @test Qobj(rand(ComplexF64, 2, 1), type = Operator()).dimensions.from == (HilbertSpace(1),)
+        @test Qobj(rand(ComplexF64, 2, 1), type = Operator()).dimensions == ProductDimensions((HilbertSpace(2),), (HilbertSpace(1),))
 
         # check non-square dimensions work for all types
         @test Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,))).dimensions.to == (HilbertSpace(2),)
@@ -252,6 +250,16 @@
         @test X == a
         tril!(X)
         @test nnz(X) == 0
+
+        # Test a more complex dimension case
+        O = rand_dm(3) ⊗ rand_dm(3) ⊗ rand_dm(3)
+        ψ1 = rand_ket(3) ⊗ rand_ket(3) ⊗ rand_ket(3)
+        ψ2 = rand_ket(3) ⊗ rand_ket(3) ⊗ rand_ket(3)
+        Π = QuantumObject(hcat(ψ1.data, ψ2.data), dims = ((3, 3, 3), (2,)))
+
+        o = (Π' * O * Π)
+        @test o.dimensions == ProductDimensions((HilbertSpace(2),), (HilbertSpace(2),))
+        @test isoper(o) == true
     end
 
     @testset "broadcasting" begin

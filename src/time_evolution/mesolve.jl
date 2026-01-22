@@ -107,9 +107,6 @@ function mesolveProblem(
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
 
-    issquare(L_evo.dimensions) || throw(
-        ArgumentError("The Liouvillian super-operator must have square dimensions, but got $(L_evo.dims)."),
-    )
     check_mul_dimensions(L_evo, ψ0)
 
     # Convert to dense vector with complex element type
