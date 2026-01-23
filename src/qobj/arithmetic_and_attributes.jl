@@ -131,8 +131,8 @@ Supports the following inputs:
     `matrix_element(i, A, j)` is a synonym of `dot(i, A, j)`.
 """
 function LinearAlgebra.dot(i::QuantumObject{Ket}, A::AbstractQuantumObject{Operator}, j::QuantumObject{Ket})
-    (i.dimensions.to == A.dimensions.to && A.dimensions.from == j.dimensions.to) ||
-        throw(DimensionMismatch("The quantum objects have incompatible dimensions for dot product."))
+    check_mul_dimensions(i', A)
+    check_mul_dimensions(A, j)
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 function LinearAlgebra.dot(
