@@ -324,14 +324,14 @@ function dBdz!(du, u, p, t)
     Bi .= _pinv_smooth!(Hermitian(B), temp_MM, L, atol = opt.atol_inv)
 
     # Calculate the effective Hamiltonian part of L_tilde
-    H(dz, A0, p.params, t)
+    H(dz, A0, nothing, p.params, t)
     mul!(L_tilde, dz, S)
     mul!(L, dz', z)
     mul!(L_tilde, z, L, +1im, -1im)
 
     # Calculate the jump operators part of L_tilde
     @inbounds for Γi in Γ
-        Γi(dz, z, p.params, t)
+        Γi(dz, z, nothing, p.params, t)
         mul!(L, dz', z)
         mul!(temp_MM, B, L)
         mul!(L_tilde, dz, temp_MM, 1, 1)
