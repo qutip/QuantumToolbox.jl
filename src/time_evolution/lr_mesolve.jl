@@ -382,7 +382,7 @@ get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (
 Formulates the ODEproblem for the low-rank time evolution of the system. The function is called by [`lr_mesolve`](@ref). For more information about the low-rank master equation, see [gravina2024adaptive](@cite).
 
 # Arguments
-- `H::Union{AbstractQuantumObject{Operator}, Tuple}`: The Hamiltonian of the system.
+- `H::Union{AbstractQuantumObject{Operator}, Tuple}`: The Hamiltonian of the system. Time dependent Hamiltonians can be provided as in [`mesolve`](@ref).
 - `z::AbstractArray`: The initial z matrix of the low-rank algorithm.
 - `B::AbstractArray`: The initial B matrix of the low-rank algorithm.
 - `tlist::AbstractVector`: The time steps at which the expectation values and function values are calculated.
@@ -404,12 +404,14 @@ function lr_mesolveProblem(
         params = nothing,
         kwargs...,
     ) where {T}
-    Hdims = H.dimensions
 
     # Formulation of problem
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
     H = cache_operator(get_data(H_eff_evo), z)
     c_ops = get_data.(cache_operator.(QuantumObjectEvolution.(c_ops), Ref(z)))
+
+    Hdims = H_eff_evo.dimensions
+
     e_ops = get_data.(e_ops)
 
     t_l = _check_tlist(tlist, _float_type(H))
