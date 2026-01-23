@@ -408,8 +408,8 @@ function lr_mesolveProblem(
 
     # Formulation of problem
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
-    H = get_data(H_eff_evo)
-    c_ops = get_data.(QuantumObjectEvolution.(c_ops))
+    H = cache_operator(get_data(H_eff_evo))
+    c_ops = get_data.(cache_operator.(QuantumObjectEvolution.(c_ops)))
     e_ops = get_data.(e_ops)
 
     t_l = _check_tlist(tlist, _float_type(H))
