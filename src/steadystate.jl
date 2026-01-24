@@ -203,7 +203,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirect
 end
 
 function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
-    ρ0 = isnothing(solver.ρ0) ? rand_dm(L.dimensions) : solver.ρ0
+    ρ0 = isnothing(solver.ρ0) ? rand_dm(eltype(L), L.dimensions) : solver.ρ0
     ftype = _float_type(ρ0)
     tlist = [ftype(0), ftype(solver.tmax)]
 
