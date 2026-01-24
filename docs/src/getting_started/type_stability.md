@@ -186,7 +186,7 @@ function reshape_operator_data(dims)
     op = Qobj(randn(get_hilbert_size(dims)...), type=Operator(), dims=dims)
     op_dims = op.dims
     op_data = op.data
-    return reshape(op_data, vcat(op_dims, op_dims)...)
+    return reshape(op_data, vcat(op_dims...)...)
 end
 
 typeof(reshape_operator_data([2, 2, 2]))

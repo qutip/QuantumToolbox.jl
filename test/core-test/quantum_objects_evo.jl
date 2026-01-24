@@ -8,10 +8,8 @@
     # DomainError: incompatible between size of array and type
     @testset "Thrown Errors" begin
         a = MatrixOperator(rand(ComplexF64, 3, 2))
-        @test_throws DomainError QobjEvo(a, type = SuperOperator())
-
-        a = MatrixOperator(rand(ComplexF64, 4, 4))
-        @test_throws DomainError QobjEvo(a, type = SuperOperator(), dims = ((2,), (2,)))
+        # SuperOperator requires sqrt-able dimensions
+        @test_throws DimensionMismatch QobjEvo(a, type = SuperOperator())
 
         a = MatrixOperator(rand(ComplexF64, 3, 2))
         for t in (Ket(), Bra(), OperatorKet(), OperatorBra())
@@ -59,6 +57,9 @@
         @test isoperket(a3) == false
         @test isoperbra(a3) == false
         @test_throws DimensionMismatch QobjEvo(a, dims = 2)
+
+        a = MatrixOperator(rand(ComplexF64, 4, 4))
+        @test QobjEvo(a, type = SuperOperator(), dims = ((2,), (2,))).dimensions.to == (HilbertSpace(2),)
     end
 
     @testset "Promote Operators Type" begin
@@ -138,16 +139,8 @@
         N = 4
         for T in [ComplexF32, ComplexF64]
             a = MatrixOperator(rand(T, N, N))
-            UnionType = Union{
-                QuantumObjectEvolution{
-                    Operator,
-                    GeneralProductDimensions{1, Tuple{HilbertSpace}, Tuple{HilbertSpace}},
-                    typeof(a),
-                },
-                QuantumObjectEvolution{Operator, ProductDimensions{1, Tuple{HilbertSpace}}, typeof(a)},
-            }
-            @inferred UnionType QobjEvo(a)
-            @inferred UnionType QobjEvo(a, type = Operator())
+            @inferred QobjEvo(a)
+            @inferred QobjEvo(a, type = Operator())
             @inferred QobjEvo(a, type = SuperOperator())
         end
 

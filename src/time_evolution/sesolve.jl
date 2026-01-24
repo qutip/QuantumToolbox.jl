@@ -3,7 +3,7 @@ export sesolveProblem, sesolve, sesolve_map
 _sesolve_make_U_QobjEvo(H) = -1im * QuantumObjectEvolution(H, type = Operator())
 
 function _gen_sesolve_solution(sol, prob::TimeEvolutionProblem{ST}) where {ST <: Union{Ket, Operator}}
-    ψt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
+    ψt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions.to), sol.u)
 
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
 
@@ -77,11 +77,12 @@ function sesolveProblem(
 
     H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
-    check_dimensions(H_evo, ψ0)
+
+    check_mul_dimensions(H_evo, ψ0)
 
     T = _complex_float_type(Base.promote_eltype(H_evo, ψ0))
-    ψ0 = to_dense(T, get_data(ψ0)) # Convert it to dense vector with complex element type
-    U = cache_operator(H_evo.data, ψ0)
+    ψ0_vec = to_dense(T, get_data(ψ0)) # Convert it to dense vector with complex element type
+    U = cache_operator(H_evo.data, ψ0_vec)
 
     tlist = _check_tlist(tlist, _float_type(T))
 
@@ -91,7 +92,7 @@ function sesolveProblem(
 
     tspan = (tlist[1], tlist[end])
 
-    prob = ODEProblem{getVal(inplace), FullSpecialize}(U, ψ0, tspan, params; kwargs4...)
+    prob = ODEProblem{getVal(inplace), FullSpecialize}(U, ψ0_vec, tspan, params; kwargs4...)
 
     return TimeEvolutionProblem(prob, tlist, states_type, H_evo.dimensions)
 end

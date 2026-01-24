@@ -42,7 +42,7 @@ end
 @doc raw"""
     SteadyStateODESolver(
         alg = DP5(),
-        ψ0 = nothing,
+        ρ0 = nothing,
         tmax = Inf,
         terminate_reltol = 1e-4,
         terminate_abstol = 1e-6
@@ -64,7 +64,7 @@ or
 
 # Arguments
 - `alg::AbstractODEAlgorithm=DP5()`: The algorithm to solve the ODE.
-- `ψ0::Union{Nothing,QuantumObject}=nothing`: The initial state of the system. If not specified, a random pure state will be generated.
+- `ρ0::Union{Nothing,QuantumObject}=nothing`: The initial state of the system. If not specified, a random density matrix state will be generated.
 - `tmax::Real=Inf`: The final time step for the steady state problem.
 - `terminate_reltol` = The relative tolerance for stationary state terminate condition. Default to `1e-4`.
 - `terminate_abstol` = The absolute tolerance for stationary state terminate condition. Default to `1e-6`.
@@ -82,7 +82,7 @@ Base.@kwdef struct SteadyStateODESolver{
         AT <: Real,
     } <: SteadyStateSolver
     alg::MT = DP5()
-    ψ0::ST = nothing
+    ρ0::ST = nothing
     tmax::TT = Inf
     terminate_reltol::RT = 1.0e-4
     terminate_abstol::AT = 1.0e-6
@@ -203,8 +203,8 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirect
 end
 
 function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
-    ψ0 = isnothing(solver.ψ0) ? rand_ket(L.dimensions) : solver.ψ0
-    ftype = _float_type(ψ0)
+    ρ0 = isnothing(solver.ρ0) ? rand_dm(eltype(L), L.dimensions) : solver.ρ0
+    ftype = _float_type(ρ0)
     tlist = [ftype(0), ftype(solver.tmax)]
 
     # overwrite some kwargs and throw warning message to tell the users that we are ignoring these settings
@@ -220,11 +220,11 @@ function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadySta
     cb = TerminateSteadyState(
         solver.terminate_abstol,
         solver.terminate_reltol,
-        SteadyStateODECondition(similar(mat2vec(ket2dm(ψ0)).data)),
+        SteadyStateODECondition(similar(mat2vec(ket2dm(ρ0)).data)),
     )
     kwargs3 = _merge_kwargs_with_callback(kwargs2, cb)
 
-    sol = mesolve(L, ψ0, tlist; kwargs3...)
+    sol = mesolve(L, ρ0, tlist; kwargs3...)
     ρss = sol.states[end]
     return ρss
 end

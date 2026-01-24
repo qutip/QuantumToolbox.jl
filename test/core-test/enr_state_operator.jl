@@ -91,14 +91,14 @@
         ρ_tot = tensor(ρ_s, ρ_enr)
         opstring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot.data)
-        ρ_tot_dims = [dims_s..., dims_enr...]
+        ρ_tot_dims = ρ_tot.dims  # Now returns tuple format
         ρ_tot_size = size_s * size_enr
         ρ_tot_isherm = isherm(ρ_tot)
         @test opstring ==
             "\nQuantum Object:   type=Operator()   dims=$ρ_tot_dims   size=$((ρ_tot_size, ρ_tot_size))   ishermitian=$ρ_tot_isherm\n$datastring"
 
-        # use GeneralProductDimensions to do partial trace
-        new_dims1 = GeneralProductDimensions(
+        # use non-square ProductDimensions to do partial trace
+        new_dims1 = ProductDimensions(
             (HilbertSpace(1), HilbertSpace(1), space_enr),
             (HilbertSpace(1), HilbertSpace(1), space_enr),
         )
@@ -107,7 +107,7 @@
         for b in basis_list
             ρ_enr_compound += tensor(b', I_enr) * ρ_tot * tensor(b, I_enr)
         end
-        new_dims2 = GeneralProductDimensions(
+        new_dims2 = ProductDimensions(
             (space_s..., HilbertSpace(1), HilbertSpace(1), HilbertSpace(1)),
             (space_s..., HilbertSpace(1), HilbertSpace(1), HilbertSpace(1)),
         )

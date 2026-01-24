@@ -13,7 +13,7 @@ function _gen_mesolve_solution(
     if prob.states_type isa Operator
         ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = prob.states_type, dims = prob.dimensions), sol.u)
     else
-        ρt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
+        ρt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions.to), sol.u)
     end
 
     kwargs = NamedTuple(sol.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
@@ -106,7 +106,8 @@ function mesolveProblem(
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
-    check_dimensions(L_evo, ψ0)
+
+    check_mul_dimensions(L_evo, ψ0)
 
     # Convert to dense vector with complex element type
 

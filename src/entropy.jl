@@ -22,7 +22,7 @@ Pure state:
 ```jldoctest
 julia> ψ = fock(2,0)
 
-Quantum Object:   type=Ket()   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
 2-element Vector{ComplexF64}:
  1.0 + 0.0im
  0.0 + 0.0im
@@ -35,7 +35,7 @@ Mixed state:
 ```jldoctest
 julia> ρ = maximally_mixed_dm(2)
 
-Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=([2], [2])   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
  0.5+0.0im  0.0+0.0im
  0.0+0.0im  0.5+0.0im
@@ -75,7 +75,7 @@ function entropy_relative(
         base::Int = 0,
         tol::Real = 1.0e-15,
     ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
-    check_dimensions(ρ, σ)
+    _check_dims_to(ρ, σ)
 
     # the logic of this code follows the detail given in the reference of the docstring
     # consider the eigen decompositions:
@@ -221,21 +221,22 @@ Calculate the [concurrence](https://en.wikipedia.org/wiki/Concurrence_(quantum_c
 - [Hill-Wootters1997](@citet)
 """
 function concurrence(ρ::QuantumObject{OpType}) where {OpType <: Union{Ket, Operator}}
-    (ρ.dimensions == ProductDimensions((HilbertSpace(2), HilbertSpace(2)))) || throw(
+    two_qubit_dims = (HilbertSpace(2), HilbertSpace(2))
+    is_two_qubit = (isket(ρ) || isendomorphism(ρ.dimensions)) && ρ.dimensions.to == two_qubit_dims
+    is_two_qubit || throw(
         ArgumentError(
             "The `concurrence` only works for a two-qubit state, invalid dims = $(_get_dims_string(ρ.dimensions)).",
         ),
     )
 
-    _ρ = ket2dm(ρ).data
-    σy = sigmay()
-    σyσy = kron(σy, σy).data
-    ρ_tilde = σyσy * conj(_ρ) * σyσy
+    ρ_mat = ket2dm(ρ).data
+    σyσy = tensor(sigmay(), sigmay()).data
+    ρ_tilde = σyσy * conj(ρ_mat) * σyσy
 
-    # we use the alternative way to calculate concurrence (more efficient)
-    # calculate the square root of each eigenvalues (in decreasing order) of the non-Hermitian matrix: ρ * ρ_tilde
-    # note that we add abs here to avoid problems with sqrt for very small negative numbers
-    λ = sqrt.(abs.(real(eigvals(_ρ * ρ_tilde; sortby = x -> -real(x)))))
+    # We use the alternative way to calculate concurrence (more efficient):
+    # calculate the square root of each eigenvalue (in decreasing order) of the non-Hermitian matrix ρ * ρ̃.
+    # Note: we use abs() to avoid problems with sqrt for very small negative numbers due to numerical precision.
+    λ = sqrt.(abs.(real(eigvals(ρ_mat * ρ_tilde; sortby = x -> -real(x)))))
 
-    return max(0.0, λ[1] - λ[2] - λ[3] - λ[4]) # use 0.0 to make sure it always return value in Float-type
+    return max(zero(λ[1]), λ[1] - λ[2] - λ[3] - λ[4])
 end

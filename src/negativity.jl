@@ -20,7 +20,7 @@ and ``\Vert \hat{X} \Vert_1=\textrm{Tr}\sqrt{\hat{X}^\dagger \hat{X}}`` is the t
 ```jldoctest
 julia> Ψ = bell_state(0, 0)
 
-Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
+Quantum Object:   type=Ket()   dims=([2, 2], [1, 1])   size=(4,)
 4-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
                 0.0 + 0.0im
@@ -29,7 +29,7 @@ Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
 
 julia> ρ = ket2dm(Ψ)
 
-Quantum Object:   type=Operator()   dims=[2, 2]   size=(4, 4)   ishermitian=true
+Quantum Object:   type=Operator()   dims=([2, 2], [2, 2])   size=(4, 4)   ishermitian=true
 4×4 Matrix{ComplexF64}:
  0.5+0.0im  0.0+0.0im  0.0+0.0im  0.5+0.0im
  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
@@ -76,8 +76,8 @@ function partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     (length(mask) != length(ρ.dimensions)) &&
         throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
 
-    isa(ρ.dimensions, GeneralProductDimensions) &&
-        (get_dimensions_to(ρ) != get_dimensions_from(ρ)) &&
+    # TODO: Extend partial_transpose to non-endomorphism dimensions
+    !isendomorphism(ρ.dimensions) &&
         throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
 
     return _partial_transpose(ρ, mask)
@@ -91,7 +91,7 @@ function _partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     #   1 - the subsystem (in reversed order) don't need to be transposed
     #   2 - the subsystem (in reversed order) need to be transposed
 
-    dims_rev = reverse(dimensions_to_dims(get_dimensions_to(ρ)))
+    dims_rev = reverse(dimensions_to_dims(ρ.dimensions.to))
     pt_dims = reshape(Vector(1:(2 * nsys)), (nsys, 2))
     pt_idx = [
         [pt_dims[n, mask2[n]] for n in 1:nsys]   # origin   value in mask2
@@ -100,7 +100,7 @@ function _partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
     return QuantumObject(
         reshape(permutedims(reshape(ρ.data, (dims_rev..., dims_rev...)), pt_idx), size(ρ)),
         Operator(),
-        ProductDimensions(ρ.dimensions.to),
+        ρ.dimensions,
     )
 end
 
@@ -110,7 +110,7 @@ function _partial_transpose(
         mask::Vector{Bool},
     ) where {DimsType <: AbstractDimensions}
     M, N = size(ρ)
-    dims_rev = reverse(Tuple(dimensions_to_dims(get_dimensions_to(ρ))))
+    dims_rev = reverse(Tuple(dimensions_to_dims(ρ.dimensions.to)))
     mask_rev = reverse(mask)
     colptr = ρ.data.colptr
     rowval = ρ.data.rowval

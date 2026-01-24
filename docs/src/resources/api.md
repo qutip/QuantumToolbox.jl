@@ -21,7 +21,6 @@ AbstractSpace
 HilbertSpace
 EnrSpace
 ProductDimensions
-GeneralProductDimensions
 AbstractQuantumObject
 Bra
 Ket

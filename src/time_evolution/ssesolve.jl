@@ -96,7 +96,8 @@ function ssesolveProblem(
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
-    check_dimensions(H_eff_evo, ψ0)
+
+    check_mul_dimensions(H_eff_evo, ψ0)
     dims = H_eff_evo.dimensions
 
     T = _complex_float_type(Base.promote_eltype(H_eff_evo, ψ0))
@@ -416,7 +417,7 @@ function ssesolve(
     _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSSESolve)
 
     normalize_states = Val(false)
-    dims = ens_prob.dimensions
+    dims = ens_prob.dimensions.to
     _expvals_all =
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP

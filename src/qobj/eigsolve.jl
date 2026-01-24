@@ -27,7 +27,7 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-type eigenvectors by:
 ```jldoctest
 julia> result = eigenstates(sigmax())
-EigsolveResult:   type=Operator()   dims=[2]
+EigsolveResult:   type=Operator()   dims=([2], [2])
 values:
 2-element Vector{Float64}:
  -1.0
@@ -45,14 +45,14 @@ julia> λ
   1.0
 
 julia> ψ
-2-element Vector{QuantumObject{Ket, ProductDimensions{1, Tuple{HilbertSpace}}, Vector{ComplexF64}}}:
+2-element Vector{QuantumObject{Ket, ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Vector{ComplexF64}}}:
 
-Quantum Object:   type=Ket()   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
 2-element Vector{ComplexF64}:
  -0.7071067811865475 + 0.0im
   0.7071067811865475 + 0.0im
 
-Quantum Object:   type=Ket()   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
 2-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
@@ -91,9 +91,9 @@ Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1, T2, Nothing}, ::Val{:vector_list}) where {T1, T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1, T2, Operator}, ::Val{:vector_list}) where {T1, T2} =
-    ([QuantumObject(res.vectors[:, k], Ket(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], Ket(), res.dimensions.to) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1, T2, SuperOperator}, ::Val{:vector_list}) where {T1, T2} =
-    ([QuantumObject(res.vectors[:, k], OperatorKet(), res.dimensions) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], OperatorKet(), res.dimensions.to) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
@@ -541,7 +541,7 @@ julia> H = a + a';
 julia> using LinearAlgebra;
 
 julia> E, ψ, U = eigen(H)
-EigsolveResult:   type=Operator()   dims=[5]
+EigsolveResult:   type=Operator()   dims=([5], [5])
 values:
 5-element Vector{Float64}:
  -2.8569700138728

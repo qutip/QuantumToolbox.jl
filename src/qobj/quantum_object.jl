@@ -25,7 +25,7 @@ Julia structure representing any time-independent quantum objects. For time-depe
 ```jldoctest
 julia> a = destroy(20)
 
-Quantum Object:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=([20], [20])   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
@@ -37,11 +37,10 @@ julia> a isa QuantumObject
 true
 
 julia> a.dims
-1-element StaticArraysCore.SVector{1, Int64} with indices SOneTo(1):
- 20
+([20], [20])
 
 julia> a.dimensions
-ProductDimensions{1, Tuple{HilbertSpace}}((HilbertSpace(20),))
+ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}((HilbertSpace(20),), (HilbertSpace(20),))
 ```
 """
 struct QuantumObject{ObjType <: QuantumObjectType, DimType <: AbstractDimensions, DataType <: AbstractArray} <:
@@ -51,7 +50,7 @@ struct QuantumObject{ObjType <: QuantumObjectType, DimType <: AbstractDimensions
     dimensions::DimType
 
     function QuantumObject(data::DT, type, dims) where {DT <: AbstractArray}
-        dimensions = _gen_dimensions(dims)
+        dimensions = _gen_dimensions(type, dims)
 
         ObjType = _check_type(type)
 
@@ -83,15 +82,15 @@ function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) whe
         )
     end
 
-    if dims isa Nothing
+    if isnothing(dims)
         if type isa Bra
-            dims = ProductDimensions(size(A, 2))
+            dims = (size(A, 2),)
+        elseif type isa OperatorBra
+            dims = (isqrt(size(A, 2)),)
         elseif type isa Operator
-            dims =
-                (size(A, 1) == size(A, 2)) ? ProductDimensions(size(A, 1)) :
-                GeneralProductDimensions(SVector{2}(SVector{1}(size(A, 1)), SVector{1}(size(A, 2))))
-        elseif type isa SuperOperator || type isa OperatorBra
-            dims = ProductDimensions(isqrt(size(A, 2)))
+            dims = ((size(A, 1),), (size(A, 2),))
+        elseif type isa SuperOperator
+            dims = ((isqrt(size(A, 1)),), (isqrt(size(A, 2)),))
         end
     end
 
@@ -106,11 +105,11 @@ function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) whe
         throw(ArgumentError("The argument type must be Ket() or OperatorKet() if the input array is a vector."))
     end
 
-    if dims isa Nothing
+    if isnothing(dims)
         if type isa Ket
-            dims = ProductDimensions(size(A, 1))
+            dims = (size(A, 1),)
         elseif type isa OperatorKet
-            dims = ProductDimensions(isqrt(size(A, 1)))
+            dims = (isqrt(size(A, 1)),)
         end
     end
 
@@ -118,11 +117,11 @@ function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) whe
 end
 
 function QuantumObject(A::AbstractArray{T, N}; type = nothing, dims = nothing) where {T, N}
-    throw(DomainError(size(A), "The size of the array is not compatible with vector or matrix."))
+    throw(DimensionMismatch("The array with size $(size(A)) is not compatible with vector or matrix."))
 end
 
 function QuantumObject(A::QuantumObject; type = A.type, dims = A.dimensions)
-    dimensions = _gen_dimensions(dims)
+    dimensions = _gen_dimensions(type, dims)
     _check_type(type)
     _check_QuantumObject(type, dimensions, size(A.data, 1), size(A.data, 2))
     return QuantumObject(copy(A.data), type, dimensions)
@@ -138,7 +137,7 @@ function Base.show(
         "\nQuantum Object:   type=",
         QO.type,
         "   dims=",
-        _get_dims_string(QO.dimensions),
+        QO.dims,
         "   size=",
         size(op_data),
     )
@@ -152,7 +151,7 @@ function Base.show(io::IO, QO::QuantumObject)
         "\nQuantum Object:   type=",
         QO.type,
         "   dims=",
-        _get_dims_string(QO.dimensions),
+        QO.dims,
         "   size=",
         size(op_data),
         "   ishermitian=",
@@ -192,7 +191,7 @@ function SciMLOperators.cache_operator(
         L::AbstractQuantumObject{OpType},
         u::QuantumObject{SType},
     ) where {OpType <: Union{Operator, SuperOperator}, SType <: Union{Ket, OperatorKet}}
-    check_dimensions(L, u)
+    check_mul_dimensions(L, u)
 
     if isoper(L) && isoperket(u)
         throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))

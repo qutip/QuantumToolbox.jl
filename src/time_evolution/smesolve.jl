@@ -1,7 +1,7 @@
 export smesolveProblem, smesolveEnsembleProblem, smesolve
 
-_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
-_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
+_smesolve_generate_state(u, dims, ::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
+_smesolve_generate_state(u, dims, ::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
 
 function _smesolve_update_coeff(u, p, t, op_vec)
     return 2 * real(dot(op_vec, u)) #this is Tr[Sn * ρ + ρ * Sn']
@@ -95,7 +95,9 @@ function smesolveProblem(
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
-    check_dimensions(L_evo, ψ0)
+    # Check Hilbert space compatibility using multiplication dimensions
+
+    check_mul_dimensions(L_evo, ψ0)
     dims = L_evo.dimensions
 
     T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
@@ -416,7 +418,7 @@ function smesolve(
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMESolve)
     _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSMESolve)
 
-    dims = ens_prob.dimensions
+    dims = ens_prob.dimensions.to
     _expvals_all =
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMESolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
