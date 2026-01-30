@@ -12,7 +12,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 <!-- Table of Badges -->
 | **Release**       | [![Release][release-img]][release-url] [![License][license-img]][license-url] [![Downloads-total][download-tot-img]][download-url] [![Downloads-monthly][download-mon-img]][download-url] [![Cite][cite-img]][cite-url] |
 |:-----------------:|:-------------|
-| **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] |
+| **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Buildkite][buildkite-img]][buildkite-url] [![Coverage][codecov-img]][codecov-url] |
 | **Code Quality**  | [![Code Quality][code-quality-img]][code-quality-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] [![code style: runic][runic-img]][runic-url] |
 | **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] |
 | **Benchmark** | [![Benchmarks][benchmark-img]][benchmark-url] |
@@ -34,6 +34,9 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 
 [runtests-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main
 [runtests-url]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain
+
+[buildkite-img]: https://badge.buildkite.com/e5ecf03a0e6830993924d63263477c7938d3320d2d6151900f.svg?branch=main
+[buildkite-url]: https://buildkite.com/julialang/quantumtoolbox-dot-jl
 
 [codecov-img]: https://codecov.io/gh/qutip/QuantumToolbox.jl/branch/main/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/qutip/QuantumToolbox.jl
