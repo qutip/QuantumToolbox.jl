@@ -4,8 +4,8 @@ export average_states, average_expect, std_expect
 
 export liouvillian_floquet, liouvillian_dressed_nonsecular
 
-const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1.0e-8, reltol = 1.0e-6, save_everystep = false, save_end = true)
-const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1.0e-3, reltol = 2.0e-3, save_everystep = false, save_end = true)
+default_ode_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-8), reltol = _float_type(T)(1.0e-6), save_everystep = false, save_end = true)
+default_sde_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-3), reltol = _float_type(T)(2.0e-3), save_everystep = false, save_end = true)
 const COL_TIMES_WHICH_INIT_SIZE = 200
 
 abstract type TimeEvolutionMultiTrajSol{Tstates, Texpect} end

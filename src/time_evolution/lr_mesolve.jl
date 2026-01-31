@@ -456,7 +456,7 @@ function lr_mesolveProblem(
     p.Si .= pinv(Hermitian(p.S), atol = opt.atol_inv)
 
     # Initialization of ODEProblem's kwargs
-    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = [t_l[end]])
+    default_values = (default_ode_solver_options(T)..., saveat = [t_l[end]])
     kwargs2 = merge(default_values, kwargs)
 
     # Initialization of Callbacks

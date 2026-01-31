@@ -122,7 +122,7 @@ function smesolveProblem(
 
     tlist = _check_tlist(tlist, _float_type(T))
 
-    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
+    kwargs2 = _merge_saveat(tlist, e_ops, default_sde_solver_options(T); kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(K), tlist)
     kwargs4 = _generate_stochastic_kwargs(
         e_ops,
