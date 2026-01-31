@@ -6,10 +6,10 @@ export spre, spost, sprepost, liouvillian, lindblad_dissipator
 
 # intrinsic functions for super-operators
 ## keep these because they take AbstractMatrix as input and ensure the output is sparse matrix
-_spre(A::AbstractMatrix) = kron(Eye(size(A, 1)), sparse(A))
-_spre(A::AbstractSparseMatrix) = kron(Eye(size(A, 1)), A)
-_spost(B::AbstractMatrix) = kron(transpose(sparse(B)), Eye(size(B, 1)))
-_spost(B::AbstractSparseMatrix) = kron(transpose(B), Eye(size(B, 1)))
+_spre(A::AbstractMatrix{T}) where T = kron(Eye{T}(size(A, 1)), sparse(A))
+_spre(A::AbstractSparseMatrix{T}) where T = kron(Eye{T}(size(A, 1)), A)
+_spost(B::AbstractMatrix{T}) where T = kron(transpose(sparse(B)), Eye{T}(size(B, 1)))
+_spost(B::AbstractSparseMatrix{T}) where T = kron(transpose(B), Eye{T}(size(B, 1)))
 _sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), sparse(A))
 _sprepost(A::AbstractMatrix, B::AbstractSparseMatrix) = kron(transpose(B), sparse(A))
 _sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), A)
@@ -23,8 +23,8 @@ _spre(A::MatrixOperator) = MatrixOperator(_spre(A.A))
 _spre(A::ScaledOperator) = ScaledOperator(A.λ, _spre(A.L))
 _spre(A::AddedOperator) = AddedOperator(map(op -> _spre(op), A.ops))
 _spre(A::ComposedOperator) = ComposedOperator(map(_spre, A.ops), nothing)
-function _spre(A::AbstractSciMLOperator)
-    Id = Eye(size(A, 1))
+function _spre(A::AbstractSciMLOperator{T}) where {T}
+    Id = Eye{T}(size(A, 1))
     _lazy_tensor_warning(Id, A)
     return kron(Id, A)
 end
@@ -33,9 +33,9 @@ _spost(B::MatrixOperator) = MatrixOperator(_spost(B.A))
 _spost(B::ScaledOperator) = ScaledOperator(B.λ, _spost(B.L))
 _spost(B::AddedOperator) = AddedOperator(map(op -> _spost(op), B.ops))
 _spost(B::ComposedOperator) = ComposedOperator(map(_spost, reverse(B.ops)), nothing)
-function _spost(B::AbstractSciMLOperator)
+function _spost(B::AbstractSciMLOperator{T}) where {T}
     B_T = transpose(B)
-    Id = Eye(size(B, 1))
+    Id = Eye{T}(size(B, 1))
     _lazy_tensor_warning(B_T, Id)
     return kron(B_T, Id)
 end
