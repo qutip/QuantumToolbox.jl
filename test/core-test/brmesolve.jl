@@ -24,7 +24,7 @@ end
     H = num(N)
     a = destroy(N) + destroy(N)^2 / 2
     A_op = a + a'
-    spectra(x) = x > 0
+    spectra(x) = one(x) * (x > 0)
 
     # this test applies for limited cutoff
     lindblad = lindblad_dissipator(a)
@@ -33,17 +33,21 @@ end
 end
 
 @testitem "brterm basis" begin
+    using SparseArrays: issparse
+
     N = 5
     H = num(N)
     a = destroy(N) + destroy(N)^2 / 2
     A_op = a + a'
-    spectra(x) = x > 0
+    spectra(x) = one(x) * (x > 0)
+
     for sec_cutoff in [0, 0.1, 1, 3, -1]
         R = brterm(H, A_op, spectra, sec_cutoff = sec_cutoff, fock_basis = Val(true))
         R_eig, evecs = brterm(H, A_op, spectra, sec_cutoff = sec_cutoff, fock_basis = Val(false))
         @test isa(R, QuantumObject)
         @test isa(R_eig, QuantumObject)
         @test isa(evecs, QuantumObject)
+        @test issparse(R_eig)
 
         state = rand_dm(N) |> mat2vec
         fock_computed = R * state
@@ -53,6 +57,8 @@ end
 end
 
 @testitem "brterm sprectra function" begin
+    using SparseArrays: issparse
+
     f(x) = exp(x) / 10
     function g(x)
         nbar = n_thermal(abs(x), 1)
@@ -65,12 +71,12 @@ end
         end
     end
 
-    spectra_list = [
-        x -> (x > 0),  # positive frequency filter
+    spectra_list = (
+        x -> one(x) * (x > 0),  # positive frequency filter
         x -> one(x), # no filter
         f, # smooth filter
         g, # thermal field
-    ]
+    )
 
     N = 5
     H = num(N)
@@ -82,6 +88,7 @@ end
         @test isa(R, QuantumObject)
         @test isa(R_eig, QuantumObject)
         @test isa(evecs, QuantumObject)
+        @test issparse(R_eig)
 
         state = rand_dm(N) |> mat2vec
         fock_computed = R * state
@@ -112,6 +119,6 @@ end
         me = mesolve(H, ψ0, tlist, me_c_ops, e_ops = e_ops, progress_bar = Val(false))
         brme = brmesolve(H, ψ0, tlist, brme_a_ops, brme_c_ops, e_ops = e_ops, progress_bar = Val(false))
 
-        @test all(me.expect .== brme.expect)
+        @test me.expect ≈ brme.expect
     end
 end

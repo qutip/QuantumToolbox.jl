@@ -6,14 +6,11 @@ export spre, spost, sprepost, liouvillian, lindblad_dissipator
 
 # intrinsic functions for super-operators
 ## keep these because they take AbstractMatrix as input and ensure the output is sparse matrix
-_spre(A::AbstractMatrix{T}) where {T} = kron(Eye{T}(size(A, 1)), sparse(A))
-_spre(A::AbstractSparseMatrix{T}) where {T} = kron(Eye{T}(size(A, 1)), A)
-_spost(B::AbstractMatrix{T}) where {T} = kron(transpose(sparse(B)), Eye{T}(size(B, 1)))
-_spost(B::AbstractSparseMatrix{T}) where {T} = kron(transpose(B), Eye{T}(size(B, 1)))
-_sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), sparse(A))
-_sprepost(A::AbstractMatrix, B::AbstractSparseMatrix) = kron(transpose(B), sparse(A))
-_sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), A)
-_sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(transpose(B), A)
+_spre(A::AbstractMatrix{T}) where {T} = kron(Eye{T}(size(A, 1)), A)
+_spost(B::AbstractMatrix{T}) where {T} = kron(transpose(B), Eye{T}(size(B, 1)))
+_spost(B::Adjoint{T, <:AbstractMatrix}) where {T} = kron(conj(parent(B)), Eye{T}(size(parent(B), 1))) # avoiding nested Transpose{Adjoint} wrapper
+_sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(B), A)
+_sprepost(A::AbstractMatrix, B::Adjoint) = kron(conj(parent(B)), A) # avoiding nested Transpose{Adjoint} wrapper
 _sprepost(A, B) = _spre(A) * _spost(B) # for any other input types
 
 ## if input is AbstractSciMLOperator

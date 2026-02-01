@@ -38,7 +38,7 @@ function bloch_redfield_tensor(
     sec_cutoff = float(sec_cutoff)
 
     H_new = getVal(fock_basis) ? H : QuantumObject(Diagonal(rst.values), Operator(), H.dimensions)
-    c_ops_new = isnothing(c_ops) ? nothing : map(x -> getVal(fock_basis) ? x : U' * x * U, c_ops)
+    c_ops_new = isnothing(c_ops) ? nothing : (getVal(fock_basis) ? c_ops : map(x -> to_sparse_if_needed(Val(issparse(x)), U' * x * U), c_ops))
     L0 = liouvillian(H_new, c_ops_new)
 
     # Check whether we can rotate the terms to the eigenbasis directly in the Hamiltonian space
@@ -130,7 +130,7 @@ function _brterm(
     skew = @. rst.values - rst.values' |> real
     spectrum = spectra.(skew)
 
-    A_mat = U' * a_op.data * U
+    A_mat = to_sparse_if_needed(Val(issparse(a_op.data)), U' * a_op.data * U)
     A_mat_spec = A_mat .* spectrum
     A_mat_spec_t = A_mat .* transpose(spectrum)
 
@@ -145,11 +145,11 @@ function _brterm(
 
     # Rotate the terms to the eigenbasis if possible
     if getVal(fock_basis_hamiltonian)
-        A_mat = U * A_mat * U'
-        A_mat_spec = U * A_mat_spec * U'
-        A_mat_spec_t = U * A_mat_spec_t * U'
-        ac_term = U * ac_term * U'
-        bd_term = U * bd_term * U'
+        A_mat = to_sparse_if_needed(Val(issparse(A_mat)), U * A_mat * U')
+        A_mat_spec = to_sparse_if_needed(Val(issparse(A_mat_spec)), U * A_mat_spec * U')
+        A_mat_spec_t = to_sparse_if_needed(Val(issparse(A_mat_spec_t)), U * A_mat_spec_t * U')
+        ac_term = to_sparse_if_needed(Val(issparse(ac_term)), U * ac_term * U')
+        bd_term = to_sparse_if_needed(Val(issparse(bd_term)), U * bd_term * U')
     end
 
     # Remove small values before passing in the Liouville space

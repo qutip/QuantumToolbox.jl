@@ -49,6 +49,7 @@ LinearAlgebra.ishermitian
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
 isunitary
+SparseArrays.issparse
 SciMLOperators.iscached
 SciMLOperators.isconstant
 ```

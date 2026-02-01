@@ -155,6 +155,9 @@ function to_sparse(A::VT, tol::Real = 1.0e-10) where {VT <: AbstractVector}
     return sparsevec(idxs, vals, length(A))
 end
 
+to_sparse_if_needed(::Val{needed}, A::Union{QuantumObject, AbstractArray}, tol::Real = 1.0e-10) where {needed} =
+    needed ? to_sparse(A, tol) : A
+
 @doc raw"""
     kron(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
     tensor(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)

@@ -107,7 +107,7 @@ function smesolveProblem(
         to_dense(T, mat2vec(ket2dm(ψ0).data))
     end
 
-    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
+    sc_ops_evo_data = map(get_data ∘ QobjEvo, sc_ops_list)
 
     K = cache_operator(get_data(L_evo), ρ0)
 
