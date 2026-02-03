@@ -137,9 +137,9 @@ end
 to_dense(::Type{M}) where {M <: AbstractMatrix} = M
 
 @doc raw"""
-    to_sparse(A::QuantumObject)
+    to_sparse(A::QuantumObject, tol::Real = settings.tidyup_tol)
 
-Converts a dense QuantumObject to a sparse QuantumObject.
+Converts a dense QuantumObject to a sparse QuantumObject by removing elements with absolute values smaller than `tol`.
 """
 to_sparse(A::QuantumObject, tol::Real = settings.tidyup_tol) = QuantumObject(to_sparse(A.data, tol), A.type, A.dimensions)
 function to_sparse(A::MT, tol::Real = settings.tidyup_tol) where {MT <: AbstractMatrix}

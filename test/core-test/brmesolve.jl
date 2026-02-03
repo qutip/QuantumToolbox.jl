@@ -119,6 +119,7 @@ end
         me = mesolve(H, ψ0, tlist, me_c_ops, e_ops = e_ops, progress_bar = Val(false))
         brme = brmesolve(H, ψ0, tlist, brme_a_ops, brme_c_ops, e_ops = e_ops, progress_bar = Val(false))
 
+        # mesolve and brmesolve should be exactly the same for these cases
         @test me.expect == brme.expect
     end
 end
