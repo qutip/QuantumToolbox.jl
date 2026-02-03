@@ -368,14 +368,16 @@
         A_wrong1 = Qobj(rand(4, 4), dims = 4)
         A_wrong2 = Qobj(rand(4, 4), dims = (2, 2))
         A_wrong3 = Qobj(rand(3, 3))
-        @test (typeof(spre(Xd).data) <: Matrix) == true
-        @test (typeof(spre(Xs).data) <: SparseMatrixCSC) == true
-        @test (typeof(spost(Xd).data) <: Matrix) == true
-        @test (typeof(spost(Xs).data) <: SparseMatrixCSC) == true
-        @test (typeof(sprepost(Xd, Xd).data) <: Matrix) == true
-        @test (typeof(sprepost(Xs, Xs).data) <: SparseMatrixCSC) == true
-        @test (typeof(sprepost(Xs, Xd).data) <: SparseMatrixCSC) == true
-        @test (typeof(sprepost(Xd, Xs).data) <: SparseMatrixCSC) == true
+        @test !issparse(spre(Xd))
+        @test issparse(spre(Xs))
+        @test !issparse(spost(Xd))
+        @test issparse(spost(Xs))
+        @test !issparse(sprepost(Xd, Xd))
+        @test issparse(sprepost(Xs, Xs))
+        if VERSION >= v"1.11" # kron(::SparseMatrixCSC, ::DenseMatrix) returns DenseArray in Julia 1.10
+            @test issparse(sprepost(Xs, Xd))
+        end
+        @test issparse(sprepost(Xd, Xs))
         @test_throws DimensionMismatch sprepost(A_wrong1, A_wrong2)
         @test_throws DimensionMismatch sprepost(A_wrong1, A_wrong3)
     end

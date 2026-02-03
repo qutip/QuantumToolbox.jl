@@ -56,7 +56,8 @@ function bloch_redfield_tensor(
         if fock_basis_hamiltonian
             return L0 + R # Already rotated in the Hamiltonian space
         else
-            SU = sprepost(U, U')
+            U_sp = to_sparse(U)
+            SU = sprepost(U_sp, U_sp')
             return L0 + SU * R * SU'
         end
     else
@@ -108,7 +109,8 @@ function brterm(
         if fock_basis_hamiltonian
             return term # Already rotated in the Hamiltonian space
         else
-            SU = sprepost(U, U')
+            U_sp = to_sparse(U)
+            SU = sprepost(U_sp, U_sp')
             return SU * term * SU'
         end
     else
