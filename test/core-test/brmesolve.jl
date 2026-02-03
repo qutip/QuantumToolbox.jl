@@ -119,6 +119,6 @@ end
         me = mesolve(H, ψ0, tlist, me_c_ops, e_ops = e_ops, progress_bar = Val(false))
         brme = brmesolve(H, ψ0, tlist, brme_a_ops, brme_c_ops, e_ops = e_ops, progress_bar = Val(false))
 
-        @test me.expect ≈ brme.expect
+        @test me.expect == brme.expect
     end
 end

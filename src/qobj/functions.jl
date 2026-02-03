@@ -141,21 +141,21 @@ to_dense(::Type{M}) where {M <: AbstractMatrix} = M
 
 Converts a dense QuantumObject to a sparse QuantumObject.
 """
-to_sparse(A::QuantumObject, tol::Real = 1.0e-10) = QuantumObject(to_sparse(A.data, tol), A.type, A.dimensions)
-function to_sparse(A::MT, tol::Real = 1.0e-10) where {MT <: AbstractMatrix}
+to_sparse(A::QuantumObject, tol::Real = settings.tidyup_tol) = QuantumObject(to_sparse(A.data, tol), A.type, A.dimensions)
+function to_sparse(A::MT, tol::Real = settings.tidyup_tol) where {MT <: AbstractMatrix}
     idxs = findall(@. abs(A) > tol)
     row_indices = getindex.(idxs, 1)
     col_indices = getindex.(idxs, 2)
     vals = getindex(A, idxs)
     return sparse(row_indices, col_indices, vals, size(A)...)
 end
-function to_sparse(A::VT, tol::Real = 1.0e-10) where {VT <: AbstractVector}
+function to_sparse(A::VT, tol::Real = settings.tidyup_tol) where {VT <: AbstractVector}
     idxs = findall(@. abs(A) > tol)
     vals = getindex(A, idxs)
     return sparsevec(idxs, vals, length(A))
 end
 
-to_sparse_if_needed(::Val{needed}, A::Union{QuantumObject, AbstractArray}, tol::Real = 1.0e-10) where {needed} =
+to_sparse_if_needed(::Val{needed}, A::Union{QuantumObject, AbstractArray}, tol::Real = settings.tidyup_tol) where {needed} =
     needed ? to_sparse(A, tol) : A
 
 @doc raw"""
