@@ -4,8 +4,8 @@ export average_states, average_expect, std_expect
 
 export liouvillian_floquet, liouvillian_dressed_nonsecular
 
-const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1.0e-8, reltol = 1.0e-6, save_everystep = false, save_end = true)
-const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1.0e-3, reltol = 2.0e-3, save_everystep = false, save_end = true)
+default_ode_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-8), reltol = _float_type(T)(1.0e-6), save_everystep = false, save_end = true)
+default_sde_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-3), reltol = _float_type(T)(2.0e-3), save_everystep = false, save_end = true)
 const COL_TIMES_WHICH_INIT_SIZE = 200
 
 abstract type TimeEvolutionMultiTrajSol{Tstates, Texpect} end
@@ -500,7 +500,7 @@ end
 
 A struct to represent the diffusion operator. This is used to perform the diffusion process on N different Wiener processes.
 =#
-struct DiffusionOperator{T, OpType <: Tuple{Vararg{AbstractSciMLOperator}}}
+struct DiffusionOperator{T, OpType <: Union{Tuple{Vararg{AbstractSciMLOperator}}, AbstractVector{<:AbstractSciMLOperator}}}
     ops::OpType
     function DiffusionOperator(ops::OpType) where {OpType}
         T = mapreduce(eltype, promote_type, ops)
@@ -508,7 +508,7 @@ struct DiffusionOperator{T, OpType <: Tuple{Vararg{AbstractSciMLOperator}}}
     end
 end
 
-@generated function (L::DiffusionOperator)(w, v, p, t)
+@generated function (L::DiffusionOperator{T, OpType} where {T, OpType <: Tuple})(w, v, p, t)
     ops_types = L.parameters[2].parameters
     N = length(ops_types)
     return quote
@@ -516,11 +516,22 @@ end
         S = (size(w, 1), size(w, 2)) # This supports also `w` as a `Vector`
         (S[1] == M && S[2] == $N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
         Base.@nexprs $N i -> begin
-            op = L.ops[i]
-            op(@view(w[:, i]), v, v, p, t)
+            L.ops[i](@view(w[:, i]), v, v, p, t)
         end
         return w
     end
+end
+
+function (L::DiffusionOperator{T, OpType} where {T, OpType <: AbstractVector})(w, v, p, t)
+    N = length(L.ops)
+    M = length(v)
+    S = (size(w, 1), size(w, 2)) # This supports also `w` as a `Vector`
+    (S[1] == M && S[2] == N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
+
+    for i in Base.OneTo(N)
+        L.ops[i](@view(w[:, i]), v, v, p, t)
+    end
+    return w
 end
 
 #######################################
@@ -609,9 +620,7 @@ function liouvillian_dressed_nonsecular(
     # Filter width
     σ = isnothing(σ_filter) ? 500 * maximum([norm(field) / length(field) for field in fields]) : σ_filter
 
-    L = liouvillian(H_d)
-
-    for i in eachindex(fields)
+    L = liouvillian(H_d) + sum(eachindex(fields)) do i
         # The operator that couples the system to the bath in the eigenbasis
         X_op = to_sparse((U' * fields[i] * U).data, tol)
         if ishermitian(fields[i])
@@ -629,7 +638,7 @@ function liouvillian_dressed_nonsecular(
         D₁ = 1 / 2 * (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁) - spre(Sp₀ * Sp₁') - spost(Sp₁ * Sp₀'))
         D₂ = 1 / 2 * (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂') - spre(Sp₀' * Sp₂) - spost(Sp₂' * Sp₀))
 
-        L += _apply_liouville_filter(D₁ + D₂, E, σ, tol)
+        _apply_liouville_filter(D₁ + D₂, E, σ, tol)
     end
 
     settings.auto_tidyup && tidyup!(L)

@@ -107,7 +107,7 @@ function smesolveProblem(
         to_dense(T, mat2vec(ket2dm(ψ0).data))
     end
 
-    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
+    sc_ops_evo_data = map(get_data ∘ QobjEvo, sc_ops_list)
 
     K = cache_operator(get_data(L_evo), ρ0)
 
@@ -122,7 +122,7 @@ function smesolveProblem(
 
     tlist = _check_tlist(tlist, _float_type(T))
 
-    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
+    kwargs2 = _merge_saveat(tlist, e_ops, default_sde_solver_options(T); kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(K), tlist)
     kwargs4 = _generate_stochastic_kwargs(
         e_ops,

@@ -88,6 +88,13 @@ Note that all the keyword arguments will be passed to `Base.isapprox`.
 isunitary(U::QuantumObject; kwargs...) = isoper(U) ? isapprox(U.data * U.data', Eye(size(U, 1)); kwargs...) : false
 
 @doc raw"""
+    issparse(U::QuantumObject)
+
+Test whether the [`QuantumObject`](@ref) ``U`` is sparse operator. This function calls `SparseArrays.issparse`.
+"""
+SparseArrays.issparse(A::AbstractQuantumObject) = issparse(A.data)
+
+@doc raw"""
     SciMLOperators.iscached(A::AbstractQuantumObject)
 
 Test whether the [`AbstractQuantumObject`](@ref) `A` has preallocated caches for inplace evaluations.

@@ -132,7 +132,7 @@ function mcsolveProblem(
     tlist = _check_tlist(tlist, _float_type(T))
 
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
-    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., progress_bar = Val(false))
+    default_values = (default_ode_solver_options(T)..., progress_bar = Val(false))
     kwargs2 = _merge_saveat(tlist, e_ops, default_values; kwargs...)
     kwargs3 = _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rng, kwargs2)
 
