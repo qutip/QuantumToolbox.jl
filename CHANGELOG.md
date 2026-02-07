@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Improve memory efficiency of `liouvillian_dressed_nonsecular` by implementing the filtering directly during the Kronecker product. ([#656])
 
 ## [v0.43.0]
 Release date: 2026-02-04
@@ -437,3 +437,4 @@ Release date: 2024-11-13
 [#649]: https://github.com/qutip/QuantumToolbox.jl/issues/649
 [#650]: https://github.com/qutip/QuantumToolbox.jl/issues/650
 [#653]: https://github.com/qutip/QuantumToolbox.jl/issues/653
+[#656]: https://github.com/qutip/QuantumToolbox.jl/issues/656
