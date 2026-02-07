@@ -698,7 +698,8 @@ end
 
 function _filtered_kron(A, B, E, σ, tol)
     N = length(E)
-    (size(A, 1) == N && size(B, 1) == N) || throw(DimensionMismatch("Matrix sizes do not match energy list."))
+    (size(A, 1) == N && size(A, 2) == N && size(B, 1) == N && size(B, 2) == N) ||
+        throw(DimensionMismatch("Matrix sizes do not match energy list; expected $(N)×$(N) matrices."))
 
     I_A, J_A, V_A = _findnz(A)
     I_B, J_B, V_B = _findnz(B)
@@ -711,7 +712,7 @@ function _filtered_kron(A, B, E, σ, tol)
     J_out = Int[]
     V_out = Vector{T}()
 
-    nnzA == 0 || nnzB == 0 && return sparse(I_out, J_out, V_out, N^2, N^2)
+    (nnzA == 0 || nnzB == 0) && return sparse(I_out, J_out, V_out, N^2, N^2)
 
     sizehint!(I_out, max(nnzA, nnzB))
     sizehint!(J_out, max(nnzA, nnzB))
