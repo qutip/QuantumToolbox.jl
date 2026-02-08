@@ -133,28 +133,6 @@ function check_dimensions(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N
 end
 check_dimensions(A::AbstractQuantumObject...) = check_dimensions(A)
 
-# Used in the _check_dims_to function
-function _check_square_dims_and_get_to(A::AbstractQuantumObject)
-    ((isoper(A) || issuper(A)) && !isendomorphism(A.dimensions)) && throw(ErrorException("The dimensions $(A.dims) are not square."))
-
-    (isbra(A) || isoperbra(A)) && throw(ArgumentError("Cchecking the `to` dimensions does not make sense for Bra or OperatorBra objects."))
-
-    return A.dimensions.to
-end
-
-#=
-This checks the dimensions.to of the objects. In order to this to make sense,
-we need to check that the diemensions are square, and that we don't have `Bra` or `OperatorBra`
-as arguments.
-=#
-function _check_dims_to(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N}
-    hilbert_dims_list = map(_check_square_dims_and_get_to, Qobj_tuple)
-    allequal(hilbert_dims_list) ||
-        throw(DimensionMismatch("The quantum objects should live in the same Hilbert space."))
-    return nothing
-end
-_check_dims_to(A::AbstractQuantumObject...) = _check_dims_to(A)
-
 function _check_QuantumObject(::Ket, dimensions::ProductDimensions, m::Int, n::Int)
     (n != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with Ket")))
     obj_size = get_hilbert_size(dimensions)
