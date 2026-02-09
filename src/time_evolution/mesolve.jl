@@ -367,7 +367,7 @@ mesolve_map(
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function mesolve_map(
-        prob::TimeEvolutionProblem{StateOpType, <:AbstractDimensions, <:ODEProblem},
+        prob::TimeEvolutionProblem{StateOpType, <:Dimensions, <:ODEProblem},
         iter::AbstractArray,
         alg::AbstractODEAlgorithm = DP5(),
         ensemblealg::EnsembleAlgorithm = EnsembleThreads();

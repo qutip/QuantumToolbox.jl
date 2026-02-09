@@ -278,7 +278,7 @@ sesolve_map(
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function sesolve_map(
-        prob::TimeEvolutionProblem{ST, <:AbstractDimensions, <:ODEProblem},
+        prob::TimeEvolutionProblem{ST, <:Dimensions, <:ODEProblem},
         iter::AbstractArray,
         alg::AbstractODEAlgorithm = Vern7(lazy = false),
         ensemblealg::EnsembleAlgorithm = EnsembleThreads();

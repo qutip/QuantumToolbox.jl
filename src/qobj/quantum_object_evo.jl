@@ -5,7 +5,7 @@ This file defines the QuantumObjectEvolution (QobjEvo) structure.
 export QuantumObjectEvolution
 
 @doc raw"""
-    struct QuantumObjectEvolution{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,DataType<:AbstractSciMLOperator} <: AbstractQuantumObject{ObjType,DimType,DataType}
+    struct QuantumObjectEvolution{ObjType<:QuantumObjectType,DimType<:Dimensions,DataType<:AbstractSciMLOperator} <: AbstractQuantumObject{ObjType,DimType,DataType}
         data::DataType
         type::ObjType
         dimensions::DimType
@@ -110,7 +110,7 @@ Quantum Object:   type=Operator()   dims=([10, 2], [10, 2])   size=(20, 20)   is
 """
 struct QuantumObjectEvolution{
         ObjType <: Union{Operator, SuperOperator},
-        DimType <: AbstractDimensions,
+        DimType <: Dimensions,
         DataType <: AbstractSciMLOperator,
     } <: AbstractQuantumObject{ObjType, DimType, DataType}
     data::DataType

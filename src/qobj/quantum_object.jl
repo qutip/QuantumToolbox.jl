@@ -9,7 +9,7 @@ It also implements the fundamental functions in Julia standard library:
 export QuantumObject
 
 @doc raw"""
-    struct QuantumObject{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,DataType<:AbstractArray} <: AbstractQuantumObject{ObjType,DimType,DataType}
+    struct QuantumObject{ObjType<:QuantumObjectType,DimType<:Dimensions,DataType<:AbstractArray} <: AbstractQuantumObject{ObjType,DimType,DataType}
         data::DataType
         type::ObjType
         dimensions::DimType
@@ -40,10 +40,10 @@ julia> a.dims
 ([20], [20])
 
 julia> a.dimensions
-ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}((HilbertSpace(20),), (HilbertSpace(20),))
+Dimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}((HilbertSpace(20),), (HilbertSpace(20),))
 ```
 """
-struct QuantumObject{ObjType <: QuantumObjectType, DimType <: AbstractDimensions, DataType <: AbstractArray} <:
+struct QuantumObject{ObjType <: QuantumObjectType, DimType <: Dimensions, DataType <: AbstractArray} <:
     AbstractQuantumObject{ObjType, DimType, DataType}
     data::DataType
     type::ObjType
@@ -90,7 +90,7 @@ function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) whe
         elseif type isa Operator
             dims = ((size(A, 1),), (size(A, 2),))
         elseif type isa SuperOperator
-            dims = ((isqrt(size(A, 1)),), (isqrt(size(A, 2)),))
+            dims = ((size(A, 1),), (size(A, 2),))
         end
     end
 
@@ -109,7 +109,7 @@ function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) whe
         if type isa Ket
             dims = (size(A, 1),)
         elseif type isa OperatorKet
-            dims = (isqrt(size(A, 1)),)
+            dims = (size(A, 1),)
         end
     end
 

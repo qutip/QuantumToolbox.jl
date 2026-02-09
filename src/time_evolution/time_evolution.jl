@@ -20,7 +20,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
 - `times::AbstractVector`: The time list of the evolution.
 - `states_type::QuantumObjectType`: The type of the quantum states during the evolution (e.g., [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref)).
-- `dimensions::AbstractDimensions`: The dimensions of the Hilbert space.
+- `dimensions::Dimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
 
 !!! note "`dims` property"
@@ -28,7 +28,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 """
 struct TimeEvolutionProblem{
         ST <: QuantumObjectType,
-        DT <: AbstractDimensions,
+        DT <: Dimensions,
         PT <: AbstractSciMLProblem,
         TT <: AbstractVector,
         KWT,
@@ -604,10 +604,10 @@ function liouvillian_dressed_nonsecular(
     )
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
 
-    dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(N_trunc)
-    final_size = get_hilbert_size(dims)[1]
+    dims = isnothing(N_trunc) ? H.dimensions : Dimensions(N_trunc)
+    final_size = get_size(dims)[1]
     # U is a non-square transformation matrix from original basis to truncated eigenbasis
-    final_dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(H.dimensions.to, (HilbertSpace(N_trunc),))
+    final_dims = isnothing(N_trunc) ? H.dimensions : Dimensions(H.dimensions.to, Space(N_trunc))
     result = eigen(H)
     E = real.(result.values[1:final_size])
     U = QuantumObject(result.vectors[:, 1:final_size], result.type, final_dims)

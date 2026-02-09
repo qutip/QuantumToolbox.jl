@@ -52,7 +52,7 @@
             end
         end
         @test_throws ArgumentError partial_transpose(A_dense, [true])
-        @test_throws ArgumentError partial_transpose(Qobj(zeros(ComplexF64, 3, 2)), [true]) # invalid non-square ProductDimensions
+        @test_throws ArgumentError partial_transpose(Qobj(zeros(ComplexF64, 3, 2)), [true]) # invalid non-square Dimensions
 
         @testset "Type Inference (partial_transpose)" begin
             @inferred partial_transpose(A_dense, [true, false, true])

@@ -119,13 +119,13 @@
                 Vector{ComplexF64},
                 Matrix{ComplexF64},
                 QuantumToolbox.Operator,
-                QuantumToolbox.ProductDimensions{2, 2, Tuple{QuantumToolbox.HilbertSpace, QuantumToolbox.HilbertSpace}, Tuple{QuantumToolbox.HilbertSpace, QuantumToolbox.HilbertSpace}},
+                QuantumToolbox.Dimensions{2, 2, Tuple{QuantumToolbox.HilbertSpace, QuantumToolbox.HilbertSpace}, Tuple{QuantumToolbox.HilbertSpace, QuantumToolbox.HilbertSpace}},
             },
             QuantumToolbox.EigsolveResult{
                 Vector{Float64},
                 Matrix{ComplexF64},
                 QuantumToolbox.Operator,
-                QuantumToolbox.ProductDimensions{2, 2, Tuple{QuantumToolbox.HilbertSpace, QuantumToolbox.HilbertSpace}, Tuple{QuantumToolbox.HilbertSpace, QuantumToolbox.HilbertSpace}},
+                QuantumToolbox.Dimensions{2, 2, Tuple{QuantumToolbox.HilbertSpace, QuantumToolbox.HilbertSpace}, Tuple{QuantumToolbox.HilbertSpace, QuantumToolbox.HilbertSpace}},
             },
         }
 

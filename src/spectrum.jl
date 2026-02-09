@@ -135,7 +135,7 @@ function _spectrum(
     b = (spre(B) * ρss).data
 
     # multiply by operator A on the left (spre) and then perform trace operation
-    D = get_hilbert_size(L.dimensions)[1]
+    D = get_size(L.dimensions)[1]
     _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D - 1)], ones(_complex_float_type(L), D)) # same as vec(system_identity_matrix)
     _tr_A = transpose(_tr) * spre(A).data
 
@@ -181,7 +181,7 @@ function _spectrum(
     vT = typeof(vₖ)
 
     # Calculate <w₁| = <I|A
-    D = get_hilbert_size(L.dimensions)[1]
+    D = get_size(L.dimensions)[1]
     Ivec = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D - 1)], ones(cT, D)) # same as vec(system_identity_matrix)
     wₖ = spre(A).data' * vT(Ivec)
 

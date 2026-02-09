@@ -15,7 +15,7 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 - `values::AbstractVector`: the eigenvalues
 - `vectors::AbstractMatrix`: the transformation matrix (eigenvectors)
 - `type::Union{Nothing,QuantumObjectType}`: the type of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
-- `dimensions::Union{Nothing,AbstractDimensions}`: the `dimensions` of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
+- `dimensions::Union{Nothing,Dimensions}`: the `dimensions` of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
 - `iter::Int`: the number of iteration during the solving process
 - `numops::Int` : number of times the linear map was applied in krylov methods
 - `converged::Bool`: Whether the result is converged
@@ -45,7 +45,7 @@ julia> λ
   1.0
 
 julia> ψ
-2-element Vector{QuantumObject{Ket, ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Vector{ComplexF64}}}:
+2-element Vector{QuantumObject{Ket, Dimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Vector{ComplexF64}}}:
 
 Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
 2-element Vector{ComplexF64}:
@@ -67,7 +67,7 @@ struct EigsolveResult{
         T1 <: AbstractVector{<:Number},
         T2 <: AbstractMatrix{<:Number},
         ObjType <: Union{Nothing, Operator, SuperOperator},
-        DimType <: Union{Nothing, AbstractDimensions},
+        DimType <: Union{Nothing, Dimensions},
     }
     values::T1
     vectors::T2
@@ -184,7 +184,7 @@ function _eigsolve(
         A,
         b::AbstractVector{T},
         type::ObjType,
-        dimensions::Union{Nothing, AbstractDimensions},
+        dimensions::Union{Nothing, Dimensions},
         k::Int = 1,
         m::Int = max(20, 2 * k + 1);
         tol::Real = 1.0e-8,

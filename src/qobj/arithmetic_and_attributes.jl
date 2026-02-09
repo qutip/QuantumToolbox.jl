@@ -62,20 +62,20 @@ end
 function Base.:(*)(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
     check_mul_dimensions(A, B)
     QType = promote_op_type(A, B)
-    return QType(A.data * B.data, Operator(), ProductDimensions(A.dimensions.to, B.dimensions.from))
+    return QType(A.data * B.data, Operator(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
 
 function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket})
     check_mul_dimensions(A, B)
-    return QuantumObject(A.data * B.data, Ket(), ProductDimensions(A.dimensions.to, B.dimensions.from))
+    return QuantumObject(A.data * B.data, Ket(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
 function Base.:(*)(A::QuantumObject{Bra}, B::AbstractQuantumObject{Operator})
     check_mul_dimensions(A, B)
-    return QuantumObject(A.data * B.data, Bra(), ProductDimensions(A.dimensions.to, B.dimensions.from))
+    return QuantumObject(A.data * B.data, Bra(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
 function Base.:(*)(A::QuantumObject{Ket}, B::QuantumObject{Bra})
     check_mul_dimensions(A, B)
-    return QuantumObject(A.data * B.data, Operator(), ProductDimensions(A.dimensions.to, B.dimensions.from))
+    return QuantumObject(A.data * B.data, Operator(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
 function Base.:(*)(A::QuantumObject{Bra}, B::QuantumObject{Ket})
     check_mul_dimensions(A, B)
@@ -500,7 +500,7 @@ function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int}, Tuple})
     _sort_sel = sort(SVector{length(sel), Int}(sel))
     dims = dimensions_to_dims(QO.dimensions.to)
     ρtr, dkeep = _ptrace_ket(QO.data, dims, _sort_sel)
-    return QuantumObject(ρtr, type = Operator(), dims = ProductDimensions(dkeep))
+    return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
 
 ptrace(QO::QuantumObject{Bra}, sel::Union{AbstractVector{Int}, Tuple}) = ptrace(QO', sel)
@@ -529,7 +529,7 @@ function ptrace(QO::QuantumObject{Operator}, sel::Union{AbstractVector{Int}, Tup
     dims = dimensions_to_dims(QO.dimensions.to)
     _sort_sel = sort(SVector{length(sel), Int}(sel))
     ρtr, dkeep = _ptrace_oper(QO.data, dims, _sort_sel)
-    return QuantumObject(ρtr, type = Operator(), dims = ProductDimensions(dkeep))
+    return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
@@ -648,7 +648,7 @@ Get the coherence value ``\alpha`` by measuring the expectation value of the des
 It returns both ``\alpha`` and the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
 """
 function get_coherence(ψ::QuantumObject{Ket})
-    a = destroy(get_hilbert_size(ψ.dimensions)[1])
+    a = destroy(get_size(ψ.dimensions)[1])
     α = expect(a, ψ)
     D = exp(α * a' - conj(α) * a)
 
@@ -656,7 +656,7 @@ function get_coherence(ψ::QuantumObject{Ket})
 end
 
 function get_coherence(ρ::QuantumObject{Operator})
-    a = destroy(get_hilbert_size(ρ.dimensions)[1])
+    a = destroy(get_size(ρ.dimensions)[1])
     α = expect(a, ρ)
     D = exp(α * a' - conj(α) * a)
 
@@ -713,18 +713,18 @@ function SparseArrays.permute(
     return QuantumObject(reshape(permutedims(reshape(A.data, dims...), Tuple(perm)), size(A)), A.type, order_dimensions)
 end
 
-_dims_and_perm(::Ket, dimensions::ProductDimensions, order::AbstractVector{Int}, L::Int) =
+_dims_and_perm(::Ket, dimensions::Dimensions, order::AbstractVector{Int}, L::Int) =
     reverse(dimensions_to_dims(dimensions.to)), reverse((L + 1) .- order)
 
-_dims_and_perm(::Bra, dimensions::ProductDimensions, order::AbstractVector{Int}, L::Int) =
+_dims_and_perm(::Bra, dimensions::Dimensions, order::AbstractVector{Int}, L::Int) =
     reverse(dimensions_to_dims(dimensions.from)), reverse((L + 1) .- order)
 
-_dims_and_perm(::Operator, dimensions::ProductDimensions, order::AbstractVector{Int}, L::Int) =
+_dims_and_perm(::Operator, dimensions::Dimensions, order::AbstractVector{Int}, L::Int) =
     reverse(vcat(dimensions_to_dims(dimensions.from), dimensions_to_dims(dimensions.to))), reverse((2 * L + 1) .- vcat(order, order .+ L))
 
-_order_dimensions(::Ket, dimensions::ProductDimensions, order::AbstractVector{Int}) =
-    ProductDimensions(dimensions.to[order], dimensions.from)  # from is one-list, keep as is
-_order_dimensions(::Bra, dimensions::ProductDimensions, order::AbstractVector{Int}) =
-    ProductDimensions(dimensions.to, dimensions.from[order])  # to is one-list, keep as is
-_order_dimensions(::Operator, dimensions::ProductDimensions, order::AbstractVector{Int}) =
-    ProductDimensions(dimensions.to[order], dimensions.from[order])
+_order_dimensions(::Ket, dimensions::Dimensions, order::AbstractVector{Int}) =
+    Dimensions(dimensions.to[order], dimensions.from)  # from is one-list, keep as is
+_order_dimensions(::Bra, dimensions::Dimensions, order::AbstractVector{Int}) =
+    Dimensions(dimensions.to, dimensions.from[order])  # to is one-list, keep as is
+_order_dimensions(::Operator, dimensions::Dimensions, order::AbstractVector{Int}) =
+    Dimensions(dimensions.to[order], dimensions.from[order])

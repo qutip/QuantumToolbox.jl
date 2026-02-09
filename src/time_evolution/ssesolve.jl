@@ -110,13 +110,13 @@ function ssesolveProblem(
     # Here the coefficients depend on the state, so this is a non-linear operator, which should be implemented with FunctionOperator instead. However, the nonlinearity is only on the coefficients, and it should be safe.
     K_l = sum(
         op ->
-        _ScalarOperator_e(op, +) * op + _ScalarOperator_e2_2(op, -) * IdentityOperator(get_hilbert_size(dims)[1]),
+        _ScalarOperator_e(op, +) * op + _ScalarOperator_e2_2(op, -) * IdentityOperator(get_size(dims)[1]),
         sc_ops_evo_data,
     )
 
     K = cache_operator(get_data(-1im * QuantumObjectEvolution(H_eff_evo)) + K_l, ψ0)
 
-    D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(get_hilbert_size(dims)[1]), sc_ops_evo_data)
+    D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(get_size(dims)[1]), sc_ops_evo_data)
     D = DiffusionOperator(D_l)
 
     tlist = _check_tlist(tlist, _float_type(T))

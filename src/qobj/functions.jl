@@ -58,19 +58,19 @@ expect(O::QuantumObject{Operator}, ρ::QuantumObject{Operator}) = tr(O * ρ)
 expect(
     O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ψ::QuantumObject{Ket},
-) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = real(dot(ψ.data, O.data, ψ.data))
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(dot(ψ.data, O.data, ψ.data))
 expect(
     O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ψ::QuantumObject{Bra},
-) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = real(expect(O, ψ'))
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(expect(O, ψ'))
 expect(
     O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ρ::QuantumObject{Operator},
-) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = real(tr(O * ρ))
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(tr(O * ρ))
 expect(
     O::AbstractVector{<:AbstractQuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}}},
     ρ::QuantumObject,
-) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = expect.(O, Ref(ρ))
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = expect.(O, Ref(ρ))
 function expect(O::AbstractVector{<:AbstractQuantumObject{Operator}}, ρ::QuantumObject)
     result = Vector{ComplexF64}(undef, length(O))
     result .= expect.(O, Ref(ρ))
@@ -80,7 +80,7 @@ expect(O::AbstractQuantumObject{Operator}, ρ::AbstractVector{<:QuantumObject}) 
 function expect(
         O::AbstractVector{<:AbstractQuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}}},
         ρ::AbstractVector{<:QuantumObject},
-    ) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real}
+    ) where {DimsType <: Dimensions, TF <: Number, TR <: Real}
     N_ops = length(O)
     result = Matrix{Float64}(undef, N_ops, length(ρ))
     for i in 1:N_ops
@@ -200,9 +200,9 @@ function Base.kron(
     return QType(
         kron(A.data, B.data),
         A.type,
-        ProductDimensions(
-            (A.dimensions.to..., B.dimensions.to...),
-            (A.dimensions.from..., B.dimensions.from...),
+        Dimensions(
+            kron(A.dimensions.to, B.dimensions.to),
+            kron(A.dimensions.from, B.dimensions.from),
         ),
     )
 end
@@ -218,9 +218,9 @@ for AOpType in (:Ket, :Bra, :Operator)
                     return QType(
                         kron(A.data, B.data),
                         Operator(),
-                        ProductDimensions(
-                            (A.dimensions.to..., B.dimensions.to...),
-                            (A.dimensions.from..., B.dimensions.from...),
+                        Dimensions(
+                            kron(A.dimensions.to, B.dimensions.to),
+                            kron(A.dimensions.from, B.dimensions.from),
                         ),
                     )
                 end

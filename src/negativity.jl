@@ -108,7 +108,7 @@ end
 function _partial_transpose(
         ρ::QuantumObject{Operator, DimsType, <:AbstractSparseArray},
         mask::Vector{Bool},
-    ) where {DimsType <: AbstractDimensions}
+    ) where {DimsType <: Dimensions}
     M, N = size(ρ)
     dims_rev = reverse(Tuple(dimensions_to_dims(ρ.dimensions.to)))
     mask_rev = reverse(mask)
