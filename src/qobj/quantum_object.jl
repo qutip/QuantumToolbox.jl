@@ -54,7 +54,7 @@ struct QuantumObject{ObjType <: QuantumObjectType, DimType <: Dimensions, DataTy
 
         ObjType = _check_type(type)
 
-        _check_QuantumObject(type, dimensions, size(data, 1), size(data, 2))
+        _check_QuantumObject(type, dimensions, _gen_data_size(data))
 
         return new{ObjType, typeof(dimensions), DT}(data, type, dimensions)
     end
@@ -84,13 +84,16 @@ function QuantumObject(A::AbstractMatrix{T}; type = nothing, dims = nothing) whe
 
     if isnothing(dims)
         if type isa Bra
-            dims = (size(A, 2),)
+            dims = ((1,), (size(A, 2),))
         elseif type isa OperatorBra
-            dims = (isqrt(size(A, 2)),)
+            s = isqrt(size(A, 2))
+            dims = ((1,), ((s,), (s,)))
         elseif type isa Operator
             dims = ((size(A, 1),), (size(A, 2),))
         elseif type isa SuperOperator
-            dims = ((size(A, 1),), (size(A, 2),))
+            sm = isqrt(size(A, 1))
+            sn = isqrt(size(A, 2))
+            dims = (((sm,), (sm,)), ((sn,), (sn,)))
         end
     end
 
@@ -123,7 +126,7 @@ end
 function QuantumObject(A::QuantumObject; type = A.type, dims = A.dimensions)
     dimensions = _gen_dimensions(type, dims)
     _check_type(type)
-    _check_QuantumObject(type, dimensions, size(A.data, 1), size(A.data, 2))
+    _check_QuantumObject(type, dimensions, _gen_data_size(A.data))
     return QuantumObject(copy(A.data), type, dimensions)
 end
 

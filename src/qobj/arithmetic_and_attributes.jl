@@ -82,8 +82,13 @@ function Base.:(*)(A::QuantumObject{Bra}, B::QuantumObject{Ket})
     return A.data * B.data
 end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{Operator})
-    check_mul_dimensions(A, B)
-    return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator(), A.dimensions.to)
+    # this case is special because SuperOperator A maps Operator B into another Operator
+    (A.dimensions.from.op_dims != B.dimensions) && throw(
+        DimensionMismatch(
+            "The quantum object with dims = $(A.dims) can not multiply a quantum object with dims = $(B.dims) on the right-hand side.",
+        ),
+    )
+    return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator(), A.dimensions.to.op_dims)
 end
 function Base.:(*)(A::QuantumObject{OperatorBra}, B::QuantumObject{OperatorKet})
     check_mul_dimensions(A, B)

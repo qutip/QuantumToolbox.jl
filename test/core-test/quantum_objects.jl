@@ -31,12 +31,12 @@
         # (1,2) becomes a valid Operator / SuperOperator with to=(1,), from=(2,)
         a12 = rand(ComplexF64, 1, 2)
         @test Qobj(a12, type = Operator()).dimensions == Dimensions(Space(1), Space(2))
-        @test Qobj(a12, type = SuperOperator()).dimensions == Dimensions(Space(1), Space(2))
+        @test Qobj(a12, type = SuperOperator(), dims = ((1,), (2,))).dimensions == Dimensions(Space(1), Space(2))
 
         # (2,1) becomes a valid Operator / SuperOperator with to=(2,), from=(1,)
         a21 = rand(ComplexF64, 2, 1)
         @test Qobj(a21, type = Operator()).dimensions == Dimensions(Space(2), Space(1))
-        @test Qobj(a21, type = SuperOperator()).dimensions == Dimensions(Space(2), Space(1))
+        @test Qobj(a21, type = SuperOperator(), dims = ((2,), (1,))).dimensions == Dimensions(Space(2), Space(1))
 
         # check non-square dimensions work for all types
         @test Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,))).dimensions.to == Space(2)
@@ -116,7 +116,7 @@
         @test iscached(a3) == true
         @test isconstant(a3) == true
         @test isunitary(a3) == false
-        @test a3.dims == ([100], [100])
+        @test a3.dims == (([10], [10]), ([10], [10]))
         @test isket(a4) == false
         @test isbra(a4) == false
         @test isoper(a4) == true
@@ -156,12 +156,12 @@
         @test isoperket(ρ_bra) == false
         @test isoperbra(ρ_bra) == true
         @test isunitary(ρ_bra) == false
-        @test ρ_bra.dims == ([1], [2])
-        @test ρ_ket.dims == ([2], [1])
+        @test ρ_bra.dims == ([1], ([2], [2]))
+        @test ρ_ket.dims == (([2], [2]), [1])
         @test H * ρ ≈ spre(H) * ρ
         @test ρ * H ≈ spost(H) * ρ
         @test H * ρ * H ≈ sprepost(H, H) * ρ
-        @test (L * ρ_ket).dims == ([2], [1])
+        @test (L * ρ_ket).dims == (([2], [2]), [1])
         @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
         @test (ρ_bra * L')' == L * ρ_ket
         @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket

@@ -68,7 +68,7 @@ Never assume 1D systems. All code must handle arbitrary composite Hilbert spaces
 ### Error Checking
 Use `@assert` for internal checks; throw descriptive `ArgumentError` for invalid user inputs. Example:
 ```julia
-_check_QuantumObject(type, dimensions, rows, cols)  # In quantum_object.jl
+_check_QuantumObject(type, dimensions, (rows, cols))  # In quantum_object.jl
 ```
 
 ### Progress Bars

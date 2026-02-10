@@ -254,7 +254,7 @@ Convert a quantum object from vector ([`OperatorKet`](@ref)-type) to matrix ([`O
 !!! note
     `vector_to_operator` is a synonym of `vec2mat`.
 """
-vec2mat(A::QuantumObject{OperatorKet}) = QuantumObject(vec2mat(A.data), Operator(), A.dimensions.to)
+vec2mat(A::QuantumObject{OperatorKet, <:Dimensions{<:LiouvilleSpace, Space}}) = QuantumObject(vec2mat(A.data), Operator(), A.dimensions.to.op_dims)
 
 @doc raw"""
     mat2vec(A::QuantumObject)
@@ -265,10 +265,7 @@ Convert a quantum object from matrix ([`Operator`](@ref)-type) to vector ([`Oper
 !!! note
     `operator_to_vector` is a synonym of `mat2vec`.
 """
-function mat2vec(A::QuantumObject{Operator})
-    isendomorphism(A.dimensions) || throw(ArgumentError("mat2vec requires a square Operator (same to and from dimensions)."))
-    return QuantumObject(mat2vec(A.data), OperatorKet(), A.dimensions.to)
-end
+mat2vec(A::QuantumObject{Operator}) = QuantumObject(mat2vec(A.data), OperatorKet(), Dimensions(LiouvilleSpace(A.dimensions), Space(1)))
 
 @doc raw"""
     mat2vec(A::AbstractMatrix)

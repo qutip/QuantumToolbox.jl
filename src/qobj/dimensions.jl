@@ -6,7 +6,8 @@ This file defines the Dimensions structure and also the following space structur
 =#
 
 export Dimensions
-export AbstractSpace, Space, TensorSpace, LiouvilleSpace
+export AbstractSpace, Space, TensorSpace
+export AbstractSuperSpace, LiouvilleSpace
 
 @doc raw"""
     abstract type AbstractSpace
@@ -14,6 +15,13 @@ export AbstractSpace, Space, TensorSpace, LiouvilleSpace
 Abstract type for all space structures.
 """
 abstract type AbstractSpace end
+
+"""
+    abstract type AbstractSuperSpace
+
+Abstract type of space structures for different SuperOperator representation.
+"""
+abstract type AbstractSuperSpace <: AbstractSpace end
 
 ##########################################
 # Dimensions
@@ -52,24 +60,30 @@ struct Dimensions{T1 <: AbstractSpace, T2 <: AbstractSpace}
     from::T2 # space acting on the right (columns)
 end
 
-# Square dimensions from integer tuple/vector
-function Dimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Integer, N}
+# by defining alias type, it is easier to represent the nested dims structure:
+const VectorOrTuple{T} = Union{AbstractVector{T}, NTuple{N, T} where N}
+const DimsListType{T1, T2} = Tuple{<:VectorOrTuple{T1}, <:VectorOrTuple{T2}}
+
+_list_to_tensor_space(dims::VectorOrTuple{T}) where {T <: Integer} = TensorSpace(Tuple(Space.(dims)))
+
+# endomorphism dimensions from integer tuple/vector
+function Dimensions(dims::VectorOrTuple{T}) where {T <: Integer}
     _non_static_array_warning("dims", dims)
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
 
-    spaces = TensorSpace(Tuple(Space.(dims)))
+    spaces = _list_to_tensor_space(dims)
     return Dimensions(spaces, spaces)
 end
 
-# Square dimensions from single integer
+# endomorphism dimensions from single integer
 Dimensions(dims::Int) = Dimensions(Space(dims))
 
-# Square dimensions from single AbstractSpace
+# endomorphism dimensions from single AbstractSpace
 Dimensions(dims::AbstractSpace) = Dimensions(dims, dims)
 
-# Non-square dimensions from 2-element tuple of integer vectors/tuples
-function Dimensions(dims::Union{AbstractVector{T}, NTuple{2, T}}) where {T <: Union{AbstractVector, NTuple}}
+# Non-endomorphism dimensions from 2-element tuple of integer vectors/tuples
+function Dimensions(dims::DimsListType{T, T}) where {T <: Integer}
     (length(dims) != 2) && throw(ArgumentError("Invalid dims = $dims"))
 
     _non_static_array_warning("dims[1]", dims[1])
@@ -80,8 +94,13 @@ function Dimensions(dims::Union{AbstractVector{T}, NTuple{2, T}}) where {T <: Un
     (L1 > 0) || throw(DomainError(L1, "The length of `dims[1]` must be larger or equal to 1."))
     (L2 > 0) || throw(DomainError(L2, "The length of `dims[2]` must be larger or equal to 1."))
 
-    return Dimensions(TensorSpace(Tuple(Space.(dims[1]))), TensorSpace(Tuple(Space.(dims[2]))))
+    return Dimensions(_list_to_tensor_space(dims[1]), _list_to_tensor_space(dims[2]))
 end
+
+# LiouvilleSpace dimensions for OperatorKet/OperatorBra/SuperOperator from 3-level nested tuple/vector of integers
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: Integer} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), _list_to_tensor_space(dims[2]))
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: Integer, T2 <: VectorOrTuple} = Dimensions(_list_to_tensor_space(dims[2]), LiouvilleSpace(Dimensions(dims[1])))
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: VectorOrTuple} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), LiouvilleSpace(Dimensions(dims[2])))
 
 # Error for invalid input
 Dimensions(dims::Any) = throw(
@@ -215,12 +234,12 @@ dimensions_to_dims(s::TensorSpace) = vcat(map(dimensions_to_dims, s.spaces)...)
 
 A structure that describes the Liouville space which is equivalent (isometrically isomorphic) to the tensor product of the original `oper` with its dual.
 """
-struct LiouvilleSpace{DT <: Dimensions} <: AbstractSpace
+struct LiouvilleSpace{DT <: Dimensions} <: AbstractSuperSpace
     op_dims::DT # original operator dimensions
 
     function LiouvilleSpace(op_dims::Dimensions{T1, T2}) where {T1 <: AbstractSpace, T2 <: AbstractSpace}
         T1 != T2 && throw(ArgumentError("`LiouvilleSpace` only allows equal `to` and `from` spaces in `Dimensions`."))
-        return new{T1}(op_dims)
+        return new{typeof(op_dims)}(op_dims)
     end
 end
 

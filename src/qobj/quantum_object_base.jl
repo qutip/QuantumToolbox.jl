@@ -155,61 +155,45 @@ function _check_dims_to(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N}
 end
 _check_dims_to(A::AbstractQuantumObject...) = _check_dims_to(A)
 
-function _check_QuantumObject(::Ket, dimensions::Dimensions, m::Int, n::Int)
-    (n != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with Ket")))
-    obj_size = get_size(dimensions)
-    (obj_size == (m, n)) || throw(
-        DimensionMismatch("Ket with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
-    )
+function _check_QuantumObject(::Ket, dimensions::Dimensions, array_size::NTuple{N, Int}) where {N}
+    (array_size[2] != 1) && throw(DimensionMismatch(("The size $(array_size) of the array is not compatible with Ket")))
+    _check_dims_and_array_size("Ket", dimensions, array_size)
     return nothing
 end
 
-function _check_QuantumObject(::Bra, dimensions::Dimensions, m::Int, n::Int)
-    (m != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with Bra")))
-    obj_size = get_size(dimensions)
-    (obj_size == (m, n)) || throw(
-        DimensionMismatch("Bra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n))."),
-    )
+function _check_QuantumObject(::Bra, dimensions::Dimensions, array_size::NTuple{N, Int}) where {N}
+    (array_size[1] != 1) && throw(DimensionMismatch(("The size $(array_size) of the array is not compatible with Bra")))
+    _check_dims_and_array_size("Bra", dimensions, array_size)
     return nothing
 end
 
-function _check_QuantumObject(::Operator, dimensions::Dimensions, m::Int, n::Int)
-    obj_size = get_size(dimensions)
-    (obj_size == (m, n)) || throw(
+function _check_QuantumObject(::Operator, dimensions::Dimensions, array_size::NTuple{N, Int}) where {N}
+    _check_dims_and_array_size("Operator", dimensions, array_size)
+    return nothing
+end
+
+function _check_QuantumObject(::SuperOperator, dimensions::Dimensions, array_size::NTuple{N, Int}) where {N}
+    _check_dims_and_array_size("SuperOperator", dimensions, array_size)
+    return nothing
+end
+
+function _check_QuantumObject(::OperatorKet, dimensions::Dimensions, array_size::NTuple{N, Int}) where {N}
+    (array_size[2] != 1) && throw(DimensionMismatch(("The size $(array_size) of the array is not compatible with OperatorKet")))
+    _check_dims_and_array_size("OperatorKet", dimensions, array_size)
+    return nothing
+end
+
+function _check_QuantumObject(::OperatorBra, dimensions::Dimensions, array_size::NTuple{N, Int}) where {N}
+    (array_size[1] != 1) && throw(DimensionMismatch(("The size $(array_size) of the array is not compatible with OperatorBra")))
+    _check_dims_and_array_size("OperatorBra", dimensions, array_size)
+    return nothing
+end
+
+# this helps to check if the Dimensions matches the array size
+function _check_dims_and_array_size(type_string::String, dimensions::Dimensions, array_size::NTuple{N, Int}) where {N}
+    (get_size(dimensions) == array_size) || throw(
         DimensionMismatch(
-            "Operator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
-        ),
-    )
-    return nothing
-end
-
-function _check_QuantumObject(::SuperOperator, dimensions::Dimensions, m::Int, n::Int)
-    obj_size = get_size(dimensions)
-    (obj_size == (m, n)) || throw(
-        DimensionMismatch(
-            "SuperOperator with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
-        ),
-    )
-    return nothing
-end
-
-function _check_QuantumObject(::OperatorKet, dimensions::Dimensions, m::Int, n::Int)
-    (n != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with OperatorKet")))
-    obj_size = get_size(dimensions)
-    (obj_size == (m, n)) || throw(
-        DimensionMismatch(
-            "OperatorKet with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
-        ),
-    )
-    return nothing
-end
-
-function _check_QuantumObject(::OperatorBra, dimensions::Dimensions, m::Int, n::Int)
-    (m != 1) && throw(DimensionMismatch(("The size $((m, n)) of the array is not compatible with OperatorBra")))
-    obj_size = get_size(dimensions)
-    (obj_size == (m, n)) || throw(
-        DimensionMismatch(
-            "OperatorBra with dims = $(_get_dims_string(dimensions)) does not fit the array size = $((m, n)).",
+            "$(type_string) with dims = $(_get_dims_string(dimensions)) does not fit the array size = $(array_size).",
         ),
     )
     return nothing
@@ -228,6 +212,11 @@ function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
         return getfield(A, key)
     end
 end
+
+# _gen_data_size help us handle the data size
+# especially for AbstractVector, it returns a 2-element tuple, which is necessary in _check_dims_and_array_size
+_gen_data_size(data::AbstractVector) = (size(data, 1), 1)
+_gen_data_size(data::AbstractArray) = size(data)
 
 _gen_dimensions(type::QuantumObjectType, dims::Dimensions) = dims
 function _gen_dimensions(::ObjType, dims::Union{T, AbstractVector{T}, NTuple{N, T}}) where {ObjType <: QuantumObjectType, T <: Union{<:Integer, <:AbstractSpace}, N}
