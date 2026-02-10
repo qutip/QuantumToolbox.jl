@@ -195,13 +195,12 @@ function SciMLOperators.cache_operator(
         L::AbstractQuantumObject{OpType},
         u::QuantumObject{SType},
     ) where {OpType <: Union{Operator, SuperOperator}, SType <: Union{Ket, OperatorKet}}
-    check_mul_dimensions(L, u)
-
     if isoper(L) && isoperket(u)
         throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))
     elseif issuper(L) && isket(u)
         throw(ArgumentError("The input state `u` must be an OperatorKet if `L` is a SuperOperator."))
     end
+    check_mul_dimensions(L, u)
     return cache_operator(L, u.data)
 end
 
