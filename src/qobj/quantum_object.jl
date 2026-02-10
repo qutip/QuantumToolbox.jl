@@ -110,9 +110,10 @@ function QuantumObject(A::AbstractVector{T}; type = nothing, dims = nothing) whe
 
     if isnothing(dims)
         if type isa Ket
-            dims = (size(A, 1),)
+            dims = ((size(A, 1),), (1,))
         elseif type isa OperatorKet
-            dims = (size(A, 1),)
+            s = isqrt(size(A, 1))
+            dims = (((s,), (s,)), (1,))
         end
     end
 

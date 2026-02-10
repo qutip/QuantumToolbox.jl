@@ -61,19 +61,19 @@ struct Dimensions{T1 <: AbstractSpace, T2 <: AbstractSpace}
 end
 
 # by defining alias type, it is easier to represent the nested dims structure:
-const VectorOrTuple{T} = Union{AbstractVector{T}, NTuple{N, T} where N}
 const DimsListType{T1, T2} = Tuple{<:VectorOrTuple{T1}, <:VectorOrTuple{T2}}
 
-_list_to_tensor_space(dims::VectorOrTuple{T}) where {T <: Integer} = TensorSpace(Tuple(Space.(dims)))
+function _list_to_tensor_space(dims::VectorOrTuple{T}, argname::String) where {T <: Integer}
+    _non_static_array_warning(argname, dims)
+    return TensorSpace(Tuple(Space.(dims)))
+end
 
 # endomorphism dimensions from integer tuple/vector
 function Dimensions(dims::VectorOrTuple{T}) where {T <: Integer}
-    _non_static_array_warning("dims", dims)
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
 
-    spaces = _list_to_tensor_space(dims)
-    return Dimensions(spaces, spaces)
+    return Dimensions(_list_to_tensor_space(dims, "dims"))
 end
 
 # endomorphism dimensions from single integer
@@ -86,26 +86,23 @@ Dimensions(dims::AbstractSpace) = Dimensions(dims, dims)
 function Dimensions(dims::DimsListType{T, T}) where {T <: Integer}
     (length(dims) != 2) && throw(ArgumentError("Invalid dims = $dims"))
 
-    _non_static_array_warning("dims[1]", dims[1])
-    _non_static_array_warning("dims[2]", dims[2])
-
     L1 = length(dims[1])
     L2 = length(dims[2])
     (L1 > 0) || throw(DomainError(L1, "The length of `dims[1]` must be larger or equal to 1."))
     (L2 > 0) || throw(DomainError(L2, "The length of `dims[2]` must be larger or equal to 1."))
 
-    return Dimensions(_list_to_tensor_space(dims[1]), _list_to_tensor_space(dims[2]))
+    return Dimensions(_list_to_tensor_space(dims[1], "dims[1]"), _list_to_tensor_space(dims[2], "dims[2]"))
 end
 
 # LiouvilleSpace dimensions for OperatorKet/OperatorBra/SuperOperator from 3-level nested tuple/vector of integers
-Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: Integer} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), _list_to_tensor_space(dims[2]))
-Dimensions(dims::DimsListType{T1, T2}) where {T1 <: Integer, T2 <: VectorOrTuple} = Dimensions(_list_to_tensor_space(dims[2]), LiouvilleSpace(Dimensions(dims[1])))
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: Integer} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), _list_to_tensor_space(dims[2], "dims[2]"))
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: Integer, T2 <: VectorOrTuple} = Dimensions(_list_to_tensor_space(dims[1], "dims[1]"), LiouvilleSpace(Dimensions(dims[2])))
 Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: VectorOrTuple} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), LiouvilleSpace(Dimensions(dims[2])))
 
 # Error for invalid input
 Dimensions(dims::Any) = throw(
     ArgumentError(
-        "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
+        "The argument dims must be a 2-element Tuple with both elements are Tuple or StaticVector of non-zero length and contain only positive integers.",
     ),
 )
 

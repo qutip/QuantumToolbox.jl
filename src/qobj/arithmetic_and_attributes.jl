@@ -34,13 +34,19 @@ for op in (:(+), :(-), :(*), :(/), :(^))
     end
 end
 
-for op in (:(+), :(-), :(*))
+for op in (:(+), :(-)) # the multiplication of two QuantumObject is handled separately below (since the return QuantumObjectType can change)
     @eval begin
-        function Base.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
+        # A and B should have same QuantumObjectType
+        function Base.$op(A::AbstractQuantumObject{ObjType}, B::AbstractQuantumObject{ObjType}) where {ObjType <: QuantumObjectType}
             check_dimensions(A, B)
             QType = promote_op_type(A, B)
             return QType($(op)(A.data, B.data), A.type, A.dimensions)
         end
+    end
+end
+
+for op in (:(+), :(-), :(*))
+    @eval begin
         Base.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dimensions)
 
         Base.$op(n::T, A::AbstractQuantumObject) where {T <: Number} =
@@ -64,7 +70,6 @@ function Base.:(*)(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{
     QType = promote_op_type(A, B)
     return QType(A.data * B.data, Operator(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
-
 function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket})
     check_mul_dimensions(A, B)
     return QuantumObject(A.data * B.data, Ket(), Dimensions(A.dimensions.to, B.dimensions.from))
@@ -81,6 +86,12 @@ function Base.:(*)(A::QuantumObject{Bra}, B::QuantumObject{Ket})
     check_mul_dimensions(A, B)
     return A.data * B.data
 end
+
+function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::AbstractQuantumObject{SuperOperator})
+    check_mul_dimensions(A, B)
+    QType = promote_op_type(A, B)
+    return QType(A.data * B.data, SuperOperator(), Dimensions(A.dimensions.to, B.dimensions.from))
+end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{Operator})
     # this case is special because SuperOperator A maps Operator B into another Operator
     (A.dimensions.from.op_dims != B.dimensions) && throw(
@@ -96,11 +107,11 @@ function Base.:(*)(A::QuantumObject{OperatorBra}, B::QuantumObject{OperatorKet})
 end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{OperatorKet})
     check_mul_dimensions(A, B)
-    return QuantumObject(A.data * B.data, OperatorKet(), A.dimensions.to)
+    return QuantumObject(A.data * B.data, OperatorKet(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
 function Base.:(*)(A::QuantumObject{OperatorBra}, B::AbstractQuantumObject{SuperOperator})
     check_mul_dimensions(A, B)
-    return QuantumObject(A.data * B.data, OperatorBra(), B.dimensions.from)
+    return QuantumObject(A.data * B.data, OperatorBra(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
 
 Base.:(^)(A::QuantumObject, n::T) where {T <: Number} = QuantumObject(^(A.data, n), A.type, A.dimensions)

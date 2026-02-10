@@ -165,8 +165,6 @@
         @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
         @test (ρ_bra * L')' == L * ρ_ket
         @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
-        @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet(), dims = 4)
-        @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra(), dims = 4)
     end
 
     @testset "Checks on non-QuantumObjects" begin
@@ -256,7 +254,7 @@
         Π = QuantumObject(hcat(ψ1.data, ψ2.data), dims = ((3, 3, 3), (2,)))
 
         o = (Π' * O * Π)
-        @test o.dimensions == Dimensions((Space(2),), (Space(2),))
+        @test o.dimensions == Dimensions(Space(2), Space(2))
         @test isoper(o) == true
     end
 
@@ -383,8 +381,8 @@
             end
 
             UnionType = Union{
-                QuantumObject{Bra, Dimensions{1, 1, Tuple{Space}, Tuple{Space}}, Matrix{T}},
-                QuantumObject{Operator, Dimensions{1, 1, Tuple{Space}, Tuple{Space}}, Matrix{T}},
+                QuantumObject{Bra, Dimensions{Space, Space}, Matrix{T}},
+                QuantumObject{Operator, Dimensions{Space, Space}, Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)

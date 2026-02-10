@@ -218,20 +218,39 @@ end
 _gen_data_size(data::AbstractVector) = (size(data, 1), 1)
 _gen_data_size(data::AbstractArray) = size(data)
 
-_gen_dimensions(type::QuantumObjectType, dims::Dimensions) = dims
-function _gen_dimensions(::ObjType, dims::Union{T, AbstractVector{T}, NTuple{N, T}}) where {ObjType <: QuantumObjectType, T <: Union{<:Integer, <:AbstractSpace}, N}
-    raw_dimensions = Dimensions(dims)
-    if ObjType <: Union{Ket, OperatorKet}
-        return Dimensions(raw_dimensions.to, Space(1))
-    elseif ObjType <: Union{Bra, OperatorBra}
-        return Dimensions(Space(1), raw_dimensions.from)
-    else
-        return raw_dimensions
-    end
-end
-_gen_dimensions(type::QuantumObjectType, dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Union{AbstractVector, NTuple}, N} =
-    Dimensions(dims)
+# generate dimensions based on different QuantumObjectType and different input formats of dims:
+## dims::Integer
+## (backward compatibility, but avoid support for OperatorKet/OperatorBra/SuperOperator since it causes ambiguity)
+_gen_dimensions(::Ket, dims::Integer) = Dimensions(Space(dims), Space(1))
+_gen_dimensions(::Bra, dims::Integer) = Dimensions(Space(1), Space(dims))
+_gen_dimensions(::Operator, dims::Integer) = Dimensions(Space(dims)) # is endomorphism
+
+## dims::VectorOrTuple{Int} : vector or tuple of integers
+## (backward compatibility, but avoid support for OperatorKet/OperatorBra/SuperOperator since it causes ambiguity)
+_gen_dimensions(::Ket, dims::VectorOrTuple{T}) where {T <: Integer} = Dimensions(_list_to_tensor_space(dims, "dims"), Space(1))
+_gen_dimensions(::Bra, dims::VectorOrTuple{T}) where {T <: Integer} = Dimensions(Space(1), _list_to_tensor_space(dims, "dims"))
+_gen_dimensions(::Operator, dims::VectorOrTuple{T}) where {T <: Integer} = Dimensions(_list_to_tensor_space(dims, "dims"))
+
+## dims::DimsListType{T1, T2} : general cases
+_gen_dimensions(::QuantumObjectType, dims::DimsListType{T1, T2}) where {T1, T2} = Dimensions(dims)
+
+# other cases
+_gen_dimensions(::QuantumObjectType, dims::Dimensions) = dims
 _gen_dimensions(type, dims) = throw(ArgumentError("The argument `dims` with value $dims is not valid for object type $type."))
+
+# function _gen_dimensions(::ObjType, dims::Union{T, VectorOrTuple{T}}) where {T <: Integer}
+    
+#     if ObjType <: Union{Ket, OperatorKet}
+#         return Dimensions(raw_dimensions.to, Space(1))
+#     elseif ObjType <: Union{Bra, OperatorBra}
+#         return Dimensions(Space(1), raw_dimensions.from)
+#     else
+#         return raw_dimensions
+#     end
+# end
+# _gen_dimensions(type::QuantumObjectType, dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Union{AbstractVector, NTuple}, N} =
+#     Dimensions(dims)
+# _gen_dimensions(type, dims) = throw(ArgumentError("The argument `dims` with value $dims is not valid for object type $type."))
 
 # functions for getting Float or Complex element type
 _float_type(A::AbstractQuantumObject) = _float_type(eltype(A))
