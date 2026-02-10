@@ -216,7 +216,7 @@ end
 # _gen_data_size help us handle the data size
 # especially for AbstractVector, it returns a 2-element tuple, which is necessary in _check_dims_and_array_size
 _gen_data_size(data::AbstractVector) = (size(data, 1), 1)
-_gen_data_size(data::AbstractArray) = size(data)
+_gen_data_size(data::Union{AbstractArray, AbstractSciMLOperator}) = size(data)
 
 # generate dimensions based on different QuantumObjectType and different input formats of dims:
 ## dims::Integer

@@ -703,12 +703,12 @@ true
     It is highly recommended to use `permute(A, order)` with `order` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function SparseArrays.permute(
-        A::QuantumObject{ObjType},
-        order::Union{AbstractVector{Int}, Tuple},
-    ) where {ObjType <: Union{Ket, Bra, Operator}}
+        A::QuantumObject{ObjType, <:Dimensions{<:TensorSpace{N}, <:TensorSpace{N}}},
+        order::VectorOrTuple{T},
+    ) where {ObjType <: Union{Ket, Bra, Operator}, N, T <: Integer}
     any(s -> s isa EnrSpace, A.dimensions.to) && throw(ArgumentError("permute does not support EnrSpace"))
 
-    (length(order) != length(A.dimensions)) &&
+    (length(order) != N) &&
         throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
 
     !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))

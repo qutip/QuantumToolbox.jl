@@ -149,7 +149,7 @@ function dfd_mesolveProblem(
         tol_list::Vector{<:Number} = fill(1.0e-8, length(maxdims)),
         kwargs...,
     ) where {T2 <: Integer, StateOpType <: Union{Ket, Operator}}
-    length(ψ0.dimensions) != length(maxdims) &&
+    length(ψ0.dimensions.to) != length(maxdims) &&
         throw(DimensionMismatch("`dim_list` and `maxdims` do not have the same dimension."))
 
     # Use the "to" dimensions for the dim_list (Hilbert space dimensions)
