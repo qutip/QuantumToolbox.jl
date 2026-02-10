@@ -751,7 +751,7 @@
         @test_throws ArgumentError ptrace(ρtotal, (0, 2))
         @test_throws ArgumentError ptrace(ρtotal, (2, 5))
         @test_throws ArgumentError ptrace(ρtotal, (2, 2, 3))
-        @test_throws ArgumentError ptrace(Qobj(zeros(ComplexF64, 3, 2)), 1) # invalid non-square Dimensions
+        @test_throws ArgumentError ptrace(tensor(Qobj(zeros(ComplexF64, 3, 2)), Qobj(zeros(ComplexF64, 2, 3))), 1) # invalid non-square Dimensions
 
         @testset "Type Inference (ptrace)" begin
             @inferred ptrace(ρ, 1)

@@ -239,7 +239,7 @@ _gen_dimensions(::QuantumObjectType, dims::Dimensions) = dims
 _gen_dimensions(type, dims) = throw(ArgumentError("The argument `dims` with value $dims is not valid for object type $type."))
 
 # function _gen_dimensions(::ObjType, dims::Union{T, VectorOrTuple{T}}) where {T <: Integer}
-    
+
 #     if ObjType <: Union{Ket, OperatorKet}
 #         return Dimensions(raw_dimensions.to, Space(1))
 #     elseif ObjType <: Union{Bra, OperatorBra}

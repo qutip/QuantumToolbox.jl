@@ -205,10 +205,14 @@ TensorSpace(s::AbstractSpace...) = TensorSpace(s) # this allows convenient funct
 
 function Base.show(io::IO, s::TensorSpace)
     print(io, "TensorSpace(")
-    join(io, s.spaces, ", ") 
+    join(io, s.spaces, ", ")
     print(io, ")")
     return nothing
 end
+
+# allow iteration over subspaces in TensorSpace
+Base.iterate(s::TensorSpace) = iterate(s.spaces)
+Base.iterate(s::TensorSpace, state) = iterate(s.spaces, state)
 
 Base.length(::TensorSpace{N}) where {N} = N
 

@@ -496,7 +496,7 @@ Quantum Object:   type=Operator()   dims=([2], [2])   size=(2, 2)   ishermitian=
  0.0+0.0im  0.5+0.0im
 ```
 """
-function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int}, Tuple})
+function ptrace(QO::QuantumObject{Ket, <:Dimensions{<:TensorSpace{N}}}, sel::VectorOrTuple{T}) where {N, T <: Integer}
     any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("ptrace does not support EnrSpace"))
 
     _non_static_array_warning("sel", sel)
@@ -504,13 +504,11 @@ function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int}, Tuple})
     if length(sel) == 0 # return full trace for empty sel
         return tr(ket2dm(QO))
     else
-        n_d = length(QO.dimensions)
-
-        (any(>(n_d), sel) || any(<(1), sel)) && throw(
-            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(n_d) sub-systems"),
+        (any(>(N), sel) || any(<(1), sel)) && throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(N) sub-systems"),
         )
         allunique(sel) || throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
-        (n_d == 1) && return ket2dm(QO) # ptrace should always return Operator
+        (N == 1) && return ket2dm(QO) # ptrace should always return Operator
     end
 
     _sort_sel = sort(SVector{length(sel), Int}(sel))
@@ -519,10 +517,10 @@ function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int}, Tuple})
     return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
 
-ptrace(QO::QuantumObject{Bra}, sel::Union{AbstractVector{Int}, Tuple}) = ptrace(QO', sel)
+ptrace(QO::QuantumObject{Bra, <:Dimensions{Tto, <:TensorSpace{N}}}, sel::VectorOrTuple{T}) where {Tto, N, T <: Integer} = ptrace(QO', sel)
 
-function ptrace(QO::QuantumObject{Operator}, sel::Union{AbstractVector{Int}, Tuple})
-    any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("ptrace does not support EnrSpace"))
+function ptrace(QO::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}}}, sel::VectorOrTuple{T}) where {N, T <: Integer}
+    ((QO.dimensions.to isa EnrSpace) || any(s -> s isa EnrSpace, QO.dimensions.to)) && throw(ArgumentError("ptrace does not support EnrSpace"))
 
     # TODO: support for special cases when some of the subsystems have same `to` and `from` space
     !isendomorphism(QO.dimensions) &&
@@ -533,13 +531,11 @@ function ptrace(QO::QuantumObject{Operator}, sel::Union{AbstractVector{Int}, Tup
     if length(sel) == 0 # return full trace for empty sel
         return tr(QO)
     else
-        n_d = length(QO.dimensions)
-
-        (any(>(n_d), sel) || any(<(1), sel)) && throw(
-            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(n_d) sub-systems"),
+        (any(>(N), sel) || any(<(1), sel)) && throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(N) sub-systems"),
         )
         allunique(sel) || throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
-        (n_d == 1) && return QO
+        (N == 1) && return QO
     end
 
     dims = dimensions_to_dims(QO.dimensions.to)
