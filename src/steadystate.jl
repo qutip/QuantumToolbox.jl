@@ -131,6 +131,9 @@ function steadystate(
         ),
     )
 
+    !isendomorphism(H.dimensions) &&
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for steadystate: dims = $(_get_dims_string(H.dimensions))"))
+
     L = liouvillian(H, c_ops)
 
     return _steadystate(L, solver; kwargs...)
@@ -138,7 +141,8 @@ end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinearSolver; kwargs...)
     L_tmp = L.data
-    N = get_size(L.dimensions)[1]
+    state_dimensions = L.dimensions.to.op_dims
+    N = get_size(state_dimensions)[1]
     weight = norm(L_tmp, 1) / length(L_tmp)
 
     v0 = _dense_similar(L_tmp, N^2)
@@ -162,11 +166,12 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
 
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator(), L.dimensions)
+    return QuantumObject(ρss, Operator(), state_dimensions)
 end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateEigenSolver; kwargs...)
-    N = get_size(L.dimensions)[1]
+    state_dimensions = L.dimensions.to.op_dims
+    N = get_size(state_dimensions)[1]
 
     kwargs = merge((sigma = 1.0e-8, eigvals = 1), (; kwargs...))
 
@@ -174,12 +179,13 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateEigenS
     ρss = reshape(ρss_vec, N, N)
     ρss /= tr(ρss)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator(), L.dimensions)
+    return QuantumObject(ρss, Operator(), state_dimensions)
 end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirectSolver)
     L_tmp = L.data
-    N = get_size(L.dimensions)[1]
+    state_dimensions = L.dimensions.to.op_dims
+    N = get_size(state_dimensions)[1]
     weight = norm(L_tmp, 1) / length(L_tmp)
 
     v0 = _dense_similar(L_tmp, N^2)
@@ -199,11 +205,11 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirect
     ρss_vec = L_tmp \ v0 # This is still not supported on GPU, yet
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator(), L.dimensions)
+    return QuantumObject(ρss, Operator(), state_dimensions)
 end
 
 function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadyStateODESolver; kwargs...)
-    ρ0 = isnothing(solver.ρ0) ? rand_dm(eltype(L), L.dimensions) : solver.ρ0
+    ρ0 = isnothing(solver.ρ0) ? rand_dm(eltype(L), L.dimensions.to.op_dims) : solver.ρ0 # the validity of L and ρ0 will be checked in mesolve
     ftype = _float_type(ρ0)
     tlist = [ftype(0), ftype(solver.tmax)]
 
@@ -352,6 +358,10 @@ function steadystate_fourier(
         R <: Real,
         FSolver <: SteadyStateSolver,
     }
+    !isendomorphism(H_0.dimensions) &&
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for steadystate_fourier: dims = $(_get_dims_string(H.dimensions))"))
+    check_dimensions(H_0, H_p, H_m)
+
     L_0 = liouvillian(H_0, c_ops)
     L_p = liouvillian(H_p)
     L_m = liouvillian(H_m)
@@ -377,8 +387,9 @@ function _steadystate_fourier(
     L_p_mat = get_data(L_p)
     L_m_mat = get_data(L_m)
 
+    state_dimensions = L_0.dimensions.to.op_dims
     N = size(L_0_mat, 1)
-    Ns = isqrt(N)
+    Ns = get_size(state_dimensions)[1]
     n_fourier = 2 * n_max + 1
     n_list = (-n_max):n_max
 
@@ -409,13 +420,13 @@ function _steadystate_fourier(
     ρ0 = reshape(ρtot[(offset1 + 1):offset2], Ns, Ns)
     ρ0_tr = tr(ρ0)
     ρ0 = ρ0 / ρ0_tr
-    ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator(), dims = L_0.dimensions)
+    ρ0 = QuantumObject((ρ0 + ρ0') / 2, type = Operator(), dims = state_dimensions)
     ρtot = ρtot / ρ0_tr
 
     ρ_list = [ρ0]
     for i in 0:(n_max - 1)
         ρi_m = reshape(ρtot[(offset1 - (i + 1) * N + 1):(offset1 - i * N)], Ns, Ns)
-        ρi_m = QuantumObject(ρi_m, type = Operator(), dims = L_0.dimensions)
+        ρi_m = QuantumObject(ρi_m, type = Operator(), dims = state_dimensions)
         push!(ρ_list, ρi_m)
     end
 
@@ -432,8 +443,6 @@ function _steadystate_fourier(
         tol::R = 1.0e-8,
         kwargs...,
     ) where {R <: Real}
-    check_dimensions(L_0, L_p, L_m)
-
     L_eff = liouvillian_floquet(L_0, L_p, L_m, ωd; n_max = n_max, tol = tol)
 
     return steadystate(L_eff; solver = solver.steadystate_solver, kwargs...)

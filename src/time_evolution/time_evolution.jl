@@ -51,6 +51,30 @@ end
 
 TimeEvolutionProblem(prob, times, states_type, dims) = TimeEvolutionProblem(prob, times, states_type, dims, nothing)
 
+"""
+A helper function to `check_mul_dimensions` and also generate the new type and dimensions for solutions
+"""
+function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{Operator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{Ket, Operator}}
+    !isendomorphism(H.dimensions) &&
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for time evolution solvers: dims = $(_get_dims_string(H.dimensions))"))
+    check_mul_dimensions(H, ψ0)
+    return to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+end
+function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{Ket, Operator}}
+    !isendomorphism(H.dimensions) &&
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for time evolution solvers: dims = $(_get_dims_string(H.dimensions))"))
+    ρ0 = ket2dm(ψ0)
+    ρ0_vec = mat2vec(ρ0)
+    check_mul_dimensions(H, ρ0_vec)
+    return to_dense(T, ρ0_vec.data), Operator(), ρ0.dimensions
+end
+function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{OperatorKet, SuperOperator}}
+    !isendomorphism(H.dimensions) &&
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for time evolution solvers: dims = $(_get_dims_string(H.dimensions))"))
+    check_mul_dimensions(H, ψ0)
+    return to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+end
+
 @doc raw"""
     struct TimeEvolutionSol
 

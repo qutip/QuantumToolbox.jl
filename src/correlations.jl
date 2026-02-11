@@ -43,11 +43,16 @@ function correlation_3op_2t(
         ψ0 = steadystate(L)
     end
 
-    check_mul_dimensions(L, ψ0)
-    check_dimensions(L, A, B, C)
+    # check the dimensions of Operator A, B, C, and ψ0
+    # the dimension validity of L and ψ0 will be checked in mesolve
+    check_mul_dimensions(A, ψ0)
+    check_dimensions(A, B, C)
 
     kwargs2 = merge((saveat = collect(tlist),), (; kwargs...))
-    ρt_list = mesolve(L, ψ0, tlist; kwargs2...).states
+
+    # generate OperatorKet first, so sol.states will store OperatorKet (skip redundant reshaping)
+    ρ0_vec = mat2vec(ket2dm(ψ0))
+    ρt_list = mesolve(L, ρ0_vec, tlist; kwargs2...).states
 
     corr = map((t, ρt) -> mesolve(L, C * ρt * A, τlist .+ t, e_ops = [B]; kwargs...).expect[1, :], tlist, ρt_list)
 

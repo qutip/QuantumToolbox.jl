@@ -97,26 +97,22 @@ function ssesolveProblem(
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
 
-    check_mul_dimensions(H_eff_evo, ψ0)
-    dims = H_eff_evo.dimensions
-
+    # Convert initial state to dense vector with complex element type and check dimensions
     T = _complex_float_type(Base.promote_eltype(H_eff_evo, ψ0))
-
-    states_type = ψ0.type
-    ψ0 = to_dense(T, get_data(ψ0))
+    ψ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(T, H_eff_evo, ψ0)
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
     # Here the coefficients depend on the state, so this is a non-linear operator, which should be implemented with FunctionOperator instead. However, the nonlinearity is only on the coefficients, and it should be safe.
     K_l = sum(
         op ->
-        _ScalarOperator_e(op, +) * op + _ScalarOperator_e2_2(op, -) * IdentityOperator(get_size(dims)[1]),
+        _ScalarOperator_e(op, +) * op + _ScalarOperator_e2_2(op, -) * IdentityOperator(size(H_eff_evo, 1)),
         sc_ops_evo_data,
     )
 
     K = cache_operator(get_data(-1im * QuantumObjectEvolution(H_eff_evo)) + K_l, ψ0)
 
-    D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(get_size(dims)[1]), sc_ops_evo_data)
+    D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(size(H_eff_evo, 1)), sc_ops_evo_data)
     D = DiffusionOperator(D_l)
 
     tlist = _check_tlist(tlist, _float_type(T))
@@ -147,7 +143,7 @@ function ssesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, states_type, dims)
+    return TimeEvolutionProblem(prob, tlist, states_type, dimensions)
 end
 
 @doc raw"""
@@ -417,13 +413,13 @@ function ssesolve(
     _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSSESolve)
 
     normalize_states = Val(false)
-    dims = ens_prob.dimensions.to
+    dimensions = ens_prob.dimensions
     _expvals_all =
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
-    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol)), dims = 1)
+    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dimensions), normalize_states), eachindex(sol)), dims = 1)
 
     _m_expvals =
         _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
