@@ -359,7 +359,7 @@ function steadystate_fourier(
         FSolver <: SteadyStateSolver,
     }
     !isendomorphism(H_0.dimensions) &&
-        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for steadystate_fourier: dims = $(_get_dims_string(H.dimensions))"))
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for steadystate_fourier: dims = $(_get_dims_string(H_0.dimensions))"))
     check_dimensions(H_0, H_p, H_m)
 
     L_0 = liouvillian(H_0, c_ops)
