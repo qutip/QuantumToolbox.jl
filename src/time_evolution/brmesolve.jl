@@ -172,7 +172,8 @@ function _brterm(
         out .*= M_cut
     end
 
-    return QuantumObject(out, SuperOperator(), rst.dimensions)
+    lspace = LiouvilleSpace(rst.dimensions)
+    return QuantumObject(out, SuperOperator(), Dimensions(lspace, lspace))
 end
 
 @doc raw"""
