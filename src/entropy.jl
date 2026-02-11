@@ -75,14 +75,16 @@ function entropy_relative(
         base::Int = 0,
         tol::Real = 1.0e-15,
     ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
-    _check_dims_to(ρ, σ)
+    ρ_dm = ket2dm(ρ)
+    σ_dm = ket2dm(σ)
+    check_dimensions(ρ_dm, σ_dm)
 
     # the logic of this code follows the detail given in the reference of the docstring
     # consider the eigen decompositions:
     #   ρ = Σ_i p_i |i⟩⟨i|
     #   σ = Σ_j q_j |j⟩⟨j|
-    ρ_result = eigenstates(ket2dm(ρ))
-    σ_result = eigenstates(ket2dm(σ))
+    ρ_result = eigenstates(ρ_dm)
+    σ_result = eigenstates(σ_dm)
 
     # make sure all p_i and q_j are real
     any(p_i -> imag(p_i) >= tol, ρ_result.values) && error("Input `ρ` has non-real eigenvalues.")

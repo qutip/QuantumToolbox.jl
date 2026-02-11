@@ -52,13 +52,13 @@ julia> round.(expect([a' * a, a' + a, a], [ψ1, ψ2]), digits = 1)
  0.0+0.0im  0.6+0.8im
 ```
 """
-expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Ket}) = dot(ψ.data, O.data, ψ.data)
+expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Ket}) = dot(ψ, O, ψ) # check_mul_dimensions in dot
 expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Bra}) = expect(O, ψ')
-expect(O::QuantumObject{Operator}, ρ::QuantumObject{Operator}) = tr(O * ρ)
+expect(O::QuantumObject{Operator}, ρ::QuantumObject{Operator}) = tr(O * ρ) # check_mul_dimensions in :(*)
 expect(
     O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ψ::QuantumObject{Ket},
-) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(dot(ψ.data, O.data, ψ.data))
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(dot(ψ, O, ψ)) # check_mul_dimensions in dot
 expect(
     O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ψ::QuantumObject{Bra},
@@ -66,7 +66,7 @@ expect(
 expect(
     O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ρ::QuantumObject{Operator},
-) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(tr(O * ρ))
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(tr(O * ρ)) # check_mul_dimensions in :(*)
 expect(
     O::AbstractVector{<:AbstractQuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}}},
     ρ::QuantumObject,

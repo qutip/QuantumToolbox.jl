@@ -17,13 +17,14 @@ Here, the definition is from [Nielsen-Chuang2011](@citet). It is the square root
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
 function fidelity(ρ::QuantumObject{Operator}, σ::QuantumObject{Operator})
+    check_dimensions(ρ, σ)
     sqrt_ρ = sqrt(ρ)
     eigval = abs.(eigvals(sqrt_ρ * σ * sqrt_ρ))
     return sum(sqrt, eigval)
 end
-fidelity(ρ::QuantumObject{Operator}, ψ::QuantumObject{Ket}) = sqrt(abs(expect(ρ, ψ)))
+fidelity(ρ::QuantumObject{Operator}, ψ::QuantumObject{Ket}) = sqrt(abs(expect(ρ, ψ))) # check_dimensions in expect
 fidelity(ψ::QuantumObject{Ket}, σ::QuantumObject{Operator}) = fidelity(σ, ψ)
-fidelity(ψ::QuantumObject{Ket}, ϕ::QuantumObject{Ket}) = abs(dot(ψ, ϕ))
+fidelity(ψ::QuantumObject{Ket}, ϕ::QuantumObject{Ket}) = abs(dot(ψ, ϕ)) # check_dimensions in dot
 
 @doc raw"""
     tracedist(ρ::QuantumObject, σ::QuantumObject)
@@ -36,7 +37,7 @@ Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 tracedist(
     ρ::QuantumObject{ObjType1},
     σ::QuantumObject{ObjType2},
-) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2
+) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}} = norm(ket2dm(ρ) - ket2dm(σ), 1) / 2 # check_dimensions in :(-)
 
 @doc raw"""
     hilbert_dist(ρ::QuantumObject, σ::QuantumObject)
@@ -53,9 +54,7 @@ function hilbert_dist(
         ρ::QuantumObject{ObjType1},
         σ::QuantumObject{ObjType2},
     ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
-    _check_dims_to(ρ, σ)
-
-    A = ket2dm(ρ) - ket2dm(σ)
+    A = ket2dm(ρ) - ket2dm(σ) # check_dimensions in :(-)
     return tr(A' * A)
 end
 
@@ -74,9 +73,14 @@ function hellinger_dist(
         ρ::QuantumObject{ObjType1},
         σ::QuantumObject{ObjType2},
     ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
+    # check dimensions first
+    ρ_dm = ket2dm(ρ)
+    σ_dm = ket2dm(σ)
+    check_dimensions(ρ_dm, σ_dm)
+
     # Ket (pure state) doesn't need to do square root
-    sqrt_ρ = isket(ρ) ? ket2dm(ρ) : sqrt(ρ)
-    sqrt_σ = isket(σ) ? ket2dm(σ) : sqrt(σ)
+    sqrt_ρ = isket(ρ) ? ρ_dm : sqrt(ρ_dm)
+    sqrt_σ = isket(σ) ? σ_dm : sqrt(σ_dm)
 
     # `max` is to avoid numerical instabilities
     # it happens when ρ = σ, sum(eigvals) might be slightly larger than 1
@@ -93,7 +97,7 @@ Here, the definition of [`fidelity`](@ref) ``F`` is from [Nielsen-Chuang2011](@c
 
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
-bures_dist(ρ::QuantumObject, σ::QuantumObject) = sqrt(2 * (1 - fidelity(ρ, σ)))
+bures_dist(ρ::QuantumObject, σ::QuantumObject) = sqrt(2 * (1 - fidelity(ρ, σ))) # check_dimensions in fidelity
 
 @doc raw"""
     bures_angle(ρ::QuantumObject, σ::QuantumObject)
@@ -105,4 +109,4 @@ Here, the definition of [`fidelity`](@ref) ``F`` is from [Nielsen-Chuang2011](@c
 
 Note that `ρ` and `σ` must be either [`Ket`](@ref) or [`Operator`](@ref).
 """
-bures_angle(ρ::QuantumObject, σ::QuantumObject) = acos(fidelity(ρ, σ))
+bures_angle(ρ::QuantumObject, σ::QuantumObject) = acos(fidelity(ρ, σ)) # check_dimensions in fidelity
