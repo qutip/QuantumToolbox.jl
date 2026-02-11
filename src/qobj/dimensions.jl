@@ -133,7 +133,7 @@ Returns `(m, n)` where `m` is the product of the `dimensions.to`, and `n` is the
 If `dimensions` is an `Integer` or a vector/tuple of `Integer`s, it is automatically treated as `Dimensions(dimensions, dimensions)`.
 """
 get_size(dimensions::Dimensions) = (get_size(dimensions.to), get_size(dimensions.from))
-get_size(dimensions::Union{<:Integer, AbstractVector{<:Integer}, NTuple{N, Integer}}) where {N} = get_size(Dimensions(dimensions))
+get_size(dimensions::Union{T, VectorOrTuple{T}}) where {T <: Integer} = get_size(Dimensions(dimensions))
 
 Base.transpose(dimensions::Dimensions) = Dimensions(dimensions.from, dimensions.to) # switch `to` and `from`
 Base.adjoint(dimensions::Dimensions) = transpose(dimensions)

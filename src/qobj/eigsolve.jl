@@ -91,9 +91,9 @@ Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1, T2, Nothing}, ::Val{:vector_list}) where {T1, T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1, T2, Operator}, ::Val{:vector_list}) where {T1, T2} =
-    ([QuantumObject(res.vectors[:, k], Ket(), res.dimensions.to) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], Ket(), Dimensions(res.dimensions.to, Space(1))) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1, T2, SuperOperator}, ::Val{:vector_list}) where {T1, T2} =
-    ([QuantumObject(res.vectors[:, k], OperatorKet(), res.dimensions.to) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], OperatorKet(), Dimensions(res.dimensions.to, Space(1))) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
@@ -487,16 +487,17 @@ function eigsolve_al(
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, SOpType <: Union{Ket, OperatorKet}}
     is_unitary_evo = isoper(H) && isnothing(c_ops)
+    L = is_unitary_evo ? H : liouvillian(H, c_ops)
 
     # Generate random initial state if not provided
     Te = eltype(H)
     ρ0_vec = if isnothing(ρ0)
-        is_unitary_evo ? rand_ket(Te, H.dimensions) : operator_to_vector(rand_dm(Te, H.dimensions))
+        is_unitary_evo ? rand_ket(Te, Dimensions(H.dimensions.to, Space(1))) : mat2vec(rand_dm(Te, L.dimensions.to.op_dims))
     else
         ρ0
     end
 
-    prob = mesolveProblem(H, ρ0_vec, [zero(T), T], c_ops; params = params, progress_bar = Val(false), kwargs...)
+    prob = mesolveProblem(L, ρ0_vec, [zero(T), T]; params = params, progress_bar = Val(false), kwargs...)
     integrator = init(prob.prob, alg)
 
     Lmap = ArnoldiLindbladIntegratorMap(Te, size(prob.prob.f.f), integrator)
@@ -506,7 +507,7 @@ function eigsolve_al(
         Lmap,
         ρ0_vec.data,
         res_type,
-        H.dimensions,
+        L.dimensions,
         eigvals,
         krylovdim,
         maxiter = maxiter,
