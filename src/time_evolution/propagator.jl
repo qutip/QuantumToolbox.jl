@@ -86,14 +86,6 @@ If `t` is provided, the propagator from `t0` to `t` is immediately computed and 
 # Returns
 
 - `U::Propagator`: A callable propagator object. Use `U(t; t0=0.0)` or `U([t0, t])` to evaluate.
-
-# Example
-
-```julia
-H = (ϵ / 2) * sigmaz() + (Ω / 2) * sigmax()
-U = propagator(H)      # create lazy propagator
-ψt = U(π) * basis(2, 0) # propagate |0⟩ to time π
-```
 """
 function propagator(
         H::AbstractQuantumObject{HOpType},
