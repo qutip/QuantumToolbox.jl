@@ -99,8 +99,8 @@
 
         # use non-square Dimensions to do partial trace
         new_dims1 = Dimensions(
-            TensorSpace(Space(1), Space(1), space_enr),
-            TensorSpace(Space(1), Space(1), space_enr),
+            TensorSpace(Space(1), space_enr),
+            TensorSpace(Space(1), space_enr),
         )
         ρ_enr_compound = Qobj(zeros(ComplexF64, size_enr, size_enr), dims = new_dims1)
         basis_list = [tensor(basis(D1, i), basis(D2, j)) for i in 0:(D1 - 1) for j in 0:(D2 - 1)]

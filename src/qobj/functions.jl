@@ -191,17 +191,38 @@ julia> a.dims, O.dims
 (([20], [20]), ([20, 20], [20, 20]))
 ```
 """
-function Base.kron(
-        A::AbstractQuantumObject{OpType},
-        B::AbstractQuantumObject{OpType},
-    ) where {OpType <: Union{Ket, Bra, Operator}}
+function Base.kron(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
     QType = promote_op_type(A, B)
     _lazy_tensor_warning(A.data, B.data)
     return QType(
         kron(A.data, B.data),
-        A.type,
+        Operator(),
         Dimensions(
             kron(A.dimensions.to, B.dimensions.to),
+            kron(A.dimensions.from, B.dimensions.from),
+        ),
+    )
+end
+function Base.kron(A::AbstractQuantumObject{Ket}, B::AbstractQuantumObject{Ket})
+    QType = promote_op_type(A, B)
+    _lazy_tensor_warning(A.data, B.data)
+    return QType(
+        kron(A.data, B.data),
+        Ket(),
+        Dimensions(
+            kron(A.dimensions.to, B.dimensions.to),
+            Space(1),
+        ),
+    )
+end
+function Base.kron(A::AbstractQuantumObject{Bra}, B::AbstractQuantumObject{Bra})
+    QType = promote_op_type(A, B)
+    _lazy_tensor_warning(A.data, B.data)
+    return QType(
+        kron(A.data, B.data),
+        Bra(),
+        Dimensions(
+            Space(1),
             kron(A.dimensions.from, B.dimensions.from),
         ),
     )

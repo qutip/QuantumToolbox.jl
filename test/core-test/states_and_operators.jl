@@ -13,7 +13,7 @@
         @test isket(v1)
         @test isket(v2)
         @test v1.dims == ([4], [1])
-        @test v2.dims == ([2, 2], [1, 1])
+        @test v2.dims == ([2, 2], [1])
     end
 
     @testset "fock state" begin
@@ -344,7 +344,7 @@
         I_op1 = qeye(4)
         I_op2 = qeye(4, dims = (2, 2))
         I_su1 = qeye(4, type = SuperOperator())
-        I_su2 = qeye(4, type = SuperOperator(), dims = 2)
+        I_su2 = qeye(4, type = SuperOperator(), dims = (((2,), (2,)), ((2,), (2,))))
         @test isunitary(I_op1) == true
         @test isunitary(I_op2) == true
         @test isunitary(I_su1) == false
@@ -358,7 +358,7 @@
         @test (I_su1 == I_su2) == true
         @test_throws DimensionMismatch qeye(4, dims = 2)
         @test_throws DimensionMismatch qeye(2, type = SuperOperator())
-        @test_throws DimensionMismatch qeye(4, type = SuperOperator(), dims = (2, 2))
+        @test_throws DimensionMismatch qeye(4, type = SuperOperator(), dims = ((2,), (2,)))
     end
 
     @testset "superoperators" begin

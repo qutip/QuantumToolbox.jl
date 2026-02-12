@@ -708,17 +708,13 @@ true
     It is highly recommended to use `permute(A, order)` with `order` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function SparseArrays.permute(
-        A::QuantumObject{ObjType, <:Dimensions{<:TensorSpace{N}, <:TensorSpace{N}}},
+        A::QuantumObject{ObjType, <:Dimensions},
         order::VectorOrTuple{T},
-    ) where {ObjType <: Union{Ket, Bra, Operator}, N, T <: Integer}
-    any(s -> s isa EnrSpace, A.dimensions.to) && throw(ArgumentError("permute does not support EnrSpace"))
+    ) where {ObjType <: Union{Ket, Bra, Operator}, T <: Integer}
 
-    (length(order) != N) &&
-        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
-
-    !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))
-
+    # check validity of order (other checks will be handled in `_dims_and_perm` since it depends on ObjType)
     _non_static_array_warning("order", order)
+    !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))
 
     order_svector = SVector{length(order), Int}(order) # convert it to SVector for performance
 
@@ -730,18 +726,35 @@ function SparseArrays.permute(
     return QuantumObject(reshape(permutedims(reshape(A.data, dims...), Tuple(perm)), size(A)), A.type, order_dimensions)
 end
 
-_dims_and_perm(::Ket, dimensions::Dimensions, order::AbstractVector{Int}, L::Int) =
-    reverse(dimensions_to_dims(dimensions.to)), reverse((L + 1) .- order)
+function _dims_and_perm(::Ket, dimensions::Dimensions{<:TensorSpace{Nq}, Space}, order::SVector{Np, Int}, L::Int) where {Nq, Np}
+    any(s -> s isa EnrSpace, dimensions.to) && throw(ArgumentError("permute does not support EnrSpace"))
 
-_dims_and_perm(::Bra, dimensions::Dimensions, order::AbstractVector{Int}, L::Int) =
-    reverse(dimensions_to_dims(dimensions.from)), reverse((L + 1) .- order)
+    (Nq != Np) &&
+        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
 
-_dims_and_perm(::Operator, dimensions::Dimensions, order::AbstractVector{Int}, L::Int) =
-    reverse(vcat(dimensions_to_dims(dimensions.from), dimensions_to_dims(dimensions.to))), reverse((2 * L + 1) .- vcat(order, order .+ L))
+    return reverse(dimensions_to_dims(dimensions.to)), reverse((L + 1) .- order)
+end
+function _dims_and_perm(::Bra, dimensions::Dimensions{Space, <:TensorSpace{Nq}}, order::SVector{Np, Int}, L::Int) where {Nq, Np}
+    any(s -> s isa EnrSpace, dimensions.from) && throw(ArgumentError("permute does not support EnrSpace"))
 
-_order_dimensions(::Ket, dimensions::Dimensions, order::AbstractVector{Int}) =
-    Dimensions(dimensions.to[order], dimensions.from)  # from is one-list, keep as is
-_order_dimensions(::Bra, dimensions::Dimensions, order::AbstractVector{Int}) =
-    Dimensions(dimensions.to, dimensions.from[order])  # to is one-list, keep as is
-_order_dimensions(::Operator, dimensions::Dimensions, order::AbstractVector{Int}) =
+    (Nq != Np) &&
+        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
+
+    return reverse(dimensions_to_dims(dimensions.from)), reverse((L + 1) .- order)
+end
+function _dims_and_perm(::Operator, dimensions::Dimensions{<:TensorSpace{Nq}, <:TensorSpace{Nq}}, order::SVector{Np, Int}, L::Int) where {Nq, Np}
+    any(s -> s isa EnrSpace, dimensions.to) && throw(ArgumentError("permute does not support EnrSpace"))
+
+    (Nq != Np) &&
+        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
+
+    return reverse(vcat(dimensions_to_dims(dimensions.from), dimensions_to_dims(dimensions.to))), reverse((2 * L + 1) .- vcat(order, order .+ L))
+end
+_dims_and_perm(type::Union{Ket, Bra, Operator}, dimensions::Dimensions, ::AbstractVector{Int}, ::Int) = throw(ArgumentError("permute does not support for $(type) with dims = $(_get_dims_string(dimensions))"))
+
+_order_dimensions(::Ket, dimensions::Dimensions, order::SVector{N, Int}) where {N} =
+    Dimensions(dimensions.to[order], dimensions.from)  # from should be Space(1), keep as is
+_order_dimensions(::Bra, dimensions::Dimensions, order::SVector{N, Int}) where {N} =
+    Dimensions(dimensions.to, dimensions.from[order])  # to should be Space(1), keep as is
+_order_dimensions(::Operator, dimensions::Dimensions, order::SVector{N, Int}) where {N} =
     Dimensions(dimensions.to[order], dimensions.from[order])

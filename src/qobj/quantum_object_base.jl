@@ -216,6 +216,12 @@ _gen_dimensions(::SuperOperator, dims::AbstractSpace) = Dimensions(dims, dims) #
 ## dims::DimsListType{T1, T2} : general nested array
 _gen_dimensions(::QuantumObjectType, dims::DimsListType{T1, T2}) where {T1, T2} = Dimensions(dims)
 
+#= # dims::Dimensions
+## special handle for Ket/OperatorKet [from must be Space(1)] and Bra/OperatorBra [to must be Space(1)]
+_gen_dimensions(::Union{Ket, OperatorKet}, dims::Dimensions) = Dimensions(dims.to, Space(1))
+_gen_dimensions(::Union{Bra, OperatorBra}, dims::Dimensions) = Dimensions(Space(1), dims.from)
+_gen_dimensions(::Union{Operator, SuperOperator}, dims::Dimensions) = dims =#
+
 # other cases
 _gen_dimensions(::QuantumObjectType, dims::Dimensions) = dims
 _gen_dimensions(type::QuantumObjectType, dims) = throw(ArgumentError("The argument `dims` with value $dims is not valid for object type $type."))

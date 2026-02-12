@@ -457,12 +457,7 @@ Note that `type` can only be either [`Operator`](@ref) or [`SuperOperator`](@ref
 !!! note
     `qeye` is a synonym of `eye`.
 """
-function eye(::Type{T}, N::Int; type = Operator(), dims = nothing) where {T <: Number}
-    if dims isa Nothing
-        dims = isa(type, Operator) ? N : isqrt(N)
-    end
-    return QuantumObject(Diagonal(ones(T, N)); type, dims)
-end
+eye(::Type{T}, N::Int; type = Operator(), dims = nothing) where {T <: Number} = QuantumObject(Diagonal(ones(T, N)); type, dims) # dims = nothing will be handled by Qobj generation
 eye(N::Int; type = Operator(), dims = nothing) = eye(ComplexF64, N; type, dims)
 
 @doc raw"""
