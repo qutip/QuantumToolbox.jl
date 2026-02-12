@@ -182,7 +182,7 @@ function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool} = nothing, 
         prop = temp_prop * prop
     end
 
-    if U.period != Inf
+    if U.period != Inf && (t - t0) > U.period
         prop = prop^(ΔT / U.period)
     end
 
