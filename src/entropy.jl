@@ -143,7 +143,7 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
 function entropy_mutual(
-        ρAB::QuantumObject{ObjType, <:Dimensions{TensorSpace{N}, TensorSpace{N}}}, # the dimensions to == from, and should both be TensorSpace
+        ρAB::QuantumObject{ObjType, <:Dimensions{<:TensorSpace{N}, <:TensorSpace{N}}}, # the dimensions to == from, and should both be TensorSpace
         selA::Union{Int, AbstractVector{Int}, Tuple},
         selB::Union{Int, AbstractVector{Int}, Tuple};
         kwargs...,
