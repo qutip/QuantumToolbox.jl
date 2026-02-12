@@ -128,6 +128,8 @@ function convert_unit(value::T, unit1::Symbol, unit2::Symbol) where {T <: Real}
     return _float_type(T)(value * (_energy_units[unit1] / _energy_units[unit2]))
 end
 
+const VectorOrTuple{T} = Union{AbstractVector{T}, NTuple{N, T} where {N}}
+
 get_typename_wrapper(A) = Base.typename(typeof(A)).wrapper
 
 _dense_similar(A::AbstractArray, args...) = similar(A, args...)

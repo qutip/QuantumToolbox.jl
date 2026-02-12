@@ -17,8 +17,6 @@
     # DimensionMismatch: incompatible between size of array and type
     @testset "DimensionMismatch" begin
         a = rand(ComplexF64, 3, 2)
-        # SuperOperator requires sqrt-able dimensions (e.g., 4x4 for 2-dim system)
-        @test_throws DimensionMismatch Qobj(a, type = SuperOperator())
         # Bra requires row vector (1xN), DimensionMismatch when dimensions don't match array size
         @test_throws DimensionMismatch Qobj(a, type = Bra())
         # OperatorBra requires row vector, DimensionMismatch when dimensions don't match array size
@@ -29,23 +27,23 @@
             @test_throws DimensionMismatch Qobj(a, type = t)
         end
 
-        # Note: (1,2) and (2,1) matrices are now allowed as non-square Operators
-        # Only check SuperOperator which requires sqrt-able dimensions
-        a = rand(ComplexF64, 1, 2)
-        @test_throws DimensionMismatch Qobj(a, type = SuperOperator())
+        # Note: (1,2) and (2,1) matrices are now allowed as non-square Operators / SuperOperators
+        # (1,2) becomes a valid Operator / SuperOperator with to=(1,), from=(2,)
+        a12 = rand(ComplexF64, 1, 2)
+        @test Qobj(a12, type = Operator()).dimensions == Dimensions(Space(1), Space(2))
+        @test Qobj(a12, type = SuperOperator(), dims = ((1,), (2,))).dimensions == Dimensions(Space(1), Space(2))
 
-        # (1,2) becomes a valid Operator with to=(1,), from=(2,)
-        @test Qobj(a, type = Operator()).dimensions == ProductDimensions((HilbertSpace(1),), (HilbertSpace(2),))
-
-        # (2,1) becomes a valid Operator with to=(2,), from=(1,)
-        @test Qobj(rand(ComplexF64, 2, 1), type = Operator()).dimensions == ProductDimensions((HilbertSpace(2),), (HilbertSpace(1),))
+        # (2,1) becomes a valid Operator / SuperOperator with to=(2,), from=(1,)
+        a21 = rand(ComplexF64, 2, 1)
+        @test Qobj(a21, type = Operator()).dimensions == Dimensions(Space(2), Space(1))
+        @test Qobj(a21, type = SuperOperator(), dims = ((2,), (1,))).dimensions == Dimensions(Space(2), Space(1))
 
         # check non-square dimensions work for all types
-        @test Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,))).dimensions.to == (HilbertSpace(2),)
-        @test Qobj(rand(ComplexF64, 1, 2), type = Bra(), dims = ((1,), (2,))).dimensions.from == (HilbertSpace(2),)
-        @test Qobj(rand(ComplexF64, 4, 9), type = SuperOperator(), dims = ((2,), (3,))).dimensions.to == (HilbertSpace(2),)
-        @test Qobj(rand(ComplexF64, 4), type = OperatorKet(), dims = ((2,), (1,))).dimensions.to == (HilbertSpace(2),)
-        @test Qobj(rand(ComplexF64, 1, 4), type = OperatorBra(), dims = ((1,), (2,))).dimensions.from == (HilbertSpace(2),)
+        @test Qobj(rand(ComplexF64, 2), type = Ket(), dims = ((2,), (1,))).dimensions.to == Space(2)
+        @test Qobj(rand(ComplexF64, 1, 2), type = Bra(), dims = ((1,), (2,))).dimensions.from == Space(2)
+        @test Qobj(rand(ComplexF64, 4, 9), type = SuperOperator(), dims = ((4,), (9,))).dimensions.to == Space(4)
+        @test Qobj(rand(ComplexF64, 4), type = OperatorKet(), dims = ((4,), (1,))).dimensions.to == Space(4)
+        @test Qobj(rand(ComplexF64, 1, 4), type = OperatorBra(), dims = ((1,), (4,))).dimensions.from == Space(4)
     end
 
     # unsupported type of dims
@@ -97,7 +95,7 @@
         a = sprand(ComplexF64, 100, 100, 0.1)
         a2 = Qobj(a)
         a3 = Qobj(a, type = SuperOperator())
-        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # non-square ProductDimensions
+        a4 = Qobj(sprand(ComplexF64, 100, 10, 0.1)) # non-square Dimensions
         a5 = QuantumObject(rand(ComplexF64, 2 * 3 * 4, 5), dims = ((2, 3, 4), (5,)))
         @test isket(a2) == false
         @test isbra(a2) == false
@@ -118,7 +116,7 @@
         @test iscached(a3) == true
         @test isconstant(a3) == true
         @test isunitary(a3) == false
-        @test a3.dims == ([10], [10])
+        @test a3.dims == (([10], [10]), ([10], [10]))
         @test isket(a4) == false
         @test isbra(a4) == false
         @test isoper(a4) == true
@@ -158,17 +156,15 @@
         @test isoperket(ρ_bra) == false
         @test isoperbra(ρ_bra) == true
         @test isunitary(ρ_bra) == false
-        @test ρ_bra.dims == ([1], [2])
-        @test ρ_ket.dims == ([2], [1])
+        @test ρ_bra.dims == ([1], ([2], [2]))
+        @test ρ_ket.dims == (([2], [2]), [1])
         @test H * ρ ≈ spre(H) * ρ
         @test ρ * H ≈ spost(H) * ρ
         @test H * ρ * H ≈ sprepost(H, H) * ρ
-        @test (L * ρ_ket).dims == ([2], [1])
+        @test (L * ρ_ket).dims == (([2], [2]), [1])
         @test L * ρ_ket ≈ -1im * (+(spre(H) * ρ_ket) - spost(H) * ρ_ket)
         @test (ρ_bra * L')' == L * ρ_ket
         @test sum((conj(ρ) .* ρ).data) ≈ dot(ρ_ket, ρ_ket) ≈ ρ_bra * ρ_ket
-        @test_throws DimensionMismatch Qobj(ρ_ket.data, type = OperatorKet(), dims = 4)
-        @test_throws DimensionMismatch Qobj(ρ_bra.data, type = OperatorBra(), dims = 4)
     end
 
     @testset "Checks on non-QuantumObjects" begin
@@ -258,7 +254,7 @@
         Π = QuantumObject(hcat(ψ1.data, ψ2.data), dims = ((3, 3, 3), (2,)))
 
         o = (Π' * O * Π)
-        @test o.dimensions == ProductDimensions((HilbertSpace(2),), (HilbertSpace(2),))
+        @test o.dimensions == Dimensions(Space(2), Space(2))
         @test isoper(o) == true
     end
 
@@ -289,7 +285,7 @@
         @test opstring ==
             "\nQuantum Object:   type=Operator()   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
 
-        # non-square ProductDimensions
+        # non-square Dimensions
         Gop = tensor(a, ψ)
         opstring = sprint((t, s) -> show(t, "text/plain", s), Gop)
         datastring = sprint((t, s) -> show(t, "text/plain", s), Gop.data)
@@ -385,8 +381,8 @@
             end
 
             UnionType = Union{
-                QuantumObject{Bra, ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Matrix{T}},
-                QuantumObject{Operator, ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Matrix{T}},
+                QuantumObject{Bra, Dimensions{Space, Space}, Matrix{T}},
+                QuantumObject{Operator, Dimensions{Space, Space}, Matrix{T}},
             }
             a = rand(T, 1, N)
             @inferred UnionType Qobj(a)
@@ -684,7 +680,7 @@
         ρ1_ptr = ptrace(ρ, 1)
         ρ2_ptr = ptrace(ρ, 2)
 
-        # use non-square ProductDimensions to do partial trace
+        # use non-square Dimensions to do partial trace
         ρ1_compound = Qobj(zeros(ComplexF64, 2, 2), dims = ((2, 1), (2, 1)))
         II = qeye(2)
         basis_list = [basis(2, i) for i in 0:1]
@@ -755,7 +751,7 @@
         @test_throws ArgumentError ptrace(ρtotal, (0, 2))
         @test_throws ArgumentError ptrace(ρtotal, (2, 5))
         @test_throws ArgumentError ptrace(ρtotal, (2, 2, 3))
-        @test_throws ArgumentError ptrace(Qobj(zeros(ComplexF64, 3, 2)), 1) # invalid non-square ProductDimensions
+        @test_throws ArgumentError ptrace(tensor(Qobj(zeros(ComplexF64, 3, 2)), Qobj(zeros(ComplexF64, 2, 3))), 1) # invalid non-square Dimensions
 
         @testset "Type Inference (ptrace)" begin
             @inferred ptrace(ρ, 1)
@@ -768,7 +764,7 @@
     end
 
     @testset "permute" begin
-        # standard ProductDimensions
+        # standard Dimensions
         ket_a = Qobj(rand(ComplexF64, 2))
         ket_b = Qobj(rand(ComplexF64, 3))
         ket_c = Qobj(rand(ComplexF64, 4))
@@ -790,8 +786,8 @@
         @test ket_bdca ≈ tensor(ket_b, ket_d, ket_c, ket_a)
         @test bra_bdca ≈ tensor(bra_b, bra_d, bra_c, bra_a)
         @test op_bdca ≈ tensor(op_b, op_d, op_c, op_a)
-        @test ket_bdca.dims == (correct_dims, [1, 1, 1, 1])
-        @test bra_bdca.dims == ([1, 1, 1, 1], correct_dims)
+        @test ket_bdca.dims == (correct_dims, [1])
+        @test bra_bdca.dims == ([1], correct_dims)
         @test op_bdca.dims == (correct_dims, correct_dims)
         @test isket(ket_bdca)
         @test isbra(bra_bdca)
@@ -803,7 +799,7 @@
         @test_throws ArgumentError permute(op_bdca, wrong_order1)
         @test_throws ArgumentError permute(op_bdca, wrong_order2)
 
-        # non-square ProductDimensions
+        # non-square Dimensions
         Gop_d = Qobj(rand(ComplexF64, 5, 6))
         compound_bdca = permute(tensor(ket_a, op_b, bra_c, Gop_d), (2, 4, 3, 1))
         compound_dacb = permute(tensor(ket_a, op_b, bra_c, Gop_d), (4, 1, 3, 2))

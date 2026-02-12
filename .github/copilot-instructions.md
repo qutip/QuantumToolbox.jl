@@ -61,14 +61,14 @@ sol = mesolve(H, ψ0, tlist, c_ops; ...)          # Solve directly
 
 ### Dimension Handling
 Never assume 1D systems. All code must handle arbitrary composite Hilbert spaces:
-- `dimensions::AbstractDimensions` stores as `StaticArraysCore.SVector`
+- `dimensions::Dimensions` stores as `StaticArraysCore.SVector`
 - Access via `qobj.dims` (returns dims Tuple) or `qobj.dimensions` (full Dimensions object)
-- Use `ProductDimensions()` constructor to create from integer/tuple specifications
+- Use `Dimensions()` constructor to create from integer/tuple specifications
 
 ### Error Checking
 Use `@assert` for internal checks; throw descriptive `ArgumentError` for invalid user inputs. Example:
 ```julia
-_check_QuantumObject(type, dimensions, rows, cols)  # In quantum_object.jl
+_check_QuantumObject(type, dimensions, (rows, cols))  # In quantum_object.jl
 ```
 
 ### Progress Bars
