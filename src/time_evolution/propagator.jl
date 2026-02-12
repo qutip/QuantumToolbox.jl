@@ -293,8 +293,12 @@ function Base.show(io::IO, U::Propagator)
         _get_dims_string(U.dimensions),
         "   size=",
         size(U),
+        "\nperiod: ",
+        U.period,
         "\nSaved Propagators: ",
-        saved_times...
+        saved_times...,
+        "\nMemory Usage: ",
+        Base.format_bytes(Base.summarysize(U.props))
     )
 end
 
@@ -304,4 +308,16 @@ end
 
 function Base.length(U::Propagator)
     return length(U.H)
+end
+
+function Base.pop!(U::Propagator, interval::Vector)
+    if U.period != Inf
+        interval = mod.(interval, U.period)
+    end
+    if interval in keys(U.props)
+        return pop!(U.props, interval)
+    else
+        @warn "Interval $interval not found in cache. No propagator removed."
+        return nothing
+    end
 end
