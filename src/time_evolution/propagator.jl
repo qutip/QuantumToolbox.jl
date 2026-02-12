@@ -221,9 +221,9 @@ function _propagator_compute_or_look_up(U::Propagator{HT}, interval) where {HT <
         end
 
         if HT <: Operator
-            return sesolve(U.H, qeye_like(U.H)(0.0), interval; U.solver_kwargs...).states[end]
+            return sesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{Operator}, interval; U.solver_kwargs...).states[end]
         else
-            return mesolve(U.H, qeye_like(U.H)(0.0), interval; U.solver_kwargs...).states[end]
+            return mesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{SuperOperator}, interval; U.solver_kwargs...).states[end]
         end
     end
 end
