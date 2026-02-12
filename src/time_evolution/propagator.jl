@@ -248,7 +248,7 @@ function _get_intervals_for_range(stored_intervals::AbstractVector{T}, target_in
         if isempty(merged) || s > merged[end][2] + threshold
             push!(merged, [s, e])
         else
-            merged[end] = (merged[end][1], max(merged[end][2], e))
+            merged[end] = [merged[end][1], max(merged[end][2], e)]
         end
     end
 
