@@ -213,7 +213,6 @@ function _propagator_compute_or_look_up(U::Propagator{HT}, interval) where {HT <
         return U.props[interval]
     else
         if !(U.H isa QobjEvo)
-            println("Computing propagator for interval [$(interval[1]), $(interval[2])] via matrix exponentiation...")
             if HT <: Operator
                 return exp(-1im * U.H * (interval[2] - interval[1]))
             else
