@@ -48,6 +48,7 @@ struct Propagator{
     threshold::Float64
     remember_by_default::Bool
     period::Real
+    isconstant::Bool
 end
 
 
@@ -103,6 +104,7 @@ function propagator(
         t0 = 0.0,
         threshold::Float64 = 1.0e-9,
         period::Real = Inf,
+        isconstant::Bool = false,
         max_saved::Union{Integer, Float64} = typemax(Int),
         remember_by_default::Bool = true,
         params = NullParameters(),
@@ -118,7 +120,10 @@ function propagator(
         @warn "max_saved should be an Integer or Inf. Setting to $max_saved."
     end
 
-    U = Propagator(H, Dict{Vector, AbstractQuantumObject}(), H.dims, H.dimensions, full_kwargs, max_saved, threshold, remember_by_default, period)
+    if !(H isa QobjEvo)
+        isconstant = true
+    end
+    U = Propagator(H, Dict{Vector, AbstractQuantumObject}(), H.dims, H.dimensions, full_kwargs, max_saved, threshold, remember_by_default, period, isconstant)
 
     if t != nothing
         U(t; t0 = t0, remember = true)
@@ -205,14 +210,14 @@ the propagator is computed via [`sesolve`](@ref) (for [`Operator`](@ref)) or [`m
 [`SuperOperator`](@ref)) using an identity matrix as the initial state.
 """
 function _propagator_compute_or_look_up(U::Propagator{HT}, interval) where {HT <: Union{Operator, SuperOperator}}
-    if !(U.H isa QobjEvo)
+    if U.isconstant
         interval = [0.0, interval[2] - interval[1]]
     end
 
     if interval in keys(U.props)
         return U.props[interval]
     else
-        if !(U.H isa QobjEvo)
+        if U.isconstant
             if HT <: Operator
                 return exp(-1im * U.H * (interval[2] - interval[1]))
             else
@@ -221,9 +226,9 @@ function _propagator_compute_or_look_up(U::Propagator{HT}, interval) where {HT <
         end
 
         if HT <: Operator
-            return sesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{Operator}, interval; U.solver_kwargs...).states[end]
+            return sesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{Operator}, interval; saveat = [interval[2]], U.solver_kwargs...).states[end]
         else
-            return mesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{SuperOperator}, interval; U.solver_kwargs...).states[end]
+            return mesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{SuperOperator}, interval; saveat = [interval[2]], U.solver_kwargs...).states[end]
         end
     end
 end
