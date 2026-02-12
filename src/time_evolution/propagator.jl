@@ -26,6 +26,7 @@ Previously computed propagators for sub-intervals are reused automatically to av
 - `max_saved`: Maximum number of propagators to cache.
 - `threshhold`: Numerical tolerance for matching stored time intervals.
 - `remember_by_default`: Whether to cache newly computed propagators by default.
+- `period`: If the system is periodic in time, the propagator will calculate intervals modulo this period.
 
 # Usage
 
@@ -46,6 +47,7 @@ struct Propagator{
     max_saved::Union{Integer, Float64}
     threshhold::Float64
     remember_by_default::Bool
+    period::Real
 end
 
 
@@ -75,6 +77,7 @@ If `t` is provided, the propagator from `t0` to `t` is immediately computed and 
 - `t`: Optional final time. If given, the propagator for the interval `[t0, t]` is computed immediately.
 - `t0`: Initial time. Default is `0.0`.
 - `threshhold`: Numerical tolerance for matching cached time intervals. Default is `1e-9`.
+- `period`: If the system is periodic in time, specify the period to automatically calculate intervals modulo this period. Default is `Inf` (no periodicity).
 - `max_saved`: Maximum number of propagators to store in the cache. Can be an `Integer` or `Inf`. Default is `typemax(Int)`.
 - `remember_by_default`: Whether to automatically cache computed propagators. Default is `true`.
 - `params`: Parameters to pass to the underlying solver.
@@ -99,6 +102,7 @@ function propagator(
     t::Union{Nothing, Real} = nothing;
     t0 = 0.0,
     threshhold::Float64=1e-9,
+    period::Real = Inf,
     max_saved::Union{Integer, Float64}=typemax(Int),
     remember_by_default::Bool=true,
     params = NullParameters(),
@@ -114,7 +118,7 @@ function propagator(
         @warn "max_saved should be an Integer or Inf. Setting to $max_saved."
     end
 
-    U = Propagator(H, Dict{Vector, AbstractQuantumObject}(), H.dims, H.dimensions, full_kwargs, max_saved, threshhold, remember_by_default)
+    U = Propagator(H, Dict{Vector, AbstractQuantumObject}(), H.dims, H.dimensions, full_kwargs, max_saved, threshhold, remember_by_default, period)
 
     if t != nothing
         U(t; t0 = t0, remember = true)
@@ -147,6 +151,10 @@ propagator is also cached separately when `remember` is enabled.
 - The propagator as an `AbstractQuantumObject` (if `return_result` is `true`).
 """
 function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool}=nothing, return_result = true, save_steps = true)
+    if U.period != Inf
+        t = mod(t, U.period)
+        t0 = mod(t0, U.period)
+    end
     intervals = _get_intervals_for_range(collect(keys(U.props)), [t0, t]; threshold=U.threshhold)
 
     prop = qeye_like(U.H)
@@ -180,14 +188,7 @@ function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool}=nothing, re
     end
 end
 
-@doc raw"""
-    (U::Propagator)(interval::Vector; kwargs...)
 
-Evaluate the propagator `U` over the time interval `[interval[1], interval[2]]`.
-
-This is a convenience method equivalent to `U(interval[2]; t0 = interval[1], kwargs...)`.
-See the other callable method of [`Propagator`](@ref) for details on keyword arguments.
-"""
 function (U::Propagator)(interval::Vector; kwargs...)
     U(interval[2]; t0 = interval[1], kwargs...)
 end
