@@ -43,7 +43,7 @@
         ρ_s = rand_dm(dims_s)
         I_s = qeye(D1) ⊗ qeye(D2)
         size_s = prod(dims_s)
-        space_s = Tensor(Space(D1), Space(D2))
+        space_s = TensorSpace(Space(D1), Space(D2))
 
         # EnrSpace
         dims_enr = (2, 3, 2)
@@ -99,8 +99,8 @@
 
         # use non-square Dimensions to do partial trace
         new_dims1 = Dimensions(
-            (Space(1), Space(1), space_enr),
-            (Space(1), Space(1), space_enr),
+            TensorSpace(Space(1), Space(1), space_enr),
+            TensorSpace(Space(1), Space(1), space_enr),
         )
         ρ_enr_compound = Qobj(zeros(ComplexF64, size_enr, size_enr), dims = new_dims1)
         basis_list = [tensor(basis(D1, i), basis(D2, j)) for i in 0:(D1 - 1) for j in 0:(D2 - 1)]
@@ -108,8 +108,8 @@
             ρ_enr_compound += tensor(b', I_enr) * ρ_tot * tensor(b, I_enr)
         end
         new_dims2 = Dimensions(
-            (space_s..., Space(1), Space(1), Space(1)),
-            (space_s..., Space(1), Space(1), Space(1)),
+            TensorSpace(space_s..., Space(1)),
+            TensorSpace(space_s..., Space(1)),
         )
         ρ_s_compound = Qobj(zeros(ComplexF64, size_s, size_s), dims = new_dims2)
         basis_list = [enr_fock(space_enr, space_enr.idx2state[idx]) for idx in 1:space_enr.size]

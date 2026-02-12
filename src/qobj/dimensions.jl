@@ -253,6 +253,9 @@ end
 
 Base.length(::LiouvilleSpace) = 1
 
+# we somehow need to define :(==) for LiouvilleSpace, otherwise, it doesn't work with EnrSpace
+Base.:(==)(s1::LiouvilleSpace, s2::LiouvilleSpace) = s1.op_dims == s2.op_dims
+
 get_size(s::LiouvilleSpace) = prod(get_size(s.op_dims)) # get_size(Dimensions.to) × get_size(Dimensions.from)
 
 dimensions_to_dims(s::LiouvilleSpace) = dimensions_to_dims(s.op_dims)

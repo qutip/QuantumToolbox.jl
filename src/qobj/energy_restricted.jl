@@ -56,7 +56,7 @@ struct EnrSpace{N} <: AbstractSpace
     state2idx::Dict{SVector{N, Int}, Int}
     idx2state::Dict{Int, SVector{N, Int}}
 
-    function EnrSpace(dims::Union{AbstractVector{T}, NTuple{N, T}}, n_excitations::Int) where {T <: Integer, N}
+    function EnrSpace(dims::VectorOrTuple{T}, n_excitations::Int) where {T <: Integer}
         # all arguments will be checked in `enr_state_dictionaries`
         size, state2idx, idx2state = enr_state_dictionaries(dims, n_excitations)
 
@@ -92,7 +92,7 @@ Return the number of states, and lookup-dictionaries for translating a state (`S
 - `state2idx`: A dictionary for looking up a state index from a state (`SVector`)
 - `idx2state`: A dictionary for looking up state (`SVector`) from a state index
 """
-function enr_state_dictionaries(dims::Union{AbstractVector{T}, NTuple{N, T}}, n_excitations::Int) where {T <: Integer, N}
+function enr_state_dictionaries(dims::VectorOrTuple{T}, n_excitations::Int) where {T <: Integer}
     # argument checks
     _non_static_array_warning("dims", dims)
     L = length(dims)
@@ -144,11 +144,11 @@ The `state` argument is a list of integers that specifies the state (in the numb
 """
 function enr_fock(
         ::Type{T},
-        dims::Union{AbstractVector{Td}, NTuple{N, Td}},
+        dims::VectorOrTuple{Td},
         n_excitations::Int,
         state::AbstractVector{Td};
         sparse::Union{Bool, Val} = Val(false),
-    ) where {T <: Number, Td <: Integer, N}
+    ) where {T <: Number, Td <: Integer}
     s_enr = EnrSpace(dims, n_excitations)
     return enr_fock(T, s_enr, state; sparse)
 end
@@ -163,7 +163,7 @@ function enr_fock(::Type{T}, s_enr::EnrSpace, state::AbstractVector{Td}; sparse:
 
     return QuantumObject(array, Ket(), s_enr)
 end
-enr_fock(dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int, state::AbstractVector{Td}; sparse::Union{Bool, Val} = Val(false)) where {Td <: Integer, N} =
+enr_fock(dims::VectorOrTuple{Td}, n_excitations::Int, state::AbstractVector{Td}; sparse::Union{Bool, Val} = Val(false)) where {Td <: Integer} =
     enr_fock(ComplexF64, dims, n_excitations, state; sparse)
 enr_fock(s_enr::EnrSpace, state::AbstractVector{Td}; sparse::Union{Bool, Val} = Val(false)) where {Td <: Integer} = enr_fock(ComplexF64, s_enr, state; sparse)
 
@@ -181,11 +181,11 @@ The argument `n` is a list that specifies the expectation values for number of p
     It is highly recommended to use `enr_thermal_dm(dims, n_excitations, n)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function enr_thermal_dm(
-        dims::Union{AbstractVector{T1}, NTuple{N, T1}},
+        dims::VectorOrTuple{T1},
         n_excitations::Int,
         n::Union{T2, AbstractVector{T2}};
         sparse::Union{Bool, Val} = Val(false),
-    ) where {T1 <: Integer, T2 <: Real, N}
+    ) where {T1 <: Integer, T2 <: Real}
     s_enr = EnrSpace(dims, n_excitations)
     return enr_thermal_dm(s_enr, n; sparse)
 end
@@ -227,7 +227,7 @@ The arguments `dims` and `n_excitations` are used to generate [`EnrSpace`](@ref)
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `enr_destroy(dims, n_excitations)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function enr_destroy(::Type{T}, dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int) where {T <: FloatOrComplex, Td <: Integer, N}
+function enr_destroy(::Type{T}, dims::VectorOrTuple{Td}, n_excitations::Int) where {T <: FloatOrComplex, Td <: Integer}
     s_enr = EnrSpace(dims, n_excitations)
     return enr_destroy(T, s_enr)
 end
@@ -257,7 +257,7 @@ function enr_destroy(::Type{T}, s_enr::EnrSpace{N}) where {T <: FloatOrComplex, 
 
     return ntuple(i -> QuantumObject(sparse(I_list[i], J_list[i], V_list[i], D, D), Operator(), s_enr), Val(N))
 end
-enr_destroy(dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int) where {Td <: Integer, N} = enr_destroy(ComplexF64, dims, n_excitations)
+enr_destroy(dims::VectorOrTuple{Td}, n_excitations::Int) where {Td <: Integer} = enr_destroy(ComplexF64, dims, n_excitations)
 enr_destroy(s_enr::EnrSpace{N}) where {N} = enr_destroy(ComplexF64, s_enr)
 
 @doc raw"""
@@ -271,10 +271,10 @@ The arguments `dims` and `n_excitations` are used to generate [`EnrSpace`](@ref)
 !!! warning "Beware of type-stability!"
     It is highly recommended to use `enr_identity(dims, n_excitations)` with `dims` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function enr_identity(::Type{T}, dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int) where {T <: Number, Td <: Integer, N}
+function enr_identity(::Type{T}, dims::VectorOrTuple{Td}, n_excitations::Int) where {T <: Number, Td <: Integer}
     s_enr = EnrSpace(dims, n_excitations)
     return enr_identity(T, s_enr)
 end
 enr_identity(::Type{T}, s_enr::EnrSpace) where {T <: Number} = QuantumObject(Diagonal(ones(T, s_enr.size)), Operator(), s_enr)
-enr_identity(dims::Union{AbstractVector{Td}, NTuple{N, Td}}, n_excitations::Int) where {Td <: Integer, N} = enr_identity(ComplexF64, dims, n_excitations)
+enr_identity(dims::VectorOrTuple{Td}, n_excitations::Int) where {Td <: Integer} = enr_identity(ComplexF64, dims, n_excitations)
 enr_identity(s_enr::EnrSpace) = enr_identity(ComplexF64, s_enr)
