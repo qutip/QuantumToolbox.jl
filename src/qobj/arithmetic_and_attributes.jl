@@ -522,7 +522,7 @@ function ptrace(QO::QuantumObject{Ket, <:Dimensions{<:TensorSpace{N}}}, sel::Vec
     return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
 
-ptrace(QO::QuantumObject{Bra, <:Dimensions{Tto, <:TensorSpace{N}}}, sel::VectorOrTuple{T}) where {Tto, N, T <: Integer} = ptrace(QO', sel)
+ptrace(QO::QuantumObject{Bra, <:Dimensions{Space, <:TensorSpace{N}}}, sel::VectorOrTuple{T}) where {N, T <: Integer} = ptrace(QO', sel)
 
 function ptrace(QO::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}}}, sel::VectorOrTuple{T}) where {N, T <: Integer}
     ((QO.dimensions.to isa EnrSpace) || any(s -> s isa EnrSpace, QO.dimensions.to)) && throw(ArgumentError("ptrace does not support EnrSpace"))
