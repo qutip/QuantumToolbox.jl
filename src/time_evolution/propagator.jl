@@ -156,6 +156,7 @@ propagator is also cached separately when `remember` is enabled.
 - The propagator as an `AbstractQuantumObject` (if `return_result` is `true`).
 """
 function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool} = nothing, return_result = true, save_steps = true)
+    ΔT = abs(t - t0)
     if U.period != Inf
         t = mod(t, U.period)
         t0 = mod(t0, U.period)
@@ -179,6 +180,10 @@ function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool} = nothing, 
             U.props[interval] = temp_prop
         end
         prop = temp_prop * prop
+    end
+
+    if U.period != Inf
+        prop = prop^(ΔT / U.period)
     end
 
     if (remember === nothing ? (U.remember_by_default && length(U.props) < U.max_saved) : remember) && !([t0, t] in keys(U.props))
