@@ -34,11 +34,11 @@ A `Propagator` is callable. Use `U(t; t0=0.0)` to obtain the propagator from `t0
 an interval. See [`propagator`](@ref) for construction.
 """
 struct Propagator{
-    HT<:Union{Operator, SuperOperator},
-    PT<:AbstractQuantumObject,
-    DT<:AbstractDimensions,
-    KWT
-}   
+        HT <: Union{Operator, SuperOperator},
+        PT <: AbstractQuantumObject,
+        DT <: AbstractDimensions,
+        KWT,
+    }
     H::AbstractQuantumObject{HT}
     props::Dict{Vector, PT}
     dims::AbstractArray
@@ -98,18 +98,18 @@ U = propagator(H)      # create lazy propagator
 ```
 """
 function propagator(
-    H::AbstractQuantumObject{HOpType},
-    t::Union{Nothing, Real} = nothing;
-    t0 = 0.0,
-    threshhold::Float64=1e-9,
-    period::Real = Inf,
-    max_saved::Union{Integer, Float64}=typemax(Int),
-    remember_by_default::Bool=true,
-    params = NullParameters(),
-    progress_bar::Union{Val, Bool}=Val(true),
-    inplace::Union{Val, Bool}=Val(true),
-    kwargs...,
-) where HOpType<:Union{Operator, SuperOperator}
+        H::AbstractQuantumObject{HOpType},
+        t::Union{Nothing, Real} = nothing;
+        t0 = 0.0,
+        threshhold::Float64 = 1.0e-9,
+        period::Real = Inf,
+        max_saved::Union{Integer, Float64} = typemax(Int),
+        remember_by_default::Bool = true,
+        params = NullParameters(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        inplace::Union{Val, Bool} = Val(true),
+        kwargs...,
+    ) where {HOpType <: Union{Operator, SuperOperator}}
 
     full_kwargs = (; params, progress_bar, inplace, kwargs...)
 
@@ -150,12 +150,12 @@ propagator is also cached separately when `remember` is enabled.
 
 - The propagator as an `AbstractQuantumObject` (if `return_result` is `true`).
 """
-function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool}=nothing, return_result = true, save_steps = true)
+function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool} = nothing, return_result = true, save_steps = true)
     if U.period != Inf
         t = mod(t, U.period)
         t0 = mod(t0, U.period)
     end
-    intervals = _get_intervals_for_range(collect(keys(U.props)), [t0, t]; threshold=U.threshhold)
+    intervals = _get_intervals_for_range(collect(keys(U.props)), [t0, t]; threshold = U.threshhold)
 
     prop = qeye_like(U.H)
     if prop isa QobjEvo
@@ -167,7 +167,7 @@ function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool}=nothing, re
 
     for interval in all_intervals
         temp_prop = _propagator_compute_or_look_up(U, interval)
-        if (remember === nothing ? (U.remember_by_default && length(U.props)<U.max_saved) : remember) && !(interval in keys(U.props)) && save_steps
+        if (remember === nothing ? (U.remember_by_default && length(U.props) < U.max_saved) : remember) && !(interval in keys(U.props)) && save_steps
             if length(U.props) >= U.max_saved
                 @warn "Maximum number of stored propagators reached, save is being forced because 'remember' is set to true."
             end
@@ -176,7 +176,7 @@ function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool}=nothing, re
         prop = temp_prop * prop
     end
 
-    if (remember === nothing ? (U.remember_by_default && length(U.props)<U.max_saved) : remember) && !([t0, t] in keys(U.props))
+    if (remember === nothing ? (U.remember_by_default && length(U.props) < U.max_saved) : remember) && !([t0, t] in keys(U.props))
         if length(U.props) >= U.max_saved
             @warn "Maximum number of stored propagators reached, save is being forced because 'remember' is set to true."
         end
@@ -190,7 +190,7 @@ end
 
 
 function (U::Propagator)(interval::Vector; kwargs...)
-    U(interval[2]; t0 = interval[1], kwargs...)
+    return U(interval[2]; t0 = interval[1], kwargs...)
 end
 
 
@@ -204,9 +204,9 @@ propagator depends only on the duration. For time-dependent Hamiltonians ([`Quan
 the propagator is computed via [`sesolve`](@ref) (for [`Operator`](@ref)) or [`mesolve`](@ref) (for
 [`SuperOperator`](@ref)) using an identity matrix as the initial state.
 """
-function _propagator_compute_or_look_up(U::Propagator{HT}, interval) where HT<:Union{Operator, SuperOperator}
+function _propagator_compute_or_look_up(U::Propagator{HT}, interval) where {HT <: Union{Operator, SuperOperator}}
     if !(U.H isa QobjEvo)
-        interval = [0.0, interval[2]-interval[1]]
+        interval = [0.0, interval[2] - interval[1]]
     end
 
     if interval in keys(U.props)
@@ -214,17 +214,17 @@ function _propagator_compute_or_look_up(U::Propagator{HT}, interval) where HT<:U
     else
         if !(U.H isa QobjEvo)
             println("Computing propagator for interval [$(interval[1]), $(interval[2])] via matrix exponentiation...")
-            if HT<:Operator
-                return exp(-1im * U.H*(interval[2]-interval[1]))
+            if HT <: Operator
+                return exp(-1im * U.H * (interval[2] - interval[1]))
             else
-                return exp(U.H*(interval[2]-interval[1]))
+                return exp(U.H * (interval[2] - interval[1]))
             end
         end
 
         if HT <: Operator
-            return sesolve(U.H, qeye_like(U.H)(0.0), interval; U.solver_kwargs...).states[end]     
+            return sesolve(U.H, qeye_like(U.H)(0.0), interval; U.solver_kwargs...).states[end]
         else
-            return mesolve(U.H, qeye_like(U.H)(0.0), interval; U.solver_kwargs...).states[end]     
+            return mesolve(U.H, qeye_like(U.H)(0.0), interval; U.solver_kwargs...).states[end]
         end
     end
 end
@@ -239,13 +239,13 @@ Returns a `NamedTuple` with:
 - `usable`: Stored intervals fully contained within `[a, b]` (within `threshold` tolerance).
 - `to_compute`: Gap intervals not covered by any stored interval that still need to be computed.
 """
-function _get_intervals_for_range(stored_intervals::AbstractVector{T}, target_interval::Vector; threshold=1e-9) where T<:Vector
+function _get_intervals_for_range(stored_intervals::AbstractVector{T}, target_interval::Vector; threshold = 1.0e-9) where {T <: Vector}
     a, b = target_interval
-    
+
     # Find stored intervals that are fully contained within target range (with fuzzy boundaries)
     usable = [[s, e] for (s, e) in stored_intervals if s >= a - threshold && e <= b + threshold]
     sort!(usable, by = first)
-    
+
     # Merge usable intervals to find coverage
     merged = Vector[]
     for (s, e) in usable
@@ -255,7 +255,7 @@ function _get_intervals_for_range(stored_intervals::AbstractVector{T}, target_in
             merged[end] = (merged[end][1], max(merged[end][2], e))
         end
     end
-    
+
     # Find gaps that need to be computed
     to_compute = Vector[]
     current = a
@@ -281,16 +281,16 @@ function Base.show(io::IO, U::Propagator)
     if length(saved_times) == 0
         saved_times = ["None"]
     end
-    println(
-    io,
-    "\nPropagator: H Type=",
-    U.H.type,
-    "   dims=",
-    _get_dims_string(U.dimensions),
-    "   size=",
-    size(U),
-    "\nSaved Propagators: ",
-    saved_times...
+    return println(
+        io,
+        "\nPropagator: H Type=",
+        U.H.type,
+        "   dims=",
+        _get_dims_string(U.dimensions),
+        "   size=",
+        size(U),
+        "\nSaved Propagators: ",
+        saved_times...
     )
 end
 
@@ -301,4 +301,3 @@ end
 function Base.length(U::Propagator)
     return length(U.H)
 end
-
