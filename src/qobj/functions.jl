@@ -257,14 +257,11 @@ function Base.kron(A::Vector{<:AbstractQuantumObject})
 end
 
 @doc raw"""
-    vec2mat(A::AbstractVector)
+    vec2mat(A::AbstractVector, m::Int, n::Int)
 
-Converts a vector to a matrix.
+Converts a vector to a matrix with size `(m, n)`. If `m` and `n` are not specified, both `m` and `n` are automatically set as `isqrt(length(A))`.
 """
-function vec2mat(A::AbstractVector)
-    newsize = isqrt(length(A))
-    return reshape(A, newsize, newsize)
-end
+vec2mat(A::AbstractVector, m::Int, n::Int) = reshape(A, m, n)
 
 @doc raw"""
     vec2mat(A::QuantumObject)
@@ -275,7 +272,11 @@ Convert a quantum object from vector ([`OperatorKet`](@ref)-type) to matrix ([`O
 !!! note
     `vector_to_operator` is a synonym of `vec2mat`.
 """
-vec2mat(A::QuantumObject{OperatorKet, <:Dimensions{<:LiouvilleSpace, Space}}) = QuantumObject(vec2mat(A.data), Operator(), A.dimensions.to.op_dims)
+function vec2mat(A::QuantumObject{OperatorKet, <:Dimensions{<:LiouvilleSpace, Space}})
+    op_dims = A.dimensions.to.op_dims
+    m, n = get_size(op_dims)
+    return QuantumObject(vec2mat(A.data, m, n), Operator(), op_dims)
+end
 
 @doc raw"""
     mat2vec(A::QuantumObject)

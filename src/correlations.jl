@@ -120,7 +120,7 @@ function correlation_2op_2t(
         reverse::Bool = false,
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
-    C = eye(get_size(H.dimensions)[1], dims = H.dimensions)
+    C = one(A) # same as qeye_like(A), use A instead of H (cause H might be SuperOperator)
     if reverse
         corr = correlation_3op_2t(H, ψ0, tlist, τlist, c_ops, A, B, C; kwargs...)
     else
