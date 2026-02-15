@@ -19,8 +19,10 @@ end
 ```@docs
 Dimensions
 AbstractSpace
+AbstractSuperSpace
 Space
 TensorSpace
+LiouvilleSpace
 EnrSpace
 AbstractQuantumObject
 Bra

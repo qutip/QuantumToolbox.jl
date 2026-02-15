@@ -5,7 +5,7 @@ This file defines the Dimensions structure and also the following space structur
     - LiouvilleSpace
 =#
 
-export Dimensions
+export Dimensions, get_size
 export AbstractSpace, Space, TensorSpace
 export AbstractSuperSpace, LiouvilleSpace
 
@@ -16,7 +16,7 @@ Abstract type for all space structures.
 """
 abstract type AbstractSpace end
 
-"""
+@doc raw"""
     abstract type AbstractSuperSpace
 
 Abstract type of space structures for different SuperOperator representation.
@@ -123,7 +123,7 @@ end
 
 dimensions_to_dims(::Nothing) = nothing # for EigsolveResult.dimensions = nothing
 
-"""
+@doc raw"""
     get_size(dimensions::Dimensions)
 
 Returns the matrix dimensions `(m, n)` of a given [`Dimensions`](@ref).
@@ -231,7 +231,7 @@ dimensions_to_dims(s::TensorSpace) = vcat(map(dimensions_to_dims, s.spaces)...)
 # LiouvilleSpace
 
 @doc raw"""
-    LiouvilleSpace{T <: Dimensions} <: AbstractSpace
+    LiouvilleSpace{T <: Dimensions} <: AbstractSuperSpace
         op_dims::T
     end
 
