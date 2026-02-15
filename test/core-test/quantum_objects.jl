@@ -50,12 +50,26 @@
     @testset "unsupported dims" begin
         @test_throws ArgumentError Qobj(rand(2, 2), dims = 2.0)
         @test_throws ArgumentError Qobj(rand(2, 2), dims = 2.0 + 0.0im)
+        @test_throws ArgumentError Qobj(rand(2, 2), dims = ((((2,),), ((2,),)), (((2,),), ((2,),)))) # 4-level nested tuple
         @test_throws DomainError Qobj(rand(2, 2), dims = 0)
         @test_throws DomainError Qobj(rand(2, 2), dims = (2, -2))
         @test_logs (
             :warn,
             "The argument dims should be a Tuple or a StaticVector for better performance. Try to use `dims = (2, 2)` instead of `dims = [2, 2]`. Alternatively, you can do `import QuantumToolbox: SVector` and use `dims = SVector(2, 2)`.",
         ) Qobj(rand(4, 4), dims = [2, 2])
+    end
+
+    @testset "TensorSpace" begin
+        N = 2
+        s = Space(2)
+        t2 = TensorSpace(s, s)
+        t3 = TensorSpace(s, s, s)
+        t4 = TensorSpace(s, s, s, s)
+        @test TensorSpace(s) == s # don't wrap with TensorSpace if there is only one space
+        @test kron(s, s) == t2
+        @test kron(s, t2) == kron(t2, s) == t3
+        @test kron(t2, t2) == t4
+        @test_throws DomainError TensorSpace()
     end
 
     @testset "Ket and Bra" begin
@@ -117,6 +131,7 @@
         @test isconstant(a3) == true
         @test isunitary(a3) == false
         @test a3.dims == (([10], [10]), ([10], [10]))
+        @test a3 == Qobj(a, type = SuperOperator(), dims = LiouvilleSpace(Dimensions(Space(N), Space(N)))) # also test if `dims = LiouvilleSpace` works
         @test isket(a4) == false
         @test isbra(a4) == false
         @test isoper(a4) == true
@@ -140,6 +155,7 @@
         ρ = Qobj(rand(ComplexF64, 2, 2))
         ρ_ket = operator_to_vector(ρ)
         ρ_bra = ρ_ket'
+        ρ_vec_data = ρ_ket.data
         @test ρ_bra == Qobj(operator_to_vector(ρ.data)', type = OperatorBra())
         @test ρ == vector_to_operator(ρ_ket)
         @test isket(ρ_ket) == false
@@ -158,6 +174,8 @@
         @test isunitary(ρ_bra) == false
         @test ρ_bra.dims == ([1], ([2], [2]))
         @test ρ_ket.dims == (([2], [2]), [1])
+        @test ρ_bra == Qobj(ρ_vec_data', type = OperatorBra(), dims = LiouvilleSpace(Dimensions(Space(2), Space(2)))) # also test if `dims = LiouvilleSpace` works
+        @test ρ_ket == Qobj(ρ_vec_data, type = OperatorKet(), dims = LiouvilleSpace(Dimensions(Space(2), Space(2)))) # also test if `dims = LiouvilleSpace` works
         @test H * ρ ≈ spre(H) * ρ
         @test ρ * H ≈ spost(H) * ρ
         @test H * ρ * H ≈ sprepost(H, H) * ρ
@@ -279,56 +297,70 @@
 
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
         datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
+        dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), a.dimensions)
         a_dims = a.dims
         a_size = size(a)
         a_isherm = isherm(a)
         @test opstring ==
             "\nQuantum Object:   type=Operator()   dims=$a_dims   size=$a_size   ishermitian=$a_isherm\n$datastring"
+        @test dimsensions_string == "Dimensions(Space($N), Space($N))"
 
         # non-square Dimensions
         Gop = tensor(a, ψ)
         opstring = sprint((t, s) -> show(t, "text/plain", s), Gop)
         datastring = sprint((t, s) -> show(t, "text/plain", s), Gop.data)
+        dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), Gop.dimensions)
         Gop_dims = ([N, N], [N, 1])  # Tuple of vectors for non-square operator
         Gop_size = size(Gop)
         Gop_isherm = isherm(Gop)
         @test opstring ==
             "\nQuantum Object:   type=Operator()   dims=$Gop_dims   size=$Gop_size   ishermitian=$Gop_isherm\n$datastring"
+        @test dimsensions_string == "Dimensions(TensorSpace(Space($N), Space($N)), TensorSpace(Space($N), Space(1)))"
 
         a = spre(a)
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
         datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
+        dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), a.dimensions)
         a_dims = a.dims
         a_size = size(a)
         a_isherm = isherm(a)
         @test opstring == "\nQuantum Object:   type=SuperOperator()   dims=$a_dims   size=$a_size\n$datastring"
+        @test dimsensions_string == "Dimensions(LiouvilleSpace(Dimensions(Space($N), Space($N))), LiouvilleSpace(Dimensions(Space($N), Space($N))))"
 
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
+        dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), ψ.dimensions)
         ψ_dims = ψ.dims
         ψ_size = size(ψ)
         @test opstring == "\nQuantum Object:   type=Ket()   dims=$ψ_dims   size=$ψ_size\n$datastring"
+        @test dimsensions_string == "Dimensions(Space($N), Space(1))"
 
         ψ = ψ'
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
+        dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), ψ.dimensions)
         ψ_dims = ψ.dims
         ψ_size = size(ψ)
         @test opstring == "\nQuantum Object:   type=Bra()   dims=$ψ_dims   size=$ψ_size\n$datastring"
+        @test dimsensions_string == "Dimensions(Space(1), Space($N))"
 
         ψ2 = Qobj(rand(ComplexF64, 4), type = OperatorKet())
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
+        dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), ψ2.dimensions)
         ψ2_dims = ψ2.dims
         ψ2_size = size(ψ2)
         @test opstring == "\nQuantum Object:   type=OperatorKet()   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+        @test dimsensions_string == "Dimensions(LiouvilleSpace(Dimensions(Space(2), Space(2))), Space(1))"
 
         ψ2 = ψ2'
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
+        dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), ψ2.dimensions)
         ψ2_dims = ψ2.dims
         ψ2_size = size(ψ2)
         @test opstring == "\nQuantum Object:   type=OperatorBra()   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
+        @test dimsensions_string == "Dimensions(Space(1), LiouvilleSpace(Dimensions(Space(2), Space(2))))"
     end
 
     @testset "matrix element" begin
@@ -783,6 +815,7 @@
         correct_dims = [3, 5, 4, 2]
         wrong_order1 = [1]
         wrong_order2 = [2, 3, 4, 5]
+        wrong_state = Qobj(rand(2 * 3 * 1, 4 * 5), dims = ((2, 3, 1), (4, 5)))
         @test ket_bdca ≈ tensor(ket_b, ket_d, ket_c, ket_a)
         @test bra_bdca ≈ tensor(bra_b, bra_d, bra_c, bra_a)
         @test op_bdca ≈ tensor(op_b, op_d, op_c, op_a)
@@ -798,6 +831,7 @@
         @test_throws ArgumentError permute(bra_bdca, wrong_order2)
         @test_throws ArgumentError permute(op_bdca, wrong_order1)
         @test_throws ArgumentError permute(op_bdca, wrong_order2)
+        @test_throws ArgumentError permute(wrong_state, (2, 1, 3))
 
         # non-square Dimensions
         Gop_d = Qobj(rand(ComplexF64, 5, 6))

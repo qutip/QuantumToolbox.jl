@@ -119,12 +119,6 @@ Base.isapprox(A::AbstractQuantumObject, B::AbstractQuantumObject; kwargs...) =
 Base.:(==)(A::AbstractQuantumObject, B::AbstractQuantumObject) =
     (A.type == B.type) && (A.dimensions == B.dimensions) && (A.data == B.data)
 
-function check_dimensions(dimensions_list::NTuple{N, Dimensions}) where {N}
-    allequal(dimensions_list) ||
-        throw(DimensionMismatch("The quantum objects should have the same Hilbert `dimensions`."))
-    return nothing
-end
-
 function check_dimensions(Qobj_tuple::NTuple{N, AbstractQuantumObject}) where {N}
     dimensions_list = map(A -> A.dimensions, Qobj_tuple)
     allequal(dimensions_list) ||
