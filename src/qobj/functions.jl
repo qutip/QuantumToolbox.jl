@@ -262,6 +262,10 @@ end
 Converts a vector to a matrix with size `(m, n)`. If `m` and `n` are not specified, both `m` and `n` are automatically set as `isqrt(length(A))`.
 """
 vec2mat(A::AbstractVector, m::Int, n::Int) = reshape(A, m, n)
+function vec2mat(A::AbstractVector)
+    newsize = isqrt(length(A))
+    return vec2mat(A, newsize, newsize)
+end
 
 @doc raw"""
     vec2mat(A::QuantumObject)
