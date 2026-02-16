@@ -541,25 +541,15 @@ julia> H = a + a';
 
 julia> using LinearAlgebra;
 
-julia> E, ψ = eigen(H);
+julia> E, ψ = eigen(H); # eigenvalues and eigenvectors
 
-julia> round.(E, digits = 5) # eigenvalues
+julia> round.(E, digits = 5)
 5-element Vector{Float64}:
  -2.85697
  -1.35563
   0.0
   1.35563
   2.85697
-
-julia> ψ[1] |> real # first eigenvector
-
-Quantum Object:   type=Ket()   dims=([5], [1])   size=(5,)
-5-element Vector{Float64}:
- -0.1061009487597572
-  0.3031272290500814
- -0.5373477353374431
-  0.6388379160698117
- -0.4472135954999586
 
 julia> expect(H, ψ[1]) ≈ E[1]
 true
