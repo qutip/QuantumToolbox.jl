@@ -149,7 +149,7 @@ function dfd_mesolveProblem(
         tol_list::Vector{<:Number} = fill(1.0e-8, length(maxdims)),
         kwargs...,
     ) where {T2 <: Integer, StateOpType <: Union{Ket, Operator}}
-    length(ψ0.dimensions) != length(maxdims) &&
+    length(ψ0.dimensions.to) != length(maxdims) &&
         throw(DimensionMismatch("`dim_list` and `maxdims` do not have the same dimension."))
 
     # Use the "to" dimensions for the dim_list (Hilbert space dimensions)
@@ -364,7 +364,7 @@ function dsf_mesolveProblem(
     αt_list = convert(Vector{T}, α0_l)
     op_l_vec = map(op -> mat2vec(get_data(op)'), op_list)
 
-    dsf_identity = Eye(get_hilbert_size(H₀.dimensions)[1])
+    dsf_identity = Eye(get_size(H₀.dimensions)[1])
 
     # Create the Krylov subspace just for initialize
     expv_cache = arnoldi(kron(dsf_identity, dsf_identity), mat2vec(ket2dm(ψ0).data), krylov_dim)

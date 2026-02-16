@@ -35,21 +35,18 @@ The function returns a real number if `O` is of `Hermitian` type or `Symmetric` 
 ```jldoctest
 julia> ψ1 = 1 / √2 * (fock(10,2) + fock(10,4));
 
-julia> ψ2 = coherent(10, 0.6 + 0.8im);
+julia> ψ2 = coherent(10, 0.6);
 
 julia> a = destroy(10);
 
-julia> expect(a' * a, ψ1) |> round
-3.0 + 0.0im
-
-julia> expect(Hermitian(a' * a), ψ1) |> round
+julia> expect(a' * a, ψ1) |> real |> round
 3.0
 
-julia> round.(expect([a' * a, a' + a, a], [ψ1, ψ2]), digits = 1)
-3×2 Matrix{ComplexF64}:
- 3.0+0.0im  1.0+0.0im
- 0.0+0.0im  1.2-0.0im
- 0.0+0.0im  0.6+0.8im
+julia> expect([a' * a, a' + a, a], [ψ1, ψ2]) |> real
+3×2 Matrix{Float64}:
+ 3.0  0.36
+ 0.0  1.2
+ 0.0  0.6
 ```
 """
 expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Ket}) = dot(ψ, O, ψ) # check_mul_dimensions in dot
@@ -58,19 +55,19 @@ expect(O::QuantumObject{Operator}, ρ::QuantumObject{Operator}) = tr(O * ρ) # c
 expect(
     O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ψ::QuantumObject{Ket},
-) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = real(dot(ψ, O, ψ)) # check_mul_dimensions in dot
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(dot(ψ, O, ψ)) # check_mul_dimensions in dot
 expect(
     O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ψ::QuantumObject{Bra},
-) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = real(expect(O, ψ'))
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(expect(O, ψ'))
 expect(
     O::QuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}},
     ρ::QuantumObject{Operator},
-) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = real(tr(O * ρ)) # check_mul_dimensions in :(*)
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = real(tr(O * ρ)) # check_mul_dimensions in :(*)
 expect(
     O::AbstractVector{<:AbstractQuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}}},
     ρ::QuantumObject,
-) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real} = expect.(O, Ref(ρ))
+) where {DimsType <: Dimensions, TF <: Number, TR <: Real} = expect.(O, Ref(ρ))
 function expect(O::AbstractVector{<:AbstractQuantumObject{Operator}}, ρ::QuantumObject)
     result = Vector{ComplexF64}(undef, length(O))
     result .= expect.(O, Ref(ρ))
@@ -80,7 +77,7 @@ expect(O::AbstractQuantumObject{Operator}, ρ::AbstractVector{<:QuantumObject}) 
 function expect(
         O::AbstractVector{<:AbstractQuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}}},
         ρ::AbstractVector{<:QuantumObject},
-    ) where {DimsType <: AbstractDimensions, TF <: Number, TR <: Real}
+    ) where {DimsType <: Dimensions, TF <: Number, TR <: Real}
     N_ops = length(O)
     result = Matrix{Float64}(undef, N_ops, length(ρ))
     for i in 1:N_ops
@@ -191,18 +188,39 @@ julia> a.dims, O.dims
 (([20], [20]), ([20, 20], [20, 20]))
 ```
 """
-function Base.kron(
-        A::AbstractQuantumObject{OpType},
-        B::AbstractQuantumObject{OpType},
-    ) where {OpType <: Union{Ket, Bra, Operator}}
+function Base.kron(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
     QType = promote_op_type(A, B)
     _lazy_tensor_warning(A.data, B.data)
     return QType(
         kron(A.data, B.data),
-        A.type,
-        ProductDimensions(
-            (A.dimensions.to..., B.dimensions.to...),
-            (A.dimensions.from..., B.dimensions.from...),
+        Operator(),
+        Dimensions(
+            kron(A.dimensions.to, B.dimensions.to),
+            kron(A.dimensions.from, B.dimensions.from),
+        ),
+    )
+end
+function Base.kron(A::AbstractQuantumObject{Ket}, B::AbstractQuantumObject{Ket})
+    QType = promote_op_type(A, B)
+    _lazy_tensor_warning(A.data, B.data)
+    return QType(
+        kron(A.data, B.data),
+        Ket(),
+        Dimensions(
+            kron(A.dimensions.to, B.dimensions.to),
+            Space(1),
+        ),
+    )
+end
+function Base.kron(A::AbstractQuantumObject{Bra}, B::AbstractQuantumObject{Bra})
+    QType = promote_op_type(A, B)
+    _lazy_tensor_warning(A.data, B.data)
+    return QType(
+        kron(A.data, B.data),
+        Bra(),
+        Dimensions(
+            Space(1),
+            kron(A.dimensions.from, B.dimensions.from),
         ),
     )
 end
@@ -218,9 +236,9 @@ for AOpType in (:Ket, :Bra, :Operator)
                     return QType(
                         kron(A.data, B.data),
                         Operator(),
-                        ProductDimensions(
-                            (A.dimensions.to..., B.dimensions.to...),
-                            (A.dimensions.from..., B.dimensions.from...),
+                        Dimensions(
+                            kron(A.dimensions.to, B.dimensions.to),
+                            kron(A.dimensions.from, B.dimensions.from),
                         ),
                     )
                 end
@@ -236,13 +254,14 @@ function Base.kron(A::Vector{<:AbstractQuantumObject})
 end
 
 @doc raw"""
-    vec2mat(A::AbstractVector)
+    vec2mat(A::AbstractVector, m::Int, n::Int)
 
-Converts a vector to a matrix.
+Converts a vector to a matrix with size `(m, n)`. If `m` and `n` are not specified, both `m` and `n` are automatically set as `isqrt(length(A))`.
 """
+vec2mat(A::AbstractVector, m::Int, n::Int) = reshape(A, m, n)
 function vec2mat(A::AbstractVector)
     newsize = isqrt(length(A))
-    return reshape(A, newsize, newsize)
+    return vec2mat(A, newsize, newsize)
 end
 
 @doc raw"""
@@ -254,7 +273,11 @@ Convert a quantum object from vector ([`OperatorKet`](@ref)-type) to matrix ([`O
 !!! note
     `vector_to_operator` is a synonym of `vec2mat`.
 """
-vec2mat(A::QuantumObject{OperatorKet}) = QuantumObject(vec2mat(A.data), Operator(), A.dimensions.to)
+function vec2mat(A::QuantumObject{OperatorKet, <:Dimensions{<:LiouvilleSpace, Space}})
+    op_dims = A.dimensions.to.op_dims
+    m, n = get_size(op_dims)
+    return QuantumObject(vec2mat(A.data, m, n), Operator(), op_dims)
+end
 
 @doc raw"""
     mat2vec(A::QuantumObject)
@@ -265,10 +288,7 @@ Convert a quantum object from matrix ([`Operator`](@ref)-type) to vector ([`Oper
 !!! note
     `operator_to_vector` is a synonym of `mat2vec`.
 """
-function mat2vec(A::QuantumObject{Operator})
-    isendomorphism(A.dimensions) || throw(ArgumentError("mat2vec requires a square Operator (same to and from dimensions)."))
-    return QuantumObject(mat2vec(A.data), OperatorKet(), A.dimensions.to)
-end
+mat2vec(A::QuantumObject{Operator}) = QuantumObject(mat2vec(A.data), OperatorKet(), Dimensions(LiouvilleSpace(A.dimensions), Space(1)))
 
 @doc raw"""
     mat2vec(A::AbstractMatrix)

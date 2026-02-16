@@ -20,7 +20,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
 - `times::AbstractVector`: The time list of the evolution.
 - `states_type::QuantumObjectType`: The type of the quantum states during the evolution (e.g., [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref)).
-- `dimensions::AbstractDimensions`: The dimensions of the Hilbert space.
+- `dimensions::Dimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
 
 !!! note "`dims` property"
@@ -28,7 +28,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 """
 struct TimeEvolutionProblem{
         ST <: QuantumObjectType,
-        DT <: AbstractDimensions,
+        DT <: Dimensions,
         PT <: AbstractSciMLProblem,
         TT <: AbstractVector,
         KWT,
@@ -50,6 +50,30 @@ function Base.getproperty(prob::TimeEvolutionProblem, key::Symbol)
 end
 
 TimeEvolutionProblem(prob, times, states_type, dims) = TimeEvolutionProblem(prob, times, states_type, dims, nothing)
+
+raw"""
+A helper function to `check_mul_dimensions` and also generate the new type and dimensions for solutions
+"""
+function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{Operator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{Ket, Operator}}
+    !isendomorphism(H.dimensions) &&
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for time evolution solvers: dims = $(_get_dims_string(H.dimensions))"))
+    check_mul_dimensions(H, ψ0)
+    return to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+end
+function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{Ket, Operator}}
+    !isendomorphism(H.dimensions) &&
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for time evolution solvers: dims = $(_get_dims_string(H.dimensions))"))
+    ρ0 = ket2dm(ψ0)
+    ρ0_vec = mat2vec(ρ0)
+    check_mul_dimensions(H, ρ0_vec)
+    return to_dense(T, ρ0_vec.data), Operator(), ρ0.dimensions
+end
+function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{OperatorKet, SuperOperator}}
+    !isendomorphism(H.dimensions) &&
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for time evolution solvers: dims = $(_get_dims_string(H.dimensions))"))
+    check_mul_dimensions(H, ψ0)
+    return to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+end
 
 @doc raw"""
     struct TimeEvolutionSol
@@ -604,10 +628,10 @@ function liouvillian_dressed_nonsecular(
     )
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
 
-    dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(N_trunc)
-    final_size = get_hilbert_size(dims)[1]
+    dims = isnothing(N_trunc) ? H.dimensions : Dimensions(N_trunc)
+    final_size = get_size(dims)[1]
     # U is a non-square transformation matrix from original basis to truncated eigenbasis
-    final_dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(H.dimensions.to, (HilbertSpace(N_trunc),))
+    final_dims = isnothing(N_trunc) ? H.dimensions : Dimensions(H.dimensions.to, Space(N_trunc))
     result = eigen(H)
     E = real.(result.values[1:final_size])
     U = QuantumObject(result.vectors[:, 1:final_size], result.type, final_dims)

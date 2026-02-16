@@ -5,7 +5,7 @@ This file defines the QuantumObjectEvolution (QobjEvo) structure.
 export QuantumObjectEvolution
 
 @doc raw"""
-    struct QuantumObjectEvolution{ObjType<:QuantumObjectType,DimType<:AbstractDimensions,DataType<:AbstractSciMLOperator} <: AbstractQuantumObject{ObjType,DimType,DataType}
+    struct QuantumObjectEvolution{ObjType<:QuantumObjectType,DimType<:Dimensions,DataType<:AbstractSciMLOperator} <: AbstractQuantumObject{ObjType,DimType,DataType}
         data::DataType
         type::ObjType
         dimensions::DimType
@@ -110,7 +110,7 @@ Quantum Object:   type=Operator()   dims=([10, 2], [10, 2])   size=(20, 20)   is
 """
 struct QuantumObjectEvolution{
         ObjType <: Union{Operator, SuperOperator},
-        DimType <: AbstractDimensions,
+        DimType <: Dimensions,
         DataType <: AbstractSciMLOperator,
     } <: AbstractQuantumObject{ObjType, DimType, DataType}
     data::DataType
@@ -124,7 +124,7 @@ struct QuantumObjectEvolution{
 
         dimensions = _gen_dimensions(type, dims)
 
-        _check_QuantumObject(type, dimensions, size(data, 1), size(data, 2))
+        _check_QuantumObject(type, dimensions, _gen_data_size(data))
 
         return new{ObjType, typeof(dimensions), DT}(data, type, dimensions)
     end
@@ -163,7 +163,9 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type = Operator(), 
         if type isa Operator
             dims = ((size(data, 1),), (size(data, 2),))
         elseif type isa SuperOperator
-            dims = ((isqrt(size(data, 1)),), (isqrt(size(data, 2)),))
+            sm = isqrt(size(data, 1))
+            sn = isqrt(size(data, 2))
+            dims = (((sm,), (sm,)), ((sn,), (sn,)))
         end
     end
 
@@ -477,9 +479,6 @@ function (A::QuantumObjectEvolution)(
         p,
         t,
     ) where {QobjType <: Union{Ket, OperatorKet}}
-    check_mul_dimensions(A, ψin)
-    check_dimensions(ψout, ψin)
-
     if isoper(A) && isoperket(ψin)
         throw(ArgumentError("The input state must be a Ket if the QuantumObjectEvolution object is an Operator."))
     elseif issuper(A) && isket(ψin)
@@ -489,6 +488,8 @@ function (A::QuantumObjectEvolution)(
             ),
         )
     end
+    check_mul_dimensions(A, ψin)
+    check_dimensions(ψout, ψin)
 
     A.data(ψout.data, ψin.data, nothing, p, t)
 

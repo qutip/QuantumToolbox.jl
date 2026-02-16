@@ -69,7 +69,15 @@ function spectrum(
         solver::SpectrumSolver = ExponentialSeries(),
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}}
-    return _spectrum(liouvillian(H, c_ops), ωlist, A, B, solver; kwargs...)
+
+    !isendomorphism(H.dimensions) &&
+        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for spectrum: dims = $(_get_dims_string(H.dimensions))"))
+
+    L = liouvillian(H, c_ops)
+    check_mul_dimensions(L, A)
+    check_dimensions(A, B)
+
+    return _spectrum(L, ωlist, A, B, solver; kwargs...)
 end
 
 function _spectrum_get_rates_vecs_ss(L, solver::ExponentialSeries{T, true}) where {T}
@@ -99,8 +107,6 @@ function _spectrum(
         solver::ExponentialSeries;
         kwargs...,
     )
-    check_dimensions(L, A, B)
-
     rates, vecs, ρss = _spectrum_get_rates_vecs_ss(L, solver)
 
     ρ0 = B.data * ρss
@@ -124,8 +130,6 @@ function _spectrum(
         solver::PseudoInverse;
         kwargs...,
     )
-    check_dimensions(L, A, B)
-
     ωList = convert(Vector{_float_type(L)}, ωlist) # Convert it to support GPUs and avoid type instabilities
     Length = length(ωList)
     spec = Vector{_float_type(L)}(undef, Length)
@@ -135,7 +139,7 @@ function _spectrum(
     b = (spre(B) * ρss).data
 
     # multiply by operator A on the left (spre) and then perform trace operation
-    D = get_hilbert_size(L.dimensions)[1]
+    D = size(A, 1)
     _tr = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D - 1)], ones(_complex_float_type(L), D)) # same as vec(system_identity_matrix)
     _tr_A = transpose(_tr) * spre(A).data
 
@@ -165,8 +169,6 @@ function _spectrum(
         B::QuantumObject{Operator},
         solver::Lanczos,
     )
-    check_dimensions(L, A, B)
-
     # Define type shortcuts
     fT = _float_type(L)
     cT = _complex_float_type(L)
@@ -181,7 +183,7 @@ function _spectrum(
     vT = typeof(vₖ)
 
     # Calculate <w₁| = <I|A
-    D = get_hilbert_size(L.dimensions)[1]
+    D = size(A, 1)
     Ivec = SparseVector(D^2, [1 + n * (D + 1) for n in 0:(D - 1)], ones(cT, D)) # same as vec(system_identity_matrix)
     wₖ = spre(A).data' * vT(Ivec)
 

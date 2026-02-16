@@ -84,7 +84,10 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 
 See also [`spost`](@ref) and [`sprepost`](@ref).
 """
-spre(A::AbstractQuantumObject{Operator}) = get_typename_wrapper(A)(_spre(A.data), SuperOperator(), A.dimensions)
+function spre(A::AbstractQuantumObject{Operator})
+    Lspace = LiouvilleSpace(A.dimensions)
+    return get_typename_wrapper(A)(_spre(A.data), SuperOperator(), Dimensions(Lspace, Lspace))
+end
 
 @doc raw"""
     spost(B::AbstractQuantumObject)
@@ -100,7 +103,10 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 
 See also [`spre`](@ref) and [`sprepost`](@ref).
 """
-spost(B::AbstractQuantumObject{Operator}) = get_typename_wrapper(B)(_spost(B.data), SuperOperator(), B.dimensions)
+function spost(B::AbstractQuantumObject{Operator})
+    Lspace = LiouvilleSpace(B.dimensions)
+    return get_typename_wrapper(B)(_spost(B.data), SuperOperator(), Dimensions(Lspace, Lspace))
+end
 
 @doc raw"""
     sprepost(A::AbstractQuantumObject, B::AbstractQuantumObject)
@@ -118,7 +124,8 @@ See also [`spre`](@ref) and [`spost`](@ref).
 """
 function sprepost(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
     check_dimensions(A, B)
-    return promote_op_type(A, B)(_sprepost(A.data, B.data), SuperOperator(), A.dimensions)
+    Lspace = LiouvilleSpace(A.dimensions)
+    return promote_op_type(A, B)(_sprepost(A.data, B.data), SuperOperator(), Dimensions(Lspace, Lspace))
 end
 
 @doc raw"""
@@ -133,8 +140,10 @@ Returns the Lindblad [`SuperOperator`](@ref) defined as
 
 See also [`spre`](@ref), [`spost`](@ref), and [`sprepost`](@ref).
 """
-lindblad_dissipator(O::AbstractQuantumObject{Operator}) =
-    get_typename_wrapper(O)(_lindblad_dissipator(O.data), SuperOperator(), O.dimensions)
+function lindblad_dissipator(O::AbstractQuantumObject{Operator})
+    Lspace = LiouvilleSpace(O.dimensions)
+    return get_typename_wrapper(O)(_lindblad_dissipator(O.data), SuperOperator(), Dimensions(Lspace, Lspace))
+end
 
 # It is already a SuperOperator
 lindblad_dissipator(O::AbstractQuantumObject{SuperOperator}) = O
@@ -187,8 +196,10 @@ liouvillian(H::Nothing, c_ops::Union{AbstractVector, Tuple}; kwargs...) = _sum_l
 
 liouvillian(H::Nothing, c_ops::Nothing; kwargs...) = 0
 
-liouvillian(H::AbstractQuantumObject{Operator}; assume_hermitian::Union{Bool, Val} = Val(true)) =
-    get_typename_wrapper(H)(_liouvillian(H.data, makeVal(assume_hermitian)), SuperOperator(), H.dimensions)
+function liouvillian(H::AbstractQuantumObject{Operator}; assume_hermitian::Union{Bool, Val} = Val(true))
+    Lspace = LiouvilleSpace(H.dimensions)
+    return get_typename_wrapper(H)(_liouvillian(H.data, makeVal(assume_hermitian)), SuperOperator(), Dimensions(Lspace, Lspace))
+end
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}; kwargs...) = H
 _sum_lindblad_dissipators(c_ops::Nothing) = 0

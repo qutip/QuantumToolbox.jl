@@ -17,10 +17,13 @@ end
 ## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 
 ```@docs
+Dimensions
 AbstractSpace
-HilbertSpace
+AbstractSuperSpace
+Space
+TensorSpace
+LiouvilleSpace
 EnrSpace
-ProductDimensions
 AbstractQuantumObject
 Bra
 Ket
@@ -325,10 +328,9 @@ n_thermal
 PhysicalConstants
 convert_unit
 row_major_reshape
+get_size
 meshgrid
 enr_state_dictionaries
-get_hilbert_size
-get_liouville_size
 ```
 
 ## [Visualization](@id doc-API:Visualization)

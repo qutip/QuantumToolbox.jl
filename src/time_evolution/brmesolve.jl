@@ -119,12 +119,12 @@ function brterm(
 end
 
 function _brterm(
-        rst::EigsolveResult,
-        a_op::T,
+        rst::EigsolveResult{T1, T2, Operator, DimType},
+        a_op::Ta,
         spectra::F,
         sec_cutoff::Real,
         fock_basis_hamiltonian::Union{Bool, Val},
-    ) where {T <: QuantumObject{Operator}, F <: Function}
+    ) where {T1, T2, DimType <: Dimensions, Ta <: QuantumObject{Operator}, F <: Function}
     _check_br_spectra(spectra)
 
     U = rst.vectors
@@ -172,7 +172,8 @@ function _brterm(
         out .*= M_cut
     end
 
-    return QuantumObject(out, SuperOperator(), rst.dimensions)
+    lspace = LiouvilleSpace(rst.dimensions)
+    return QuantumObject(out, SuperOperator(), Dimensions(lspace, lspace))
 end
 
 @doc raw"""

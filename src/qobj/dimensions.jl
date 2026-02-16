@@ -1,100 +1,121 @@
 #=
-This file defines the ProductDimensions structure, which can describe composite Hilbert spaces.
+This file defines the Dimensions structure and also the following space structures:
+    - Space
+    - TensorSpace
+    - LiouvilleSpace
 =#
 
-export AbstractDimensions, ProductDimensions
-export get_hilbert_size, get_liouville_size
-
-abstract type AbstractDimensions{M, N} end
+export Dimensions, get_size
+export AbstractSpace, Space, TensorSpace
+export AbstractSuperSpace, LiouvilleSpace
 
 @doc raw"""
-    struct ProductDimensions{M, N, T1<:Tuple, T2<:Tuple} <: AbstractDimensions{M, N}
+    abstract type AbstractSpace
+
+Abstract type for all space structures.
+"""
+abstract type AbstractSpace end
+
+@doc raw"""
+    abstract type AbstractSuperSpace
+
+Abstract type of space structures for different SuperOperator representation.
+"""
+abstract type AbstractSuperSpace <: AbstractSpace end
+
+##########################################
+# Dimensions
+
+@doc raw"""
+    struct Dimensions{T1 <: AbstractSpace, T2 <: AbstractSpace}
         to::T1
         from::T2
     end
 
 A structure that embodies the left-hand side (`to`) and right-hand side (`from`) [`AbstractSpace`](@ref) of a quantum object.
 
-For non-square operators, `to` is related to the row dimensions and `from` is related to the column dimensions.
+The fields `to` and `from` are related to the left (row) and right (column) dimensions, respectively.
 
 # Constructors
 
-- `ProductDimensions(to, from)`: Create with explicit `to` and `from` spaces (tuples of `AbstractSpace`)
-- `ProductDimensions(dims)`: Create square dimensions where `to == from`
-- `ProductDimensions((to_dims, from_dims))`: Create non-square dimensions from a 2-element tuple of integer vectors
+- `Dimensions(to, from)`: Create `Dimensions` with explicit `to` and `from` [`AbstractSpace`](@ref)
+- `Dimensions(dims)`: Create `Dimensions` where `to == from`
+- `Dimensions((to_dims, from_dims))`: Create `Dimensions` from a 2-element tuple of integer tuple/vectors
 
 # Examples
 
 ```jldoctest
-julia> ProductDimensions(3)  # Single 3-dimensional Hilbert space
-ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}((HilbertSpace(3),), (HilbertSpace(3),))
+julia> Dimensions(3)  # Single 3-dimensional Hilbert space
+Dimensions(Space(3), Space(3))
 
-julia> ProductDimensions((2, 3))  # Composite 2⊗3 Hilbert space (square)
-ProductDimensions{2, 2, Tuple{HilbertSpace, HilbertSpace}, Tuple{HilbertSpace, HilbertSpace}}((HilbertSpace(2), HilbertSpace(3)), (HilbertSpace(2), HilbertSpace(3)))
+julia> Dimensions((2, 3))  # Composite 2⊗3 Hilbert space (square)
+Dimensions(TensorSpace(Space(2), Space(3)), TensorSpace(Space(2), Space(3)))
 
-julia> ProductDimensions(((2, 3), (4,)))  # Non-square: maps from 4-dim to 2⊗3=6-dim
-ProductDimensions{2, 1, Tuple{HilbertSpace, HilbertSpace}, Tuple{HilbertSpace}}((HilbertSpace(2), HilbertSpace(3)), (HilbertSpace(4),))
+julia> Dimensions(((2, 3), (4,)))  # Non-square: maps from 4-dim to 2⊗3=6-dim
+Dimensions(TensorSpace(Space(2), Space(3)), Space(4))
 ```
 """
-struct ProductDimensions{M, N, T1 <: Tuple, T2 <: Tuple} <: AbstractDimensions{M, N}
+struct Dimensions{T1 <: AbstractSpace, T2 <: AbstractSpace}
     to::T1   # space acting on the left (rows)
     from::T2 # space acting on the right (columns)
-
-    # make sure the elements in the tuple are all AbstractSpace
-    function ProductDimensions(to::NTuple{M, AbstractSpace}, from::NTuple{N, AbstractSpace}) where {M, N}
-        return new{M, N, typeof(to), typeof(from)}(to, from)
-    end
 end
 
-# Square dimensions constructor from tuple of AbstractSpace
-function ProductDimensions(dims::NTuple{N, AbstractSpace}) where {N}
-    return ProductDimensions(dims, dims)
+# by defining alias type, it is easier to represent the nested dims structure:
+const DimsListType{T1, T2} = Tuple{<:VectorOrTuple{T1}, <:VectorOrTuple{T2}}
+
+function _list_to_tensor_space(dims::VectorOrTuple{T}, argname::String) where {T <: Integer}
+    _non_static_array_warning(argname, dims)
+    return TensorSpace(Tuple(Space.(dims)))
 end
 
-# Square dimensions from integer tuple/vector
-function ProductDimensions(dims::Union{AbstractVector{T}, NTuple{N, T}}) where {T <: Integer, N}
-    _non_static_array_warning("dims", dims)
+# endomorphism dimensions from integer tuple/vector
+function Dimensions(dims::VectorOrTuple{T}) where {T <: Integer}
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
 
-    spaces = Tuple(HilbertSpace.(dims))
-    return ProductDimensions(spaces, spaces)
+    return Dimensions(_list_to_tensor_space(dims, "dims"))
 end
 
-# Square dimensions from single integer
-ProductDimensions(dims::Int) = ProductDimensions((HilbertSpace(dims),))
+# endomorphism dimensions from single integer
+Dimensions(dims::Int) = Dimensions(Space(dims))
 
-# Square dimensions from single AbstractSpace
-ProductDimensions(dims::DimType) where {DimType <: AbstractSpace} = ProductDimensions((dims,))
+# endomorphism dimensions from single AbstractSpace
+Dimensions(dims::AbstractSpace) = Dimensions(dims, dims)
 
-# Non-square dimensions from 2-element tuple of integer vectors/tuples
-function ProductDimensions(dims::Union{AbstractVector{T}, NTuple{2, T}}) where {T <: Union{AbstractVector, NTuple}}
+# Non-endomorphism dimensions from 2-element tuple of integer vectors/tuples
+function Dimensions(dims::DimsListType{T, T}) where {T <: Integer}
     (length(dims) != 2) && throw(ArgumentError("Invalid dims = $dims"))
-
-    _non_static_array_warning("dims[1]", dims[1])
-    _non_static_array_warning("dims[2]", dims[2])
 
     L1 = length(dims[1])
     L2 = length(dims[2])
     (L1 > 0) || throw(DomainError(L1, "The length of `dims[1]` must be larger or equal to 1."))
     (L2 > 0) || throw(DomainError(L2, "The length of `dims[2]` must be larger or equal to 1."))
 
-    return ProductDimensions(Tuple(HilbertSpace.(dims[1])), Tuple(HilbertSpace.(dims[2])))
+    return Dimensions(_list_to_tensor_space(dims[1], "dims[1]"), _list_to_tensor_space(dims[2], "dims[2]"))
 end
 
+# LiouvilleSpace dimensions for OperatorKet/OperatorBra/SuperOperator from 3-level nested tuple/vector of integers
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: Integer} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), _list_to_tensor_space(dims[2], "dims[2]"))
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: Integer, T2 <: VectorOrTuple} = Dimensions(_list_to_tensor_space(dims[1], "dims[1]"), LiouvilleSpace(Dimensions(dims[2])))
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: VectorOrTuple} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), LiouvilleSpace(Dimensions(dims[2])))
+
 # Error for invalid input
-ProductDimensions(dims::Any) = throw(
+Dimensions(dims::Any) = throw(
     ArgumentError(
-        "The argument dims must be a Tuple or a StaticVector of non-zero length and contain only positive integers.",
+        "The argument dims must be a 2-element Tuple with both elements are Tuple or StaticVector of non-zero length and contain only positive integers.",
     ),
 )
 
+function Base.show(io::IO, d::Dimensions)
+    print(io, "Dimensions($(d.to), $(d.from))")
+    return nothing
+end
+
 # Check if dimensions are square (to == from)
-isendomorphism(dimensions::ProductDimensions) = dimensions.to == dimensions.from
+isendomorphism(dimensions::Dimensions) = dimensions.to == dimensions.from
 
 # obtain dims in the type of SVector with integers
-dimensions_to_dims(dimensions::NTuple{N, AbstractSpace}) where {N} = vcat(map(dimensions_to_dims, dimensions)...)
-function dimensions_to_dims(dimensions::ProductDimensions)
+function dimensions_to_dims(dimensions::Dimensions)
     to_dims = dimensions_to_dims(dimensions.to)
     from_dims = dimensions_to_dims(dimensions.from)
     return (to_dims, from_dims)
@@ -102,54 +123,139 @@ end
 
 dimensions_to_dims(::Nothing) = nothing # for EigsolveResult.dimensions = nothing
 
-Base.length(::AbstractDimensions{M, N}) where {M, N} = M  # length refers to the number of subsystems in `to`
+@doc raw"""
+    get_size(dimensions::Dimensions)
 
+Returns the matrix dimensions `(m, n)` of a given [`Dimensions`](@ref).
+
+Returns `(m, n)` where `m` is the product of the `dimensions.to`, and `n` is the product of the `dimensions.from`.
+
+If `dimensions` is an `Integer` or a vector/tuple of `Integer`s, it is automatically treated as `Dimensions(dimensions, dimensions)`.
 """
-    get_hilbert_size(dimensions)
+get_size(dimensions::Dimensions) = (get_size(dimensions.to), get_size(dimensions.from))
+get_size(dimensions::Union{T, VectorOrTuple{T}}) where {T <: Integer} = get_size(Dimensions(dimensions))
 
-Returns the matrix dimensions `(m, n)` of an [`Operator`](@ref) with the given `dimensions`.
-
-Returns `(m, n)` where `m` is the product of the `to` Hilbert space dimensions
-and `n` is the product of the `from` Hilbert space dimensions.
-
-If `dimensions` is an `Integer` or a vector/tuple of `Integer`s, it is automatically treated as square [`ProductDimensions`](@ref).
-"""
-function get_hilbert_size(dimensions::ProductDimensions)
-    m = prod(get_hilbert_size, dimensions.to)
-    n = prod(get_hilbert_size, dimensions.from)
-    return (m, n)
-end
-get_hilbert_size(dimensions::Union{<:Integer, AbstractVector{<:Integer}, NTuple{N, Integer}}) where {N} =
-    get_hilbert_size(ProductDimensions(dimensions))
-
-"""
-    get_liouville_size(dimensions)
-
-Returns the matrix dimensions `(m, n)` of a [`SuperOperator`](@ref) with the given `dimensions`.
-
-Returns `(m, n)` where `m` is the product of the `to` Liouville space dimensions
-and `n` is the product of the `from` Liouville space dimensions.
-(Each Hilbert dimension `d` contributes `d²` to the product.)
-
-If `dimensions` is an `Integer` or a vector/tuple of `Integer`s, it is automatically treated as square [`ProductDimensions`](@ref).
-"""
-function get_liouville_size(dimensions::ProductDimensions)
-    m = prod(get_liouville_size, dimensions.to)
-    n = prod(get_liouville_size, dimensions.from)
-    return (m, n)
-end
-get_liouville_size(dimensions::Union{<:Integer, AbstractVector{<:Integer}, NTuple{N, Integer}}) where {N} =
-    get_liouville_size(ProductDimensions(dimensions))
-
-Base.transpose(dimensions::ProductDimensions) = ProductDimensions(dimensions.from, dimensions.to) # switch `to` and `from`
-Base.adjoint(dimensions::AbstractDimensions) = transpose(dimensions)
+Base.transpose(dimensions::Dimensions) = Dimensions(dimensions.from, dimensions.to) # switch `to` and `from`
+Base.adjoint(dimensions::Dimensions) = transpose(dimensions)
 
 # this is used to show `dims` for Qobj and QobjEvo
-function _get_dims_string(dimensions::ProductDimensions)
+function _get_dims_string(dimensions::Dimensions)
     dims = dimensions_to_dims(dimensions)
     return "($(string(dims[1])), $(string(dims[2])))"
 end
 _get_dims_string(::Nothing) = "nothing" # for EigsolveResult.dimensions = nothing
 
-Base.:(==)(dim1::ProductDimensions, dim2::ProductDimensions) =
-    (dim1.to == dim2.to) && (dim1.from == dim2.from)
+Base.:(==)(dim1::Dimensions, dim2::Dimensions) = (dim1.to == dim2.to) && (dim1.from == dim2.from)
+
+##########################################
+# Space
+
+@doc raw"""
+    struct Space <: AbstractSpace
+        size::Int
+    end
+
+A structure that describes a single space with size equals to `size`.
+"""
+struct Space <: AbstractSpace
+    size::Int
+
+    function Space(size::Int)
+        (size < 1) && throw(DomainError(size, "The size of `Space` must be positive integer (≥ 1)."))
+        return new(size)
+    end
+end
+
+function Base.show(io::IO, s::Space)
+    print(io, "Space($(s.size))")
+    return nothing
+end
+
+Base.length(s::Space) = 1
+
+get_size(s::Space) = s.size
+
+dimensions_to_dims(s::Space) = SVector{1, Int}(s.size)
+
+##########################################
+# TensorSpace
+
+@doc raw"""
+    struct TensorSpace{N, T <: NTuple{N, AbstractSpace}} <: AbstractSpace
+        spaces::T
+    end
+
+A structure that describes a tensor product of `N` spaces, where each space is an element of the tuple `spaces`.
+"""
+struct TensorSpace{N, T <: NTuple{N, AbstractSpace}} <: AbstractSpace
+    spaces::T # a tuple which all elements should be <: AbstractSpace
+
+    function TensorSpace(spaces::T) where {N, T <: NTuple{N, AbstractSpace}}
+        if N < 1
+            throw(DomainError(N, "The number of spaces in `TensorSpace` must be larger or equal to 1."))
+        elseif N == 1
+            return spaces[1] # don't wrap with TensorSpace if there is only one space
+        else
+            return new{N, T}(spaces)
+        end
+    end
+end
+TensorSpace(spaces::AbstractSpace) = spaces # don't wrap with TensorSpace if there is only one space
+TensorSpace(s::AbstractSpace...) = TensorSpace(s) # this allows convenient function call: TensorSpace(s1, s2, ...)
+
+function Base.show(io::IO, s::TensorSpace)
+    print(io, "TensorSpace(")
+    join(io, s.spaces, ", ")
+    print(io, ")")
+    return nothing
+end
+
+# allow iteration over subspaces in TensorSpace
+Base.iterate(s::TensorSpace) = iterate(s.spaces)
+Base.iterate(s::TensorSpace, state) = iterate(s.spaces, state)
+
+Base.getindex(s::TensorSpace, i) = TensorSpace(s.spaces[i]) # this is used for indexing in `permute`
+
+Base.length(::TensorSpace{N}) where {N} = N
+
+get_size(s::TensorSpace) = prod(get_size, s.spaces)
+
+Base.kron(s1::TensorSpace, s2::TensorSpace) = TensorSpace(s1.spaces..., s2.spaces...)
+Base.kron(s1::TensorSpace, s2::AbstractSpace) = TensorSpace(s1.spaces..., s2)
+Base.kron(s1::AbstractSpace, s2::TensorSpace) = TensorSpace(s1, s2.spaces...)
+Base.kron(s1::AbstractSpace, s2::AbstractSpace) = TensorSpace(s1, s2)
+
+dimensions_to_dims(s::TensorSpace) = vcat(map(dimensions_to_dims, s.spaces)...)
+
+##########################################
+# LiouvilleSpace
+
+@doc raw"""
+    LiouvilleSpace{T <: Dimensions} <: AbstractSuperSpace
+        op_dims::T
+    end
+
+A structure that describes the Liouville space which is equivalent (isometrically isomorphic) to the tensor product of the original `oper` with its dual.
+"""
+struct LiouvilleSpace{DT <: Dimensions} <: AbstractSuperSpace
+    op_dims::DT # original operator dimensions
+
+    function LiouvilleSpace(op_dims::Dimensions{T1, T2}) where {T1 <: AbstractSpace, T2 <: AbstractSpace}
+        T1 != T2 && throw(ArgumentError("`LiouvilleSpace` only allows equal `to` and `from` spaces in `Dimensions`."))
+        return new{typeof(op_dims)}(op_dims)
+    end
+end
+
+function Base.show(io::IO, s::LiouvilleSpace)
+    print(io, "LiouvilleSpace(", s.op_dims, ")")
+    return nothing
+end
+
+Base.length(::LiouvilleSpace) = 1
+
+# we somehow need to define :(==) for LiouvilleSpace, otherwise, it doesn't work with EnrSpace
+Base.:(==)(s1::LiouvilleSpace, s2::LiouvilleSpace) = s1.op_dims == s2.op_dims
+
+get_size(s::LiouvilleSpace) = prod(get_size(s.op_dims)) # get_size(Dimensions.to) × get_size(Dimensions.from)
+
+dimensions_to_dims(s::LiouvilleSpace) = dimensions_to_dims(s.op_dims)

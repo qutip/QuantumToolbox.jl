@@ -59,7 +59,7 @@
         @test_throws DimensionMismatch QobjEvo(a, dims = 2)
 
         a = MatrixOperator(rand(ComplexF64, 4, 4))
-        @test QobjEvo(a, type = SuperOperator(), dims = ((2,), (2,))).dimensions.to == (HilbertSpace(2),)
+        @test QobjEvo(a, type = SuperOperator(), dims = (((2,), (2,)), ((2,), (2,)))).dimensions.to == LiouvilleSpace(Dimensions(Space(2), Space(2)))
     end
 
     @testset "Promote Operators Type" begin
