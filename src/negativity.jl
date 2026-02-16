@@ -20,7 +20,7 @@ and ``\Vert \hat{X} \Vert_1=\textrm{Tr}\sqrt{\hat{X}^\dagger \hat{X}}`` is the t
 ```jldoctest
 julia> Ψ = bell_state(0, 0)
 
-Quantum Object:   type=Ket()   dims=([2, 2], [1, 1])   size=(4,)
+Quantum Object:   type=Ket()   dims=([2, 2], [1])   size=(4,)
 4-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
                 0.0 + 0.0im

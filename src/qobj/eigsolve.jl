@@ -39,13 +39,13 @@ vectors:
 
 julia> λ, ψ, U = result;
 
-julia> λ
+julia> λ # eigenvalues
 2-element Vector{Float64}:
  -1.0
   1.0
 
-julia> ψ
-2-element Vector{QuantumObject{Ket, Dimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Vector{ComplexF64}}}:
+julia> ψ # eigenvectors
+2-element Vector{QuantumObject{Ket, Dimensions{Space, Space}, Vector{ComplexF64}}}:
 
 Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
 2-element Vector{ComplexF64}:
@@ -57,7 +57,7 @@ Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
 
-julia> U
+julia> U # the transformation matrix
 2×2 Matrix{ComplexF64}:
  -0.707107+0.0im  0.707107+0.0im
   0.707107+0.0im  0.707107+0.0im
@@ -541,22 +541,33 @@ julia> H = a + a';
 
 julia> using LinearAlgebra;
 
-julia> E, ψ, U = eigen(H)
-EigsolveResult:   type=Operator()   dims=([5], [5])
-values:
+julia> E, ψ, U = eigen(H);
+
+julia> round.(E, digits = 5) # eigenvalues
 5-element Vector{Float64}:
- -2.8569700138728
- -1.3556261799742608
-  1.3322676295501878e-15
-  1.3556261799742677
-  2.8569700138728056
-vectors:
-5×5 Matrix{ComplexF64}:
-  0.106101+0.0im  -0.471249-0.0im  …   0.471249+0.0im  0.106101+0.0im
- -0.303127-0.0im   0.638838+0.0im      0.638838+0.0im  0.303127+0.0im
-  0.537348+0.0im  -0.279149-0.0im      0.279149+0.0im  0.537348+0.0im
- -0.638838-0.0im  -0.303127-0.0im     -0.303127-0.0im  0.638838+0.0im
-  0.447214+0.0im   0.447214+0.0im     -0.447214-0.0im  0.447214+0.0im
+ -2.85697
+ -1.35563
+  0.0
+  1.35563
+  2.85697
+
+julia> ψ[1] |> real # first eigenvector
+
+Quantum Object:   type=Ket()   dims=([5], [1])   size=(5,)
+5-element Vector{Float64}:
+ -0.1061009487597572
+  0.3031272290500814
+ -0.5373477353374431
+  0.6388379160698117
+ -0.4472135954999586
+
+julia> U |> real # the transformation matrix (eigenvectors)
+5×5 Matrix{Float64}:
+ -0.106101   0.471249   0.730297   0.471249  0.106101
+  0.303127  -0.638838   0.0        0.638838  0.303127
+ -0.537348   0.279149  -0.516398   0.279149  0.537348
+  0.638838   0.303127  -0.0       -0.303127  0.638838
+ -0.447214  -0.447214   0.447214  -0.447214  0.447214
 
 julia> expect(H, ψ[1]) ≈ E[1]
 true

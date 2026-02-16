@@ -51,7 +51,7 @@ end
 
 TimeEvolutionProblem(prob, times, states_type, dims) = TimeEvolutionProblem(prob, times, states_type, dims, nothing)
 
-"""
+raw"""
 A helper function to `check_mul_dimensions` and also generate the new type and dimensions for solutions
 """
 function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{Operator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{Ket, Operator}}

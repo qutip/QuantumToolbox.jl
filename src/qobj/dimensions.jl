@@ -38,21 +38,21 @@ The fields `to` and `from` are related to the left (row) and right (column) dime
 
 # Constructors
 
-- `Dimensions(to, from)`: Create with explicit `to` and `from` [`AbstractSpace`](@ref)
-- `Dimensions(dims)`: Create square dimensions where `to == from`
-- `Dimensions((to_dims, from_dims))`: Create non-square dimensions from a 2-element tuple of integer vectors
+- `Dimensions(to, from)`: Create `Dimensions` with explicit `to` and `from` [`AbstractSpace`](@ref)
+- `Dimensions(dims)`: Create `Dimensions` where `to == from`
+- `Dimensions((to_dims, from_dims))`: Create `Dimensions` from a 2-element tuple of integer tuple/vectors
 
 # Examples
 
 ```jldoctest
 julia> Dimensions(3)  # Single 3-dimensional Hilbert space
-Dimensions{1, 1, Tuple{Space}, Tuple{Space}}((Space(3),), (Space(3),))
+Dimensions(Space(3), Space(3))
 
 julia> Dimensions((2, 3))  # Composite 2⊗3 Hilbert space (square)
-Dimensions{2, 2, Tuple{HilbertSpace, HilbertSpace}, Tuple{HilbertSpace, HilbertSpace}}((HilbertSpace(2), HilbertSpace(3)), (HilbertSpace(2), HilbertSpace(3)))
+Dimensions(TensorSpace(Space(2), Space(3)), TensorSpace(Space(2), Space(3)))
 
 julia> Dimensions(((2, 3), (4,)))  # Non-square: maps from 4-dim to 2⊗3=6-dim
-Dimensions{2, 1, Tuple{HilbertSpace, HilbertSpace}, Tuple{HilbertSpace}}((HilbertSpace(2), HilbertSpace(3)), (HilbertSpace(4),))
+Dimensions(TensorSpace(Space(2), Space(3)), Space(4))
 ```
 """
 struct Dimensions{T1 <: AbstractSpace, T2 <: AbstractSpace}

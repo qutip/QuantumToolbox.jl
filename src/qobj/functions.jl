@@ -35,21 +35,18 @@ The function returns a real number if `O` is of `Hermitian` type or `Symmetric` 
 ```jldoctest
 julia> ψ1 = 1 / √2 * (fock(10,2) + fock(10,4));
 
-julia> ψ2 = coherent(10, 0.6 + 0.8im);
+julia> ψ2 = coherent(10, 0.6);
 
 julia> a = destroy(10);
 
-julia> expect(a' * a, ψ1) |> round
-3.0 + 0.0im
-
-julia> expect(Hermitian(a' * a), ψ1) |> round
+julia> expect(a' * a, ψ1) |> real |> round
 3.0
 
-julia> round.(expect([a' * a, a' + a, a], [ψ1, ψ2]), digits = 1)
-3×2 Matrix{ComplexF64}:
- 3.0+0.0im  1.0+0.0im
- 0.0+0.0im  1.2-0.0im
- 0.0+0.0im  0.6+0.8im
+julia> expect([a' * a, a' + a, a], [ψ1, ψ2]) |> real
+3×2 Matrix{Float64}:
+ 3.0  0.36
+ 0.0  1.2
+ 0.0  0.6
 ```
 """
 expect(O::AbstractQuantumObject{Operator}, ψ::QuantumObject{Ket}) = dot(ψ, O, ψ) # check_mul_dimensions in dot
