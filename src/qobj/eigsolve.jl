@@ -541,7 +541,7 @@ julia> H = a + a';
 
 julia> using LinearAlgebra;
 
-julia> E, ψ, U = eigen(H);
+julia> E, ψ = eigen(H);
 
 julia> round.(E, digits = 5) # eigenvalues
 5-element Vector{Float64}:
@@ -560,14 +560,6 @@ Quantum Object:   type=Ket()   dims=([5], [1])   size=(5,)
  -0.5373477353374431
   0.6388379160698117
  -0.4472135954999586
-
-julia> U |> real # the transformation matrix (eigenvectors)
-5×5 Matrix{Float64}:
- -0.106101   0.471249   0.730297   0.471249  0.106101
-  0.303127  -0.638838   0.0        0.638838  0.303127
- -0.537348   0.279149  -0.516398   0.279149  0.537348
-  0.638838   0.303127   0.0       -0.303127  0.638838
- -0.447214  -0.447214   0.447214  -0.447214  0.447214
 
 julia> expect(H, ψ[1]) ≈ E[1]
 true
