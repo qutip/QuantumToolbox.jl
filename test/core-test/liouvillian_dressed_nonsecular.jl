@@ -1,4 +1,4 @@
-@testitem "Generalized Master Equation" begin
+@testitem "Dressed Nonsecular Master Equation" begin
     using LinearAlgebra
 
     N_c = 30

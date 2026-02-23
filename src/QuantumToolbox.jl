@@ -123,6 +123,7 @@ include("time_evolution/sesolve.jl")
 include("time_evolution/mcsolve.jl")
 include("time_evolution/ssesolve.jl")
 include("time_evolution/smesolve.jl")
+include("time_evolution/liouvillian_dressed_nonsecular.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 
 ## Other functionalities
