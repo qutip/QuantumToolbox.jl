@@ -2,7 +2,7 @@ export TimeEvolutionSol
 export TimeEvolutionMultiTrajSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
 export average_states, average_expect, std_expect
 
-export liouvillian_floquet, liouvillian_dressed_nonsecular
+export liouvillian_floquet
 
 default_ode_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-8), reltol = _float_type(T)(1.0e-6), save_everystep = false, save_end = true)
 default_sde_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-3), reltol = _float_type(T)(2.0e-3), save_everystep = false, save_end = true)
@@ -562,121 +562,6 @@ function liouvillian_floquet(
         OpType3 <: Union{Operator, SuperOperator},
     }
     return liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
-end
-
-@doc raw"""
-    liouvillian_dressed_nonsecular(
-        H::QuantumObject{Operator},
-        fields::Vector,
-        T_list::Vector{<:Real};
-        N_trunc::Union{Int,Nothing}=nothing,
-        tol::Real=1e-12,
-        σ_filter::Union{Nothing,Real}=nothing,
-    )
-
-Build the generalized Liouvillian for a system coupled to multiple bosonic baths in the ultrastrong-coupling regime. The Hamiltonian `H` is diagonalized, the system-bath operators in `fields` are projected into the eigenbasis, and thermal jump operators are assembled for each temperature in `T_list`.
-
-# Arguments
-- `H::QuantumObject{Operator}`: System Hamiltonian.
-- `fields::Vector`: Coupling operators that mediate the interaction with each bath; must match the length of `T_list`.
-- `T_list::Vector{<:Real}`: Bath temperatures ordered consistently with `fields`.
-
-# Keyword Arguments
-- `N_trunc::Union{Int,Nothing}`: If provided, truncate the eigenbasis to the first `N_trunc` levels; otherwise use the full dimension of `H`.
-- `tol::Real`: Tolerance passed to sparsification utilities when constructing the filters and dissipators.
-- `σ_filter::Union{Nothing,Real}`: Width of the Gaussian frequency filter. If `nothing`, a heuristic value proportional to the coupling strengths is used.
-
-# Returns
-- `E`: Eigenenergies of `H` (truncated if `N_trunc` is provided).
-- `U`: Eigenvectors of `H` as a [`QuantumObject`](@ref) mapping to the truncated basis.
-- `L`: Generalized Liouvillian [`SuperOperator`](@ref) including the frequency-filtered dissipators.
-
-# References
-- [Settineri2018](@cite)
-"""
-function liouvillian_dressed_nonsecular(
-        H::QuantumObject{Operator},
-        fields::Vector,
-        T_list::Vector{<:Real};
-        N_trunc::Union{Int, Nothing} = nothing,
-        tol::Real = 1.0e-12,
-        σ_filter::Union{Nothing, Real} = nothing,
-    )
-    (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
-
-    dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(N_trunc)
-    final_size = get_hilbert_size(dims)[1]
-    # U is a non-square transformation matrix from original basis to truncated eigenbasis
-    final_dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(H.dimensions.to, (HilbertSpace(N_trunc),))
-    result = eigen(H)
-    E = real.(result.values[1:final_size])
-    U = QuantumObject(result.vectors[:, 1:final_size], result.type, final_dims)
-
-    H_d = QuantumObject(Diagonal(complex(E)), type = Operator(), dims = dims)
-
-    Ω = E' .- E
-    Ωp = triu(to_sparse(Ω, tol), 1)
-
-    # Filter width
-    σ = isnothing(σ_filter) ? 500 * maximum([norm(field) / length(field) for field in fields]) : σ_filter
-
-    L = liouvillian(H_d) + sum(eachindex(fields)) do i
-        # The operator that couples the system to the bath in the eigenbasis
-        X_op = to_sparse((U' * fields[i] * U).data, tol)
-        if ishermitian(fields[i])
-            X_op = (X_op + X_op') / 2 # Make sure it's hermitian
-        end
-
-        # Ohmic reservoir
-        N_th = n_thermal.(Ωp, T_list[i])
-        Sp₀ = QuantumObject(triu(X_op, 1), type = Operator(), dims = dims)
-        Sp₁ = QuantumObject(droptol!((@. Ωp * N_th * Sp₀.data), tol), type = Operator(), dims = dims)
-        Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), type = Operator(), dims = dims)
-        # S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
-
-        # Build the dissipator contribution and apply Gaussian filter in Liouville space
-        D₁ = 1 / 2 * (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁) - spre(Sp₀ * Sp₁') - spost(Sp₁ * Sp₀'))
-        D₂ = 1 / 2 * (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂') - spre(Sp₀' * Sp₂) - spost(Sp₂' * Sp₀))
-
-        _apply_liouville_filter(D₁ + D₂, E, σ, tol)
-    end
-
-    settings.auto_tidyup && tidyup!(L)
-
-    return E, U, L
-end
-
-function _apply_liouville_filter(
-        L::QuantumObject{SuperOperator, DimsType, MT},
-        E::AbstractVector,
-        σ::Real,
-        tol::Real,
-    ) where {DimsType, MT <: AbstractSparseMatrix}
-    data = L.data
-    N = length(E)
-
-    I, J, V = findnz(data)
-
-    # Broadcast the filter computation for GPU compatibility
-    V .*= _liouville_filter_weights.(I, J, N, Ref(E), σ)
-
-    # Reconstruct sparse matrix, filtering out small values
-    mask = abs.(V) .> tol
-    filtered_data = sparse(I[mask], J[mask], V[mask], size(data)...)
-    return QuantumObject(filtered_data, SuperOperator(), L.dimensions)
-end
-
-function _liouville_filter_weights(row::Int, col::Int, N::Int, E::AbstractVector, σ::Real)
-    j, l = _linear_to_subscript(row, N)
-    k, m = _linear_to_subscript(col, N)
-    Ωdiff = (E[j] - E[k]) - (E[l] - E[m])
-    return gaussian(Ωdiff, 0, σ)
-end
-
-function _linear_to_subscript(idx::Int, N::Int)
-    row = mod1(idx, N)
-    col = div(idx - 1, N) + 1
-    return row, col
 end
 
 function _liouvillian_floquet(

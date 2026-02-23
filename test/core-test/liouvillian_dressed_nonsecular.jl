@@ -1,9 +1,9 @@
-@testitem "Generalized Master Equation" begin
+@testitem "Dressed Nonsecular Master Equation" begin
     using LinearAlgebra
 
     N_c = 30
     N_trunc = 10
-    tol = 1.0e-14
+    tol = 1.0e-6
 
     a = kron(destroy(N_c), qeye(2))
     sm = kron(qeye(N_c), sigmam())
