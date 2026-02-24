@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Align with last changes in CUDA.jl v5.9.6+. Use `GPUArrays.AbstractGPUSparseArray` instead of `CUDA.CUSPARSE.AbstractCuSparseArray` to support more GPU backends. ([#625])
 
 
 ## [v0.43.1]
@@ -33,7 +34,6 @@ Release date: 2026-01-12
 
 - Introduce `matrix_heatmap` and `matrix_histogram` for visualizing operators. ([#621])
 - Allow rectangular eigenvector matrices in `liouvillian_generalized` and expand its documentation with proper citation. Rename it to `liouvillian_dressed_nonsecular`. ([#624])
-- Align with last changes in CUDA.jl. Use `GPUArrays.AbstractGPUSparseArray` instead of `CUDA.CUSPARSE.AbstractCuSparseArray` to support more GPU backends. ([#625])
 - Optimize `liouvillian_dressed_nonsecular`: avoid O(N⁴) dense filter matrices. ([#627])
 - Restrict `CUDA.jl` version compatibility to < 5.9.6 due to breaking changes in that release. ([#630])
 - Move from `JuliaFormatter.jl` to `Runic.jl` for code formatting. ([#633])
