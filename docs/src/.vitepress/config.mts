@@ -95,7 +95,7 @@ export default defineConfig({
     sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     socialLinks: [
-      { icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }
+      { icon: 'zulip', link: 'https://quantumtoolbox-jl.zulipchat.com/#narrow/stream/General' }
     ],
     footer: {
       message: 'Made with <a href="https://luxdl.github.io/DocumenterVitepress.jl/dev/" target="_blank"><strong>DocumenterVitepress.jl</strong></a><br>Released under the BSD 3-Clause License. Powered by the <a href="https://www.julialang.org" target="_blank">Julia Programming Language</a>.<br>',
