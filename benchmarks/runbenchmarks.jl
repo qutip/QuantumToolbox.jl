@@ -5,8 +5,9 @@ using QuantumToolbox
 using SciMLBase: EnsembleSerial, EnsembleThreads
 using ForwardDiff
 using Zygote
+using Mooncake
 using Enzyme: Enzyme, Const, Active, Duplicated
-using SciMLSensitivity: BacksolveAdjoint, EnzymeVJP
+using SciMLSensitivity: BacksolveAdjoint, EnzymeVJP, MooncakeVJP
 
 BLAS.set_num_threads(1)
 
