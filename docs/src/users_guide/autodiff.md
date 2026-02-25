@@ -2,7 +2,7 @@
 
 Automatic differentiation (AD) has emerged as a key technique in computational science, enabling exact and efficient computation of derivatives for functions defined by code. Unlike symbolic differentiation, which may produce complex and inefficient expressions, or finite-difference methods, which suffer from numerical instability and poor scalability, AD leverages the chain rule at the level of elementary operations to provide machine-precision gradients with minimal overhead.
 
-In `QuantumToolbox.jl`, we have introduced preliminary support for automatic differentiation. Many of the core functions are compatible with AD engines such as [`Zygote.jl`](https://github.com/FluxML/Zygote.jl), [`Enzyme.jl`](https://github.com/EnzymeAD/Enzyme.jl) or [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl), allowing users to compute gradients of observables or cost functionals involving the time evolution of open quantum systems. Although `QuantumToolbox.jl` was not originally designed with AD in mind, its architecture—rooted in Julia’s multiple dispatch and generic programming model—facilitated the integration of AD capabilities. Many core functions were already compatible with AD engines out of the box.
+In `QuantumToolbox.jl`, we have introduced preliminary support for automatic differentiation. Many of the core functions are compatible with AD engines such as [`Zygote.jl`](https://github.com/FluxML/Zygote.jl), [`Enzyme.jl`](https://github.com/EnzymeAD/Enzyme.jl), [`Mooncake.jl`](https://github.com/chalk-lab/Mooncake.jl), or [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl), allowing users to compute gradients of observables or cost functionals involving the time evolution of open quantum systems. Although `QuantumToolbox.jl` was not originally designed with AD in mind, its architecture—rooted in Julia’s multiple dispatch and generic programming model—facilitated the integration of AD capabilities. Many core functions were already compatible with AD engines out of the box.
 
 !!! warning "Experimental Functionality"
     At present, this functionality is considered experimental and not all parts of the library are AD-compatible. Here we provide a brief overview of the current state of AD support in `QuantumToolbox.jl` and how to use it.
@@ -54,7 +54,7 @@ Our goal is to compute the derivative of the expectation value with respect to t
 \frac{\partial \langle \hat{O}(\mathbf{p}, t) \rangle}{\partial p_j} = \frac{\partial}{\partial p_j} \text{Tr}[\hat{O} \hat{\rho}(\mathbf{p}, t)] \, ,
 ```
 
-and to achieve this, we can use an AD engine like [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) (forward mode) or [`Zygote.jl`](https://github.com/FluxML/Zygote.jl) (reverse mode).
+and to achieve this, we can use an AD engine like [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) (forward mode) or [`Mooncake.jl`](https://github.com/chalk-lab/Mooncake.jl) (reverse mode).
 
 Let's apply this to a simple example of a driven-dissipative quantum harmonic oscillator. The Hamiltonian in the drive frame is given by
 
@@ -81,7 +81,7 @@ with the gradient given by
 \end{pmatrix} \, .
 ```
 
-Although `QuantumToolbox.jl` has the [`steadystate`](@ref) function to directly compute the steady state without explicitly solving the master equation, here we use the [`mesolve`](@ref) function to integrate up to a long time $t_\mathrm{max}$, and then compute the expectation value of the number operator. We will demonstrate how to compute the gradient using both [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) and [`Zygote.jl`](https://github.com/FluxML/Zygote.jl).
+Although `QuantumToolbox.jl` has the [`steadystate`](@ref) function to directly compute the steady state without explicitly solving the master equation, here we use the [`mesolve`](@ref) function to integrate up to a long time $t_\mathrm{max}$, and then compute the expectation value of the number operator. We will demonstrate how to compute the gradient using both [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) and [`Mooncake.jl`](https://github.com/chalk-lab/Mooncake.jl).
 
 ### [Forward Mode AD with ForwardDiff.jl](@id doc:autodiff:forward)
 
@@ -144,7 +144,7 @@ and test if the results match:
 isapprox(grad_exact, grad_fd; atol = 1e-5)
 ```
 
-### [Reverse Mode AD with Zygote.jl](@id doc:autodiff:reverse)
+### [Reverse Mode AD with Mooncake.jl](@id doc:autodiff:reverse)
 
 Reverse-mode differentiation is significantly more challenging than forward-mode when dealing ODEs, as the complexity arises from the need to propagate gradients backward through the entire time evolution of the quantum state.
 
@@ -153,8 +153,9 @@ Reverse-mode differentiation is significantly more challenging than forward-mode
 In order to reverse-differentiate the master equation, we need to define the operators as [`QuantumObjectEvolution`](@ref) objects, which use [`SciMLOperators.jl`](https://github.com/SciML/SciMLOperators.jl) to represent parameter-dependent operators.
 
 ```@example autodiff
-using Zygote
+using Mooncake
 using SciMLSensitivity
+using SciMLSensitivity: MooncakeVJP
 
 # For SciMLSensitivity.jl
 coef_Δ(p, t) = p[1]
@@ -171,25 +172,26 @@ function my_f_mesolve(p)
         tlist,
         progress_bar = Val(false),
         params = p,
-        sensealg = BacksolveAdjoint(autojacvec = EnzymeVJP()),
+        sensealg = BacksolveAdjoint(autojacvec = MooncakeVJP()),
     )
 
     return real(expect(a' * a, sol.states[end]))
 end
 ```
 
-And the gradient can be computed using `Zygote.gradient`:
+And the gradient can be computed with:
 
 ```@example autodiff
-grad_zygote = Zygote.gradient(my_f_mesolve, params)[1]
+grad_cache = Mooncake.prepare_gradient_cache(my_f_mesolve, params)
+grad_mooncake = Mooncake.value_and_gradient!!(grad_cache, my_f_mesolve, params)
 ```
 
-Finally, we can compare the results from [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) and [`Zygote.jl`](https://github.com/FluxML/Zygote.jl):
+Finally, we can compare the results from [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) and [`Mooncake.jl`](https://github.com/chalk-lab/Mooncake.jl):
 
 ```@example autodiff
-isapprox(grad_fd, grad_zygote; atol = 1e-5)
+isapprox(grad_fd, grad_mooncake; atol = 1e-5)
 ```
 
 ## [Conclusion](@id doc:autodiff:conclusion)
 
-In this section, we have explored the integration of automatic differentiation into `QuantumToolbox.jl`, enabling users to compute gradients of observables and cost functionals involving the time evolution of open quantum systems. We demonstrated how to differentiate the master equation using both forward mode with [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) and reverse mode with [`Zygote.jl`](https://github.com/FluxML/Zygote.jl), showcasing the flexibility and power of automatic differentiation in quantum computing applications. AD can be applied to other functions in `QuantumToolbox.jl`, although the support is still experimental and not all functions are guaranteed to be compatible. We encourage users to experiment with AD in their quantum simulations and contribute to the ongoing development of this feature.
+In this section, we have explored the integration of automatic differentiation into `QuantumToolbox.jl`, enabling users to compute gradients of observables and cost functionals involving the time evolution of open quantum systems. We demonstrated how to differentiate the master equation using both forward mode with [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) and reverse mode with [`Mooncake.jl`](https://github.com/chalk-lab/Mooncake.jl), showcasing the flexibility and power of automatic differentiation in quantum computing applications. AD can be applied to other functions in `QuantumToolbox.jl`, although the support is still experimental and not all functions are guaranteed to be compatible. We encourage users to experiment with AD in their quantum simulations and contribute to the ongoing development of this feature.
