@@ -2,9 +2,13 @@ module QuantumToolboxGPUArraysExt
 
 using QuantumToolbox
 
-import GPUArrays: AbstractGPUArray
+import GPUArrays: AbstractGPUArray, AbstractGPUSparseArray, dense_array_type
 import KernelAbstractions
 import KernelAbstractions: @kernel, @Const, @index, get_backend, synchronize
+
+QuantumToolbox.to_dense(::Type{T1}, A::AbstractGPUArray{T2}) where {T1 <: Number, T2 <: Number} = T1.(A)
+QuantumToolbox.to_dense(A::AbstractGPUSparseArray) = dense_array_type(typeof(A))(A)
+QuantumToolbox.to_dense(::Type{T}, A::AbstractGPUSparseArray) where {T <: Number} = dense_array_type(typeof(A)){T}(A)
 
 @kernel function tr_kernel!(B, @Const(A))
     # i, j, k = @index(Global, NTuple)

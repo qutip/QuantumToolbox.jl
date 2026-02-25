@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Align with last changes in CUDA.jl v5.9.6+. Use `GPUArrays.AbstractGPUSparseArray` instead of `CUDA.CUSPARSE.AbstractCuSparseArray` to support more GPU backends. ([#625])
 
 
 ## [v0.43.1]
@@ -435,6 +436,7 @@ Release date: 2024-11-13
 [#619]: https://github.com/qutip/QuantumToolbox.jl/issues/619
 [#621]: https://github.com/qutip/QuantumToolbox.jl/issues/621
 [#624]: https://github.com/qutip/QuantumToolbox.jl/issues/624
+[#625]: https://github.com/qutip/QuantumToolbox.jl/issues/625
 [#627]: https://github.com/qutip/QuantumToolbox.jl/issues/627
 [#630]: https://github.com/qutip/QuantumToolbox.jl/issues/630
 [#633]: https://github.com/qutip/QuantumToolbox.jl/issues/633

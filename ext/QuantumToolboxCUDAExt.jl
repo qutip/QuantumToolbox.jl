@@ -4,7 +4,7 @@ using QuantumToolbox
 using QuantumToolbox: makeVal, getVal
 import QuantumToolbox: _sparse_similar, _convert_eltype_wordsize
 import CUDA: cu, CuArray, allowscalar
-import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR, AbstractCuSparseArray
+import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR
 import SparseArrays: SparseVector, SparseMatrixCSC, sparse
 import CUDA.Adapt: adapt
 
@@ -96,11 +96,6 @@ function cu(
     ) where {ObjType <: QuantumObjectType, DimsType <: AbstractDimensions}
     return CuSparseMatrixCSC{_convert_eltype_wordsize(eltype(A), word_size)}(A)
 end
-
-QuantumToolbox.to_dense(A::MT) where {MT <: AbstractCuSparseArray} = CuArray(A)
-
-QuantumToolbox.to_dense(::Type{T1}, A::CuArray{T2}) where {T1 <: Number, T2 <: Number} = CuArray{T1}(A)
-QuantumToolbox.to_dense(::Type{T}, A::AbstractCuSparseArray) where {T <: Number} = CuArray{T}(A)
 
 QuantumToolbox._sparse_similar(A::CuSparseMatrixCSC, args...) = sparse(args..., fmt = :csc)
 QuantumToolbox._sparse_similar(A::CuSparseMatrixCSR, args...) = sparse(args..., fmt = :csr)

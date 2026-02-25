@@ -73,6 +73,7 @@ if (GROUP == "CUDA_Ext")
 
     using QuantumToolbox
     import LinearAlgebra: Diagonal
+    import SparseArrays: SparseMatrixCSC
     using CUDA
     using CUDA.CUSPARSE
     using CUDSS
