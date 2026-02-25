@@ -8,10 +8,6 @@ Command line output of information on QuantumToolbox, dependencies, and system i
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.about`](@ref).
 """
 function versioninfo(io::IO = stdout)
-    cpu = Sys.cpu_info()
-    BLAS_info = BLAS.get_config().loaded_libs[1]
-    Sys.iswindows() ? OS_name = "Windows" : Sys.isapple() ? OS_name = "macOS" : OS_name = Sys.KERNEL
-
     # print introduction
     println(
         io,
@@ -24,28 +20,63 @@ function versioninfo(io::IO = stdout)
     )
 
     # print package information
-    pkg_list = (
+    pkg_tuple = (
         QuantumToolbox,
         SciMLOperators,
         LinearSolve,
         OrdinaryDiffEqCore,
     )
-    pkg_ver_list = map(pkgversion, pkg_list)    # `Base.pkgversion` also support for current module "QuantumToolbox"
-    maxLen = maximum(length ∘ string, pkg_list) # maximum string length of package names
+    pkginfo(io; pkgs = pkg_tuple)
+
+    # print System information
+    sysinfo(io)
+
+    # print citation information
+    println(
+        io,
+        "+---------------------------------------------------+\n",
+        "| Please cite QuantumToolbox.jl in your publication |\n",
+        "+---------------------------------------------------+\n",
+        "For your convenience, a bibtex reference can be easily generated using `QuantumToolbox.cite()`.\n",
+    )
+    return nothing
+end
+
+@doc raw"""
+    QuantumToolbox.pkginfo(io::IO=stdout; pkgs::NTuple{N, Module} = (QuantumToolbox,))
+
+Command line output of version numbers for given tuple of packages: `pkgs`. Default to `(QuantumToolbox,)`.
+"""
+function pkginfo(io::IO = stdout; pkgs::NTuple{N, Module} = (QuantumToolbox,)) where {N}
+    pkg_ver_list = map(pkgversion, pkgs)
+    maxLen = max(5, maximum(length ∘ string, pkgs)) # maximum string length of package names (5 refer to "Julia")
+
     print(
         io,
         "Package information:\n",
         "====================================\n",
     )
     println(io, rpad("Julia", maxLen, " "), " Ver. ", VERSION) # print Julia version first
-    for (pkg, pkg_ver) in zip(pkg_list, pkg_ver_list)
+    for (pkg, pkg_ver) in zip(pkgs, pkg_ver_list)
         println(io, rpad(pkg, maxLen, " "), " Ver. ", pkg_ver)
     end
+    print(io, "\n")
+    return nothing
+end
 
-    # print System information
+@doc raw"""
+    QuantumToolbox.sysinfo(io::IO=stdout)
+
+Command line output of system information.
+"""
+function sysinfo(io::IO = stdout)
+    cpu = Sys.cpu_info()
+    BLAS_info = BLAS.get_config().loaded_libs[1]
+    Sys.iswindows() ? OS_name = "Windows" : Sys.isapple() ? OS_name = "macOS" : OS_name = Sys.KERNEL
+
     println(
         io,
-        "\nSystem information:\n",
+        "System information:\n",
         "====================================\n",
         """OS       : $(OS_name) ($(Sys.MACHINE))\n""",
         """CPU      : $(length(cpu)) × $(cpu[1].model)\n""",
@@ -55,15 +86,6 @@ function versioninfo(io::IO = stdout)
         """LLVM     : libLLVM-$(Base.libllvm_version) ($(Sys.JIT), $(Sys.CPU_NAME))\n""",
         """BLAS     : $(basename(BLAS_info.libname)) ($(BLAS_info.interface))\n""",
         """Threads  : $(Threads.nthreads()) (on $(Sys.CPU_THREADS) virtual cores)\n""",
-    )
-
-    # print citation information
-    println(
-        io,
-        "+---------------------------------------------------+\n",
-        "| Please cite QuantumToolbox.jl in your publication |\n",
-        "+---------------------------------------------------+\n",
-        "For your convenience, a bibtex reference can be easily generated using `QuantumToolbox.cite()`.\n",
     )
     return nothing
 end

@@ -319,6 +319,8 @@ AbstractLinearMap
 QuantumToolbox.settings
 QuantumToolbox.versioninfo
 QuantumToolbox.about
+QuantumToolbox.pkginfo
+QuantumToolbox.sysinfo
 QuantumToolbox.cite
 gaussian
 n_thermal
