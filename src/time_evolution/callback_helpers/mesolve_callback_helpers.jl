@@ -25,7 +25,7 @@ function _save_func_mesolve(u, integrator, e_ops, progr, iter, expvals)
     # to reshape u to make it a matrix, but we reshape the e_ops once.
 
     for (i, op) in enumerate(e_ops)
-        expvals[i, iter[]] = dot(op, integrator.u)
+        @inbounds expvals[i, iter[]] = dot(op, u)
     end
     iter[] += 1
 
