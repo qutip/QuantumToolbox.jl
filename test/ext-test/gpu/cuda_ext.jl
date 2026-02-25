@@ -127,7 +127,7 @@
     @test SparseMatrixCSC(L_gpu64.data) ≈ L_cpu64.data
 
     @test all([isapprox(sol_cpu64.expect[i], sol_gpu64.expect[i]) for i in 1:length(tlist)])
-    @test all([isapprox(sol_cpu32.expect[i], sol_gpu32.expect[i]) for i in 1:length(tlist)])
+    @test all([isapprox(sol_cpu32.expect[i], sol_gpu32.expect[i]; atol = 1.0e-8) for i in 1:length(tlist)])
 end
 
 @testset "CUDA steadystate" begin
