@@ -24,21 +24,28 @@ function versioninfo(io::IO = stdout)
     )
 
     # print package information
-    println(
+    pkg_list = (
+        QuantumToolbox,
+        SciMLOperators,
+        LinearSolve,
+        OrdinaryDiffEqCore,
+    )
+    pkg_ver_list = map(pkgversion, pkg_list)    # `Base.pkgversion` also support for current module "QuantumToolbox"
+    maxLen = maximum(length ∘ string, pkg_list) # maximum string length of package names
+    print(
         io,
         "Package information:\n",
         "====================================\n",
-        "Julia              Ver. $(VERSION)\n",
-        "QuantumToolbox     Ver. $(_get_pkg_version("QuantumToolbox"))\n",
-        "SciMLOperators     Ver. $(_get_pkg_version("SciMLOperators"))\n",
-        "LinearSolve        Ver. $(_get_pkg_version("LinearSolve"))\n",
-        "OrdinaryDiffEqCore Ver. $(_get_pkg_version("OrdinaryDiffEqCore"))\n",
     )
+    println(io, rpad("Julia", maxLen, " "), " Ver. ", VERSION) # print Julia version first
+    for (pkg, pkg_ver) in zip(pkg_list, pkg_ver_list)
+        println(io, rpad(pkg, maxLen, " "), " Ver. ", pkg_ver)
+    end
 
     # print System information
     println(
         io,
-        "System information:\n",
+        "\nSystem information:\n",
         "====================================\n",
         """OS       : $(OS_name) ($(Sys.MACHINE))\n""",
         """CPU      : $(length(cpu)) × $(cpu[1].model)\n""",
@@ -67,16 +74,6 @@ end
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.versioninfo`](@ref).
 """
 about(io::IO = stdout) = versioninfo(io)
-
-function _get_pkg_version(pkg_name::String)
-    D = Pkg.dependencies()
-    for uuid in keys(D)
-        if D[uuid].name == pkg_name
-            return D[uuid].version
-        end
-    end
-    return
-end
 
 @doc raw"""
     QuantumToolbox.cite(io::IO = stdout)
