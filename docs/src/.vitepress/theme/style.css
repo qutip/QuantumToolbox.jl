@@ -95,12 +95,13 @@ font-feature-settings: "calt" off;
     #CB3C33
   );
 
-  --vp-home-hero-image-background-image: linear-gradient(
+  --vp-home-hero-image-background-image: none; /* remove the blur background */
+  /* --vp-home-hero-image-background-image: linear-gradient(
     -145deg,
     #9558b282 30%,
     #3798269a 30%,
     #cb3d33e3 
-  );
+  ); */
   --vp-home-hero-image-filter: blur(40px);
 }
 
@@ -114,12 +115,13 @@ font-feature-settings: "calt" off;
     var(--vp-dark-green)
 
   );
-  --vp-home-hero-image-background-image: linear-gradient(
+  --vp-home-hero-image-background-image: none; /* remove the blur background */
+  /* --vp-home-hero-image-background-image: linear-gradient(
     -45deg,
     var(--vp-dark-green) 30%,
     var(--vp-dark-green-light),
     var(--vp-dark-gray) 30%
-  );
+  ); */
   --vp-home-hero-image-filter: blur(56px);
 }
 
