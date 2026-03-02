@@ -91,8 +91,10 @@ font-feature-settings: "calt" off;
   --vp-home-hero-name-color: transparent;
   --vp-home-hero-name-background: -webkit-linear-gradient(
     120deg,
-    #9558B2 30%,
-    #CB3C33
+    var(--julia-purple) 15%,
+    var(--vp-dark-green-light),
+    var(--vp-dark-green)
+
   );
 
   --vp-home-hero-image-background-image: none; /* remove the blur background */
