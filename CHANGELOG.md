@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Align with last changes in CUDA.jl v5.9.6+. Use `GPUArrays.AbstractGPUSparseArray` instead of `CUDA.CUSPARSE.AbstractCuSparseArray` to support more GPU backends. ([#625])
+- Add limit tests of the filter in `liouvillian_dressed_nonsecular`. In the limit of the filter width going to zero, we should recover the dressed liouvillian within secular approximation (see, e.g., https://doi.org/10.1103/PhysRevA.84.043832). ([#669])
 
 
 ## [v0.43.1]
@@ -448,3 +449,4 @@ Release date: 2024-11-13
 [#653]: https://github.com/qutip/QuantumToolbox.jl/issues/653
 [#656]: https://github.com/qutip/QuantumToolbox.jl/issues/656
 [#657]: https://github.com/qutip/QuantumToolbox.jl/issues/657
+[#669]: https://github.com/qutip/QuantumToolbox.jl/issues/669
