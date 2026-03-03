@@ -57,7 +57,7 @@
     # Test that in the limit of σ_filter → 0, we recover the dressed master equation as in https://doi.org/10.1103/PhysRevA.84.043832
     L_gme_0 = liouvillian_dressed_nonsecular(H, fields, Tlist, tol = tol, σ_filter = 1.0e-14)[3]
     L_dr = dressed_liouvillian(H, fields, tol = tol)
-    @test norm(L_gme_0.data - L_dr.data) / length(L_gme_0.data) < 1.0e-8
+    @test norm(L_gme_0.data - L_dr.data) / size(L_gme_0.data, 1) < 1.0e-8
 
     H = 1 * a' * a + 1 * sz / 2 + 1.0e-5 * (a * sp + a' * sm)
 

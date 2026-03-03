@@ -10,7 +10,7 @@ export liouvillian_dressed_nonsecular
         σ_filter::Union{Nothing,Real}=nothing,
     )
 
-Build the generalized Liouvillian for a system coupled to multiple bosonic baths in the ultrastrong-coupling regime. The Hamiltonian `H` is diagonalized, the system-bath operators in `fields` are projected into the eigenbasis, and thermal jump operators are assembled for each temperature in `T_list`.
+Build the generalized Liouvillian for a system coupled to multiple bosonic baths when the system subparts are highly coupled. The Hamiltonian `H` is diagonalized, the system-bath operators in `fields` are projected into the eigenbasis, and thermal jump operators are assembled for each temperature in `T_list`.
 
 # Arguments
 - `H::QuantumObject{Operator}`: System Hamiltonian.
@@ -102,7 +102,7 @@ function _filtered_sprepost(
     isinf(σ) && return sprepost(A, B)
 
     check_dimensions(A, B)
-    data = _filtered_kron(transpose(B.data), A.data, E, E, σ, tol)
+    data = _filtered_kron(transpose(B.data), A.data, E, σ, tol)
     return promote_op_type(A, B)(data, SuperOperator(), A.dimensions)
 end
 
@@ -115,7 +115,7 @@ function _filtered_spre(
     isinf(σ) && return spre(A)
 
     T = eltype(A)
-    data = _filtered_kron(Eye{T}(size(A, 1)), A.data, E, E, σ, tol)
+    data = _filtered_kron(Eye{T}(size(A, 1)), A.data, E, σ, tol)
     return get_typename_wrapper(A)(data, SuperOperator(), A.dimensions)
 end
 
@@ -128,13 +128,12 @@ function _filtered_spost(
     isinf(σ) && return spost(A)
 
     T = eltype(A)
-    data = _filtered_kron(transpose(A.data), Eye{T}(size(A, 1)), E, E, σ, tol)
+    data = _filtered_kron(transpose(A.data), Eye{T}(size(A, 1)), E, σ, tol)
     return get_typename_wrapper(A)(data, SuperOperator(), A.dimensions)
 end
 
-function _filtered_kron(A, B, E_a, E_b, σ, tol)
-    N = length(E_a)
-    length(E_a) == length(E_b) || throw(DimensionMismatch("Energy lists must have the same length."))
+function _filtered_kron(A, B, E, σ, tol)
+    N = length(E)
     (size(A, 1) == N && size(A, 2) == N && size(B, 1) == N && size(B, 2) == N) ||
         throw(DimensionMismatch("Matrix sizes do not match energy list; expected $(N)×$(N) matrices."))
 
@@ -144,7 +143,7 @@ function _filtered_kron(A, B, E_a, E_b, σ, tol)
     nnzA = length(V_A)
     nnzB = length(V_B)
 
-    T = Base.promote_eltype(V_A, V_B, E_a, E_b, σ)
+    T = Base.promote_eltype(V_A, V_B, E, σ)
     I_out = Int[]
     J_out = Int[]
     V_out = Vector{T}()
@@ -163,7 +162,7 @@ function _filtered_kron(A, B, E_a, E_b, σ, tol)
             iT = I_B[idxB]
             jT = J_B[idxB]
             vB = V_B[idxB]
-            Ωdiff = (E_a[iA] - E_a[jA]) - (E_b[iT] - E_b[jT])
+            Ωdiff = (E[iA] - E[jA]) - (E[iT] - E[jT])
             v = vA * vB * gaussian(Ωdiff, 0, σ)
             if abs(v) > tol
                 push!(I_out, iA + (iT - 1) * N)
@@ -175,8 +174,8 @@ function _filtered_kron(A, B, E_a, E_b, σ, tol)
 
     return sparse(I_out, J_out, V_out, N^2, N^2)
 end
-function _filtered_kron(A::Transpose{T, <:Adjoint}, B, E_a, E_b, σ, tol) where {T}
-    return _filtered_kron(conj(parent(parent(A))), B, E_a, E_b, σ, tol)
+function _filtered_kron(A::Transpose{T, <:Adjoint}, B, E, σ, tol) where {T}
+    return _filtered_kron(conj(parent(parent(A))), B, E, σ, tol)
 end
 
 _findnz(A::AbstractSparseMatrix) = findnz(A)
