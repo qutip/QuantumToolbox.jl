@@ -10,7 +10,7 @@ export liouvillian_dressed_nonsecular
         σ_filter::Union{Nothing,Real}=nothing,
     )
 
-Build the generalized Liouvillian for a system coupled to multiple bosonic baths in the ultrastrong-coupling regime. The Hamiltonian `H` is diagonalized, the system-bath operators in `fields` are projected into the eigenbasis, and thermal jump operators are assembled for each temperature in `T_list`.
+Build the generalized Liouvillian for a system coupled to multiple bosonic baths when the system subparts are highly coupled. The Hamiltonian `H` is diagonalized, the system-bath operators in `fields` are projected into the eigenbasis, and thermal jump operators are assembled for each temperature in `T_list`.
 
 # Arguments
 - `H::QuantumObject{Operator}`: System Hamiltonian.
