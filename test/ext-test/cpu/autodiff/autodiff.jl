@@ -128,15 +128,6 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
             @test grad_qt ≈ grad_exact atol = 1.0e-6
         end
 
-        @testset "Zygote.jl" begin
-            grad_qt_bsa_enzyme = Zygote.gradient(my_f_sesolve_bsa_enzyme, params)[1]
-            grad_qt_bsa_mooncake = Zygote.gradient(my_f_sesolve_bsa_mooncake, params)[1]
-
-            # TODO: Fix the factor of 2 discrepancy once https://github.com/SciML/SciMLSensitivity.jl/issues/1181 is resolved.
-            @test grad_qt_bsa_enzyme ≈ 2 .* grad_exact atol = 1.0e-6
-            @test grad_qt_bsa_mooncake ≈ 2 .* grad_exact atol = 1.0e-6
-        end
-
         @testset "Mooncake.jl" begin
             grad_cache = Mooncake.prepare_gradient_cache(my_f_sesolve_bsa_mooncake, params)
             _, grad_mooncake = Mooncake.value_and_gradient!!(grad_cache, my_f_sesolve_bsa_mooncake, params)
@@ -168,25 +159,12 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
         my_f_mesolve_assume_non_herm_bsa_enzyme(params)
         my_f_mesolve_assume_non_herm_bsa_mooncake(params)
 
-        grad_exact = Zygote.gradient((p) -> n_ss(p[1], p[2], p[3]), params)[1]
+        grad_exact_cache = Mooncake.prepare_gradient_cache(splat(n_ss), params)
+        grad_exact = Mooncake.value_and_gradient!!(grad_exact_cache, splat(n_ss), params)[2][2]
 
         @testset "ForwardDiff.jl" begin
             grad_qt = ForwardDiff.gradient(my_f_mesolve_direct, params)
             @test grad_qt ≈ grad_exact atol = 1.0e-6
-        end
-
-        @testset "Zygote.jl" begin
-            grad_qt1_bsa_enzyme = Zygote.gradient(my_f_mesolve_bsa_enzyme, params)[1]
-            grad_qt1_bsa_mooncake = Zygote.gradient(my_f_mesolve_bsa_mooncake, params)[1]
-            # grad_qt2_bsa_enzyme = Zygote.gradient(my_f_mesolve_assume_non_herm_bsa_enzyme, params)[1] # It doesn't work yet
-            grad_qt2_bsa_mooncake = Zygote.gradient(my_f_mesolve_assume_non_herm_bsa_mooncake, params)[1]
-
-            # TODO: Fix the factor of 2 discrepancy once
-
-            @test grad_qt1_bsa_enzyme ≈ 2 .* grad_exact atol = 1.0e-6
-            @test grad_qt1_bsa_mooncake ≈ 2 .* grad_exact atol = 1.0e-6
-            # @test grad_qt2_bsa_enzyme ≈ 2 .* grad_exact atol = 1.0e-6
-            @test grad_qt2_bsa_mooncake ≈ 2 .* grad_exact atol = 1.0e-6
         end
 
         @testset "Mooncake.jl" begin

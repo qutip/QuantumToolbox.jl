@@ -183,13 +183,13 @@ And the gradient can be computed with:
 
 ```@example autodiff
 grad_cache = Mooncake.prepare_gradient_cache(my_f_mesolve, params)
-grad_mooncake = Mooncake.value_and_gradient!!(grad_cache, my_f_mesolve, params)
+_, grad_mooncake = Mooncake.value_and_gradient!!(grad_cache, my_f_mesolve, params)
 ```
 
 Finally, we can compare the results from [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) and [`Mooncake.jl`](https://github.com/chalk-lab/Mooncake.jl):
 
 ```@example autodiff
-isapprox(grad_fd, grad_mooncake; atol = 1e-5)
+isapprox(grad_fd, grad_mooncake[2]; atol = 1e-5)
 ```
 
 ## [Conclusion](@id doc:autodiff:conclusion)
