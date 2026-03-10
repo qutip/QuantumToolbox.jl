@@ -13,7 +13,7 @@ function benchmark_autodiff!(SUITE)
         return real(expect(a' * a, sol.states[end]))
     end
 
-    # For SciMLSensitivity.jl (reverse mode with Zygote and Enzyme)
+    # For SciMLSensitivity.jl (reverse mode with Mooncake and Enzyme)
     coef_Δ(p, t) = p[1]
     coef_F(p, t) = p[2]
     H_evo = QobjEvo(a' * a, coef_Δ) + QobjEvo(a + a', coef_F)
@@ -41,7 +41,7 @@ function benchmark_autodiff!(SUITE)
         return real(expect(a' * a, sol.states[end]))
     end
 
-    # For SciMLSensitivity.jl (reverse mode with Zygote and Enzyme)
+    # For SciMLSensitivity.jl (reverse mode with Mooncake and Enzyme)
     coef_γ(p, t) = sqrt(p[3])
     c_ops = [QobjEvo(a, coef_γ)]
     L = liouvillian(H_evo, c_ops)
@@ -67,9 +67,6 @@ function benchmark_autodiff!(SUITE)
     # Benchmark sesolve - Forward
     SUITE["Autodiff"]["sesolve"]["Forward"] = @benchmarkable ForwardDiff.gradient($my_f_sesolve_direct, $params_sesolve)
 
-    # Benchmark sesolve - Reverse (Zygote)
-    SUITE["Autodiff"]["sesolve"]["Reverse (Zygote)"] = @benchmarkable Zygote.gradient($my_f_sesolve_bsa_mooncake, $params_sesolve)
-
     # Benchmark sesolve - Reverse (Enzyme)
     SUITE["Autodiff"]["sesolve"]["Reverse (Enzyme)"] = @benchmarkable Enzyme.autodiff(
         Enzyme.set_runtime_activity(Enzyme.Reverse),
@@ -80,13 +77,10 @@ function benchmark_autodiff!(SUITE)
 
     # Benchmark sesolve - Reverse (Mooncake)
     cache_sesolve_mooncake = Mooncake.prepare_gradient_cache(my_f_sesolve_bsa_mooncake, params_sesolve)
-    SUITE["Autodiff"]["sesolve"]["Reverse (Mooncake)"] = @benchmarkable Mooncake.value_and_gradient!!(grad_cache1, my_f_sesolve_bsa_mooncake, params_sesolve) setup = (grad_cache1 = cache_sesolve_mooncake)
+    SUITE["Autodiff"]["sesolve"]["Reverse (Mooncake)"] = @benchmarkable Mooncake.value_and_gradient!!(grad_cache1, $my_f_sesolve_bsa_mooncake, $params_sesolve) setup = (grad_cache1 = cache_sesolve_mooncake)
 
     # Benchmark mesolve - Forward
     SUITE["Autodiff"]["mesolve"]["Forward"] = @benchmarkable ForwardDiff.gradient($my_f_mesolve_direct, $params_mesolve)
-
-    # Benchmark mesolve - Reverse (Zygote)
-    SUITE["Autodiff"]["mesolve"]["Reverse (Zygote)"] = @benchmarkable Zygote.gradient($my_f_mesolve_bsa_mooncake, $params_mesolve)
 
     # Benchmark mesolve - Reverse (Enzyme)
     SUITE["Autodiff"]["mesolve"]["Reverse (Enzyme)"] = @benchmarkable Enzyme.autodiff(
@@ -98,7 +92,7 @@ function benchmark_autodiff!(SUITE)
 
     # Benchmark mesolve - Reverse (Mooncake)
     cache_mesolve_mooncake = Mooncake.prepare_gradient_cache(my_f_mesolve_bsa_mooncake, params_mesolve)
-    SUITE["Autodiff"]["mesolve"]["Reverse (Mooncake)"] = @benchmarkable Mooncake.value_and_gradient!!(grad_cache2, my_f_mesolve_bsa_mooncake, params_mesolve) setup = (grad_cache2 = cache_mesolve_mooncake)
+    SUITE["Autodiff"]["mesolve"]["Reverse (Mooncake)"] = @benchmarkable Mooncake.value_and_gradient!!(grad_cache2, $my_f_mesolve_bsa_mooncake, $params_mesolve) setup = (grad_cache2 = cache_mesolve_mooncake)
 
     return nothing
 end
