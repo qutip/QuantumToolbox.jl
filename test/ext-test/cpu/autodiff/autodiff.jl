@@ -39,13 +39,14 @@ const N = 20
 const a = destroy(N)
 const ψ0_mesolve = fock(N, 0)
 const tlist_mesolve = range(0, 40, 100)
+const ad_a = a' * a
 
 # For direct Forward differentiation
 function my_f_mesolve_direct(p)
     H = p[1] * a' * a + p[2] * (a + a')
     c_ops = [sqrt(p[3]) * a]
     sol = mesolve(H, ψ0_mesolve, tlist_mesolve, c_ops, progress_bar = Val(false))
-    return real(expect(a' * a, sol.states[end]))
+    return real(expect(ad_a, sol.states[end]))
 end
 
 # For SciMLSensitivity.jl
@@ -67,7 +68,7 @@ function my_f_mesolve(p, sensealg)
         sensealg = sensealg,
     )
 
-    return real(expect(a' * a, sol.states[end]))
+    return real(expect(ad_a, sol.states[end]))
 end
 const my_f_mesolve_bsa_enzyme = Base.Fix{2}(my_f_mesolve, BacksolveAdjoint(autojacvec = EnzymeVJP()))
 const my_f_mesolve_bsa_mooncake = Base.Fix{2}(my_f_mesolve, BacksolveAdjoint(autojacvec = MooncakeVJP()))
@@ -82,7 +83,7 @@ function my_f_mesolve_assume_non_herm(p, sensealg)
         sensealg = sensealg,
     )
 
-    return real(expect(a' * a, sol.states[end]))
+    return real(expect(ad_a, sol.states[end]))
 end
 const my_f_mesolve_assume_non_herm_bsa_enzyme = Base.Fix{2}(my_f_mesolve_assume_non_herm, BacksolveAdjoint(autojacvec = EnzymeVJP()))
 const my_f_mesolve_assume_non_herm_bsa_mooncake = Base.Fix{2}(my_f_mesolve_assume_non_herm, BacksolveAdjoint(autojacvec = MooncakeVJP()))
