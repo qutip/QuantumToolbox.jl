@@ -45,9 +45,10 @@ if (GROUP == "AutoDiff_Ext")
 
     using QuantumToolbox
     using ForwardDiff
-    using Zygote
     using Enzyme
+    using Mooncake
     using SciMLSensitivity
+    using SciMLSensitivity: MooncakeVJP
 
     QuantumToolbox.about()
 

@@ -101,9 +101,10 @@ In order to get a better experience and take full advantage of `QuantumToolbox`
   - [`Makie.jl`](https://github.com/MakieOrg/Makie.jl)
 - Automatic Differentiation:
   - [`SciMLSensitivity.jl`](https://github.com/SciML/SciMLSensitivity.jl)
-  - [`Zygote.jl`](https://github.com/FluxML/Zygote.jl)
-  - [`Enzyme.jl`](https://github.com/EnzymeAD/Enzyme.jl)
   - [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl)
+  - [`Enzyme.jl`](https://github.com/EnzymeAD/Enzyme.jl)
+  - [`Mooncake.jl`](https://github.com/chalk-lab/Mooncake.jl)
+  - [`Zygote.jl`](https://github.com/FluxML/Zygote.jl)
 - Progress Bars:
   - [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl)
 - Packages for other advanced usage:
