@@ -56,7 +56,7 @@ function _plot_fock_distribution(
         kwargs...,
     ) where {SType <: Union{Bra, Ket, Operator}}
     ρ = ket2dm(ρ)
-    D = get_hilbert_size(ρ.dimensions)[1]
+    D = get_size(ρ.dimensions)[1]
     isapprox(tr(ρ), 1, atol = 1.0e-4) || (@warn "The input ρ should be normalized.")
 
     # handle x ticks

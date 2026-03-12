@@ -87,13 +87,13 @@ cu(A::QuantumObject, word_size::Union{Val{32}, Val{64}}) =
 function cu(
         A::QuantumObject{ObjType, DimsType, <:SparseVector},
         word_size::Union{Val{32}, Val{64}},
-    ) where {ObjType <: QuantumObjectType, DimsType <: AbstractDimensions}
+    ) where {ObjType <: QuantumObjectType, DimsType <: Dimensions}
     return CuSparseVector{_convert_eltype_wordsize(eltype(A), word_size)}(A)
 end
 function cu(
         A::QuantumObject{ObjType, DimsType, <:SparseMatrixCSC},
         word_size::Union{Val{32}, Val{64}},
-    ) where {ObjType <: QuantumObjectType, DimsType <: AbstractDimensions}
+    ) where {ObjType <: QuantumObjectType, DimsType <: Dimensions}
     return CuSparseMatrixCSC{_convert_eltype_wordsize(eltype(A), word_size)}(A)
 end
 

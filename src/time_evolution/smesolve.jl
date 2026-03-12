@@ -95,23 +95,16 @@ function smesolveProblem(
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
-    # Check Hilbert space compatibility using multiplication dimensions
 
-    check_mul_dimensions(L_evo, ψ0)
-    dims = L_evo.dimensions
-
+    # Convert initial state to dense vector with complex element type and check dimensions
     T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
-    ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
-        to_dense(T, copy(ψ0.data))
-    else
-        to_dense(T, mat2vec(ket2dm(ψ0).data))
-    end
+    ρ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(T, L_evo, ψ0)
 
     sc_ops_evo_data = map(get_data ∘ QobjEvo, sc_ops_list)
 
     K = cache_operator(get_data(L_evo), ρ0)
 
-    Id_op = IdentityOperator(get_liouville_size(dims)[1])
+    Id_op = IdentityOperator(size(L_evo, 1))
     D_l = map(sc_ops_evo_data) do op
         # TODO: # Currently, we are assuming a time-independent MatrixOperator
         # Also, the u state may become non-hermitian, so Tr[Sn * ρ + ρ * Sn'] != real(Tr[Sn * ρ]) / 2
@@ -148,7 +141,7 @@ function smesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, ψ0.type, dims, (isoperket = Val(isoperket(ψ0)),))
+    return TimeEvolutionProblem(prob, tlist, states_type, dimensions, (isoperket = Val(isoperket(ψ0)),))
 end
 
 @doc raw"""
@@ -418,14 +411,14 @@ function smesolve(
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMESolve)
     _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSMESolve)
 
-    dims = ens_prob.dimensions.to
+    dimensions = ens_prob.dimensions
     _expvals_all =
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMESolve), eachindex(sol))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
     states_all = stack(
-        map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims), ens_prob.kwargs.isoperket), eachindex(sol)),
+        map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dimensions), ens_prob.kwargs.isoperket), eachindex(sol)),
         dims = 1,
     )
 

@@ -8,7 +8,7 @@ where ``\hat{\rho}^{\Gamma}`` is the partial transpose of ``\hat{\rho}`` with re
 and ``\Vert \hat{X} \Vert_1=\textrm{Tr}\sqrt{\hat{X}^\dagger \hat{X}}`` is the trace norm.
 
 # Arguments
-- `ρ::QuantumObject`: The density matrix (`ρ.type` must be [`Operator`](@ref)).
+- `ρ::QuantumObject`: The quantum state. It must be a [`Ket`](@ref) or [`Operator`](@ref).
 - `subsys::Int`: an index that indicates which subsystem to compute the negativity for.
 - `logarithmic::Bool`: choose whether to calculate logarithmic negativity or not. Default as `false`
 
@@ -20,7 +20,7 @@ and ``\Vert \hat{X} \Vert_1=\textrm{Tr}\sqrt{\hat{X}^\dagger \hat{X}}`` is the t
 ```jldoctest
 julia> Ψ = bell_state(0, 0)
 
-Quantum Object:   type=Ket()   dims=([2, 2], [1, 1])   size=(4,)
+Quantum Object:   type=Ket()   dims=([2, 2], [1])   size=(4,)
 4-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
                 0.0 + 0.0im
@@ -40,15 +40,15 @@ julia> round(negativity(ρ, 2), digits=2)
 0.5
 ```
 """
-function negativity(ρ::QuantumObject, subsys::Int; logarithmic::Bool = false)
-    mask = fill(false, length(ρ.dimensions))
+function negativity(ρ::QuantumObject{ObjType}, subsys::Int; logarithmic::Bool = false) where {ObjType <: Union{Ket, Operator}}
+    mask = fill(false, length(ρ.dimensions.to))
     try
         mask[subsys] = true
     catch
         throw(ArgumentError("Invalid index of subsys: $subsys"))
     end
 
-    ρ_pt = partial_transpose(ρ, mask)
+    ρ_pt = partial_transpose(ket2dm(ρ), mask) # partial_transpose will handle the dimension validity of ρ
     tr_norm = norm(ρ_pt, 1) # trace norm
 
     if logarithmic
@@ -70,10 +70,10 @@ Return the partial transpose of a density matrix ``\rho``, where `mask` is an ar
 # Returns
 - `ρ_pt::QuantumObject`: The density matrix with the selected subsystems transposed.
 """
-function partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
-    any(s -> s isa EnrSpace, ρ.dimensions.to) && throw(ArgumentError("partial_transpose does not support EnrSpace"))
+function partial_transpose(ρ::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}}}, mask::Vector{Bool}) where {N}
+    any(s -> s isa EnrSpace, ρ.dimensions.to.spaces) && throw(ArgumentError("partial_transpose does not support EnrSpace"))
 
-    (length(mask) != length(ρ.dimensions)) &&
+    (length(mask) != N) &&
         throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
 
     # TODO: Extend partial_transpose to non-endomorphism dimensions
@@ -82,6 +82,8 @@ function partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
 
     return _partial_transpose(ρ, mask)
 end
+
+partial_transpose(ρ::QuantumObject{Operator, DType}, ::Vector{Bool}) where {DType} = throw(ArgumentError("Invalid partial transpose for dims = $(_get_dims_string(ρ.dimensions))"))
 
 # for dense matrices
 function _partial_transpose(ρ::QuantumObject{Operator}, mask::Vector{Bool})
@@ -108,7 +110,7 @@ end
 function _partial_transpose(
         ρ::QuantumObject{Operator, DimsType, <:AbstractSparseArray},
         mask::Vector{Bool},
-    ) where {DimsType <: AbstractDimensions}
+    ) where {DimsType <: Dimensions}
     M, N = size(ρ)
     dims_rev = reverse(Tuple(dimensions_to_dims(ρ.dimensions.to)))
     mask_rev = reverse(mask)

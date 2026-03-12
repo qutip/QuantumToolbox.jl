@@ -40,10 +40,10 @@ function liouvillian_dressed_nonsecular(
     )
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
 
-    dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(N_trunc)
-    final_size = get_hilbert_size(dims)[1]
+    dims = isnothing(N_trunc) ? H.dimensions : Dimensions(N_trunc)
+    final_size = get_size(dims)[1]
     # U is a non-square transformation matrix from original basis to truncated eigenbasis
-    final_dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(H.dimensions.to, (HilbertSpace(N_trunc),))
+    final_dims = isnothing(N_trunc) ? H.dimensions : Dimensions(H.dimensions.to, Space(N_trunc))
     result = eigen(H)
     E = real.(result.values[1:final_size])
     U = QuantumObject(result.vectors[:, 1:final_size], result.type, final_dims)
@@ -103,7 +103,7 @@ function _filtered_sprepost(
 
     check_dimensions(A, B)
     data = _filtered_kron(transpose(B.data), A.data, E, σ, tol)
-    return promote_op_type(A, B)(data, SuperOperator(), A.dimensions)
+    return promote_op_type(A, B)(data, SuperOperator(), LiouvilleSpace(A.dimensions))
 end
 
 function _filtered_spre(
@@ -116,7 +116,7 @@ function _filtered_spre(
 
     T = eltype(A)
     data = _filtered_kron(Eye{T}(size(A, 1)), A.data, E, σ, tol)
-    return get_typename_wrapper(A)(data, SuperOperator(), A.dimensions)
+    return get_typename_wrapper(A)(data, SuperOperator(), LiouvilleSpace(A.dimensions))
 end
 
 function _filtered_spost(
@@ -129,7 +129,7 @@ function _filtered_spost(
 
     T = eltype(A)
     data = _filtered_kron(transpose(A.data), Eye{T}(size(A, 1)), E, σ, tol)
-    return get_typename_wrapper(A)(data, SuperOperator(), A.dimensions)
+    return get_typename_wrapper(A)(data, SuperOperator(), LiouvilleSpace(A.dimensions))
 end
 
 function _filtered_kron(A, B, E, σ, tol)
