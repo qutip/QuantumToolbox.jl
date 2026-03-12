@@ -103,7 +103,7 @@ function _filtered_sprepost(
 
     check_dimensions(A, B)
     data = _filtered_kron(transpose(B.data), A.data, E, σ, tol)
-    return promote_op_type(A, B)(data, SuperOperator(), A.dimensions)
+    return promote_op_type(A, B)(data, SuperOperator(), LiouvilleSpace(A.dimensions))
 end
 
 function _filtered_spre(
@@ -116,7 +116,7 @@ function _filtered_spre(
 
     T = eltype(A)
     data = _filtered_kron(Eye{T}(size(A, 1)), A.data, E, σ, tol)
-    return get_typename_wrapper(A)(data, SuperOperator(), A.dimensions)
+    return get_typename_wrapper(A)(data, SuperOperator(), LiouvilleSpace(A.dimensions))
 end
 
 function _filtered_spost(
@@ -129,7 +129,7 @@ function _filtered_spost(
 
     T = eltype(A)
     data = _filtered_kron(transpose(A.data), Eye{T}(size(A, 1)), E, σ, tol)
-    return get_typename_wrapper(A)(data, SuperOperator(), A.dimensions)
+    return get_typename_wrapper(A)(data, SuperOperator(), LiouvilleSpace(A.dimensions))
 end
 
 function _filtered_kron(A, B, E, σ, tol)
