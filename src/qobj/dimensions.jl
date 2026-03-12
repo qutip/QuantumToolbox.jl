@@ -239,11 +239,6 @@ A structure that describes the Liouville space which is equivalent (isometricall
 """
 struct LiouvilleSpace{DT <: Dimensions} <: AbstractSuperSpace
     op_dims::DT # original operator dimensions
-
-    function LiouvilleSpace(op_dims::Dimensions{T1, T2}) where {T1 <: AbstractSpace, T2 <: AbstractSpace}
-        T1 != T2 && throw(ArgumentError("`LiouvilleSpace` only allows equal `to` and `from` spaces in `Dimensions`."))
-        return new{typeof(op_dims)}(op_dims)
-    end
 end
 
 function Base.show(io::IO, s::LiouvilleSpace)

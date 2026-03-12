@@ -37,7 +37,9 @@ end
 for op in (:(+), :(-)) # the multiplication of two QuantumObject is handled separately below (since the return QuantumObjectType can change)
     @eval begin
         # A and B should have same QuantumObjectType
-        function Base.$op(A::AbstractQuantumObject{ObjType}, B::AbstractQuantumObject{ObjType}) where {ObjType <: QuantumObjectType}
+        function Base.$op(A::AbstractQuantumObject{AObjType}, B::AbstractQuantumObject{BObjType}) where {AObjType <: QuantumObjectType, BObjType <: QuantumObjectType}
+            # avoid the case where A and B have same dimensions but different type, and throw error message
+            (AObjType == BObjType) || throw(ArgumentError("Invalid type for A $($op) B, where A is $AObjType and B is $BObjType"))
             check_dimensions(A, B)
             QType = promote_op_type(A, B)
             return QType($(op)(A.data, B.data), A.type, A.dimensions)

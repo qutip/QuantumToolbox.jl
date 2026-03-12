@@ -40,10 +40,10 @@ function liouvillian_dressed_nonsecular(
     )
     (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
 
-    dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(N_trunc)
-    final_size = get_hilbert_size(dims)[1]
+    dims = isnothing(N_trunc) ? H.dimensions : Dimensions(N_trunc)
+    final_size = get_size(dims)[1]
     # U is a non-square transformation matrix from original basis to truncated eigenbasis
-    final_dims = isnothing(N_trunc) ? H.dimensions : ProductDimensions(H.dimensions.to, (HilbertSpace(N_trunc),))
+    final_dims = isnothing(N_trunc) ? H.dimensions : Dimensions(H.dimensions.to, Space(N_trunc))
     result = eigen(H)
     E = real.(result.values[1:final_size])
     U = QuantumObject(result.vectors[:, 1:final_size], result.type, final_dims)
