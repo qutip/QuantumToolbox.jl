@@ -302,7 +302,7 @@ function mat2vec(A::MT) where {MT <: AbstractSparseMatrix}
 end
 for op in (:Transpose, :Adjoint)
     @eval mat2vec(A::$op{T, <:AbstractSparseMatrix}) where {T <: Number} = mat2vec(sparse(A))
-    @eval mat2vec(A::$op{T, <:AbstractMatrix}) where {T <: Number} = mat2vec(Matrix(A))
+    @eval mat2vec(A::$op{T, MT}) where {T <: Number, MT <: AbstractMatrix} = mat2vec(MT(A))
 end
 
 function mat2vec(::Type{M}) where {M <: DenseMatrix}

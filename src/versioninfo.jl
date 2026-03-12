@@ -8,10 +8,6 @@ Command line output of information on QuantumToolbox, dependencies, and system i
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.about`](@ref).
 """
 function versioninfo(io::IO = stdout)
-    cpu = Sys.cpu_info()
-    BLAS_info = BLAS.get_config().loaded_libs[1]
-    Sys.iswindows() ? OS_name = "Windows" : Sys.isapple() ? OS_name = "macOS" : OS_name = Sys.KERNEL
-
     # print introduction
     println(
         io,
@@ -24,31 +20,16 @@ function versioninfo(io::IO = stdout)
     )
 
     # print package information
-    println(
-        io,
-        "Package information:\n",
-        "====================================\n",
-        "Julia              Ver. $(VERSION)\n",
-        "QuantumToolbox     Ver. $(_get_pkg_version("QuantumToolbox"))\n",
-        "SciMLOperators     Ver. $(_get_pkg_version("SciMLOperators"))\n",
-        "LinearSolve        Ver. $(_get_pkg_version("LinearSolve"))\n",
-        "OrdinaryDiffEqCore Ver. $(_get_pkg_version("OrdinaryDiffEqCore"))\n",
+    pkg_tuple = (
+        QuantumToolbox,
+        SciMLOperators,
+        LinearSolve,
+        OrdinaryDiffEqCore,
     )
+    pkginfo(io; pkgs = pkg_tuple)
 
     # print System information
-    println(
-        io,
-        "System information:\n",
-        "====================================\n",
-        """OS       : $(OS_name) ($(Sys.MACHINE))\n""",
-        """CPU      : $(length(cpu)) × $(cpu[1].model)\n""",
-        """Memory   : $(round(Sys.total_memory() / 2^30, digits = 3)) GB\n""",
-        """WORD_SIZE: $(Sys.WORD_SIZE)\n""",
-        """LIBM     : $(Base.libm_name)\n""",
-        """LLVM     : libLLVM-$(Base.libllvm_version) ($(Sys.JIT), $(Sys.CPU_NAME))\n""",
-        """BLAS     : $(basename(BLAS_info.libname)) ($(BLAS_info.interface))\n""",
-        """Threads  : $(Threads.nthreads()) (on $(Sys.CPU_THREADS) virtual cores)\n""",
-    )
+    sysinfo(io)
 
     # print citation information
     println(
@@ -62,21 +43,59 @@ function versioninfo(io::IO = stdout)
 end
 
 @doc raw"""
+    QuantumToolbox.pkginfo(io::IO=stdout; pkgs::NTuple{N, Module} = (QuantumToolbox,))
+
+Command line output of version numbers for given tuple of packages: `pkgs`. Default to `(QuantumToolbox,)`.
+"""
+function pkginfo(io::IO = stdout; pkgs::NTuple{N, Module} = (QuantumToolbox,)) where {N}
+    pkg_ver_list = map(pkgversion, pkgs)
+    maxLen = max(5, maximum(length ∘ string, pkgs)) # maximum string length of package names (5 refer to "Julia")
+
+    print(
+        io,
+        "Package information:\n",
+        "====================================\n",
+    )
+    println(io, rpad("Julia", maxLen, " "), " Ver. ", VERSION) # print Julia version first
+    for (pkg, pkg_ver) in zip(pkgs, pkg_ver_list)
+        println(io, rpad(pkg, maxLen, " "), " Ver. ", pkg_ver)
+    end
+    print(io, "\n")
+    return nothing
+end
+
+@doc raw"""
+    QuantumToolbox.sysinfo(io::IO=stdout)
+
+Command line output of system information.
+"""
+function sysinfo(io::IO = stdout)
+    cpu = Sys.cpu_info()
+    BLAS_info = BLAS.get_config().loaded_libs[1]
+    Sys.iswindows() ? OS_name = "Windows" : Sys.isapple() ? OS_name = "macOS" : OS_name = Sys.KERNEL
+
+    println(
+        io,
+        "System information:\n",
+        "====================================\n",
+        """OS       : $(OS_name) ($(Sys.MACHINE))\n""",
+        """CPU      : $(length(cpu)) × $(cpu[1].model)\n""",
+        """Memory   : $(round(Sys.total_memory() / 2^30, digits = 3)) GB\n""",
+        """WORD_SIZE: $(Sys.WORD_SIZE)\n""",
+        """LIBM     : $(Base.libm_name)\n""",
+        """LLVM     : libLLVM-$(Base.libllvm_version) ($(Sys.JIT), $(Sys.CPU_NAME))\n""",
+        """BLAS     : $(basename(BLAS_info.libname)) ($(BLAS_info.interface))\n""",
+        """Threads  : $(Threads.nthreads()) (on $(Sys.CPU_THREADS) virtual cores)\n""",
+    )
+    return nothing
+end
+
+@doc raw"""
     QuantumToolbox.about(io::IO=stdout)
 
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.versioninfo`](@ref).
 """
 about(io::IO = stdout) = versioninfo(io)
-
-function _get_pkg_version(pkg_name::String)
-    D = Pkg.dependencies()
-    for uuid in keys(D)
-        if D[uuid].name == pkg_name
-            return D[uuid].version
-        end
-    end
-    return
-end
 
 @doc raw"""
     QuantumToolbox.cite(io::IO = stdout)

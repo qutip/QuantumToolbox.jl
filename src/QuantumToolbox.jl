@@ -55,8 +55,9 @@ import SciMLOperators:
     update_coefficients!,
     concretize
 import LinearSolve:
-    SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, LUFactorization, OperatorAssumptions
+    LinearSolve, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, LUFactorization, OperatorAssumptions
 import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
+import OrdinaryDiffEqCore
 import OrdinaryDiffEqVerner: Vern7
 import OrdinaryDiffEqLowOrderRK: DP5
 import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
@@ -122,6 +123,7 @@ include("time_evolution/sesolve.jl")
 include("time_evolution/mcsolve.jl")
 include("time_evolution/ssesolve.jl")
 include("time_evolution/smesolve.jl")
+include("time_evolution/liouvillian_dressed_nonsecular.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 
 ## Other functionalities

@@ -7,10 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Remove internal function `_check_dims_to`. ([#657])
 - Restructure `Dimensions` and `Space` to align with `qutip` (`Python`) ([#659]). Note that this update basically overwrites many changes made in PR [#600]:
   - Replace `ProductDimensions` and `HilbertSpace` structures with `Dimensions` + `Space`/`TensorSpace`/`LiouvilleSpace`.
   - Remove `get_hilbert_size` and `get_liouville_size`, and use `get_size` instead.
+
+## [v0.44.0]
+Release date: 2026-03-11
+
+- Align with last changes in CUDA.jl v5.9.6+. Use `GPUArrays.AbstractGPUSparseArray` instead of `CUDA.CUSPARSE.AbstractCuSparseArray` to support more GPU backends. ([#625])
+- Update to DocumenterVitepress.jl `v0.3`. ([#667])
+- Add limit tests of the filter in `liouvillian_dressed_nonsecular`. In the limit of the filter width going to zero, we should recover the dressed liouvillian within secular approximation (see, e.g., https://doi.org/10.1103/PhysRevA.84.043832). ([#669])
+- Support generic `AbstractMatrix` for `mat2vec`. ([#670])
+
+## [v0.43.1]
+Release date: 2026-02-23
+
+- Remove internal function `_check_dims_to`. ([#657])
+- Improve memory efficiency of `liouvillian_dressed_nonsecular` by implementing the filtering directly during the Kronecker product. ([#656])
 
 ## [v0.43.0]
 Release date: 2026-02-04
@@ -312,6 +325,8 @@ Release date: 2024-11-13
 [v0.41.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.41.0
 [v0.42.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.42.0
 [v0.43.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.43.0
+[v0.43.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.43.1
+[v0.44.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.44.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -431,6 +446,7 @@ Release date: 2024-11-13
 [#619]: https://github.com/qutip/QuantumToolbox.jl/issues/619
 [#621]: https://github.com/qutip/QuantumToolbox.jl/issues/621
 [#624]: https://github.com/qutip/QuantumToolbox.jl/issues/624
+[#625]: https://github.com/qutip/QuantumToolbox.jl/issues/625
 [#627]: https://github.com/qutip/QuantumToolbox.jl/issues/627
 [#630]: https://github.com/qutip/QuantumToolbox.jl/issues/630
 [#633]: https://github.com/qutip/QuantumToolbox.jl/issues/633
@@ -440,5 +456,9 @@ Release date: 2024-11-13
 [#649]: https://github.com/qutip/QuantumToolbox.jl/issues/649
 [#650]: https://github.com/qutip/QuantumToolbox.jl/issues/650
 [#653]: https://github.com/qutip/QuantumToolbox.jl/issues/653
+[#656]: https://github.com/qutip/QuantumToolbox.jl/issues/656
 [#657]: https://github.com/qutip/QuantumToolbox.jl/issues/657
 [#659]: https://github.com/qutip/QuantumToolbox.jl/issues/659
+[#667]: https://github.com/qutip/QuantumToolbox.jl/issues/667
+[#669]: https://github.com/qutip/QuantumToolbox.jl/issues/669
+[#670]: https://github.com/qutip/QuantumToolbox.jl/issues/670
