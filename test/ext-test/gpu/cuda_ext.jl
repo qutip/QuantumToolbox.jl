@@ -1,3 +1,14 @@
+using QuantumToolbox
+import LinearAlgebra: Diagonal
+import SparseArrays: SparseMatrixCSC
+using CUDA
+using CUDA.CUSPARSE
+using CUDSS
+using LinearSolve
+
+QuantumToolbox.about()
+CUDA.versioninfo()
+
 @testset "CUDA Extension" verbose = true begin
     # Test that scalar indexing is disallowed
     @test_throws ErrorException CUDA.rand(1)[1]

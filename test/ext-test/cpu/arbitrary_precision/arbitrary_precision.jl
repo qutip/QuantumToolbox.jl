@@ -1,3 +1,13 @@
+setprecision(128) # Instead of 256. This speeds up the tests.
+
+using QuantumToolbox
+using LinearAlgebra
+using SparseArrays
+using Sparspak
+using GenericSchur
+
+QuantumToolbox.about()
+
 @testset "Arbitrary Precision" verbose = true begin
     N = 20
     Δ = 1.0
