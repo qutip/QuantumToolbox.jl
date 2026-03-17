@@ -1,3 +1,12 @@
+using QuantumToolbox
+using ForwardDiff
+using Enzyme
+using Mooncake
+using SciMLSensitivity
+using SciMLSensitivity: MooncakeVJP
+
+QuantumToolbox.about()
+
 # ---- SESOLVE ----
 const ψ0_sesolve = fock(2, 1)
 t_max = 10

@@ -2,23 +2,28 @@ using Test
 using TestItemRunner
 using Pkg
 
-const EXTENSIONS = String[
-    "AutoDiff_Ext",
-    "Makie_Ext",
-    "CUDA_Ext",
-    "Arbitrary-Precision",
-]
+const testdir = dirname(@__FILE__)
 
+# Define the paths to the extension tests
+const EXTENSION_PATHS = Dict(
+    "AutoDiff_Ext" => joinpath(testdir, "ext-test", "cpu", "autodiff"),
+    "Makie_Ext" => joinpath(testdir, "ext-test", "cpu", "makie"),
+    "CUDA_Ext" => joinpath(testdir, "ext-test", "gpu"),
+    "Arbitrary-Precision" => joinpath(testdir, "ext-test", "cpu", "arbitrary_precision"),
+)
+const EXTENSION_LIST = collect(keys(EXTENSION_PATHS))
+
+# Handle the GROUP environment variable to determine which tests to run
+const GROUP = get(ENV, "GROUP", "All")
 const GROUP_LIST = String[
     "All",
     "Core",
     "Code-Quality",
-    EXTENSIONS...,
+    EXTENSION_LIST...,
 ]
-
-const GROUP = get(ENV, "GROUP", "All")
 (GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nThe allowed groups are: $GROUP_LIST\n"))
 
+# function to set up the environment for subtests
 function setup_subtest_env(path::String)
     Pkg.activate(path)
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
@@ -26,7 +31,9 @@ function setup_subtest_env(path::String)
     return nothing
 end
 
-# Core tests
+######################################
+# Core tests (use TestItemRunner.jl) #
+######################################
 if (GROUP == "All") || (GROUP == "Core")
     import QuantumToolbox
 
@@ -40,82 +47,32 @@ end
 # Use traditional Test.jl instead of TestItemRunner.jl for other tests #
 ########################################################################
 
-const testdir = dirname(@__FILE__)
-
+# Code Quality tests
 if (GROUP == "All") || (GROUP == "Code-Quality")
-    path = "core-test/code-quality"
-    setup_subtest_env()
+    path = joinpath(testdir, "core-test", "code-quality")
+    setup_subtest_env(path)
 
     using QuantumToolbox
     using Aqua, JET
 
     (GROUP == "Code-Quality") && QuantumToolbox.about() # print version info. for code quality CI in GitHub
 
-    include(joinpath(testdir, path, "code_quality.jl"))
+    include(joinpath(path, "code_quality.jl"))
 end
 
-if (GROUP == "AutoDiff_Ext")
-    path = "ext-test/cpu/autodiff"
-    setup_subtest_env(path)
-    println(Pkg.status())
-
-    using QuantumToolbox
-    using ForwardDiff
-    using Enzyme
-    using Mooncake
-    using SciMLSensitivity
-    using SciMLSensitivity: MooncakeVJP
-
-    QuantumToolbox.about()
-
-    include(joinpath(testdir, path, "autodiff.jl"))
-end
-
-if (GROUP == "Makie_Ext")
-    path = "ext-test/cpu/makie"
+# Extension tests
+if GROUP ∈ EXTENSION_LIST
+    path = EXTENSION_PATHS[GROUP]
     setup_subtest_env(path)
 
-    using QuantumToolbox
-    QuantumToolbox.about()
-
-    # CarioMakie is imported in the following script
-    include(joinpath(testdir, path, "makie_ext.jl"))
-end
-
-if (GROUP == "CUDA_Ext")
-    path = "ext-test/gpu"
-    setup_subtest_env(path)
-
-    using QuantumToolbox
-    import LinearAlgebra: Diagonal
-    import SparseArrays: SparseMatrixCSC
-    using CUDA
-    using CUDA.CUSPARSE
-    using CUDSS
-    using LinearSolve
-
-    QuantumToolbox.about()
-    CUDA.versioninfo()
-
-    include(joinpath(testdir, path, "cuda_ext.jl"))
-end
-
-if (GROUP == "Arbitrary-Precision")
-    path = "ext-test/cpu/arbitrary_precision"
-    setup_subtest_env(path)
-
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.update()
-
-    setprecision(128) # Instead of 256. This speeds up the tests.
-
-    using QuantumToolbox
-    using LinearAlgebra
-    using SparseArrays
-    using Sparspak
-    using GenericSchur
-
-    QuantumToolbox.about()
-
-    include(joinpath(testdir, path, "arbitrary_precision.jl"))
+    if GROUP == "AutoDiff_Ext"
+        println(Pkg.status())
+        include(joinpath(path, "autodiff.jl"))
+    elseif GROUP == "Makie_Ext"
+        include(joinpath(path, "makie_ext.jl"))
+    elseif GROUP == "CUDA_Ext"
+        include(joinpath(path, "cuda_ext.jl"))
+    elseif GROUP == "Arbitrary-Precision"
+        include(joinpath(path, "arbitrary_precision.jl"))
+    end
 end
