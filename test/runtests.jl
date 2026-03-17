@@ -6,7 +6,7 @@ const EXTENSIONS = String[
     "AutoDiff_Ext",
     "Makie_Ext",
     "CUDA_Ext",
-    "Arbitrary-Precision"
+    "Arbitrary-Precision",
 ]
 
 const GROUP_LIST = String[
