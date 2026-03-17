@@ -2,10 +2,29 @@ using Test
 using TestItemRunner
 using Pkg
 
-const GROUP_LIST = String["All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext", "Arbitrary-Precision"]
+const EXTENSIONS = String[
+    "AutoDiff_Ext",
+    "Makie_Ext",
+    "CUDA_Ext",
+    "Arbitrary-Precision"
+]
+
+const GROUP_LIST = String[
+    "All",
+    "Core",
+    "Code-Quality",
+    EXTENSIONS...,
+]
 
 const GROUP = get(ENV, "GROUP", "All")
 (GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nThe allowed groups are: $GROUP_LIST\n"))
+
+function setup_subtest_env(path::String)
+    Pkg.activate(path)
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.update()
+    return nothing
+end
 
 # Core tests
 if (GROUP == "All") || (GROUP == "Core")
@@ -24,23 +43,20 @@ end
 const testdir = dirname(@__FILE__)
 
 if (GROUP == "All") || (GROUP == "Code-Quality")
-    Pkg.activate("core-test/code-quality")
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.update()
+    path = "core-test/code-quality"
+    setup_subtest_env()
 
     using QuantumToolbox
     using Aqua, JET
 
     (GROUP == "Code-Quality") && QuantumToolbox.about() # print version info. for code quality CI in GitHub
 
-    include(joinpath(testdir, "core-test", "code-quality", "code_quality.jl"))
+    include(joinpath(testdir, path, "code_quality.jl"))
 end
 
 if (GROUP == "AutoDiff_Ext")
-    Pkg.activate("ext-test/cpu/autodiff")
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.update()
-
+    path = "ext-test/cpu/autodiff"
+    setup_subtest_env(path)
     println(Pkg.status())
 
     using QuantumToolbox
@@ -52,25 +68,23 @@ if (GROUP == "AutoDiff_Ext")
 
     QuantumToolbox.about()
 
-    include(joinpath(testdir, "ext-test", "cpu", "autodiff", "autodiff.jl"))
+    include(joinpath(testdir, path, "autodiff.jl"))
 end
 
 if (GROUP == "Makie_Ext")
-    Pkg.activate("ext-test/cpu/makie")
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.update()
+    path = "ext-test/cpu/makie"
+    setup_subtest_env(path)
 
     using QuantumToolbox
     QuantumToolbox.about()
 
     # CarioMakie is imported in the following script
-    include(joinpath(testdir, "ext-test", "cpu", "makie", "makie_ext.jl"))
+    include(joinpath(testdir, path, "makie_ext.jl"))
 end
 
 if (GROUP == "CUDA_Ext")
-    Pkg.activate("ext-test/gpu")
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.update()
+    path = "ext-test/gpu"
+    setup_subtest_env(path)
 
     using QuantumToolbox
     import LinearAlgebra: Diagonal
@@ -83,11 +97,13 @@ if (GROUP == "CUDA_Ext")
     QuantumToolbox.about()
     CUDA.versioninfo()
 
-    include(joinpath(testdir, "ext-test", "gpu", "cuda_ext.jl"))
+    include(joinpath(testdir, path, "cuda_ext.jl"))
 end
 
 if (GROUP == "Arbitrary-Precision")
-    Pkg.activate("ext-test/cpu/arbitrary_precision")
+    path = "ext-test/cpu/arbitrary_precision"
+    setup_subtest_env(path)
+
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.update()
 
@@ -101,5 +117,5 @@ if (GROUP == "Arbitrary-Precision")
 
     QuantumToolbox.about()
 
-    include(joinpath(testdir, "ext-test", "cpu", "arbitrary_precision", "arbitrary_precision.jl"))
+    include(joinpath(testdir, path, "arbitrary_precision.jl"))
 end
