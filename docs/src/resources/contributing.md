@@ -1,4 +1,4 @@
-# [Contributing to Quantum Toolbox in Julia](@id doc-Contribute)
+# [Contributor's Guide for Quantum Toolbox in Julia](@id doc-Contribute)
 [![Zulip](https://img.shields.io/badge/Zulip%20Chat-join-6f73af.svg)](https://quantumtoolbox-jl.zulipchat.com/#narrow/stream/General)
 
 ## [Quick Start](@id doc-Contribute:Quick-Start)
