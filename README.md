@@ -14,7 +14,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 |:-----------------:|:-------------|
 | **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Buildkite][buildkite-img]][buildkite-url] [![Coverage][codecov-img]][codecov-url] |
 | **Code Quality**  | [![Code Quality][code-quality-img]][code-quality-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] [![code style: runic][runic-img]][runic-url] |
-| **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] |
+| **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] [![Doc-ColGuide][docs-col-guide-img]][docs-col-guide-url] |
 | **Benchmark** | [![Benchmarks][benchmark-img]][benchmark-url] |
 | **Community** | [![Zulip][zulip-img]][zulip-url] [![QuTiP-discussion][QuTiP-discussion-img]][QuTiP-discussion-url] |
 | **Support** | [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund) |
@@ -57,6 +57,8 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [docs-stable-url]: https://qutip.github.io/QuantumToolbox.jl/stable
 [docs-develop-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-develop-url]: https://qutip.github.io/QuantumToolbox.jl/dev
+[docs-col-guide-img]: https://img.shields.io/badge/docs-Contributor's%20Guide-blue
+[docs-col-guide-url]: https://qutip.org/QuantumToolbox.jl/stable/resources/contributing
 
 [benchmark-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/Benchmarks.yml/badge.svg?branch=main
 [benchmark-url]: https://qutip.org/QuantumToolbox.jl/benchmarks/
@@ -194,7 +196,7 @@ Contributors and users for `QuantumToolbox.jl` are invited to [![Zulip][zulip-im
 
 You can also help out with users' questions, or discuss proposed changes for the entire QuTiP organization in the [![QuTiP-discussion][QuTiP-discussion-img]][QuTiP-discussion-url].
 
-For more information about contribution, including technical advice, please see the [Contributing to Quantum Toolbox in Julia](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing).
+For more information about contribution, including technical advice, please see the [![Doc-ColGuide][docs-col-guide-img]][docs-col-guide-url].
 
 ## Cite `QuantumToolbox.jl`
 If you like `QuantumToolbox.jl`, we would appreciate it if you starred the repository in order to help us increase its visibility. Furthermore, if you find the framework useful in your research, we would be grateful if you could cite our publication [ [Quantum 9, 1866 (2025)](https://doi.org/10.22331/q-2025-09-29-1866)  ] using the following bibtex entry:
