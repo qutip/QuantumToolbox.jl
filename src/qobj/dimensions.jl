@@ -102,7 +102,11 @@ Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: VectorO
 # Error for invalid input
 Dimensions(dims::Any) = throw(
     ArgumentError(
-        "The argument dims must be a 2-element Tuple with both elements are Tuple or StaticVector of non-zero length and contain only positive integers.",
+        "The argument `dims` must be one of the following:\n" *
+        "• an `Integer` (single Hilbert space dimension),\n" *
+        "• a `Tuple` or `AbstractVector` of positive integers,\n" *
+        "• an `AbstractSpace`,\n" *
+        "• a 2-element `Tuple` combining the above."
     ),
 )
 
