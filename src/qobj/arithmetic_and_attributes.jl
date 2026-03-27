@@ -66,8 +66,9 @@ function check_mul_dimensions(A::AbstractQuantumObject, B::AbstractQuantumObject
     )
     return nothing
 end
-function check_mul_dimensions(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{Operator})
-    # this case is special because SuperOperator A maps Operator B into another Operator
+
+# special case: SuperOperator A maps Operator B into another Operator
+function check_mul_dimensions(A::AbstractQuantumObject{SuperOperator, <:Dimensions{T1, T2}}, B::QuantumObject{Operator}) where {T1 <: LiouvilleSpace, T2 <: LiouvilleSpace}
     (A.dimensions.from.op_dims != B.dimensions) && throw(
         DimensionMismatch(
             "The quantum object with dims = $(A.dims) can not multiply a quantum object with dims = $(B.dims) on the right-hand side.",
@@ -103,7 +104,7 @@ function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::AbstractQuantumOb
     QType = promote_op_type(A, B)
     return QType(A.data * B.data, SuperOperator(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
-function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{Operator})
+function Base.:(*)(A::AbstractQuantumObject{SuperOperator, <:Dimensions{T1, T2}}, B::QuantumObject{Operator}) where {T1 <: LiouvilleSpace, T2 <: LiouvilleSpace}
     # this case is special because SuperOperator A maps Operator B into another Operator
     check_mul_dimensions(A, B)
     return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator(), A.dimensions.to.op_dims)
