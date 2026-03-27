@@ -680,6 +680,19 @@
     end
 
     @testset "ptrace" begin
+        # Special cases for single-subsystem (N=1) where TensorSpace collapses to Space
+        ψ0 = rand_ket(2)
+        ρ0 = ket2dm(ψ0)
+        empty_sel = SVector{0, Int}()
+        @test ptrace(ψ0, empty_sel) ≈ 1
+        @test ptrace(ψ0', empty_sel) ≈ 1
+        @test ptrace(ρ0, empty_sel) ≈ 1
+        @test ptrace(ψ0, 1) ≈ ρ0
+        @test ptrace(ψ0', 1) ≈ ρ0
+        @test ptrace(ρ0, 1) == ρ0
+        @test_throws ArgumentError ptrace(ψ0, 0)
+        @test_throws ArgumentError ptrace(ψ0, (1, 1))
+
         g = fock(2, 1)
         e = fock(2, 0)
         α = sqrt(0.7)

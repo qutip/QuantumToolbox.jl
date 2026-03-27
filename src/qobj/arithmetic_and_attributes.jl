@@ -550,6 +550,39 @@ function ptrace(QO::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}}}, sel
     ρtr, dkeep = _ptrace_oper(QO.data, dims, _sort_sel)
     return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
+
+# Special cases for single-subsystem (N=1) where TensorSpace collapses to Space
+function ptrace(QO::QuantumObject{Ket, <:Dimensions{Space, Space}}, sel::VectorOrTuple{T}) where {T <: Integer}
+    _non_static_array_warning("sel", sel)
+
+    N_sel = length(sel)
+    if N_sel == 0  # return full trace for empty sel
+        return tr(ket2dm(QO))
+    else
+        ((N_sel == 1) && (sel[1] == 1)) || throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have 1 sub-system"),
+        )
+        return ket2dm(QO)  # ptrace should always return Operator
+    end
+end
+function ptrace(QO::QuantumObject{Operator, <:Dimensions{Space, Space}}, sel::VectorOrTuple{T}) where {T <: Integer}
+    !isendomorphism(QO.dimensions) &&
+        throw(ArgumentError("Invalid partial trace for dims = $(_get_dims_string(QO.dimensions))"))
+
+    _non_static_array_warning("sel", sel)
+
+    N_sel = length(sel)
+    if N_sel == 0  # return full trace for empty sel
+        return tr(QO)
+    else
+        ((N_sel == 1) && (sel[1] == 1)) || throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have 1 sub-system"),
+        )
+        return QO
+    end
+end
+ptrace(QO::QuantumObject{Bra, <:Dimensions{Space, Space}}, sel::VectorOrTuple{T}) where {T <: Integer} = ptrace(QO', sel)
+
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
 function _ptrace_ket(QO::AbstractArray, dims::Union{SVector, MVector}, sel)
