@@ -15,7 +15,7 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 - `values::AbstractVector`: the eigenvalues
 - `vectors::AbstractMatrix`: the transformation matrix (eigenvectors)
 - `type::Union{Nothing,QuantumObjectType}`: the type of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
-- `dimensions::Union{Nothing,AbstractDimensions}`: the `dimensions` of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
+- `dimensions::Union{Nothing,Dimensions}`: the `dimensions` of [`QuantumObject`](@ref), or `nothing` means solving eigen equation for general matrix
 - `iter::Int`: the number of iteration during the solving process
 - `numops::Int` : number of times the linear map was applied in krylov methods
 - `converged::Bool`: Whether the result is converged
@@ -39,13 +39,13 @@ vectors:
 
 julia> λ, ψ, U = result;
 
-julia> λ
+julia> λ # eigenvalues
 2-element Vector{Float64}:
  -1.0
   1.0
 
-julia> ψ
-2-element Vector{QuantumObject{Ket, ProductDimensions{1, 1, Tuple{HilbertSpace}, Tuple{HilbertSpace}}, Vector{ComplexF64}}}:
+julia> ψ # eigenvectors
+2-element Vector{QuantumObject{Ket, Dimensions{Space, Space}, Vector{ComplexF64}}}:
 
 Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
 2-element Vector{ComplexF64}:
@@ -57,7 +57,7 @@ Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
 
-julia> U
+julia> U # the transformation matrix
 2×2 Matrix{ComplexF64}:
  -0.707107+0.0im  0.707107+0.0im
   0.707107+0.0im  0.707107+0.0im
@@ -67,7 +67,7 @@ struct EigsolveResult{
         T1 <: AbstractVector{<:Number},
         T2 <: AbstractMatrix{<:Number},
         ObjType <: Union{Nothing, Operator, SuperOperator},
-        DimType <: Union{Nothing, AbstractDimensions},
+        DimType <: Union{Nothing, Dimensions},
     }
     values::T1
     vectors::T2
@@ -91,9 +91,9 @@ Base.iterate(res::EigsolveResult) = (res.values, Val(:vector_list))
 Base.iterate(res::EigsolveResult{T1, T2, Nothing}, ::Val{:vector_list}) where {T1, T2} =
     ([res.vectors[:, k] for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1, T2, Operator}, ::Val{:vector_list}) where {T1, T2} =
-    ([QuantumObject(res.vectors[:, k], Ket(), res.dimensions.to) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], Ket(), Dimensions(res.dimensions.to, Space(1))) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult{T1, T2, SuperOperator}, ::Val{:vector_list}) where {T1, T2} =
-    ([QuantumObject(res.vectors[:, k], OperatorKet(), res.dimensions.to) for k in 1:length(res.values)], Val(:vectors))
+    ([QuantumObject(res.vectors[:, k], OperatorKet(), Dimensions(res.dimensions.to, Space(1))) for k in 1:length(res.values)], Val(:vectors))
 Base.iterate(res::EigsolveResult, ::Val{:vectors}) = (res.vectors, Val(:done))
 Base.iterate(res::EigsolveResult, ::Val{:done}) = nothing
 
@@ -184,7 +184,7 @@ function _eigsolve(
         A,
         b::AbstractVector{T},
         type::ObjType,
-        dimensions::Union{Nothing, AbstractDimensions},
+        dimensions::Union{Nothing, Dimensions},
         k::Int = 1,
         m::Int = max(20, 2 * k + 1);
         tol::Real = 1.0e-8,
@@ -487,16 +487,17 @@ function eigsolve_al(
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, SOpType <: Union{Ket, OperatorKet}}
     is_unitary_evo = isoper(H) && isnothing(c_ops)
+    L = is_unitary_evo ? H : liouvillian(H, c_ops)
 
     # Generate random initial state if not provided
     Te = eltype(H)
     ρ0_vec = if isnothing(ρ0)
-        is_unitary_evo ? rand_ket(Te, H.dimensions) : operator_to_vector(rand_dm(Te, H.dimensions))
+        is_unitary_evo ? rand_ket(Te, Dimensions(H.dimensions.to, Space(1))) : mat2vec(rand_dm(Te, L.dimensions.to.op_dims))
     else
         ρ0
     end
 
-    prob = mesolveProblem(H, ρ0_vec, [zero(T), T], c_ops; params = params, progress_bar = Val(false), kwargs...)
+    prob = mesolveProblem(L, ρ0_vec, [zero(T), T]; params = params, progress_bar = Val(false), kwargs...)
     integrator = init(prob.prob, alg)
 
     Lmap = ArnoldiLindbladIntegratorMap(Te, size(prob.prob.f.f), integrator)
@@ -506,7 +507,7 @@ function eigsolve_al(
         Lmap,
         ρ0_vec.data,
         res_type,
-        H.dimensions,
+        L.dimensions,
         eigvals,
         krylovdim,
         maxiter = maxiter,
@@ -540,22 +541,15 @@ julia> H = a + a';
 
 julia> using LinearAlgebra;
 
-julia> E, ψ, U = eigen(H)
-EigsolveResult:   type=Operator()   dims=([5], [5])
-values:
+julia> E, ψ = eigen(H); # eigenvalues and eigenvectors
+
+julia> round.(E, digits = 5)
 5-element Vector{Float64}:
- -2.8569700138728
- -1.3556261799742608
-  1.3322676295501878e-15
-  1.3556261799742677
-  2.8569700138728056
-vectors:
-5×5 Matrix{ComplexF64}:
-  0.106101+0.0im  -0.471249-0.0im  …   0.471249+0.0im  0.106101+0.0im
- -0.303127-0.0im   0.638838+0.0im      0.638838+0.0im  0.303127+0.0im
-  0.537348+0.0im  -0.279149-0.0im      0.279149+0.0im  0.537348+0.0im
- -0.638838-0.0im  -0.303127-0.0im     -0.303127-0.0im  0.638838+0.0im
-  0.447214+0.0im   0.447214+0.0im     -0.447214-0.0im  0.447214+0.0im
+ -2.85697
+ -1.35563
+  0.0
+  1.35563
+  2.85697
 
 julia> expect(H, ψ[1]) ≈ E[1]
 true
