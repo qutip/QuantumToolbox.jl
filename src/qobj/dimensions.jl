@@ -214,7 +214,7 @@ end
 Base.iterate(s::TensorSpace) = iterate(s.spaces)
 Base.iterate(s::TensorSpace, state) = iterate(s.spaces, state)
 
-Base.getindex(s::TensorSpace, i) = TensorSpace(s.spaces[i]) # this is used for indexing in `permute`
+Base.getindex(s::TensorSpace, idx::Union{T, AbstractVector{T}}) where {T <: Integer} = TensorSpace(s.spaces[idx]) # indexing for `permute`
 
 Base.length(::TensorSpace{N}) where {N} = N
 
