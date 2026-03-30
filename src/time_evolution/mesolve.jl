@@ -107,9 +107,8 @@ function mesolveProblem(
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
 
-    # Convert initial state to dense vector with complex element type and check dimensions
-    T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
-    ρ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(T, L_evo, ψ0)
+    # Convert initial state to dense vector with complex element type (T) and check dimensions
+    T, ρ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(L_evo, ψ0)
 
     L = cache_operator(L_evo.data, ρ0)
 

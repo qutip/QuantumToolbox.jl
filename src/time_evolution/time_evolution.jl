@@ -54,22 +54,28 @@ TimeEvolutionProblem(prob, times, states_type, dims) = TimeEvolutionProblem(prob
 raw"""
 A helper function to `check_mul_dimensions` and also generate the new type and dimensions for solutions
 """
-function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{Operator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{Ket, Operator}}
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{Operator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
     !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
     check_mul_dimensions(H, ψ0)
-    return to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
 end
-function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{Ket, Operator}}
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
     !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
     ρ0 = ket2dm(ψ0)
     ρ0_vec = mat2vec(ρ0)
     check_mul_dimensions(H, ρ0_vec)
-    return to_dense(T, ρ0_vec.data), Operator(), ρ0.dimensions
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ρ0_vec.data), Operator(), ρ0.dimensions
 end
-function _handle_init_state_and_sol_type_dims(::Type{T}, H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {T <: Number, Tψ <: Union{OperatorKet, SuperOperator}}
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{OperatorKet, SuperOperator}}
     !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
     check_mul_dimensions(H, ψ0)
-    return to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
 end
 
 @doc raw"""

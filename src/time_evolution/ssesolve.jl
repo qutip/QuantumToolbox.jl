@@ -97,9 +97,8 @@ function ssesolveProblem(
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
 
-    # Convert initial state to dense vector with complex element type and check dimensions
-    T = _complex_float_type(Base.promote_eltype(H_eff_evo, ψ0))
-    ψ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(T, H_eff_evo, ψ0)
+    # Convert initial state to dense vector with complex element type (T) and check dimensions
+    T, ψ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(H_eff_evo, ψ0)
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 

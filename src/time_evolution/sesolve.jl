@@ -76,9 +76,8 @@ function sesolveProblem(
     H_evo = _sesolve_make_U_QobjEvo(H) # Multiply by -i
     isoper(H_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
 
-    # Convert initial state to dense vector with complex element type and check dimensions
-    T = _complex_float_type(Base.promote_eltype(H_evo, ψ0))
-    ψ0_vec, states_type, dimensions = _handle_init_state_and_sol_type_dims(T, H_evo, ψ0)
+    # Convert initial state to dense vector with complex element type (T) and check dimensions
+    T, ψ0_vec, states_type, dimensions = _handle_init_state_and_sol_type_dims(H_evo, ψ0)
 
     U = cache_operator(H_evo.data, ψ0_vec)
 
