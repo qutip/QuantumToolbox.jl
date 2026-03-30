@@ -107,7 +107,7 @@ end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperator, <:Dimensions{T1, T2}}, B::QuantumObject{Operator}) where {T1 <: LiouvilleSpace, T2 <: LiouvilleSpace}
     # this case is special because SuperOperator A maps Operator B into another Operator
     check_mul_dimensions(A, B)
-    return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator(), A.dimensions.to.op_dims)
+    return vec2mat(A * mat2vec(B)) # vec2mat and mat2vec will handle the type and Dimensions
 end
 function Base.:(*)(A::QuantumObject{OperatorBra}, B::QuantumObject{OperatorKet})
     check_mul_dimensions(A, B)
