@@ -131,8 +131,7 @@ function steadystate(
         ),
     )
 
-    !isendomorphism(H.dimensions) &&
-        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for steadystate: dims = $(_get_dims_string(H.dimensions))"))
+    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for steadystate", H.dimensions)
 
     L = liouvillian(H, c_ops)
 
@@ -358,8 +357,7 @@ function steadystate_fourier(
         R <: Real,
         FSolver <: SteadyStateSolver,
     }
-    !isendomorphism(H_0.dimensions) &&
-        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for steadystate_fourier: dims = $(_get_dims_string(H_0.dimensions))"))
+    !isendomorphic(H_0.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for steadystate_fourier", H_0.dimensions)
     check_dimensions(H_0, H_p, H_m)
 
     L_0 = liouvillian(H_0, c_ops)

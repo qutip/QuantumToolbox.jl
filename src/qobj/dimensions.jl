@@ -68,7 +68,7 @@ function _list_to_tensor_space(dims::VectorOrTuple{T}, argname::String) where {T
     return TensorSpace(Tuple(Space.(dims)))
 end
 
-# endomorphism dimensions from integer tuple/vector
+# endomorphic dimensions from integer tuple/vector
 function Dimensions(dims::VectorOrTuple{T}) where {T <: Integer}
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
@@ -76,13 +76,13 @@ function Dimensions(dims::VectorOrTuple{T}) where {T <: Integer}
     return Dimensions(_list_to_tensor_space(dims, "dims"))
 end
 
-# endomorphism dimensions from single integer
+# endomorphic dimensions from single integer
 Dimensions(dims::Int) = Dimensions(Space(dims))
 
-# endomorphism dimensions from single AbstractSpace
+# endomorphic dimensions from single AbstractSpace
 Dimensions(dims::AbstractSpace) = Dimensions(dims, dims)
 
-# Non-endomorphism dimensions from 2-element tuple of integer vectors/tuples
+# Non-endomorphic dimensions from 2-element tuple of integer vectors/tuples
 function Dimensions(dims::DimsListType{T, T}) where {T <: Integer}
     (length(dims) != 2) && throw(ArgumentError("Invalid dims = $dims"))
 
@@ -118,8 +118,9 @@ function Base.show(io::IO, d::Dimensions)
     return nothing
 end
 
-# Check if dimensions are square (to == from)
-isendomorphism(dimensions::Dimensions) = dimensions.to == dimensions.from
+# Check if Dimensions is endomorphic (to == from)
+isendomorphic(dimensions::Dimensions) = dimensions.to == dimensions.from
+_non_endomorphic_dims_error(op_description::String, dimensions::Dimensions) = throw(ArgumentError("The $op_description must be endomorphic (same `to` and `from`), got: dims = $(_get_dims_string(dimensions))"))
 
 # obtain dims in the type of SVector with integers
 function dimensions_to_dims(dimensions::Dimensions)

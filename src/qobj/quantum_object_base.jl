@@ -202,10 +202,10 @@ _gen_dimensions(type::ObjType, dims::VectorOrTuple{T}) where {ObjType <: Union{K
 ## dims::AbstractSpace
 _gen_dimensions(::Ket, dims::AbstractSpace) = Dimensions(dims, Space(1))
 _gen_dimensions(::Bra, dims::AbstractSpace) = Dimensions(Space(1), dims)
-_gen_dimensions(::Operator, dims::AbstractSpace) = Dimensions(dims, dims) # is endomorphism
+_gen_dimensions(::Operator, dims::AbstractSpace) = Dimensions(dims, dims) # is endomorphic
 _gen_dimensions(::OperatorKet, dims::AbstractSpace) = Dimensions(dims, Space(1))
 _gen_dimensions(::OperatorBra, dims::AbstractSpace) = Dimensions(Space(1), dims)
-_gen_dimensions(::SuperOperator, dims::AbstractSpace) = Dimensions(dims, dims) # is endomorphism
+_gen_dimensions(::SuperOperator, dims::AbstractSpace) = Dimensions(dims, dims) # is endomorphic
 
 ## dims::DimsListType{T1, T2} : general nested array
 _gen_dimensions(::QuantumObjectType, dims::DimsListType{T1, T2}) where {T1, T2} = Dimensions(dims)

@@ -70,8 +70,7 @@ function spectrum(
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}}
 
-    !isendomorphism(H.dimensions) &&
-        throw(ArgumentError("Invalid Hamiltonian or Liouvillian for spectrum: dims = $(_get_dims_string(H.dimensions))"))
+    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for spectrum", H.dimensions)
 
     L = liouvillian(H, c_ops)
     check_mul_dimensions(L, A)

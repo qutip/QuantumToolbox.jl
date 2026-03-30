@@ -54,7 +54,7 @@
         Q0 = Qobj(zeros(ComplexF64, 3, 2))
         @test_throws ArgumentError partial_transpose(A_dense, [true])
         @test_throws ArgumentError partial_transpose(Q0, [true]) # invalid Dimensions (not TensorSpace)
-        @test_throws ArgumentError partial_transpose(tensor(Q0, Q0), [true, false]) # invalid Dimensions (not endomorphism)
+        @test_throws ArgumentError partial_transpose(tensor(Q0, Q0), [true, false]) # invalid Dimensions (not endomorphic)
 
         @testset "Type Inference (partial_transpose)" begin
             @inferred partial_transpose(A_dense, [true, false, true])

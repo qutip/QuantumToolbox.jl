@@ -531,8 +531,7 @@ function ptrace(QO::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}}}, sel
     ((QO.dimensions.to isa EnrSpace) || any(s -> s isa EnrSpace, QO.dimensions.to)) && throw(ArgumentError("ptrace does not support EnrSpace"))
 
     # TODO: support for special cases when some of the subsystems have same `to` and `from` space
-    !isendomorphism(QO.dimensions) &&
-        throw(ArgumentError("Invalid partial trace for dims = $(_get_dims_string(QO.dimensions))"))
+    !isendomorphic(QO.dimensions) && _non_endomorphic_dims_error("operator for ptrace", QO.dimensions)
 
     _non_static_array_warning("sel", sel)
 
@@ -567,8 +566,7 @@ function ptrace(QO::QuantumObject{Ket, <:Dimensions{Space, Space}}, sel::VectorO
     end
 end
 function ptrace(QO::QuantumObject{Operator, <:Dimensions{Space, Space}}, sel::VectorOrTuple{T}) where {T <: Integer}
-    !isendomorphism(QO.dimensions) &&
-        throw(ArgumentError("Invalid partial trace for dims = $(_get_dims_string(QO.dimensions))"))
+    !isendomorphic(QO.dimensions) && _non_endomorphic_dims_error("operator for ptrace", QO.dimensions)
 
     _non_static_array_warning("sel", sel)
 
