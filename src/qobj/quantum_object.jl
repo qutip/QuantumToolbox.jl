@@ -54,7 +54,7 @@ struct QuantumObject{ObjType <: QuantumObjectType, DimType <: Dimensions, DataTy
 
         ObjType = _check_type(type)
 
-        _check_QuantumObject(type, dimensions, _gen_data_size(data))
+        _check_QuantumObject(type, dimensions, size(data))
 
         return new{ObjType, typeof(dimensions), DT}(data, type, dimensions)
     end
@@ -127,7 +127,7 @@ end
 function QuantumObject(A::QuantumObject; type = A.type, dims = A.dimensions)
     dimensions = _gen_dimensions(type, dims)
     _check_type(type)
-    _check_QuantumObject(type, dimensions, _gen_data_size(A.data))
+    _check_QuantumObject(type, dimensions, size(A.data))
     return QuantumObject(copy(A.data), type, dimensions)
 end
 

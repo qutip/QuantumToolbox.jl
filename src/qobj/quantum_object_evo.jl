@@ -124,7 +124,7 @@ struct QuantumObjectEvolution{
 
         dimensions = _gen_dimensions(type, dims)
 
-        _check_QuantumObject(type, dimensions, _gen_data_size(data))
+        _check_QuantumObject(type, dimensions, size(data))
 
         return new{ObjType, typeof(dimensions), DT}(data, type, dimensions)
     end

@@ -22,7 +22,7 @@
         # OperatorBra requires row vector, DimensionMismatch when dimensions don't match array size
         @test_throws DimensionMismatch Qobj(a, type = OperatorBra())
 
-        a = rand(ComplexF64, 2, 2, 2)
+        a = rand(ComplexF64, 4, 1, 2) # although the first two dimensions (4x1) are compatible with Ket/OperatorKet, the last dimension causes DimensionMismatch
         for t in (nothing, Ket(), Bra(), Operator(), SuperOperator(), OperatorBra(), OperatorKet())
             @test_throws DimensionMismatch Qobj(a, type = t)
         end
