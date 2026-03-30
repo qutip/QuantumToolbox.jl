@@ -188,66 +188,33 @@ julia> a.dims, O.dims
 (([20], [20]), ([20, 20], [20, 20]))
 ```
 """
-function Base.kron(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
-    QType = promote_op_type(A, B)
-    _lazy_tensor_warning(A.data, B.data)
-    return QType(
-        kron(A.data, B.data),
-        Operator(),
-        Dimensions(
-            kron(A.dimensions.to, B.dimensions.to),
-            kron(A.dimensions.from, B.dimensions.from),
-        ),
-    )
-end
-function Base.kron(A::AbstractQuantumObject{Ket}, B::AbstractQuantumObject{Ket})
-    QType = promote_op_type(A, B)
-    _lazy_tensor_warning(A.data, B.data)
-    return QType(
-        kron(A.data, B.data),
-        Ket(),
-        Dimensions(
-            kron(A.dimensions.to, B.dimensions.to),
-            Space(1),
-        ),
-    )
-end
-function Base.kron(A::AbstractQuantumObject{Bra}, B::AbstractQuantumObject{Bra})
-    QType = promote_op_type(A, B)
-    _lazy_tensor_warning(A.data, B.data)
-    return QType(
-        kron(A.data, B.data),
-        Bra(),
-        Dimensions(
-            Space(1),
-            kron(A.dimensions.from, B.dimensions.from),
-        ),
-    )
-end
+Base.kron(A::AbstractQuantumObject) = A
 
-# if A and B are different type (must return Operator)
+# kron for two quantum objects A and B
 for AOpType in (:Ket, :Bra, :Operator)
     for BOpType in (:Ket, :Bra, :Operator)
-        if (AOpType != BOpType)
-            @eval begin
-                function Base.kron(A::AbstractQuantumObject{$AOpType}, B::AbstractQuantumObject{$BOpType})
-                    QType = promote_op_type(A, B)
-                    _lazy_tensor_warning(A.data, B.data)
-                    return QType(
-                        kron(A.data, B.data),
-                        Operator(),
-                        Dimensions(
-                            kron(A.dimensions.to, B.dimensions.to),
-                            kron(A.dimensions.from, B.dimensions.from),
-                        ),
-                    )
-                end
+        # handle the expressions for different type-cases here
+        # so that we don't need to evaluate if-condition in the function body
+        KronOpType = (AOpType == BOpType) ? AOpType : :Operator
+        dimensions_to_expr = (AOpType == BOpType == :Bra) ? :(Space(1)) : :(kron(A.dimensions.to, B.dimensions.to))
+        dimensions_from_expr = (AOpType == BOpType == :Ket) ? :(Space(1)) : :(kron(A.dimensions.from, B.dimensions.from))
+
+        @eval begin
+            function Base.kron(A::AbstractQuantumObject{$AOpType}, B::AbstractQuantumObject{$BOpType})
+                QType = promote_op_type(A, B)
+                _lazy_tensor_warning(A.data, B.data)
+                return QType(
+                    kron(A.data, B.data),
+                    $(KronOpType)(),
+                    Dimensions(
+                        $dimensions_to_expr,
+                        $dimensions_from_expr,
+                    ),
+                )
             end
         end
     end
 end
-
-Base.kron(A::AbstractQuantumObject) = A
 function Base.kron(A::Vector{<:AbstractQuantumObject})
     @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."
     return kron(A...)
