@@ -473,7 +473,7 @@ This method finds eigenvalues and eigenvectors of the time-ordered propagator ``
 function eigsolve_al(
         H::AbstractQuantumObject{HOpType},
         T::Real,
-        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
         alg::AbstractODEAlgorithm = DP5(),
         params = NullParameters(),
         ρ0::Union{Nothing, QuantumObject{SOpType}} = nothing,

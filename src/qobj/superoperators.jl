@@ -182,7 +182,7 @@ See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 """
 function liouvillian(
         H::AbstractQuantumObject{OpType},
-        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
         assume_hermitian::Union{Bool, Val} = Val(true),
     ) where {OpType <: Union{Operator, SuperOperator}}
     L = liouvillian(H; assume_hermitian = assume_hermitian)
@@ -192,7 +192,7 @@ function liouvillian(
     return L
 end
 
-liouvillian(H::Nothing, c_ops::Union{AbstractVector, Tuple}; kwargs...) = _sum_lindblad_dissipators(c_ops)
+liouvillian(H::Nothing, c_ops::VectorOrTuple{<:QuantumObject{Operator}}; kwargs...) = _sum_lindblad_dissipators(c_ops)
 
 liouvillian(H::Nothing, c_ops::Nothing; kwargs...) = 0
 
@@ -204,7 +204,7 @@ end
 liouvillian(H::AbstractQuantumObject{SuperOperator}; kwargs...) = H
 _sum_lindblad_dissipators(c_ops::Nothing) = 0
 
-_sum_lindblad_dissipators(c_ops::AbstractVector) = sum(op -> lindblad_dissipator(op), c_ops; init = 0)
+_sum_lindblad_dissipators(c_ops::VectorOrTuple{<:QuantumObject{Operator}}) = sum(op -> lindblad_dissipator(op), c_ops; init = 0)
 
 # Help the compiler to unroll the sum at compile time
 @generated function _sum_lindblad_dissipators(c_ops::Tuple)
