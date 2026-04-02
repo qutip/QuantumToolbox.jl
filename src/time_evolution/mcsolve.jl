@@ -407,7 +407,7 @@ function mcsolve(
     )
     sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj)
 
-    dims = ens_prob_mc.dimensions.to
+    dimensions = ens_prob_mc.dimensions
     _sol_1 = sol[:, 1]
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMCSolve)
 
@@ -416,7 +416,7 @@ function mcsolve(
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
-    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol)), dims = 1)
+    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dimensions), normalize_states), eachindex(sol)), dims = 1)
 
     col_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_times, eachindex(sol))
     col_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_which, eachindex(sol))

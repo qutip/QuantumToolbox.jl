@@ -20,7 +20,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
 - `times::AbstractVector`: The time list of the evolution.
 - `states_type::QuantumObjectType`: The type of the quantum states during the evolution (e.g., [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref)).
-- `dimensions::AbstractDimensions`: The dimensions of the Hilbert space.
+- `dimensions::Dimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
 
 !!! note "`dims` property"
@@ -28,7 +28,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 """
 struct TimeEvolutionProblem{
         ST <: QuantumObjectType,
-        DT <: AbstractDimensions,
+        DT <: Dimensions,
         PT <: AbstractSciMLProblem,
         TT <: AbstractVector,
         KWT,
@@ -50,6 +50,33 @@ function Base.getproperty(prob::TimeEvolutionProblem, key::Symbol)
 end
 
 TimeEvolutionProblem(prob, times, states_type, dims) = TimeEvolutionProblem(prob, times, states_type, dims, nothing)
+
+raw"""
+A helper function to `check_mul_dimensions` and also generate the new type and dimensions for solutions
+"""
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{Operator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
+    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    check_mul_dimensions(H, ψ0)
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+end
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
+    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    ρ0 = ket2dm(ψ0)
+    ρ0_vec = mat2vec(ρ0)
+    check_mul_dimensions(H, ρ0_vec)
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ρ0_vec.data), Operator(), ρ0.dimensions
+end
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{OperatorKet, SuperOperator}}
+    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    check_mul_dimensions(H, ψ0)
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+end
 
 @doc raw"""
     struct TimeEvolutionSol
