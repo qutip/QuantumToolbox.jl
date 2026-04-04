@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `rand_ket`
   - `rand_dm`
   - `rand_unitary`
+- Fix benchmarks instability for autodiff. ([#681])
 
 ## [v0.44.0]
 Release date: 2026-03-11
@@ -469,3 +470,4 @@ Release date: 2024-11-13
 [#670]: https://github.com/qutip/QuantumToolbox.jl/issues/670
 [#679]: https://github.com/qutip/QuantumToolbox.jl/issues/679
 [#680]: https://github.com/qutip/QuantumToolbox.jl/issues/680
+[#681]: https://github.com/qutip/QuantumToolbox.jl/issues/681
