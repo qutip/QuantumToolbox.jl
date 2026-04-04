@@ -2,6 +2,7 @@
     import QuantumToolbox: position, momentum
     using LinearAlgebra
     using SparseArrays
+    using Random
 
     @testset "zero state" begin
         v1 = zero_ket(4)
@@ -103,6 +104,19 @@
         @test all(eigenenergies(ρ_B) .>= 0)
         @test all(isapprox.(eig_val[1:rank], 0.0, atol = 1.0e-10))
         @test all(eig_val[(rank + 1):10] .>= 0)
+
+        # reproducibility with the same seed 1234
+        rng = MersenneTwister(1234)
+        ψ1 = rand_ket(10; rng = rng)
+        rng = MersenneTwister(1234)
+        ψ2 = rand_ket(10; rng = rng)
+        rng = MersenneTwister(1234)
+        ρ1 = rand_dm(10; rng = rng)
+        rng = MersenneTwister(1234)
+        ρ2 = rand_dm(10; rng = rng)
+        @test ψ1 == ψ2
+        @test ρ1 == ρ2
+
         @test_throws DomainError rand_dm(4, rank = rank)
         @test_throws DomainError rand_dm(4, rank = 0)
     end
@@ -223,6 +237,18 @@
         @test isunitary(U4)
         @test U1.dims == U2.dims == ([20], [20])
         @test U3.dims == U4.dims == ([5, 5], [5, 5])
+
+        # reproducibility with the same seed 1234
+        rng = MersenneTwister(1234)
+        U5 = rand_unitary(10, Val(:haar); rng = rng)
+        rng = MersenneTwister(1234)
+        U6 = rand_unitary(10, Val(:haar); rng = rng)
+        rng = MersenneTwister(1234)
+        U7 = rand_unitary(10, Val(:exp); rng = rng)
+        rng = MersenneTwister(1234)
+        U8 = rand_unitary(10, Val(:exp); rng = rng)
+        @test U5 == U6
+        @test U7 == U8
 
         @test_throws ArgumentError rand_unitary(20, :wrong)
     end

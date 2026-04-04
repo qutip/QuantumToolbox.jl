@@ -60,7 +60,7 @@ This state is constructed via the displacement operator [`displace`](@ref) and z
 coherent(N::Int, α::T) where {T <: Number} = displace(N, α) * fock(T, N, 0)
 
 @doc raw"""
-    rand_ket([T::Type=ComplexF64,] dimensions)
+    rand_ket([T::Type=ComplexF64,] dimensions; rng::AbstractRNG=default_rng())
 
 Generate a random normalized [`Ket`](@ref) vector with given argument `dimensions` and element type `T = ComplexF64` (default).
 
@@ -68,16 +68,18 @@ The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
 - `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
+The random number generator can be specified via the keyword argument `rng`.
+
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-rand_ket(::Type{T}, dimensions::Int) where {T <: Complex} = rand_ket(T, SVector(dimensions))
-function rand_ket(::Type{T}, dimensions::Union{Dimensions, VectorOrTuple{Int}}) where {T <: Complex}
+rand_ket(::Type{T}, dimensions::Int; rng::AbstractRNG = default_rng()) where {T <: Complex} = rand_ket(T, SVector(dimensions); rng)
+function rand_ket(::Type{T}, dimensions::Union{Dimensions, VectorOrTuple{Int}}; rng::AbstractRNG = default_rng()) where {T <: Complex}
     N = get_size(dimensions)[1]
-    ψ = rand(T, N) .- (one(T) / 2 + one(T) * im / 2)
+    ψ = rand(rng, T, N) .- (one(T) / 2 + one(T) * im / 2)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
 end
-rand_ket(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}) = rand_ket(ComplexF64, dimensions)
+rand_ket(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}; rng::AbstractRNG = default_rng()) = rand_ket(ComplexF64, dimensions; rng)
 
 @doc raw"""
     fock_dm([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -153,7 +155,7 @@ end
 maximally_mixed_dm(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}) = maximally_mixed_dm(ComplexF64, dimensions)
 
 @doc raw"""
-    rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=get_size(dimensions)[1])
+    rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=get_size(dimensions)[1], rng::AbstractRNG=default_rng())
 
 Generate a random density matrix from Ginibre ensemble with given argument `dimensions`, `rank`, and element type `T = ComplexF64` (default), ensuring that it is positive semi-definite and trace equals to `1`.
 
@@ -161,7 +163,9 @@ The `dimensions` can be either the following types:
 - `dimensions::Int`: Number of basis states in the Hilbert space.
 - `dimensions::Union{Dimensions,AbstractVector{Int},Tuple}`: list of dimensions representing the each number of basis in the subsystems.
 
-The default keyword argument `rank = get_size(dimensions)[1]` (full rank).
+The keyword arguments:
+- `rank = get_size(dimensions)[1]` (full rank).
+- `rng = default_rng()` (random number generator).
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `rand_dm(dimensions; rank=rank)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) instead of `Vector`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
@@ -170,23 +174,25 @@ The default keyword argument `rank = get_size(dimensions)[1]` (full rank).
 - [J. Ginibre, Statistical ensembles of complex, quaternion, and real matrices, Journal of Mathematical Physics 6.3 (1965): 440-449](https://doi.org/10.1063/1.1704292)
 - [K. Życzkowski, et al., Generating random density matrices, Journal of Mathematical Physics 52, 062201 (2011)](http://dx.doi.org/10.1063/1.3595693)
 """
-rand_dm(::Type{T}, dimensions::Int; rank::Int = dimensions) where {T <: Complex} =
-    rand_dm(T, SVector(dimensions); rank)
+rand_dm(::Type{T}, dimensions::Int; rank::Int = dimensions, rng::AbstractRNG = default_rng()) where {T <: Complex} =
+    rand_dm(T, SVector(dimensions); rank, rng)
 function rand_dm(
         ::Type{T},
         dimensions::Union{Dimensions, VectorOrTuple{Int}};
         rank::Int = get_size(dimensions)[1],
+        rng::AbstractRNG = default_rng(),
     ) where {T <: Complex}
     N = get_size(dimensions)[1]
     (rank < 1) && throw(DomainError(rank, "The argument rank must be larger than 1."))
     (rank > N) && throw(DomainError(rank, "The argument rank cannot exceed dimensions."))
 
-    X = _Ginibre_ensemble(T, N, rank)
+    X = _Ginibre_ensemble(rng, T, N, rank)
     ρ = X * X'
     ρ /= tr(ρ)
     return QuantumObject(ρ; type = Operator(), dims = dimensions)
 end
-rand_dm(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}; rank::Int = get_size(dimensions)[1]) = rand_dm(ComplexF64, dimensions; rank)
+rand_dm(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}; rank::Int = get_size(dimensions)[1], rng::AbstractRNG = default_rng()) =
+    rand_dm(ComplexF64, dimensions; rank, rng)
 
 @doc raw"""
     spin_state([T::Type=ComplexF64,] j::Real, m::Real)
