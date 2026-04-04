@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replace `ProductDimensions` and `HilbertSpace` structures with `Dimensions` + `Space`/`TensorSpace`/`LiouvilleSpace`.
   - Remove `get_hilbert_size` and `get_liouville_size`, and use `get_size` instead.
 - Use `VectorOrTuple` for type definitions. ([#679])
+- Allow specifying random number generator by keyword argument `rng` for the following generating functions ([#680]): 
+  - `rand_ket`
+  - `rand_dm`
+  - `rand_unitary`
 
 ## [v0.44.0]
 Release date: 2026-03-11
@@ -464,3 +468,4 @@ Release date: 2024-11-13
 [#669]: https://github.com/qutip/QuantumToolbox.jl/issues/669
 [#670]: https://github.com/qutip/QuantumToolbox.jl/issues/670
 [#679]: https://github.com/qutip/QuantumToolbox.jl/issues/679
+[#680]: https://github.com/qutip/QuantumToolbox.jl/issues/680
