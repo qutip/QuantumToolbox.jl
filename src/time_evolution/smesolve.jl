@@ -77,9 +77,9 @@ function smesolveProblem(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{StateOpType},
         tlist::AbstractVector,
-        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
-        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
-        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        sc_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}, AbstractQuantumObject} = nothing;
+        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         progress_bar::Union{Val, Bool} = Val(true),
@@ -218,9 +218,9 @@ function smesolveEnsembleProblem(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{StateOpType},
         tlist::AbstractVector,
-        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
-        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
-        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        sc_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}, AbstractQuantumObject} = nothing;
+        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
@@ -355,10 +355,10 @@ function smesolve(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{StateOpType},
         tlist::AbstractVector,
-        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
-        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
+        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        sc_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}, AbstractQuantumObject} = nothing;
         alg::Union{Nothing, AbstractSDEAlgorithm} = nothing,
-        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,

@@ -84,8 +84,8 @@ function mesolveProblem(
         H::Union{AbstractQuantumObject{HOpType}, Tuple},
         ψ0::QuantumObject{StateOpType},
         tlist,
-        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
-        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
+        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
         params = NullParameters(),
         progress_bar::Union{Val, Bool} = Val(true),
         inplace::Union{Val, Bool} = Val(true),
@@ -181,9 +181,9 @@ function mesolve(
         H::Union{AbstractQuantumObject{HOpType}, Tuple},
         ψ0::QuantumObject{StateOpType},
         tlist::AbstractVector,
-        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
         alg::AbstractODEAlgorithm = DP5(),
-        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
         params = NullParameters(),
         progress_bar::Union{Val, Bool} = Val(true),
         inplace::Union{Val, Bool} = Val(true),
@@ -292,10 +292,10 @@ function mesolve_map(
         H::Union{AbstractQuantumObject{HOpType}, Tuple},
         ψ0::AbstractVector{<:QuantumObject{StateOpType}},
         tlist::AbstractVector,
-        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
         alg::AbstractODEAlgorithm = DP5(),
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
         params::Union{NullParameters, Tuple} = NullParameters(),
         progress_bar::Union{Val, Bool} = Val(true),
         kwargs...,
@@ -346,7 +346,7 @@ mesolve_map(
     H::Union{AbstractQuantumObject{HOpType}, Tuple},
     ψ0::QuantumObject{StateOpType},
     tlist::AbstractVector,
-    c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+    c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
     kwargs...,
 ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}} =
     mesolve_map(H, [ψ0], tlist, c_ops; kwargs...)

@@ -580,7 +580,7 @@ function liouvillian_floquet(
         Hₚ::QuantumObject{OpType2},
         Hₘ::QuantumObject{OpType3},
         ω::Real,
-        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
         n_max::Int = 3,
         tol::Real = 1.0e-15,
     ) where {
