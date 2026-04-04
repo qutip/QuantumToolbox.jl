@@ -35,10 +35,10 @@ rand_unitary(::Type{T}, dimensions::Int, distribution::Union{Symbol, Val} = Val(
     rand_unitary(T, SVector(dimensions), makeVal(distribution))
 rand_unitary(
     ::Type{T},
-    dimensions::Union{Dimensions, AbstractVector{Int}, Tuple},
+    dimensions::Union{Dimensions, VectorOrTuple{Int}},
     distribution::Union{Symbol, Val} = Val(:haar),
 ) where {T <: FloatOrComplex} = rand_unitary(T, dimensions, makeVal(distribution))
-function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:haar}) where {T <: FloatOrComplex}
+function rand_unitary(::Type{T}, dimensions::Union{Dimensions, VectorOrTuple{Int}}, ::Val{:haar}) where {T <: FloatOrComplex}
     N = get_size(dimensions)[1]
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -53,7 +53,7 @@ function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{In
     Λ ./= abs.(Λ) # rescaling the elements
     return QuantumObject(to_dense(Q * Diagonal(Λ)); type = Operator(), dims = dimensions)
 end
-function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{:exp}) where {T <: FloatOrComplex}
+function rand_unitary(::Type{T}, dimensions::Union{Dimensions, VectorOrTuple{Int}}, ::Val{:exp}) where {T <: FloatOrComplex}
     N = get_size(dimensions)[1]
 
     # generate N x N matrix Z of complex standard normal random variates
@@ -64,9 +64,9 @@ function rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{In
     H = QuantumObject((Z + Z') / 2; type = Operator(), dims = dimensions)
     return to_dense(_rand_unitary_exp(H))
 end
-rand_unitary(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}, ::Val{Td}) where {T <: FloatOrComplex, Td} =
+rand_unitary(::Type{T}, dimensions::Union{Dimensions, VectorOrTuple{Int}}, ::Val{Td}) where {T <: FloatOrComplex, Td} =
     throw(ArgumentError("Invalid distribution: $(Td)"))
-rand_unitary(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}, distribution::Union{Symbol, Val} = Val(:haar)) = rand_unitary(ComplexF64, dimensions, distribution)
+rand_unitary(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}, distribution::Union{Symbol, Val} = Val(:haar)) = rand_unitary(ComplexF64, dimensions, distribution)
 
 # we make H sparse here because the following method currently does not exist : exp(::Matrix{Complex{BigFloat}})
 _rand_unitary_exp(H::QuantumObject{Operator, <:Dimensions, Matrix{Complex{BigFloat}}}) = exp(-im * to_sparse(H))
@@ -584,9 +584,9 @@ where ``\omega = \exp(\frac{2 \pi i}{N})``.
     It is highly recommended to use `qft(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 qft(::Type{T}, dimensions::Int) where {T <: Complex} = QuantumObject(_qft_op(T, dimensions), Operator(), dimensions)
-qft(::Type{T}, dimensions::Union{Dimensions, AbstractVector{Int}, Tuple}) where {T <: Complex} =
+qft(::Type{T}, dimensions::Union{Dimensions, VectorOrTuple{Int}}) where {T <: Complex} =
     QuantumObject(_qft_op(T, get_size(dimensions)[1]), Operator(), dimensions)
-qft(dimensions::Union{Int, Dimensions, AbstractVector{Int}, Tuple}) = qft(ComplexF64, dimensions)
+qft(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}) = qft(ComplexF64, dimensions)
 
 function _qft_op(::Type{T}, N::Int) where {T <: Complex}
     N_T = T(N)

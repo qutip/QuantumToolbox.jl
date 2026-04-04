@@ -28,8 +28,8 @@ The return depends on `fock_basis`.
 """
 function bloch_redfield_tensor(
         H::QuantumObject{Operator},
-        a_ops::Union{AbstractVector, Tuple, Nothing},
-        c_ops::Union{AbstractVector, Tuple, Nothing} = nothing;
+        a_ops::Union{Nothing, AbstractVector, Tuple},
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         sec_cutoff::Real = 0.1,
         fock_basis::Union{Val, Bool} = Val(false),
     )
@@ -216,7 +216,7 @@ function brmesolve(
         a_ops::Union{Nothing, AbstractVector, Tuple},
         c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         sec_cutoff::Real = 0.1,
-        e_ops::Union{Nothing, AbstractVector} = nothing,
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         kwargs...,
     )
     R = bloch_redfield_tensor(H, a_ops, c_ops; sec_cutoff = sec_cutoff, fock_basis = Val(true))
