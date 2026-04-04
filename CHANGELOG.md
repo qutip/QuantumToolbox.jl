@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replace `ProductDimensions` and `HilbertSpace` structures with `Dimensions` + `Space`/`TensorSpace`/`LiouvilleSpace`.
   - Remove `get_hilbert_size` and `get_liouville_size`, and use `get_size` instead.
 - Use `VectorOrTuple` for type definitions. ([#679])
-- Allow specifying random number generator by keyword argument `rng` for the following generating functions ([#680]): 
+- Allow specifying random number generator by keyword argument `rng` for the following random `Qobj` generating functions ([#680]): 
   - `rand_ket`
   - `rand_dm`
   - `rand_unitary`
