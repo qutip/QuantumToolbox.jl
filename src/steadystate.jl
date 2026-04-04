@@ -345,7 +345,7 @@ function steadystate_fourier(
         H_p::QuantumObject{OpType2},
         H_m::QuantumObject{OpType3},
         ωd::Number,
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         n_max::Integer = 2,
         tol::R = 1.0e-8,
         solver::FSolver = SteadyStateLinearSolver(),

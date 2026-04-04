@@ -28,7 +28,7 @@ function correlation_3op_2t(
         ψ0::Union{Nothing, QuantumObject{StateOpType}},
         tlist::AbstractVector,
         τlist::AbstractVector,
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}},
+        c_ops::Union{Nothing, AbstractVector, Tuple},
         A::QuantumObject{Operator},
         B::QuantumObject{Operator},
         C::QuantumObject{Operator};
@@ -81,7 +81,7 @@ function correlation_3op_1t(
         H::AbstractQuantumObject{HOpType},
         ψ0::Union{Nothing, QuantumObject{StateOpType}},
         τlist::AbstractVector,
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}},
+        c_ops::Union{Nothing, AbstractVector, Tuple},
         A::QuantumObject{Operator},
         B::QuantumObject{Operator},
         C::QuantumObject{Operator};
@@ -114,7 +114,7 @@ function correlation_2op_2t(
         ψ0::Union{Nothing, QuantumObject{StateOpType}},
         tlist::AbstractVector,
         τlist::AbstractVector,
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}},
+        c_ops::Union{Nothing, AbstractVector, Tuple},
         A::QuantumObject{Operator},
         B::QuantumObject{Operator};
         reverse::Bool = false,
@@ -150,7 +150,7 @@ function correlation_2op_1t(
         H::AbstractQuantumObject{HOpType},
         ψ0::Union{Nothing, QuantumObject{StateOpType}},
         τlist::AbstractVector,
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}},
+        c_ops::Union{Nothing, AbstractVector, Tuple},
         A::QuantumObject{Operator},
         B::QuantumObject{Operator};
         reverse::Bool = false,

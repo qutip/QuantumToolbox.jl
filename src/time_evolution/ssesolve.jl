@@ -78,8 +78,8 @@ function ssesolveProblem(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
-        sc_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}, AbstractQuantumObject} = nothing;
-        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         progress_bar::Union{Val, Bool} = Val(true),
@@ -220,8 +220,8 @@ function ssesolveEnsembleProblem(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
-        sc_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}, AbstractQuantumObject} = nothing;
-        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
@@ -358,9 +358,9 @@ function ssesolve(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
-        sc_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}, AbstractQuantumObject} = nothing;
+        sc_ops::Union{Nothing, AbstractVector, Tuple, AbstractQuantumObject} = nothing;
         alg::Union{Nothing, AbstractSDEAlgorithm} = nothing,
-        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,

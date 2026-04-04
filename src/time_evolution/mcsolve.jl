@@ -112,8 +112,8 @@ function mcsolveProblem(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
-        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         jump_callback::TJC = ContinuousLindbladJumpCallback(),
@@ -223,8 +223,8 @@ function mcsolveEnsembleProblem(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
-        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
@@ -361,9 +361,9 @@ function mcsolve(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{Ket},
         tlist::AbstractVector,
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         alg::AbstractODEAlgorithm = DP5(),
-        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,

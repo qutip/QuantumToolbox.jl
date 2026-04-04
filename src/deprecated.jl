@@ -55,7 +55,7 @@ function correlation_3op_2t(
         A::QuantumObject{Operator},
         B::QuantumObject{Operator},
         C::QuantumObject{Operator},
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     Base.depwarn(
@@ -73,7 +73,7 @@ function correlation_3op_1t(
         A::QuantumObject{Operator},
         B::QuantumObject{Operator},
         C::QuantumObject{Operator},
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     Base.depwarn(
@@ -91,7 +91,7 @@ function correlation_2op_2t(
         τ_l::AbstractVector,
         A::QuantumObject{Operator},
         B::QuantumObject{Operator},
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         reverse::Bool = false,
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
@@ -109,7 +109,7 @@ function correlation_2op_1t(
         τ_l::AbstractVector,
         A::QuantumObject{Operator},
         B::QuantumObject{Operator},
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing;
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         reverse::Bool = false,
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
@@ -168,7 +168,7 @@ end
 
 function liouvillian(
         H::QuantumObject{HOpType},
-        c_ops::VectorOrTuple{<:QuantumObject{Operator}},
+        c_ops::AbstractVector, Tuple,
         Id_cache;
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}}

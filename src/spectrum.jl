@@ -63,7 +63,7 @@ See also the following list for `SpectrumSolver` docstrings:
 function spectrum(
         H::QuantumObject{HOpType},
         ωlist::AbstractVector,
-        c_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}},
+        c_ops::Union{Nothing, AbstractVector, Tuple},
         A::QuantumObject{Operator},
         B::QuantumObject{Operator};
         solver::SpectrumSolver = ExponentialSeries(),

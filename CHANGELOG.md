@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restructure `Dimensions` and `Space` to align with `qutip` (`Python`) ([#659]). Note that this update basically overwrites many changes made in PR [#600]:
   - Replace `ProductDimensions` and `HilbertSpace` structures with `Dimensions` + `Space`/`TensorSpace`/`LiouvilleSpace`.
   - Remove `get_hilbert_size` and `get_liouville_size`, and use `get_size` instead.
-- Use `VectorOrTuple` for type definitions of `c_ops` and `e_ops`. ([#679])
+- Use `VectorOrTuple` for type definitions. ([#679])
 
 ## [v0.44.0]
 Release date: 2026-03-11

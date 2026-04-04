@@ -64,7 +64,7 @@ function sesolveProblem(
         H::Union{AbstractQuantumObject{Operator}, Tuple},
         ψ0::QuantumObject{ST},
         tlist::AbstractVector;
-        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         progress_bar::Union{Val, Bool} = Val(true),
         inplace::Union{Val, Bool} = Val(true),
@@ -143,7 +143,7 @@ function sesolve(
         ψ0::QuantumObject{ST},
         tlist::AbstractVector;
         alg::AbstractODEAlgorithm = Vern7(lazy = false),
-        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         progress_bar::Union{Val, Bool} = Val(true),
         inplace::Union{Val, Bool} = Val(true),
@@ -232,7 +232,7 @@ function sesolve_map(
         tlist::AbstractVector;
         alg::AbstractODEAlgorithm = Vern7(lazy = false),
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-        e_ops::Union{Nothing, VectorOrTuple{<:QuantumObject{Operator}}} = nothing,
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params::Union{NullParameters, Tuple} = NullParameters(),
         progress_bar::Union{Val, Bool} = Val(true),
         kwargs...,
