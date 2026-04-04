@@ -168,7 +168,7 @@ end
 
 function liouvillian(
         H::QuantumObject{HOpType},
-        c_ops::AbstractVector, Tuple,
+        c_ops::AbstractVector,
         Id_cache;
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}}

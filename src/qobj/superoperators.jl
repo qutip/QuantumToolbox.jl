@@ -192,7 +192,7 @@ function liouvillian(
     return L
 end
 
-liouvillian(H::Nothing, c_ops::Union{AbstractVector, Tuple}, Tuple; kwargs...) = _sum_lindblad_dissipators(c_ops)
+liouvillian(H::Nothing, c_ops::Union{AbstractVector, Tuple}; kwargs...) = _sum_lindblad_dissipators(c_ops)
 
 liouvillian(H::Nothing, c_ops::Nothing; kwargs...) = 0
 

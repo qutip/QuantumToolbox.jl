@@ -121,10 +121,10 @@ Solve the stationary state based on different solvers.
 """
 function steadystate(
         H::AbstractQuantumObject{OpType},
-        c_ops::Union{Nothing, VectorOrTuple{COpType}} = nothing;
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         solver::SteadyStateSolver = SteadyStateDirectSolver(),
         kwargs...,
-    ) where {OpType <: Union{Operator, SuperOperator}, COpType <: QuantumObject{Operator}}
+    ) where {OpType <: Union{Operator, SuperOperator}}
     solver isa SSFloquetEffectiveLiouvillian && throw(
         ArgumentError(
             "The solver `SSFloquetEffectiveLiouvillian` is only available for the `steadystate_fourier` function.",
