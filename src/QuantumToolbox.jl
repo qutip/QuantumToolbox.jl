@@ -4,6 +4,7 @@ module QuantumToolbox
 using LinearAlgebra
 using SparseArrays
 
+import Base: AbstractVecOrTuple
 import Distributed: RemoteChannel
 import LinearAlgebra: checksquare
 import Pkg

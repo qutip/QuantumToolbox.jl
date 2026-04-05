@@ -144,8 +144,8 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 """
 function entropy_mutual(
         ρAB::QuantumObject{ObjType, <:Dimensions{<:TensorSpace{N}, <:TensorSpace{N}}}, # the dimensions to == from, and should both be TensorSpace
-        selA::Union{Int, VectorOrTuple{Int}},
-        selB::Union{Int, VectorOrTuple{Int}};
+        selA::Union{Int, AbstractVecOrTuple{Int}},
+        selB::Union{Int, AbstractVecOrTuple{Int}};
         kwargs...,
     ) where {ObjType <: Union{Ket, Operator}, N}
     # check if selA and selB matches the dimensions of ρAB
@@ -177,7 +177,7 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 """
 entropy_conditional(
     ρAB::QuantumObject{ObjType, <:Dimensions{N, N}},
-    selB::Union{Int, VectorOrTuple{Int}};
+    selB::Union{Int, AbstractVecOrTuple{Int}};
     kwargs...,
 ) where {ObjType <: Union{Ket, Operator}, N} = entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
 
@@ -194,7 +194,7 @@ Calculates the [entanglement entropy](https://en.wikipedia.org/wiki/Entropy_of_e
 """
 function entanglement(
         ρ::QuantumObject{OpType},
-        sel::Union{Int, VectorOrTuple{Int}},
+        sel::Union{Int, AbstractVecOrTuple{Int}},
         kwargs...,
     ) where {OpType <: Union{Ket, Operator}}
     p = purity(ρ)

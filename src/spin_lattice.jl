@@ -34,7 +34,7 @@ julia> op.dims
 ([2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2])
 ```
 """
-function multisite_operator(dims::VectorOrTuple{T}, pairs::Pair{<:Integer, <:QuantumObject}...) where {T <: Integer}
+function multisite_operator(dims::AbstractVecOrTuple{T}, pairs::Pair{<:Integer, <:QuantumObject}...) where {T <: Integer}
     sites_unsorted = collect(first.(pairs))
     idxs = sortperm(sites_unsorted)
     _sites = sites_unsorted[idxs]

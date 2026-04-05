@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restructure `Dimensions` and `Space` to align with `qutip` (`Python`) ([#659]). Note that this update basically overwrites many changes made in PR [#600]:
   - Replace `ProductDimensions` and `HilbertSpace` structures with `Dimensions` + `Space`/`TensorSpace`/`LiouvilleSpace`.
   - Remove `get_hilbert_size` and `get_liouville_size`, and use `get_size` instead.
-- Use `VectorOrTuple` for type definitions. ([#679])
+- Use `AbstractVecOrTuple` for type definitions. ([#679])
 - Allow specifying random number generator by keyword argument `rng` for the following random `Qobj` generating functions ([#680]): 
   - `rand_ket`
   - `rand_dm`
