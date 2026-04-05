@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `rand_unitary`
 - Fix benchmarks instability for autodiff. ([#681])
 - Use `StochasticDiffEqHighOrder` as dependency instead of `StochasticDiffEq` for stochastic solvers. ([#682])
+- Use `Base.AbstractVecOrTuple` instead of handwritten `VectorOrTuple`. ([#682])
 
 ## [v0.44.0]
 Release date: 2026-03-11
