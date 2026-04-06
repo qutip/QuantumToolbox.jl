@@ -39,7 +39,7 @@ import SciMLBase:
     AbstractODEAlgorithm,
     AbstractODESolution,
     AbstractSDEAlgorithm
-import StochasticDiffEq: SRA2, SRIW1
+import StochasticDiffEqHighOrder: SRA2, SRIW1
 import SciMLOperators:
     cache_operator,
     iscached,
