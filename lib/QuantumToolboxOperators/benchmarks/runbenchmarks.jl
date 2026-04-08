@@ -2,8 +2,8 @@ using LinearAlgebra
 using SparseArrays
 using SciMLOperators
 using QuantumToolboxOperators
-# using CUDA
-using Metal
+using CUDA
+# using Metal
 using Reactant
 using Adapt
 using Chairmarks
@@ -35,22 +35,28 @@ mul!(dψ, a_sparse, ψ)
 
 Adapt.@adapt_structure DestroyOperator
 
-# a_gpu = adapt(CuArray, a)
-a_gpu = adapt(MtlArray, a)
+a_gpu = adapt(CuArray, a)
+# a_gpu = adapt(MtlArray, a)
 
-ψ_gpu = adapt(MtlArray, ψ)
-dψ_gpu = adapt(MtlArray, dψ)
+a_sparse_gpu = CUSPARSE.CuSparseMatrixCSR(a_sparse)
+
+ψ_gpu = adapt(CuArray, ψ)
+dψ_gpu = adapt(CuArray, dψ)
+# ψ_gpu = adapt(MtlArray, ψ)
+# dψ_gpu = adapt(MtlArray, dψ)
 
 mul!(dψ_gpu, a_gpu, ψ_gpu)
 
 @be mul!(dψ_gpu, a_gpu, ψ_gpu)
+@be mul!(dψ_gpu, a_sparse_gpu, ψ_gpu)
 
 @benchmark mul!($dψ_gpu, $a_gpu, $ψ_gpu)
+@benchmark mul!($dψ_gpu, $a_sparse_gpu, $ψ_gpu)
 
 # %%
 
-# a_reactant = Reactant.to_rarray(a)
-a_reactant = adapt(Reactant.ConcreteRArray, a)
+a_reactant = Reactant.to_rarray(a)
+# a_reactant = adapt(Reactant.ConcreteRArray, a)
 
 ψ_reactant = Reactant.to_rarray(ψ)
 dψ_reactant = Reactant.to_rarray(dψ)
@@ -58,3 +64,5 @@ dψ_reactant = Reactant.to_rarray(dψ)
 mul_compiled! = @compile mul!(dψ_reactant, a_reactant, ψ_reactant)
 
 mul_compiled!(dψ_reactant, a_reactant, ψ_reactant)
+
+@be mul_compiled!(dψ_reactant, a_reactant, ψ_reactant)

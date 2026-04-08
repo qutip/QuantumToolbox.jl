@@ -70,8 +70,10 @@ has_adjoint(::DestroyOperator) = true
 
 function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyOperator{T, true}, v::AbstractVecOrMat) where {T}
     N = L.N
+
+    # @views w[N:N] .= zero(eltype(w)) # This doesn't work on Reactant
+    fill!(w, zero(eltype(w)))
     @views w[1:(N - 1)] .= L.coeffs .* v[2:N]
-    @views w[N:N] .= zero(eltype(w))
     return w
 end
 
@@ -79,8 +81,9 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::DestroyOperator{T, true}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N = L.N
+    # @views w[N:N] .= β .* w[N:N] # This doesn't work on Reactant
+    lmul!(β, w)
     @views w[1:(N - 1)] .= α .* L.coeffs .* v[2:N] .+ β .* w[1:(N - 1)]
-    @views w[N:N] .= β .* w[N:N]
     return w
 end
 
@@ -117,7 +120,8 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::AdjointOperator{T, <:DestroyOperator{T, true}}, v::AbstractVecOrMat,
     ) where {T}
     N = L.L.N
-    @views w[1:1] .= zero(eltype(w))
+    # @views w[1:1] .= zero(eltype(w)) # This doesn't work on Reactant
+    fill!(w, zero(eltype(w)))
     @views w[2:N] .= L.L.coeffs .* v[1:(N - 1)]
     return w
 end
@@ -126,7 +130,8 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::AdjointOperator{T, <:DestroyOperator{T, true}}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N = L.L.N
-    @views w[1:1] .= β .* w[1:1]
+    # @views w[1:1] .= β .* w[1:1] # This doesn't work on Reactant
+    lmul!(β, w)
     @views w[2:N] .= α .* L.L.coeffs .* v[1:(N - 1)] .+ β .* w[2:N]
     return w
 end
@@ -204,14 +209,14 @@ Base.adjoint(L::NumberOperator) = L
 # ─── mul! with precomputed coefficients ──────────────────────────────────────
 
 function LinearAlgebra.mul!(w::AbstractVecOrMat, L::NumberOperator{T, true}, v::AbstractVecOrMat) where {T}
-    @views w .= L.coeffs .* v
+    w .= L.coeffs .* v
     return w
 end
 
 function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::NumberOperator{T, true}, v::AbstractVecOrMat, α, β,
     ) where {T}
-    @views w .= α .* L.coeffs .* v .+ β .* w
+    w .= α .* L.coeffs .* v .+ β .* w
     return w
 end
 
@@ -281,8 +286,10 @@ has_adjoint(::DestroyPowerOperator) = true
 
 function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyPowerOperator{T, true}, v::AbstractVecOrMat) where {T}
     N, k = L.N, L.k
+
+    # @views w[(N - k + 1):N] .= zero(eltype(w)) # This doesn't work on Reactant
+    fill!(w, zero(eltype(w)))
     @views w[1:(N - k)] .= L.coeffs .* v[(k + 1):N]
-    @views w[(N - k + 1):N] .= zero(eltype(w))
     return w
 end
 
@@ -290,8 +297,10 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::DestroyPowerOperator{T, true}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N, k = L.N, L.k
+
+    # @views w[(N - k + 1):N] .= β .* w[(N - k + 1):N]
+    lmul!(β, view(w, (N - k + 1):N))
     @views w[1:(N - k)] .= α .* L.coeffs .* v[(k + 1):N] .+ β .* w[1:(N - k)]
-    @views w[(N - k + 1):N] .= β .* w[(N - k + 1):N]
     return w
 end
 
@@ -332,7 +341,8 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::AdjointOperator{T, <:DestroyPowerOperator{T, true}}, v::AbstractVecOrMat,
     ) where {T}
     N, k = L.L.N, L.L.k
-    @views w[1:k] .= zero(eltype(w))
+    # @views w[1:k] .= zero(eltype(w))
+    fill!(w, zero(eltype(w)))
     @views w[(k + 1):N] .= L.L.coeffs .* v[1:(N - k)]
     return w
 end
@@ -341,7 +351,9 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::AdjointOperator{T, <:DestroyPowerOperator{T, true}}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N, k = L.L.N, L.L.k
-    @views w[1:k] .= β .* w[1:k]
+    
+    # @views w[1:k] .= β .* w[1:k] # This doesn't work on Reactant
+    lmul!(β, view(w, 1:k))
     @views w[(k + 1):N] .= α .* L.L.coeffs .* v[1:(N - k)] .+ β .* w[(k + 1):N]
     return w
 end
