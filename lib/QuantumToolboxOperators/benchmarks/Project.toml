@@ -1,3 +1,9 @@
 [deps]
+Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Chairmarks = "0ca39b1e-fe0b-4e98-acfc-b1656634c4de"
+Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
 QuantumToolboxOperators = "27b6a5b1-9c19-4929-a357-4e7b83bd013e"
+Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
+SciMLOperators = "c0aeaf25-5076-4817-a8d5-81caf7dfa961"
