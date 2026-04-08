@@ -52,22 +52,22 @@ end
 for N in [2, 5, 10, 20, 50]
     println("\n--- N = $N ---")
 
-    a = DestroyOperator(N)
-    ad = adjoint(a)
-    n_op = NumberOperator(N)
+    a_op = DestroyOperator(N)
+    ad_op = adjoint(a_op)
+    n_op0 = NumberOperator(N)
     n_op1 = NumberOperator(N; shift = 1)
 
     # DestroyOperator
-    test_mul(a, "DestroyOperator")
-    test_mul5(a, "DestroyOperator")
+    test_mul(a_op, "DestroyOperator")
+    test_mul5(a_op, "DestroyOperator")
 
     # AdjointOperator (creation)
-    test_mul(ad, "adjoint(DestroyOperator)")
-    test_mul5(ad, "adjoint(DestroyOperator)")
+    test_mul(ad_op, "adjoint(DestroyOperator)")
+    test_mul5(ad_op, "adjoint(DestroyOperator)")
 
     # NumberOperator (shift=0)
-    test_mul(n_op, "NumberOperator(shift=0)")
-    test_mul5(n_op, "NumberOperator(shift=0)")
+    test_mul(n_op0, "NumberOperator(shift=0)")
+    test_mul5(n_op0, "NumberOperator(shift=0)")
 
     # NumberOperator (shift=1)
     test_mul(n_op1, "NumberOperator(shift=1)")
@@ -163,6 +163,19 @@ n_op = NumberOperator(10)
 @assert adjoint(n_op) === n_op
 println("  ✓ adjoint(NumberOperator) === NumberOperator")
 
+# Type-preserving constructors and promotion
+a32 = DestroyOperator{Float32}(10)
+a64 = DestroyOperator{Float64}(10)
+@assert DestroyOperator(10) isa DestroyOperator{Float64}
+@assert NumberOperator(10) isa NumberOperator{Float64}
+@assert DestroyPowerOperator(10, 2) isa DestroyPowerOperator{Float64}
+@assert (adjoint(a32) * a64) isa NumberOperator{Float64}
+@assert (a32 * adjoint(a64)) isa NumberOperator{Float64}
+@assert (a32 * a64) isa DestroyPowerOperator{Float64}
+@assert (a32^2) isa DestroyPowerOperator{Float32}
+@assert (adjoint(a32) * adjoint(a64)).L isa DestroyPowerOperator{Float64}
+println("  ✓ operator constructors default to Float64 and mixed products promote T")
+
 # ── concretize tests ─────────────────────────────────────────────────────────
 println("\n--- concretize tests ---")
 
@@ -188,6 +201,11 @@ println("  ✓ concretize(NumberOperator) correct for shift=0 and shift=1")
 # Verify a' * a concretize == num concretize
 @assert concretize(ad * a) ≈ concretize(NumberOperator(N))
 println("  ✓ concretize(a' * a) == concretize(NumberOperator)")
+
+a32_sp = concretize(DestroyOperator{Float32}(N))
+@assert eltype(a32_sp) == Float32
+@assert concretize(DestroyPowerOperator{ComplexF32}(N, 2)) |> eltype == ComplexF32
+println("  ✓ concretize preserves operator precision")
 
 # ── Type stability tests ────────────────────────────────────────────────────
 println("\n--- Type Stability ---")

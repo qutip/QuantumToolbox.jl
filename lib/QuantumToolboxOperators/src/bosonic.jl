@@ -5,40 +5,42 @@
 # ─── Type-aware coefficient helpers ──────────────────────────────────────────
 # Avoid sqrt(::Int) → Float64 promotion when working with Float32 / other types.
 
-@inline _sqrt_coeff(::Type{T}, i::Int) where {T <: Real} = sqrt(T(i))
-@inline _sqrt_coeff(v::AbstractVecOrMat, i::Int) = _sqrt_coeff(real(eltype(v)), i)
+_sqrt_coeff(::Type{T}, i::Int) where {T} = sqrt(T(i))
+_sqrt_coeff(::Type{Complex{T}}, i::Int) where {T} = _sqrt_coeff(T, i)
 
-@inline function _power_coeff(::Type{T}, i::Int, k::Int) where {T <: Real}
+function _power_coeff(::Type{T}, i::Int, k::Int) where {T}
     c = one(T)
     for m in i:(i + k - 1)
         c *= T(m)
     end
     return sqrt(c)
 end
-@inline _power_coeff(v::AbstractVecOrMat, i::Int, k::Int) = _power_coeff(real(eltype(v)), i, k)
+_power_coeff(::Type{Complex{T}}, i::Int, k::Int) where {T} = _power_coeff(T, i, k)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  DestroyOperator
 # ═══════════════════════════════════════════════════════════════════════════════
 
 """
-    DestroyOperator <: AbstractSciMLOperator{Bool}
+    DestroyOperator{T} <: AbstractSciMLOperator{T}
 
 Matrix-free bosonic annihilation (destroy) operator.
 
 Action on a Fock-basis vector: ``â |n⟩ = √n |n-1⟩``.
 
 The creation operator ``â†`` is obtained via `adjoint(a)`, which returns
-an `AdjointOperator{Bool, DestroyOperator}` — no separate type is needed.
+an `AdjointOperator{T, DestroyOperator}` — no separate type is needed.
 """
-struct DestroyOperator <: AbstractSciMLOperator{Bool}
+struct DestroyOperator{T} <: AbstractSciMLOperator{T}
     N::Int
 
-    function DestroyOperator(N::Int)
+    function DestroyOperator{T}(N::Int) where {T}
         N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
-        return new(N)
+        return new{T}(N)
     end
 end
+
+DestroyOperator(N::Int) = DestroyOperator{Float64}(N)
 
 Base.size(L::DestroyOperator) = (L.N, L.N)
 Base.size(L::DestroyOperator, n::Int) = L.N
@@ -47,25 +49,25 @@ islinear(::DestroyOperator) = true
 has_adjoint(::DestroyOperator) = true
 
 # â |n⟩ = √n |n-1⟩  ⟹  w[i] = √i · v[i+1]  for i = 1…N-1;  w[N] = 0
-@inline function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyOperator, v::AbstractVecOrMat)
+function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyOperator{T}, v::AbstractVecOrMat) where {T}
     N = L.N
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
     @inbounds for i in 1:(N - 1)
-        w[i] = _sqrt_coeff(v, i) * v[i + 1]
+        w[i] = _sqrt_coeff(T, i) * v[i + 1]
     end
     @inbounds w[N] = zero(eltype(w))
     return w
 end
 
-@inline function LinearAlgebra.mul!(
-    w::AbstractVecOrMat, L::DestroyOperator, v::AbstractVecOrMat, α, β,
-)
+function LinearAlgebra.mul!(
+    w::AbstractVecOrMat, L::DestroyOperator{T}, v::AbstractVecOrMat, α, β,
+) where {T}
     N = L.N
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
     @inbounds for i in 1:(N - 1)
-        w[i] = α * _sqrt_coeff(v, i) * v[i + 1] + β * w[i]
+        w[i] = α * _sqrt_coeff(T, i) * v[i + 1] + β * w[i]
     end
     @inbounds w[N] = β * w[N]
     return w
@@ -74,30 +76,30 @@ end
 # ─── Adjoint: creation operator â† ───────────────────────────────────────────
 # â† |n⟩ = √(n+1) |n+1⟩  ⟹  w[1] = 0;  w[i+1] = √i · v[i]  for i = 1…N-1
 
-const AdjointDestroyOperator{T} = AdjointOperator{T, DestroyOperator}
+const AdjointDestroyOperator{T} = AdjointOperator{T, DestroyOperator{T}} where T
 
-@inline function LinearAlgebra.mul!(
-    w::AbstractVecOrMat, L::AdjointDestroyOperator, v::AbstractVecOrMat,
-)
+function LinearAlgebra.mul!(
+    w::AbstractVecOrMat, L::AdjointDestroyOperator{T}, v::AbstractVecOrMat,
+) where {T}
     N = L.L.N
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
     @inbounds w[1] = zero(eltype(w))
     @inbounds for i in 1:(N - 1)
-        w[i + 1] = _sqrt_coeff(v, i) * v[i]
+        w[i + 1] = _sqrt_coeff(T, i) * v[i]
     end
     return w
 end
 
-@inline function LinearAlgebra.mul!(
-    w::AbstractVecOrMat, L::AdjointDestroyOperator, v::AbstractVecOrMat, α, β,
-)
+function LinearAlgebra.mul!(
+    w::AbstractVecOrMat, L::AdjointDestroyOperator{T}, v::AbstractVecOrMat, α, β,
+) where {T}
     N = L.L.N
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
     @inbounds w[1] = β * w[1]
     @inbounds for i in 1:(N - 1)
-        w[i + 1] = α * _sqrt_coeff(v, i) * v[i] + β * w[i + 1]
+        w[i + 1] = α * _sqrt_coeff(T, i) * v[i] + β * w[i + 1]
     end
     return w
 end
@@ -107,7 +109,7 @@ end
 # ═══════════════════════════════════════════════════════════════════════════════
 
 """
-    NumberOperator <: AbstractSciMLOperator{Bool}
+    NumberOperator{T} <: AbstractSciMLOperator{T}
 
 Matrix-free bosonic number operator with optional shift.
 
@@ -116,15 +118,17 @@ Action: ``w_i = (i - 1 + \\text{shift}) \\cdot v_i``.
   - `shift = 0` represents ``\\hat{n} = â†â`` with eigenvalues ``0, 1, 2, …``
   - `shift = 1` represents ``ââ†`` with eigenvalues ``1, 2, 3, …``
 """
-struct NumberOperator <: AbstractSciMLOperator{Bool}
+struct NumberOperator{T} <: AbstractSciMLOperator{T}
     N::Int
     shift::Int
 
-    function NumberOperator(N::Int; shift::Int = 0)
+    function NumberOperator{T}(N::Int; shift::Int = 0) where {T}
         N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
-        return new(N, shift)
+        return new{T}(N, shift)
     end
 end
+
+NumberOperator(N::Int; shift::Int = 0) = NumberOperator{Float64}(N; shift)
 
 Base.size(L::NumberOperator) = (L.N, L.N)
 Base.size(L::NumberOperator, n::Int) = L.N
@@ -135,24 +139,24 @@ has_adjoint(::NumberOperator) = true
 # NumberOperator is Hermitian: adjoint returns itself
 Base.adjoint(L::NumberOperator) = L
 
-@inline function LinearAlgebra.mul!(w::AbstractVecOrMat, L::NumberOperator, v::AbstractVecOrMat)
+function LinearAlgebra.mul!(w::AbstractVecOrMat, L::NumberOperator{T}, v::AbstractVecOrMat) where {T}
     N, shift = L.N, L.shift
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
     @inbounds for i in 1:N
-        w[i] = (i - 1 + shift) * v[i]
+        w[i] = T(i - 1 + shift) * v[i]
     end
     return w
 end
 
-@inline function LinearAlgebra.mul!(
-    w::AbstractVecOrMat, L::NumberOperator, v::AbstractVecOrMat, α, β,
-)
+function LinearAlgebra.mul!(
+    w::AbstractVecOrMat, L::NumberOperator{T}, v::AbstractVecOrMat, α, β,
+) where {T}
     N, shift = L.N, L.shift
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
     @inbounds for i in 1:N
-        w[i] = α * (i - 1 + shift) * v[i] + β * w[i]
+        w[i] = α * T(i - 1 + shift) * v[i] + β * w[i]
     end
     return w
 end
@@ -162,7 +166,7 @@ end
 # ═══════════════════════════════════════════════════════════════════════════════
 
 """
-    DestroyPowerOperator <: AbstractSciMLOperator{Bool}
+    DestroyPowerOperator{T} <: AbstractSciMLOperator{T}
 
 Matrix-free ``â^k`` (k-th power of the bosonic annihilation operator).
 
@@ -170,16 +174,18 @@ Action on Fock basis: ``â^k |n⟩ = \\sqrt{n! / (n-k)!}\\, |n-k⟩`` for ``n �
 
 Computed in a single O(N) pass.
 """
-struct DestroyPowerOperator <: AbstractSciMLOperator{Bool}
+struct DestroyPowerOperator{T} <: AbstractSciMLOperator{T}
     N::Int
     k::Int
 
-    function DestroyPowerOperator(N::Int, k::Int)
+    function DestroyPowerOperator{T}(N::Int, k::Int) where {T}
         N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
         k > 0 || throw(ArgumentError("Power k must be positive, got $k"))
-        return new(N, k)
+        return new{T}(N, k)
     end
 end
+
+DestroyPowerOperator(N::Int, k::Int) = DestroyPowerOperator{Float64}(N, k)
 
 Base.size(L::DestroyPowerOperator) = (L.N, L.N)
 Base.size(L::DestroyPowerOperator, n::Int) = L.N
@@ -188,12 +194,12 @@ islinear(::DestroyPowerOperator) = true
 has_adjoint(::DestroyPowerOperator) = true
 
 # â^k |n⟩ = √(n!/(n-k)!) |n-k⟩  ⟹  w[i] = coeff(i,k) · v[i+k]
-@inline function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyPowerOperator, v::AbstractVecOrMat)
+function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyPowerOperator{T}, v::AbstractVecOrMat) where {T}
     N, k = L.N, L.k
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
     @inbounds for i in 1:(N - k)
-        w[i] = _power_coeff(v, i, k) * v[i + k]
+        w[i] = _power_coeff(T, i, k) * v[i + k]
     end
     @inbounds for i in (N - k + 1):N
         w[i] = zero(eltype(w))
@@ -201,14 +207,14 @@ has_adjoint(::DestroyPowerOperator) = true
     return w
 end
 
-@inline function LinearAlgebra.mul!(
-    w::AbstractVecOrMat, L::DestroyPowerOperator, v::AbstractVecOrMat, α, β,
-)
+function LinearAlgebra.mul!(
+    w::AbstractVecOrMat, L::DestroyPowerOperator{T}, v::AbstractVecOrMat, α, β,
+) where {T}
     N, k = L.N, L.k
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
     @inbounds for i in 1:(N - k)
-        w[i] = α * _power_coeff(v, i, k) * v[i + k] + β * w[i]
+        w[i] = α * _power_coeff(T, i, k) * v[i + k] + β * w[i]
     end
     @inbounds for i in (N - k + 1):N
         w[i] = β * w[i]
@@ -219,11 +225,11 @@ end
 # ─── Adjoint: (â†)^k ─────────────────────────────────────────────────────────
 # (â†)^k |n⟩ = √((n+k)!/n!) |n+k⟩  ⟹  w[1:k] = 0;  w[i+k] = coeff(i,k) · v[i]
 
-const AdjointDestroyPowerOperator{T} = AdjointOperator{T, DestroyPowerOperator}
+const AdjointDestroyPowerOperator{T} = AdjointOperator{T, DestroyPowerOperator{T}} where T
 
-@inline function LinearAlgebra.mul!(
-    w::AbstractVecOrMat, L::AdjointDestroyPowerOperator, v::AbstractVecOrMat,
-)
+function LinearAlgebra.mul!(
+    w::AbstractVecOrMat, L::AdjointDestroyPowerOperator{T}, v::AbstractVecOrMat,
+) where {T}
     N, k = L.L.N, L.L.k
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
@@ -231,14 +237,14 @@ const AdjointDestroyPowerOperator{T} = AdjointOperator{T, DestroyPowerOperator}
         w[i] = zero(eltype(w))
     end
     @inbounds for i in 1:(N - k)
-        w[i + k] = _power_coeff(v, i, k) * v[i]
+        w[i + k] = _power_coeff(T, i, k) * v[i]
     end
     return w
 end
 
-@inline function LinearAlgebra.mul!(
-    w::AbstractVecOrMat, L::AdjointDestroyPowerOperator, v::AbstractVecOrMat, α, β,
-)
+function LinearAlgebra.mul!(
+    w::AbstractVecOrMat, L::AdjointDestroyPowerOperator{T}, v::AbstractVecOrMat, α, β,
+) where {T}
     N, k = L.L.N, L.L.k
     @assert size(v, 1) == N "Input dimension mismatch: expected $N, got $(size(v, 1))"
     @assert size(w, 1) == N "Output dimension mismatch: expected $N, got $(size(w, 1))"
@@ -246,107 +252,107 @@ end
         w[i] = β * w[i]
     end
     @inbounds for i in 1:(N - k)
-        w[i + k] = α * _power_coeff(v, i, k) * v[i] + β * w[i + k]
+        w[i + k] = α * _power_coeff(T, i, k) * v[i] + β * w[i + k]
     end
     return w
 end
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  Algebraic Simplifications
-# ═══════════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 
 # ─── a' * a  →  NumberOperator ───────────────────────────────────────────────
-function Base.:*(A::AdjointDestroyOperator, B::DestroyOperator)
+function Base.:*(A::AdjointDestroyOperator{TA}, B::DestroyOperator{TB}) where {TA, TB}
     @assert A.L.N == B.N "Dimension mismatch: a'($(A.L.N)) * a($(B.N))"
-    return NumberOperator(B.N)
+    return NumberOperator{promote_type(TA, TB)}(B.N)
 end
 
 # ─── a * a'  →  NumberOperator(shift=1) ──────────────────────────────────────
-function Base.:*(A::DestroyOperator, B::AdjointDestroyOperator)
+function Base.:*(A::DestroyOperator{TA}, B::AdjointDestroyOperator{TB}) where {TA, TB}
     @assert A.N == B.L.N "Dimension mismatch: a($(A.N)) * a'($(B.L.N))"
-    return NumberOperator(A.N; shift = 1)
+    return NumberOperator{promote_type(TA, TB)}(A.N; shift = 1)
 end
 
 # ─── Destroy × Destroy compositions → DestroyPowerOperator ──────────────────
-function Base.:*(A::DestroyOperator, B::DestroyOperator)
+function Base.:*(A::DestroyOperator{TA}, B::DestroyOperator{TB}) where {TA, TB}
     @assert A.N == B.N "Dimension mismatch: a($(A.N)) * a($(B.N))"
-    return DestroyPowerOperator(A.N, 2)
+    return DestroyPowerOperator{promote_type(TA, TB)}(A.N, 2)
 end
 
-function Base.:*(A::DestroyPowerOperator, B::DestroyOperator)
+function Base.:*(A::DestroyPowerOperator{TA}, B::DestroyOperator{TB}) where {TA, TB}
     @assert A.N == B.N "Dimension mismatch: a^$(A.k)($(A.N)) * a($(B.N))"
-    return DestroyPowerOperator(A.N, A.k + 1)
+    return DestroyPowerOperator{promote_type(TA, TB)}(A.N, A.k + 1)
 end
 
-function Base.:*(A::DestroyOperator, B::DestroyPowerOperator)
+function Base.:*(A::DestroyOperator{TA}, B::DestroyPowerOperator{TB}) where {TA, TB}
     @assert A.N == B.N "Dimension mismatch: a($(A.N)) * a^$(B.k)($(B.N))"
-    return DestroyPowerOperator(A.N, 1 + B.k)
+    return DestroyPowerOperator{promote_type(TA, TB)}(A.N, 1 + B.k)
 end
 
-function Base.:*(A::DestroyPowerOperator, B::DestroyPowerOperator)
+function Base.:*(A::DestroyPowerOperator{TA}, B::DestroyPowerOperator{TB}) where {TA, TB}
     @assert A.N == B.N "Dimension mismatch: a^$(A.k)($(A.N)) * a^$(B.k)($(B.N))"
-    return DestroyPowerOperator(A.N, A.k + B.k)
+    return DestroyPowerOperator{promote_type(TA, TB)}(A.N, A.k + B.k)
 end
 
 # ─── Create × Create compositions → adjoint(DestroyPowerOperator) ────────────
-function Base.:*(A::AdjointDestroyOperator, B::AdjointDestroyOperator)
+function Base.:*(A::AdjointDestroyOperator{TA}, B::AdjointDestroyOperator{TB}) where {TA, TB}
     @assert A.L.N == B.L.N "Dimension mismatch"
-    return adjoint(DestroyPowerOperator(A.L.N, 2))
+    return adjoint(DestroyPowerOperator{promote_type(TA, TB)}(A.L.N, 2))
 end
 
-function Base.:*(A::AdjointDestroyPowerOperator, B::AdjointDestroyOperator)
+function Base.:*(A::AdjointDestroyPowerOperator{TA}, B::AdjointDestroyOperator{TB}) where {TA, TB}
     @assert A.L.N == B.L.N "Dimension mismatch"
-    return adjoint(DestroyPowerOperator(A.L.N, A.L.k + 1))
+    return adjoint(DestroyPowerOperator{promote_type(TA, TB)}(A.L.N, A.L.k + 1))
 end
 
-function Base.:*(A::AdjointDestroyOperator, B::AdjointDestroyPowerOperator)
+function Base.:*(A::AdjointDestroyOperator{TA}, B::AdjointDestroyPowerOperator{TB}) where {TA, TB}
     @assert A.L.N == B.L.N "Dimension mismatch"
-    return adjoint(DestroyPowerOperator(A.L.N, 1 + B.L.k))
+    return adjoint(DestroyPowerOperator{promote_type(TA, TB)}(A.L.N, 1 + B.L.k))
 end
 
-function Base.:*(A::AdjointDestroyPowerOperator, B::AdjointDestroyPowerOperator)
+function Base.:*(A::AdjointDestroyPowerOperator{TA}, B::AdjointDestroyPowerOperator{TB}) where {TA, TB}
     @assert A.L.N == B.L.N "Dimension mismatch"
-    return adjoint(DestroyPowerOperator(A.L.N, A.L.k + B.L.k))
+    return adjoint(DestroyPowerOperator{promote_type(TA, TB)}(A.L.N, A.L.k + B.L.k))
 end
 
 # ─── Powers ──────────────────────────────────────────────────────────────────
-function Base.:^(a::DestroyOperator, k::Integer)
+function Base.:^(a::DestroyOperator{T}, k::Integer) where {T}
     k > 0 || throw(ArgumentError("Power k must be positive, got $k"))
     k == 1 && return a
-    return DestroyPowerOperator(a.N, k)
+    return DestroyPowerOperator{T}(a.N, k)
 end
 
-function Base.:^(a::AdjointDestroyOperator, k::Integer)
+function Base.:^(a::AdjointDestroyOperator{T}, k::Integer) where {T}
     k > 0 || throw(ArgumentError("Power k must be positive, got $k"))
     k == 1 && return a
-    return adjoint(DestroyPowerOperator(a.L.N, k))
+    return adjoint(DestroyPowerOperator{T}(a.L.N, k))
 end
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  concretize: convert to sparse matrix
 # ═══════════════════════════════════════════════════════════════════════════════
 
-function concretize(L::DestroyOperator)
+function concretize(L::DestroyOperator{T}) where {T}
     N = L.N
-    return spdiagm(1 => ComplexF64[sqrt(i) for i in 1:(N - 1)])
+    return spdiagm(1 => T[_sqrt_coeff(T, i) for i in 1:(N - 1)])
 end
 
-function concretize(L::AdjointDestroyOperator)
+function concretize(L::AdjointDestroyOperator{T}) where {T}
     N = L.L.N
-    return spdiagm(-1 => ComplexF64[sqrt(i) for i in 1:(N - 1)])
+    return spdiagm(-1 => T[_sqrt_coeff(T, i) for i in 1:(N - 1)])
 end
 
-function concretize(L::NumberOperator)
+function concretize(L::NumberOperator{T}) where {T}
     N = L.N
-    return spdiagm(0 => ComplexF64[i - 1 + L.shift for i in 1:N])
+    return spdiagm(0 => T[T(i - 1 + L.shift) for i in 1:N])
 end
 
-function concretize(L::DestroyPowerOperator)
+function concretize(L::DestroyPowerOperator{T}) where {T}
     N, k = L.N, L.k
-    return spdiagm(k => ComplexF64[_power_coeff(Float64, i, k) for i in 1:(N - k)])
+    return spdiagm(k => T[_power_coeff(T, i, k) for i in 1:(N - k)])
 end
 
-function concretize(L::AdjointDestroyPowerOperator)
+function concretize(L::AdjointDestroyPowerOperator{T}) where {T}
     N, k = L.L.N, L.L.k
-    return spdiagm(-k => ComplexF64[_power_coeff(Float64, i, k) for i in 1:(N - k)])
+    return spdiagm(-k => T[_power_coeff(T, i, k) for i in 1:(N - k)])
 end
