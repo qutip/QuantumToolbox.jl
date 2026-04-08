@@ -198,9 +198,9 @@ end
 ## (backward compatibility, but avoid support for OperatorKet/OperatorBra/SuperOperator since it causes ambiguity)
 _gen_dimensions(type::ObjType, dims::Integer) where {ObjType <: Union{Ket, Bra, Operator}} = _gen_dimensions(type, Space(dims))
 
-## dims::VectorOrTuple{Int} : vector or tuple of integers
+## dims::AbstractVecOrTuple{Int} : vector or tuple of integers
 ## (backward compatibility, but avoid support for OperatorKet/OperatorBra/SuperOperator since it causes ambiguity)
-_gen_dimensions(type::ObjType, dims::VectorOrTuple{T}) where {ObjType <: Union{Ket, Bra, Operator}, T <: Integer} = _gen_dimensions(type, _list_to_tensor_space(dims, "dims"))
+_gen_dimensions(type::ObjType, dims::AbstractVecOrTuple{T}) where {ObjType <: Union{Ket, Bra, Operator}, T <: Integer} = _gen_dimensions(type, _list_to_tensor_space(dims, "dims"))
 
 ## dims::AbstractSpace
 _gen_dimensions(::Ket, dims::AbstractSpace) = Dimensions(dims, Space(1))

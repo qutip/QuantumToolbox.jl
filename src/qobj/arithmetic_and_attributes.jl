@@ -503,7 +503,7 @@ Quantum Object:   type=Operator()   dims=([2], [2])   size=(2, 2)   ishermitian=
  0.0+0.0im  0.5+0.0im
 ```
 """
-function ptrace(QO::QuantumObject{Ket, <:Dimensions{<:TensorSpace{N}}}, sel::VectorOrTuple{T}) where {N, T <: Integer}
+function ptrace(QO::QuantumObject{Ket, <:Dimensions{<:TensorSpace{N}}}, sel::AbstractVecOrTuple{T}) where {N, T <: Integer}
     any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("ptrace does not support EnrSpace"))
 
     _non_static_array_warning("sel", sel)
@@ -524,9 +524,9 @@ function ptrace(QO::QuantumObject{Ket, <:Dimensions{<:TensorSpace{N}}}, sel::Vec
     return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
 
-ptrace(QO::QuantumObject{Bra, <:Dimensions{Space, <:TensorSpace{N}}}, sel::VectorOrTuple{T}) where {N, T <: Integer} = ptrace(QO', sel)
+ptrace(QO::QuantumObject{Bra, <:Dimensions{Space, <:TensorSpace{N}}}, sel::AbstractVecOrTuple{T}) where {N, T <: Integer} = ptrace(QO', sel)
 
-function ptrace(QO::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}}}, sel::VectorOrTuple{T}) where {N, T <: Integer}
+function ptrace(QO::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}}}, sel::AbstractVecOrTuple{T}) where {N, T <: Integer}
     ((QO.dimensions.to isa EnrSpace) || any(s -> s isa EnrSpace, QO.dimensions.to)) && throw(ArgumentError("ptrace does not support EnrSpace"))
 
     # TODO: support for special cases when some of the subsystems have same `to` and `from` space
@@ -551,7 +551,7 @@ function ptrace(QO::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}}}, sel
 end
 
 # Special cases for single-subsystem (N=1) where TensorSpace collapses to Space
-function ptrace(QO::QuantumObject{Ket, <:Dimensions{Space, Space}}, sel::VectorOrTuple{T}) where {T <: Integer}
+function ptrace(QO::QuantumObject{Ket, <:Dimensions{Space, Space}}, sel::AbstractVecOrTuple{T}) where {T <: Integer}
     _non_static_array_warning("sel", sel)
 
     N_sel = length(sel)
@@ -564,7 +564,7 @@ function ptrace(QO::QuantumObject{Ket, <:Dimensions{Space, Space}}, sel::VectorO
         return ket2dm(QO)  # ptrace should always return Operator
     end
 end
-function ptrace(QO::QuantumObject{Operator, <:Dimensions{Space, Space}}, sel::VectorOrTuple{T}) where {T <: Integer}
+function ptrace(QO::QuantumObject{Operator, <:Dimensions{Space, Space}}, sel::AbstractVecOrTuple{T}) where {T <: Integer}
     !isendomorphic(QO.dimensions) && _non_endomorphic_dims_error("operator for ptrace", QO.dimensions)
 
     _non_static_array_warning("sel", sel)
@@ -579,7 +579,7 @@ function ptrace(QO::QuantumObject{Operator, <:Dimensions{Space, Space}}, sel::Ve
         return QO
     end
 end
-ptrace(QO::QuantumObject{Bra, <:Dimensions{Space, Space}}, sel::VectorOrTuple{T}) where {T <: Integer} = ptrace(QO', sel)
+ptrace(QO::QuantumObject{Bra, <:Dimensions{Space, Space}}, sel::AbstractVecOrTuple{T}) where {T <: Integer} = ptrace(QO', sel)
 
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
@@ -742,7 +742,7 @@ true
 """
 function SparseArrays.permute(
         A::QuantumObject{ObjType, <:Dimensions},
-        order::VectorOrTuple{T},
+        order::AbstractVecOrTuple{T},
     ) where {ObjType <: Union{Ket, Bra, Operator}, T <: Integer}
 
     # check validity of order (other checks will be handled in `_dims_and_perm` since it depends on ObjType)

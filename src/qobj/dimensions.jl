@@ -61,15 +61,15 @@ struct Dimensions{T1 <: AbstractSpace, T2 <: AbstractSpace}
 end
 
 # by defining alias type, it is easier to represent the nested dims structure:
-const DimsListType{T1, T2} = Tuple{<:VectorOrTuple{T1}, <:VectorOrTuple{T2}}
+const DimsListType{T1, T2} = Tuple{<:AbstractVecOrTuple{T1}, <:AbstractVecOrTuple{T2}}
 
-function _list_to_tensor_space(dims::VectorOrTuple{T}, argname::String) where {T <: Integer}
+function _list_to_tensor_space(dims::AbstractVecOrTuple{T}, argname::String) where {T <: Integer}
     _non_static_array_warning(argname, dims)
     return TensorSpace(Tuple(Space.(dims)))
 end
 
 # endomorphic dimensions from integer tuple/vector
-function Dimensions(dims::VectorOrTuple{T}) where {T <: Integer}
+function Dimensions(dims::AbstractVecOrTuple{T}) where {T <: Integer}
     L = length(dims)
     (L > 0) || throw(DomainError(dims, "The argument dims must be of non-zero length"))
 
@@ -95,9 +95,9 @@ function Dimensions(dims::DimsListType{T, T}) where {T <: Integer}
 end
 
 # LiouvilleSpace dimensions for OperatorKet/OperatorBra/SuperOperator from 3-level nested tuple/vector of integers
-Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: Integer} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), _list_to_tensor_space(dims[2], "dims[2]"))
-Dimensions(dims::DimsListType{T1, T2}) where {T1 <: Integer, T2 <: VectorOrTuple} = Dimensions(_list_to_tensor_space(dims[1], "dims[1]"), LiouvilleSpace(Dimensions(dims[2])))
-Dimensions(dims::DimsListType{T1, T2}) where {T1 <: VectorOrTuple, T2 <: VectorOrTuple} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), LiouvilleSpace(Dimensions(dims[2])))
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: AbstractVecOrTuple, T2 <: Integer} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), _list_to_tensor_space(dims[2], "dims[2]"))
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: Integer, T2 <: AbstractVecOrTuple} = Dimensions(_list_to_tensor_space(dims[1], "dims[1]"), LiouvilleSpace(Dimensions(dims[2])))
+Dimensions(dims::DimsListType{T1, T2}) where {T1 <: AbstractVecOrTuple, T2 <: AbstractVecOrTuple} = Dimensions(LiouvilleSpace(Dimensions(dims[1])), LiouvilleSpace(Dimensions(dims[2])))
 
 # Error for invalid input
 Dimensions(dims::Any) = throw(
@@ -141,7 +141,7 @@ Returns `(m, n)` where `m` is the product of the `dimensions.to`, and `n` is the
 If `dimensions` is an `Integer` or a vector/tuple of `Integer`s, it is automatically treated as `Dimensions(dimensions, dimensions)`.
 """
 get_size(dimensions::Dimensions) = (get_size(dimensions.to), get_size(dimensions.from))
-get_size(dimensions::Union{T, VectorOrTuple{T}}) where {T <: Integer} = get_size(Dimensions(dimensions))
+get_size(dimensions::Union{T, AbstractVecOrTuple{T}}) where {T <: Integer} = get_size(Dimensions(dimensions))
 
 Base.transpose(dimensions::Dimensions) = Dimensions(dimensions.from, dimensions.to) # switch `to` and `from`
 Base.adjoint(dimensions::Dimensions) = transpose(dimensions)

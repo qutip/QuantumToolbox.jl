@@ -20,9 +20,9 @@ The `dimensions` can be either the following types:
     It is highly recommended to use `zero_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 zero_ket(::Type{T}, dimensions::Int) where {T <: Number} = QuantumObject(zeros(T, dimensions), Ket(), dimensions)
-zero_ket(::Type{T}, dimensions::Union{Dimensions, VectorOrTuple{Int}}) where {T <: Number} =
+zero_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVecOrTuple{Int}}) where {T <: Number} =
     QuantumObject(zeros(T, get_size(dimensions)[1]), Ket(), dimensions)
-zero_ket(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}) = zero_ket(ComplexF64, dimensions)
+zero_ket(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}) = zero_ket(ComplexF64, dimensions)
 
 @doc raw"""
     fock([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -38,7 +38,7 @@ It is also possible to specify the list of dimensions `dims` if different subsys
 !!! note
     `basis(N, j; dims = dims, sparse = sparse)` is a synonym of `fock(N, j; dims = dims, sparse = sparse)`.
 """
-function fock(::Type{T}, N::Int, j::Int = 0; dims::Union{Int, VectorOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) where {T <: Number}
+function fock(::Type{T}, N::Int, j::Int = 0; dims::Union{Int, AbstractVecOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) where {T <: Number}
     (0 <= j < N) || throw(ArgumentError("Invalid argument j, must satisfy: 0 ≤ j ≤ N-1"))
     if getVal(sparse)
         array = sparsevec([j + 1], [one(T)], N)
@@ -48,7 +48,7 @@ function fock(::Type{T}, N::Int, j::Int = 0; dims::Union{Int, VectorOrTuple{Int}
     end
     return QuantumObject(array; type = Ket(), dims = dims)
 end
-fock(N::Int, j::Int = 0; dims::Union{Int, VectorOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) = fock(ComplexF64, N, j; dims, sparse)
+fock(N::Int, j::Int = 0; dims::Union{Int, AbstractVecOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) = fock(ComplexF64, N, j; dims, sparse)
 
 @doc raw"""
     coherent(N::Int, α::Number)
@@ -74,12 +74,12 @@ The random number generator can be specified via the keyword argument `rng`.
     If you want to keep type stability, it is recommended to use `rand_ket(dimensions)` with `dimensions` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 rand_ket(::Type{T}, dimensions::Int; rng::AbstractRNG = default_rng()) where {T <: Complex} = rand_ket(T, SVector(dimensions); rng)
-function rand_ket(::Type{T}, dimensions::Union{Dimensions, VectorOrTuple{Int}}; rng::AbstractRNG = default_rng()) where {T <: Complex}
+function rand_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVecOrTuple{Int}}; rng::AbstractRNG = default_rng()) where {T <: Complex}
     N = get_size(dimensions)[1]
     ψ = rand(rng, T, N) .- (one(T) / 2 + one(T) * im / 2)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
 end
-rand_ket(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}; rng::AbstractRNG = default_rng()) = rand_ket(ComplexF64, dimensions; rng)
+rand_ket(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}; rng::AbstractRNG = default_rng()) = rand_ket(ComplexF64, dimensions; rng)
 
 @doc raw"""
     fock_dm([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -95,13 +95,13 @@ function fock_dm(
         ::Type{T},
         N::Int,
         j::Int = 0;
-        dims::Union{Int, VectorOrTuple{Int}} = N,
+        dims::Union{Int, AbstractVecOrTuple{Int}} = N,
         sparse::Union{Bool, Val} = Val(false),
     ) where {T <: Number}
     ψ = fock(T, N, j; dims, sparse)
     return ket2dm(ψ)
 end
-fock_dm(N::Int, j::Int = 0; dims::Union{Int, VectorOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) = fock_dm(ComplexF64, N, j; dims, sparse)
+fock_dm(N::Int, j::Int = 0; dims::Union{Int, AbstractVecOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) = fock_dm(ComplexF64, N, j; dims, sparse)
 
 @doc raw"""
     coherent_dm(N::Int, α::Number)
@@ -148,11 +148,11 @@ The `dimensions` can be either the following types:
 """
 maximally_mixed_dm(::Type{T}, dimensions::Int) where {T <: FloatOrComplex} =
     QuantumObject(diagm(0 => fill(1 / T(dimensions), dimensions))::Matrix{T}, Operator(), SVector(dimensions)) # TODO: remove `::Matrix{T}` if JET.jl fix https://github.com/aviatesk/JET.jl/issues/790
-function maximally_mixed_dm(::Type{T}, dimensions::Union{Dimensions, VectorOrTuple{Int}}) where {T <: FloatOrComplex}
+function maximally_mixed_dm(::Type{T}, dimensions::Union{Dimensions, AbstractVecOrTuple{Int}}) where {T <: FloatOrComplex}
     N = get_size(dimensions)[1]
     return QuantumObject(diagm(0 => fill(1 / T(N), N)), Operator(), dimensions)
 end
-maximally_mixed_dm(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}) = maximally_mixed_dm(ComplexF64, dimensions)
+maximally_mixed_dm(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}) = maximally_mixed_dm(ComplexF64, dimensions)
 
 @doc raw"""
     rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=get_size(dimensions)[1], rng::AbstractRNG=default_rng())
@@ -178,7 +178,7 @@ rand_dm(::Type{T}, dimensions::Int; rank::Int = dimensions, rng::AbstractRNG = d
     rand_dm(T, SVector(dimensions); rank, rng)
 function rand_dm(
         ::Type{T},
-        dimensions::Union{Dimensions, VectorOrTuple{Int}};
+        dimensions::Union{Dimensions, AbstractVecOrTuple{Int}};
         rank::Int = get_size(dimensions)[1],
         rng::AbstractRNG = default_rng(),
     ) where {T <: Complex}
@@ -191,7 +191,7 @@ function rand_dm(
     ρ /= tr(ρ)
     return QuantumObject(ρ; type = Operator(), dims = dimensions)
 end
-rand_dm(dimensions::Union{Int, Dimensions, VectorOrTuple{Int}}; rank::Int = get_size(dimensions)[1], rng::AbstractRNG = default_rng()) =
+rand_dm(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}; rank::Int = get_size(dimensions)[1], rng::AbstractRNG = default_rng()) =
     rand_dm(ComplexF64, dimensions; rank, rng)
 
 @doc raw"""
