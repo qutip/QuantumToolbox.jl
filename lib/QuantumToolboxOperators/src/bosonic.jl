@@ -413,6 +413,130 @@ function LinearAlgebra.mul!(
 end
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  NormalOrderedOperator
+# ═══════════════════════════════════════════════════════════════════════════════
+
+"""
+    NormalOrderedOperator{T,Precomp} <: BosonicOperator{T}
+
+Matrix-free normal-ordered bosonic operator ``(â†)^k â^n``.
+
+Action on Fock basis: ``(â†)^k â^n |m⟩ = \\sqrt{\\frac{m!}{(m-n)!} \\cdot \\frac{(m-n+k)!}{(m-n)!}} |m-n+k⟩``
+for ``m ≥ n``, else ``0``.
+
+This is a band operator on diagonal ``k - n``.
+
+When `Precomp = true`, the band coefficients are precomputed and stored.
+When `Precomp = false`, they are computed on the fly.
+"""
+struct NormalOrderedOperator{T, Precomp, VT} <: BosonicOperator{T}
+    N::Int
+    k::Int   # creation power (â†)^k
+    n::Int   # annihilation power â^n
+    coeffs::VT
+
+    function NormalOrderedOperator{T, true}(N::Int, k::Int, n::Int) where {T}
+        N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
+        k > 0 || throw(ArgumentError("Creation power k must be positive, got $k"))
+        n > 0 || throw(ArgumentError("Annihilation power n must be positive, got $n"))
+        len = N - max(k, n)
+        len > 0 || throw(ArgumentError("N=$N is too small for (â†)^$k â^$n"))
+        coeffs = [_power_coeff(T, i, n) * _power_coeff(T, i, k) for i in 1:len]
+        return new{T, true, typeof(coeffs)}(N, k, n, coeffs)
+    end
+
+    function NormalOrderedOperator{T, false}(N::Int, k::Int, n::Int) where {T}
+        N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
+        k > 0 || throw(ArgumentError("Creation power k must be positive, got $k"))
+        n > 0 || throw(ArgumentError("Annihilation power n must be positive, got $n"))
+        len = N - max(k, n)
+        len > 0 || throw(ArgumentError("N=$N is too small for (â†)^$k â^$n"))
+        return new{T, false, Nothing}(N, k, n, nothing)
+    end
+
+    function NormalOrderedOperator(N::Int, k::Int, n::Int, coeffs::Union{Nothing, AbstractVector})
+        N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
+        k > 0 || throw(ArgumentError("Creation power k must be positive, got $k"))
+        n > 0 || throw(ArgumentError("Annihilation power n must be positive, got $n"))
+        if isnothing(coeffs)
+            return new{Float64, false, Nothing}(N, k, n, nothing)
+        else
+            return new{eltype(coeffs), true, typeof(coeffs)}(N, k, n, coeffs)
+        end
+    end
+end
+
+NormalOrderedOperator{T}(N::Int, k::Int, n::Int) where {T} = NormalOrderedOperator{T, true}(N, k, n)
+NormalOrderedOperator(N::Int, k::Int, n::Int) = NormalOrderedOperator{Float64}(N, k, n)
+
+Base.size(L::NormalOrderedOperator) = (L.N, L.N)
+Base.size(L::NormalOrderedOperator, _::Int) = L.N
+
+islinear(::NormalOrderedOperator) = true
+has_adjoint(::NormalOrderedOperator) = true
+
+# adjoint((â†)^k â^n) = (â†)^n â^k  →  swap k and n
+function Base.adjoint(L::NormalOrderedOperator{T, Precomp}) where {T, Precomp}
+    return NormalOrderedOperator{T, Precomp}(L.N, L.n, L.k)
+end
+
+# ─── Helper: coefficient for normal-ordered product ──────────────────────────
+# c_j = _power_coeff(T, j, n) * _power_coeff(T, j, k)
+# = sqrt(j*(j+1)*...*(j+n-1)) * sqrt(j*(j+1)*...*(j+k-1))
+
+function _normal_ordered_coeff(::Type{T}, j::Int, n::Int, k::Int) where {T}
+    return _power_coeff(T, j, n) * _power_coeff(T, j, k)
+end
+
+# ─── mul! with precomputed coefficients ──────────────────────────────────────
+# (â†)^k â^n maps v[j+n] → w[j+k] with coefficient coeffs[j], for j = 1..N-max(k,n)
+
+function LinearAlgebra.mul!(w::AbstractVecOrMat, L::NormalOrderedOperator{T, true}, v::AbstractVecOrMat) where {T}
+    N, k, n = L.N, L.k, L.n
+    len = N - max(k, n)
+    fill!(w, zero(eltype(w)))
+    @views w[1+k:len+k] .= L.coeffs .* v[1+n:len+n]
+    return w
+end
+
+function LinearAlgebra.mul!(
+        w::AbstractVecOrMat, L::NormalOrderedOperator{T, true}, v::AbstractVecOrMat, α, β,
+    ) where {T}
+    N, k, n = L.N, L.k, L.n
+    len = N - max(k, n)
+
+    lmul!(β, w)
+    @views w[1+k:len+k] .+= α .* L.coeffs .* v[1+n:len+n]
+    return w
+end
+
+# ─── mul! without precomputed coefficients ───────────────────────────────────
+
+function LinearAlgebra.mul!(w::AbstractVecOrMat, L::NormalOrderedOperator{T, false}, v::AbstractVecOrMat) where {T}
+    N, k, n = L.N, L.k, L.n
+    len = N - max(k, n)
+    fill!(w, zero(eltype(w)))
+    @inbounds @simd for j in 1:len
+        w[j + k] = _normal_ordered_coeff(T, j, n, k) * v[j + n]
+    end
+    return w
+end
+
+function LinearAlgebra.mul!(
+        w::AbstractVecOrMat, L::NormalOrderedOperator{T, false}, v::AbstractVecOrMat, α, β,
+    ) where {T}
+    N, k, n = L.N, L.k, L.n
+    len = N - max(k, n)
+    @inbounds @simd for i in 1:N
+        w[i] = β * w[i]
+    end
+    @inbounds @simd for j in 1:len
+        w[j + k] = α * _normal_ordered_coeff(T, j, n, k) * v[j + n] + w[j + k]
+    end
+    return w
+end
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  Algebraic Simplifications
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -484,6 +608,22 @@ function Base.:*(A::AdjointDestroyPowerOperator{TA, Precomp}, B::AdjointDestroyP
     return adjoint(DestroyPowerOperator{promote_type(TA, TB), Precomp}(A.L.N, A.L.k + B.L.k))
 end
 
+# ─── Create × Destroy mixed compositions → NormalOrderedOperator ─────────────
+function Base.:*(A::AdjointOperator{TA, <:DestroyPowerOperator{TA, Precomp}}, B::DestroyPowerOperator{TB, Precomp}) where {TA, TB, Precomp}
+    @assert A.L.N == B.N "Dimension mismatch: (a')^$(A.L.k)($(A.L.N)) * a^$(B.k)($(B.N))"
+    return NormalOrderedOperator{promote_type(TA, TB), Precomp}(B.N, A.L.k, B.k)
+end
+
+function Base.:*(A::AdjointOperator{TA, <:DestroyPowerOperator{TA, Precomp}}, B::DestroyOperator{TB, Precomp}) where {TA, TB, Precomp}
+    @assert A.L.N == B.N "Dimension mismatch: (a')^$(A.L.k)($(A.L.N)) * a($(B.N))"
+    return NormalOrderedOperator{promote_type(TA, TB), Precomp}(B.N, A.L.k, 1)
+end
+
+function Base.:*(A::AdjointOperator{TA, <:DestroyOperator{TA, Precomp}}, B::DestroyPowerOperator{TB, Precomp}) where {TA, TB, Precomp}
+    @assert A.L.N == B.N "Dimension mismatch: a'($(A.L.N)) * a^$(B.k)($(B.N))"
+    return NormalOrderedOperator{promote_type(TA, TB), Precomp}(B.N, 1, B.k)
+end
+
 # ─── Powers ──────────────────────────────────────────────────────────────────
 function Base.:^(a::DestroyOperator{T, Precomp}, k::Integer) where {T, Precomp}
     k > 0 || throw(ArgumentError("Power k must be positive, got $k"))
@@ -544,4 +684,21 @@ end
 function concretize(L::AdjointOperator{T, <:DestroyPowerOperator{T, false}}) where {T}
     N, k = L.L.N, L.L.k
     return spdiagm(-k => [_power_coeff(T, i, k) for i in 1:(N - k)])
+end
+
+function concretize(L::NormalOrderedOperator{T, true}) where {T}
+    N, k, n = L.N, L.k, L.n
+    len = N - max(k, n)
+    rows = (1:len) .+ k
+    cols = (1:len) .+ n
+    return sparse(rows, cols, L.coeffs, N, N)
+end
+
+function concretize(L::NormalOrderedOperator{T, false}) where {T}
+    N, k, n = L.N, L.k, L.n
+    len = N - max(k, n)
+    rows = (1:len) .+ k
+    cols = (1:len) .+ n
+    coeffs = [_normal_ordered_coeff(T, j, n, k) for j in 1:len]
+    return sparse(rows, cols, coeffs, N, N)
 end

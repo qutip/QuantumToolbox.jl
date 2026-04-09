@@ -293,6 +293,140 @@ mul!(w64, a, v64)
 @assert isapprox(ComplexF64.(w32), w64; atol = 1e-6)
 println("  ✓ Float32 and Float64 results agree (within Float32 precision)")
 
+# ── NormalOrderedOperator tests ──────────────────────────────────────────────
+println("\n--- NormalOrderedOperator: mul! correctness ---")
+
+for N in [5, 10, 20, 50]
+    for (k, n) in [(2, 1), (1, 2), (2, 3), (3, 2), (2, 2), (3, 3), (1, 3), (3, 1)]
+        if max(k, n) < N
+            L = NormalOrderedOperator(N, k, n)
+            test_mul(L, "NormalOrderedOperator(N=$N, k=$k, n=$n)")
+            test_mul5(L, "NormalOrderedOperator(N=$N, k=$k, n=$n)")
+        end
+    end
+end
+
+# NormalOrderedOperator adjoint: adjoint((â†)^k â^n) = (â†)^n â^k
+println("\n--- NormalOrderedOperator: adjoint ---")
+
+N = 10
+for (k, n) in [(2, 3), (3, 2), (1, 3), (2, 2)]
+    L = NormalOrderedOperator(N, k, n)
+    Ladj = adjoint(L)
+    @assert Ladj isa NormalOrderedOperator
+    @assert Ladj.k == n && Ladj.n == k "adjoint should swap k and n"
+    # Verify adjoint concretize matches transpose of original
+    @assert concretize(Ladj) ≈ transpose(concretize(L))
+end
+println("  ✓ adjoint(NormalOrderedOperator) swaps k,n and concretize matches transpose")
+
+# Self-adjoint when k == n
+L_sym = NormalOrderedOperator(10, 2, 2)
+L_sym_adj = adjoint(L_sym)
+@assert concretize(L_sym) ≈ concretize(L_sym_adj)
+println("  ✓ NormalOrderedOperator(k=n) is self-adjoint")
+
+# Adjoint mul! correctness
+for (k, n) in [(2, 3), (3, 1), (1, 2)]
+    L = NormalOrderedOperator(N, k, n)
+    Ladj = adjoint(L)
+    test_mul(Ladj, "adjoint(NormalOrderedOperator(k=$k, n=$n))")
+    test_mul5(Ladj, "adjoint(NormalOrderedOperator(k=$k, n=$n))")
+end
+
+# NormalOrderedOperator concretize
+println("\n--- NormalOrderedOperator: concretize ---")
+
+N = 10
+# Compare against explicit matrix product: concretize((â†)^k) * concretize(â^n)
+for (k, n) in [(2, 1), (1, 2), (2, 3), (3, 2), (2, 2)]
+    L = NormalOrderedOperator(N, k, n)
+    a = DestroyOperator(N)
+    ad = adjoint(a)
+    expected = concretize(ad^k) * concretize(a^n)
+    @assert concretize(L) ≈ expected "concretize mismatch for k=$k, n=$n"
+end
+println("  ✓ concretize(NormalOrderedOperator) matches (â†)^k * â^n sparse product")
+
+# NormalOrderedOperator algebraic simplification
+println("\n--- NormalOrderedOperator: algebraic simplifications ---")
+
+a = DestroyOperator(10)
+ad = adjoint(a)
+
+# (a')^k * a^n → NormalOrderedOperator
+result = (ad^2) * (a^3)
+@assert result isa NormalOrderedOperator "Expected NormalOrderedOperator, got $(typeof(result))"
+@assert result.k == 2 && result.n == 3
+println("  ✓ (a')^2 * a^3 → NormalOrderedOperator(k=2, n=3)")
+
+result = (ad^3) * (a^2)
+@assert result isa NormalOrderedOperator
+@assert result.k == 3 && result.n == 2
+println("  ✓ (a')^3 * a^2 → NormalOrderedOperator(k=3, n=2)")
+
+# (a')^k * a → NormalOrderedOperator(k, 1)
+result = (ad^2) * a
+@assert result isa NormalOrderedOperator
+@assert result.k == 2 && result.n == 1
+println("  ✓ (a')^2 * a → NormalOrderedOperator(k=2, n=1)")
+
+# a' * a^n → NormalOrderedOperator(1, n)
+result = ad * (a^3)
+@assert result isa NormalOrderedOperator
+@assert result.k == 1 && result.n == 3
+println("  ✓ a' * a^3 → NormalOrderedOperator(k=1, n=3)")
+
+# Verify numerical correctness of algebraic simplification
+v = randn(ComplexF64, 10)
+w1 = similar(v)
+w2 = similar(v)
+w_tmp = similar(v)
+
+# (a')^2 * a^3: compare direct NormalOrderedOperator vs sequential application
+L = (ad^2) * (a^3)
+mul!(w1, L, v)
+# Sequential: first a^3 * v, then (a')^2 * result
+a3 = a^3
+ad2 = ad^2
+mul!(w_tmp, a3, v)
+mul!(w2, ad2, w_tmp)
+@assert isapprox(w1, w2; atol = 1e-12)
+println("  ✓ NormalOrderedOperator mul! matches sequential (â†)^2 â^3 application")
+
+# a' * a still gives NumberOperator (preserved)
+result = ad * a
+@assert result isa NumberOperator
+println("  ✓ a' * a still gives NumberOperator (not NormalOrderedOperator)")
+
+# Type promotion
+a32 = DestroyOperator{Float32}(10)
+a64 = DestroyOperator{Float64}(10)
+result = (adjoint(a32)^2) * (a64^3)
+@assert result isa NormalOrderedOperator{Float64}
+println("  ✓ NormalOrderedOperator type promotion works correctly")
+
+# NormalOrderedOperator type stability
+println("\n--- NormalOrderedOperator: type stability ---")
+
+N = 10
+L = NormalOrderedOperator(N, 2, 3)
+v = randn(ComplexF64, N)
+w = similar(v)
+
+@inferred mul!(w, L, v)
+println("  ✓ mul!(w, NormalOrderedOperator, v) is type-stable")
+
+# NormalOrderedOperator Float32
+println("\n--- NormalOrderedOperator: Float32 ---")
+
+v32 = randn(ComplexF32, N)
+w32 = similar(v32)
+L32 = NormalOrderedOperator{Float32}(N, 2, 3)
+mul!(w32, L32, v32)
+@assert eltype(w32) == ComplexF32
+println("  ✓ NormalOrderedOperator{Float32} preserves ComplexF32")
+
 println("\n" * "=" ^ 60)
 println("All tests passed!")
 println("=" ^ 60)

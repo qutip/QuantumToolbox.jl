@@ -36,6 +36,7 @@ mul!(dψ, a_sparse, ψ)
 Adapt.@adapt_structure DestroyOperator
 Adapt.@adapt_structure NumberOperator
 Adapt.@adapt_structure DestroyPowerOperator
+Adapt.@adapt_structure NormalOrderedOperator
 Adapt.@adapt_structure SciMLOperators.ScaledOperator
 Adapt.@adapt_structure SciMLOperators.AdjointOperator
 Adapt.@adapt_structure SciMLOperators.ComposedOperator
