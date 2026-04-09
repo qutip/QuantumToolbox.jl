@@ -192,6 +192,15 @@ struct NumberOperator{T, Precomp, VT} <: AbstractSciMLOperator{T}
         N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
         return new{T, false, Nothing}(N, shift, nothing)
     end
+
+    function NumberOperator(N::Int, shift::Int, coeffs::Union{Nothing, AbstractVector})
+        N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
+        if isnothing(coeffs)
+            return new{Float64, false, Nothing}(N, shift, nothing)
+        else
+            return new{eltype(coeffs), true, typeof(coeffs)}(N, shift, coeffs)
+        end
+    end
 end
 
 NumberOperator{T}(N::Int; shift::Int = 0) where {T} = NumberOperator{T, true}(N; shift)
@@ -270,6 +279,16 @@ struct DestroyPowerOperator{T, Precomp, VT} <: AbstractSciMLOperator{T}
         N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
         k > 0 || throw(ArgumentError("Power k must be positive, got $k"))
         return new{T, false, Nothing}(N, k, nothing)
+    end
+
+    function DestroyPowerOperator(N::Int, k::Int, coeffs::Union{Nothing, AbstractVector})
+        N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
+        k > 0 || throw(ArgumentError("Power k must be positive, got $k"))
+        if isnothing(coeffs)
+            return new{Float64, false, Nothing}(N, k, nothing)
+        else
+            return new{eltype(coeffs), true, typeof(coeffs)}(N, k, coeffs)
+        end
     end
 end
 
@@ -351,7 +370,7 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::AdjointOperator{T, <:DestroyPowerOperator{T, true}}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N, k = L.L.N, L.L.k
-    
+
     # @views w[1:k] .= β .* w[1:k] # This doesn't work on Reactant
     lmul!(β, view(w, 1:k))
     @views w[(k + 1):N] .= α .* L.L.coeffs .* v[1:(N - k)] .+ β .* w[(k + 1):N]
