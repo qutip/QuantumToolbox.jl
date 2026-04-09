@@ -22,6 +22,7 @@ function versioninfo(io::IO = stdout)
     # print package information
     pkg_tuple = (
         QuantumToolbox,
+        QuantumToolboxUtils,
         SciMLOperators,
         LinearSolve,
         OrdinaryDiffEqCore,

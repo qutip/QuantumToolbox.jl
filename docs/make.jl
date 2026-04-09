@@ -83,6 +83,7 @@ const PAGES = [
 
 makedocs(;
     modules = [
+        QuantumToolboxUtils,
         QuantumToolbox,
         Base.get_extension(QuantumToolbox, :QuantumToolboxMakieExt),
     ],
