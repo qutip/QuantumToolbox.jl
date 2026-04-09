@@ -2,6 +2,13 @@
 # Bosonic matrix-free quantum operators
 # ──────────────────────────────────────────────────────────────────────────────
 
+"""
+    BosonicOperator{T} <: AbstractSciMLOperator{T}
+
+Abstract supertype for all matrix-free bosonic operators.
+"""
+abstract type BosonicOperator{T} <: AbstractSciMLOperator{T} end
+
 # ─── Type-aware coefficient helpers ──────────────────────────────────────────
 # Avoid sqrt(::Int) → Float64 promotion when working with Float32 / other types.
 
@@ -32,7 +39,7 @@ an `AdjointOperator{T, DestroyOperator}` — no separate type is needed.
 When `Precomp = true`, the coefficients ``√1, √2, …, √(N-1)`` are precomputed
 and stored. When `Precomp = false`, they are computed on the fly.
 """
-struct DestroyOperator{T, Precomp, VT} <: AbstractSciMLOperator{T}
+struct DestroyOperator{T, Precomp, VT} <: BosonicOperator{T}
     N::Int
     coeffs::VT
 
@@ -177,7 +184,7 @@ Action: ``w_i = (i - 1 + \\text{shift}) \\cdot v_i``.
 When `Precomp = true`, the diagonal coefficients are precomputed and stored.
 When `Precomp = false`, they are computed on the fly.
 """
-struct NumberOperator{T, Precomp, VT} <: AbstractSciMLOperator{T}
+struct NumberOperator{T, Precomp, VT} <: BosonicOperator{T}
     N::Int
     shift::Int
     coeffs::VT
@@ -263,7 +270,7 @@ Action on Fock basis: ``â^k |n⟩ = \\sqrt{n! / (n-k)!}\\, |n-k⟩`` for ``n �
 When `Precomp = true`, the coefficients are precomputed and stored.
 When `Precomp = false`, they are computed on the fly.
 """
-struct DestroyPowerOperator{T, Precomp, VT} <: AbstractSciMLOperator{T}
+struct DestroyPowerOperator{T, Precomp, VT} <: BosonicOperator{T}
     N::Int
     k::Int
     coeffs::VT
@@ -408,6 +415,20 @@ end
 # ═══════════════════════════════════════════════════════════════════════════════
 #  Algebraic Simplifications
 # ══════════════════════════════════════════════════════════════════════════════
+
+const BosonicOrAdjoint{T} = Union{BosonicOperator{T}, AdjointOperator{T, <:BosonicOperator{T}}} where {T}
+
+# ─── ScaledOperator unwrap rules ─────────────────────────────────────────────
+# Peel the scalar so that the inner operator hits the algebraic simplification
+# rules below. E.g. `(Δ * a') * a` → `Δ * (a' * a)` → `Δ * NumberOperator`.
+
+function Base.:*(A::ScaledOperator{<:Any, <:Any, <:BosonicOrAdjoint}, B::BosonicOrAdjoint)
+    return A.λ * (A.L * B)
+end
+
+function Base.:*(A::BosonicOrAdjoint, B::ScaledOperator{<:Any, <:Any, <:BosonicOrAdjoint})
+    return (A * B.L) * B.λ
+end
 
 # ─── a' * a  →  NumberOperator ───────────────────────────────────────────────
 function Base.:*(A::AdjointDestroyOperator{TA, Precomp}, B::DestroyOperator{TB, Precomp}) where {TA, TB, Precomp}

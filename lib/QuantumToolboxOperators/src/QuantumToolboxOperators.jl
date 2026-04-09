@@ -3,10 +3,10 @@ module QuantumToolboxOperators
 using LinearAlgebra
 using SparseArrays
 
-import SciMLOperators: AbstractSciMLOperator, AdjointOperator, IdentityOperator
+import SciMLOperators: AbstractSciMLOperator, AdjointOperator, IdentityOperator, ScaledOperator
 import SciMLOperators: islinear, has_adjoint, concretize
 
-export DestroyOperator, NumberOperator, DestroyPowerOperator
+export BosonicOperator, DestroyOperator, NumberOperator, DestroyPowerOperator
 
 include("bosonic.jl")
 
