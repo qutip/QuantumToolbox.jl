@@ -86,7 +86,6 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.node.arch }}
       - uses: julia-actions/cache@v3
-      - uses: julia-actions/julia-buildpkg@v1
       - name: Dev local libs for Julia < 1.11
         shell: bash
         run: |
@@ -101,6 +100,7 @@ jobs:
             end
             Pkg.instantiate()
           '
+      - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         env:
           GROUP: ${{ matrix.group }}
