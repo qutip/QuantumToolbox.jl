@@ -17,6 +17,8 @@ a = DestroyOperator{T, true}(N)
 # a_sparse = spdiagm(1 => sqrt.(T.(1:N-1)))
 a_sparse = concretize(a)
 
+Base.summarysize(a_sparse) / Base.summarysize(a)
+
 ψ = randn(T, N) |> normalize
 dψ = similar(ψ)
 
@@ -28,8 +30,8 @@ mul!(dψ, a_sparse, ψ)
 @be mul!(dψ, a, ψ)
 @be mul!(dψ, a_sparse, ψ)
 
-@benchmark mul!(dψ, a, ψ)
-@benchmark mul!(dψ, a_sparse, ψ)
+@benchmark mul!($dψ, $a, $ψ)
+@benchmark mul!($dψ, $a_sparse, $ψ)
 
 # %%
 
@@ -58,8 +60,8 @@ dψ_gpu = adapt(CuArray, dψ)
 
 mul!(dψ_gpu, a_gpu, ψ_gpu)
 
-@be mul!(dψ_gpu, a_gpu, ψ_gpu)
-@be mul!(dψ_gpu, a_sparse_gpu, ψ_gpu)
+@be mul!($dψ_gpu, $a_gpu, $ψ_gpu)
+@be mul!($dψ_gpu, $a_sparse_gpu, $ψ_gpu)
 
 @benchmark mul!($dψ_gpu, $a_gpu, $ψ_gpu)
 @benchmark mul!($dψ_gpu, $a_sparse_gpu, $ψ_gpu)
@@ -76,7 +78,7 @@ mul_compiled! = @compile mul!(dψ_reactant, a_reactant, ψ_reactant)
 
 mul_compiled!(dψ_reactant, a_reactant, ψ_reactant)
 
-@be mul_compiled!(dψ_reactant, a_reactant, ψ_reactant)
+@be mul_compiled!($dψ_reactant, $a_reactant, $ψ_reactant)
 
 # %%
 
@@ -84,7 +86,7 @@ mul_compiled!(dψ_reactant, a_reactant, ψ_reactant)
 U = 0.2f0
 F = 0.3f0
 
-H = Δ * (a' * a) + U * (a'^2 * a^2) + F * (a + a')
+H = Δ * a' * a + U * (a'^2 * a^2) + F * (a + a')
 H = cache_operator(H, ψ)
 H_sparse = Δ * (a_sparse' * a_sparse) + U * (a_sparse'^2 * a_sparse^2) + F * (a_sparse + a_sparse')
 
@@ -100,14 +102,17 @@ H_reactant = cache_operator(H_reactant, ψ_reactant)
 mul!(dψ, H, ψ)
 mul!(dψ, H_sparse, ψ)
 
-@be mul!(dψ, H, ψ)
-@be mul!(dψ, H_sparse, ψ)
+@be mul!($dψ, $H, $ψ)
+@be mul!($dψ, $H_sparse, $ψ)
+
+@benchmark mul!($dψ, $H, $ψ)
+@benchmark mul!($dψ, $H_sparse, $ψ)
 
 mul!(dψ_gpu, H_gpu, ψ_gpu)
 mul!(dψ_gpu, H_sparse_gpu, ψ_gpu)
 
-@be mul!(dψ_gpu, H_gpu, ψ_gpu)
-@be mul!(dψ_gpu, H_sparse_gpu, ψ_gpu)
+@be mul!($dψ_gpu, $H_gpu, $ψ_gpu)
+@be mul!($dψ_gpu, $H_sparse_gpu, $ψ_gpu)
 
 @benchmark mul!($dψ_gpu, $H_gpu, $ψ_gpu)
 @benchmark mul!($dψ_gpu, $H_sparse_gpu, $ψ_gpu)
@@ -115,11 +120,26 @@ mul!(dψ_gpu, H_sparse_gpu, ψ_gpu)
 mul_compiled! = @compile mul!(dψ_reactant, H_reactant, ψ_reactant)
 mul_compiled!(dψ_reactant, H_reactant, ψ_reactant)
 
-@be mul_compiled!(dψ_reactant, H_reactant, ψ_reactant)
+@be mul_compiled!($dψ_reactant, $H_reactant, $ψ_reactant)
 
 @benchmark mul_compiled!($dψ_reactant, $H_reactant, $ψ_reactant)
 
 # %%
 
-Base.summarysize(H)
-Base.summarysize(H_sparse)
+ratio = Base.summarysize(H_sparse) / Base.summarysize(H)
+
+400 / ratio
+
+# %%
+
+function to_profile(w, H, v)
+    for i in 1:10
+        mul!(w, H, v)
+    end
+    return w
+end
+
+to_profile(dψ, H, ψ)
+to_profile(dψ, H_sparse, ψ)
+
+@profview_allocs to_profile(dψ, H, ψ) sample_rate=0.1

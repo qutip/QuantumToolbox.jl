@@ -98,10 +98,14 @@ end
 
 function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyOperator{T, false}, v::AbstractVecOrMat) where {T}
     N = L.N
-    @inbounds @simd for i in 1:(N - 1)
-        w[i] = _sqrt_coeff(T, i) * v[i + 1]
-    end
-    @inbounds w[N] = zero(eltype(w))
+    # @inbounds @simd for i in 1:(N - 1)
+    #     w[i] = _sqrt_coeff(T, i) * v[i + 1]
+    # end
+    # @inbounds w[N] = zero(eltype(w))
+
+    fill!(w, zero(eltype(w)))
+    @views w[1:(N - 1)] .= _sqrt_coeff.(T, 1:(N - 1)) .* v[2:N]
+
     return w
 end
 
@@ -109,10 +113,14 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::DestroyOperator{T, false}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N = L.N
-    @inbounds @simd for i in 1:(N - 1)
-        w[i] = α * _sqrt_coeff(T, i) * v[i + 1] + β * w[i]
-    end
-    @inbounds w[N] = β * w[N]
+    # @inbounds @simd for i in 1:(N - 1)
+    #     w[i] = α * _sqrt_coeff(T, i) * v[i + 1] + β * w[i]
+    # end
+    # @inbounds w[N] = β * w[N]
+
+    lmul!(β, w)
+    @views w[1:(N - 1)] .= α .* _sqrt_coeff.(T, 1:(N - 1)) .* v[2:N] .+ β .* w[1:(N - 1)]
+
     return w
 end
 
@@ -149,10 +157,15 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::AdjointOperator{T, <:DestroyOperator{T, false}}, v::AbstractVecOrMat,
     ) where {T}
     N = L.L.N
-    @inbounds w[1] = zero(eltype(w))
-    @inbounds @simd for i in 1:(N - 1)
-        w[i + 1] = _sqrt_coeff(T, i) * v[i]
-    end
+
+    # @inbounds w[1] = zero(eltype(w))
+    # @inbounds @simd for i in 1:(N - 1)
+    #     w[i + 1] = _sqrt_coeff(T, i) * v[i]
+    # end
+
+    fill!(w, zero(eltype(w)))
+    @views w[2:N] .= _sqrt_coeff.(T, 1:(N - 1)) .* v[1:(N - 1)]
+
     return w
 end
 
@@ -160,10 +173,15 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::AdjointOperator{T, <:DestroyOperator{T, false}}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N = L.L.N
-    @inbounds w[1] = β * w[1]
-    @inbounds @simd for i in 1:(N - 1)
-        w[i + 1] = α * _sqrt_coeff(T, i) * v[i] + β * w[i + 1]
-    end
+
+    # @inbounds w[1] = β * w[1]
+    # @inbounds @simd for i in 1:(N - 1)
+    #     w[i + 1] = α * _sqrt_coeff(T, i) * v[i] + β * w[i + 1]
+    # end
+
+    lmul!(β, w)
+    @views w[2:N] .= α .* _sqrt_coeff.(T, 1:(N - 1)) .* v[1:(N - 1)] .+ β .* w[2:N]
+
     return w
 end
 
@@ -240,9 +258,14 @@ end
 
 function LinearAlgebra.mul!(w::AbstractVecOrMat, L::NumberOperator{T, false}, v::AbstractVecOrMat) where {T}
     N, shift = L.N, L.shift
-    @inbounds @simd for i in 1:N
-        w[i] = T(i - 1 + shift) * v[i]
-    end
+
+    # @inbounds @simd for i in 1:N
+    #     w[i] = T(i - 1 + shift) * v[i]
+    # end
+
+    fill!(w, zero(eltype(w)))
+    w .= real(T).(shift:shift+N-1) .* v
+
     return w
 end
 
@@ -250,9 +273,14 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::NumberOperator{T, false}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N, shift = L.N, L.shift
-    @inbounds @simd for i in 1:N
-        w[i] = α * T(i - 1 + shift) * v[i] + β * w[i]
-    end
+
+    # @inbounds @simd for i in 1:N
+    #     w[i] = α * T(i - 1 + shift) * v[i] + β * w[i]
+    # end
+
+    lmul!(β, w)
+    w .= α .* real(T).(shift:shift+N-1) .* v .+ β .* w
+
     return w
 end
 
@@ -334,12 +362,17 @@ end
 
 function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyPowerOperator{T, false}, v::AbstractVecOrMat) where {T}
     N, k = L.N, L.k
-    @inbounds for i in 1:(N - k)
-        w[i] = _power_coeff(T, i, k) * v[i + k]
-    end
-    @inbounds for i in (N - k + 1):N
-        w[i] = zero(eltype(w))
-    end
+
+    # @inbounds for i in 1:(N - k)
+    #     w[i] = _power_coeff(T, i, k) * v[i + k]
+    # end
+    # @inbounds for i in (N - k + 1):N
+    #     w[i] = zero(eltype(w))
+    # end
+
+    fill!(w, zero(eltype(w)))
+    @views w[1:(N - k)] .= _power_coeff.(T, 1:(N - k), Ref(k)) .* v[(k + 1):N]
+
     return w
 end
 
@@ -347,12 +380,17 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::DestroyPowerOperator{T, false}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N, k = L.N, L.k
-    @inbounds for i in 1:(N - k)
-        w[i] = α * _power_coeff(T, i, k) * v[i + k] + β * w[i]
-    end
-    @inbounds for i in (N - k + 1):N
-        w[i] = β * w[i]
-    end
+
+    # @inbounds for i in 1:(N - k)
+    #     w[i] = α * _power_coeff(T, i, k) * v[i + k] + β * w[i]
+    # end
+    # @inbounds for i in (N - k + 1):N
+    #     w[i] = β * w[i]
+    # end
+
+    lmul!(β, view(w, (N - k + 1):N))
+    @views w[1:(N - k)] .= α .* _power_coeff.(T, 1:(N - k), Ref(k)) .* v[(k + 1):N] .+ β .* w[1:(N - k)]
+
     return w
 end
 
@@ -390,12 +428,17 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::AdjointOperator{T, <:DestroyPowerOperator{T, false}}, v::AbstractVecOrMat,
     ) where {T}
     N, k = L.L.N, L.L.k
-    @inbounds for i in 1:k
-        w[i] = zero(eltype(w))
-    end
-    @inbounds for i in 1:(N - k)
-        w[i + k] = _power_coeff(T, i, k) * v[i]
-    end
+
+    # @inbounds for i in 1:k
+    #     w[i] = zero(eltype(w))
+    # end
+    # @inbounds for i in 1:(N - k)
+    #     w[i + k] = _power_coeff(T, i, k) * v[i]
+    # end
+
+    fill!(w, zero(eltype(w)))
+    @views w[(k + 1):N] .= _power_coeff.(T, 1:(N - k), Ref(k)) .* v[1:(N - k)]
+
     return w
 end
 
@@ -403,12 +446,17 @@ function LinearAlgebra.mul!(
         w::AbstractVecOrMat, L::AdjointOperator{T, <:DestroyPowerOperator{T, false}}, v::AbstractVecOrMat, α, β,
     ) where {T}
     N, k = L.L.N, L.L.k
-    @inbounds for i in 1:k
-        w[i] = β * w[i]
-    end
-    @inbounds for i in 1:(N - k)
-        w[i + k] = α * _power_coeff(T, i, k) * v[i] + β * w[i + k]
-    end
+
+    # @inbounds for i in 1:k
+    #     w[i] = β * w[i]
+    # end
+    # @inbounds for i in 1:(N - k)
+    #     w[i + k] = α * _power_coeff(T, i, k) * v[i] + β * w[i + k]
+    # end
+
+    lmul!(β, view(w, 1:k))
+    @views w[(k + 1):N] .= α .* _power_coeff.(T, 1:(N - k), Ref(k)) .* v[1:(N - k)] .+ β .* w[(k + 1):N]
+
     return w
 end
 
@@ -516,9 +564,13 @@ function LinearAlgebra.mul!(w::AbstractVecOrMat, L::NormalOrderedOperator{T, fal
     N, k, n = L.N, L.k, L.n
     len = N - max(k, n)
     fill!(w, zero(eltype(w)))
-    @inbounds @simd for j in 1:len
-        w[j + k] = _normal_ordered_coeff(T, j, n, k) * v[j + n]
-    end
+
+    # @inbounds @simd for j in 1:len
+    #     w[j + k] = _normal_ordered_coeff(T, j, n, k) * v[j + n]
+    # end
+
+    @views w[1+k:len+k] .= _normal_ordered_coeff.(T, 1:len, Ref(n), Ref(k)) .* v[1+n:len+n]
+
     return w
 end
 
@@ -527,12 +579,17 @@ function LinearAlgebra.mul!(
     ) where {T}
     N, k, n = L.N, L.k, L.n
     len = N - max(k, n)
-    @inbounds @simd for i in 1:N
-        w[i] = β * w[i]
-    end
-    @inbounds @simd for j in 1:len
-        w[j + k] = α * _normal_ordered_coeff(T, j, n, k) * v[j + n] + w[j + k]
-    end
+
+    # @inbounds @simd for i in 1:N
+    #     w[i] = β * w[i]
+    # end
+    # @inbounds @simd for j in 1:len
+    #     w[j + k] = α * _normal_ordered_coeff(T, j, n, k) * v[j + n] + w[j + k]
+    # end
+
+    lmul!(β, w)
+    @views w[1+k:len+k] .+= α .* _normal_ordered_coeff.(T, 1:len, Ref(n), Ref(k)) .* v[1+n:len+n]
+
     return w
 end
 
