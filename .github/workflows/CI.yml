@@ -87,6 +87,20 @@ jobs:
           arch: ${{ matrix.node.arch }}
       - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@v1
+      - name: Dev local libs for Julia < 1.11
+        shell: bash
+        run: |
+          julia --project=. -e '
+            using Pkg
+            if VERSION < v"1.11"
+            for lib in readdir("lib"; join=true)
+              isdir(lib) || continue
+              isfile(joinpath(lib, "Project.toml")) || continue
+              Pkg.develop(path=lib)
+              end
+            end
+            Pkg.instantiate()
+          '
       - uses: julia-actions/julia-runtest@v1
         env:
           GROUP: ${{ matrix.group }}
