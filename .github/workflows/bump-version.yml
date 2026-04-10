@@ -85,7 +85,7 @@ jobs:
             content = read(changelog_file, String)
 
             marker1 = "\n\n## [v$v_QT]"
-            insertion1 = "\nBump $package version to v$new_v\n$marker1"
+            insertion1 = "\n- Bump $package version to v$new_v\n$marker1"
             new_content = replace(content, marker1 => insertion1)
 
             if package == "QuantumToolbox"
