@@ -3,6 +3,14 @@ name: Bump Version
 on:
   workflow_dispatch:
     inputs:
+      package:
+        description: 'Package to bump'
+        required: true
+        default: 'QuantumToolbox'
+        type: choice
+        options:
+        - QuantumToolbox
+        - QuantumToolboxUtils
       bump_type:
         description: 'Version bump type'
         required: true
@@ -37,12 +45,20 @@ jobs:
           julia -e '
             using Pkg; Pkg.add("Changelog")
             using TOML, Dates, Changelog
-            project_file = "Project.toml"
+            package = ENV["PACKAGE"]
+            project_file = package == "QuantumToolbox" ? "Project.toml" : "lib/$(package)/Project.toml"
             changelog_file = "CHANGELOG.md"
 
             # --- PART 1: Calculate new version number ---
+            # the current version of QuantumToolbox 
+            p_QT = TOML.parsefile("Project.toml")
+            v_QT = VersionNumber(p_QT["version"])
+            
+            # the current version of selected package 
             p = TOML.parsefile(project_file)
             v = VersionNumber(p["version"])
+
+            # the version bump type (major, minor, patch)
             type = ENV["BUMP_TYPE"]
             new_v = if type == "major"
                 VersionNumber(v.major + 1, 0, 0)
@@ -53,9 +69,10 @@ jobs:
             end
 
             # --- PART 2: Output version number to GitHub Actions variables ---
-            println("Bump version from v$v to v$new_v")
+            println("Bump $package version from v$v to v$new_v")
             open(ENV["GITHUB_OUTPUT"], "a") do io
               println(io, "new_version=$new_v")
+              println(io, "project_file=$project_file")
             end
 
             # --- PART 3: Update Project.toml (using Regex to preserve formatting) ---
@@ -66,35 +83,43 @@ jobs:
 
             # --- PART 4: Update CHANGELOG.md ---
             content = read(changelog_file, String)
-            marker = "## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)"
-            insertion = "$marker\n\n\n\n## [v$new_v]\nRelease date: $(Dates.format(now(), "yyyy-mm-dd"))"
-            new_content = replace(content, marker => insertion)
+
+            marker1 = "\n\n## [v$v_QT]"
+            insertion1 = "\nBump $package version to v$new_v\n$marker1"
+            new_content = replace(content, marker1 => insertion1)
+
+            if package == "QuantumToolbox"
+              marker2 = "## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)"
+              insertion2 = "$marker2\n\n\n\n## [v$new_v]\nRelease date: $(Dates.format(now(), "yyyy-mm-dd"))"
+              new_content = replace(new_content, marker2 => insertion2)
+            end
+
             write(changelog_file, new_content)
             Changelog.generate(Changelog.CommonMark(), changelog_file; repo = "qutip/QuantumToolbox.jl")
             println("Updated $changelog_file")
           '
         env:
+          PACKAGE: ${{ inputs.package }}
           BUMP_TYPE: ${{ inputs.bump_type }}
 
       - name: Create Branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          BRANCH_NAME="bump-to-${{ steps.updates.outputs.new_version }}"
+
+          BRANCH_NAME="bump-${{ inputs.package }}-version-to-v${{ steps.updates.outputs.new_version }}"
           git checkout -b $BRANCH_NAME
-          git add Project.toml CHANGELOG.md
-          git commit -m "[no ci] Bump version to v${{ steps.updates.outputs.new_version }}"
+          git add "${{ steps.updates.outputs.project_file }}" CHANGELOG.md
+          git commit -m "[no ci] Bump ${{ inputs.package }}.jl version to v${{ steps.updates.outputs.new_version }}"
           git push origin $BRANCH_NAME
 
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="bump-to-${{ steps.updates.outputs.new_version }}"
+          BRANCH_NAME="bump-${{ inputs.package }}-version-to-v${{ steps.updates.outputs.new_version }}"
           gh pr create \
             --base main \
             --head $BRANCH_NAME \
-            --title "Bump version to v${{ steps.updates.outputs.new_version }}" \
-            --body "This PR bumps the package version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md." \
-            --label "Skip ChangeLog"
+            --title "Bump ${{ inputs.package }} version to v${{ steps.updates.outputs.new_version }}" \
+            --body "This PR bumps ${{ inputs.package }} version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md."
