@@ -11,6 +11,26 @@ import Pkg
 import Random: AbstractRNG, default_rng, seed!
 import Statistics: mean, std
 
+## Re-export of QuantumToolbox libraries
+import Reexport: @reexport
+@reexport using QuantumToolboxUtils
+
+## internal functions of QuantumToolbox libraries
+import QuantumToolboxUtils:
+    FloatOrComplex,
+    getVal,
+    makeVal,
+    get_typename_wrapper,
+    _float_type,
+    _complex_float_type,
+    _convert_eltype_wordsize,
+    _non_static_array_warning,
+    _lazy_tensor_warning,
+    _Ginibre_ensemble,
+    _Boltzmann_weight,
+    _dense_similar,
+    _sparse_similar
+
 ## SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
 import SciMLBase:
     solve,
@@ -89,7 +109,6 @@ export cache_operator, iscached, isconstant
 
 ## Utility
 include("settings.jl")
-include("utilities.jl")
 include("versioninfo.jl")
 include("linear_maps.jl")
 

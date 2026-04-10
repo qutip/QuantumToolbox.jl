@@ -1,0 +1,17 @@
+name = "QuantumToolboxUtils"
+uuid = "02afad9e-e2b8-4f9a-965f-b5dca5b538ca"
+authors = ["Alberto Mercurio", "Yi-Te Huang"]
+version = "0.1.0"
+
+[deps]
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SciMLOperators = "c0aeaf25-5076-4817-a8d5-81caf7dfa961"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
+
+[compat]
+Random = "1"
+SciMLOperators = "1.12"
+SparseArrays = "1"
+StaticArraysCore = "1"
+julia = "1.10"
