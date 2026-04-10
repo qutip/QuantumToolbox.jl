@@ -16,7 +16,7 @@ import Reexport: @reexport
 @reexport using QuantumToolboxUtils
 
 ## internal functions of QuantumToolbox libraries
-import QuantumToolboxUtils: 
+import QuantumToolboxUtils:
     FloatOrComplex,
     getVal,
     makeVal,
