@@ -34,6 +34,7 @@ for op in (:(+), :(-), :(*), :(/), :(^))
     end
 end
 
+# addition and subtraction for quantum object
 for op in (:(+), :(-))
     @eval begin
         # unary operations
@@ -57,8 +58,12 @@ for op in (:(+), :(-))
     end
 end
 
-Base.:(*)(A::AbstractQuantumObject, n::T) where {T <: Number} = get_typename_wrapper(A)(A.data * n, A.type, A.dimensions)
-Base.:(*)(n::T, A::AbstractQuantumObject) where {T <: Number} = get_typename_wrapper(A)(n * A.data, A.type, A.dimensions)
+# multiplication (quantum object with Number)
+## we treat the Number as a scalar multiplied by identity matrix for GPU compatibility
+Base.:(*)(n::T, A::AbstractQuantumObject) where {T <: Number} = get_typename_wrapper(A)((n * I) * A.data, A.type, A.dimensions)
+Base.:(*)(A::AbstractQuantumObject, n::T) where {T <: Number} = n * A # it is necessary to call the method above (otherwise we will obtain incorrect type for Ket and OperatorKet)
+
+# multiplication (two quantum objects)
 function Base.:(*)(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
     check_mul_dimensions(A, B)
     QType = promote_op_type(A, B)
