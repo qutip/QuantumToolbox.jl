@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/CI.yml'
       - 'src/**'
+      - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
@@ -18,6 +19,7 @@ on:
     paths:
       - '.github/workflows/CI.yml'
       - 'src/**'
+      - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
@@ -92,10 +94,10 @@ jobs:
           julia --project=. -e '
             using Pkg
             if VERSION < v"1.11"
-            for lib in readdir("lib"; join=true)
-              isdir(lib) || continue
-              isfile(joinpath(lib, "Project.toml")) || continue
-              Pkg.develop(path=lib)
+              for lib in readdir("lib"; join=true)
+                isdir(lib) || continue
+                isfile(joinpath(lib, "Project.toml")) || continue
+                Pkg.develop(path=lib)
               end
             end
             Pkg.instantiate()

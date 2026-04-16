@@ -85,7 +85,7 @@ jobs:
             content = read(changelog_file, String)
 
             marker1 = "\n\n## [v$v_QT]"
-            insertion1 = "\n- Bump $package version to v$new_v\n$marker1"
+            insertion1 = "\n- Bump $package version to `v$new_v`.\n$marker1"
             new_content = replace(content, marker1 => insertion1)
 
             if package == "QuantumToolbox"
@@ -114,12 +114,48 @@ jobs:
           git push origin $BRANCH_NAME
 
       - name: Create Pull Request
+        id: create_pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="bump-${{ inputs.package }}-version-to-v${{ steps.updates.outputs.new_version }}"
-          gh pr create \
+          PR_URL=$(gh pr create \
             --base main \
             --head $BRANCH_NAME \
             --title "Bump ${{ inputs.package }} version to v${{ steps.updates.outputs.new_version }}" \
-            --body "This PR bumps ${{ inputs.package }} version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md."
+            --body "This PR bumps ${{ inputs.package }} version to v${{ steps.updates.outputs.new_version }} and updates CHANGELOG.md.")
+
+          PR_NUMBER="${PR_URL##*/}"
+
+          echo "Created PR: $PR_URL"
+          {
+            echo "pr_url=$PR_URL"
+            echo "pr_number=$PR_NUMBER"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update CHANGELOG with PR number
+        run: |
+          julia -e '
+            using Pkg; Pkg.add("Changelog")
+            using Changelog
+
+            package = ENV["PACKAGE"]
+            new_v = ENV["NEW_VERSION"]
+            pr_number = ENV["PR_NUMBER"]
+            changelog_file = "CHANGELOG.md"
+
+            content = read(changelog_file, String)
+            old_entry = "- Bump $package version to `v$new_v`."
+            new_entry = "$old_entry ([#$pr_number])"
+
+            write(changelog_file, replace(content, old_entry => new_entry))
+            Changelog.generate(Changelog.CommonMark(), changelog_file; repo = "qutip/QuantumToolbox.jl")
+          '
+
+          git add CHANGELOG.md
+          git commit -m "[no ci] Add PR reference to CHANGELOG"
+          git push origin "bump-${{ inputs.package }}-version-to-v${{ steps.updates.outputs.new_version }}"
+        env:
+          PACKAGE: ${{ inputs.package }}
+          NEW_VERSION: ${{ steps.updates.outputs.new_version }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}

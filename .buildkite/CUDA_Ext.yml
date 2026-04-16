@@ -1,4 +1,31 @@
 steps:
+  # Julia 1.10 doesn't support [sources] in Project.toml,
+  # so we need to manually dev workspace packages before instantiating.
+  - label: "Dev local libs for Julia < 1.11"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1.10"
+      - JuliaCI/julia-coverage#v1:
+          dirs:
+            - src
+            - lib
+            - ext
+    agents:
+      queue: "juliagpu"
+      cuda: "*"
+    commands: |
+      julia --project=. -e '
+        using Pkg
+        if VERSION < v"1.11"
+          for lib in readdir("lib"; join=true)
+            isdir(lib) || continue
+            isfile(joinpath(lib, "Project.toml")) || continue
+            Pkg.develop(path=lib)
+          end
+        end
+        Pkg.instantiate()
+      '
+
   - label: "CUDA Julia {{matrix.version}}"
     matrix:
       setup:
@@ -14,6 +41,7 @@ steps:
           codecov: true
           dirs:
             - src
+            - lib
             - ext
     agents:
       queue: "juliagpu"
