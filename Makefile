@@ -16,8 +16,7 @@ test:
 	${JULIA} --project -e 'using Pkg; Pkg.update(); Pkg.test()'
 
 docs:
-	${JULIA} --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.update()'
-	${JULIA} --project=docs docs/make.jl
+	${JULIA} --project=docs -e 'using Pkg; Pkg.update(); include("docs/make.jl")'
 
 vitepress:
 	npm --prefix docs run docs:dev
