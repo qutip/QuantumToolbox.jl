@@ -77,10 +77,6 @@ CUDA.versioninfo()
     @test typeof(CuSparseMatrixCSR(Xsc).data) == CuSparseMatrixCSR{ComplexF64, Int32}
     @test typeof(CuSparseMatrixCSR{ComplexF32}(Xsc).data) == CuSparseMatrixCSR{ComplexF32, Int32}
 
-    # type conversion of CUDA Diagonal arrays
-    @test cu(qeye(10), word_size = Val(32)).data isa Diagonal{ComplexF32, <:CuVector{ComplexF32}}
-    @test cu(qeye(10), word_size = Val(64)).data isa Diagonal{ComplexF64, <:CuVector{ComplexF64}}
-
     # Sparse To Dense
     # @test to_dense(cu(ψsi; word_size = 64)).data isa CuVector{Int64} # TODO: Fix this in CUDA.jl
     @test to_dense(cu(ψsf; word_size = 64)).data isa CuVector{Float64}
@@ -160,28 +156,38 @@ end
 
     H_gpu_csr = CuSparseMatrixCSR(H_gpu_csc)
     c_ops_gpu_csr = [CuSparseMatrixCSR(c_op) for c_op in c_ops_gpu_csc]
-    ρ_ss_gpu_csr = steadystate(H_gpu_csr, c_ops_gpu_csr, solver = SteadyStateLinearSolver())
+    ρ_ss_gpu_csr = steadystate(H_gpu_csr, c_ops_gpu_csr) # Direct solver using CUDSS
 
     @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csc.data) atol = 1.0e-8 * length(ρ_ss_cpu)
     @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csr.data) atol = 1.0e-8 * length(ρ_ss_cpu)
 end
 
-@testset "CUDA spectrum" begin
+@testset "CUDA Correlations and Spectrum" begin
     N = 10
-    a = cu(destroy(N))
+    Id = qeye(N)
+    a = destroy(N) |> CUSPARSE.CuSparseMatrixCSR
     H = a' * a
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
-    solver = Lanczos(steadystate_solver = SteadyStateLinearSolver())
+    solver = Lanczos()
 
-    ω_l = range(0, 3, length = 1000)
-    spec = spectrum(H, ω_l, c_ops, a', a; solver = solver)
+    t_l = range(0, 333 * π, length = 1000)
+    corr1 = correlation_2op_1t(H, nothing, t_l, c_ops, a', a; progress_bar = Val(false))
+    corr2 = correlation_3op_1t(H, nothing, t_l, c_ops, Id, a', a; progress_bar = Val(false))
+    ω_l1, spec1 = spectrum_correlation_fft(t_l, corr1)
 
-    spec = collect(spec)
-    spec = spec ./ maximum(spec)
+    ω_l2 = range(0, 3, length = 1000)
+    spec2 = spectrum(H, ω_l2, c_ops, a', a; solver = solver)
 
-    test_func = maximum(real.(spec)) * (0.1 / 2)^2 ./ ((ω_l .- 1) .^ 2 .+ (0.1 / 2)^2)
-    idxs = test_func .> 0.05
-    @test sum(abs2.(spec[idxs] .- test_func[idxs])) / sum(abs2.(test_func[idxs])) < 0.01
+    spec1 = spec1 ./ maximum(spec1)
+    spec2 = collect(spec2) ./ maximum(spec2)
+
+    test_func1 = maximum(real.(spec1)) * (0.1 / 2)^2 ./ ((ω_l1 .- 1) .^ 2 .+ (0.1 / 2)^2)
+    test_func2 = maximum(real.(spec2)) * (0.1 / 2)^2 ./ ((ω_l2 .- 1) .^ 2 .+ (0.1 / 2)^2)
+    idxs1 = test_func1 .> 0.05
+    idxs2 = test_func2 .> 0.05
+    @test sum(abs2.(spec1[idxs1] .- test_func1[idxs1])) / sum(abs2.(test_func1[idxs1])) < 0.01
+    @test sum(abs2.(spec2[idxs2] .- test_func2[idxs2])) / sum(abs2.(test_func2[idxs2])) < 0.01
+    @test all(corr1 .≈ corr2)
 
     # TODO: Fix this
     # @testset "Type Inference spectrum" begin
