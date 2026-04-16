@@ -4,6 +4,11 @@ using Pkg
 
 const testdir = dirname(@__FILE__)
 
+# Define the paths to the library
+const LIBRARY_PATHS = Dict(
+    "QuantumToolboxUtils" => joinpath(testdir, "..", "lib", "QuantumToolboxUtils"),
+)
+
 # Define the paths to the extension tests
 const EXTENSION_PATHS = Dict(
     "AutoDiff_Ext" => joinpath(testdir, "ext-test", "cpu", "autodiff"),
@@ -57,6 +62,9 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
 
     (GROUP == "Code-Quality") && QuantumToolbox.about() # print version info. for code quality CI in GitHub
 
+    for (lib_name, lib_path) in LIBRARY_PATHS
+        include(joinpath(lib_path, "test", "code_quality.jl"))
+    end
     include(joinpath(path, "code_quality.jl"))
 end
 
