@@ -47,8 +47,6 @@ jobs:
           - 'ubuntu-latest'
         arch:
           - 'x64'
-        group:
-          - 'Code-Quality'
 
     steps:
       - uses: actions/checkout@v6
@@ -74,4 +72,4 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         env:
-          GROUP: ${{ matrix.group }}
+          GROUP: 'Code-Quality'
