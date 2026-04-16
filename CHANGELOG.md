@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use `StochasticDiffEqHighOrder` as dependency instead of `StochasticDiffEq` for stochastic solvers. ([#682])
 - Fix arithmetic operations (`+`, `-`, `*`) for quantum objects. ([#688])
 - Throw `ArgumentError` for the functions that should not allow time-dependent collapse operators (`c_ops`). ([#689])
+- Use FillArrays for `qeye` and better support to GPU for `steadystate` and `correlation` functions. ([#690])
 
 ## [v0.44.0]
 Release date: 2026-03-11
@@ -478,3 +479,4 @@ Release date: 2024-11-13
 [#683]: https://github.com/qutip/QuantumToolbox.jl/issues/683
 [#688]: https://github.com/qutip/QuantumToolbox.jl/issues/688
 [#689]: https://github.com/qutip/QuantumToolbox.jl/issues/689
+[#690]: https://github.com/qutip/QuantumToolbox.jl/issues/690
