@@ -5,8 +5,8 @@ using Pkg
 const testdir = dirname(@__FILE__)
 
 # Define the paths to the library
-const LIBRARY_PATHS = Dict(
-    "QuantumToolboxUtils" => joinpath(testdir, "..", "lib", "QuantumToolboxUtils"),
+const LIBRARY_PATHS = (
+    joinpath(testdir, "..", "lib", "QuantumToolboxUtils"),
 )
 
 # Define the paths to the extension tests
@@ -31,6 +31,11 @@ const GROUP_LIST = String[
 # function to set up the environment for subtests
 function setup_subtest_env(path::String)
     Pkg.activate(path)
+    if VERSION < v"1.11"
+        for lib in LIBRARY_PATHS
+            Pkg.develop(path=lib)
+        end
+    end
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
     Pkg.update()
     return nothing
