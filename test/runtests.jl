@@ -32,8 +32,8 @@ const GROUP_LIST = String[
 function setup_subtest_env(path::String)
     Pkg.activate(path)
     if VERSION < v"1.11"
-        for lib in LIBRARY_PATHS
-            Pkg.develop(path=lib)
+        for lib_path in LIBRARY_PATHS
+            Pkg.develop(path=lib_path)
         end
     end
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
@@ -67,7 +67,8 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
 
     (GROUP == "Code-Quality") && QuantumToolbox.about() # print version info. for code quality CI in GitHub
 
-    for (lib_name, lib_path) in LIBRARY_PATHS
+    # run code quality tests for all libraries and the main package
+    for lib_path in LIBRARY_PATHS
         include(joinpath(lib_path, "test", "code_quality.jl"))
     end
     include(joinpath(path, "code_quality.jl"))
