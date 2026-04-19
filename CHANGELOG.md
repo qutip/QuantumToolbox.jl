@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+
+
+## [v0.45.0]
+Release date: 2026-04-19
+
 - Restructure `Dimensions` and `Space` to align with `qutip` (`Python`) ([#659]). Note that this update basically overwrites many changes made in PR [#600]:
   - Replace `ProductDimensions` and `HilbertSpace` structures with `Dimensions` + `Space`/`TensorSpace`/`LiouvilleSpace`.
   - Remove `get_hilbert_size` and `get_liouville_size`, and use `get_size` instead.
@@ -338,6 +343,7 @@ Release date: 2024-11-13
 [v0.43.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.43.0
 [v0.43.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.43.1
 [v0.44.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.44.0
+[v0.45.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.45.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
