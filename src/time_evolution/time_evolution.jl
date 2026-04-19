@@ -588,7 +588,9 @@ function liouvillian_floquet(
         OpType2 <: Union{Operator, SuperOperator},
         OpType3 <: Union{Operator, SuperOperator},
     }
-    return liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
+    L₀ = liouvillian(H, c_ops)
+    (L₀ isa QuantumObject) || throw(ArgumentError("liouvillian_floquet only supports (time-independent) QuantumObject in c_ops"))
+    return liouvillian_floquet(L₀, liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
 end
 
 function _liouvillian_floquet(

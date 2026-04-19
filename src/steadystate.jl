@@ -9,11 +9,18 @@ export SteadyStateSolver,
 abstract type SteadyStateSolver end
 
 @doc raw"""
-    SteadyStateDirectSolver()
+    SteadyStateDirectSolver(
+        factorization = lu
+    )
 
 A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillian [`SuperOperator`](@ref) using the standard method given in `LinearAlgebra`.
+
+# Arguments
+- `factorization::Function=lu`: The factorization method to use for solving the linear system. The default is `lu`, which performs LU factorization.
 """
-struct SteadyStateDirectSolver <: SteadyStateSolver end
+Base.@kwdef struct SteadyStateDirectSolver{FT <: Function} <: SteadyStateSolver
+    factorization::FT = lu
+end
 
 @doc raw"""
     SteadyStateEigenSolver()
@@ -198,10 +205,11 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirect
     fill!(rows, 1)
     copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
     fill!(vals, weight)
-    Tn = sparse(rows, cols, vals, N^2, N^2)
+    Tn = _sparse_similar(L_tmp, rows, cols, vals, N^2, N^2)
     L_tmp = L_tmp + Tn
 
-    ρss_vec = L_tmp \ v0 # This is still not supported on GPU, yet
+    F = solver.factorization(L_tmp)
+    ρss_vec = F \ v0 # This is still not supported on GPU, yet
     ρss = reshape(ρss_vec, N, N)
     ρss = (ρss + ρss') / 2 # Hermitianize
     return QuantumObject(ρss, Operator(), state_dimensions)
@@ -361,6 +369,8 @@ function steadystate_fourier(
     check_dimensions(H_0, H_p, H_m)
 
     L_0 = liouvillian(H_0, c_ops)
+    (L_0 isa QuantumObject) || throw(ArgumentError("steadystate_fourier only supports (time-independent) QuantumObject in c_ops"))
+
     L_p = liouvillian(H_p)
     L_m = liouvillian(H_m)
     return _steadystate_fourier(L_0, L_p, L_m, ωd, solver; n_max = n_max, tol = tol, kwargs...)

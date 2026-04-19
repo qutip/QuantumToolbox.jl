@@ -87,7 +87,7 @@ function liouvillian_dressed_nonsecular(
         D₁ + D₂
     end
 
-    settings.auto_tidyup && tidyup!(L)
+    settings.auto_tidyup && (L isa QuantumObject) && tidyup!(L) # tidyup! only supports QuantumObject
 
     return E, U, L
 end
