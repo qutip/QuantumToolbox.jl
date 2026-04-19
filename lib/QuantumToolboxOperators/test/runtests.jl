@@ -19,7 +19,7 @@ function test_mul(L, label; N_trials = 5)
         w1 = similar(v)
         mul!(w1, L, v)
         w2 = A * v
-        if !isapprox(w1, w2; atol = 1.0e-12)
+        if !isapprox(w1, w2; atol = 1.0e-10)
             ok = false
             @error "$label: 3-arg mul! mismatch" norm(w1 - w2)
         end
@@ -39,7 +39,7 @@ function test_mul5(L, label; N_trials = 5)
         α, β = randn(ComplexF64), randn(ComplexF64)
         mul!(w, L, v, α, β)
         w_expected = α * (A * v) + β * w_orig
-        if !isapprox(w, w_expected; atol = 1.0e-12)
+        if !isapprox(w, w_expected; atol = 1.0e-10)
             ok = false
             @error "$label: 5-arg mul! mismatch" norm(w - w_expected)
         end

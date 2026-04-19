@@ -70,7 +70,7 @@ function LinearAlgebra.mul!(
     N = L.N
 
     lmul!(β, w)
-    @views w[1:(N - 1)] .= α .* _sqrt_coeff.(T, 1:(N - 1)) .* v[2:N] .+ β .* w[1:(N - 1)]
+    @views w[1:(N - 1)] .+= α .* _sqrt_coeff.(T, 1:(N - 1)) .* v[2:N]
 
     return w
 end
@@ -97,7 +97,7 @@ function LinearAlgebra.mul!(
     N = L.L.N
 
     lmul!(β, w)
-    @views w[2:N] .= α .* _sqrt_coeff.(T, 1:(N - 1)) .* v[1:(N - 1)] .+ β .* w[2:N]
+    @views w[2:N] .+= α .* _sqrt_coeff.(T, 1:(N - 1)) .* v[1:(N - 1)]
 
     return w
 end
@@ -120,10 +120,9 @@ struct NumberOperator{T} <: BosonicOperator{T}
     N::Int
     shift::T
 
-    function NumberOperator{T1}(N::Int; shift::T2 = zero(T1)) where {T1, T2}
-        T2 <: T1 || throw(ArgumentError("Shift type $T2 is not a subtype of $T1"))
+    function NumberOperator{T1}(N::Int; shift = zero(T1)) where {T1}
         N > 0 || throw(ArgumentError("Hilbert space dimension N must be positive, got $N"))
-        return new{T1}(N, shift)
+        return new{T1}(N, T1(shift))
     end
 end
 
@@ -152,7 +151,6 @@ function LinearAlgebra.mul!(
     ) where {T}
     N, shift = L.N, L.shift
 
-    lmul!(β, w)
     w .= α .* (real(T).(0:(N - 1)) .+ shift) .* v .+ β .* w
 
     return w
@@ -202,8 +200,8 @@ function LinearAlgebra.mul!(
     ) where {T}
     N, k = L.N, L.k
 
-    lmul!(β, view(w, (N - k + 1):N))
-    @views w[1:(N - k)] .= α .* _power_coeff.(T, 1:(N - k), Ref(k)) .* v[(k + 1):N] .+ β .* w[1:(N - k)]
+    lmul!(β, w)
+    @views w[1:(N - k)] .+= α .* _power_coeff.(T, 1:(N - k), Ref(k)) .* v[(k + 1):N]
 
     return w
 end
@@ -229,8 +227,8 @@ function LinearAlgebra.mul!(
     ) where {T}
     N, k = L.L.N, L.L.k
 
-    lmul!(β, view(w, 1:k))
-    @views w[(k + 1):N] .= α .* _power_coeff.(T, 1:(N - k), Ref(k)) .* v[1:(N - k)] .+ β .* w[(k + 1):N]
+    lmul!(β, w)
+    @views w[(k + 1):N] .+= α .* _power_coeff.(T, 1:(N - k), Ref(k)) .* v[1:(N - k)]
 
     return w
 end
