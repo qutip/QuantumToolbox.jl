@@ -46,19 +46,13 @@ mul!(dψ, a_sparse, ψ)
 @be mul!(dψ, a, ψ)
 @be mul!(dψ, a_sparse, ψ)
 
-@benchmark mul!($dψ, $a, $ψ)
-@benchmark mul!($dψ, $a_sparse, $ψ)
-
 # ------- GPU -------
 
 mul!(dψ_gpu, a, ψ_gpu)
-mul!(dψ_gpu, a_sparse_gpu, ψ_gpu)
+# mul!(dψ_gpu, a_sparse_gpu, ψ_gpu)
 
 @be mul!($dψ_gpu, $a, $ψ_gpu)
 # @be mul!($dψ_gpu, $a_sparse_gpu, $ψ_gpu)
-
-@benchmark mul!($dψ_gpu, $a, $ψ_gpu)
-@benchmark mul!($dψ_gpu, $a_sparse_gpu, $ψ_gpu)
 
 # ------- Reactant -------
 
@@ -66,8 +60,6 @@ mul_compiled! = @compile mul!(dψ_reactant, a, ψ_reactant)
 mul_compiled!(dψ_reactant, a, ψ_reactant)
 
 @be mul_compiled!($dψ_reactant, $a, $ψ_reactant)
-@benchmark mul_compiled!($dψ_reactant, $a, $ψ_reactant)
-
 
 # %% -------------- Real Hamiltonian ---------------
 
@@ -89,24 +81,18 @@ mul!(dψ, H_sparse, ψ)
 @be mul!($dψ, $H, $ψ)
 @be mul!($dψ, $H_sparse, $ψ)
 
-@benchmark mul!($dψ, $H, $ψ)
-@benchmark mul!($dψ, $H_sparse, $ψ)
 
 mul!(dψ_gpu, H, ψ_gpu)
-mul!(dψ_gpu, H_sparse_gpu, ψ_gpu)
+# mul!(dψ_gpu, H_sparse_gpu, ψ_gpu)
 
 @be mul!($dψ_gpu, $H, $ψ_gpu)
-@be mul!($dψ_gpu, $H_sparse_gpu, $ψ_gpu)
+# @be mul!($dψ_gpu, $H_sparse_gpu, $ψ_gpu)
 
-@benchmark mul!($dψ_gpu, $H, $ψ_gpu)
-@benchmark mul!($dψ_gpu, $H_sparse_gpu, $ψ_gpu)
 
 mul_H_compiled! = @compile mul!(dψ_reactant, H, ψ_reactant)
 mul_H_compiled!(dψ_reactant, H, ψ_reactant)
 
 @be mul_H_compiled!($dψ_reactant, $H, $ψ_reactant)
-
-@benchmark mul_H_compiled!($dψ_reactant, $H, $ψ_reactant)
 
 # %%
 
@@ -133,6 +119,8 @@ bench_H_sparse_gpu = missing
 bench_H_reactant = (tmp = @be mul_H_compiled!($dψ_reactant, $H, $ψ_reactant); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6
 
 md"""
+Memory ratio (sparse/dense): $(round(memory_ratio * 1e-3, digits=2)) k
+
 | Operator | CPU (Lazy) | CPU (Sparse) | GPU (Lazy) | GPU (Sparse) | Reactant (Lazy) |
 |:--------:|:----------:|:------------:|:----------:|:------------:|:----------------:|
 | a        | $(round(bench_a_cpu, digits=2)) μs | $(round(bench_a_sparse_cpu, digits=2)) μs | $(round(bench_a_gpu, digits=2)) μs | $(bench_a_sparse_gpu === missing ? "N/A" : string(round(bench_a_sparse_gpu, digits=2)) * " μs") | $(round(bench_a_reactant, digits=2)) μs |
