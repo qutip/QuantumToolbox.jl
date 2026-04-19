@@ -51,8 +51,9 @@ function correlation_3op_2t(
     kwargs2 = merge((saveat = collect(tlist),), (; kwargs...))
 
     # generate OperatorKet first, so sol.states will store OperatorKet (skip redundant reshaping)
+    # note that doesn't need to do the first mesolve if tlist == [0] (for 2op_1t and 3op_1t cases)
     ρ0_vec = mat2vec(ket2dm(ψ0))
-    ρt_list = mesolve(L, ρ0_vec, tlist; kwargs2...).states
+    ρt_list = (tlist == [0]) ? [ρ0_vec] : mesolve(L, ρ0_vec, tlist; kwargs2...).states
 
     C_A = sprepost(C, A)
     corr = map((t, ρt) -> mesolve(L, C_A * ρt, τlist .+ t, e_ops = [B]; kwargs...).expect[1, :], tlist, ρt_list)
