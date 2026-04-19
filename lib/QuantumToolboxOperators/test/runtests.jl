@@ -5,9 +5,9 @@ using SciMLOperators
 using SciMLOperators: AdjointOperator
 using Test
 
-println("=" ^ 60)
+println("="^60)
 println("QuantumToolboxOperators — Informal Tests")
-println("=" ^ 60)
+println("="^60)
 
 # ── Helper: compare matrix-free mul! against concretize'd sparse ─────────────
 function test_mul(L, label; N_trials = 5)
@@ -19,7 +19,7 @@ function test_mul(L, label; N_trials = 5)
         w1 = similar(v)
         mul!(w1, L, v)
         w2 = A * v
-        if !isapprox(w1, w2; atol = 1e-12)
+        if !isapprox(w1, w2; atol = 1.0e-12)
             ok = false
             @error "$label: 3-arg mul! mismatch" norm(w1 - w2)
         end
@@ -39,7 +39,7 @@ function test_mul5(L, label; N_trials = 5)
         α, β = randn(ComplexF64), randn(ComplexF64)
         mul!(w, L, v, α, β)
         w_expected = α * (A * v) + β * w_orig
-        if !isapprox(w, w_expected; atol = 1e-12)
+        if !isapprox(w, w_expected; atol = 1.0e-12)
             ok = false
             @error "$label: 5-arg mul! mismatch" norm(w - w_expected)
         end
@@ -151,7 +151,7 @@ w_tmp = similar(v)
 mul!(w_tmp, a, v)       # a * v
 mul!(w1, a, w_tmp)      # a * (a * v)
 mul!(w2, a * a, v)      # (a^2) * v  via DestroyPowerOperator
-@assert isapprox(w1, w2; atol = 1e-12)
+@assert isapprox(w1, w2; atol = 1.0e-12)
 println("  ✓ (a*a)*v == a*(a*v) numerically")
 
 # adjoint(adjoint(a)) == a  (double adjoint unwrap)
@@ -248,7 +248,7 @@ w = similar(v)
 sum_op_cached = cache_operator(sum_op, v)
 mul!(w, sum_op_cached, v)
 w_ref = concretize(a) * v + concretize(ad) * v
-@assert isapprox(w, w_ref; atol = 1e-12)
+@assert isapprox(w, w_ref; atol = 1.0e-12)
 println("  ✓ (a + a') * v gives correct result")
 
 # scaled operator: 2.0 * a
@@ -258,7 +258,7 @@ w = similar(v)
 scaled_cached = cache_operator(scaled, v)
 mul!(w, scaled_cached, v)
 w_ref = 2.0 * concretize(a) * v
-@assert isapprox(w, w_ref; atol = 1e-12)
+@assert isapprox(w, w_ref; atol = 1.0e-12)
 println("  ✓ (2.0 * a) * v gives correct result")
 
 # ── Float32 type preservation ────────────────────────────────────────────────
@@ -290,7 +290,7 @@ v64 = ComplexF64.(v32)
 w64 = similar(v64)
 mul!(w32, a, v32)
 mul!(w64, a, v64)
-@assert isapprox(ComplexF64.(w32), w64; atol = 1e-6)
+@assert isapprox(ComplexF64.(w32), w64; atol = 1.0e-6)
 println("  ✓ Float32 and Float64 results agree (within Float32 precision)")
 
 # ── NormalOrderedOperator tests ──────────────────────────────────────────────
@@ -391,7 +391,7 @@ a3 = a^3
 ad2 = ad^2
 mul!(w_tmp, a3, v)
 mul!(w2, ad2, w_tmp)
-@assert isapprox(w1, w2; atol = 1e-12)
+@assert isapprox(w1, w2; atol = 1.0e-12)
 println("  ✓ NormalOrderedOperator mul! matches sequential (â†)^2 â^3 application")
 
 # a' * a still gives NumberOperator (preserved)
@@ -427,6 +427,6 @@ mul!(w32, L32, v32)
 @assert eltype(w32) == ComplexF32
 println("  ✓ NormalOrderedOperator{Float32} preserves ComplexF32")
 
-println("\n" * "=" ^ 60)
+println("\n" * "="^60)
 println("All tests passed!")
-println("=" ^ 60)
+println("="^60)
