@@ -2,13 +2,15 @@ using LinearAlgebra
 using SparseArrays
 using SciMLOperators
 using QuantumToolboxOperators
-using CUDA
-# using Metal
+# using CUDA
+using Metal
 using Reactant
 using Adapt
 using Chairmarks
 using BenchmarkTools
 using Markdown
+
+has_cuda = isdefined(Main, :CUDA)
 
 # %%
 
@@ -25,8 +27,7 @@ Base.summarysize(a_sparse) / Base.summarysize(a)
 ψ = randn(T, N) |> normalize
 dψ = similar(ψ)
 
-ψ_gpu = CuArray(ψ)
-# ψ_gpu = MtlArray(ψ)
+ψ_gpu = has_cuda ? CuArray(ψ) : MtlArray(ψ)
 dψ_gpu = similar(ψ_gpu)
 
 ψ_reactant = Reactant.to_rarray(ψ)
@@ -34,7 +35,7 @@ dψ_reactant = similar(ψ_reactant)
 
 # %%
 
-a_sparse_gpu = CUSPARSE.CuSparseMatrixCSR(a_sparse)
+a_sparse_gpu = has_cuda ? CUSPARSE.CuSparseMatrixCSR(a_sparse) : missing
 
 # %%
 
@@ -49,10 +50,10 @@ mul!(dψ, a_sparse, ψ)
 # ------- GPU -------
 
 mul!(dψ_gpu, a, ψ_gpu)
-mul!(dψ_gpu, a_sparse_gpu, ψ_gpu)
+has_cuda && mul!(dψ_gpu, a_sparse_gpu, ψ_gpu)
 
 @be mul!($dψ_gpu, $a, $ψ_gpu)
-@be mul!($dψ_gpu, $a_sparse_gpu, $ψ_gpu)
+has_cuda && @be mul!($dψ_gpu, $a_sparse_gpu, $ψ_gpu)
 
 # ------- Reactant -------
 
@@ -71,7 +72,7 @@ H = Δ * a' * a + U * (a'^2 * a^2) + F * (a + a')
 H = cache_operator(H, ψ)
 H_sparse = Δ * (a_sparse' * a_sparse) + U * (a_sparse'^2 * a_sparse^2) + F * (a_sparse + a_sparse')
 
-H_sparse_gpu = CUSPARSE.CuSparseMatrixCSR(H_sparse)
+H_sparse_gpu = has_cuda ? CUSPARSE.CuSparseMatrixCSR(H_sparse) : missing
 
 # %%
 
@@ -83,10 +84,10 @@ mul!(dψ, H_sparse, ψ)
 
 
 mul!(dψ_gpu, H, ψ_gpu)
-mul!(dψ_gpu, H_sparse_gpu, ψ_gpu)
+has_cuda && mul!(dψ_gpu, H_sparse_gpu, ψ_gpu)
 
 @be mul!($dψ_gpu, $H, $ψ_gpu)
-@be mul!($dψ_gpu, $H_sparse_gpu, $ψ_gpu)
+has_cuda && @be mul!($dψ_gpu, $H_sparse_gpu, $ψ_gpu)
 
 
 mul_H_compiled! = @compile mul!(dψ_reactant, H, ψ_reactant)
@@ -104,8 +105,8 @@ bench_a_cpu = (tmp = @be mul!(dψ, a, ψ); sum(x -> x.time, tmp.samples) / lengt
 bench_a_sparse_cpu = (tmp = @be mul!(dψ, a_sparse, ψ); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6
 
 bench_a_gpu = (tmp = @be mul!(dψ_gpu, a, ψ_gpu); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6
-bench_a_sparse_gpu = (tmp = @be mul!(dψ_gpu, a_sparse_gpu, ψ_gpu); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6
-# bench_a_sparse_gpu = missing
+bench_a_sparse_gpu = has_cuda ? (tmp = @be mul!(dψ_gpu, a_sparse_gpu, ψ_gpu); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6 : missing
+
 
 bench_a_reactant = (tmp = @be mul_compiled!($dψ_reactant, $a, $ψ_reactant); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6
 
@@ -113,8 +114,7 @@ bench_H_cpu = (tmp = @be mul!(dψ, H, ψ); sum(x -> x.time, tmp.samples) / lengt
 bench_H_sparse_cpu = (tmp = @be mul!(dψ, H_sparse, ψ); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6
 
 bench_H_gpu = (tmp = @be mul!(dψ_gpu, H, ψ_gpu); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6
-bench_H_sparse_gpu = (tmp = @be mul!(dψ_gpu, H_sparse_gpu, ψ_gpu); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6
-# bench_H_sparse_gpu = missing
+bench_H_sparse_gpu = has_cuda ? (tmp = @be mul!(dψ_gpu, H_sparse_gpu, ψ_gpu); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6 : missing
 
 bench_H_reactant = (tmp = @be mul_H_compiled!($dψ_reactant, $H, $ψ_reactant); sum(x -> x.time, tmp.samples) / length(tmp.samples)) * 1.0e6
 

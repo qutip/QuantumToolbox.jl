@@ -428,5 +428,311 @@ mul!(w32, L32, v32)
 println("  ✓ NormalOrderedOperator{Float32} preserves ComplexF32")
 
 println("\n" * "="^60)
+println("Matrix (AbstractVecOrMat) mul! Tests")
+println("="^60)
+
+# ── Test that mul!(W_mat, op, V_mat) matches column-wise mul! ───────────────
+println("\n--- Matrix mul! for all BosonicOperators ---")
+
+N = 10
+ncols = 4
+V = randn(ComplexF64, N, ncols)
+W_mat = similar(V)
+W_col = similar(V)
+
+for (label, op) in [
+        ("DestroyOperator", DestroyOperator(N)),
+        ("adjoint(DestroyOperator)", adjoint(DestroyOperator(N))),
+        ("NumberOperator(shift=0)", NumberOperator(N)),
+        ("NumberOperator(shift=1)", NumberOperator(N; shift = 1)),
+        ("DestroyPowerOperator(k=2)", DestroyPowerOperator(N, 2)),
+        ("adjoint(DestroyPowerOperator(k=2))", adjoint(DestroyPowerOperator(N, 2))),
+        ("NormalOrderedOperator(k=2,n=3)", NormalOrderedOperator(N, 2, 3)),
+    ]
+    # 3-arg
+    mul!(W_mat, op, V)
+    for c in 1:ncols
+        mul!(view(W_col, :, c), op, view(V, :, c))
+    end
+    @assert isapprox(W_mat, W_col; atol = 1.0e-12) "$label: matrix 3-arg mul! mismatch"
+    println("  ✓ $label — 3-arg matrix mul! matches column-wise")
+
+    # 5-arg
+    W_mat2 = randn(ComplexF64, N, ncols)
+    W_col2 = copy(W_mat2)
+    α, β = randn(ComplexF64), randn(ComplexF64)
+    mul!(W_mat2, op, V, α, β)
+    for c in 1:ncols
+        mul!(view(W_col2, :, c), op, view(V, :, c), α, β)
+    end
+    @assert isapprox(W_mat2, W_col2; atol = 1.0e-12) "$label: matrix 5-arg mul! mismatch"
+    println("  ✓ $label — 5-arg matrix mul! matches column-wise")
+end
+
+println("\n" * "="^60)
+println("KroneckerOperator Tests")
+println("="^60)
+
+using SciMLOperators: IdentityOperator, MatrixOperator
+
+# ── Helper: reference Kronecker product via concretize ───────────────────────
+function kron_ref(L::KroneckerOperator)
+    return concretize(L)
+end
+
+# ── 2-mode basic test ────────────────────────────────────────────────────────
+println("\n--- KroneckerOperator: 2-mode basic ---")
+
+NA, NB = 4, 5
+a = DestroyOperator(NA)
+b = DestroyOperator(NB)
+
+K = KroneckerOperator((NA, NB), 1 => a, 2 => b)
+K_ref = kron(concretize(a), concretize(b))
+
+v = randn(ComplexF64, NA * NB)
+w = similar(v)
+mul!(w, K, v)
+@assert isapprox(w, K_ref * v; atol = 1.0e-12)
+println("  ✓ KroneckerOperator(a, b) matches kron(concretize(a), concretize(b))")
+
+# With cache
+K_cached = cache_operator(K, v)
+w2 = similar(v)
+mul!(w2, K_cached, v)
+@assert isapprox(w2, K_ref * v; atol = 1.0e-12)
+println("  ✓ cached KroneckerOperator gives same result")
+
+# ── Single operator per mode ─────────────────────────────────────────────────
+println("\n--- KroneckerOperator: single active operator ---")
+
+# Only mode 1 active
+K1 = KroneckerOperator((NA, NB), 1 => a)
+K1_ref = kron(concretize(a), sparse(1.0I, NB, NB))
+mul!(w, K1, v)
+@assert isapprox(w, K1_ref * v; atol = 1.0e-12)
+println("  ✓ A ⊗ I matches kron(concretize(A), I)")
+
+# Only mode 2 active (innermost → no permutation fast path)
+K2 = KroneckerOperator((NA, NB), 2 => b)
+K2_ref = kron(sparse(1.0I, NA, NA), concretize(b))
+mul!(w, K2, v)
+@assert isapprox(w, K2_ref * v; atol = 1.0e-12)
+println("  ✓ I ⊗ B matches kron(I, concretize(B)) — fast path (no permutation)")
+
+# ── 4-mode with identities ──────────────────────────────────────────────────
+println("\n--- KroneckerOperator: 4-mode with identities ---")
+
+dims4 = (3, 4, 5, 6)
+a4 = DestroyOperator(dims4[1])
+b4 = DestroyOperator(dims4[4])
+total4 = prod(dims4)
+
+K4 = KroneckerOperator(dims4, 1 => a4, 4 => b4)
+K4_ref = kron(concretize(a4), sparse(1.0I, dims4[2], dims4[2]),
+    sparse(1.0I, dims4[3], dims4[3]), concretize(b4))
+
+v4 = randn(ComplexF64, total4)
+w4 = similar(v4)
+mul!(w4, K4, v4)
+@assert isapprox(w4, K4_ref * v4; atol = 1.0e-10)
+println("  ✓ A ⊗ I ⊗ I ⊗ B (4-mode) matches materialized kron")
+
+# Cached version
+K4c = cache_operator(K4, v4)
+w4c = similar(v4)
+mul!(w4c, K4c, v4)
+@assert isapprox(w4c, K4_ref * v4; atol = 1.0e-10)
+println("  ✓ cached A ⊗ I ⊗ I ⊗ B gives same result")
+
+# Different active positions: modes 1, 3
+K4b = KroneckerOperator(dims4, 1 => a4, 3 => DestroyOperator(dims4[3]))
+K4b_ref = kron(concretize(a4), sparse(1.0I, dims4[2], dims4[2]),
+    concretize(DestroyOperator(dims4[3])), sparse(1.0I, dims4[4], dims4[4]))
+mul!(w4, K4b, v4)
+@assert isapprox(w4, K4b_ref * v4; atol = 1.0e-10)
+println("  ✓ A ⊗ I ⊗ B ⊗ I (4-mode) matches materialized kron")
+
+# All 4 active
+a1 = DestroyOperator(dims4[1])
+a2 = NumberOperator(dims4[2])
+a3 = DestroyOperator(dims4[3])
+a4_all = DestroyOperator(dims4[4])
+K4all = KroneckerOperator(dims4, 1 => a1, 2 => a2, 3 => a3, 4 => a4_all)
+K4all_ref = kron(concretize(a1), concretize(a2), concretize(a3), concretize(a4_all))
+mul!(w4, K4all, v4)
+@assert isapprox(w4, K4all_ref * v4; atol = 1.0e-10)
+println("  ✓ A ⊗ B ⊗ C ⊗ D (all active, 4-mode) matches materialized kron")
+
+# ── 5-arg mul! ───────────────────────────────────────────────────────────────
+println("\n--- KroneckerOperator: 5-arg mul! ---")
+
+K = KroneckerOperator((NA, NB), 1 => a, 2 => b)
+K_ref_mat = kron(concretize(a), concretize(b))
+K_cached = cache_operator(K, v)
+v = randn(ComplexF64, NA * NB)
+
+# β = 0 case
+w = randn(ComplexF64, NA * NB)
+α = randn(ComplexF64)
+mul!(w, K_cached, v, α, 0.0)
+@assert isapprox(w, α * K_ref_mat * v; atol = 1.0e-12)
+println("  ✓ mul!(w, K, v, α, 0) matches α * K_ref * v")
+
+# β ≠ 0 case
+w = randn(ComplexF64, NA * NB)
+w_orig = copy(w)
+α, β = randn(ComplexF64), randn(ComplexF64)
+mul!(w, K_cached, v, α, β)
+@assert isapprox(w, α * K_ref_mat * v + β * w_orig; atol = 1.0e-12)
+println("  ✓ mul!(w, K, v, α, β) matches α * K_ref * v + β * w_orig")
+
+# 5-arg with 4-mode
+K4c = cache_operator(K4, v4)
+w4 = randn(ComplexF64, total4)
+w4_orig = copy(w4)
+α, β = randn(ComplexF64), randn(ComplexF64)
+mul!(w4, K4c, v4, α, β)
+@assert isapprox(w4, α * K4_ref * v4 + β * w4_orig; atol = 1.0e-10)
+println("  ✓ 5-arg mul! with 4-mode KroneckerOperator matches reference")
+
+# ── All-identity (M = 0) ────────────────────────────────────────────────────
+println("\n--- KroneckerOperator: all-identity (M=0) ---")
+
+K_id = KroneckerOperator((IdentityOperator(3), IdentityOperator(4)))
+v_id = randn(ComplexF64, 12)
+w_id = similar(v_id)
+mul!(w_id, K_id, v_id)
+@assert isapprox(w_id, v_id; atol = 1.0e-15)
+println("  ✓ all-identity KroneckerOperator copies input")
+
+# 5-arg all-identity
+w_id2 = randn(ComplexF64, 12)
+w_id2_orig = copy(w_id2)
+α, β = randn(ComplexF64), randn(ComplexF64)
+mul!(w_id2, K_id, v_id, α, β)
+@assert isapprox(w_id2, α * v_id + β * w_id2_orig; atol = 1.0e-12)
+println("  ✓ 5-arg all-identity KroneckerOperator: α*v + β*w")
+
+# ── Adjoint ──────────────────────────────────────────────────────────────────
+println("\n--- KroneckerOperator: adjoint ---")
+
+K = KroneckerOperator((NA, NB), 1 => a, 2 => b)
+Kadj = adjoint(K)
+K_ref_mat = kron(concretize(a), concretize(b))
+Kadj_ref = K_ref_mat'
+
+v = randn(ComplexF64, NA * NB)
+w = similar(v)
+Kadj_cached = cache_operator(Kadj, v)
+mul!(w, Kadj_cached, v)
+@assert isapprox(w, Kadj_ref * v; atol = 1.0e-12)
+println("  ✓ adjoint(KroneckerOperator) matches adjoint of materialized kron")
+
+# ── concretize ───────────────────────────────────────────────────────────────
+println("\n--- KroneckerOperator: concretize ---")
+
+K = KroneckerOperator((NA, NB), 1 => a, 2 => b)
+K_mat = concretize(K)
+K_ref_mat = kron(concretize(a), concretize(b))
+@assert isapprox(K_mat, K_ref_mat; atol = 1.0e-12)
+println("  ✓ concretize(KroneckerOperator(a,b)) matches kron")
+
+K4_mat = concretize(K4)
+@assert isapprox(K4_mat, K4_ref; atol = 1.0e-10)
+println("  ✓ concretize(4-mode KroneckerOperator) matches reference")
+
+# ── Full tuple constructor ───────────────────────────────────────────────────
+println("\n--- KroneckerOperator: full tuple constructor ---")
+
+K_full = KroneckerOperator((a, IdentityOperator(NB)))
+K_sparse = KroneckerOperator((NA, NB), 1 => a)
+v = randn(ComplexF64, NA * NB)
+w_full = similar(v)
+w_sparse = similar(v)
+mul!(w_full, K_full, v)
+mul!(w_sparse, K_sparse, v)
+@assert isapprox(w_full, w_sparse; atol = 1.0e-15)
+println("  ✓ full tuple constructor matches sparse constructor")
+
+K_full3 = KroneckerOperator((a, IdentityOperator(NB), b))
+K_sparse3 = KroneckerOperator((NA, NB, NB), 1 => a, 3 => b)
+v3 = randn(ComplexF64, NA * NB * NB)
+w3a = similar(v3)
+w3b = similar(v3)
+mul!(w3a, K_full3, v3)
+mul!(w3b, K_sparse3, v3)
+@assert isapprox(w3a, w3b; atol = 1.0e-12)
+println("  ✓ full tuple constructor with 3 modes matches sparse constructor")
+
+# ── Base.kron overload ───────────────────────────────────────────────────────
+println("\n--- KroneckerOperator: kron overload ---")
+
+# kron with KroneckerOperator flattens
+K_base = KroneckerOperator((NA, NB), 1 => a, 2 => b)
+K_flat = kron(K_base, DestroyOperator(3))
+@assert K_flat isa KroneckerOperator
+@assert length(K_flat.dims) == 3
+println("  ✓ kron(KroneckerOperator, op) flattens correctly")
+
+K_flat2 = kron(DestroyOperator(3), K_base)
+@assert K_flat2 isa KroneckerOperator
+@assert length(K_flat2.dims) == 3
+println("  ✓ kron(op, KroneckerOperator) flattens correctly")
+
+# kron(K, K) flattening
+K_flat3 = kron(K_base, K_base)
+@assert K_flat3 isa KroneckerOperator
+@assert length(K_flat3.dims) == 4
+println("  ✓ kron(KroneckerOperator, KroneckerOperator) flattens correctly")
+
+# Numerical verification of flattened kron
+v_flat = randn(ComplexF64, NA * NB * 3)
+w_flat = similar(v_flat)
+K_flat_cached = cache_operator(K_flat, v_flat)
+mul!(w_flat, K_flat_cached, v_flat)
+K_flat_ref = kron(concretize(a), concretize(b), concretize(DestroyOperator(3)))
+@assert isapprox(w_flat, K_flat_ref * v_flat; atol = 1.0e-12)
+println("  ✓ flattened kron(K, op) gives correct numerical result")
+
+# ── Mixed operator types ────────────────────────────────────────────────────
+println("\n--- KroneckerOperator: mixed operator types ---")
+
+M_mat = randn(ComplexF64, NB, NB)
+M_op = MatrixOperator(M_mat)
+K_mixed = KroneckerOperator((NA, NB), 1 => a, 2 => M_op)
+K_mixed_cached = cache_operator(K_mixed, v)
+v = randn(ComplexF64, NA * NB)
+w = similar(v)
+mul!(w, K_mixed_cached, v)
+K_mixed_ref = kron(concretize(a), M_mat)
+@assert isapprox(w, K_mixed_ref * v; atol = 1.0e-12)
+println("  ✓ BosonicOperator ⊗ MatrixOperator gives correct result")
+
+# ── size and properties ──────────────────────────────────────────────────────
+println("\n--- KroneckerOperator: size and properties ---")
+
+K = KroneckerOperator((NA, NB), 1 => a, 2 => b)
+@assert size(K) == (NA * NB, NA * NB)
+@assert size(K, 1) == NA * NB
+@assert islinear(K) == true
+@assert has_adjoint(K) == true
+println("  ✓ size, islinear, has_adjoint correct")
+
+# ── Type stability ───────────────────────────────────────────────────────────
+println("\n--- KroneckerOperator: type stability ---")
+
+K = KroneckerOperator((NA, NB), 1 => a, 2 => b)
+K_cached = cache_operator(K, randn(ComplexF64, NA * NB))
+v = randn(ComplexF64, NA * NB)
+w = similar(v)
+
+@inferred mul!(w, K_cached, v)
+println("  ✓ mul!(w, KroneckerOperator, v) is type-stable (cached)")
+
+@inferred mul!(w, K_cached, v, 1.0, 0.0)
+println("  ✓ mul!(w, KroneckerOperator, v, α, β) is type-stable (cached)")
+
+println("\n" * "="^60)
 println("All tests passed!")
 println("="^60)
