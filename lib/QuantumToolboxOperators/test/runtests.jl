@@ -529,8 +529,10 @@ b4 = DestroyOperator(dims4[4])
 total4 = prod(dims4)
 
 K4 = KroneckerOperator(dims4, 1 => a4, 4 => b4)
-K4_ref = kron(concretize(a4), sparse(1.0I, dims4[2], dims4[2]),
-    sparse(1.0I, dims4[3], dims4[3]), concretize(b4))
+K4_ref = kron(
+    concretize(a4), sparse(1.0I, dims4[2], dims4[2]),
+    sparse(1.0I, dims4[3], dims4[3]), concretize(b4)
+)
 
 v4 = randn(ComplexF64, total4)
 w4 = similar(v4)
@@ -547,8 +549,10 @@ println("  ✓ cached A ⊗ I ⊗ I ⊗ B gives same result")
 
 # Different active positions: modes 1, 3
 K4b = KroneckerOperator(dims4, 1 => a4, 3 => DestroyOperator(dims4[3]))
-K4b_ref = kron(concretize(a4), sparse(1.0I, dims4[2], dims4[2]),
-    concretize(DestroyOperator(dims4[3])), sparse(1.0I, dims4[4], dims4[4]))
+K4b_ref = kron(
+    concretize(a4), sparse(1.0I, dims4[2], dims4[2]),
+    concretize(DestroyOperator(dims4[3])), sparse(1.0I, dims4[4], dims4[4])
+)
 mul!(w4, K4b, v4)
 @assert isapprox(w4, K4b_ref * v4; atol = 1.0e-10)
 println("  ✓ A ⊗ I ⊗ B ⊗ I (4-mode) matches materialized kron")

@@ -55,7 +55,7 @@ struct KroneckerOperator{T, D <: Tuple, I <: Tuple, O <: Tuple, C} <: AbstractSc
             idx = indices[j]
             (1 <= idx <= n) || throw(ArgumentError("index $idx out of range 1:$n"))
             size(ops[j], 1) == dims[idx] || throw(
-                ArgumentError("operator $j has size $(size(ops[j],1)) but dims[$idx] = $(dims[idx])"),
+                ArgumentError("operator $j has size $(size(ops[j], 1)) but dims[$idx] = $(dims[idx])"),
             )
             size(ops[j], 1) == size(ops[j], 2) || throw(
                 ArgumentError("operator $j must be square, got size $(size(ops[j]))"),
@@ -415,5 +415,5 @@ end
 function Base.show(io::IO, L::KroneckerOperator{T}) where {T}
     n = length(L.dims)
     m = length(L.indices)
-    print(io, "KroneckerOperator{$T}(dims=$(L.dims), $m active of $n subsystems)")
+    return print(io, "KroneckerOperator{$T}(dims=$(L.dims), $m active of $n subsystems)")
 end

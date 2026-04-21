@@ -2,8 +2,8 @@ using LinearAlgebra
 using SparseArrays
 using SciMLOperators
 using QuantumToolboxOperators
-# using CUDA
-using Metal
+using CUDA
+# using Metal
 using Reactant
 using Adapt
 using Chairmarks
