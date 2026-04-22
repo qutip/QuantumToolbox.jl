@@ -33,7 +33,7 @@ function setup_subtest_env(path::String)
     Pkg.activate(path)
     if VERSION < v"1.11"
         for lib_path in LIBRARY_PATHS
-            Pkg.develop(path=lib_path)
+            Pkg.develop(path = lib_path)
         end
     end
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
