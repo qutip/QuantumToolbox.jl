@@ -85,7 +85,7 @@ jobs:
             content = read(changelog_file, String)
 
             marker1 = "\n\n## [v$v_QT]"
-            insertion1 = "\n- Bump $package version to `v$new_v`.\n$marker1"
+            insertion1 = "\n- [lib] Bump `$package` version to `v$new_v`.\n$marker1"
             new_content = replace(content, marker1 => insertion1)
 
             if package == "QuantumToolbox"
@@ -145,7 +145,7 @@ jobs:
             changelog_file = "CHANGELOG.md"
 
             content = read(changelog_file, String)
-            old_entry = "- Bump $package version to `v$new_v`."
+            old_entry = "- [lib] Bump `$package` version to `v$new_v`."
             new_entry = "$old_entry ([#$pr_number])"
 
             write(changelog_file, replace(content, old_entry => new_entry))
