@@ -33,6 +33,7 @@ import QuantumToolboxUtils:
 
 ## SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
 import SciMLBase:
+    SciMLBase,
     solve,
     solve!,
     init,
@@ -107,9 +108,9 @@ export cache_operator, iscached, isconstant
 
 # Source files
 
-## Utility
+## Some overloading with QuantumToolboxUtils library
 include("settings.jl")
-include("versioninfo.jl")
+include("utils.jl")
 include("linear_maps.jl")
 
 ## Quantum Object
@@ -165,5 +166,10 @@ include("visualization/wigner.jl")
 
 ## deprecated functions
 include("deprecated.jl")
+
+function __init__()
+    QuantumToolboxUtils._register_qt_library!(QuantumToolbox)
+    return nothing
+end
 
 end
