@@ -39,12 +39,13 @@ function Base.adjoint(L::LocalTensorProductOperator)
 end
 
 _needs_cache(L::LocalTensorProductOperator{T, M, N}) where {T, M, N} = (M > 1) || (M == 1 && L.indices[1] != N)
+
 SciMLOperators.iscached(L::LocalTensorProductOperator{T, M, N}) where {T, M, N} = !_needs_cache(L) || !isnothing(L.cache)
 
 function cache_operator(L::LocalTensorProductOperator{T, M, N}, v::AbstractVector) where {T, M, N}
     total = prod(L.dims)
 
-    buf = _needs_cache(L) ? similar(v, total) : nothing
+    buf = _needs_cache(L) ? (similar(v, total), similar(v, total)) : nothing
 
     # Also cache internals of each sub-operator
     cached_ops = ntuple(Val(M)) do j
@@ -68,9 +69,9 @@ function LinearAlgebra.mul!(w::AbstractVector, L::LocalTensorProductOperator{T, 
         return w
     end
 
-    # M >= 2: ping-pong between buf and w
+    # M >= 1
     iscached(L) || throw(ArgumentError("Operator is not cached"))
-    buf = L.cache
+    buf = L.cache[1]
 
     current_src = v
     for j in 1:M
@@ -84,7 +85,7 @@ function LinearAlgebra.mul!(w::AbstractVector, L::LocalTensorProductOperator{T, 
         current_src = current_dst
     end
 
-    # If M is odd, the last write went to buf — copy to w
+    # If M is even, the last write went to buf — copy to w
     if iseven(M)
         copyto!(w, buf)
     end
@@ -99,7 +100,8 @@ function _apply_single_op_tensor_prod!(
     dk = dims_rev[idx]
     rest = length(src) ÷ dk
 
-    # If the cache is nothing, we know that the target dimension is already contiguous, so we can skip the permutation step
+    # If the cache is nothing, we know that the target dimension is already contiguous,
+    # so we can skip the permutation step
     mul!(reshape(dst, dk, rest), op, reshape(src, dk, rest))
     return dst
 end
@@ -136,4 +138,48 @@ function _apply_single_op_tensor_prod!(
         permutedims!(reshape(dst, dims_rev...), reshape(perm_buf, perm_dims...), inv_perm)
     end
     return dst
+end
+
+function LinearAlgebra.mul!(
+        w::AbstractVector,
+        L::LocalTensorProductOperator{T, M, N},
+        v::AbstractVector,
+        α,
+        β,
+    ) where {T, M, N}
+    length(w) == prod(L.dims) || throw(DimensionMismatch("output vector has wrong length"))
+    length(v) == prod(L.dims) || throw(DimensionMismatch("input vector has wrong length"))
+
+    # Fast exits for scalar coefficients
+    if iszero(α)
+        if iszero(β)
+            fill!(w, zero(eltype(w)))
+        elseif !isone(β)
+            rmul!(w, β)
+        end
+        return w
+    end
+
+    # Identity operator case: w <- α*v + β*w
+    if M == 0
+        return axpby!(α, v, β, w)
+    end
+
+    # If β == 0, compute w <- L*v first, then scale by α if needed
+    if iszero(β)
+        mul!(w, L, v)
+        if !isone(α)
+            rmul!(w, α)
+        end
+        return w
+    end
+
+    # General case:
+    # compute tmp = L*v into an internal cached buffer, then w <- α*tmp + β*w
+    iscached(L) || throw(ArgumentError("Operator is not cached"))
+    buf2 = L.cache[2]
+
+    mul!(buf2, L, v)
+    axpby!(α, buf2, β, w)
+    return w
 end

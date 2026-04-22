@@ -4,6 +4,13 @@ using SciMLOperators
 using QuantumToolboxOperators
 using Chairmarks
 
+function to_profile(y, A, x)
+    for _ in 1:100
+        mul!(y, A, x)
+    end
+    return y
+end
+
 # %%
 
 # ─── Setup ───────────────────────────────────────────────────────────────────
@@ -61,6 +68,9 @@ display(@be mul!($w, $K1c, $v))
 println("\n  SciML TensorProductOperator:")
 display(@be mul!($w, $S1c, $v))
 println()
+
+@profview to_profile(w, K1c, v)
+@profview to_profile(w, S1c, v)
 
 # ─── Case 2: A ⊗ I ⊗ I ⊗ B ─────────────────────────────────────────────────
 
@@ -121,13 +131,13 @@ println()
 # ─── Case 4: Single operator A ⊗ I ⊗ I ⊗ I ─────────────────────────────────
 
 println("="^60)
-println("Case 4: A ⊗ I ⊗ I ⊗ I (single active, fast path)")
+println("Case 4: I ⊗ A ⊗ I ⊗ I (single active, fast path)")
 println("="^60)
 
-K4 = LocalTensorProductOperator(dims, 4 => a4)  # physics mode 4 → julia dim 1 (fast path)
+K4 = LocalTensorProductOperator(dims, 2 => a2)  # physics mode 4 → julia dim 1 (fast path)
 K4c = cache_operator(K4, v)
 
-S4 = reduce(kron, (I1, I2, I3, a4)) # kron(I1, I2, I3, a4)
+S4 = reduce(kron, (I1, a2, I3, I4)) # kron(I1, I2, I3, a4)
 S4c = cache_operator(S4, v)
 
 println("  LocalTensorProductOperator memory: $(Base.summarysize(K4c)) bytes")

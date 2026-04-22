@@ -11,6 +11,9 @@ abstract type BosonicOperator{T} <: AbstractSciMLOperator{T} end
 
 const BosonicOrAdjoint{T} = Union{BosonicOperator{T}, AdjointOperator{T, <:BosonicOperator{T}}} where {T}
 
+SciMLOperators.issquare(::BosonicOrAdjoint) = true
+SciMLOperators.cache_operator(L::BosonicOrAdjoint, ::AbstractVecOrMat) = L
+
 # ─── Type-aware coefficient helpers ──────────────────────────────────────────
 # Avoid sqrt(::Int) → Float64 promotion when working with Float32 / other types.
 
@@ -52,8 +55,8 @@ DestroyOperator(N::Int) = DestroyOperator{Float64}(N)
 Base.size(L::DestroyOperator) = (L.N, L.N)
 Base.size(L::DestroyOperator, n::Int) = size(L)[n]
 
-islinear(::DestroyOperator) = true
-has_adjoint(::DestroyOperator) = true
+SciMLOperators.islinear(::DestroyOperator) = true
+SciMLOperators.has_adjoint(::DestroyOperator) = true
 
 function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyOperator{T}, v::AbstractVecOrMat) where {T}
     N = L.N
@@ -131,8 +134,8 @@ NumberOperator(N::Int; shift::T = zero(Float64)) where {T} = NumberOperator{T}(N
 Base.size(L::NumberOperator) = (L.N, L.N)
 Base.size(L::NumberOperator, n::Int) = size(L)[n]
 
-islinear(::NumberOperator) = true
-has_adjoint(::NumberOperator) = true
+SciMLOperators.islinear(::NumberOperator) = true
+SciMLOperators.has_adjoint(::NumberOperator) = true
 
 # NumberOperator is Hermitian: adjoint returns itself
 Base.adjoint(L::NumberOperator) = L
@@ -183,8 +186,8 @@ DestroyPowerOperator(N::Int, k::Integer) = DestroyPowerOperator{Float64}(N, k)
 Base.size(L::DestroyPowerOperator) = (L.N, L.N)
 Base.size(L::DestroyPowerOperator, n::Int) = size(L)[n]
 
-islinear(::DestroyPowerOperator) = true
-has_adjoint(::DestroyPowerOperator) = true
+SciMLOperators.islinear(::DestroyPowerOperator) = true
+SciMLOperators.has_adjoint(::DestroyPowerOperator) = true
 
 function LinearAlgebra.mul!(w::AbstractVecOrMat, L::DestroyPowerOperator{T}, v::AbstractVecOrMat) where {T}
     N, k = L.N, L.k
@@ -267,8 +270,8 @@ NormalOrderedOperator(N::Int, k::Integer, n::Integer) = NormalOrderedOperator{Fl
 Base.size(L::NormalOrderedOperator) = (L.N, L.N)
 Base.size(L::NormalOrderedOperator, _::Int) = size(L)[1]
 
-islinear(::NormalOrderedOperator) = true
-has_adjoint(::NormalOrderedOperator) = true
+SciMLOperators.islinear(::NormalOrderedOperator) = true
+SciMLOperators.has_adjoint(::NormalOrderedOperator) = true
 
 # adjoint((â†)^k â^n) = (â†)^n â^k  →  swap k and n
 function Base.adjoint(L::NormalOrderedOperator{T}) where {T}
@@ -410,32 +413,32 @@ end
 #  concretize: convert to sparse matrix
 # ═══════════════════════════════════════════════════════════════════════════════
 
-function concretize(L::DestroyOperator{T}) where {T}
+function SciMLOperators.concretize(L::DestroyOperator{T}) where {T}
     N = L.N
     return spdiagm(1 => [_sqrt_coeff(T, i) for i in 1:(N - 1)])
 end
 
-function concretize(L::AdjointOperator{T, <:DestroyOperator{T}}) where {T}
+function SciMLOperators.concretize(L::AdjointOperator{T, <:DestroyOperator{T}}) where {T}
     N = L.L.N
     return spdiagm(-1 => [_sqrt_coeff(T, i) for i in 1:(N - 1)])
 end
 
-function concretize(L::NumberOperator{T}) where {T}
+function SciMLOperators.concretize(L::NumberOperator{T}) where {T}
     N = L.N
     return spdiagm(0 => [real(T)(i - 1 + L.shift) for i in 1:N])
 end
 
-function concretize(L::DestroyPowerOperator{T}) where {T}
+function SciMLOperators.concretize(L::DestroyPowerOperator{T}) where {T}
     N, k = L.N, L.k
     return spdiagm(k => [_power_coeff(T, i, k) for i in 1:(N - k)])
 end
 
-function concretize(L::AdjointOperator{T, <:DestroyPowerOperator{T}}) where {T}
+function SciMLOperators.concretize(L::AdjointOperator{T, <:DestroyPowerOperator{T}}) where {T}
     N, k = L.L.N, L.L.k
     return spdiagm(-k => [_power_coeff(T, i, k) for i in 1:(N - k)])
 end
 
-function concretize(L::NormalOrderedOperator{T}) where {T}
+function SciMLOperators.concretize(L::NormalOrderedOperator{T}) where {T}
     N, k, n = L.N, L.k, L.n
     len = N - max(k, n)
     rows = (1:len) .+ k
