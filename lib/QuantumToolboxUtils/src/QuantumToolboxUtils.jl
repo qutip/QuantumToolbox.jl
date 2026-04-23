@@ -5,7 +5,7 @@ using SparseArrays
 import StaticArraysCore: SVector, MVector
 import Random: AbstractRNG
 
-import SciMLOperators: AbstractSciMLOperator
+import SciMLOperators: SciMLOperators, AbstractSciMLOperator
 
 include("versioninfo.jl")
 include("type_handle.jl")

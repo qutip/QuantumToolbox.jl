@@ -21,7 +21,10 @@ raw"""
 Add new dependencies to `DEPpkgs` for the specified library. Extend this function in each QuantumToolbox library to declare its external (non-QuantumToolbox) dependencies.
 """
 _add_library_deps!(lib::Val{T}, DEPpkgs::Vector{Module}) where {T} = throw(ArgumentError("Unknown QuantumToolbox library : $T"))
-_add_library_deps!(lib::Val{:QuantumToolboxUtils}, DEPpkgs::Vector{Module}) = nothing # currently no external dependencies for QuantumToolboxUtils
+function _add_library_deps!(lib::Val{:QuantumToolboxUtils}, DEPpkgs::Vector{Module})
+    _add_pkgs!(DEPpkgs, Module[SciMLOperators])
+    return nothing
+end
 
 # add pkgs2 into pkgs1 but ensure the uniqueness
 function _add_pkgs!(pkgs1::Vector{Module}, pkgs2::Vector{Module})
