@@ -21,7 +21,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
-      - 'test/core-test/**'
+      - 'test/code-quality/**'
       - 'Project.toml'
     types:
       - opened

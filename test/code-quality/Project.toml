@@ -6,7 +6,7 @@ QuantumToolboxUtils = "02afad9e-e2b8-4f9a-965f-b5dca5b538ca"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [sources]
-QuantumToolboxUtils = {path = "../../../lib/QuantumToolboxUtils"}
+QuantumToolboxUtils = {path = "../../lib/QuantumToolboxUtils"}
 
 [compat]
 Aqua = "0.8"

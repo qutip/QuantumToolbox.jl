@@ -59,7 +59,7 @@ end
 
 # Code Quality tests
 if (GROUP == "All") || (GROUP == "Code-Quality")
-    path = joinpath(testdir, "core-test", "code-quality")
+    path = joinpath(testdir, "code-quality")
     setup_subtest_env(path)
 
     using QuantumToolbox
