@@ -9,9 +9,12 @@ import SciMLOperators: SciMLOperators, AbstractSciMLOperator
 
 include("settings.jl")
 include("versioninfo.jl")
+
 include("type_handle.jl")
+include("linalg.jl")
+include("linear_maps.jl")
 include("PhysicalConstants.jl")
-include("misc.jl")
+include("physics_func.jl")
 
 function __init__()
     _register_qt_library!(QuantumToolboxUtils)
