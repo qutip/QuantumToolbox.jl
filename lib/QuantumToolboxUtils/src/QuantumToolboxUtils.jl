@@ -16,6 +16,9 @@ include("linear_maps.jl")
 include("PhysicalConstants.jl")
 include("physics_func.jl")
 
+## deprecated functions
+include("deprecated.jl")
+
 function __init__()
     _register_qt_library!(QuantumToolboxUtils)
     return nothing
