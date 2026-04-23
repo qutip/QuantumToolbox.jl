@@ -7,12 +7,17 @@ import Random: AbstractRNG
 
 import SciMLOperators: SciMLOperators, AbstractSciMLOperator
 
+## Basic utilities for QuantumToolbox libraries
 include("settings.jl")
 include("versioninfo.jl")
-
 include("type_handle.jl")
-include("linalg.jl")
-include("linear_maps.jl")
+
+## Linear Algebra
+include("linalg/linalg.jl")
+include("linalg/arnoldi.jl")
+include("linalg/linear_maps.jl")
+
+## Other physical related utilities
 include("PhysicalConstants.jl")
 include("physics_func.jl")
 
