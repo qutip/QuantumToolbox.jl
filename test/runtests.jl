@@ -5,8 +5,8 @@ using Pkg
 const testdir = dirname(@__FILE__)
 
 # Define the paths to the library
-const LIBRARY_PATHS = (
-    joinpath(testdir, "..", "lib", "QuantumToolboxUtils"),
+const LIBRARY_PATHS = Dict(
+    "QuantumToolboxUtils" => joinpath(testdir, "..", "lib", "QuantumToolboxUtils"),
 )
 
 # Define the paths to the extension tests
@@ -32,7 +32,7 @@ const GROUP_LIST = String[
 function setup_subtest_env(path::String)
     Pkg.activate(path)
     if VERSION < v"1.11"
-        for lib_path in LIBRARY_PATHS
+        for (_, lib_path) in LIBRARY_PATHS
             Pkg.develop(path = lib_path)
         end
     end
@@ -49,8 +49,20 @@ if (GROUP == "All") || (GROUP == "Basic")
 
     QuantumToolbox.about()
 
-    println("\nStart running Basic tests...\n")
-    @run_package_tests verbose = true
+    println("\nStart running Basic tests...")
+
+    # tests in lib folder for each library
+    # PATH: lib/LIBRARY_NAME/test/
+    for (lib_name, _) in LIBRARY_PATHS
+        println("\n[$lib_name]")
+        @run_package_tests filter = ti -> occursin(joinpath("lib", lib_name, "test"), ti.filename) verbose = true
+    end
+
+    # main package tests (all tests except those in the lib folder)
+    println("\n[QuantumToolbox]")
+    @run_package_tests filter = ti -> !occursin("lib", ti.filename) verbose = true
+
+    println("\n===============> Basic tests completed <===============\n")
 end
 
 ########################################################################
@@ -68,7 +80,7 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
     (GROUP == "Code-Quality") && QuantumToolbox.about() # print version info. for code quality CI in GitHub
 
     # run code quality tests for all libraries and the main package
-    for lib_path in LIBRARY_PATHS
+    for (_, lib_path) in LIBRARY_PATHS
         include(joinpath(lib_path, "test", "code_quality.jl"))
     end
     include(joinpath(path, "code_quality.jl"))
