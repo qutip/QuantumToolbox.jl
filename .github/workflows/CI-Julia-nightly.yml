@@ -47,7 +47,7 @@ jobs:
         arch:
           - 'x64'
         group:
-          - 'Core'
+          - 'Basic'
 
     steps:
       - uses: actions/checkout@v6

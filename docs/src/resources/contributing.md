@@ -62,15 +62,15 @@ make test
 
 This command will automatically rebuild `Julia` and run the script located in `test/runtests.jl` (should cover both the original tests and the new test(s) you add).
 
-The tests are divided into several test groups, where the group names are defined in the file `test/runtests.jl` with a variable `GROUP`. One can also run the test scripts just for a certain test group by adding an argument `GROUP=<test-group-name>` to the `make test` command. For example, to run the tests for group `Core`, one can use the following command:
+The tests are divided into several test groups, where the group names are defined in the file `test/runtests.jl` with a variable `GROUP`. One can also run the test scripts just for a certain test group by adding an argument `GROUP=<test-group-name>` to the `make test` command. For example, to run the tests for group `Basic`, one can use the following command:
 
 ```shell
-make GROUP=Core test
+make GROUP=Basic test
 ```
 
-#### [Test Item Framework for Core tests](@id doc-Contribute:Test-Item-Framework-for-Core-tests)
+#### [Test Item Framework for Basic tests](@id doc-Contribute:Test-Item-Framework-for-Basic-tests)
 
-The tests in `GROUP=Core` are provided using the [Test Item Framework](https://www.julia-vscode.org/docs/stable/userguide/testitems/), which structures the test codes into `@testitems` and makes it easier to run individually.
+The tests in `GROUP=Basic` are provided using the [Test Item Framework](https://www.julia-vscode.org/docs/stable/userguide/testitems/), which structures the test codes into `@testitems` and makes it easier to run individually.
 
 The [VS Code](https://code.visualstudio.com/) and its [Julia extension](https://www.julia-vscode.org/) provides us with options to run individual `@testitems`. It is much easier to find the specific core test that failed since the [Julia extension](https://www.julia-vscode.org/) in [VS Code](https://code.visualstudio.com/) will collect all core test failures and then display them in a structured way, directly at the place in the code where a specific core test failed. See [here](https://www.julia-vscode.org/docs/stable/userguide/testitems/) for more details.
 

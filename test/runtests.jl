@@ -22,7 +22,7 @@ const EXTENSION_LIST = collect(keys(EXTENSION_PATHS))
 const GROUP = get(ENV, "GROUP", "All")
 const GROUP_LIST = String[
     "All",
-    "Core",
+    "Basic",
     "Code-Quality",
     EXTENSION_LIST...,
 ]
@@ -41,15 +41,15 @@ function setup_subtest_env(path::String)
     return nothing
 end
 
-######################################
-# Core tests (use TestItemRunner.jl) #
-######################################
-if (GROUP == "All") || (GROUP == "Core")
+#######################################
+# Basic tests (use TestItemRunner.jl) #
+#######################################
+if (GROUP == "All") || (GROUP == "Basic")
     import QuantumToolbox
 
     QuantumToolbox.about()
 
-    println("\nStart running Core tests...\n")
+    println("\nStart running Basic tests...\n")
     @run_package_tests verbose = true
 end
 
