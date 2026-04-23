@@ -118,22 +118,22 @@ function _gen_dep_pkg_list()
     return DEPpkgs
 end
 
-raw"""
-    QuantumToolboxUtils.versioninfo(io::IO=stdout)
+@doc raw"""
+    QuantumToolbox.versioninfo(io::IO=stdout)
 
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.about`](@ref).
 """
 versioninfo(io::IO = stdout) = _print_versioninfo(io)
 
-raw"""
-    QuantumToolboxUtils.about(io::IO=stdout)
+@doc raw"""
+    QuantumToolbox.about(io::IO=stdout)
 
 Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.versioninfo`](@ref).
 """
 about(io::IO = stdout) = versioninfo(io)
 
-raw"""
-    QuantumToolboxUtils.cite(io::IO = stdout)
+@doc raw"""
+    QuantumToolbox.cite(io::IO = stdout)
 
 Command line output of citation information and bibtex generator for `QuantumToolbox.jl`.
 """

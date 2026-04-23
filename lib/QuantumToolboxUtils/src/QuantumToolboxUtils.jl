@@ -7,6 +7,7 @@ import Random: AbstractRNG
 
 import SciMLOperators: SciMLOperators, AbstractSciMLOperator
 
+include("settings.jl")
 include("versioninfo.jl")
 include("type_handle.jl")
 include("PhysicalConstants.jl")

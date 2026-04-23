@@ -17,7 +17,7 @@ end
 @doc raw"""
     QuantumToolbox.settings
 
-Contains all the default global settings of QuantumToolbox.jl.
+Contains all the default global settings of QuantumToolbox.jl and all related libraries.
 
 # List of settings
 

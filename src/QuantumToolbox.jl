@@ -109,7 +109,6 @@ export cache_operator, iscached, isconstant
 # Source files
 
 ## Some overloading with QuantumToolboxUtils library
-include("settings.jl")
 include("utils.jl")
 include("linear_maps.jl")
 
