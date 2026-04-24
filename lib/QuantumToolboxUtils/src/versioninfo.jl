@@ -121,14 +121,14 @@ end
 @doc raw"""
     QuantumToolbox.versioninfo(io::IO=stdout)
 
-Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.about`](@ref).
+Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.about`](@ref QuantumToolboxUtils.about).
 """
 versioninfo(io::IO = stdout) = _print_versioninfo(io)
 
 @doc raw"""
     QuantumToolbox.about(io::IO=stdout)
 
-Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.versioninfo`](@ref).
+Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.versioninfo`](@ref QuantumToolboxUtils.versioninfo).
 """
 about(io::IO = stdout) = versioninfo(io)
 

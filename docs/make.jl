@@ -34,7 +34,6 @@ const PAGES = [
     "Home" => "index.md",
     "Getting Started" => [
         "Brief Example" => "getting_started/brief_example.md",
-        # "Key differences from QuTiP" => "getting_started/qutip_differences.md",
         "The Importance of Type-Stability" => "getting_started/type_stability.md",
         "Example: Create QuantumToolbox.jl Logo" => "getting_started/logo.md",
         "Cite QuantumToolbox.jl" => "getting_started/cite.md",
