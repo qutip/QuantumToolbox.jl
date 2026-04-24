@@ -1,8 +1,8 @@
-@testitem "Cite" begin
+@testitem "cite" begin
 
     # citation bibtex
     io_buffer = IOBuffer()
-    QuantumToolbox.cite(io_buffer)
+    QuantumToolboxUtils.cite(io_buffer)
     captured_output = String(take!(io_buffer))
     @test captured_output ==
         """@article{QuantumToolbox.jl2025,\n""" *

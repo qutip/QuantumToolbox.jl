@@ -1,4 +1,18 @@
+@testitem "gaussian" begin
+    mu = 0.7
+    sigma = 1.2
+    delta = 0.4
+
+    @test gaussian(mu, mu, sigma) == 1.0
+    @test gaussian(mu + delta, mu, sigma) ≈ gaussian(mu - delta, mu, sigma)
+
+    @testset "Type Inference" begin
+        @inferred gaussian(0.1, 0.2, 0.3)
+    end
+end
+
 @testitem "n_thermal" begin
+
     ω1 = rand(Float64)
     ω2 = rand(Float64)
     @test n_thermal(0, ω2) == 0.0
