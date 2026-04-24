@@ -22,7 +22,7 @@ const EXTENSION_LIST = collect(keys(EXTENSION_PATHS))
 const GROUP = get(ENV, "GROUP", "All")
 const GROUP_LIST = String[
     "All",
-    "Basic",
+    "Main",
     "Code-Quality",
     EXTENSION_LIST...,
 ]
@@ -42,14 +42,14 @@ function setup_subtest_env(path::String)
 end
 
 #######################################
-# Basic tests (use TestItemRunner.jl) #
+# Main tests (use TestItemRunner.jl) #
 #######################################
-if (GROUP == "All") || (GROUP == "Basic")
+if (GROUP == "All") || (GROUP == "Main")
     import QuantumToolbox
 
     QuantumToolbox.about()
 
-    println("\nStart running Basic tests...")
+    println("\nStart running Main tests...")
 
     # tests in lib folder for each library
     # PATH: lib/LIBRARY_NAME/test/
@@ -62,7 +62,7 @@ if (GROUP == "All") || (GROUP == "Basic")
     println("\n[QuantumToolbox]")
     @run_package_tests filter = ti -> !occursin("lib", ti.filename) verbose = true
 
-    println("\n===============> Basic tests completed <===============\n")
+    println("\n===============> Main tests completed <===============\n")
 end
 
 ########################################################################

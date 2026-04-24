@@ -54,7 +54,7 @@ jobs:
           - os: 'macOS-latest'
             arch: 'arm64'
         group:
-          - 'Basic'
+          - 'Main'
 
         include:
           # for core tests (intermediate versions)
@@ -62,7 +62,7 @@ jobs:
             node:
               os: 'ubuntu-latest'
               arch: 'x64'
-            group: 'Basic'
+            group: 'Main'
 
           # for extension tests
           - version: '1'
