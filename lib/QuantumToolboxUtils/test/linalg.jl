@@ -1,9 +1,4 @@
 @testitem "linalg helpers" begin
-    # row_major_reshape
-    q = collect(1:12)
-    q_row_major = row_major_reshape(q, 3, 4)
-    @test Array(q_row_major) == [1 2 3 4; 5 6 7 8; 9 10 11 12]
-
     # meshgrid
     x = [1, 2, 3]
     y = [10, 20]

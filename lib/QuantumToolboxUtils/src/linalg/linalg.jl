@@ -1,12 +1,4 @@
-export row_major_reshape, meshgrid
-
-@doc raw"""
-    row_major_reshape(Q::AbstractArray, shapes...)
-
-Reshapes `Q` in the row-major order, as numpy.
-"""
-row_major_reshape(Q::AbstractArray{T}, shapes...) where {T} =
-    PermutedDimsArray(reshape(Q, reverse(shapes)...), (length(shapes):-1:1))
+export meshgrid
 
 @doc raw"""
     meshgrid(x::AbstractVector, y::AbstractVector)

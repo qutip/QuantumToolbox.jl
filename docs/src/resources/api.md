@@ -19,7 +19,6 @@ settings
 versioninfo
 about
 cite
-row_major_reshape
 meshgrid
 AbstractLinearMap
 gaussian
