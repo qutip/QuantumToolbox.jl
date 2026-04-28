@@ -4,6 +4,7 @@ using SparseArrays
 using SciMLOperators
 using QuantumToolbox
 using QuantumToolboxOperators
+using CUDA
 using Chairmarks
 
 function to_profile(y, A, x)
@@ -67,14 +68,14 @@ memory_ratio_local = Base.summarysize(H_full) / Base.summarysize(H_local)
 # %% -------- TEST with N CAVITIES -----------
 
 T = ComplexF32
-N = 5
+N = 4
 dims = ntuple(_ -> 30, Val(N))
 
 ψ = randn(T, prod(dims)) |> normalize
 dψ = similar(ψ)
 
 H_full = sum(1:(N - 1)) do n
-    multisite_operator(dims, n => create(dims[n]), n + 1 => destroy(dims[n + 1])).data
+    SparseMatrixCSC{T}(multisite_operator(dims, n => create(T, dims[n]), n + 1 => destroy(T, dims[n + 1])).data)
 end
 
 H_tensor = sum(1:(N - 1)) do n
@@ -114,17 +115,38 @@ memory_ratio_local = Base.summarysize(H_full) / Base.summarysize(H_local)
 
 # %%
 
+ψ_cuda = CuArray(ψ)
+dψ_cuda = similar(ψ_cuda)
+
+H_full_cuda = CUSPARSE.CuSparseMatrixCSR(H_full)
+H_local_cuda_cache = cache_operator(H_local.ops[1], ψ_cuda).cache
+H_local_cuda = SciMLOperators.AddedOperator((LocalTensorProductOperator(op.dims, op.indices, op.ops, H_local_cuda_cache) for op in H_local.ops)...)
+
+mul!(dψ_cuda, H_full_cuda, ψ_cuda)
+mul!(dψ_cuda, H_local_cuda, ψ_cuda)
+
+@be mul!($dψ_cuda, $H_full_cuda, $ψ_cuda)
+@be mul!($dψ_cuda, $H_local_cuda, $ψ_cuda)
+
+# %%
+
 using Reactant
 
 ψ_reactant = Reactant.to_rarray(ψ)
 dψ_reactant = similar(ψ_reactant)
 
+H_tensor_reactant = Reactant.to_rarray(H_tensor)
+
 H_local_cache_reactant = Reactant.to_rarray(H_local_cache) # cache_operator(H_local.ops[1], ψ).cache  # Cache the first term (all are the same)
 H_local_reactant = SciMLOperators.AddedOperator((LocalTensorProductOperator(op.dims, op.indices, op.ops, H_local_cache_reactant) for op in H_local.ops)...)
 
-mul_compiled! = @compile mul!(dψ_reactant, H_local_reactant, ψ_reactant)
+# mul_compiled_tensor! = @compile mul!(dψ_reactant, H_tensor_reactant, ψ_reactant)
+mul_compiled_local! = @compile mul!(dψ_reactant, H_local_reactant, ψ_reactant)
 
-mul_compiled!(dψ_reactant, H_local_reactant, ψ_reactant)
+# mul_compiled_tensor!(dψ_reactant, H_tensor_reactant, ψ_reactant)
+mul_compiled_local!(dψ_reactant, H_local_reactant, ψ_reactant)
+
+@be mul_compiled_local!($dψ_reactant, $H_local_reactant, $ψ_reactant)
 
 # %%
 
