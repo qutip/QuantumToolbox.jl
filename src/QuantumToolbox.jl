@@ -18,7 +18,7 @@ import SciMLBase:
     init,
     reinit!,
     remake,
-    u_modified!,
+    derivative_discontinuity!,
     NullParameters,
     LinearProblem,
     ODEFunction,
