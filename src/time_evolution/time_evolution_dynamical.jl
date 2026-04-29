@@ -581,7 +581,7 @@ function _DSF_mcsolve_Affect!(integrator)
     return derivative_discontinuity!(integrator, true)
 end
 
-function _dsf_mcsolve_prob_func(prob, i, repeat)
+function _dsf_mcsolve_prob_func(prob, ctx)
     params = prob.p
 
     prm = merge(
