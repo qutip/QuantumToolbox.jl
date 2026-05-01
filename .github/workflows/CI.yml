@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/CI.yml'
       - 'src/**'
+      - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
@@ -18,6 +19,7 @@ on:
     paths:
       - '.github/workflows/CI.yml'
       - 'src/**'
+      - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
@@ -52,7 +54,7 @@ jobs:
           - os: 'macOS-latest'
             arch: 'arm64'
         group:
-          - 'Core'
+          - 'Main'
 
         include:
           # for core tests (intermediate versions)
@@ -60,19 +62,19 @@ jobs:
             node:
               os: 'ubuntu-latest'
               arch: 'x64'
-            group: 'Core'
+            group: 'Main'
 
           # for extension tests
           - version: '1'
             node:
               os: 'ubuntu-latest'
               arch: 'x64'
-            group: 'Makie_Ext'
+            group: 'Makie-Ext'
           - version: '1.12'
             node:
               os: 'ubuntu-latest'
               arch: 'x64'
-            group: 'AutoDiff_Ext'
+            group: 'AutoDiff-Ext'
           - version: '1'
             node:
               os: 'ubuntu-latest'
@@ -86,6 +88,20 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.node.arch }}
       - uses: julia-actions/cache@v3
+      - name: Dev local libs for Julia < 1.11
+        shell: bash
+        run: |
+          julia --project=. -e '
+            using Pkg
+            if VERSION < v"1.11"
+              for lib in readdir("lib"; join=true)
+                isdir(lib) || continue
+                isfile(joinpath(lib, "Project.toml")) || continue
+                Pkg.develop(path=lib)
+              end
+            end
+            Pkg.instantiate()
+          '
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         env:

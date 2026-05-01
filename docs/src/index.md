@@ -75,7 +75,7 @@ Alternatively, this can also be done in `Julia`'s [Pkg REPL](https://julialang.g
 ```
 More information about `Julia`'s package manager can be found at [`Pkg.jl`](https://julialang.github.io/Pkg.jl/v1/).
 
-To load the package and check the version information, use either [`QuantumToolbox.versioninfo()`](@ref) or [`QuantumToolbox.about()`](@ref), namely
+To load the package and check the version information, use either [`QuantumToolbox.versioninfo()`](@ref QuantumToolboxUtils.versioninfo) or [`QuantumToolbox.about()`](@ref QuantumToolboxUtils.about), namely
 ```julia
 using QuantumToolbox
 QuantumToolbox.versioninfo()

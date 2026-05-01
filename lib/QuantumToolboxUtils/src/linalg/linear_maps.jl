@@ -28,7 +28,7 @@ It is typically represented as a matrix with dimensions given by `size`, and thi
 
 ## Example
 
-As an example, we now define the linear map used in the [`eigsolve_al`](@ref) function for Arnoldi-Lindblad eigenvalue solver:
+As an example, we now define the linear map used in the [`eigsolve_al`](@ref QuantumToolbox.eigsolve_al) function for Arnoldi-Lindblad eigenvalue solver:
 
 ```julia
 struct ArnoldiLindbladIntegratorMap{T,TS,TI} <: AbstractLinearMap{T,TS}
@@ -44,7 +44,7 @@ function LinearAlgebra.mul!(y::AbstractVector, A::ArnoldiLindbladIntegratorMap, 
 end
 ```
 
-where `integrator` is the ODE integrator for the time-evolution. In this way, we can diagonalize this linear map using the [`eigsolve`](@ref) function.
+where `integrator` is the ODE integrator for the time-evolution. In this way, we can diagonalize this linear map using the [`eigsolve`](@ref QuantumToolbox.eigsolve) function.
 """
 abstract type AbstractLinearMap{T, TS} end
 

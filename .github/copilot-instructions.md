@@ -82,11 +82,11 @@ QuantumToolbox.settings.ProgressMeterKWARGS = (showspeed=true, printed=true)
 ### Running Tests
 ```bash
 make test                    # Run all core tests
-GROUP=Core make test         # Run core tests only
-GROUP=CUDA_Ext make test     # Run CUDA extension tests only
+GROUP=Main make test         # Run Main tests only
+GROUP=CUDA-Ext make test     # Run CUDA extension tests only
 ```
 
-Test groups (set `GROUP` env var): "All", "Core", "Code-Quality", "AutoDiff_Ext", "Makie_Ext", "CUDA_Ext", "Arbitrary-Precision"
+Test groups (set `GROUP` env var): "All", "Main", "Code-Quality", "AutoDiff-Ext", "Makie-Ext", "CUDA-Ext", "Arbitrary-Precision"
 
 ### Code Quality & Formatting
 ```bash

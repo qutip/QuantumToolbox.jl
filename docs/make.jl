@@ -7,16 +7,14 @@ using Changelog
 # Load of packages required to compile the extension documentation
 using CairoMakie
 
-doctest_setup = quote
-    using LinearAlgebra
-    using SparseArrays
-    using QuantumToolbox
-end
-DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, doctest_setup; recursive = true)
-
 # some options for `makedocs`
 const DRAFT = get(ENV, "DRAFT", false) == "true"  # `DRAFT   = true`  disables cell evaluation
 const DOCTEST = get(ENV, "DOCTEST", true) == true # `DOCTEST = false` skips doc tests
+
+if DOCTEST
+    DocMeta.setdocmeta!(QuantumToolboxUtils, :DocTestSetup, :(using QuantumToolboxUtils); recursive = true)
+    DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox, LinearAlgebra, SparseArrays); recursive = true)
+end
 
 # generate bibliography
 bib = CitationBibliography(
@@ -36,7 +34,6 @@ const PAGES = [
     "Home" => "index.md",
     "Getting Started" => [
         "Brief Example" => "getting_started/brief_example.md",
-        # "Key differences from QuTiP" => "getting_started/qutip_differences.md",
         "The Importance of Type-Stability" => "getting_started/type_stability.md",
         "Example: Create QuantumToolbox.jl Logo" => "getting_started/logo.md",
         "Cite QuantumToolbox.jl" => "getting_started/cite.md",
@@ -83,6 +80,7 @@ const PAGES = [
 
 makedocs(;
     modules = [
+        QuantumToolboxUtils,
         QuantumToolbox,
         Base.get_extension(QuantumToolbox, :QuantumToolboxMakieExt),
     ],

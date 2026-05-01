@@ -11,8 +11,29 @@ import Pkg
 import Random: AbstractRNG, default_rng, seed!
 import Statistics: mean, std
 
+## Re-export of QuantumToolbox libraries
+import Reexport: @reexport
+@reexport using QuantumToolboxUtils
+
+## internal functions of QuantumToolbox libraries
+import QuantumToolboxUtils:
+    FloatOrComplex,
+    getVal,
+    makeVal,
+    get_typename_wrapper,
+    _float_type,
+    _complex_float_type,
+    _convert_eltype_wordsize,
+    _non_static_array_warning,
+    _lazy_tensor_warning,
+    _Ginibre_ensemble,
+    _Boltzmann_weight,
+    _dense_similar,
+    _sparse_similar
+
 ## SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
 import SciMLBase:
+    SciMLBase,
     solve,
     solve!,
     init,
@@ -87,11 +108,8 @@ export cache_operator, iscached, isconstant
 
 # Source files
 
-## Utility
-include("settings.jl")
-include("utilities.jl")
-include("versioninfo.jl")
-include("linear_maps.jl")
+## Some overloading with QuantumToolboxUtils library
+include("utils.jl")
 
 ## Quantum Object
 include("qobj/dimensions.jl")
@@ -131,7 +149,6 @@ include("time_evolution/time_evolution_dynamical.jl")
 include("correlations.jl")
 include("wigner.jl")
 include("spin_lattice.jl")
-include("arnoldi.jl")
 include("entropy.jl")
 include("metrics.jl")
 include("negativity.jl")
@@ -146,5 +163,10 @@ include("visualization/wigner.jl")
 
 ## deprecated functions
 include("deprecated.jl")
+
+function __init__()
+    QuantumToolboxUtils._register_qt_library!(QuantumToolbox)
+    return nothing
+end
 
 end

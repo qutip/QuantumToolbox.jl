@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/CI-Julia-nightly.yml'
       - 'src/**'
+      - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
@@ -17,6 +18,7 @@ on:
     paths:
       - '.github/workflows/CI-Julia-nightly.yml'
       - 'src/**'
+      - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
       - 'test/core-test/**'
@@ -45,7 +47,7 @@ jobs:
         arch:
           - 'x64'
         group:
-          - 'Core'
+          - 'Main'
 
     steps:
       - uses: actions/checkout@v6

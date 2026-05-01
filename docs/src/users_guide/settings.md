@@ -2,7 +2,7 @@
 
 In this section, we introduce the default global settings used throughout the package and show how to modify them.
 
-All settings are stored in [`QuantumToolbox.settings`](@ref).
+All settings are stored in [`QuantumToolbox.settings`](@ref QuantumToolboxUtils.settings).
 
 !!! warning "Differences from QuTiP"
     Due to the differences in programming languages, solving algorithms, and many other reasons, these global settings (including their default values and usage) may be very different from those in `Python QuTiP`.
@@ -20,7 +20,7 @@ Here, we list out each setting along with the specific functions that will use i
 
 ## Change default settings
 
-First, we can check the current [`QuantumToolbox.settings`](@ref):
+First, we can check the current [`QuantumToolbox.settings`](@ref QuantumToolboxUtils.settings):
 
 ```@example settings
 using QuantumToolbox

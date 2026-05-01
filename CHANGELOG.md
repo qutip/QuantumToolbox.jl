@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- [lib] Introduce QuantumToolboxUtils library. ([#686])
 
 ## [v0.45.0]
 Release date: 2026-04-19
@@ -484,6 +484,7 @@ Release date: 2024-11-13
 [#681]: https://github.com/qutip/QuantumToolbox.jl/issues/681
 [#682]: https://github.com/qutip/QuantumToolbox.jl/issues/682
 [#683]: https://github.com/qutip/QuantumToolbox.jl/issues/683
+[#686]: https://github.com/qutip/QuantumToolbox.jl/issues/686
 [#688]: https://github.com/qutip/QuantumToolbox.jl/issues/688
 [#689]: https://github.com/qutip/QuantumToolbox.jl/issues/689
 [#690]: https://github.com/qutip/QuantumToolbox.jl/issues/690
