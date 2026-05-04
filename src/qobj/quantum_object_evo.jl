@@ -109,7 +109,7 @@ Quantum Object:   type=Operator()   dims=([10, 2], [10, 2])   size=(20, 20)   is
 ```
 """
 struct QuantumObjectEvolution{
-        ObjType <: Union{Operator, SuperOperator},
+    ObjType <: Union{Operator, SuperOperatorType},
         DimType <: Dimensions,
         DataType <: AbstractSciMLOperator,
     } <: AbstractQuantumObject{ObjType, DimType, DataType}
@@ -117,16 +117,18 @@ struct QuantumObjectEvolution{
     type::ObjType
     dimensions::DimType
 
-    function QuantumObjectEvolution(data::DT, type, dims) where {DT <: AbstractSciMLOperator}
+    function QuantumObjectEvolution(data::DT, type, dims) where {DT <: Union{AbstractMatrix, AbstractSciMLOperator}}
         ObjType = _check_type(type)
-        (type isa Operator || type isa SuperOperator) ||
+        (type isa Operator || type isa SuperOperatorType) ||
             throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
 
         dimensions = _gen_dimensions(type, dims)
 
         _check_QuantumObject(type, dimensions, size(data))
 
-        return new{ObjType, typeof(dimensions), DT}(data, type, dimensions)
+        data_sciml = _promote_to_scimloperator(data)
+
+        return new{ObjType, typeof(dimensions), typeof(data_sciml)}(data_sciml, type, dimensions)
     end
 end
 
@@ -166,6 +168,8 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type = Operator(), 
             sm = isqrt(size(data, 1))
             sn = isqrt(size(data, 2))
             dims = (((sm,), (sm,)), ((sn,), (sn,)))
+        elseif type isa SuperOperatorMatrixForm
+            dims = ((size(data, 1),), (size(data, 2),))
         end
     end
 
