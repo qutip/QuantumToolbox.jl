@@ -71,9 +71,11 @@ function _lindblad_dissipator(O::ScaledOperator)
 end
 
 @doc raw"""
-    spre(A::AbstractQuantumObject)
+    spre(A::AbstractQuantumObject; matrix_form::Union{Bool, Val} = Val(false))
 
-Returns the [`SuperOperator`](@ref) form of `A` acting on the left of the density matrix operator: ``\mathcal{O} \left(\hat{A}\right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho}``.
+Returns the [`SuperOperator`](@ref) form of `A` acting on the left of the density matrix operator: ``\mathcal{O} \left(\hat{A}\right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho}``. The `matrix_form` keyword argument controls the output format of the superoperator:
+- If `matrix_form = Val(false)` (default), the output is a [`SuperOperator`](@ref), acting on **vectorized** density matrices.
+- If `matrix_form = Val(true)`, the output is a [`SuperOperatorMatrixForm`](@ref), acting on **non-vectorized** density matrices.
 
 Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\!\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{\mathbb{1}} \otimes \hat{A}``, namely 
 
@@ -84,15 +86,21 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 
 See also [`spost`](@ref) and [`sprepost`](@ref).
 """
-function spre(A::AbstractQuantumObject{Operator})
-    Lspace = LiouvilleSpace(A.dimensions)
-    return get_typename_wrapper(A)(_spre(A.data), SuperOperator(), Dimensions(Lspace, Lspace))
+function spre(A::AbstractQuantumObject{Operator}; matrix_form::Union{Bool, Val} = Val(false))
+    if getVal(matrix_form)
+        return QuantumObjectEvolution(A.data, SuperOperatorMatrixForm(), A.dimensions)
+    else
+        Lspace = LiouvilleSpace(A.dimensions)
+        return get_typename_wrapper(A)(_spre(A.data), SuperOperator(), Dimensions(Lspace, Lspace))
+    end
 end
 
 @doc raw"""
-    spost(B::AbstractQuantumObject)
+    spost(B::AbstractQuantumObject{Operator}; matrix_form::Union{Bool, Val} = Val(false))
 
-Returns the [`SuperOperator`](@ref) form of `B` acting on the right of the density matrix operator: ``\mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{\rho} \hat{B}``.
+Returns the [`SuperOperator`](@ref) form of `B` acting on the right of the density matrix operator: ``\mathcal{O} \left(\hat{B}\right) \left[ \hat{\rho} \right] = \hat{\rho} \hat{B}``. The `matrix_form` keyword argument controls the output format of the superoperator:
+- If `matrix_form = Val(false)` (default), the output is a [`SuperOperator`](@ref), acting on **vectorized** density matrices.
+- If `matrix_form = Val(true)`, the output is a [`SuperOperatorMatrixForm`](@ref), acting on **non-vectorized** density matrices.
 
 Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\!\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{B}^T \otimes \hat{\mathbb{1}}``, namely
 
@@ -103,15 +111,21 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 
 See also [`spre`](@ref) and [`sprepost`](@ref).
 """
-function spost(B::AbstractQuantumObject{Operator})
-    Lspace = LiouvilleSpace(B.dimensions)
-    return get_typename_wrapper(B)(_spost(B.data), SuperOperator(), Dimensions(Lspace, Lspace))
+function spost(B::AbstractQuantumObject{Operator}; matrix_form::Union{Bool, Val} = Val(false))
+    if getVal(matrix_form)
+        return QuantumObjectEvolution(SpostSuperOperator(B.data), SuperOperatorMatrixForm(), B.dimensions)
+    else
+        Lspace = LiouvilleSpace(B.dimensions)
+        return get_typename_wrapper(B)(_spost(B.data), SuperOperator(), Dimensions(Lspace, Lspace))
+    end
 end
 
 @doc raw"""
-    sprepost(A::AbstractQuantumObject, B::AbstractQuantumObject)
+    sprepost(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator}; matrix_form::Union{Bool, Val} = Val(false))
 
-Returns the [`SuperOperator`](@ref) form of `A` and `B` acting on the left and right of the density matrix operator, respectively: ``\mathcal{O} \left( \hat{A}, \hat{B} \right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho} \hat{B}``.
+Returns the [`SuperOperator`](@ref) form of `A` and `B` acting on the left and right of the density matrix operator, respectively: ``\mathcal{O} \left( \hat{A}, \hat{B} \right) \left[ \hat{\rho} \right] = \hat{A} \hat{\rho} \hat{B}``. The `matrix_form` keyword argument controls the output format of the superoperator:
+- If `matrix_form = Val(false)` (default), the output is a [`SuperOperator`](@ref), acting on **vectorized** density matrices.
+- If `matrix_form = Val(true)`, the output is a [`SuperOperatorMatrixForm`](@ref), acting on **non-vectorized** density matrices.
 
 Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\rho}\rangle\!\rangle``, this [`SuperOperator`](@ref) is always a matrix ``\hat{B}^T \otimes \hat{A}``, namely
 
@@ -122,14 +136,18 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 
 See also [`spre`](@ref) and [`spost`](@ref).
 """
-function sprepost(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
+function sprepost(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator}; matrix_form::Union{Bool, Val} = Val(false))
     check_dimensions(A, B)
-    Lspace = LiouvilleSpace(A.dimensions)
-    return promote_op_type(A, B)(_sprepost(A.data, B.data), SuperOperator(), Dimensions(Lspace, Lspace))
+    if getVal(matrix_form)
+        return QuantumObjectEvolution(SprePostSuperOperator(A.data, B.data), SuperOperatorMatrixForm(), A.dimensions)
+    else
+        Lspace = LiouvilleSpace(A.dimensions)
+        return promote_op_type(A, B)(_sprepost(A.data, B.data), SuperOperator(), Dimensions(Lspace, Lspace))
+    end
 end
 
 @doc raw"""
-    lindblad_dissipator(O::AbstractQuantumObject)
+    lindblad_dissipator(O::AbstractQuantumObject; matrix_form::Union{Bool, Val} = Val(false))
 
 Returns the Lindblad [`SuperOperator`](@ref) defined as
 
@@ -138,21 +156,34 @@ Returns the Lindblad [`SuperOperator`](@ref) defined as
 \hat{O}^\dagger \hat{O} \hat{\rho} - \hat{\rho} \hat{O}^\dagger \hat{O} \right)
 ```
 
+The `matrix_form` keyword argument controls the output format of the superoperator:
+- If `matrix_form = Val(false)` (default), the output is a [`SuperOperator`](@ref), acting on **vectorized** density matrices.
+- If `matrix_form = Val(true)`, the output is a [`SuperOperatorMatrixForm`](@ref), acting on **non-vectorized** density matrices.
+
 See also [`spre`](@ref), [`spost`](@ref), and [`sprepost`](@ref).
 """
-function lindblad_dissipator(O::AbstractQuantumObject{Operator})
-    Lspace = LiouvilleSpace(O.dimensions)
-    return get_typename_wrapper(O)(_lindblad_dissipator(O.data), SuperOperator(), Dimensions(Lspace, Lspace))
+function lindblad_dissipator(O::AbstractQuantumObject{Operator}; matrix_form::Union{Bool, Val} = Val(false))
+    if getVal(matrix_form)
+        Od_O = O.data' * O.data / 2
+        O_spre = Od_O
+        O_spost = SpostSuperOperator(Od_O)
+        O_sprepost = SprePostSuperOperator(O.data, O.data')
+        return QuantumObjectEvolution(O_sprepost - O_spre - O_spost, SuperOperatorMatrixForm(), O.dimensions)
+    else
+        Lspace = LiouvilleSpace(O.dimensions)
+        return get_typename_wrapper(O)(_lindblad_dissipator(O.data), SuperOperator(), Dimensions(Lspace, Lspace))
+    end
 end
 
 # It is already a SuperOperator
-lindblad_dissipator(O::AbstractQuantumObject{SuperOperator}) = O
+lindblad_dissipator(O::AbstractQuantumObject{SuperOperator}; kwargs...) = O
 
 @doc raw"""
     liouvillian(
         H::AbstractQuantumObject,
         c_ops::Union{Nothing,AbstractVector,Tuple}=nothing;
         assume_hermitian::Union{Bool,Val} = Val(true),
+        matrix_form::Union{Bool, Val} = Val(false)
     )
 
 Construct the Liouvillian [`SuperOperator`](@ref) for a system Hamiltonian ``\hat{H}`` and a set of collapse operators ``\{\hat{C}_n\}_n``.
@@ -175,6 +206,10 @@ where
 \mathcal{D}(\hat{C}_n) [\cdot] = \hat{C}_n [\cdot] \hat{C}_n^\dagger - \frac{1}{2} \hat{C}_n^\dagger \hat{C}_n [\cdot] - \frac{1}{2} [\cdot] \hat{C}_n^\dagger \hat{C}_n
 ```
 
+The `matrix_form` keyword argument controls the output format of the superoperator:
+- If `matrix_form = Val(false)` (default), the output is a [`SuperOperator`](@ref), acting on **vectorized** density matrices.
+- If `matrix_form = Val(true)`, the output is a [`SuperOperatorMatrixForm`](@ref), acting on **non-vectorized** density matrices.
+
 See also [`spre`](@ref), [`spost`](@ref), and [`lindblad_dissipator`](@ref).
 
 !!! warning "Beware of type-stability!"
@@ -184,12 +219,26 @@ function liouvillian(
         H::AbstractQuantumObject{OpType},
         c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         assume_hermitian::Union{Bool, Val} = Val(true),
+        matrix_form::Union{Bool, Val} = Val(false)
     ) where {OpType <: Union{Operator, SuperOperator}}
-    L = liouvillian(H; assume_hermitian = assume_hermitian)
-    if !isnothing(c_ops)
-        return L + _sum_lindblad_dissipators(c_ops)
+    if getVal(matrix_form)
+        isoper(H) || throw(ArgumentError("The Hamiltonian must be an Operator for constructing Liouvillian in matrix form."))
+        c_ops_sum_data = isnothing(c_ops) ? 0 : sum(op -> op.data' * op.data, c_ops)
+        H_eff_spre_data = - im * H.data - c_ops_sum_data / 2
+        H_eff_spost_data = getVal(assume_hermitian) ? SpostSuperOperator(im * H.data - c_ops_sum_data / 2) : SpostSuperOperator(im * H.data' - c_ops_sum_data / 2)
+
+        H_eff_spre = QuantumObjectEvolution(H_eff_spre_data, SuperOperatorMatrixForm(), H.dimensions)
+        H_eff_spost = QuantumObjectEvolution(H_eff_spost_data, SuperOperatorMatrixForm(), H.dimensions)
+        H_eff_sprepost = _sum_lindblad_jump_terms(c_ops)
+
+        return H_eff_spre + H_eff_spost + H_eff_sprepost
+    else
+        L = liouvillian(H; assume_hermitian = assume_hermitian)
+        if !isnothing(c_ops)
+            return L + _sum_lindblad_dissipators(c_ops)
+        end
+        return L
     end
-    return L
 end
 
 liouvillian(H::Nothing, c_ops::Union{AbstractVector, Tuple}; kwargs...) = _sum_lindblad_dissipators(c_ops)
@@ -217,4 +266,27 @@ _sum_lindblad_dissipators(c_ops::AbstractVector) = sum(op -> lindblad_dissipator
         ex = :($ex + lindblad_dissipator(c_ops[$i]))
     end
     return ex
+end
+
+_sum_lindblad_jump_terms(c_ops::Nothing) = 0
+
+function _sum_lindblad_jump_terms(c_ops::AbstractVector)
+    Op_data = sum(c_ops; init = 0) do op
+        O = op.data
+        SprePostSuperOperator(O, O')
+    end
+
+    return QuantumObjectEvolution(Op_data, SuperOperatorMatrixForm(), first(c_ops).dimensions)
+end
+
+@generated function _sum_lindblad_jump_terms(c_ops::Tuple)
+    N = length(c_ops.parameters)
+    if N == 0
+        return :(0)
+    end
+    ex = :(SprePostSuperOperator(_promote_to_scimloperator(c_ops[1].data), _promote_to_scimloperator(c_ops[1].data')))
+    for i in 2:N
+        ex = :($ex, SprePostSuperOperator(_promote_to_scimloperator(c_ops[$i].data), _promote_to_scimloperator(c_ops[$i].data')))
+    end
+    return :(QuantumObjectEvolution(AddedOperator($ex), SuperOperatorMatrixForm(), first(c_ops).dimensions))
 end

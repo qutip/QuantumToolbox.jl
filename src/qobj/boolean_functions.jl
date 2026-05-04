@@ -50,10 +50,13 @@ isoperket(A) = false # default case
 
 Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperator`](@ref). Default case returns `false` for any other inputs.
 """
-issuper(A::AbstractQuantumObject{<:SuperOperatorType}) = true
+issuper(A::AbstractQuantumObject{<:SuperOperator}) = true
 issuper(A) = false # default case
 
 isendomorphic(A::AbstractQuantumObject) = isendomorphic(A.dimensions)
+
+issupermatform(A::AbstractQuantumObject{<:SuperOperatorMatrixForm}) = true
+issupermatform(A) = false # default case
 
 @doc raw"""
     ishermitian(A::AbstractQuantumObject)
