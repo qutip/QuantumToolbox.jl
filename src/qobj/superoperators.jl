@@ -223,7 +223,7 @@ function liouvillian(
     ) where {OpType <: Union{Operator, <:SuperOperatorType}}
     if getVal(matrix_form)
         (issupermatform(H) && isnothing(c_ops)) && return H
-        issuper(H) || throw(ArgumentError("The Hamiltonian must be an Operator for constructing Liouvillian in matrix form."))
+        isoper(H) || throw(ArgumentError("The Hamiltonian must be an Operator for constructing Liouvillian in matrix form."))
 
         H_eff_spre_data = issupermatform(H) ? H.data : -im * H.data
         H_eff_spost_data = if getVal(assume_hermitian)
@@ -240,7 +240,7 @@ function liouvillian(
             c_ops_sum_data = sum(op -> op.data' * op.data, c_ops)
 
             H_eff_spre = QuantumObjectEvolution(H_eff_spre_data - c_ops_sum_data / 2, SuperOperatorMatrixForm(), H.dimensions)
-            H_eff_spost = QuantumObjectEvolution(H_eff_spost_data - c_ops_sum_data / 2, SuperOperatorMatrixForm(), H.dimensions)
+            H_eff_spost = QuantumObjectEvolution(SpostSuperOperator(H_eff_spost_data - c_ops_sum_data / 2), SuperOperatorMatrixForm(), H.dimensions)
             H_eff_sprepost = _sum_lindblad_sprepost_terms(c_ops)
 
             return H_eff_spre + H_eff_spost + H_eff_sprepost

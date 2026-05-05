@@ -216,6 +216,10 @@ end
 
     sol_me2 = mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
     sol_me3 = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
+    prob_me_mat = mesolveProblem(H, ket2dm(ψ0), tlist, c_ops, progress_bar = Val(false), matrix_form = Val(true))
+    sol_me_mat = mesolve(H, ket2dm(ψ0), tlist, c_ops, progress_bar = Val(false), matrix_form = Val(true))
+    sol_me_mat2 =
+        mesolve(H, ket2dm(ψ0), tlist, c_ops, e_ops = e_ops, saveat = saveat, progress_bar = Val(false), matrix_form = Val(true))
 
     # For testing the `OperatorKet` input
     sol_me4 = mesolve(H, operator_to_vector(ket2dm(ψ0)), tlist, c_ops, saveat = saveat, progress_bar = Val(false))
@@ -225,6 +229,7 @@ end
 
     @test TESetup.prob_me.prob.f.f isa MatrixOperator
     @test !haskey(TESetup.prob_me.prob.kwargs, :tstops) # tstops should not exist for time-independent cases
+    @test !haskey(prob_me_mat.prob.kwargs, :tstops)
     @test isket(sol_me5.states[1])
     @test length(sol_me.times) == length(tlist)
     @test length(sol_me.times_states) == 1
@@ -240,6 +245,13 @@ end
     @test size(sol_me3.expect) == (length(e_ops), length(tlist))
     @test sol_me3.expect[1, TESetup.saveat_idxs] ≈ expect(e_ops[1], sol_me3.states) atol = 1.0e-6
     @test all([sol_me3.states[i] ≈ vector_to_operator(sol_me4.states[i]) for i in eachindex(saveat)])
+    @test length(sol_me_mat.times_states) == length(tlist)
+    @test length(sol_me_mat.states) == length(tlist)
+    @test sol_me_mat.expect === nothing
+    @test all(isoper, sol_me_mat.states)
+    @test size(sol_me_mat2.expect) == (length(e_ops), length(tlist))
+    @test sol_me_mat2.expect[1, TESetup.saveat_idxs] ≈ expect(e_ops[1], sol_me_mat2.states) atol = 1.0e-6
+    @test sol_me_mat2.expect[1, :] ≈ sol_me.expect[1, :] atol = 1.0e-6
 
     sol_me_string = sprint((t, s) -> show(t, "text/plain", s), sol_me)
     @test sol_me_string ==
@@ -290,10 +302,12 @@ end
         coef(p, t) = exp(-t)
         ad_t = QobjEvo(a', coef)
         @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), matrix_form = Val(true))
         @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
         @inferred mesolveProblem(H, TESetup.ψ0_int, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
         @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(true)) # also test progress bar
         @inferred mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
+        @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), matrix_form = Val(true))
         @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
         @inferred mesolve(H, ψ0, tlist, (a, ad_t), e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple
         @inferred mesolve(TESetup.H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
@@ -336,6 +350,8 @@ end
     sols1 = mesolve_map(H, ψ_0_e, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     # Test with multiple initial states
     sols2 = mesolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+    # Test matrix_form = Val(true) case
+    sols2_mat = mesolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false), matrix_form = Val(true))
 
     # Test redirect to sesolve_map when c_ops is nothing
     sols3 = mesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
@@ -346,6 +362,8 @@ end
     @test sols1 isa Array{<:TimeEvolutionSol}
     @test size(sols2) == (2, 3, 4)
     @test sols2 isa Array{<:TimeEvolutionSol}
+    @test size(sols2_mat) == (2, 3, 4)
+    @test sols2_mat isa Array{<:TimeEvolutionSol}
     @test size(sols3) == (2, 3, 4)
     @test sols3 isa Array{<:TimeEvolutionSol}
 
@@ -354,10 +372,14 @@ end
         for (j, ωq) in enumerate(ωq_list)
             sol_0_e = sols2[1, i, j]
             sol_1_g = sols2[2, i, j]
+            sol_0_e_mat = sols2_mat[1, i, j]
+            sol_1_g_mat = sols2_mat[2, i, j]
 
             # Check that expectation values are bounded and physical (take real part for physical observables)
             @test all(x -> real(x) >= -1.0e-4, sol_0_e.expect[1, :]) # a'a should be non-negative (with small tolerance)
             @test all(x -> real(x) >= -1.0e-4, sol_1_g.expect[1, :])
+            @test all(x -> real(x) >= -1.0e-4, sol_0_e_mat.expect[1, :])
+            @test all(x -> real(x) >= -1.0e-4, sol_1_g_mat.expect[1, :])
         end
     end
 

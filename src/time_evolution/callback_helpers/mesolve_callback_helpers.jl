@@ -24,6 +24,10 @@ function _save_func_mesolve(u, integrator, e_ops, progr, iter, expvals)
     # The advantage of using this convention is that We don't need
     # to reshape u to make it a matrix, but we reshape the e_ops once.
 
+    # Notice: when matrix_form = Val(true), u is a matrix, while op is still the
+    # vectorized form of the operator. This still works because the dot function
+    # treats the second argument as a vector regardless of its actual shape.
+
     for (i, op) in enumerate(e_ops)
         @inbounds expvals[i, iter[]] = dot(op, u)
     end
