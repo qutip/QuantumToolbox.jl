@@ -220,39 +220,50 @@ function liouvillian(
         c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
         assume_hermitian::Union{Bool, Val} = Val(true),
         matrix_form::Union{Bool, Val} = Val(false)
-    ) where {OpType <: Union{Operator, SuperOperator}}
+    ) where {OpType <: Union{Operator, <:SuperOperatorType}}
     if getVal(matrix_form)
-        isoper(H) || throw(ArgumentError("The Hamiltonian must be an Operator for constructing Liouvillian in matrix form."))
-        c_ops_sum_data = isnothing(c_ops) ? 0 : sum(op -> op.data' * op.data, c_ops)
-        H_eff_spre_data = - im * H.data - c_ops_sum_data / 2
-        H_eff_spost_data = getVal(assume_hermitian) ? SpostSuperOperator(im * H.data - c_ops_sum_data / 2) : SpostSuperOperator(im * H.data' - c_ops_sum_data / 2)
+        (issupermatform(H) && isnothing(c_ops)) && return H
+        issuper(H) || throw(ArgumentError("The Hamiltonian must be an Operator for constructing Liouvillian in matrix form."))
 
-        H_eff_spre = QuantumObjectEvolution(H_eff_spre_data, SuperOperatorMatrixForm(), H.dimensions)
-        H_eff_spost = QuantumObjectEvolution(H_eff_spost_data, SuperOperatorMatrixForm(), H.dimensions)
-        H_eff_sprepost = _sum_lindblad_jump_terms(c_ops)
-
-        return H_eff_spre + H_eff_spost + H_eff_sprepost
-    else
-        L = liouvillian(H; assume_hermitian = assume_hermitian)
-        if !isnothing(c_ops)
-            return L + _sum_lindblad_dissipators(c_ops)
+        H_eff_spre_data = issupermatform(H) ? H.data : -im * H.data
+        H_eff_spost_data = if getVal(assume_hermitian)
+            issupermatform(H) ? H.data : im * H.data
+        else
+            issupermatform(H) ? H.data : im * H.data'
         end
+
+        if isnothing(c_ops)
+            H_eff_spre = QuantumObjectEvolution(H_eff_spre_data, SuperOperatorMatrixForm(), H.dimensions)
+            H_eff_spost = QuantumObjectEvolution(H_eff_spost_data, SuperOperatorMatrixForm(), H.dimensions)
+            return H_eff_spre + H_eff_spost
+        else
+            c_ops_sum_data = sum(op -> op.data' * op.data, c_ops)
+
+            H_eff_spre = QuantumObjectEvolution(H_eff_spre_data - c_ops_sum_data / 2, SuperOperatorMatrixForm(), H.dimensions)
+            H_eff_spost = QuantumObjectEvolution(H_eff_spost_data - c_ops_sum_data / 2, SuperOperatorMatrixForm(), H.dimensions)
+            H_eff_sprepost = _sum_lindblad_sprepost_terms(c_ops)
+
+            return H_eff_spre + H_eff_spost + H_eff_sprepost
+        end
+    else
+        Lspace = LiouvilleSpace(H.dimensions)
+        L = if isoper(H)
+            get_typename_wrapper(H)(_liouvillian(H.data, makeVal(assume_hermitian)), SuperOperator(), Dimensions(Lspace, Lspace))
+        elseif issuper(H)
+            H
+        end
+
+        !isnothing(c_ops) && return L + _sum_lindblad_dissipators(c_ops)
+
         return L
     end
 end
 
-liouvillian(H::Nothing, c_ops::Union{AbstractVector, Tuple}; kwargs...) = _sum_lindblad_dissipators(c_ops)
-
+liouvillian(H::Nothing, c_ops::AbstractVecOrTuple; kwargs...) = _sum_lindblad_dissipators(c_ops)
 liouvillian(H::Nothing, c_ops::Nothing; kwargs...) = 0
+liouvillian(H::AbstractQuantumObject{<:SuperOperatorType}; kwargs...) = H
 
-function liouvillian(H::AbstractQuantumObject{Operator}; assume_hermitian::Union{Bool, Val} = Val(true))
-    Lspace = LiouvilleSpace(H.dimensions)
-    return get_typename_wrapper(H)(_liouvillian(H.data, makeVal(assume_hermitian)), SuperOperator(), Dimensions(Lspace, Lspace))
-end
-
-liouvillian(H::AbstractQuantumObject{SuperOperator}; kwargs...) = H
 _sum_lindblad_dissipators(c_ops::Nothing) = 0
-
 _sum_lindblad_dissipators(c_ops::AbstractVector) = sum(op -> lindblad_dissipator(op), c_ops; init = 0)
 
 # Help the compiler to unroll the sum at compile time
@@ -268,9 +279,9 @@ _sum_lindblad_dissipators(c_ops::AbstractVector) = sum(op -> lindblad_dissipator
     return ex
 end
 
-_sum_lindblad_jump_terms(c_ops::Nothing) = 0
+_sum_lindblad_sprepost_terms(c_ops::Nothing) = 0
 
-function _sum_lindblad_jump_terms(c_ops::AbstractVector)
+function _sum_lindblad_sprepost_terms(c_ops::AbstractVector)
     Op_data = sum(c_ops; init = 0) do op
         O = op.data
         SprePostSuperOperator(O, O')
@@ -279,7 +290,7 @@ function _sum_lindblad_jump_terms(c_ops::AbstractVector)
     return QuantumObjectEvolution(Op_data, SuperOperatorMatrixForm(), first(c_ops).dimensions)
 end
 
-@generated function _sum_lindblad_jump_terms(c_ops::Tuple)
+@generated function _sum_lindblad_sprepost_terms(c_ops::Tuple)
     N = length(c_ops.parameters)
     if N == 0
         return :(0)

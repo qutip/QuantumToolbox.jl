@@ -109,7 +109,7 @@ Quantum Object:   type=Operator()   dims=([10, 2], [10, 2])   size=(20, 20)   is
 ```
 """
 struct QuantumObjectEvolution{
-    ObjType <: Union{Operator, SuperOperatorType},
+        ObjType <: Union{Operator, SuperOperatorType},
         DimType <: Dimensions,
         DataType <: AbstractSciMLOperator,
     } <: AbstractQuantumObject{ObjType, DimType, DataType}
@@ -482,7 +482,7 @@ function (A::QuantumObjectEvolution)(
         ψin::QuantumObject{QobjType},
         p,
         t,
-    ) where {QobjType <: Union{Ket, OperatorKet}}
+    ) where {QobjType <: Union{Ket, Operator, OperatorKet}}
     if isoper(A) && isoperket(ψin)
         throw(ArgumentError("The input state must be a Ket if the QuantumObjectEvolution object is an Operator."))
     elseif issuper(A) && isket(ψin)
@@ -505,7 +505,7 @@ end
 
 Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the input state `ψ` at time `t` with parameters `p`. Out-of-place version of [`(A::QuantumObjectEvolution)(ψout, ψin, p, t)`](@ref). The output state is stored in a new [`QuantumObject`](@ref) object. This function mimics the behavior of a `AbstractSciMLOperator` object.
 """
-function (A::QuantumObjectEvolution)(ψ::QuantumObject{QobjType}, p, t) where {QobjType <: Union{Ket, OperatorKet}}
+function (A::QuantumObjectEvolution)(ψ::QuantumObject{QobjType}, p, t) where {QobjType <: Union{Ket, Operator, OperatorKet}}
     ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dimensions)
     return A(ψout, ψ, p, t)
 end

@@ -92,8 +92,7 @@ function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::AbstractQuantumOb
 end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperatorMatrixForm}, B::QuantumObject{Operator})
     check_mul_dimensions(A, B)
-    QType = promote_op_type(A, B)
-    return QType(A.data * B.data, Operator(), Dimensions(A.dimensions.to, B.dimensions.from))
+    return QuantumObject(A.data * B.data, Operator(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperatorMatrixForm}, B::QuantumObject{OperatorKet})
     Bmat = vector_to_operator(B)
