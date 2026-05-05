@@ -1,17 +1,33 @@
 export mesolveProblem, mesolve, mesolve_map
 
-_mesolve_make_L_QobjEvo(H::Union{QuantumObject, Nothing}, c_ops) =
-    QuantumObjectEvolution(liouvillian(H, c_ops), type = SuperOperator())
-_mesolve_make_L_QobjEvo(H::Union{QuantumObjectEvolution, Tuple}, c_ops) = liouvillian(QobjEvo(H), c_ops)
-_mesolve_make_L_QobjEvo(H::Nothing, c_ops::Nothing) = throw(ArgumentError("Both H and
-c_ops are Nothing. You are probably running the wrong function."))
+_mesolve_make_L_QobjEvo(
+    H::Union{QuantumObject, Nothing},
+    c_ops,
+    matrix_form = Val(false),
+) = QuantumObjectEvolution(liouvillian(H, c_ops; matrix_form = matrix_form))
+_mesolve_make_L_QobjEvo(
+    H::Union{QuantumObjectEvolution, Tuple},
+    c_ops,
+    matrix_form = Val(false),
+) = liouvillian(QobjEvo(H), c_ops; matrix_form = matrix_form)
+_mesolve_make_L_QobjEvo(
+    H::Nothing,
+    c_ops::Nothing,
+    matrix_form = Val(false),
+) = throw(ArgumentError("Both H and c_ops are Nothing. You are probably running the wrong function."))
 
 function _gen_mesolve_solution(
         sol,
         prob::TimeEvolutionProblem{ST},
     ) where {ST <: Union{Operator, OperatorKet, SuperOperator}}
     if prob.states_type isa Operator
-        ρt = map(ϕ -> QuantumObject(vec2mat(ϕ), type = prob.states_type, dims = prob.dimensions), sol.u)
+        ρt = map(sol.u) do ϕ
+            if ϕ isa AbstractMatrix
+                return QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions)
+            else
+                return QuantumObject(vec2mat(ϕ), type = prob.states_type, dims = prob.dimensions)
+            end
+        end
     else
         ρt = map(ϕ -> QuantumObject(ϕ, type = prob.states_type, dims = prob.dimensions), sol.u)
     end
@@ -40,6 +56,7 @@ end
         params = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
         inplace::Union{Val,Bool} = Val(true),
+        matrix_form::Union{Val,Bool} = Val(false),
         kwargs...,
     )
 
@@ -65,6 +82,7 @@ where
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`. It is recommended to use `Val(true)` for better performance, but it is sometimes necessary to use `Val(false)`, for example when performing automatic differentiation using [Zygote.jl](https://github.com/FluxML/Zygote.jl).
+- `matrix_form`: Whether to use the matrix form of the Liouvillian. The default is `Val(false)`. Using `Val(true)` can lead to better performance and less memory usage when the system size is large.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -89,8 +107,9 @@ function mesolveProblem(
         params = NullParameters(),
         progress_bar::Union{Val, Bool} = Val(true),
         inplace::Union{Val, Bool} = Val(true),
+        matrix_form::Union{Val, Bool} = Val(false),
         kwargs...,
-    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
+    ) where {HOpType <: Union{Operator, SuperOperatorType}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolveProblem(
         H,
         ψ0,
@@ -105,7 +124,7 @@ function mesolveProblem(
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
-    L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
+    L_evo = _mesolve_make_L_QobjEvo(H, c_ops, matrix_form)
 
     # Convert initial state to dense vector with complex element type (T) and check dimensions
     T, ρ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(L_evo, ψ0)
@@ -136,6 +155,7 @@ end
         params = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
         inplace::Union{Val,Bool} = Val(true),
+        matrix_form::Union{Val,Bool} = Val(false),
         kwargs...,
     )
 
@@ -162,6 +182,7 @@ where
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `inplace`: Whether to use the inplace version of the ODEProblem. The default is `Val(true)`. It is recommended to use `Val(true)` for better performance, but it is sometimes necessary to use `Val(false)`, for example when performing automatic differentiation using [Zygote.jl](https://github.com/FluxML/Zygote.jl).
+- `matrix_form`: Whether to use the matrix form of the Liouvillian. The default is `Val(false)`. Using `Val(true)` can lead to better performance and less memory usage when the system size is large.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -187,8 +208,9 @@ function mesolve(
         params = NullParameters(),
         progress_bar::Union{Val, Bool} = Val(true),
         inplace::Union{Val, Bool} = Val(true),
+        matrix_form::Union{Val, Bool} = Val(false),
         kwargs...,
-    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
+    ) where {HOpType <: Union{Operator, SuperOperatorType}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     (isoper(H) && isket(ψ0) && isnothing(c_ops)) && return sesolve(
         H,
         ψ0,
@@ -216,6 +238,7 @@ function mesolve(
         params = params,
         progress_bar = progress_bar,
         inplace = inplace,
+        matrix_form = matrix_form,
         kwargs_filtered...,
     )
 
@@ -244,6 +267,7 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params::Union{NullParameters,Tuple} = NullParameters(),
         progress_bar::Union{Val,Bool} = Val(true),
+        matrix_form::Union{Val,Bool} = Val(false),
         kwargs...,
     )
 
@@ -274,6 +298,7 @@ for each combination in the ensemble.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: A `Tuple` of parameter sets. Each element should be an `AbstractVector` representing the sweep range for that parameter. The function will solve for all combinations of initial states and parameter sets.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `matrix_form`: Whether to use the matrix form of the Liouvillian. The default is `Val(false)`. Using `Val(true)` can lead to better performance and less memory usage when the system size is large.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -298,8 +323,9 @@ function mesolve_map(
         e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params::Union{NullParameters, Tuple} = NullParameters(),
         progress_bar::Union{Val, Bool} = Val(true),
+        matrix_form::Union{Val, Bool} = Val(false),
         kwargs...,
-    ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
+    ) where {HOpType <: Union{Operator, SuperOperatorType}, StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     (isoper(H) && all(isket, ψ0) && isnothing(c_ops)) && return sesolve_map(
         H,
         ψ0,
@@ -314,12 +340,19 @@ function mesolve_map(
 
     # mapping initial states and parameters
     # Convert to appropriate format based on state type
+    matrix_form_val = makeVal(matrix_form)
     ψ0_iter = map(ψ0) do state
         T = _complex_float_type(eltype(state))
-        if isoperket(state) || issuper(state)
+        if getVal(matrix_form_val)
+            if isket(state) || isoper(state)
+                to_dense(T, ket2dm(copy(state)).data)
+            else
+                throw(ArgumentError("When `matrix_form = Val(true)`, initial states for `mesolve_map` must be `Ket` or `Operator`."))
+            end
+        elseif isoperket(state) || issuper(state)
             to_dense(T, copy(state.data))
         else
-            to_dense(T, mat2vec(ket2dm(state).data))
+            to_dense(T, mat2vec(ket2dm(copy(state)).data))
         end
     end
     if params isa NullParameters
@@ -337,6 +370,7 @@ function mesolve_map(
         e_ops = e_ops,
         params = first(iter)[2:end],
         progress_bar = Val(false),
+        matrix_form = matrix_form_val,
         kwargs...,
     )
 
