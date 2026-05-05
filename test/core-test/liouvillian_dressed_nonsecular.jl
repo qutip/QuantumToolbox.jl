@@ -37,10 +37,11 @@
 
     H = 1 * a' * a + 1 * sz / 2 + 0.5 * (a + a') * sx
 
-    fields = [sqrt(0.01) * (a + a'), sqrt(0.01) * sx]
-    Tlist = [0, 0.0]
+    fields = (sqrt(0.01) * (a + a'), sqrt(0.01) * sx)
+    Tlist = (0.0, 0.0)
+    σ_filter = 4.0
 
-    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
+    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = σ_filter)
     Ω = to_sparse((E' .- E)[1:N_trunc, 1:N_trunc], tol)
 
     H_d = U' * H * U
@@ -61,9 +62,9 @@
 
     H = 1 * a' * a + 1 * sz / 2 + 1.0e-5 * (a * sp + a' * sm)
 
-    Tlist = [0.2, 0.0]
+    Tlist = (0.2, 0.0)
 
-    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
+    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = σ_filter)
     Ω = to_sparse((E' .- E)[1:N_trunc, 1:N_trunc], tol)
 
     H_d = U' * H * U
@@ -87,10 +88,13 @@
 
             H = 1 * a' * a + 1 * sz / 2 + 0.5 * (a + a') * sx
 
-            fields = [sqrt(0.01) * (a + a'), sqrt(0.01) * sx]
-            Tlist = [0, 0.01]
+            fields = (sqrt(0.01) * (a + a'), sqrt(0.01) * sx)
+            Tlist = (0.0, 0.01)
 
-            @inferred liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
+            σ_filter = 4.0
+
+            @inferred liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = nothing)
+            @inferred liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = σ_filter)
         end
     end
 end
