@@ -279,8 +279,6 @@ _sum_lindblad_dissipators(c_ops::AbstractVector) = sum(op -> lindblad_dissipator
     return ex
 end
 
-_sum_lindblad_sprepost_terms(c_ops::Nothing) = 0
-
 function _sum_lindblad_sprepost_terms(c_ops::AbstractVector)
     Op_data = sum(c_ops; init = 0) do op
         O = op.data
@@ -290,14 +288,12 @@ function _sum_lindblad_sprepost_terms(c_ops::AbstractVector)
     return QuantumObjectEvolution(Op_data, SuperOperatorMatrixForm(), first(c_ops).dimensions)
 end
 
-@generated function _sum_lindblad_sprepost_terms(c_ops::Tuple)
-    N = length(c_ops.parameters)
-    if N == 0
-        return :(0)
+function _sum_lindblad_sprepost_terms(c_ops::Tuple)
+    N = length(c_ops)
+    N == 0 && return 0
+    Op_data = ntuple(Val(N)) do i
+        O = c_ops[i].data
+        SprePostSuperOperator(O, O')
     end
-    ex = :(SprePostSuperOperator(_promote_to_scimloperator(c_ops[1].data), _promote_to_scimloperator(c_ops[1].data')))
-    for i in 2:N
-        ex = :($ex, SprePostSuperOperator(_promote_to_scimloperator(c_ops[$i].data), _promote_to_scimloperator(c_ops[$i].data')))
-    end
-    return :(QuantumObjectEvolution(AddedOperator($ex), SuperOperatorMatrixForm(), first(c_ops).dimensions))
+    return QuantumObjectEvolution(AddedOperator(Op_data), SuperOperatorMatrixForm(), first(c_ops).dimensions)
 end

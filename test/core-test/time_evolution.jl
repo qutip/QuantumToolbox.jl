@@ -18,12 +18,12 @@
     H = ωc * a' * a + ωq / 2 * σz + g * (a' * σm + a * σm')
     ψ0 = kron(fock(N, 0), fock(2, 0))
 
-    e_ops = [a' * a, σz]
-    c_ops = [sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σm']
+    e_ops = (a' * a, σz)
+    c_ops = (sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σm')
 
     sme_η = 0.7 # Efficiency of the homodyne detector for smesolve
-    c_ops_sme = [sqrt(1 - sme_η) * op for op in c_ops]
-    sc_ops_sme = [sqrt(sme_η) * op for op in c_ops]
+    c_ops_sme = ntuple(i -> sqrt(1 - sme_η) * c_ops[i], Val(length(c_ops)))
+    sc_ops_sme = ntuple(i -> sqrt(sme_η) * c_ops[i], Val(length(c_ops)))
 
     # The following definition is to test the case of `sc_ops` as an `AbstractQuantumObject`
     c_ops_sme2 = c_ops[2:end]
