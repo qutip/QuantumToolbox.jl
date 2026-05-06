@@ -136,3 +136,9 @@ function SciMLOperators.cache_operator(op::SprePostSuperOperator, u::AbstractMat
     cache = similar(u)
     return SprePostSuperOperator(L_cached, R_cached, cache)
 end
+
+SciMLOperators.getcache(op::SprePostSuperOperator) = op.cache
+
+function SciMLOperators._get_cache_shapes(::SprePostSuperOperator, u::AbstractMatrix)
+    return size(u)
+end
