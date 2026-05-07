@@ -45,7 +45,7 @@ A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillia
 Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more details about the available algorithms. For example, the preconditioners can be defined directly in the solver like: `SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (I, Diagonal(A))))`.
 """
 Base.@kwdef struct SteadyStateLinearSolver{
-        MT <: Union{SciMLLinearSolveAlgorithm, Nothing}, 
+        MT <: Union{SciMLLinearSolveAlgorithm, Nothing},
         ST <: Union{Nothing, QuantumObject},
     } <: SteadyStateSolver
     alg::MT = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
@@ -179,7 +179,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
         _, u0_data, _, _ = _handle_init_state_and_sol_type_dims(L, solver.ρ0)
         u0_data
     end
-    prob = LinearProblem{true}(L_tmp, v0, u0=u0) # add u0 support for SteadyStateLinearSolver case. it can be useful for paramter sweeps when the steady state changes smoothly with the parameters.
+    prob = LinearProblem{true}(L_tmp, v0, u0 = u0) # add u0 support for SteadyStateLinearSolver case. it can be useful for paramter sweeps when the steady state changes smoothly with the parameters.
     ρss_vec = solve(prob, solver.alg; kwargs...).u
 
     ρss = reshape(ρss_vec, N, N)

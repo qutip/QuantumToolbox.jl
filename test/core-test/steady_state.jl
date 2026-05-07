@@ -25,7 +25,7 @@
     @test tracedist(rho_me, ρ_ss) < 1.0e-4
     @test_throws ArgumentError steadystate(Ht, c_ops, solver = solver)
 
-    solver = SteadyStateLinearSolver(;ρ0 = rho_me)
+    solver = SteadyStateLinearSolver(; ρ0 = rho_me)
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1.0e-4
     @test_throws ArgumentError steadystate(Ht, c_ops, solver = solver)
