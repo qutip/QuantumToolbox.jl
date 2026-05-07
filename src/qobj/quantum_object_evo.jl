@@ -389,7 +389,7 @@ function _QobjEvo_generate_data(op_func_list::Tuple)
 end
 
 function _QobjEvo_check_op(op::AbstractQuantumObject)
-    (isoper(op) || issuper(op)) || throw(ArgumentError("The element must be a Operator or SuperOperator."))
+    (isoper(op) || issuper(op) || issupermatform(op)) || throw(ArgumentError("The element must be a Operator, SuperOperator, or SuperOperatorMatrixForm."))
     return nothing
 end
 
