@@ -277,10 +277,6 @@ function QuantumObjectEvolution(op_func_list::Tuple; type = nothing)
         type = op.type
     end
 
-    # Preallocate the SciMLOperator cache using a dense vector as a reference
-    v0 = to_dense(similar(op.data, size(op, 1)))
-    data = cache_operator(data, v0)
-
     return QuantumObjectEvolution(data, type, dims)
 end
 
@@ -319,9 +315,9 @@ Quantum Object Evo.:   type=Operator()   dims=([10, 2], [10, 2])   size=(20, 20)
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 """
-QuantumObjectEvolution(op::QuantumObject, f::Function; type = nothing) = QuantumObjectEvolution(((op, f),); type = type)
+QuantumObjectEvolution(op::AbstractQuantumObject, f::Function; type = nothing) = QuantumObjectEvolution(((op, f),); type = type)
 
-function QuantumObjectEvolution(op::QuantumObject; type = nothing)
+function QuantumObjectEvolution(op::AbstractQuantumObject; type = nothing)
     _check_type(type)
     if type isa Nothing
         type = op.type
@@ -355,11 +351,11 @@ function _QobjEvo_generate_data(op_func_list::Tuple)
     first_op = _QobjEvo_get_first_op(op_func_list[1])
 
     ops_constant = filter(op_func_list) do x
-        if x isa QuantumObject
+        if x isa AbstractQuantumObject
             x.type == first_op.type || throw(ArgumentError("The types of the operators must be the same."))
             x.dimensions == first_op.dimensions ||
                 throw(ArgumentError("The dimensions of the operators must be the same."))
-            return true
+            return isconstant(x.data)
         elseif x isa Tuple
             return false
         else
@@ -376,8 +372,8 @@ function _QobjEvo_generate_data(op_func_list::Tuple)
             op.dimensions == first_op.dimensions ||
                 throw(ArgumentError("The dimensions of the operators must be the same."))
             return true
-        elseif x isa QuantumObject
-            return false
+        elseif x isa AbstractQuantumObject
+            return !isconstant(x.data)
         else
             throw(ArgumentError("Each element of the tuple must be either a QuantumObject or a Tuple."))
         end
