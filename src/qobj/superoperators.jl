@@ -234,7 +234,7 @@ function liouvillian(
 
         if isnothing(c_ops)
             H_eff_spre = QuantumObjectEvolution(H_eff_spre_data, SuperOperatorMatrixForm(), H.dimensions)
-            H_eff_spost = QuantumObjectEvolution(H_eff_spost_data, SuperOperatorMatrixForm(), H.dimensions)
+            H_eff_spost = QuantumObjectEvolution(SpostSuperOperator(H_eff_spost_data), SuperOperatorMatrixForm(), H.dimensions)
             return H_eff_spre + H_eff_spost
         else
             c_ops_sum_data = sum(op -> op.data' * op.data, c_ops)
