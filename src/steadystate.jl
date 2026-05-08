@@ -179,7 +179,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
         _, u0_data, _, _ = _handle_init_state_and_sol_type_dims(L, solver.ρ0)
         u0_data
     end
-    prob = LinearProblem{true}(L_tmp, v0, u0 = u0) # add u0 support for SteadyStateLinearSolver case. it can be useful for paramter sweeps when the steady state changes smoothly with the parameters.
+    prob = LinearProblem{true}(L_tmp, v0, u0 = u0) # add u0 support for SteadyStateLinearSolver case. it can be useful for parameter sweeps when the steady state changes smoothly with the parameters.
     ρss_vec = solve(prob, solver.alg; kwargs...).u
 
     ρss = reshape(ρss_vec, N, N)
