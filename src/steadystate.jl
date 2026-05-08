@@ -31,19 +31,25 @@ struct SteadyStateEigenSolver <: SteadyStateSolver end
 
 @doc raw"""
     SteadyStateLinearSolver(
-        alg = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
+        alg = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I)),
+        ρ0 = nothing
     )
 
 A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillian [`SuperOperator`](@ref) using the `alg`orithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/).
 
 # Arguments
 - `alg::SciMLLinearSolveAlgorithm=KrylovJL_GMRES()`: algorithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/)
+- `ρ0::Union{Nothing, QuantumObject}=nothing`: The initial guess of the `steadystate` solution. If not specified, the initial guess will be handled by the solver.
 
 # Note
 Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more details about the available algorithms. For example, the preconditioners can be defined directly in the solver like: `SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (I, Diagonal(A))))`.
 """
-Base.@kwdef struct SteadyStateLinearSolver{MT <: Union{SciMLLinearSolveAlgorithm, Nothing}} <: SteadyStateSolver
+Base.@kwdef struct SteadyStateLinearSolver{
+        MT <: Union{SciMLLinearSolveAlgorithm, Nothing},
+        ST <: Union{Nothing, QuantumObject},
+    } <: SteadyStateSolver
     alg::MT = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
+    ρ0::ST = nothing
 end
 
 @doc raw"""
@@ -167,7 +173,13 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
 
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
 
-    prob = LinearProblem{true}(L_tmp, v0)
+    u0 = if isnothing(solver.ρ0)
+        nothing
+    else
+        _, u0_data, _, _ = _handle_init_state_and_sol_type_dims(L, solver.ρ0)
+        u0_data
+    end
+    prob = LinearProblem{true}(L_tmp, v0, u0 = u0) # add u0 support for SteadyStateLinearSolver case. it can be useful for parameter sweeps when the steady state changes smoothly with the parameters.
     ρss_vec = solve(prob, solver.alg; kwargs...).u
 
     ρss = reshape(ρss_vec, N, N)

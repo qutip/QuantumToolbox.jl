@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Allow specifying initial guess for `SteadyStateLinearSolver`. ([#698])
 
 ## [v0.45.0]
 Release date: 2026-04-19
@@ -488,3 +488,4 @@ Release date: 2024-11-13
 [#689]: https://github.com/qutip/QuantumToolbox.jl/issues/689
 [#690]: https://github.com/qutip/QuantumToolbox.jl/issues/690
 [#692]: https://github.com/qutip/QuantumToolbox.jl/issues/692
+[#698]: https://github.com/qutip/QuantumToolbox.jl/issues/698
