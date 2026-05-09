@@ -1,4 +1,4 @@
-export steadystate, steadystate_fourier, steadystate_floquet
+export steadystate, steadystate_fourier
 export SteadyStateSolver,
     SteadyStateDirectSolver,
     SteadyStateEigenSolver,
@@ -81,7 +81,7 @@ or
 - `tmax::Real`: The final time step for the steady state problem. Default to `Inf`.
 - `terminate_reltol`: The relative tolerance for stationary state terminate condition. Default to `1e-4`.
 - `terminate_abstol`: The absolute tolerance for stationary state terminate condition. Default to `1e-6`.
-- `return_details::Union{Val, Bool}`: Whether to return the details of the ODE solution. If `Val(true)`, the function will return a tuple of the steady state and a `NamedTuple` containing the ODE solution details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
+- `return_details::Union{Val, Bool}`: Whether to return the details of the ODE solution. If `Val(true)`, the [`steadystate`](#ref) function will return a 2-element tuple: the steady state and an extra `NamedTuple` containing the ODE solution details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
 
 !!! warning "Tolerances for terminate condition"
     The terminate condition tolerances `terminate_reltol` and `terminate_abstol` should be larger than `reltol` and `abstol` of [`mesolve`](@ref), respectively.
@@ -361,9 +361,6 @@ In the case of `SSFloquetEffectiveLiouvillian`, instead, the effective Liouvilli
 !!! note "different return"
     The two solvers returns different objects. The `SteadyStateLinearSolver` returns a list of [`QuantumObject`](@ref), containing the density matrices for each Fourier component (``\hat{\rho}_{-n}``, with ``n`` from ``0`` to ``n_\textrm{max}``), while the `SSFloquetEffectiveLiouvillian` returns only ``\hat{\rho}_0``. 
 
-!!! note
-    `steadystate_floquet` is a synonym of `steadystate_fourier`.
-
 ## Arguments
 - `H_0::QuantumObject`: The Hamiltonian or the Liouvillian of the undriven system.
 - `H_p::QuantumObject`: The Hamiltonian or the Liouvillian of the part of the drive that oscillates as ``e^{i \omega t}``.
@@ -482,6 +479,3 @@ function _steadystate_fourier(
 
     return steadystate(L_eff; solver = solver.steadystate_solver, kwargs...)
 end
-
-# TODO: Synonym to align with QuTiP. Track https://github.com/qutip/qutip/issues/2632 when this can be removed.
-const steadystate_floquet = steadystate_fourier

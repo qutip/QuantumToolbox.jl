@@ -84,6 +84,9 @@
     @test abs(sum(sol_me.expect[1, (end - 100):end]) / 101 - expect(e_ops[1], ρ_ss1)) < 1.0e-3
     @test abs(sum(sol_me.expect[1, (end - 100):end]) / 101 - expect(e_ops[1], ρ_ss2)) < 1.0e-3
 
+    # deprecated warning
+    @test_logs (:warn,) steadystate_floquet(H, -1im * 0.5 * H_t, 1im * 0.5 * H_t, 1, c_ops, solver = SteadyStateLinearSolver())
+
     @testset "Type Inference (steadystate_fourier)" begin
         @inferred steadystate_fourier(
             H,

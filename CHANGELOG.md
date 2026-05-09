@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Allow specifying initial guess for `SteadyStateLinearSolver`. ([#698])
-- Add keyword argument (`return_details`) to `SteadyStateODESolver` and simplify the implementation of several `SteadyStateSolver`s. ([#708])
+- Several improvements in `SteadyStateSolver`:
+  - Allow specifying initial guess for `SteadyStateLinearSolver`. ([#698])
+  - Add keyword argument (`return_details`) to `SteadyStateODESolver`. ([#708])
+  - Simplify the implementation of `SteadyStateDirectSolver` and `SteadyStateLinearSolver`. ([#708])
+  - Move `steadystate_floquet` to deprecated function, use `steadystate_fourier` instead. ([#708])
 
 ## [v0.45.0]
 Release date: 2026-04-19
