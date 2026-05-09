@@ -15,6 +15,11 @@
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1.0e-4
 
+    solver = SteadyStateODESolver(return_details = Val(true))
+    ρ_ss, details = steadystate(H, c_ops, solver = solver)
+    @test tracedist(rho_me, ρ_ss) < 1.0e-4
+    @test details.t_final < t_l[end] # this also double checks whether the above `sol_me` has enough time steps to reach the steady state
+
     solver = SteadyStateDirectSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1.0e-4
@@ -40,6 +45,9 @@
 
         solver = SteadyStateODESolver(tmax = t_l[end])
         @inferred steadystate(H, c_ops, solver = solver)
+        @inferred steadystate(L, solver = solver)
+
+        solver = SteadyStateODESolver(tmax = t_l[end], return_details = Val(true))
         @inferred steadystate(L, solver = solver)
 
         solver = SteadyStateDirectSolver()

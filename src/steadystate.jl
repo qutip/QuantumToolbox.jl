@@ -78,9 +78,10 @@ or
 # Arguments
 - `alg::AbstractODEAlgorithm=DP5()`: The algorithm to solve the ODE.
 - `ρ0::Union{Nothing,QuantumObject}=nothing`: The initial state of the system. If not specified, a random density matrix state will be generated.
-- `tmax::Real=Inf`: The final time step for the steady state problem.
-- `terminate_reltol` = The relative tolerance for stationary state terminate condition. Default to `1e-4`.
-- `terminate_abstol` = The absolute tolerance for stationary state terminate condition. Default to `1e-6`.
+- `tmax::Real`: The final time step for the steady state problem. Default to `Inf`.
+- `terminate_reltol`: The relative tolerance for stationary state terminate condition. Default to `1e-4`.
+- `terminate_abstol`: The absolute tolerance for stationary state terminate condition. Default to `1e-6`.
+- `return_details::Val{<:Bool}`: Whether to return the details of the ODE solution. If `Val(true)`, the function will return a tuple of the steady state and a `NamedTuple` containing the ODE solution details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
 
 !!! warning "Tolerances for terminate condition"
     The terminate condition tolerances `terminate_reltol` and `terminate_abstol` should be larger than `reltol` and `abstol` of [`mesolve`](@ref), respectively.
@@ -93,12 +94,14 @@ Base.@kwdef struct SteadyStateODESolver{
         TT <: Real,
         RT <: Real,
         AT <: Real,
+        DT <: Union{Val, Bool},
     } <: SteadyStateSolver
     alg::MT = DP5()
     ρ0::ST = nothing
     tmax::TT = Inf
     terminate_reltol::RT = 1.0e-4
     terminate_abstol::AT = 1.0e-6
+    return_details::DT = Val(false)
 end
 
 @doc raw"""
@@ -151,38 +154,53 @@ function steadystate(
     return _steadystate(L, solver; kwargs...)
 end
 
-function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinearSolver; kwargs...)
-    L_tmp = L.data
-    state_dimensions = L.dimensions.to.op_dims
-    N = get_size(state_dimensions)[1]
-    weight = norm(L_tmp, 1) / length(L_tmp)
-
-    v0 = _dense_similar(L_tmp, N^2)
-    fill!(v0, 0)
-    allowed_setindex!(v0, weight, 1) # Because scalar indexing is not allowed on GPU arrays
-
-    idx_range = collect(1:N)
-    rows = _dense_similar(L_tmp, N)
-    cols = _dense_similar(L_tmp, N)
-    vals = _dense_similar(L_tmp, N)
+# this function is used for SteadyStateDirectSolver and SteadyStateLinearSolver to handle the trace preserving condition
+function _handle_steady_state_trace_preserving_condition(A::AbstractMatrix, N_op::Int, N_super::Int)
+    # [ solving linear problem: Ax = b ]
+    # handle A (Liouvillian) to include the trace preserving condition
+    weight = norm(A, 1) / length(A)
+    idx_range = collect(1:N_op)
+    rows = _dense_similar(A, N_op)
+    cols = _dense_similar(A, N_op)
+    vals = _dense_similar(A, N_op)
     fill!(rows, 1)
-    copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
+    copyto!(cols, N_op .* (idx_range .- 1) .+ idx_range)
     fill!(vals, weight)
-    Tn = _sparse_similar(L_tmp, rows, cols, vals, N^2, N^2)
-    L_tmp = L_tmp + Tn
+    Tn = _sparse_similar(A, rows, cols, vals, N_super, N_super)
+    A_new = A + Tn
 
-    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
+    # handle b to include the trace preserving condition
+    b = _dense_similar(A_new, N_super)
+    fill!(b, 0)
+    allowed_setindex!(b, weight, 1) # Because scalar indexing is not allowed on GPU arrays
 
+    return A_new, b
+end
+
+function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinearSolver; kwargs...)
+    (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && throw(ArgumentError("The use of preconditioners (Pl or Pr) must be defined in the solver."))
+
+    # handle dimensions
+    state_dimensions = L.dimensions.to.op_dims
+    N_op = get_size(state_dimensions)[1]
+    N_super = N_op^2
+
+    # handle initial guess of u (steady state) and return dimensions
+    # u0 can be useful for parameter sweeps when the steady state changes smoothly with the parameters
     u0 = if isnothing(solver.ρ0)
         nothing
     else
         _, u0_data, _, _ = _handle_init_state_and_sol_type_dims(L, solver.ρ0)
         u0_data
     end
-    prob = LinearProblem{true}(L_tmp, v0, u0 = u0) # add u0 support for SteadyStateLinearSolver case. it can be useful for parameter sweeps when the steady state changes smoothly with the parameters.
+
+    # linear problem: Au = b
+    A, b = _handle_steady_state_trace_preserving_condition(L.data, N_op, N_super)
+
+    prob = LinearProblem{true}(A, b, u0 = u0)
     ρss_vec = solve(prob, solver.alg; kwargs...).u
 
-    ρss = reshape(ρss_vec, N, N)
+    ρss = reshape(ρss_vec, N_op, N_op)
     ρss = (ρss + ρss') / 2 # Hermitianize
     return QuantumObject(ρss, Operator(), state_dimensions)
 end
@@ -201,28 +219,17 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateEigenS
 end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirectSolver)
-    L_tmp = L.data
+    # handle dimensions
     state_dimensions = L.dimensions.to.op_dims
-    N = get_size(state_dimensions)[1]
-    weight = norm(L_tmp, 1) / length(L_tmp)
+    N_op = get_size(state_dimensions)[1]
+    N_super = N_op^2
 
-    v0 = _dense_similar(L_tmp, N^2)
-    fill!(v0, 0)
-    allowed_setindex!(v0, weight, 1) # Because scalar indexing is not allowed on GPU arrays
+    # linear problem: Au = b
+    A, b = _handle_steady_state_trace_preserving_condition(L.data, N_op, N_super)
 
-    idx_range = collect(1:N)
-    rows = _dense_similar(L_tmp, N)
-    cols = _dense_similar(L_tmp, N)
-    vals = _dense_similar(L_tmp, N)
-    fill!(rows, 1)
-    copyto!(cols, N .* (idx_range .- 1) .+ idx_range)
-    fill!(vals, weight)
-    Tn = _sparse_similar(L_tmp, rows, cols, vals, N^2, N^2)
-    L_tmp = L_tmp + Tn
-
-    F = solver.factorization(L_tmp)
-    ρss_vec = F \ v0 # This is still not supported on GPU, yet
-    ρss = reshape(ρss_vec, N, N)
+    F = solver.factorization(A)
+    ρss_vec = F \ b # This is still not supported on GPU, yet
+    ρss = reshape(ρss_vec, N_op, N_op)
     ρss = (ρss + ρss') / 2 # Hermitianize
     return QuantumObject(ρss, Operator(), state_dimensions)
 end
@@ -251,7 +258,15 @@ function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadySta
 
     sol = mesolve(L, ρ0, tlist; kwargs3...)
     ρss = sol.states[end]
-    return ρss
+
+    if getVal(solver.return_details)
+        details = (
+            t_final = sol.times_states[end], # sol.times_states relates to sol.t in OrdinaryDiffEq.jl
+        )
+        return ρss, details
+    else
+        return ρss
+    end
 end
 
 _steadystate(
