@@ -8,7 +8,7 @@ import Base: AbstractVecOrTuple
 import Distributed: RemoteChannel
 import LinearAlgebra: checksquare
 import Pkg
-import Random: AbstractRNG, default_rng, seed!
+import Random: AbstractRNG, default_rng
 import Statistics: mean, std
 
 ## SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)

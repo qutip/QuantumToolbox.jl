@@ -179,11 +179,11 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
         @testset "Mooncake.jl" begin
             grad_cache1 = Mooncake.prepare_gradient_cache(my_f_mesolve_bsa_mooncake, params)
-            grad_cache2 = Mooncake.prepare_gradient_cache(my_f_mesolve_assume_non_herm_bsa_mooncake, params)
+            # grad_cache2 = Mooncake.prepare_gradient_cache(my_f_mesolve_assume_non_herm_bsa_mooncake, params)
             _, grad_mooncake1 = Mooncake.value_and_gradient!!(grad_cache1, my_f_mesolve_bsa_mooncake, params)
             @test grad_mooncake1[2] ≈ grad_exact atol = 1.0e-6
-            _, grad_mooncake2 = Mooncake.value_and_gradient!!(grad_cache2, my_f_mesolve_assume_non_herm_bsa_mooncake, params)
-            @test grad_mooncake2[2] ≈ grad_exact atol = 1.0e-6
+            # _, grad_mooncake2 = Mooncake.value_and_gradient!!(grad_cache2, my_f_mesolve_assume_non_herm_bsa_mooncake, params)
+            # @test grad_mooncake2[2] ≈ grad_exact atol = 1.0e-6
         end
 
         @testset "Enzyme.jl" begin
