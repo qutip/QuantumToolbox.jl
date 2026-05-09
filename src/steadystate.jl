@@ -81,7 +81,7 @@ or
 - `tmax::Real`: The final time step for the steady state problem. Default to `Inf`.
 - `terminate_reltol`: The relative tolerance for stationary state terminate condition. Default to `1e-4`.
 - `terminate_abstol`: The absolute tolerance for stationary state terminate condition. Default to `1e-6`.
-- `return_details::Val{<:Bool}`: Whether to return the details of the ODE solution. If `Val(true)`, the function will return a tuple of the steady state and a `NamedTuple` containing the ODE solution details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
+- `return_details::Union{Val, Bool}`: Whether to return the details of the ODE solution. If `Val(true)`, the function will return a tuple of the steady state and a `NamedTuple` containing the ODE solution details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
 
 !!! warning "Tolerances for terminate condition"
     The terminate condition tolerances `terminate_reltol` and `terminate_abstol` should be larger than `reltol` and `abstol` of [`mesolve`](@ref), respectively.
