@@ -32,7 +32,8 @@ struct SteadyStateEigenSolver <: SteadyStateSolver end
 @doc raw"""
     SteadyStateLinearSolver(
         alg = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I)),
-        ρ0 = nothing
+        ρ0 = nothing,
+        return_details = Val(false),
     )
 
 A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillian [`SuperOperator`](@ref) using the `alg`orithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/).
@@ -40,6 +41,7 @@ A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillia
 # Arguments
 - `alg::SciMLLinearSolveAlgorithm=KrylovJL_GMRES()`: algorithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/)
 - `ρ0::Union{Nothing, QuantumObject}=nothing`: The initial guess of the `steadystate` solution. If not specified, the initial guess will be handled by the solver.
+- `return_details::Val{<:Bool} = Val(false)`: Whether to return the details of the `SciMLBase.LinearSolution`. If `Val(true)`, the [`steadystate`](#ref) function will return a 2-element tuple: the steady state and an extra `NamedTuple` containing the linear solving details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
 
 # Note
 Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more details about the available algorithms. For example, the preconditioners can be defined directly in the solver like: `SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (I, Diagonal(A))))`.
@@ -47,9 +49,11 @@ Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more 
 Base.@kwdef struct SteadyStateLinearSolver{
         MT <: Union{SciMLLinearSolveAlgorithm, Nothing},
         ST <: Union{Nothing, QuantumObject},
+        DT <: Val,
     } <: SteadyStateSolver
     alg::MT = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
     ρ0::ST = nothing
+    return_details::DT = Val(false)
 end
 
 @doc raw"""
@@ -58,7 +62,8 @@ end
         ρ0 = nothing,
         tmax = Inf,
         terminate_reltol = 1e-4,
-        terminate_abstol = 1e-6
+        terminate_abstol = 1e-6,
+        return_details = Val(false),
     )
 
 An ordinary differential equation (ODE) solver for solving [`steadystate`](@ref). It solves the stationary state based on [`mesolve`](@ref) with a termination condition.
@@ -81,7 +86,7 @@ or
 - `tmax::Real`: The final time step for the steady state problem. Default to `Inf`.
 - `terminate_reltol`: The relative tolerance for stationary state terminate condition. Default to `1e-4`.
 - `terminate_abstol`: The absolute tolerance for stationary state terminate condition. Default to `1e-6`.
-- `return_details::Union{Val, Bool}`: Whether to return the details of the ODE solution. If `Val(true)`, the [`steadystate`](#ref) function will return a 2-element tuple: the steady state and an extra `NamedTuple` containing the ODE solution details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
+- `return_details::Val{<:Bool}`: Whether to return the details of the ODE solution. If `Val(true)`, the [`steadystate`](#ref) function will return a 2-element tuple: the steady state and an extra `NamedTuple` containing the ODE solving details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
 
 !!! warning "Tolerances for terminate condition"
     The terminate condition tolerances `terminate_reltol` and `terminate_abstol` should be larger than `reltol` and `abstol` of [`mesolve`](@ref), respectively.
@@ -94,7 +99,7 @@ Base.@kwdef struct SteadyStateODESolver{
         TT <: Real,
         RT <: Real,
         AT <: Real,
-        DT <: Union{Val, Bool},
+        DT <: Val,
     } <: SteadyStateSolver
     alg::MT = DP5()
     ρ0::ST = nothing
@@ -198,11 +203,22 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
     A, b = _handle_steady_state_trace_preserving_condition(L.data, N_op, N_super)
 
     prob = LinearProblem{true}(A, b, u0 = u0)
-    ρss_vec = solve(prob, solver.alg; kwargs...).u
+    sol = solve(prob, solver.alg; kwargs...)
 
-    ρss = reshape(ρss_vec, N_op, N_op)
-    ρss = (ρss + ρss') / 2 # Hermitianize
-    return QuantumObject(ρss, Operator(), state_dimensions)
+    ρss_data = reshape(sol.u, N_op, N_op)
+    ρss = QuantumObject((ρss_data + ρss_data') / 2, Operator(), state_dimensions) # Hermitianize
+
+    if getVal(solver.return_details)
+        # several details stored in SciMLBase.LinearSolution
+        details = (
+            retcode = sol.retcode,
+            stats = sol.stats,
+        )
+        return ρss, details
+    else
+        return ρss
+    end
+    return ρss
 end
 
 function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateEigenSolver; kwargs...)
@@ -228,7 +244,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateDirect
     A, b = _handle_steady_state_trace_preserving_condition(L.data, N_op, N_super)
 
     F = solver.factorization(A)
-    ρss_vec = F \ b # This is still not supported on GPU, yet
+    ρss_vec = F \ b
     ρss = reshape(ρss_vec, N_op, N_op)
     ρss = (ρss + ρss') / 2 # Hermitianize
     return QuantumObject(ρss, Operator(), state_dimensions)

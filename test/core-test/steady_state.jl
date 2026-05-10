@@ -35,6 +35,11 @@
     @test tracedist(rho_me, ρ_ss) < 1.0e-4
     @test_throws ArgumentError steadystate(Ht, c_ops, solver = solver)
 
+    solver = SteadyStateLinearSolver(; ρ0 = rho_me, return_details = Val(true))
+    ρ_ss, details = steadystate(H, c_ops, solver = solver)
+    @test tracedist(rho_me, ρ_ss) < 1.0e-4
+    @test details.stats.niter < 5 # with a good initial guess (ρ0 = rho_me is basically the steady state already), the solver should converge in very few iterations
+
     solver = SteadyStateEigenSolver()
     ρ_ss = steadystate(H, c_ops, solver = solver)
     @test tracedist(rho_me, ρ_ss) < 1.0e-4
@@ -56,6 +61,9 @@
 
         solver = SteadyStateLinearSolver()
         @inferred steadystate(H, c_ops, solver = solver)
+        @inferred steadystate(L, solver = solver)
+
+        solver = SteadyStateLinearSolver(; return_details = Val(true))
         @inferred steadystate(L, solver = solver)
 
         solver = SteadyStateEigenSolver()

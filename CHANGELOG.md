@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Several improvements in `SteadyStateSolver`:
   - Allow specifying initial guess for `SteadyStateLinearSolver`. ([#698])
-  - Add keyword argument (`return_details`) to `SteadyStateODESolver`. ([#708])
+  - Add keyword argument (`return_details`) to `SteadyStateODESolver` and `SteadyStateLinearSolver`. ([#708])
   - Simplify the implementation of `SteadyStateDirectSolver` and `SteadyStateLinearSolver`. ([#708])
   - Move `steadystate_floquet` to deprecated function, use `steadystate_fourier` instead. ([#708])
 - Bump compat for several package of SciML ecosystem. ([#697])
