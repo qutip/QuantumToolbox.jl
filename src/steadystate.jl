@@ -41,7 +41,7 @@ A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillia
 # Arguments
 - `alg::SciMLLinearSolveAlgorithm=KrylovJL_GMRES()`: algorithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/)
 - `ρ0::Union{Nothing, QuantumObject}=nothing`: The initial guess of the `steadystate` solution. If not specified, the initial guess will be handled by the solver.
-- `return_details::Val{<:Bool} = Val(false)`: Whether to return the details of the `SciMLBase.LinearSolution`. If `Val(true)`, the [`steadystate`](#ref) function will return a 2-element tuple: the steady state and an extra `NamedTuple` containing the linear solving details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
+- `return_details::Val{<:Bool}`: Whether to return the details from the `SciMLBase.LinearSolution`. If `Val(true)`, the [`steadystate`](#ref) function will return a 2-element tuple: the steady state and an extra `NamedTuple` containing the linear solve details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
 
 # Note
 Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more details about the available algorithms. For example, the preconditioners can be defined directly in the solver like: `SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (I, Diagonal(A))))`.
@@ -86,7 +86,7 @@ or
 - `tmax::Real`: The final time step for the steady state problem. Default to `Inf`.
 - `terminate_reltol`: The relative tolerance for stationary state terminate condition. Default to `1e-4`.
 - `terminate_abstol`: The absolute tolerance for stationary state terminate condition. Default to `1e-6`.
-- `return_details::Val{<:Bool}`: Whether to return the details of the ODE solution. If `Val(true)`, the [`steadystate`](#ref) function will return a 2-element tuple: the steady state and an extra `NamedTuple` containing the ODE solving details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
+- `return_details::Val{<:Bool}`: Whether to return the details from the ODE solution. If `Val(true)`, the [`steadystate`](#ref) function will return a 2-element tuple: the steady state and an extra `NamedTuple` containing the ODE solve details. If `Val(false)`, only the steady state will be returned. Default to `Val(false)`.
 
 !!! warning "Tolerances for terminate condition"
     The terminate condition tolerances `terminate_reltol` and `terminate_abstol` should be larger than `reltol` and `abstol` of [`mesolve`](@ref), respectively.
@@ -277,6 +277,7 @@ function _steadystate(L::AbstractQuantumObject{SuperOperator}, solver::SteadySta
 
     if getVal(solver.return_details)
         details = (
+            retcode = sol.retcode,
             t_final = sol.times_states[end], # sol.times_states relates to sol.t in OrdinaryDiffEq.jl
         )
         return ρss, details
