@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Add keyword argument (`return_details`) to `SteadyStateODESolver`. ([#708])
   - Simplify the implementation of `SteadyStateDirectSolver` and `SteadyStateLinearSolver`. ([#708])
   - Move `steadystate_floquet` to deprecated function, use `steadystate_fourier` instead. ([#708])
+- Bump compat for several package of SciML ecosystem. ([#697])
+  - `SciMLBase.jl` v3
+  - `OrdinaryDiffEqCore.jl` v4
+  - `OrdinaryDiffEqLowOrderRK.jl` v2
+  - `OrdinaryDiffEqVerner.jl` v2
+  - `StochasticDiffEqHighOrder.jl` v2
 
 ## [v0.45.0]
 Release date: 2026-04-19
@@ -492,5 +498,6 @@ Release date: 2024-11-13
 [#689]: https://github.com/qutip/QuantumToolbox.jl/issues/689
 [#690]: https://github.com/qutip/QuantumToolbox.jl/issues/690
 [#692]: https://github.com/qutip/QuantumToolbox.jl/issues/692
+[#697]: https://github.com/qutip/QuantumToolbox.jl/issues/697
 [#698]: https://github.com/qutip/QuantumToolbox.jl/issues/698
 [#708]: https://github.com/qutip/QuantumToolbox.jl/issues/708

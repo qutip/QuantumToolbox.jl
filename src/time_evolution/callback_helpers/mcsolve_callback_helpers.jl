@@ -62,7 +62,7 @@ function _save_func_mcsolve(u, integrator, e_ops, iter, expvals)
     @. expvals[:, iter[]] = _expect(e_ops)
     iter[] += 1
 
-    u_modified!(integrator, false)
+    derivative_discontinuity!(integrator, false)
     return nothing
 end
 
@@ -153,7 +153,7 @@ function _lindblad_jump_affect!(
         resize!(col_times, length(col_times) + COL_TIMES_WHICH_INIT_SIZE)
         resize!(col_which, length(col_which) + COL_TIMES_WHICH_INIT_SIZE)
     end
-    u_modified!(integrator, true)
+    derivative_discontinuity!(integrator, true)
     return nothing
 end
 

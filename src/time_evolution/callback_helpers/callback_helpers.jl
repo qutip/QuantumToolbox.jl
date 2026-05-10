@@ -102,13 +102,13 @@ end
 # When e_ops is Nothing. Common for all solvers
 function _save_func(integrator, progr)
     next!(progr)
-    u_modified!(integrator, false)
+    derivative_discontinuity!(integrator, false)
     return nothing
 end
 
 # When progr is Nothing. Common for all solvers
 function _save_func(integrator, progr::Nothing)
-    u_modified!(integrator, false)
+    derivative_discontinuity!(integrator, false)
     return nothing
 end
 
