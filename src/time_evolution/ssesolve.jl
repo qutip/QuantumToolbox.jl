@@ -235,8 +235,6 @@ function ssesolveEnsembleProblem(
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
-            rng,
-            ntraj,
             tlist,
             _stochastic_prob_func;
             sc_ops = sc_ops,
@@ -270,7 +268,7 @@ function ssesolveEnsembleProblem(
         prob_sme.times,
         prob_sme.states_type,
         prob_sme.dimensions,
-        (progr = _output_func[2], channel = _output_func[3]),
+        (progr = _output_func[2], channel = _output_func[3], rng = rng),
     )
 
     return ensemble_prob
@@ -405,23 +403,23 @@ function ssesolve(
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         keep_runs_results = Val(false),
     )
-    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj; rng = ens_prob.kwargs.rng)
 
-    _sol_1 = sol[:, 1]
+    _sol_1 = sol.u[1]
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncSSESolve)
     _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSSESolve)
 
     normalize_states = Val(false)
     dimensions = ens_prob.dimensions
     _expvals_all =
-        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
+        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol.u[i], SaveFuncSSESolve), eachindex(sol.u))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
-    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dimensions), normalize_states), eachindex(sol)), dims = 1)
+    states_all = stack(map(i -> _normalize_state!.(sol.u[i].u, Ref(dimensions), normalize_states), eachindex(sol.u)), dims = 1)
 
     _m_expvals =
-        _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
+        _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol.u[i], SaveFuncSSESolve), eachindex(sol.u))
     m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2)
 
     kwargs = NamedTuple(_sol_1.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility

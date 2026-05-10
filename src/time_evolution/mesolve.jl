@@ -368,7 +368,7 @@ function mesolve_map(
     ) where {StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     # generate ensemble problem
     ntraj = length(iter)
-    _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func
+    _prob_func = isnothing(prob_func) ? (prob, ctx) -> _se_me_map_prob_func(prob, ctx, iter) : prob_func
     _output_func =
         isnothing(output_func) ?
         _ensemble_dispatch_output_func(
@@ -389,6 +389,6 @@ function mesolve_map(
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     # handle solution and make it become an Array of TimeEvolutionSol
-    sol_vec = [_gen_mesolve_solution(sol[:, i], prob) for i in eachindex(sol)] # map is type unstable
+    sol_vec = [_gen_mesolve_solution(sol.u[i], prob) for i in eachindex(sol.u)] # map is type unstable
     return reshape(sol_vec, size(iter))
 end
