@@ -37,10 +37,11 @@
 
     H = 1 * a' * a + 1 * sz / 2 + 0.5 * (a + a') * sx
 
-    fields = [sqrt(0.01) * (a + a'), sqrt(0.01) * sx]
-    Tlist = [0, 0.0]
+    fields = (sqrt(0.01) * (a + a'), sqrt(0.01) * sx)
+    Tlist = (0.0, 0.0)
+    σ_filter = 4.0
 
-    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
+    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = σ_filter)
     Ω = to_sparse((E' .- E)[1:N_trunc, 1:N_trunc], tol)
 
     H_d = U' * H * U
@@ -50,20 +51,31 @@
 
     # Standard liouvillian case
     c_ops = [sqrt(0.01) * a2, sqrt(0.01) * sm2]
-    L2 = liouvillian(H_d, c_ops)
+    L_std = liouvillian(H_d, c_ops)
 
-    @test (expect(Hermitian(Xp' * Xp), steadystate(L1)) < 1.0e-10 && expect(Hermitian(Xp' * Xp), steadystate(L2)) > 1.0e-3)
+    @test (expect(Hermitian(Xp' * Xp), steadystate(L1)) < 1.0e-10 && expect(Hermitian(Xp' * Xp), steadystate(L_std)) > 1.0e-3)
 
     # Test that in the limit of σ_filter → 0, we recover the dressed master equation as in https://doi.org/10.1103/PhysRevA.84.043832
     L_gme_0 = liouvillian_dressed_nonsecular(H, fields, Tlist, tol = tol, σ_filter = 1.0e-14)[3]
     L_dr = dressed_liouvillian(H, fields, tol = tol)
     @test norm(L_gme_0.data - L_dr.data) / size(L_gme_0.data, 1) < 1.0e-8
 
+    # Test matrix-form output against vectorized output for the unfiltered case.
+    L_vec_nf = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = nothing)[3]
+    L_mat_nf =
+        liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = nothing, matrix_form = Val(true))[3]
+
+    ρ_test = rand_dm(N_trunc)
+    dρ_vec = vector_to_operator(L_vec_nf * operator_to_vector(ρ_test))
+    L_mat_nf_cached = cache_operator(L_mat_nf, ρ_test)
+    dρ_mat = L_mat_nf_cached * ρ_test
+    @test dρ_mat ≈ dρ_vec atol = 1.0e-10
+
     H = 1 * a' * a + 1 * sz / 2 + 1.0e-5 * (a * sp + a' * sm)
 
-    Tlist = [0.2, 0.0]
+    Tlist = (0.2, 0.0)
 
-    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
+    E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = σ_filter)
     Ω = to_sparse((E' .- E)[1:N_trunc, 1:N_trunc], tol)
 
     H_d = U' * H * U
@@ -87,10 +99,15 @@
 
             H = 1 * a' * a + 1 * sz / 2 + 0.5 * (a + a') * sx
 
-            fields = [sqrt(0.01) * (a + a'), sqrt(0.01) * sx]
-            Tlist = [0, 0.01]
+            fields = (sqrt(0.01) * (a + a'), sqrt(0.01) * sx)
+            Tlist = (0.0, 0.01)
 
-            @inferred liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
+            σ_filter = 4.0
+
+            @inferred liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = nothing)
+            @inferred liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = σ_filter)
+
+            @inferred liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = nothing, matrix_form = Val(true))
         end
     end
 end

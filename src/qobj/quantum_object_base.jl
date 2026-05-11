@@ -4,7 +4,7 @@ This file defines the AbstractQuantumObject structure, all the type structures f
 =#
 
 export AbstractQuantumObject
-export QuantumObjectType, SuperOperatorType, Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator
+export QuantumObjectType, SuperOperatorType, Bra, Ket, Operator, OperatorBra, OperatorKet, SuperOperator, SuperOperatorMatrixForm
 
 @doc raw"""
     abstract type AbstractQuantumObject{ObjType,DimType,DataType}
@@ -53,11 +53,20 @@ Base.show(io::IO, ::Operator) = print(io, "Operator()")
 @doc raw"""
     SuperOperator <: SuperOperatorType
 
-Constructor representing a super-operator ``\hat{\mathcal{O}}`` acting on vectorized density operator matrices.
+Constructor representing a super-operator ``\hat{\mathcal{O}}`` acting on **vectorized** density operator matrices.
 """
 struct SuperOperator <: SuperOperatorType end
 
 Base.show(io::IO, ::SuperOperator) = print(io, "SuperOperator()")
+
+@doc raw"""
+    SuperOperatorMatrixForm <: SuperOperatorType
+
+Constructor representing a super-operator ``\hat{\mathcal{O}}`` acting on **non-vectorized** density operator matrices.
+"""
+struct SuperOperatorMatrixForm <: SuperOperatorType end
+
+Base.show(io::IO, ::SuperOperatorMatrixForm) = print(io, "SuperOperatorMatrixForm()")
 
 @doc raw"""
     OperatorBra <: QuantumObjectType
@@ -153,6 +162,11 @@ function _check_QuantumObject(::SuperOperator, dimensions::Dimensions, array_siz
     return nothing
 end
 
+function _check_QuantumObject(::SuperOperatorMatrixForm, dimensions::Dimensions, array_size::NTuple{N, Int}) where {N}
+    (get_size(dimensions) == array_size) || _dims_and_array_mismatch_error("SuperOperatorMatrixForm", dimensions, array_size)
+    return nothing
+end
+
 function _check_QuantumObject(::OperatorKet, dimensions::Dimensions, array_size::NTuple{N, Int}) where {N}
     (length(array_size) == 1) || _type_and_array_mismatch_error("OperatorKet", array_size)
 
@@ -209,6 +223,7 @@ _gen_dimensions(::Operator, dims::AbstractSpace) = Dimensions(dims, dims) # is e
 _gen_dimensions(::OperatorKet, dims::AbstractSpace) = Dimensions(dims, Space(1))
 _gen_dimensions(::OperatorBra, dims::AbstractSpace) = Dimensions(Space(1), dims)
 _gen_dimensions(::SuperOperator, dims::AbstractSpace) = Dimensions(dims, dims) # is endomorphic
+_gen_dimensions(::SuperOperatorMatrixForm, dims::AbstractSpace) = Dimensions(dims, dims) # is endomorphic
 
 ## dims::DimsListType{T1, T2} : general nested array
 _gen_dimensions(::QuantumObjectType, dims::DimsListType{T1, T2}) where {T1, T2} = Dimensions(dims)

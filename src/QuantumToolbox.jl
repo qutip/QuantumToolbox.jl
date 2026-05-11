@@ -43,6 +43,8 @@ import SciMLBase:
     AbstractSDEAlgorithm
 import StochasticDiffEqHighOrder: SRA2, SRIW1
 import SciMLOperators:
+    _get_cache_shapes,
+    getcache,
     cache_operator,
     iscached,
     isconstant,
@@ -106,6 +108,7 @@ include("qobj/eigsolve.jl")
 include("qobj/functions.jl")
 include("qobj/states.jl")
 include("qobj/operators.jl")
+include("qobj/superoperators_scimloperators.jl")
 include("qobj/superoperators.jl")
 include("qobj/synonyms.jl")
 include("qobj/block_diagonal_form.jl")

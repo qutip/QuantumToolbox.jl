@@ -90,6 +90,14 @@ function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::AbstractQuantumOb
     QType = promote_op_type(A, B)
     return QType(A.data * B.data, SuperOperator(), Dimensions(A.dimensions.to, B.dimensions.from))
 end
+function Base.:(*)(A::AbstractQuantumObject{SuperOperatorMatrixForm}, B::QuantumObject{Operator})
+    check_mul_dimensions(A, B)
+    return QuantumObject(A.data * B.data, Operator(), Dimensions(A.dimensions.to, B.dimensions.from))
+end
+function Base.:(*)(A::AbstractQuantumObject{SuperOperatorMatrixForm}, B::QuantumObject{OperatorKet})
+    Bmat = vector_to_operator(B)
+    return operator_to_vector(A * Bmat)
+end
 function Base.:(*)(A::AbstractQuantumObject{SuperOperator, <:Dimensions{T1, T2}}, B::QuantumObject{Operator}) where {T1 <: LiouvilleSpace, T2 <: LiouvilleSpace}
     # this case is special because SuperOperator A maps Operator B into another Operator
     check_mul_dimensions(A, B)

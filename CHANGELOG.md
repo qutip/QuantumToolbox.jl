@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Add support for matrix form `liouvillian`, `liouvillian_dressed_nonsecular` and `mesolve` time evolution. By setting `matrix_form = Val(true)`, the density matrix is not vectorized, which improves the memory efficiency for large systems. The superoperators are now stored through SciMLOperators.jl objects. ([#658])
 
 ## [v0.46.0]
 Release date: 2026-05-11
@@ -491,6 +491,7 @@ Release date: 2024-11-13
 [#653]: https://github.com/qutip/QuantumToolbox.jl/issues/653
 [#656]: https://github.com/qutip/QuantumToolbox.jl/issues/656
 [#657]: https://github.com/qutip/QuantumToolbox.jl/issues/657
+[#658]: https://github.com/qutip/QuantumToolbox.jl/issues/658
 [#659]: https://github.com/qutip/QuantumToolbox.jl/issues/659
 [#667]: https://github.com/qutip/QuantumToolbox.jl/issues/667
 [#669]: https://github.com/qutip/QuantumToolbox.jl/issues/669

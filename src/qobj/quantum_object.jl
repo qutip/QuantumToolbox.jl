@@ -134,7 +134,7 @@ end
 function Base.show(
         io::IO,
         QO::QuantumObject{OpType},
-    ) where {OpType <: Union{Bra, Ket, OperatorBra, OperatorKet, SuperOperator}}
+    ) where {OpType <: Union{Bra, Ket, OperatorBra, OperatorKet, SuperOperatorType}}
     op_data = QO.data
     println(
         io,
@@ -187,19 +187,32 @@ Here, `u` can be in either the following types:
 """
 SciMLOperators.cache_operator(
     L::AbstractQuantumObject{OpType},
-    u::AbstractVector,
-) where {OpType <: Union{Operator, SuperOperator}} =
+    u::AbstractVecOrMat,
+) where {OpType <: Union{Operator, SuperOperatorType}} =
     get_typename_wrapper(L)(cache_operator(L.data, to_dense(similar(u))), L.type, L.dimensions)
 
 function SciMLOperators.cache_operator(
         L::AbstractQuantumObject{OpType},
         u::QuantumObject{SType},
-    ) where {OpType <: Union{Operator, SuperOperator}, SType <: Union{Ket, OperatorKet}}
-    if isoper(L) && isoperket(u)
-        throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))
-    elseif issuper(L) && isket(u)
-        throw(ArgumentError("The input state `u` must be an OperatorKet if `L` is a SuperOperator."))
+    ) where {OpType <: Union{Operator, SuperOperatorType}, SType <: Union{Ket, Operator, OperatorKet}}
+    if isoper(L)
+        if !isket(u)
+            throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))
+        end
+    elseif issuper(L)
+        if !isoperket(u)
+            throw(ArgumentError("The input state `u` must be an OperatorKet if `L` is a SuperOperator."))
+        end
+    elseif issupermatform(L)
+        if !isoper(u)
+            throw(ArgumentError("The input state `u` must be an Operator if `L` is a SuperOperatorMatrixForm in matrix form."))
+        end
     end
+
+    # (isoper(L) && isket(u)) || throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))
+    # (issuper(L) && isoperket(u)) || throw(ArgumentError("The input state `u` must be an OperatorKet if `L` is a SuperOperator."))
+    # (issupermatform(L) && isoper(u)) || throw(ArgumentError("The input state `u` must be an Operator if `L` is a SuperOperatorMatrixForm in matrix form."))
+
     check_mul_dimensions(L, u)
     return cache_operator(L, u.data)
 end

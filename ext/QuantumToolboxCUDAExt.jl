@@ -1,5 +1,6 @@
 module QuantumToolboxCUDAExt
 
+import LinearAlgebra
 using QuantumToolbox
 using QuantumToolbox: makeVal, getVal
 import QuantumToolbox: _sparse_similar, _convert_eltype_wordsize
@@ -8,7 +9,7 @@ import CUDA.CUSPARSE: CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR
 import SparseArrays: SparseVector, SparseMatrixCSC, sparse
 import CUDA.Adapt: adapt
 
-allowscalar(false)
+LinearAlgebra.dot(x::CuSparseVector{T}, y::CuArray{T, 2}) where {T} = dot(x, reshape(y, :))
 
 @doc raw"""
     CuArray(A::QuantumObject)
