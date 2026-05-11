@@ -189,3 +189,13 @@ function liouvillian_generalized(args...; kwargs...)
     )
     return liouvillian_dressed_nonsecular(args...; kwargs...)
 end
+
+export steadystate_floquet
+function steadystate_floquet(args...; kwargs...)
+    Base.depwarn(
+        "`steadystate_floquet` is deprecated and will be removed in next major release, use `steadystate_fourier` instead.",
+        :steadystate_floquet,
+        force = true,
+    )
+    return steadystate_fourier(args...; kwargs...)
+end
