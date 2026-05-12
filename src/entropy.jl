@@ -143,11 +143,11 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
 function entropy_mutual(
-        ρAB::QuantumObject{ObjType, <:Dimensions{<:TensorSpace{N}, <:TensorSpace{N}}}, # the dimensions to == from, and should both be TensorSpace
+        ρAB::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}, <:TensorSpace{N}}}, # the dimensions to == from, and should both be TensorSpace
         selA::Union{Int, AbstractVecOrTuple{Int}},
         selB::Union{Int, AbstractVecOrTuple{Int}};
         kwargs...,
-    ) where {ObjType <: Union{Ket, Operator}, N}
+    ) where {N}
     # check if selA and selB matches the dimensions of ρAB
     sel_A_B = (selA..., selB...)
     (length(sel_A_B) != N) && throw(
@@ -161,6 +161,12 @@ function entropy_mutual(
     ρB = ptrace(ρAB, selB)
     return entropy_vn(ρA; kwargs...) + entropy_vn(ρB; kwargs...) - entropy_vn(ρAB; kwargs...)
 end
+entropy_mutual(
+    ρAB::QuantumObject{Ket, <:Dimensions{<:TensorSpace{N}, Space}}, # the dimensions `to` should be TensorSpace
+    selA::Union{Int, AbstractVecOrTuple{Int}},
+    selB::Union{Int, AbstractVecOrTuple{Int}};
+    kwargs...,
+) where {N} = entropy_mutual(ket2dm(ρAB), selB, selA; kwargs...)
 
 @doc raw"""
     entropy_conditional(ρAB::QuantumObject, selB; kwargs...)
