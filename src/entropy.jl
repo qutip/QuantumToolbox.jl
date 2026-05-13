@@ -166,7 +166,7 @@ entropy_mutual(
     selA::Union{Int, AbstractVecOrTuple{Int}},
     selB::Union{Int, AbstractVecOrTuple{Int}};
     kwargs...,
-) where {N} = entropy_mutual(ket2dm(ρAB), selB, selA; kwargs...)
+) where {N} = entropy_mutual(ket2dm(ρAB), selA, selB; kwargs...)
 
 @doc raw"""
     entropy_conditional(ρAB::QuantumObject, selB; kwargs...)
