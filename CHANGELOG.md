@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Use `expm1` in `n_thermal` for stability. ([#717], [#718])
+- Bump compat for `CUDA.jl` to v6. ([#687])
 
 ## [v0.46.0]
 Release date: 2026-05-11
@@ -500,6 +501,7 @@ Release date: 2024-11-13
 [#681]: https://github.com/qutip/QuantumToolbox.jl/issues/681
 [#682]: https://github.com/qutip/QuantumToolbox.jl/issues/682
 [#683]: https://github.com/qutip/QuantumToolbox.jl/issues/683
+[#687]: https://github.com/qutip/QuantumToolbox.jl/issues/687
 [#688]: https://github.com/qutip/QuantumToolbox.jl/issues/688
 [#689]: https://github.com/qutip/QuantumToolbox.jl/issues/689
 [#690]: https://github.com/qutip/QuantumToolbox.jl/issues/690
