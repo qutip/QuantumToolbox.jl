@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Use `expm1` in `n_thermal` for stability. ([#717], [#718])
+
+## [v0.46.0]
+Release date: 2026-05-11
+
+- Several improvements in `SteadyStateSolver`:
+  - Allow specifying initial guess for `SteadyStateLinearSolver`. ([#698])
+  - Add keyword argument (`return_details`) to `SteadyStateODESolver` and `SteadyStateLinearSolver`. ([#708])
+  - Simplify the implementation of `SteadyStateDirectSolver` and `SteadyStateLinearSolver`. ([#708])
+  - Move `steadystate_floquet` to deprecated function, use `steadystate_fourier` instead. ([#708])
+- Bump compat for several package of SciML ecosystem. ([#697])
+  - `SciMLBase.jl` v3
+  - `OrdinaryDiffEqCore.jl` v4
+  - `OrdinaryDiffEqLowOrderRK.jl` v2
+  - `OrdinaryDiffEqVerner.jl` v2
+  - `StochasticDiffEqHighOrder.jl` v2
+
+## [v0.45.0]
+Release date: 2026-04-19
+
 - Restructure `Dimensions` and `Space` to align with `qutip` (`Python`) ([#659]). Note that this update basically overwrites many changes made in PR [#600]:
   - Replace `ProductDimensions` and `HilbertSpace` structures with `Dimensions` + `Space`/`TensorSpace`/`LiouvilleSpace`.
   - Remove `get_hilbert_size` and `get_liouville_size`, and use `get_size` instead.
@@ -17,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `rand_unitary`
 - Fix benchmarks instability for autodiff. ([#681])
 - Use `StochasticDiffEqHighOrder` as dependency instead of `StochasticDiffEq` for stochastic solvers. ([#682])
+- Fix arithmetic operations (`+`, `-`, `*`) for quantum objects. ([#688])
+- Throw `ArgumentError` for the functions that should not allow time-dependent collapse operators (`c_ops`). ([#689])
+- Use FillArrays for `qeye` and better support to GPU for `steadystate` and `correlation` functions. ([#690])
+- Improve `correlation_2op_1t` and `correlation_3op_1t`. ([#692])
 
 ## [v0.44.0]
 Release date: 2026-03-11
@@ -334,6 +358,8 @@ Release date: 2024-11-13
 [v0.43.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.43.0
 [v0.43.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.43.1
 [v0.44.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.44.0
+[v0.45.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.45.0
+[v0.46.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.46.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -474,3 +500,12 @@ Release date: 2024-11-13
 [#681]: https://github.com/qutip/QuantumToolbox.jl/issues/681
 [#682]: https://github.com/qutip/QuantumToolbox.jl/issues/682
 [#683]: https://github.com/qutip/QuantumToolbox.jl/issues/683
+[#688]: https://github.com/qutip/QuantumToolbox.jl/issues/688
+[#689]: https://github.com/qutip/QuantumToolbox.jl/issues/689
+[#690]: https://github.com/qutip/QuantumToolbox.jl/issues/690
+[#692]: https://github.com/qutip/QuantumToolbox.jl/issues/692
+[#697]: https://github.com/qutip/QuantumToolbox.jl/issues/697
+[#698]: https://github.com/qutip/QuantumToolbox.jl/issues/698
+[#708]: https://github.com/qutip/QuantumToolbox.jl/issues/708
+[#717]: https://github.com/qutip/QuantumToolbox.jl/issues/717
+[#718]: https://github.com/qutip/QuantumToolbox.jl/issues/718

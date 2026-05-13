@@ -390,15 +390,15 @@ This is very useful especially for dispatching which method to use to update the
 =#
 
 # Output function with progress bar update
-function _ensemble_output_func_progress(sol, i, progr, output_func)
+function _ensemble_output_func_progress(sol, ctx, progr, output_func)
     next!(progr)
-    return output_func(sol, i)
+    return output_func(sol, ctx)
 end
 
 # Output function with distributed channel update for progress bar
-function _ensemble_output_func_distributed(sol, i, channel, output_func)
+function _ensemble_output_func_distributed(sol, ctx, channel, output_func)
     put!(channel, true)
-    return output_func(sol, i)
+    return output_func(sol, ctx)
 end
 
 function _ensemble_dispatch_output_func(
@@ -410,7 +410,7 @@ function _ensemble_dispatch_output_func(
     ) where {ET <: Union{EnsembleSerial, EnsembleThreads}}
     if getVal(progress_bar)
         progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
-        f = (sol, i) -> _ensemble_output_func_progress(sol, i, progr, output_func)
+        f = (sol, ctx) -> _ensemble_output_func_progress(sol, ctx, progr, output_func)
         return (f, progr, nothing)
     else
         return (output_func, nothing, nothing)
@@ -427,23 +427,23 @@ function _ensemble_dispatch_output_func(
         progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
 
-        f = (sol, i) -> _ensemble_output_func_distributed(sol, i, progr_channel, output_func)
+        f = (sol, ctx) -> _ensemble_output_func_distributed(sol, ctx, progr_channel, output_func)
         return (f, progr, progr_channel)
     else
         return (output_func, nothing, nothing)
     end
 end
 
-function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
-    seeds = map(i -> rand(rng, UInt64), 1:ntraj)
-    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
+function _ensemble_dispatch_prob_func(tlist, prob_func; kwargs...)
+    return (prob, ctx) -> prob_func(prob, ctx, tlist; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
         ens_prob::TimeEvolutionProblem,
         alg::Union{<:AbstractODEAlgorithm, <:AbstractSDEAlgorithm},
         ensemblealg::ET,
-        ntraj::Int,
+        ntraj::Int;
+        kwargs...
     ) where {ET <: Union{EnsembleSplitThreads, EnsembleDistributed}}
     sol = nothing
 
@@ -453,7 +453,7 @@ function _ensemble_dispatch_solve(
         end
 
         @async begin
-            sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
+            sol = solve(ens_prob.prob, alg, ensemblealg; trajectories = ntraj, kwargs...)
             put!(ens_prob.kwargs.channel, false)
         end
     end
@@ -464,17 +464,18 @@ function _ensemble_dispatch_solve(
         ens_prob::TimeEvolutionProblem,
         alg::Union{<:AbstractODEAlgorithm, <:AbstractSDEAlgorithm},
         ensemblealg,
-        ntraj::Int,
+        ntraj::Int;
+        kwargs...
     )
-    sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
+    sol = solve(ens_prob.prob, alg, ensemblealg; trajectories = ntraj, kwargs...)
     return sol
 end
 
 # For mapped solvers
-function _se_me_map_prob_func(prob, i, repeat, iter)
+function _se_me_map_prob_func(prob, ctx, iter)
     f = deepcopy(prob.f.f)
-    u0 = iter[i][1]
-    p = iter[i][2:end]
+    u0 = iter[ctx.sim_id][1]
+    p = iter[ctx.sim_id][2:end]
     if haskey(prob.kwargs, :callback)
         return remake(prob, f = f, u0 = u0, p = p, callback = deepcopy(prob.kwargs[:callback]))
     else
@@ -486,20 +487,16 @@ end
 #=
  Stochastic funcs
 =#
-function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
-    seed = seeds[i]
-    traj_rng = typeof(rng)()
-    seed!(traj_rng, seed)
-
+function _stochastic_prob_func(prob, ctx, tlist; kwargs...)
     sc_ops = kwargs[:sc_ops]
     store_measurement = kwargs[:store_measurement]
-    noise = _make_noise(prob.prob.tspan[1], sc_ops, store_measurement, traj_rng)
+    noise = _make_noise(prob.prob.tspan[1], sc_ops, store_measurement, ctx.rng)
 
-    return remake(prob.prob, noise = noise, seed = seed)
+    return remake(prob.prob, noise = noise)
 end
 
 # Standard output function which does nothing (used for mapped and stochastic solvers)
-_standard_output_func(sol, i) = (sol, false)
+_standard_output_func(sol, ctx) = (sol, false)
 
 #= 
     Define diagonal or non-diagonal noise depending on the type of `sc_ops`.
@@ -588,7 +585,9 @@ function liouvillian_floquet(
         OpType2 <: Union{Operator, SuperOperator},
         OpType3 <: Union{Operator, SuperOperator},
     }
-    return liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
+    L₀ = liouvillian(H, c_ops)
+    (L₀ isa QuantumObject) || throw(ArgumentError("liouvillian_floquet only supports (time-independent) QuantumObject in c_ops"))
+    return liouvillian_floquet(L₀, liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
 end
 
 function _liouvillian_floquet(

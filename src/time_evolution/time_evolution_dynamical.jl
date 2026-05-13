@@ -337,7 +337,7 @@ function _DSF_mesolve_Affect!(integrator)
     # By doing this, we are assuming that all the arguments of ODEFunction are the default ones
     integrator.f =
         ODEFunction{true, FullSpecialize}(_mesolve_make_L_QobjEvo(H(op_l2, dsf_params), c_ops(op_l2, dsf_params)).data)
-    return u_modified!(integrator, true)
+    return derivative_discontinuity!(integrator, true)
 end
 
 function dsf_mesolveProblem(
@@ -578,10 +578,10 @@ function _DSF_mcsolve_Affect!(integrator)
     # By doing this, we are assuming that the system is time-independent and f is a ScaledOperator
     # of the form -1im * (H - H_nh)
     copyto!(integrator.f.f.L, H(op_l2, dsf_params).data - H_nh)
-    return u_modified!(integrator, true)
+    return derivative_discontinuity!(integrator, true)
 end
 
-function _dsf_mcsolve_prob_func(prob, i, repeat)
+function _dsf_mcsolve_prob_func(prob, ctx)
     params = prob.p
 
     prm = merge(

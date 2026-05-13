@@ -8,7 +8,7 @@ import Base: AbstractVecOrTuple
 import Distributed: RemoteChannel
 import LinearAlgebra: checksquare
 import Pkg
-import Random: AbstractRNG, default_rng, seed!
+import Random: AbstractRNG, default_rng
 import Statistics: mean, std
 
 ## SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
@@ -18,7 +18,7 @@ import SciMLBase:
     init,
     reinit!,
     remake,
-    u_modified!,
+    derivative_discontinuity!,
     NullParameters,
     LinearProblem,
     ODEFunction,
@@ -26,6 +26,7 @@ import SciMLBase:
     ODEProblem,
     SDEProblem,
     EnsembleProblem,
+    EnsembleContext,
     EnsembleAlgorithm,
     EnsembleSerial,
     EnsembleThreads,

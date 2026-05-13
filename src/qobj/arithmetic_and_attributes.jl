@@ -34,9 +34,20 @@ for op in (:(+), :(-), :(*), :(/), :(^))
     end
 end
 
-for op in (:(+), :(-)) # the multiplication of two QuantumObject is handled separately below (since the return QuantumObjectType can change)
+# addition and subtraction for quantum object
+for op in (:(+), :(-))
     @eval begin
-        # A and B should have same QuantumObjectType
+        # unary operations
+        Base.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dimensions)
+
+        # binary operations between Number and QuantumObject (must be Operator or SuperOperator)
+        # the number is treated as a scalar multiplied by identity matrix
+        Base.$op(n::T, A::AbstractQuantumObject{ObjType}) where {T <: Number, ObjType <: Union{Operator, SuperOperator}} =
+            get_typename_wrapper(A)($(op)(n * I, A.data), A.type, A.dimensions)
+        Base.$op(A::AbstractQuantumObject{ObjType}, n::T) where {ObjType <: Union{Operator, SuperOperator}, T <: Number} =
+            get_typename_wrapper(A)($(op)(A.data, n * I), A.type, A.dimensions)
+
+        # binary operations between two QuantumObjects (should have same QuantumObjectType)
         function Base.$op(A::AbstractQuantumObject{AObjType}, B::AbstractQuantumObject{BObjType}) where {AObjType <: QuantumObjectType, BObjType <: QuantumObjectType}
             # avoid the case where A and B have same dimensions but different type, and throw error message
             (AObjType == BObjType) || throw(ArgumentError("Invalid type for A $($op) B, where A is $AObjType and B is $BObjType"))
@@ -47,17 +58,12 @@ for op in (:(+), :(-)) # the multiplication of two QuantumObject is handled sepa
     end
 end
 
-for op in (:(+), :(-), :(*))
-    @eval begin
-        Base.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dimensions)
+# multiplication (quantum object with Number)
+## we treat the Number as a scalar multiplied by identity matrix for GPU compatibility
+Base.:(*)(n::T, A::AbstractQuantumObject) where {T <: Number} = get_typename_wrapper(A)((n * I) * A.data, A.type, A.dimensions)
+Base.:(*)(A::AbstractQuantumObject, n::T) where {T <: Number} = n * A # it is necessary to call the method above (otherwise we will obtain incorrect type for Ket and OperatorKet)
 
-        Base.$op(n::T, A::AbstractQuantumObject) where {T <: Number} =
-            get_typename_wrapper(A)($(op)(n * I, A.data), A.type, A.dimensions)
-        Base.$op(A::AbstractQuantumObject, n::T) where {T <: Number} =
-            get_typename_wrapper(A)($(op)(A.data, n * I), A.type, A.dimensions)
-    end
-end
-
+# multiplication (two quantum objects)
 function Base.:(*)(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
     check_mul_dimensions(A, B)
     QType = promote_op_type(A, B)

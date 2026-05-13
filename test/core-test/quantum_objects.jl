@@ -205,7 +205,10 @@
 
     @testset "arithmetic" begin
         a = sprand(ComplexF64, 100, 100, 0.1)
+        b = rand(ComplexF64, 100)
         a2 = Qobj(a)
+        b2 = Qobj(b, type = Ket())
+        b3 = b2'
         a3 = Qobj(a, type = SuperOperator())
         a4 = to_sparse(a2)
         a4_copy = copy(a4)
@@ -218,11 +221,17 @@
         @test real(a2).data == real(a)
         @test imag(a2).data == imag(a)
         @test +a2 == a2
+        @test +b2 == b2
+        @test +b3 == b3
         @test -(-a2) == a2
+        @test -(-b2) == b2
+        @test -(-b3) == b3
         @test a2^3 ≈ a2 * a2 * a2
         @test a2 + 2 == 2 + a2
         @test (a2 + 2).data == a2.data + 2 * I
         @test a2 * 2 == 2 * a2
+        @test b2 * 2 == 2 * b2
+        @test b3 * 2 == 2 * b3
 
         zero_like = qzero_like(a2)
         iden_like = qeye_like(a3)

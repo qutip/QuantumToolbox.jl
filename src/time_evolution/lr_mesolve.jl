@@ -143,7 +143,7 @@ function _periodicsave_func(integrator)
     ip = integrator.p
     ip.u_save .= integrator.u
     ip.scalars[2] = integrator.t
-    return u_modified!(integrator, false)
+    return derivative_discontinuity!(integrator, false)
 end
 
 _save_control_lr_mesolve(u, t, integrator) = t in integrator.p.times
@@ -161,7 +161,7 @@ function _save_affect_lr_mesolve!(integrator)
         print("\rProgress: $(round(Int, 100 * idx / length(ip.times)))%")
         flush(stdout)
     end
-    return u_modified!(integrator, false)
+    return derivative_discontinuity!(integrator, false)
 end
 
 #=
