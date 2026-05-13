@@ -1,17 +1,19 @@
 using QuantumToolbox
 import LinearAlgebra: Diagonal
 import SparseArrays: SparseMatrixCSC
-using CUDA
-using CUDA.CUSPARSE
+using CUDACore
+using cuSPARSE
 using CUDSS
 using LinearSolve
 
+# print package versions
 QuantumToolbox.about()
-CUDA.versioninfo()
+println("CUDACore Ver. ", pkgversion(CUDACore))
+println("cuSPARSE Ver. ", pkgversion(cuSPARSE))
 
 @testset "CUDA Extension" verbose = true begin
     # Test that scalar indexing is disallowed
-    @test_throws ErrorException CUDA.rand(1)[1]
+    @test_throws ErrorException cu(rand(1))[1]
 
     ψdi = Qobj(Int64[1, 0])
     ψdf = Qobj(Float64[1, 0])
@@ -165,7 +167,7 @@ end
 @testset "CUDA Correlations and Spectrum" begin
     N = 10
     Id = qeye(N)
-    a = destroy(N) |> CUSPARSE.CuSparseMatrixCSR
+    a = destroy(N) |> cuSPARSE.CuSparseMatrixCSR
     H = a' * a
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
     solver = Lanczos()
