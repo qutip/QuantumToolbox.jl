@@ -44,9 +44,14 @@ n(\omega, \omega_{\textrm{th}}) = \frac{1}{e^{\omega/\omega_{\textrm{th}}} - 1},
 where ``\hbar`` is the reduced Planck constant, and ``k_B`` is the Boltzmann constant.
 """
 function n_thermal(ω::T1, ω_th::T2) where {T1 <: Real, T2 <: Real}
-    x = exp(ω / ω_th)
-    n = ((x != 1) && (ω_th > 0)) ? 1 / (x - 1) : 0
-    return _float_type(promote_type(T1, T2))(n)
+    T = _float_type(promote_type(T1, T2))
+    if ω_th <= 0 || ω <= 0
+        return zero(T)
+    end
+
+    n = 1 / expm1(T(ω) / T(ω_th))
+
+    return n
 end
 
 @doc raw"""
