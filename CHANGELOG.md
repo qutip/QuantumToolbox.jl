@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Use `expm1` in `n_thermal` for stability. ([#717])
+- Use `expm1` in `n_thermal` for stability. ([#717], [#718])
 
 ## [v0.46.0]
 Release date: 2026-05-11
@@ -508,3 +508,4 @@ Release date: 2024-11-13
 [#698]: https://github.com/qutip/QuantumToolbox.jl/issues/698
 [#708]: https://github.com/qutip/QuantumToolbox.jl/issues/708
 [#717]: https://github.com/qutip/QuantumToolbox.jl/issues/717
+[#718]: https://github.com/qutip/QuantumToolbox.jl/issues/718
