@@ -1,15 +1,26 @@
 using QuantumToolbox
 import LinearAlgebra: Diagonal
 import SparseArrays: SparseMatrixCSC
+using LinearSolve
+
+# import CUDA libraries
 using CUDACore
 using cuSPARSE
+using cuSOLVER # trigger LinearSolveCUDAExt
 using CUDSS
-using LinearSolve
 
 # print package versions
 QuantumToolbox.about()
-println("CUDACore Ver. ", pkgversion(CUDACore))
-println("cuSPARSE Ver. ", pkgversion(cuSPARSE))
+print(
+    """
+    =========================
+    CUDACore Ver. $(pkgversion(CUDACore))
+    cuSPARSE Ver. $(pkgversion(cuSPARSE))
+    cuSOLVER Ver. $(pkgversion(cuSOLVER))
+    CUDSS    Ver. $(pkgversion(CUDSS))
+    =========================
+    """
+)
 
 @testset "CUDA Extension" verbose = true begin
     # Test that scalar indexing is disallowed
