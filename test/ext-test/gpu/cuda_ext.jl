@@ -1,30 +1,17 @@
 using QuantumToolbox
 import LinearAlgebra: Diagonal
 import SparseArrays: SparseMatrixCSC
-using LinearSolve
-
-# import CUDA libraries
-using CUDACore
-using cuSPARSE
-using cuSOLVER # trigger LinearSolveCUDAExt
+using CUDA
 using CUDSS
+using LinearSolve
 
 # print package versions
 QuantumToolbox.about()
-print(
-    """
-    =========================
-    CUDACore Ver. $(pkgversion(CUDACore))
-    cuSPARSE Ver. $(pkgversion(cuSPARSE))
-    cuSOLVER Ver. $(pkgversion(cuSOLVER))
-    CUDSS    Ver. $(pkgversion(CUDSS))
-    =========================
-    """
-)
+CUDA.versioninfo()
 
 @testset "CUDA Extension" verbose = true begin
     # Test that scalar indexing is disallowed
-    @test_throws ErrorException cu(rand(1))[1]
+    @test_throws ErrorException CUDA.rand(1)[1]
 
     ψdi = Qobj(Int64[1, 0])
     ψdf = Qobj(Float64[1, 0])
@@ -329,7 +316,7 @@ end
         eigvals = 4,
         krylovdim = 30,
         solver = LUFactorization(),
-        v0 = normalize!(cu(rand(ComplexF64, size(L_gpu, 1)))),
+        v0 = normalize!(CUDA.rand(ComplexF64, size(L_gpu, 1))),
     )
 
     @test vals_cpu ≈ vals_gpu atol = 1.0e-8
