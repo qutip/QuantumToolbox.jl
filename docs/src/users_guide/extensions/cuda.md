@@ -4,22 +4,19 @@
 
 This is an extension to support `QuantumObject.data` conversion from standard dense and sparse CPU arrays to GPU ([`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl)) arrays.
 
-This extension will be automatically loaded if user imports `QuantumToolbox.jl` together with any of the following [`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl) libraries:
-
-- `CUDA`
-- `CUDACore`
-- `cuSPARSE`
+This extension will be automatically triggered if `QuantumToolbox.jl`, `CUDACore`, and `cuSPARSE` are all loaded:
 
 ```julia
 using QuantumToolbox
-
-# lightweight import (recommended)
-using CUDACore
-using cuSPARSE
+using CUDACore, cuSPARSE
 CUDACore.allowscalar(false) # Avoid unexpected scalar indexing
+```
 
-# entire CUDA.jl import
-using CUDA
+User can also trigger the extension by importing the entire `CUDA` package, since it internally loads both libraries (`CUDACore` and `cuSPARSE`):
+
+```julia
+using QuantumToolbox
+using CUDA, CUDA.cuSPARSE
 CUDA.allowscalar(false) # Avoid unexpected scalar indexing
 ```
 
