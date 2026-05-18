@@ -2,6 +2,7 @@ using QuantumToolbox
 import LinearAlgebra: Diagonal
 import SparseArrays: SparseMatrixCSC
 using CUDA
+using CUDA.cuSPARSE
 using CUDSS
 using LinearSolve
 
