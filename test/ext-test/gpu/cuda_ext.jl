@@ -329,7 +329,7 @@ end
         eigvals = 4,
         krylovdim = 30,
         solver = LUFactorization(),
-        v0 = normalize!(CUDA.rand(ComplexF64, size(L_gpu, 1))),
+        v0 = normalize!(cu(rand(ComplexF64, size(L_gpu, 1)))),
     )
 
     @test vals_cpu ≈ vals_gpu atol = 1.0e-8
