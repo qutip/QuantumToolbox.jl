@@ -4,26 +4,31 @@
 
 This is an extension to support `QuantumObject.data` conversion from standard dense and sparse CPU arrays to GPU ([`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl)) arrays.
 
-This extension will be automatically loaded if user imports both `QuantumToolbox.jl` and [`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl):
+This extension will be automatically triggered if `QuantumToolbox.jl`, `CUDACore`, and `cuSPARSE` are all loaded:
 
 ```julia
 using QuantumToolbox
-using CUDA
-using CUDA.CUSPARSE
-CUDA.allowscalar(false) # Avoid unexpected scalar indexing
+using CUDACore, cuSPARSE
 ```
 
-We wrapped several functions in `CUDA` and `CUDA.CUSPARSE` in order to not only converting `QuantumObject.data` into GPU arrays, but also changing the element type and word size (`32` and `64`) since some of the GPUs perform better in `32`-bit. The functions are listed as follows (where input `A` is a [`QuantumObject`](@ref)):
+User can also trigger the extension by importing the entire `CUDA` package, since it internally loads both libraries (`CUDACore` and `cuSPARSE`):
+
+```julia
+using QuantumToolbox
+using CUDA, CUDA.cuSPARSE
+```
+
+We wrapped several functions in `CUDACore` and `cuSPARSE` in order to not only converting `QuantumObject.data` into GPU arrays, but also changing the element type and word size (`32` and `64`) since some of the GPUs perform better in `32`-bit. The functions are listed as follows (where input `A` is a [`QuantumObject`](@ref)):
 
 - `cu(A; word_size=64)`: return a new [`QuantumObject`](@ref) with `CUDA` arrays and specified `word_size`.
-- `CuArray(A)`: If `A.data` is a dense array, return a new [`QuantumObject`](@ref) with `CUDA.CuArray`.
-- `CuArray{T}(A)`: If `A.data` is a dense array, return a new [`QuantumObject`](@ref) with `CUDA.CuArray` under element type `T`.
-- `CuSparseVector(A)`: If `A.data` is a sparse vector, return a new [`QuantumObject`](@ref) with `CUDA.CUSPARSE.CuSparseVector`.
-- `CuSparseVector{T}(A)`: If `A.data` is a sparse vector, return a new [`QuantumObject`](@ref) with `CUDA.CUSPARSE.CuSparseVector` under element type `T`.
-- `CuSparseMatrixCSC(A)`: If `A.data` is a sparse matrix, return a new [`QuantumObject`](@ref) with `CUDA.CUSPARSE.CuSparseMatrixCSC`.
-- `CuSparseMatrixCSC{T}(A)`: If `A.data` is a sparse matrix, return a new [`QuantumObject`](@ref) with `CUDA.CUSPARSE.CuSparseMatrixCSC` under element type `T`.
-- `CuSparseMatrixCSR(A)`: If `A.data` is a sparse matrix, return a new [`QuantumObject`](@ref) with `CUDA.CUSPARSE.CuSparseMatrixCSR`.
-- `CuSparseMatrixCSR{T}(A)`: If `A.data` is a sparse matrix, return a new [`QuantumObject`](@ref) with `CUDA.CUSPARSE.CuSparseMatrixCSR` under element type `T`.
+- `CuArray(A)`: If `A.data` is a dense array, return a new [`QuantumObject`](@ref) with `CUDACore.CuArray`.
+- `CuArray{T}(A)`: If `A.data` is a dense array, return a new [`QuantumObject`](@ref) with `CUDACore.CuArray` under element type `T`.
+- `CuSparseVector(A)`: If `A.data` is a sparse vector, return a new [`QuantumObject`](@ref) with `cuSPARSE.CuSparseVector`.
+- `CuSparseVector{T}(A)`: If `A.data` is a sparse vector, return a new [`QuantumObject`](@ref) with `cuSPARSE.CuSparseVector` under element type `T`.
+- `CuSparseMatrixCSC(A)`: If `A.data` is a sparse matrix, return a new [`QuantumObject`](@ref) with `cuSPARSE.CuSparseMatrixCSC`.
+- `CuSparseMatrixCSC{T}(A)`: If `A.data` is a sparse matrix, return a new [`QuantumObject`](@ref) with `cuSPARSE.CuSparseMatrixCSC` under element type `T`.
+- `CuSparseMatrixCSR(A)`: If `A.data` is a sparse matrix, return a new [`QuantumObject`](@ref) with `cuSPARSE.CuSparseMatrixCSR`.
+- `CuSparseMatrixCSR{T}(A)`: If `A.data` is a sparse matrix, return a new [`QuantumObject`](@ref) with `cuSPARSE.CuSparseMatrixCSR` under element type `T`.
 
 We suggest to convert the arrays from CPU to GPU memory by using the function `cu` because it allows different `data`-types of input [`QuantumObject`](@ref).
 

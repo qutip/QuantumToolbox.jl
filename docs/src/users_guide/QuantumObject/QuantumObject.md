@@ -8,10 +8,10 @@ The key difference between classical and quantum mechanics is the use of operato
 - `Base.Matrix` (dense matrix)
 - `SparseArrays.SparseVector` (sparse vector)
 - `SparseArrays.SparseMatrixCSC` (sparse matrix)
-- `CUDA.CuArray` (dense GPU vector / matrix)
-- `CUDA.CUSPARSE.CuSparseVector` (sparse GPU vector)
-- `CUDA.CUSPARSE.CuSparseMatrixCSC` (sparse GPU matrix)
-- `CUDA.CUSPARSE.CuSparseMatrixCSR` (sparse GPU matrix)
+- `CUDACore.CuArray` (dense GPU vector / matrix)
+- `cuSPARSE.CuSparseVector` (sparse GPU vector)
+- `cuSPARSE.CuSparseMatrixCSC` (sparse GPU matrix)
+- `cuSPARSE.CuSparseMatrixCSR` (sparse GPU matrix)
 - and even more ...
 
 !!! note "Support for GPU arrays"
