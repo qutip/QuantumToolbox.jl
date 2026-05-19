@@ -9,7 +9,6 @@ This extension will be automatically triggered if `QuantumToolbox.jl`, `CUDACore
 ```julia
 using QuantumToolbox
 using CUDACore, cuSPARSE
-CUDACore.allowscalar(false) # Avoid unexpected scalar indexing
 ```
 
 User can also trigger the extension by importing the entire `CUDA` package, since it internally loads both libraries (`CUDACore` and `cuSPARSE`):
@@ -17,7 +16,6 @@ User can also trigger the extension by importing the entire `CUDA` package, sinc
 ```julia
 using QuantumToolbox
 using CUDA, CUDA.cuSPARSE
-CUDA.allowscalar(false) # Avoid unexpected scalar indexing
 ```
 
 We wrapped several functions in `CUDACore` and `cuSPARSE` in order to not only converting `QuantumObject.data` into GPU arrays, but also changing the element type and word size (`32` and `64`) since some of the GPUs perform better in `32`-bit. The functions are listed as follows (where input `A` is a [`QuantumObject`](@ref)):
