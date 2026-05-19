@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Fix `entropy_mutual` (mutual information) when the input state is a pure state (`Ket`). ([#716])
 - Use `expm1` in `n_thermal` for stability. ([#717], [#718])
 - Use `CUDACore` and `cuSPARSE` as dependencies instead of `CUDA`. ([#687])
 
@@ -509,5 +510,6 @@ Release date: 2024-11-13
 [#697]: https://github.com/qutip/QuantumToolbox.jl/issues/697
 [#698]: https://github.com/qutip/QuantumToolbox.jl/issues/698
 [#708]: https://github.com/qutip/QuantumToolbox.jl/issues/708
+[#716]: https://github.com/qutip/QuantumToolbox.jl/issues/716
 [#717]: https://github.com/qutip/QuantumToolbox.jl/issues/717
 [#718]: https://github.com/qutip/QuantumToolbox.jl/issues/718

@@ -17,6 +17,10 @@
     IA = qeye(nA, dims = dims)
     IB = qeye(nB, dims = dims)
 
+    # special case for mutual information (also test input state as Ket)
+    Ψbell = bell_state(Val(0), Val(0))
+    @test entropy_mutual(Ψbell, 1, 2) ≈ 2 * log(2) # log(2) + log(2) - 0
+
     # quantum relative entropy
     @test entropy_relative(ρ1, ψ) == Inf
     @test entropy_relative(ρ1, rand_dm(10, rank = 9)) == Inf
