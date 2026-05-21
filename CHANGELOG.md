@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improvement for `multisite_operator` ([#722]):
   - Add a convenient method when the Hilbert space dimension of all sites are equal.
-  - Fix and also improve the docstring. 
+  - Improve the documentation and docstring. 
 
 ## [v0.47.0]
 Release date: 2026-05-19
