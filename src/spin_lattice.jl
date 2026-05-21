@@ -15,8 +15,8 @@ end
 
 #Definition of many-body operators
 @doc raw"""
-    multisite_operator(dims::AbstractVecOrTuple, pairs::Pair{<:Integer,<:QuantumObject}...)
-    multisite_operator(N::Union{Integer, Val}, d::Integer, pairs::Pair{<:Integer,<:QuantumObject}...)
+    multisite_operator(dims::AbstractVecOrTuple, pairs::Pair{Integer,QuantumObject{Operator}}...)
+    multisite_operator(N::Union{Integer, Val}, d::Integer, pairs::Pair{Integer,QuantumObject{Operator}}...)
 
 A Julia function for generating a multi-site operator.
 
@@ -31,13 +31,13 @@ For example, a ``N``-site operator ``\hat{O}`` with operators ``\hat{A}``, ``\ha
 
 # Arguments
 ## first method
-- `dims::AbstractVecOrTuple{<:Integer}`: A list of integers representing the Hilbert space dimensions of each site.
-- `pairs::Pair{<:Integer,<:QuantumObject}...`: A list of pairs where the first element of the pair is the site index and the second element is the operator acting on that site.
+- `dims::AbstractVecOrTuple{Integer}`: A list of integers representing the Hilbert space dimensions of each site.
+- `pairs::Pair{Integer,QuantumObject{Operator}}...`: A list of pairs where the first element of the pair is the site index and the second element is the [`Operator`](@ref) acting on that site.
 
 ## second method
 - `N::Union{Integer, Val}`: The number of sites (`N` or `Val(N)`), and each site is assumed to have the same Hilbert space dimension `d`.
 - `d::Integer`: The Hilbert space dimension of each site. If this argument is not specified, it defaults to `2`, which corresponds to a two-level system.
-- `pairs::Pair{<:Integer,<:QuantumObject}...`: A list of pairs where the first element of the pair is the site index and the second element is the operator acting on that site.
+- `pairs::Pair{Integer,QuantumObject{Operator}}...`: A list of pairs where the first element of the pair is the site index and the second element is the [`Operator`](@ref) acting on that site.
 
 # Returns
 `QuantumObject`: A `QuantumObject` representing the multi-site operator.
@@ -93,7 +93,7 @@ julia> op.dims
 ([2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2])
 ```
 """
-function multisite_operator(dims::AbstractVecOrTuple{T}, pairs::Pair{<:Integer, <:QuantumObject}...) where {T <: Integer}
+function multisite_operator(dims::AbstractVecOrTuple{T}, pairs::Pair{<:Integer, <:QuantumObject{Operator}}...) where {T <: Integer}
     sites_unsorted = collect(first.(pairs))
     idxs = sortperm(sites_unsorted)
     _sites = sites_unsorted[idxs]
@@ -112,12 +112,12 @@ function multisite_operator(dims::AbstractVecOrTuple{T}, pairs::Pair{<:Integer, 
 
     return QuantumObject(data; type = Operator(), dims = dims)
 end
-function multisite_operator(N::Union{Integer, Val}, d::Integer, pairs::Pair{<:Integer, <:QuantumObject}...)
+function multisite_operator(N::Union{Integer, Val}, d::Integer, pairs::Pair{<:Integer, <:QuantumObject{Operator}}...)
     dims = ntuple(j -> d, makeVal(N))
     return multisite_operator(dims, pairs...)
 end
-multisite_operator(N::Union{Integer, Val}, pairs::Pair{<:Integer, <:QuantumObject}...) = multisite_operator(N, 2, pairs...)
-multisite_operator(latt::Lattice, pairs::Pair{<:Integer, <:QuantumObject}...) = multisite_operator(makeVal(latt.N), pairs...)
+multisite_operator(N::Union{Integer, Val}, pairs::Pair{<:Integer, <:QuantumObject{Operator}}...) = multisite_operator(N, 2, pairs...)
+multisite_operator(latt::Lattice, pairs::Pair{<:Integer, <:QuantumObject{Operator}}...) = multisite_operator(makeVal(latt.N), pairs...)
 
 #Definition of nearest-neighbour sites on lattice
 periodic_boundary_conditions(i::Integer, N::Integer) = 1 + (i - 1 + N) % N
