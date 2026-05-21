@@ -10,6 +10,8 @@ To describe the states of multipartite quantum systems (such as two coupled qubi
 
 In `QuantumToolbox`, the function [`tensor`](@ref) (or [`kron`](@ref)) is used to accomplish this task. This function takes a collection of [`Ket`](@ref) or [`Operator`](@ref) as argument and returns a composite [`QuantumObject`](@ref) for the combined Hilbert space. The function accepts an arbitrary number of [`QuantumObject`](@ref) as argument. The `type` of returned [`QuantumObject`](@ref) is the same as that of the input(s).
 
+For many-body systems, the helper function [`multisite_operator`](@ref) is often more convenient than assembling the full tensor product by hand. It builds an operator on the full Hilbert space from a few `Pairs` (`site-index => operator`) and handles the untouched sites implicitly as identities. Note that this function is efficient because it does not construct explicit identity operators for the remaining sites, which avoids extra memory allocation and keeps the operator assembly lightweight. Therefore, [`multisite_operator`](@ref) is especially useful when you want an operator acting on a few selected sites, or an interaction term that is nontrivial only on selected sites, particularly in spin chains and other composite systems with a fixed site ordering.
+
 A collection of [`QuantumObject`](@ref):
 ```@example tensor_products
 tensor(sigmax(), sigmax(), sigmax())
@@ -69,6 +71,16 @@ H = tensor(sigmaz(), qeye(2)) +
     0.05 * tensor(sigmax(), sigmax())
 ```
 
+We can also construct this Hamiltonian using [`multisite_operator`](@ref):
+
+```@example tensor_products
+N = Val(2) # number of sites
+d = 2      # Hilbert space dimension of each site
+H = multisite_operator(N, d, 1 => sigmaz()) + 
+    multisite_operator(N, d, 2 => sigmaz()) + 
+    0.05 * multisite_operator(N, d, 1 => sigmax(), 2 => sigmax())
+```
+
 ### Three coupled qubits
 
 The two-qubit example is easily generalized to three coupled qubits:
@@ -79,6 +91,18 @@ H = tensor(sigmaz(), qeye(2), qeye(2)) +
     tensor(qeye(2), qeye(2), sigmaz()) + 
     0.5  * tensor(sigmax(), sigmax(), qeye(2)) + 
     0.25 * tensor(qeye(2), sigmax(), sigmax())
+```
+
+We can also construct this Hamiltonian using [`multisite_operator`](@ref):
+
+```@example tensor_products
+N = Val(3) # number of sites
+d = 2      # Hilbert space dimension of each site
+H = multisite_operator(N, d, 1 => sigmaz()) +
+    multisite_operator(N, d, 2 => sigmaz()) +
+    multisite_operator(N, d, 3 => sigmaz()) +
+    0.5  * multisite_operator(N, d, 1 => sigmax(), 2 => sigmax()) +
+    0.25 * multisite_operator(N, d, 2 => sigmax(), 3 => sigmax())
 ```
 
 ### A two-level system coupled to a cavity: The Jaynes-Cummings model
