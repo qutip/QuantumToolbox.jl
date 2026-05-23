@@ -74,21 +74,20 @@ H = tensor(sigmaz(), qeye(2)) +
 We can also construct this Hamiltonian using [`multisite_operator`](@ref):
 
 ```@example tensor_products
-N = Val(2) # number of sites
-d = 2      # Hilbert space dimension of each site
-H = multisite_operator(N, d, 1 => sigmaz()) + 
-    multisite_operator(N, d, 2 => sigmaz()) + 
-    0.05 * multisite_operator(N, d, 1 => sigmax(), 2 => sigmax())
-nothing # hide
-```
-
-Or directly specify a list of integers (`dims`) representing the Hilbert space dimensions of each site to [`multisite_operator`](@ref), namely
-
-```@example tensor_products
 dims = (2, 2)
 H = multisite_operator(dims, 1 => sigmaz()) + 
     multisite_operator(dims, 2 => sigmaz()) + 
     0.05 * multisite_operator(dims, 1 => sigmax(), 2 => sigmax())
+nothing # hide
+```
+
+Since the Hilbert space dimension of all sites are equal in this case, we can just specify the number of sites `N` to [`multisite_operator`](@ref), namely
+
+```@example tensor_products
+N = Val(2)
+H = multisite_operator(N, 1 => sigmaz()) + 
+    multisite_operator(N, 2 => sigmaz()) + 
+    0.05 * multisite_operator(N, 1 => sigmax(), 2 => sigmax())
 nothing # hide
 ```
 
@@ -107,25 +106,24 @@ H = tensor(sigmaz(), qeye(2), qeye(2)) +
 We can also construct this Hamiltonian using [`multisite_operator`](@ref):
 
 ```@example tensor_products
-N = Val(3) # number of sites
-d = 2      # Hilbert space dimension of each site
-H = multisite_operator(N, d, 1 => sigmaz()) +
-    multisite_operator(N, d, 2 => sigmaz()) +
-    multisite_operator(N, d, 3 => sigmaz()) +
-    0.5  * multisite_operator(N, d, 1 => sigmax(), 2 => sigmax()) +
-    0.25 * multisite_operator(N, d, 2 => sigmax(), 3 => sigmax())
-nothing # hide
-```
-
-Or directly specify a list of integers (`dims`) representing the Hilbert space dimensions of each site to [`multisite_operator`](@ref), namely
-
-```@example tensor_products
 dims = (2, 2, 2)
 H = multisite_operator(dims, 1 => sigmaz()) +
     multisite_operator(dims, 2 => sigmaz()) +
     multisite_operator(dims, 3 => sigmaz()) +
     0.5  * multisite_operator(dims, 1 => sigmax(), 2 => sigmax()) +
     0.25 * multisite_operator(dims, 2 => sigmax(), 3 => sigmax())
+nothing # hide
+```
+
+Since the Hilbert space dimension of all sites are equal in this case, we can just specify the number of sites `N` to [`multisite_operator`](@ref), namely
+
+```@example tensor_products
+N = Val(3)
+H = multisite_operator(N, 1 => sigmaz()) +
+    multisite_operator(N, 2 => sigmaz()) +
+    multisite_operator(N, 3 => sigmaz()) +
+    0.5  * multisite_operator(N, 1 => sigmax(), 2 => sigmax()) +
+    0.25 * multisite_operator(N, 2 => sigmax(), 3 => sigmax())
 nothing # hide
 ```
 
