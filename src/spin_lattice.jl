@@ -29,7 +29,6 @@ For example, a ``N``-site operator ``\hat{O}`` with operators ``\hat{A}``, ``\ha
 ```
 
 # Arguments
-## first method
 - `dims::Union{AbstractVecOrTuple,Integer,Val}`: A list of integers representing the Hilbert space dimensions of each site. If `dims` is specified as an `Integer` or `Val`, it is assumed that all sites have the same Hilbert space dimension.
 - `pairs::Pair{Integer,QuantumObject{Operator}}...`: A list of pairs where the first element of the pair is the site index and the second element is the [`Operator`](@ref) acting on that site.
 
