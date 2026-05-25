@@ -515,11 +515,12 @@ function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
     (1 <= j <= N) || throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
-    σz = sigmaz(T).data
-    Z_tensor = kron(one(T), one(T), fill(σz, j - 1)...)
+    # use bitwise left shift for efficient generation of the data for σz^{⊗ j-1}
+    zdata = T[(-1)^Base.count_ones(k - 1) for k in 1:(1 << (j - 1))]
+    Z_tensor = spdiagm(0 => zdata)
 
-    S = 2^(N - j)
-    I_tensor = sparse(one(T) * LinearAlgebra.I, S, S)
+    # use Eye for efficient generation of the data for I^{⊗ N-j}
+    I_tensor = Eye{T}(2^(N - j))
 
     return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator(), dims = ntuple(i -> 2, Val(N)))
 end
