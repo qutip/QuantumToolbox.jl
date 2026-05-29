@@ -8,14 +8,17 @@ using QuantumToolbox
 
 To describe the states of multipartite quantum systems (such as two coupled qubits, a qubit coupled to an oscillator, etc.) we need to expand the Hilbert space by taking the tensor product of the state vectors for each of the system components. Similarly, the operators acting on the state vectors in the combined Hilbert space (describing the coupled system) are formed by taking the tensor product of the individual operators.
 
-In `QuantumToolbox`, the function [`tensor`](@ref) (or [`kron`](@ref)) is used to accomplish this task. This function takes a collection of [`Ket`](@ref) or [`Operator`](@ref) as argument and returns a composite [`QuantumObject`](@ref) for the combined Hilbert space. The function accepts an arbitrary number of [`QuantumObject`](@ref) as argument. The `type` of returned [`QuantumObject`](@ref) is the same as that of the input(s).
+In `QuantumToolbox`, the function [`tensor`](@ref) (or [`kron`](@ref)) is used to accomplish this task. This function takes a collection of [`Ket`](@ref) or [`Operator`](@ref) as argument and returns a composite [`QuantumObject`](@ref) for the combined Hilbert space.
 
-A collection of [`QuantumObject`](@ref):
+For many-body systems, the helper function [`multisite_operator`](@ref) is often more convenient than assembling the full tensor product of many [`Operator`](@ref) by hand. It builds an [`Operator`](@ref) on the full Hilbert space from a few `Pair`s (`site-index => Operator`) and handles the untouched sites implicitly as identities. Note that this function is efficient because it does not construct explicit identity operators for the remaining sites, which avoids extra memory allocation and keeps the operator assembly lightweight. Therefore, [`multisite_operator`](@ref) is especially useful when you want an [`Operator`](@ref) acting on a few selected sites, or an interaction term that is nontrivial only on selected sites, particularly in spin chains and other composite systems with a fixed site ordering.
+
+The function [`tensor`](@ref) (or [`kron`](@ref)) accepts an arbitrary number of [`QuantumObject`](@ref) as argument. The `type` of returned [`QuantumObject`](@ref) is the same as that of the input(s). For example, the input can be a collection of many [`QuantumObject`](@ref):
+
 ```@example tensor_products
 tensor(sigmax(), sigmax(), sigmax())
 ```
 
-or a `Vector{QuantumObject}`:
+or a single `Vector{QuantumObject}`:
 
 ```@example tensor_products
 op_list = fill(sigmax(), 3)
@@ -25,7 +28,7 @@ tensor(op_list)
 !!! warning "Beware of type-stability!"
     Please note that `tensor(op_list)` or `kron(op_list)` with `op_list` is a `Vector` is type-instable and can hurt performance. It is recommended to use `tensor(op_list...)` or `kron(op_list...)` instead. See the Section [The Importance of Type-Stability](@ref doc:Type-Stability) for more details.
 
-For example, the state vector describing two qubits in their ground states is formed by taking the tensor product of the two single-qubit ground state vectors:
+Furthermore, the state vector describing two qubits in their ground states is formed by taking the tensor product of the two single-qubit ground state vectors:
 
 ```@example tensor_products
 tensor(basis(2, 0), basis(2, 0))
@@ -41,6 +44,7 @@ states = QuantumObject[
 ]
 tensor(states...)
 ```
+
 This state is slightly more complicated, describing two qubits in a superposition between the up and down states, while the third qubit is in its ground state.
 
 To construct operators that act on an extended Hilbert space of a combined system, we similarly pass a list of operators for each component system to the [`tensor`](@ref) (or [`kron`](@ref)) function. For example, to form the operator that represents the simultaneous action of the ``\hat{\sigma}_x`` operator on two qubits:
@@ -69,6 +73,26 @@ H = tensor(sigmaz(), qeye(2)) +
     0.05 * tensor(sigmax(), sigmax())
 ```
 
+We can also construct this Hamiltonian using [`multisite_operator`](@ref):
+
+```@example tensor_products
+dims = (2, 2)
+H = multisite_operator(dims, 1 => sigmaz()) + 
+    multisite_operator(dims, 2 => sigmaz()) + 
+    0.05 * multisite_operator(dims, 1 => sigmax(), 2 => sigmax())
+nothing # hide
+```
+
+Since the Hilbert space dimension of all sites are equal in this case, we can just specify the number of sites `N` to [`multisite_operator`](@ref), namely
+
+```@example tensor_products
+N = Val(2)
+H = multisite_operator(N, 1 => sigmaz()) + 
+    multisite_operator(N, 2 => sigmaz()) + 
+    0.05 * multisite_operator(N, 1 => sigmax(), 2 => sigmax())
+nothing # hide
+```
+
 ### Three coupled qubits
 
 The two-qubit example is easily generalized to three coupled qubits:
@@ -79,6 +103,30 @@ H = tensor(sigmaz(), qeye(2), qeye(2)) +
     tensor(qeye(2), qeye(2), sigmaz()) + 
     0.5  * tensor(sigmax(), sigmax(), qeye(2)) + 
     0.25 * tensor(qeye(2), sigmax(), sigmax())
+```
+
+We can also construct this Hamiltonian using [`multisite_operator`](@ref):
+
+```@example tensor_products
+dims = (2, 2, 2)
+H = multisite_operator(dims, 1 => sigmaz()) +
+    multisite_operator(dims, 2 => sigmaz()) +
+    multisite_operator(dims, 3 => sigmaz()) +
+    0.5  * multisite_operator(dims, 1 => sigmax(), 2 => sigmax()) +
+    0.25 * multisite_operator(dims, 2 => sigmax(), 3 => sigmax())
+nothing # hide
+```
+
+Since the Hilbert space dimension of all sites are equal in this case, we can just specify the number of sites `N` to [`multisite_operator`](@ref), namely
+
+```@example tensor_products
+N = Val(3)
+H = multisite_operator(N, 1 => sigmaz()) +
+    multisite_operator(N, 2 => sigmaz()) +
+    multisite_operator(N, 3 => sigmaz()) +
+    0.5  * multisite_operator(N, 1 => sigmax(), 2 => sigmax()) +
+    0.25 * multisite_operator(N, 2 => sigmax(), 3 => sigmax())
+nothing # hide
 ```
 
 ### A two-level system coupled to a cavity: The Jaynes-Cummings model
