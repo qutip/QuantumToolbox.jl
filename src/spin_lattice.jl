@@ -1,4 +1,4 @@
-export Lattice, multisite_operator, DissipativeIsing
+export Lattice, DissipativeIsing
 
 @doc raw"""
     Lattice
@@ -13,54 +13,7 @@ Base.@kwdef struct Lattice{TN <: Integer, TLI <: LinearIndices, TCI <: Cartesian
     car_idx::TCI = CartesianIndices((Nx, Ny))
 end
 
-#Definition of many-body operators
-@doc raw"""
-    multisite_operator(dims::Union{AbstractVector, Tuple}, pairs::Pair{<:Integer,<:QuantumObject}...)
-
-A Julia function for generating a multi-site operator ``\\hat{O} = \\hat{O}_i \\hat{O}_j \\cdots \\hat{O}_k``. The function takes a vector of dimensions `dims` and a list of pairs `pairs` where the first element of the pair is the site index and the second element is the operator acting on that site.
-
-# Arguments
-- `dims::Union{AbstractVector, Tuple}`: A vector of dimensions of the lattice.
-- `pairs::Pair{<:Integer,<:QuantumObject}...`: A list of pairs where the first element of the pair is the site index and the second element is the operator acting on that site.
-    
-# Returns
-`QuantumObject`: A `QuantumObject` representing the multi-site operator.
-
-# Example
-```jldoctest
-julia> op = multisite_operator(Val(8), 5=>sigmax(), 7=>sigmaz());
-
-julia> op.dims
-([2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2])
-```
-"""
-function multisite_operator(dims::AbstractVecOrTuple{T}, pairs::Pair{<:Integer, <:QuantumObject}...) where {T <: Integer}
-    sites_unsorted = collect(first.(pairs))
-    idxs = sortperm(sites_unsorted)
-    _sites = sites_unsorted[idxs]
-    _ops = collect(last.(pairs))[idxs]
-    _dims = collect(dims) # Use this instead of a Tuple, to avoid type instability when indexing on a slice
-
-    sites, ops = _get_unique_sites_ops(_sites, _ops)
-
-    _dims[sites] == [get_size(op.dimensions)[1] for op in ops] || throw(ArgumentError("The dimensions of the operators do not match the dimensions of the lattice."))
-
-    data = kron(Eye(prod(_dims[1:(sites[1] - 1)])), ops[1].data)
-    for i in 2:length(sites)
-        data = kron(data, Eye(prod(_dims[(sites[i - 1] + 1):(sites[i] - 1)])), ops[i].data)
-    end
-    data = kron(data, Eye(prod(_dims[(sites[end] + 1):end])))
-
-    return QuantumObject(data; type = Operator(), dims = dims)
-end
-function multisite_operator(N::Union{Integer, Val}, pairs::Pair{<:Integer, <:QuantumObject}...)
-    dims = ntuple(j -> 2, makeVal(N))
-
-    return multisite_operator(dims, pairs...)
-end
-function multisite_operator(latt::Lattice, pairs::Pair{<:Integer, <:QuantumObject}...)
-    return multisite_operator(makeVal(latt.N), pairs...)
-end
+multisite_operator(latt::Lattice, pairs::Pair{<:Integer, <:QuantumObject{Operator}}...) = multisite_operator(makeVal(latt.N), pairs...)
 
 #Definition of nearest-neighbour sites on lattice
 periodic_boundary_conditions(i::Integer, N::Integer) = 1 + (i - 1 + N) % N
@@ -80,19 +33,19 @@ function nearest_neighbor(i::CartesianIndex, latt::Lattice, ::Val{:open_bc}; ord
     return vcat([CartesianIndex(r, i[2]) for r in row], [CartesianIndex(i[1], c) for c in col])
 end
 
-@doc """
+@doc raw"""
     DissipativeIsing(Jx::Real, Jy::Real, Jz::Real, hx::Real, hy::Real, hz::Real, γ::Real, latt::Lattice; boundary_condition::Union{Symbol, Val} = Val(:periodic_bc), order::Integer = 1)
 
 A Julia constructor for a dissipative Ising model. The function returns the Hamiltonian
 
 ```math
-\\hat{H} = \\frac{J_x}{2} \\sum_{\\langle i, j \\rangle} \\hat{\\sigma}_i^x \\hat{\\sigma}_j^x + \\frac{J_y}{2} \\sum_{\\langle i, j \\rangle} \\hat{\\sigma}_i^y \\hat{\\sigma}_j^y + \\frac{J_z}{2} \\sum_{\\langle i, j \\rangle} \\hat{\\sigma}_i^z \\hat{\\sigma}_j^z + h_x \\sum_i \\hat{\\sigma}_i^x
+\hat{H} = \frac{J_x}{2} \sum_{\langle i, j \rangle} \hat{\sigma}_i^x \hat{\sigma}_j^x + \frac{J_y}{2} \sum_{\langle i, j \rangle} \hat{\sigma}_i^y \hat{\sigma}_j^y + \frac{J_z}{2} \sum_{\langle i, j \rangle} \hat{\sigma}_i^z \hat{\sigma}_j^z + h_x \sum_i \hat{\sigma}_i^x
 ```
 
 and the collapse operators
 
 ```math
-\\hat{c}_i = \\sqrt{\\gamma} \\hat{\\sigma}_i^-
+\hat{c}_i = \sqrt{\gamma} \hat{\sigma}_i^-
 ```
 
 # Arguments
@@ -142,11 +95,4 @@ function DissipativeIsing(
         H += hz * sum(S)
     end
     return H, c_ops
-end
-
-function _get_unique_sites_ops(sites, ops)
-    unique_sites = unique(sites)
-    unique_ops = map(i -> prod(ops[findall(==(i), sites)]), unique_sites)
-
-    return unique_sites, unique_ops
 end
