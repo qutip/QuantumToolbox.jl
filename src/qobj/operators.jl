@@ -516,7 +516,7 @@ function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}
     (1 <= j <= N) || throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
     # use bitwise left shift for efficient generation of the data for σz^{⊗ j-1}
-    zdata = T[isodd(Base.count_ones(k - 1)) ? -one(T) : one(T) for k in 1:(1 << (j - 1))]
+    zdata = [isodd(Base.count_ones(k - 1)) ? -one(T) : one(T) for k in 1:(1 << (j - 1))]
     Z_tensor = spdiagm(0 => zdata)
 
     # use Eye for efficient generation of the data for I^{⊗ N-j}
