@@ -294,7 +294,10 @@ julia> op.dims
 function multisite_operator(dims::AbstractVecOrTuple{T}, pairs::Pair{<:Integer, <:QuantumObject{Operator}}...) where {T <: Integer}
     isempty(pairs) && throw(ArgumentError("At least one Pair of `site-index => operator` must be provided."))
 
+    N = length(dims) # total number of sites
     sites_unsorted = collect(getfield.(pairs, :first))
+    all(i -> 1 <= i <= N, sites_unsorted) || throw(ArgumentError("There are totally $N-sites, so site indices must satisfy 1 ≤ i ≤ $N."))
+    
     idxs = sortperm(sites_unsorted)
     _sites = sites_unsorted[idxs]
     _ops = collect(getfield.(pairs, :second))[idxs]
