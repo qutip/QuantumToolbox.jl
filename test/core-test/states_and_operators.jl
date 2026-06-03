@@ -364,19 +364,19 @@
         @test_throws ArgumentError fdestroy(0, 0)
         @test_throws ArgumentError fdestroy(sites, 0)
         @test_throws ArgumentError fdestroy(sites, sites + 1)
-        @test_throws ArgumentError fdestroy(sites, 1; mode = :unknown)
-        @test_throws ArgumentError fcreate(sites, 1; mode = :unknown)
+        @test_throws ArgumentError fdestroy(sites, 1; method = :unknown)
+        @test_throws ArgumentError fcreate(sites, 1; method = :unknown)
 
         # Bravyi-Kitaev fermion-to-qubit mapping
-        @test fdestroy(1, 1; mode = :BK) == fdestroy(1, 1; mode = :JW)
-        @test fcreate(1, 1; mode = :BK) == fcreate(1, 1; mode = :JW)
+        @test fdestroy(1, 1; method = :BK) == fdestroy(1, 1; method = :JW)
+        @test fcreate(1, 1; method = :BK) == fcreate(1, 1; method = :JW)
 
         N = 7
         vac_BK = tensor(fill(basis(2, 0), N)...)
-        Cs = map(i -> fdestroy(N, i; mode = :BK), 1:N)
+        Cs = map(i -> fdestroy(N, i; method = :BK), 1:N)
         for i in 1:N
             Ci = Cs[i]
-            @test Ci' ≈ fcreate(N, i; mode = :BK)
+            @test Ci' ≈ fcreate(N, i; method = :BK)
             @test (Ci * vac_BK) ≈ zero_ket(ntuple(_ -> 2, N))
 
             @test commutator(Ci, Ci'; anti = true) ≈ qeye(2^N; dims = ntuple(_ -> 2, N))
@@ -389,7 +389,7 @@
             end
         end
 
-        # explicit Pauli strings for N = 4 (see Tranter et al., PhysRevB.109.115149)
+        # explicit Pauli strings for N = 4 [see O'Brien and Strelchuk, Phys. Rev. B 109, 115149 (2024)]
         X = sigmax()
         Y = sigmay()
         Z = sigmaz()
@@ -400,11 +400,11 @@
             0.5 * tensor(Id2, Z, X, X) + 0.5im * tensor(Id2, Z, Y, X),
             0.5 * tensor(Id2, Z, Z, X) + 0.5im * tensor(Id2, Id2, Id2, Y),
         ]
-        @test all([fdestroy(4, i; mode = :BK) ≈ d_BK[i] for i in 1:4])
+        @test all([fdestroy(4, i; method = :BK) ≈ d_BK[i] for i in 1:4])
 
-        @test_throws ArgumentError fdestroy(0, 0; mode = :BK)
-        @test_throws ArgumentError fdestroy(sites, 0; mode = :BK)
-        @test_throws ArgumentError fdestroy(sites, sites + 1; mode = :BK)
+        @test_throws ArgumentError fdestroy(0, 0; method = :BK)
+        @test_throws ArgumentError fdestroy(sites, 0; method = :BK)
+        @test_throws ArgumentError fdestroy(sites, sites + 1; method = :BK)
     end
 
     @testset "identity operator" begin
@@ -592,6 +592,8 @@
             @test CT == eltype(momentum(CT, N))
             @test CT == eltype(fdestroy(CT, N, 1))
             @test CT == eltype(fcreate(CT, N, 1))
+            @test CT == eltype(fdestroy(CT, N, 1; method = :BK))
+            @test CT == eltype(fcreate(CT, N, 1; method = :BK))
             @test CT == eltype(tunneling(CT, N))
             @test CT == eltype(qft(CT, N))
         end
