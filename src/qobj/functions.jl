@@ -297,7 +297,7 @@ function multisite_operator(dims::AbstractVecOrTuple{T}, pairs::Pair{<:Integer, 
     N = length(dims) # total number of sites
     sites_unsorted = collect(getfield.(pairs, :first))
     all(i -> 1 <= i <= N, sites_unsorted) || throw(ArgumentError("There are totally $N-sites, so site indices must satisfy 1 ≤ i ≤ $N."))
-    
+
     idxs = sortperm(sites_unsorted)
     _sites = sites_unsorted[idxs]
     _ops = collect(getfield.(pairs, :second))[idxs]

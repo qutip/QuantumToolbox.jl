@@ -525,9 +525,11 @@
     end
 
     @testset "multisite operator" begin
-        dims = (3, 2, 4, 2)
-        M = multisite_operator(dims, 2=>sigmaz(), 4=>sigmay())
-        @test M == tensor(qeye(3), sigmaz(), eye(4), sigmay())
+        a = destroy(5)
+        σy = sigmay()
+        M = multisite_operator((3, 5, 4, 2), 2 => a, 4 => σy)
+        @test M == tensor(qeye(3), a, qeye(4), σy)
+        @test eltype(M) == ComplexF64 # since promote_type(a, σy) == ComplexF64
 
         # check if the method works when all sites have the same Hilbert space dimension
         # also make sure the eltype of the multisite_operator is promoted correctly
@@ -536,10 +538,10 @@
         II = qeye(Int8, D)
         A = Qobj(rand(Float16, D, D))
         B = Qobj(rand(Float32, D, D))
-        IAI = multisite_operator(N, 2=>A)
-        IAB = multisite_operator(N, 2=>A, 3=>B)
-        AIB = multisite_operator(N, 1=>A, 3=>B)
-        ABI = multisite_operator(N, 1=>A, 2=>B)
+        IAI = multisite_operator(N, 2 => A)
+        IAB = multisite_operator(N, 2 => A, 3 => B)
+        AIB = multisite_operator(N, 1 => A, 3 => B)
+        ABI = multisite_operator(N, 1 => A, 2 => B)
         @test IAI == kron(II, A, II)
         @test IAB == kron(II, A, B)
         @test AIB == kron(A, II, B)
@@ -547,9 +549,11 @@
         @test eltype(IAI) == Float16
         @test eltype(IAB) == eltype(AIB) == eltype(ABI) == Float32
 
+        dims = (3, 2, 4, 2)
         @test_throws ArgumentError multisite_operator(dims) # at least one Pair must be provided
         @test_throws ArgumentError multisite_operator(dims, 0 => sigmax()) # site index out of range
         @test_throws ArgumentError multisite_operator(dims, 5 => sigmax()) # site index out of range
+        @test_throws ArgumentError multisite_operator(dims, 1 => Qobj(rand(2, 2))) # dims mismatch
         @test_throws ArgumentError multisite_operator(dims, 2 => Qobj(rand(2, 3))) # not endomorphic
     end
 
