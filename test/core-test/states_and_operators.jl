@@ -364,6 +364,47 @@
         @test_throws ArgumentError fdestroy(0, 0)
         @test_throws ArgumentError fdestroy(sites, 0)
         @test_throws ArgumentError fdestroy(sites, sites + 1)
+        @test_throws ArgumentError fdestroy(sites, 1; mode = :unknown)
+        @test_throws ArgumentError fcreate(sites, 1; mode = :unknown)
+
+        # Bravyi-Kitaev fermion-to-qubit mapping
+        @test fdestroy(1, 1; mode = :BK) == fdestroy(1, 1; mode = :JW)
+        @test fcreate(1, 1; mode = :BK) == fcreate(1, 1; mode = :JW)
+
+        N = 7
+        vac_BK = tensor(fill(basis(2, 0), N)...)
+        Cs = map(i -> fdestroy(N, i; mode = :BK), 1:N)
+        for i in 1:N
+            Ci = Cs[i]
+            @test Ci' ≈ fcreate(N, i; mode = :BK)
+            @test (Ci * vac_BK) ≈ zero_ket(ntuple(_ -> 2, N))
+
+            @test commutator(Ci, Ci'; anti = true) ≈ qeye(2^N; dims = ntuple(_ -> 2, N))
+            @test norm(commutator(Ci, Ci; anti = true)) ≈ 0 atol = 1.0e-12
+
+            for j in (i + 1):N
+                Cj = Cs[j]
+                @test norm(commutator(Ci, Cj; anti = true)) ≈ 0 atol = 1.0e-12
+                @test norm(commutator(Ci, Cj'; anti = true)) ≈ 0 atol = 1.0e-12
+            end
+        end
+
+        # explicit Pauli strings for N = 4 (see Tranter et al., PhysRevB.109.115149)
+        X = sigmax()
+        Y = sigmay()
+        Z = sigmaz()
+        Id2 = qeye(2)
+        d_BK = [
+            0.5 * tensor(X, X, Id2, X) + 0.5im * tensor(Y, X, Id2, X),
+            0.5 * tensor(Z, X, Id2, X) + 0.5im * tensor(Id2, Y, Id2, X),
+            0.5 * tensor(Id2, Z, X, X) + 0.5im * tensor(Id2, Z, Y, X),
+            0.5 * tensor(Id2, Z, Z, X) + 0.5im * tensor(Id2, Id2, Id2, Y),
+        ]
+        @test all([fdestroy(4, i; mode = :BK) ≈ d_BK[i] for i in 1:4])
+
+        @test_throws ArgumentError fdestroy(0, 0; mode = :BK)
+        @test_throws ArgumentError fdestroy(sites, 0; mode = :BK)
+        @test_throws ArgumentError fdestroy(sites, sites + 1; mode = :BK)
     end
 
     @testset "identity operator" begin

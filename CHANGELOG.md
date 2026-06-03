@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Add a convenient method when the Hilbert space dimension of all sites are equal.
   - Improve the documentation and docstring. 
 - Efficient Jordan Wigner transformation for `fdestroy` and `fcreate`. ([#723])
+- Add Bravyi-Kitaev fermion-to-qubit mapping for `fdestroy` and `fcreate` via the keyword argument `mode = :BK` (`mode = :JW` for Jordan-Wigner remains the default). ([#724])
 
 ## [v0.47.0]
 Release date: 2026-05-19
@@ -516,6 +517,7 @@ Release date: 2024-11-13
 [#689]: https://github.com/qutip/QuantumToolbox.jl/issues/689
 [#690]: https://github.com/qutip/QuantumToolbox.jl/issues/690
 [#692]: https://github.com/qutip/QuantumToolbox.jl/issues/692
+<<<<<<< HEAD
 [#697]: https://github.com/qutip/QuantumToolbox.jl/issues/697
 [#698]: https://github.com/qutip/QuantumToolbox.jl/issues/698
 [#708]: https://github.com/qutip/QuantumToolbox.jl/issues/708
@@ -524,3 +526,6 @@ Release date: 2024-11-13
 [#718]: https://github.com/qutip/QuantumToolbox.jl/issues/718
 [#722]: https://github.com/qutip/QuantumToolbox.jl/issues/722
 [#723]: https://github.com/qutip/QuantumToolbox.jl/issues/723
+=======
+[#724]: https://github.com/qutip/QuantumToolbox.jl/issues/724
+>>>>>>> 2053e461 (Add Bravyi-Kitaev fermion-to-qubit mapping for `fdestroy`/`fcreate`)
