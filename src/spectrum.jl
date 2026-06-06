@@ -70,7 +70,7 @@ function spectrum(
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}}
 
-    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for spectrum", H.dimensions)
+    !isendomorphic(H) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for spectrum", H.dimensions)
 
     L = liouvillian(H, c_ops)
     (L isa QuantumObject) || throw(ArgumentError("spectrum only supports (time-independent) QuantumObject in c_ops"))
