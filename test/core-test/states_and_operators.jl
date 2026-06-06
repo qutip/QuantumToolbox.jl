@@ -327,8 +327,11 @@
             (
             exp(-γ / 2) * cos(θ1 / 2) * cos(θ2 / 2) + exp(1im * (ϕ2 - ϕ1) + γ / 2) * sin(θ1 / 2) * sin(θ2 / 2)
         )^(2 * s)
+    end
 
-        # test commutation relations for fermionic creation and annihilation operators
+    @testset "fdestroy and fcreate" begin
+        # Jordan-Wigner transformation
+        ## test commutation relations for fermionic creation and annihilation operators
         sites = 4
         SIZE = 2^sites
         dims = ntuple(i -> 2, Val(sites))
@@ -361,11 +364,6 @@
         @test d1' * d2' * vac == tensor(basis(2, 1), basis(2, 1))
         @test d1' * d1' * d2' * vac == zero
         @test d2' * d1' * d2' * vac == zero
-        @test_throws ArgumentError fdestroy(0, 0)
-        @test_throws ArgumentError fdestroy(sites, 0)
-        @test_throws ArgumentError fdestroy(sites, sites + 1)
-        @test_throws ArgumentError fdestroy(sites, 1; method = :unknown)
-        @test_throws ArgumentError fcreate(sites, 1; method = :unknown)
 
         # Bravyi-Kitaev fermion-to-qubit mapping
         @test fdestroy(1, 1; method = :BK) == fdestroy(1, 1; method = :JW)
@@ -389,7 +387,7 @@
             end
         end
 
-        # explicit Pauli strings for N = 4 [see O'Brien and Strelchuk, Phys. Rev. B 109, 115149 (2024)]
+        ## explicit Pauli strings for N = 4 [see O'Brien and Strelchuk, Phys. Rev. B 109, 115149 (2024)]
         X = sigmax()
         Y = sigmay()
         Z = sigmaz()
@@ -402,9 +400,15 @@
         ]
         @test all([fdestroy(4, i; method = :BK) ≈ d_BK[i] for i in 1:4])
 
+        # Errors
+        @test_throws ArgumentError fdestroy(0, 0; method = :JW)
+        @test_throws ArgumentError fdestroy(sites, 0; method = :JW)
+        @test_throws ArgumentError fdestroy(sites, sites + 1; method = :JW)
         @test_throws ArgumentError fdestroy(0, 0; method = :BK)
         @test_throws ArgumentError fdestroy(sites, 0; method = :BK)
         @test_throws ArgumentError fdestroy(sites, sites + 1; method = :BK)
+        @test_throws ArgumentError fdestroy(sites, 1; method = :unknown)
+        @test_throws ArgumentError fcreate(sites, 1; method = :unknown)
     end
 
     @testset "identity operator" begin
