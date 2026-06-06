@@ -53,6 +53,8 @@ Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperator`](@ref). 
 issuper(A::AbstractQuantumObject{<:SuperOperatorType}) = true
 issuper(A) = false # default case
 
+isendomorphic(A::AbstractQuantumObject) = isendomorphic(A.dimensions)
+
 @doc raw"""
     ishermitian(A::AbstractQuantumObject)
     isherm(A::AbstractQuantumObject)

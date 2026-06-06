@@ -77,7 +77,7 @@ function partial_transpose(ρ::QuantumObject{Operator, <:Dimensions{<:TensorSpac
         throw(ArgumentError("The length of \`mask\` should be equal to the length of \`ρ.dims\`."))
 
     # TODO: Extend partial_transpose to non-endomorphic dimensions
-    !isendomorphic(ρ.dimensions) && _non_endomorphic_dims_error("operator for partial_transpose", ρ.dimensions)
+    !isendomorphic(ρ) && _non_endomorphic_dims_error("operator for partial_transpose", ρ.dimensions)
 
     return _partial_transpose(ρ, mask)
 end
