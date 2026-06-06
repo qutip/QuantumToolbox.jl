@@ -521,15 +521,15 @@ fcreate(::Type{T}, N::Union{Int, Val}, j::Int; method::Union{Symbol, Val} = Val(
     _fermionic_operator(T, makeVal(N), j, makeVal(method), Val(:create))
 fcreate(N::Union{Int, Val}, j::Int; kwargs...) = fcreate(ComplexF64, N, j; kwargs...)
 
-_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:JW}, ::Val{:destroy}) where {T <: FloatOrComplex, N} =
+_fermionic_operator(::Type{T}, N::Val, j::Int, ::Val{:JW}, ::Val{:destroy}) where {T <: FloatOrComplex} =
     _Jordan_Wigner(T, N, j, sigmap(T))
-_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:JW}, ::Val{:create}) where {T <: FloatOrComplex, N} =
+_fermionic_operator(::Type{T}, N::Val, j::Int, ::Val{:JW}, ::Val{:create}) where {T <: FloatOrComplex} =
     _Jordan_Wigner(T, N, j, sigmam(T))
-_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:BK}, ::Val{:destroy}) where {T <: FloatOrComplex, N} =
+_fermionic_operator(::Type{T}, N::Val, j::Int, ::Val{:BK}, ::Val{:destroy}) where {T <: FloatOrComplex} =
     _Bravyi_Kitaev(T, N, j, one(T))
-_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:BK}, ::Val{:create}) where {T <: FloatOrComplex, N} =
+_fermionic_operator(::Type{T}, N::Val, j::Int, ::Val{:BK}, ::Val{:create}) where {T <: FloatOrComplex} =
     _Bravyi_Kitaev(T, N, j, -one(T))
-_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{method}, _) where {T <: FloatOrComplex, N, method} =
+_fermionic_operator(::Type{T}, ::Val, ::Int, ::Val{method}, _) where {T <: FloatOrComplex, method} =
     throw(ArgumentError("The fermion-to-qubit mapping `method` should be either `:JW` or `:BK`, got `:$method`."))
 
 function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}) where {T <: FloatOrComplex, N}
