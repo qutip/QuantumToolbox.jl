@@ -529,7 +529,7 @@ _fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:BK}, ::Val{:destroy}) wh
     _Bravyi_Kitaev(T, N, j, one(T))
 _fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:BK}, ::Val{:create}) where {T <: FloatOrComplex, N} =
     _Bravyi_Kitaev(T, N, j, -one(T))
-_fermionic_operator(::Type{T}, :Val{N}, j::Int, ::Val{method}, _) where {T <: FloatOrComplex, N, method} =
+_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{method}, _) where {T <: FloatOrComplex, N, method} =
     throw(ArgumentError("The fermion-to-qubit mapping `method` should be either `:JW` or `:BK`, got `:$method`."))
 
 function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}) where {T <: FloatOrComplex, N}
