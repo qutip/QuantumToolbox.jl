@@ -576,7 +576,7 @@ function _BK_flip_set(α::Int)
     i = 0
     while ((α >> i) & 1) == 1 # while α_i is 1
         β = α & ~(1 << i)     # set i-th bit to 0
-        push!(F_α, β)
+        push!(F, β)
         i += 1
     end
     return F
