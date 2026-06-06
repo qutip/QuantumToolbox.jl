@@ -492,7 +492,7 @@ Note that we put ``\hat{\sigma}_{+} = \begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatri
 See also [`fcreate`](@ref).
 """
 fdestroy(::Type{T}, N::Union{Int, Val}, j::Int; method::Union{Symbol, Val} = Val(:JW)) where {T <: FloatOrComplex} =
-    _fermionic_operator(T, N, j, makeVal(method), Val(:destroy))
+    _fermionic_operator(T, makeVal(N), j, makeVal(method), Val(:destroy))
 fdestroy(N::Union{Int, Val}, j::Int; kwargs...) = fdestroy(ComplexF64, N, j; kwargs...)
 
 @doc raw"""
@@ -518,19 +518,19 @@ Note that we put ``\hat{\sigma}_{-} = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatri
 See also [`fdestroy`](@ref).
 """
 fcreate(::Type{T}, N::Union{Int, Val}, j::Int; method::Union{Symbol, Val} = Val(:JW)) where {T <: FloatOrComplex} =
-    _fermionic_operator(T, N, j, makeVal(method), Val(:create))
+    _fermionic_operator(T, makeVal(N), j, makeVal(method), Val(:create))
 fcreate(N::Union{Int, Val}, j::Int; kwargs...) = fcreate(ComplexF64, N, j; kwargs...)
 
-_fermionic_operator(::Type{T}, N::Union{Int, Val}, j::Int, ::Val{:JW}, ::Val{:destroy}) where {T <: FloatOrComplex} =
+_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:JW}, ::Val{:destroy}) where {T <: FloatOrComplex, N} =
     _Jordan_Wigner(T, N, j, sigmap(T))
-_fermionic_operator(::Type{T}, N::Union{Int, Val}, j::Int, ::Val{:JW}, ::Val{:create}) where {T <: FloatOrComplex} =
+_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:JW}, ::Val{:create}) where {T <: FloatOrComplex, N} =
     _Jordan_Wigner(T, N, j, sigmam(T))
-_fermionic_operator(::Type{T}, N::Union{Int, Val}, j::Int, ::Val{:BK}, dagger::Val) where {T <: FloatOrComplex} =
-    _Bravyi_Kitaev(T, N, j, dagger)
-_fermionic_operator(::Type{T}, N::Union{Int, Val}, j::Int, ::Val{method}, _) where {T <: FloatOrComplex, method} =
+_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:BK}, ::Val{:destroy}) where {T <: FloatOrComplex, N} =
+    _Bravyi_Kitaev(T, N, j, one(T))
+_fermionic_operator(::Type{T}, ::Val{N}, j::Int, ::Val{:BK}, ::Val{:create}) where {T <: FloatOrComplex, N} =
+    _Bravyi_Kitaev(T, N, j, -one(T))
+_fermionic_operator(::Type{T}, :Val{N}, j::Int, ::Val{method}, _) where {T <: FloatOrComplex, N, method} =
     throw(ArgumentError("The fermion-to-qubit mapping `method` should be either `:JW` or `:BK`, got `:$method`."))
-
-_Jordan_Wigner(::Type{T}, N::Int, j::Int, op::QuantumObject{Operator}) where {T <: FloatOrComplex} = _Jordan_Wigner(T, Val(N), j, op)
 
 function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}) where {T <: FloatOrComplex, N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
@@ -546,53 +546,53 @@ function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}
     return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator(), dims = ntuple(i -> 2, Val(N)))
 end
 
-# The "update", "parity", and "flip" sets used by the Bravyi-Kitaev transformation,
-# following the convention of [OBrien-Strelchuk2024](@cite). All site indices here
-# are 0-based to match the bit-manipulation definitions.
-function _BK_update_set(N::Int, j::Int)
-    out = Int[]
-    p = j
-    while p < N
-        (p != j) && push!(out, p) # exclude site j itself
-        p = p | (p + 1)
+# These "update", "parity", and "flip" sets are used by the `_Bravyi_Kitaev` transformation [Phys. Rev. B 109, 115149 (2024)]
+## The following functions are optimized using bitwise operations for better performance compared to the pseudo-code in the paper.
+## All site-indices here are 0-based to match the bit-manipulation definitions.
+##
+## Note that we use the variable names as presented in the paper:
+##   - `n`: Number of fermionic modes
+##   - `α`: site index
+function _BK_update_set(n::Int, α::Int)
+    U = Int[]
+    β = α
+    while β < n
+        (β != α) && push!(U, β) # exclude site α itself
+        β = β | (β + 1)
     end
-    return out
+    return U
 end
-
-function _BK_parity_set(j::Int)
-    out = Int[]
-    p = j - 1 # prefix parity = sites with index less than j
-    while p >= 0
-        push!(out, p)
-        p = (p & (p + 1)) - 1 # drop the lowest set block of bits
+function _BK_parity_set(α::Int)
+    P = Int[]
+    β = α - 1 # prefix parity = sites with index less than j
+    while β >= 0
+        push!(P, β)
+        β = (β & (β + 1)) - 1 # drop the lowest set block of bits
     end
-    return out
+    return P
 end
-
-function _BK_flip_set(j::Int)
-    out = Int[]
-    k = 0
-    while ((j >> k) & 1) == 1 # while bit k of j is set
-        push!(out, j & ~(1 << k)) # clear bit k
-        k += 1
+function _BK_flip_set(α::Int)
+    F = Int[]
+    i = 0
+    while ((α >> i) & 1) == 1 # while α_i is 1
+        β = α & ~(1 << i)     # set i-th bit to 0
+        push!(F_α, β)
+        i += 1
     end
-    return out
+    return F
 end
-
-# `Val(:destroy)` gives the +i term (destruction operator), `Val(:create)` the -i term (creation operator)
-_BK_sign(::Val{:destroy}) = 1
-_BK_sign(::Val{:create}) = -1
 
 # build the Pauli string ⨂ᵢ op over the (0-based) sites in `set`; falls back to the identity when `set` is empty
-_BK_pauli_string(::Type{T}, dims, set, op::QuantumObject) where {T <: FloatOrComplex} =
+# the `set` is using 0-based indexing, so shift by 1 to obtain the 1-based site-indices
+_BK_Pauli_string(::Type{T}, dims, set, op::QuantumObject) where {T <: FloatOrComplex} =
     isempty(set) ? qeye(T, prod(dims); dims = dims) : multisite_operator(dims, map(i -> (i + 1) => op, set)...)
 
-_Bravyi_Kitaev(::Type{T}, N::Int, j::Int, dagger::Val) where {T <: FloatOrComplex} = _Bravyi_Kitaev(T, Val(N), j, dagger)
-
-function _Bravyi_Kitaev(::Type{T}, ::Val{N}, j::Int, dagger::Union{Val{:destroy}, Val{:create}}) where {T <: FloatOrComplex, N}
+# the type of `sign` should be same as the first argument (which is specified by `_fermionic_operator`)
+function _Bravyi_Kitaev(::Type{T}, ::Val{N}, j::Int, sign::T) where {T <: FloatOrComplex, N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
     (1 <= j <= N) || throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
+    # use j-1 because these functions consider 0-based indexing, which aligns with the convention of [Phys. Rev. B 109, 115149 (2024)]
     U = _BK_update_set(N, j - 1)
     P = _BK_parity_set(j - 1)
     F = _BK_flip_set(j - 1)
@@ -600,19 +600,14 @@ function _Bravyi_Kitaev(::Type{T}, ::Val{N}, j::Int, dagger::Union{Val{:destroy}
 
     dims = ntuple(i -> 2, Val(N))
 
-    # the sets are 0-based, so shift by 1 to obtain the 1-based site indices
-    XU = _BK_pauli_string(T, dims, U, sigmax(T))
-    ZR = _BK_pauli_string(T, dims, R, sigmaz(T))
-    ZP = _BK_pauli_string(T, dims, P, sigmaz(T))
+    XU = _BK_Pauli_string(T, dims, U, sigmax(T))
+    ZR = _BK_Pauli_string(T, dims, R, sigmaz(T))
+    ZP = _BK_Pauli_string(T, dims, P, sigmaz(T))
 
     Xj = multisite_operator(dims, j => sigmax(T))
     Yj = multisite_operator(dims, j => sigmay(T))
 
-    op = (XU * (Xj * ZP + T(_BK_sign(dagger) * im) * (Yj * ZR))) / 2
-
-    # `multisite_operator` builds its identity padding with the default (`Float64`) eltype,
-    # so cast back to keep the requested element type `T` (matching the Jordan-Wigner path)
-    return eltype(op) === T ? op : QuantumObject(T.(op.data); type = Operator(), dims = dims)
+    return (XU * (Xj * ZP + (sign * im) * (Yj * ZR))) / 2
 end
 
 @doc raw"""
