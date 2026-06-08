@@ -527,8 +527,10 @@
 
         @inferred eye(20)
 
-        @inferred fdestroy(Val(10), 4)
-        @inferred fcreate(Val(10), 4)
+        @inferred fdestroy(Val(10), 4; method = :JW)
+        @inferred fcreate(Val(10), 4; method = :JW)
+        @inferred fdestroy(Val(10), 4; method = :BK)
+        @inferred fcreate(Val(10), 4; method = :BK)
 
         @inferred projection(20, 5, 3)
 
