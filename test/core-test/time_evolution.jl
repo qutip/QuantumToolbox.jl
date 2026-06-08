@@ -481,7 +481,8 @@ end
         "reltol = $(sol_mc_states.reltol)\n"
 
     # save_states = Val(false) skips state assembly/averaging but keeps expectation values.
-    # Using the same seeded rng, the expectation values must be identical to a save_states = Val(true) run.
+    # Using the same seeded rng and EnsembleSerial (for deterministic trajectory/RNG order), the
+    # expectation values must be identical to a save_states = Val(true) run.
     sol_mc_with_states = mcsolve(
         H,
         ψ0,
@@ -489,6 +490,7 @@ end
         c_ops,
         e_ops = e_ops,
         progress_bar = Val(false),
+        ensemblealg = QuantumToolbox.EnsembleSerial(),
         rng = MersenneTwister(1234),
     )
     sol_mc_no_states = mcsolve(
@@ -498,6 +500,7 @@ end
         c_ops,
         e_ops = e_ops,
         progress_bar = Val(false),
+        ensemblealg = QuantumToolbox.EnsembleSerial(),
         save_states = Val(false),
         rng = MersenneTwister(1234),
     )
@@ -506,6 +509,22 @@ end
     @test isempty(average_states(sol_mc_no_states))
     sol_mc_no_states_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc_no_states)
     @test occursin("num_states = 0", sol_mc_no_states_string)
+
+    # save_states = Val(false) with keep_runs_results = Val(true) returns an empty per-trajectory
+    # (matrix-shaped) container, consistent with the saved-states layout.
+    sol_mc_no_states_runs = mcsolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        ensemblealg = QuantumToolbox.EnsembleSerial(),
+        save_states = Val(false),
+        keep_runs_results = Val(true),
+    )
+    @test isempty(sol_mc_no_states_runs.states)
+    @test ndims(sol_mc_no_states_runs.states) == 2
 
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist1, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist2, c_ops, progress_bar = Val(false))

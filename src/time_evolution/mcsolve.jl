@@ -23,14 +23,17 @@ end
 
 # Assemble (and, when `keep_runs_results = Val(false)`, trajectory-average) the states.
 # With `save_states = Val(false)` this is skipped entirely to avoid the (potentially expensive)
-# state normalization and `ket2dm` averaging when only expectation values are needed.
+# state normalization and `ket2dm` averaging when only expectation values are needed. In that case
+# an empty container is returned whose number of dimensions matches the `keep_runs_results` layout
+# (a per-trajectory matrix when `Val(true)`, an averaged vector when `Val(false)`).
 function _mcsolve_states(sol, dimensions, normalize_states, keep_runs_results, ::Val{true})
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
     states_all =
         stack(map(i -> _normalize_state!.(sol.u[i].u, Ref(dimensions), normalize_states), eachindex(sol.u)), dims = 1)
     return _store_multitraj_states(states_all, keep_runs_results)
 end
-_mcsolve_states(sol, dimensions, normalize_states, keep_runs_results, ::Val{false}) = QuantumObject[]
+_mcsolve_states(sol, dimensions, normalize_states, ::Val{false}, ::Val{false}) = QuantumObject[]
+_mcsolve_states(sol, dimensions, normalize_states, ::Val{true}, ::Val{false}) = Matrix{QuantumObject}(undef, 0, 0)
 
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
     c_ops isa Nothing && return QuantumObjectEvolution(H)
@@ -350,7 +353,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `normalize_states`: Whether to normalize the states. Default to `Val(true)`.
-- `save_states`: Whether to assemble and store the trajectory states in the returned solution. Default to `Val(true)`. Set it to `Val(false)` (together with `e_ops`) to skip the (potentially expensive) state assembly and averaging when only expectation values are needed; in that case `sol.states` is empty.
+- `save_states`: Whether to assemble and store the trajectory states in the returned solution. Default to `Val(true)`. Set it to `Val(false)` to skip the (potentially expensive) state assembly and averaging when only expectation values are needed; in that case `sol.states` is empty. This is functional on its own, but for best performance it is recommended to also pass `e_ops` so that the solver stores fewer states during integration (see the Notes below).
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
