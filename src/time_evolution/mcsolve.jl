@@ -21,6 +21,17 @@ function _normalize_state!(u, dims, normalize_states)
     return QuantumObject(u, Ket(), dims)
 end
 
+# Assemble (and, when `keep_runs_results = Val(false)`, trajectory-average) the states.
+# With `save_states = Val(false)` this is skipped entirely to avoid the (potentially expensive)
+# state normalization and `ket2dm` averaging when only expectation values are needed.
+function _mcsolve_states(sol, dimensions, normalize_states, keep_runs_results, ::Val{true})
+    # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
+    states_all =
+        stack(map(i -> _normalize_state!.(sol.u[i].u, Ref(dimensions), normalize_states), eachindex(sol.u)), dims = 1)
+    return _store_multitraj_states(states_all, keep_runs_results)
+end
+_mcsolve_states(sol, dimensions, normalize_states, keep_runs_results, ::Val{false}) = QuantumObject[]
+
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
     c_ops isa Nothing && return QuantumObjectEvolution(H)
     return QuantumObjectEvolution(H - 1im * mapreduce(op -> op' * op, +, c_ops) / 2)
@@ -283,6 +294,7 @@ end
         output_func::Union{Tuple,Nothing} = nothing,
         keep_runs_results::Union{Val,Bool} = Val(false),
         normalize_states::Union{Val,Bool} = Val(true),
+        save_states::Union{Val,Bool} = Val(true),
         kwargs...,
     )
 
@@ -338,6 +350,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `normalize_states`: Whether to normalize the states. Default to `Val(true)`.
+- `save_states`: Whether to assemble and store the trajectory states in the returned solution. Default to `Val(true)`. Set it to `Val(false)` (together with `e_ops`) to skip the (potentially expensive) state assembly and averaging when only expectation values are needed; in that case `sol.states` is empty.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -345,6 +358,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `ensemblealg` can be one of `EnsembleThreads()`, `EnsembleSerial()`, `EnsembleDistributed()`
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
+- `save_states=Val(false)` only skips the post-processing of the states (assembly and trajectory-averaging); it does not change how many states the ODE solver stores during integration (that is controlled by `saveat`). For maximum performance when only expectation values are needed, combine `save_states=Val(false)` with `e_ops` (so that `saveat=[tlist[end]]`).
 - The default tolerances in `kwargs` are given as `reltol=1e-6` and `abstol=1e-8`.
 - For more details about `alg` please refer to [`DifferentialEquations.jl` (ODE Solvers)](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
@@ -370,6 +384,7 @@ function mcsolve(
         output_func::Union{Tuple, Nothing} = nothing,
         keep_runs_results::Union{Val, Bool} = Val(false),
         normalize_states::Union{Val, Bool} = Val(true),
+        save_states::Union{Val, Bool} = Val(true),
         kwargs...,
     ) where {TJC <: LindbladJumpCallbackType}
     ens_prob_mc = mcsolveEnsembleProblem(
@@ -390,7 +405,15 @@ function mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc, alg, ntraj, ensemblealg, makeVal(keep_runs_results), normalize_states)
+    return mcsolve(
+        ens_prob_mc,
+        alg,
+        ntraj,
+        ensemblealg,
+        makeVal(keep_runs_results),
+        normalize_states,
+        makeVal(save_states),
+    )
 end
 
 function mcsolve(
@@ -400,6 +423,7 @@ function mcsolve(
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         keep_runs_results = Val(false),
         normalize_states = Val(true),
+        save_states = Val(true),
     )
     sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj; rng = ens_prob_mc.kwargs.rng)
 
@@ -411,8 +435,7 @@ function mcsolve(
         _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol.u[i], SaveFuncMCSolve), eachindex(sol.u))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
-    # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
-    states_all = stack(map(i -> _normalize_state!.(sol.u[i].u, Ref(dimensions), normalize_states), eachindex(sol.u)), dims = 1)
+    states = _mcsolve_states(sol, dimensions, normalize_states, keep_runs_results, makeVal(save_states))
 
     col_times = map(i -> _mc_get_jump_callback(sol.u[i]).affect!.col_times, eachindex(sol.u))
     col_which = map(i -> _mc_get_jump_callback(sol.u[i]).affect!.col_which, eachindex(sol.u))
@@ -423,7 +446,7 @@ function mcsolve(
         ntraj,
         ens_prob_mc.times,
         _sol_1.t,
-        _store_multitraj_states(states_all, keep_runs_results),
+        states,
         _store_multitraj_expect(expvals_all, keep_runs_results),
         col_times,
         col_which,

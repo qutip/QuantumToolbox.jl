@@ -392,6 +392,7 @@ end
 end
 
 @testitem "mcsolve" setup = [TESetup] begin
+    using Random
     using SciMLOperators
     import SciMLOperators: ScaledOperator
     using Statistics
@@ -478,6 +479,33 @@ end
         "ODE alg.: $(sol_mc_states.alg)\n" *
         "abstol = $(sol_mc_states.abstol)\n" *
         "reltol = $(sol_mc_states.reltol)\n"
+
+    # save_states = Val(false) skips state assembly/averaging but keeps expectation values.
+    # Using the same seeded rng, the expectation values must be identical to a save_states = Val(true) run.
+    sol_mc_with_states = mcsolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        rng = MersenneTwister(1234),
+    )
+    sol_mc_no_states = mcsolve(
+        H,
+        ψ0,
+        tlist,
+        c_ops,
+        e_ops = e_ops,
+        progress_bar = Val(false),
+        save_states = Val(false),
+        rng = MersenneTwister(1234),
+    )
+    @test sol_mc_no_states.expect == sol_mc_with_states.expect
+    @test isempty(sol_mc_no_states.states)
+    @test isempty(average_states(sol_mc_no_states))
+    sol_mc_no_states_string = sprint((t, s) -> show(t, "text/plain", s), sol_mc_no_states)
+    @test occursin("num_states = 0", sol_mc_no_states_string)
 
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist1, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist2, c_ops, progress_bar = Val(false))
