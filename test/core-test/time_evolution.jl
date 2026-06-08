@@ -479,6 +479,13 @@ end
         "abstol = $(sol_mc_states.abstol)\n" *
         "reltol = $(sol_mc_states.reltol)\n"
 
+    # check that save_end = false works as expected
+    # the states at the end of each trajectory are not saved, but expectation values are still saved
+    sol_mc_save_end_false =
+        mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, save_end = false, progress_bar = Val(false), ntraj = 5)
+    @test length(sol_mc_save_end_false.states) == length(sol_mc_save_end_false.times_states) == 0
+    @test size(sol_mc_save_end_false.expect) == (length(e_ops), length(tlist))
+
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist1, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist2, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist3, c_ops, progress_bar = Val(false))
