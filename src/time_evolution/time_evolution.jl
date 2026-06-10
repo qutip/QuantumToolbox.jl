@@ -289,8 +289,10 @@ average_states(sol::TimeEvolutionMultiTrajSol{<:Vector{<:QuantumObject}}) = sol.
 
 # TODO: Check if broadcasting division ./ size(states, 1) is type stable
 _average_traj_states(states::Matrix{<:QuantumObject{Ket}}) =
+    size(states, 2) == 0 ? Vector{Base.promote_op(ket2dm, eltype(states))}() :
     map(x -> x / size(states, 1), dropdims(sum(ket2dm, states, dims = 1), dims = 1))
 _average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType <: Union{Operator, OperatorKet}} =
+    size(states, 2) == 0 ? Vector{eltype(states)}() :
     map(x -> x / size(states, 1), dropdims(sum(states, dims = 1), dims = 1))
 
 @doc raw"""
