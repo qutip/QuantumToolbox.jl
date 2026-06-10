@@ -525,9 +525,10 @@
     end
 
     @testset "multisite operator" begin
+        dims = (3, 5, 4, 2)
         a = destroy(5)
         σy = sigmay()
-        M = multisite_operator((3, 5, 4, 2), 2 => a, 4 => σy)
+        M = multisite_operator(dims, 2 => a, 4 => σy)
         @test M == tensor(qeye(3), a, qeye(4), σy)
         @test eltype(M) == ComplexF64 # since promote_type(a, σy) == ComplexF64
 
@@ -549,12 +550,16 @@
         @test eltype(IAI) == Float16
         @test eltype(IAB) == eltype(AIB) == eltype(ABI) == Float32
 
-        dims = (3, 2, 4, 2)
         @test_throws ArgumentError multisite_operator(dims) # at least one Pair must be provided
         @test_throws ArgumentError multisite_operator(dims, 0 => sigmax()) # site index out of range
         @test_throws ArgumentError multisite_operator(dims, 5 => sigmax()) # site index out of range
         @test_throws ArgumentError multisite_operator(dims, 1 => Qobj(rand(2, 2))) # dims mismatch
         @test_throws ArgumentError multisite_operator(dims, 2 => Qobj(rand(2, 3))) # not endomorphic
+
+        @testset "Type Inference (multisite_operator)" begin
+            @inferred multisite_operator(Val(3), 2 => a)
+            @inferred multisite_operator(dims, 2 => a, 4 => σy)
+        end
     end
 
     @testset "expectation value" begin

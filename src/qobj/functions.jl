@@ -295,12 +295,12 @@ function multisite_operator(dims::AbstractVecOrTuple{T}, pairs::Pair{<:Integer, 
     isempty(pairs) && throw(ArgumentError("At least one Pair of `site-index => operator` must be provided."))
 
     N = length(dims) # total number of sites
-    sites_unsorted = collect(getfield.(pairs, :first))
+    sites_unsorted = [first(p) for p in pairs]
     all(i -> 1 <= i <= N, sites_unsorted) || throw(ArgumentError("There are totally $N-sites, so site indices must satisfy 1 ≤ i ≤ $N."))
 
     idxs = sortperm(sites_unsorted)
     _sites = sites_unsorted[idxs]
-    _ops = collect(getfield.(pairs, :second))[idxs]
+    _ops = [last(p) for p in pairs][idxs]
     _dims = collect(dims) # Use this instead of a Tuple, to avoid type instability when indexing on a slice
 
     sites, ops, ElType = _get_unique_sites_ops_type(_sites, _ops)
@@ -324,7 +324,7 @@ function multisite_operator(N::Union{Integer, Val}, pairs::Pair{<:Integer, <:Qua
     return multisite_operator(dims, pairs...)
 end
 
-function _get_unique_sites_ops_type(sites, ops)
+function _get_unique_sites_ops_type(sites::AbstractVector{<:Integer}, ops::AbstractVector{<:QuantumObject{Operator}})
     unique_sites = unique(sites)
     unique_ops = map(i -> prod(ops[findall(==(i), sites)]), unique_sites)
     T = mapreduce(eltype, promote_type, unique_ops)

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Improvement for `multisite_operator` ([#722], [#725]):
+- Improvement for `multisite_operator` ([#722], [#725], [#727]):
   - Add a convenient method when the Hilbert space dimension of all sites are equal.
   - Improve the documentation and docstring.
 - Efficient Jordan Wigner transformation for `fdestroy` and `fcreate`. ([#723])
@@ -526,4 +526,5 @@ Release date: 2024-11-13
 [#722]: https://github.com/qutip/QuantumToolbox.jl/issues/722
 [#723]: https://github.com/qutip/QuantumToolbox.jl/issues/723
 [#725]: https://github.com/qutip/QuantumToolbox.jl/issues/725
+[#727]: https://github.com/qutip/QuantumToolbox.jl/issues/727
 [#728]: https://github.com/qutip/QuantumToolbox.jl/issues/728
