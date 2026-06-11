@@ -566,7 +566,7 @@ function _BK_parity_set(α::Int)
     P = Int[]
     β = α - 1 # prefix parity = sites with index less than j
     while β >= 0
-        push!(P, β)
+        pushfirst!(P, β)      # use pushfirst! so that P is sorted in ascending order
         β = (β & (β + 1)) - 1 # drop the lowest set block of bits
     end
     return P
@@ -576,36 +576,52 @@ function _BK_flip_set(α::Int)
     i = 0
     while ((α >> i) & 1) == 1 # while α_i is 1
         β = α & ~(1 << i)     # set i-th bit to 0
-        push!(F, β)
+        pushfirst!(F, β)      # use pushfirst! so that F is sorted in ascending order
         i += 1
     end
     return F
 end
 
-# build the Pauli string ⨂ᵢ op over the (0-based) sites in `set`; falls back to the identity when `set` is empty
-# the `set` is using 0-based indexing, so shift by 1 to obtain the 1-based site-indices
-_BK_Pauli_string(::Type{T}, dims, set, op::QuantumObject) where {T <: FloatOrComplex} =
-    isempty(set) ? qeye(T, prod(dims); dims = dims) : multisite_operator(dims, map(i -> (i + 1) => op, set)...)
+function _BK_Pauli_string(
+        dims::NTuple{N, Int}, sites::Vector{Int}, op::QuantumObject{Operator, Dimensions{Space, Space}, <:SparseMatrixCSC{T}}
+    ) where {T <: FloatOrComplex, N}
+    isempty(sites) && return qeye(T, prod(dims); dims = dims)
+
+    # DON'T USE multisite_operator HERE !
+    # because the length of `sites` obtained from those _BK_XXX_set is not fixed, which can cause type-instability
+    # but current implementation of _BK_XXX_set is indeed the fastest method (as far as we have tested)
+    # Thus, we directly construct the Kronecker product (part of the code in multisite_operator without pre-handling the site-indices)
+    _dims = collect(dims) # avoid tuple-slice instability for runtime site indices
+    data = kron(Eye{T}(prod(_dims[1:(sites[1] - 1)])), op.data)
+    for i in 2:length(sites)
+        data = kron(data, Eye{T}(prod(_dims[(sites[i - 1] + 1):(sites[i] - 1)])), op.data)
+    end
+    data = kron(data, Eye{T}(prod(_dims[(sites[end] + 1):end])))
+
+    return QuantumObject(data; type = Operator(), dims = dims)
+end
 
 # the type of `sign` should be same as the first argument (which is specified by `_fermionic_operator`)
 function _Bravyi_Kitaev(::Type{T}, ::Val{N}, j::Int, sign::T) where {T <: FloatOrComplex, N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
     (1 <= j <= N) || throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
 
-    # use j-1 because these functions consider 0-based indexing, which aligns with the convention of [Phys. Rev. B 109, 115149 (2024)]
-    U = _BK_update_set(N, j - 1)
-    P = _BK_parity_set(j - 1)
-    F = _BK_flip_set(j - 1)
+    # use j-1 because these _BK_XXXX_set functions consider 0-based indexing, which aligns with the convention of [Phys. Rev. B 109, 115149 (2024)]
+    # and add `1`` back because our site-indices are 1-based
+    U = _BK_update_set(N, j - 1) .+ 1
+    P = _BK_parity_set(j - 1) .+ 1
+    F = _BK_flip_set(j - 1) .+ 1
     R = setdiff(P, F)
 
     dims = ntuple(i -> 2, Val(N))
-
-    XU = _BK_Pauli_string(T, dims, U, sigmax(T))
-    ZR = _BK_Pauli_string(T, dims, R, sigmaz(T))
-    ZP = _BK_Pauli_string(T, dims, P, sigmaz(T))
-
-    Xj = multisite_operator(dims, j => sigmax(T))
-    Yj = multisite_operator(dims, j => sigmay(T))
+    σx = sigmax(T)
+    σy = sigmay(T)
+    σz = sigmaz(T)
+    XU = _BK_Pauli_string(dims, U, σx)
+    ZR = _BK_Pauli_string(dims, R, σz)
+    ZP = _BK_Pauli_string(dims, P, σz)
+    Xj = multisite_operator(dims, j => σx)
+    Yj = multisite_operator(dims, j => σy)
 
     return (XU * (Xj * ZP + (sign * im) * (Yj * ZR))) / 2
 end
