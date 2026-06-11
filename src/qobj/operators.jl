@@ -470,46 +470,67 @@ eye(::Type{T}, N::Int; type = Operator(), dims = nothing) where {T <: Number} = 
 eye(N::Int; type = Operator(), dims = nothing) = eye(ComplexF64, N; type, dims)
 
 @doc raw"""
-    fdestroy([T::Type=ComplexF64,] N::Union{Int,Val}, j::Int)
+    fdestroy([T::Type=ComplexF64,] N::Union{Int,Val}, j::Int; method::Union{Symbol,Val}=Val(:JW))
 
-Construct a fermionic destruction operator [with element type `T = ComplexF64` (default)] acting on the `j`-th site, where the fock space has totally `N`-sites:
+Construct a fermionic destruction operator [with element type `T = ComplexF64` (default)] acting on the `j`-th site, where the Hilbert space has totally `N`-sites.
 
-Here, we use the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
+The site index `j` should satisfy: `1 ≤ j ≤ N`.
+
+The fermion-to-qubit mapping is selected by the keyword argument `method`:
+
+- `method = :JW` (default): the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
 ```math
 \hat{d}_j = \hat{\sigma}_z^{\otimes j-1} \otimes \hat{\sigma}_{+} \otimes \hat{\mathbb{1}}^{\otimes N-j}
 ```
-
-The site index `j` should satisfy: `1 ≤ j ≤ N`.
+- `method = :BK`: the Bravyi-Kitaev transformation [OBrien-Strelchuk2024](@cite).
 
 Note that we put ``\hat{\sigma}_{+} = \begin{pmatrix} 0 & 1 \\ 0 & 0 \end{pmatrix}`` here because we consider ``|0\rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix}`` to be ground (vacant) state, and ``|1\rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix}`` to be excited (occupied) state.
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fdestroy(Val(N), j)` instead of `fdestroy(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
+
+See also [`fcreate`](@ref).
 """
-fdestroy(::Type{T}, N::Union{Int, Val}, j::Int) where {T <: FloatOrComplex} = _Jordan_Wigner(T, N, j, sigmap(T))
-fdestroy(N::Union{Int, Val}, j::Int) = fdestroy(ComplexF64, N, j)
+fdestroy(::Type{T}, N::Union{Int, Val}, j::Int; method::Union{Symbol, Val} = Val(:JW)) where {T <: FloatOrComplex} =
+    _fermionic_operator(T, makeVal(N), j, makeVal(method), Val(:destroy))
+fdestroy(N::Union{Int, Val}, j::Int; kwargs...) = fdestroy(ComplexF64, N, j; kwargs...)
 
 @doc raw"""
-    fcreate([T::Type=ComplexF64,] N::Union{Int,Val}, j::Int)
+    fcreate([T::Type=ComplexF64,] N::Union{Int,Val}, j::Int; method::Union{Symbol,Val}=Val(:JW))
 
-Construct a fermionic creation operator [with element type `T = ComplexF64` (default)] acting on the `j`-th site, where the fock space has totally `N`-sites:
+Construct a fermionic creation operator [with element type `T = ComplexF64` (default)] acting on the `j`-th site, where the Hilbert space has totally `N`-sites.
 
-Here, we use the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
+The site index `j` should satisfy: `1 ≤ j ≤ N`.
+
+The fermion-to-qubit mapping is selected by the keyword argument `method`:
+
+- `method = :JW` (default): the [Jordan-Wigner transformation](https://en.wikipedia.org/wiki/Jordan%E2%80%93Wigner_transformation), namely
 ```math
 \hat{d}^\dagger_j = \hat{\sigma}_z^{\otimes j-1} \otimes \hat{\sigma}_{-} \otimes \hat{\mathbb{1}}^{\otimes N-j}
 ```
-
-The site index `j` should satisfy: `1 ≤ j ≤ N`.
+- `method = :BK`: the Bravyi-Kitaev transformation [OBrien-Strelchuk2024](@cite).
 
 Note that we put ``\hat{\sigma}_{-} = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatrix}`` here because we consider ``|0\rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix}`` to be ground (vacant) state, and ``|1\rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix}`` to be excited (occupied) state.
 
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `fcreate(Val(N), j)` instead of `fcreate(N, j)`. See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
-"""
-fcreate(::Type{T}, N::Union{Int, Val}, j::Int) where {T <: FloatOrComplex} = _Jordan_Wigner(T, N, j, sigmam(T))
-fcreate(N::Union{Int, Val}, j::Int) = fcreate(ComplexF64, N, j)
 
-_Jordan_Wigner(::Type{T}, N::Int, j::Int, op::QuantumObject{Operator}) where {T <: FloatOrComplex} = _Jordan_Wigner(T, Val(N), j, op)
+See also [`fdestroy`](@ref).
+"""
+fcreate(::Type{T}, N::Union{Int, Val}, j::Int; method::Union{Symbol, Val} = Val(:JW)) where {T <: FloatOrComplex} =
+    _fermionic_operator(T, makeVal(N), j, makeVal(method), Val(:create))
+fcreate(N::Union{Int, Val}, j::Int; kwargs...) = fcreate(ComplexF64, N, j; kwargs...)
+
+_fermionic_operator(::Type{T}, N::Val, j::Int, ::Val{:JW}, ::Val{:destroy}) where {T <: FloatOrComplex} =
+    _Jordan_Wigner(T, N, j, sigmap(T))
+_fermionic_operator(::Type{T}, N::Val, j::Int, ::Val{:JW}, ::Val{:create}) where {T <: FloatOrComplex} =
+    _Jordan_Wigner(T, N, j, sigmam(T))
+_fermionic_operator(::Type{T}, N::Val, j::Int, ::Val{:BK}, ::Val{:destroy}) where {T <: FloatOrComplex} =
+    _Bravyi_Kitaev(T, N, j, one(T))
+_fermionic_operator(::Type{T}, N::Val, j::Int, ::Val{:BK}, ::Val{:create}) where {T <: FloatOrComplex} =
+    _Bravyi_Kitaev(T, N, j, -one(T))
+_fermionic_operator(::Type{T}, ::Val, ::Int, ::Val{method}, _) where {T <: FloatOrComplex, method} =
+    throw(ArgumentError("The fermion-to-qubit mapping `method` should be either `:JW` or `:BK`, got `:$method`."))
 
 function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}) where {T <: FloatOrComplex, N}
     (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
@@ -523,6 +544,86 @@ function _Jordan_Wigner(::Type{T}, ::Val{N}, j::Int, op::QuantumObject{Operator}
     I_tensor = Eye{T}(2^(N - j))
 
     return QuantumObject(kron(Z_tensor, op.data, I_tensor); type = Operator(), dims = ntuple(i -> 2, Val(N)))
+end
+
+# These "update", "parity", and "flip" sets are used by the `_Bravyi_Kitaev` transformation [Phys. Rev. B 109, 115149 (2024)]
+## The following functions are optimized using bitwise operations for better performance compared to the pseudo-code in the paper.
+## All site-indices here are 0-based to match the bit-manipulation definitions.
+##
+## Note that we use the variable names as presented in the paper:
+##   - `n`: Number of fermionic modes
+##   - `α`: site index
+function _BK_update_set(n::Int, α::Int)
+    U = Int[]
+    β = α
+    while β < n
+        (β != α) && push!(U, β) # exclude site α itself
+        β = β | (β + 1)
+    end
+    return U
+end
+function _BK_parity_set(α::Int)
+    P = Int[]
+    β = α - 1 # prefix parity = sites with index less than j
+    while β >= 0
+        pushfirst!(P, β)      # use pushfirst! so that P is sorted in ascending order
+        β = (β & (β + 1)) - 1 # drop the lowest set block of bits
+    end
+    return P
+end
+function _BK_flip_set(α::Int)
+    F = Int[]
+    i = 0
+    while ((α >> i) & 1) == 1 # while α_i is 1
+        β = α & ~(1 << i)     # set i-th bit to 0
+        pushfirst!(F, β)      # use pushfirst! so that F is sorted in ascending order
+        i += 1
+    end
+    return F
+end
+
+function _BK_Pauli_string(
+        dims::NTuple{N, Int}, sites::Vector{Int}, op::QuantumObject{Operator, Dimensions{Space, Space}, <:SparseMatrixCSC{T}}
+    ) where {T <: FloatOrComplex, N}
+    isempty(sites) && return qeye(T, prod(dims); dims = dims)
+
+    # DON'T USE multisite_operator HERE !
+    # because the length of `sites` obtained from those _BK_XXX_set is not fixed, which can cause type-instability
+    # but current implementation of _BK_XXX_set is indeed the fastest method (as far as we have tested)
+    # Thus, we directly construct the Kronecker product (part of the code in multisite_operator without pre-handling the site-indices)
+    _dims = collect(dims) # avoid tuple-slice instability for runtime site indices
+    data = kron(Eye{T}(prod(_dims[1:(sites[1] - 1)])), op.data)
+    for i in 2:length(sites)
+        data = kron(data, Eye{T}(prod(_dims[(sites[i - 1] + 1):(sites[i] - 1)])), op.data)
+    end
+    data = kron(data, Eye{T}(prod(_dims[(sites[end] + 1):end])))
+
+    return QuantumObject(data; type = Operator(), dims = dims)
+end
+
+# the type of `sign` should be same as the first argument (which is specified by `_fermionic_operator`)
+function _Bravyi_Kitaev(::Type{T}, ::Val{N}, j::Int, sign::T) where {T <: FloatOrComplex, N}
+    (N < 1) && throw(ArgumentError("The total number of sites (N) cannot be less than 1"))
+    (1 <= j <= N) || throw(ArgumentError("The site index (j) should satisfy: 1 ≤ j ≤ N"))
+
+    # use j-1 because these _BK_XXXX_set functions consider 0-based indexing, which aligns with the convention of [Phys. Rev. B 109, 115149 (2024)]
+    # and add `1`` back because our site-indices are 1-based
+    U = _BK_update_set(N, j - 1) .+ 1
+    P = _BK_parity_set(j - 1) .+ 1
+    F = _BK_flip_set(j - 1) .+ 1
+    R = setdiff(P, F)
+
+    dims = ntuple(i -> 2, Val(N))
+    σx = sigmax(T)
+    σy = sigmay(T)
+    σz = sigmaz(T)
+    XU = _BK_Pauli_string(dims, U, σx)
+    ZR = _BK_Pauli_string(dims, R, σz)
+    ZP = _BK_Pauli_string(dims, P, σz)
+    Xj = multisite_operator(dims, j => σx)
+    Yj = multisite_operator(dims, j => σy)
+
+    return (XU * (Xj * ZP + (sign * im) * (Yj * ZR))) / 2
 end
 
 @doc raw"""

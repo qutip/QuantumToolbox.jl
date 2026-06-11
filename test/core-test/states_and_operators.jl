@@ -327,8 +327,11 @@
             (
             exp(-γ / 2) * cos(θ1 / 2) * cos(θ2 / 2) + exp(1im * (ϕ2 - ϕ1) + γ / 2) * sin(θ1 / 2) * sin(θ2 / 2)
         )^(2 * s)
+    end
 
-        # test commutation relations for fermionic creation and annihilation operators
+    @testset "fdestroy and fcreate" begin
+        # Jordan-Wigner transformation
+        ## test commutation relations for fermionic creation and annihilation operators
         sites = 4
         SIZE = 2^sites
         dims = ntuple(i -> 2, Val(sites))
@@ -361,9 +364,51 @@
         @test d1' * d2' * vac == tensor(basis(2, 1), basis(2, 1))
         @test d1' * d1' * d2' * vac == zero
         @test d2' * d1' * d2' * vac == zero
-        @test_throws ArgumentError fdestroy(0, 0)
-        @test_throws ArgumentError fdestroy(sites, 0)
-        @test_throws ArgumentError fdestroy(sites, sites + 1)
+
+        # Bravyi-Kitaev fermion-to-qubit mapping
+        @test fdestroy(1, 1; method = :BK) == fdestroy(1, 1; method = :JW)
+        @test fcreate(1, 1; method = :BK) == fcreate(1, 1; method = :JW)
+
+        N = 7
+        vac_BK = tensor(fill(basis(2, 0), N)...)
+        Cs = map(i -> fdestroy(N, i; method = :BK), 1:N)
+        for i in 1:N
+            Ci = Cs[i]
+            @test Ci' ≈ fcreate(N, i; method = :BK)
+            @test (Ci * vac_BK) ≈ zero_ket(ntuple(_ -> 2, N))
+
+            @test commutator(Ci, Ci'; anti = true) ≈ qeye(2^N; dims = ntuple(_ -> 2, N))
+            @test norm(commutator(Ci, Ci; anti = true)) ≈ 0 atol = 1.0e-12
+
+            for j in (i + 1):N
+                Cj = Cs[j]
+                @test norm(commutator(Ci, Cj; anti = true)) ≈ 0 atol = 1.0e-12
+                @test norm(commutator(Ci, Cj'; anti = true)) ≈ 0 atol = 1.0e-12
+            end
+        end
+
+        ## explicit Pauli strings for N = 4 [see O'Brien and Strelchuk, Phys. Rev. B 109, 115149 (2024)]
+        X = sigmax()
+        Y = sigmay()
+        Z = sigmaz()
+        Id2 = qeye(2)
+        d_BK = [
+            0.5 * tensor(X, X, Id2, X) + 0.5im * tensor(Y, X, Id2, X),
+            0.5 * tensor(Z, X, Id2, X) + 0.5im * tensor(Id2, Y, Id2, X),
+            0.5 * tensor(Id2, Z, X, X) + 0.5im * tensor(Id2, Z, Y, X),
+            0.5 * tensor(Id2, Z, Z, X) + 0.5im * tensor(Id2, Id2, Id2, Y),
+        ]
+        @test all([fdestroy(4, i; method = :BK) ≈ d_BK[i] for i in 1:4])
+
+        # Errors
+        @test_throws ArgumentError fdestroy(0, 0; method = :JW)
+        @test_throws ArgumentError fdestroy(sites, 0; method = :JW)
+        @test_throws ArgumentError fdestroy(sites, sites + 1; method = :JW)
+        @test_throws ArgumentError fdestroy(0, 0; method = :BK)
+        @test_throws ArgumentError fdestroy(sites, 0; method = :BK)
+        @test_throws ArgumentError fdestroy(sites, sites + 1; method = :BK)
+        @test_throws ArgumentError fdestroy(sites, 1; method = :unknown)
+        @test_throws ArgumentError fcreate(sites, 1; method = :unknown)
     end
 
     @testset "identity operator" begin
@@ -482,8 +527,10 @@
 
         @inferred eye(20)
 
-        @inferred fdestroy(Val(10), 4)
-        @inferred fcreate(Val(10), 4)
+        @inferred fdestroy(Val(10), 4; method = Val(:JW))
+        @inferred fcreate(Val(10), 4; method = Val(:JW))
+        @inferred fdestroy(Val(10), 4; method = Val(:BK))
+        @inferred fcreate(Val(10), 4; method = Val(:BK))
 
         @inferred projection(20, 5, 3)
 
@@ -551,6 +598,8 @@
             @test CT == eltype(momentum(CT, N))
             @test CT == eltype(fdestroy(CT, N, 1))
             @test CT == eltype(fcreate(CT, N, 1))
+            @test CT == eltype(fdestroy(CT, N, 1; method = :BK))
+            @test CT == eltype(fcreate(CT, N, 1; method = :BK))
             @test CT == eltype(tunneling(CT, N))
             @test CT == eltype(qft(CT, N))
         end
