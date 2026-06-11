@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improve the documentation and docstring.
 - Efficient Jordan Wigner transformation for `fdestroy` and `fcreate`. ([#723])
 - Fix `mcsolve` error when both keyword arguments `e_ops` and `save_end=false` are specified. ([#728])
+- Fix wrong order in filtered kronecker product in `liouvillian_dressed_nonsecular`. ([#729])
 
 ## [v0.47.0]
 Release date: 2026-05-19
@@ -528,3 +529,4 @@ Release date: 2024-11-13
 [#725]: https://github.com/qutip/QuantumToolbox.jl/issues/725
 [#727]: https://github.com/qutip/QuantumToolbox.jl/issues/727
 [#728]: https://github.com/qutip/QuantumToolbox.jl/issues/728
+[#729]: https://github.com/qutip/QuantumToolbox.jl/issues/729
