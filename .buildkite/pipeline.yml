@@ -11,7 +11,7 @@ steps:
         !build.pull_request.draft      &&
         (build.branch =~ /main/ || build.pull_request.base_branch =~ /main/)
     agents:
-      queue: "juliagpu"
+      queue: "cuda"
     plugins:
       - staticfloat/forerunner: # CUDA.jl tests
           watch:
