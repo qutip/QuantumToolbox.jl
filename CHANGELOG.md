@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Add support for time-dependent collapse operators (`QobjEvo`) in `mcsolve`. ([#733])
+- Support `Base.lastindex` (`end`) for quantum objects. ([#736])
 
 ## [v0.47.1]
 Release date: 2026-06-11
@@ -540,3 +541,4 @@ Release date: 2024-11-13
 [#728]: https://github.com/qutip/QuantumToolbox.jl/issues/728
 [#729]: https://github.com/qutip/QuantumToolbox.jl/issues/729
 [#733]: https://github.com/qutip/QuantumToolbox.jl/issues/733
+[#736]: https://github.com/qutip/QuantumToolbox.jl/issues/736

@@ -258,6 +258,15 @@
         @test issymmetric(Y) == false
         @test issymmetric(Z) == true
 
+        # indexing
+        ψ = rand_ket(N)
+        ρ = rand_dm(N)
+        @test ψ[end] == ψ.data[end]
+        @test ρ[end] == ρ[N^2] == ρ.data[end]
+        @test ρ[end, 1] == ρ[N, 1] == ρ.data[N, 1]
+        @test ρ[1, end] == ρ[1, N] == ρ.data[1, N]
+        @test ρ[end, end] == ρ[N, N] == ρ.data[N, N]
+
         # diag
         @test diag(a, 1) ≈ [sqrt(i) for i in 1:(N - 1)]
         @test diag(a_d, -1) == [sqrt(i) for i in 1:(N - 1)]
