@@ -86,7 +86,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
-- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`. Each element can be a [`QuantumObject`](@ref) or a [`QuantumObjectEvolution`](@ref) (for time-dependent collapse operators).
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
@@ -192,7 +192,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
-- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`. Each element can be a [`QuantumObject`](@ref) or a [`QuantumObjectEvolution`](@ref) (for time-dependent collapse operators).
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
@@ -325,7 +325,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
-- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`. Each element can be a [`QuantumObject`](@ref) or a [`QuantumObjectEvolution`](@ref) (for time-dependent collapse operators).
 - `alg`: The algorithm to use for the ODE solver. Default to `DP5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
