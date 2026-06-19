@@ -195,17 +195,16 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
                 Duplicated(params, dparams1),
             )[1]
 
-            # It doesn't work yet when assume_hermitian = Val(false)
-            # dparams2 = Enzyme.make_zero(params)
-            # Enzyme.autodiff(
-            #     Enzyme.set_runtime_activity(Enzyme.Reverse),
-            #     my_f_mesolve_assume_non_herm,
-            #     Active,
-            #     Duplicated(params, dparams2),
-            # )[1]
+            dparams2 = Enzyme.make_zero(params)
+            Enzyme.autodiff(
+                Enzyme.set_runtime_activity(Enzyme.Reverse),
+                my_f_mesolve_assume_non_herm_bsa_enzyme,
+                Active,
+                Duplicated(params, dparams2),
+            )[1]
 
             @test dparams1 ≈ grad_exact atol = 1.0e-6
-            # @test dparams2 ≈ grad_exact atol = 1.0e-6
+            @test dparams2 ≈ grad_exact atol = 1.0e-6
         end
     end
 end
