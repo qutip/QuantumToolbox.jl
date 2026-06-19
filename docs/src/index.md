@@ -31,6 +31,9 @@ hero:
     - theme: alt
       text: Visit QuTiP.org
       link: https://qutip.org/
+    - theme: alt
+      text: QuTiP User Survey 2026
+      link: https://forms.gle/BXbeT44N4immJykJ7
 
 
 features:
