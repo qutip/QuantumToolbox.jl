@@ -168,5 +168,99 @@
         @inferred enr_fock(dims, excitations, zeros(Int, N))
         @inferred enr_destroy(dims, excitations)
         @inferred enr_thermal_dm(dims, excitations, rand(N))
+
+        weights = (1, 1, 2)
+        @inferred EnrSpace(dims, excitations; excitation_weights = weights)
+        @inferred enr_identity(dims, excitations; excitation_weights = weights)
+        @inferred enr_fock(dims, excitations, zeros(Int, N); excitation_weights = weights)
+        @inferred enr_destroy(dims, excitations; excitation_weights = weights)
+        @inferred enr_thermal_dm(dims, excitations, rand(N); excitation_weights = weights)
+    end
+
+    @testset "Weighted number operator (excitation_weights)" begin
+        # default weights recover the standard total-excitation restriction
+        s_default = EnrSpace((2, 2, 3), 3)
+        s_ones = EnrSpace((2, 2, 3), 3; excitation_weights = (1, 1, 1))
+        @test s_default == s_ones
+        @test all(==(1), s_default.excitation_weights)
+        @test s_default.idx2state == s_ones.idx2state
+
+        # weighted restriction n_1 + n_2 + 2 * n_3 <= 2 (e.g. parametric down-conversion)
+        s_enr = EnrSpace((2, 2, 2), 2; excitation_weights = (1, 1, 2))
+        expected_idx2state = Dict(
+            1 => SVector{3}(0, 0, 0),
+            2 => SVector{3}(0, 0, 1),
+            3 => SVector{3}(0, 1, 0),
+            4 => SVector{3}(1, 0, 0),
+            5 => SVector{3}(1, 1, 0),
+        )
+        @test s_enr.size == 5
+        @test s_enr.idx2state == expected_idx2state
+        @test s_enr.excitation_weights == SVector{3}(1, 1, 2)
+        n, _, i2s = enr_state_dictionaries((2, 2, 2), 2; excitation_weights = (1, 1, 2))
+        @test n == 5
+        @test i2s == expected_idx2state
+
+        # show
+        @test sprint(show, s_default) == "EnrSpace([2, 2, 3], 3)"
+        @test sprint(show, s_enr) == "EnrSpace([2, 2, 2], 2; excitation_weights = [1, 1, 2])"
+
+        # equality distinguishes different weights
+        @test EnrSpace((3, 3), 2; excitation_weights = (2, 1)) != EnrSpace((3, 3), 2; excitation_weights = (1, 1))
+        @test EnrSpace((3, 3), 2; excitation_weights = (2, 1)) == EnrSpace((3, 3), 2; excitation_weights = (2, 1))
+
+        # the weighted number operator has integer eigenvalues bounded by n_excitations
+        dims = (4, 4, 3)
+        weights = (1, 1, 2)
+        n_exc = 4
+        space = EnrSpace(dims, n_exc; excitation_weights = weights)
+        a, b, c = enr_destroy(space)
+        N_op = a' * a + b' * b + 2 * (c' * c)
+        n_eig = real.(diag(N_op.data))
+        @test all(x -> isapprox(x, round(x); atol = 1.0e-10), n_eig)
+        @test maximum(n_eig) <= n_exc + 1.0e-9
+        # a number-conserving (parametric down-conversion) Hamiltonian commutes with N_op
+        M = a' * b' * c
+        H = M + M'
+        @test isapprox((H * N_op - N_op * H).data, zero((H * N_op).data); atol = 1.0e-10)
+
+        # argument checks
+        @test_throws DimensionMismatch EnrSpace((2, 2, 2), 2; excitation_weights = (1, 1))
+        @test_throws DomainError EnrSpace((2, 2, 2), 2; excitation_weights = (1, 1, 0))
+        @test_throws DomainError EnrSpace((2, 2, 2), 2; excitation_weights = (1, 1, -1))
+    end
+
+    @testset "Parametric down-conversion: full vs ENR" begin
+        Δa, Δb, Δc = 1.0, 1.3, 2.1
+        g = 0.5
+        γ = 0.1
+        tlist = range(0, 10, 50)
+
+        # full Fock space (signal, idler, pump)
+        Na = Nb = Nc = 2
+        a = destroy(Na) ⊗ qeye(Nb) ⊗ qeye(Nc)
+        b = qeye(Na) ⊗ destroy(Nb) ⊗ qeye(Nc)
+        c = qeye(Na) ⊗ qeye(Nb) ⊗ destroy(Nc)
+        Mf = a' * b' * c
+        H = Δa * a' * a + Δb * b' * b + Δc * c' * c + g * (Mf + Mf')
+        ψ0 = fock(Na, 0) ⊗ fock(Nb, 0) ⊗ fock(Nc, 1)  # one pump excitation, N = 2
+        c_ops = (√γ * a, √γ * b)
+        sol_full = mesolve(H, ψ0, tlist, c_ops; e_ops = [a' * a, c' * c], progress_bar = Val(false))
+
+        # ENR space with conserved weighted number n_a + n_b + 2 * n_c <= 2
+        dims = (2, 2, 2)
+        n_exc = 2
+        weights = (1, 1, 2)
+        s_enr = EnrSpace(dims, n_exc; excitation_weights = weights)
+        ae, be, ce = enr_destroy(s_enr)
+        Me = ae' * be' * ce
+        H_enr = Δa * ae' * ae + Δb * be' * be + Δc * ce' * ce + g * (Me + Me')
+        ψ0_enr = enr_fock(s_enr, [0, 0, 1])
+        c_ops_enr = (√γ * ae, √γ * be)
+        sol_enr =
+            mesolve(H_enr, ψ0_enr, tlist, c_ops_enr; e_ops = [ae' * ae, ce' * ce], progress_bar = Val(false))
+
+        @test size(H_enr.data, 1) == 5  # ENR truncation (vs 8 for the full space)
+        @test all(isapprox.(sol_full.expect, sol_enr.expect, atol = 1.0e-5))
     end
 end
