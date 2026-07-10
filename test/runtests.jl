@@ -8,7 +8,7 @@ const testdir = dirname(@__FILE__)
 const EXTENSION_PATHS = Dict(
     "AutoDiff_Ext" => joinpath(testdir, "ext-test", "cpu", "autodiff"),
     "Makie_Ext" => joinpath(testdir, "ext-test", "cpu", "makie"),
-    "CUDA_Ext" => joinpath(testdir, "ext-test", "gpu"),
+    "CUDA_Ext" => joinpath(testdir, "ext-test", "gpu", "cuda"),
     "Arbitrary-Precision" => joinpath(testdir, "ext-test", "cpu", "arbitrary_precision"),
 )
 const EXTENSION_LIST = collect(keys(EXTENSION_PATHS))
