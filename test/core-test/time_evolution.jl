@@ -512,8 +512,8 @@ end
     @testset "Memory Allocations (mcsolve)" begin
         ntraj = 100
         for keep_runs_results in (Val(false), Val(true))
-            n1 = QuantumToolbox.getVal(keep_runs_results) ? 120 : 140
-            n2 = QuantumToolbox.getVal(keep_runs_results) ? 110 : 130
+            n1 = 140
+            n2 = 130
 
             allocs_tot = @allocations mcsolve(
                 H,
