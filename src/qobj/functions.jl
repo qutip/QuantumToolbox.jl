@@ -75,24 +75,8 @@ function expect(O::AbstractVector{<:AbstractQuantumObject{Operator}}, ρ::Quantu
     return result
 end
 expect(O::AbstractQuantumObject{Operator}, ρ::AbstractVector{<:QuantumObject}) = expect.(Ref(O), ρ)
-function expect(
-        O::AbstractVector{<:AbstractQuantumObject{Operator, DimsType, <:Union{<:Hermitian{TF}, <:Symmetric{TR}}}},
-        ρ::AbstractVector{<:QuantumObject},
-    ) where {DimsType <: Dimensions, TF <: Number, TR <: Real}
-    N_ops = length(O)
-    result = Matrix{Float64}(undef, N_ops, length(ρ))
-    for i in 1:N_ops
-        result[i, :] .= expect.(Ref(O[i]), ρ)
-    end
-    return result
-end
 function expect(O::AbstractVector{<:AbstractQuantumObject{Operator}}, ρ::AbstractVector{<:QuantumObject})
-    N_ops = length(O)
-    result = Matrix{ComplexF64}(undef, N_ops, length(ρ))
-    for i in 1:N_ops
-        result[i, :] .= expect.(Ref(O[i]), ρ)
-    end
-    return result
+    return expect.(reshape(O, :, 1), reshape(ρ, 1, :))
 end
 
 @doc raw"""
