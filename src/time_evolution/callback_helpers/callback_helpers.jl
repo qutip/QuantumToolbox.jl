@@ -16,11 +16,12 @@ function _merge_tstops(kwargs, prob_is_const::Bool, tlist)
 end
 
 # Multiple dispatch depending on the progress_bar and e_ops types
-function _generate_se_me_kwargs(e_ops, progress_bar, tlist, kwargs, method)
-    cb = _generate_save_callback(e_ops, tlist, progress_bar, method)
+function _generate_se_me_kwargs(e_ops, progress_bar, tlist, kwargs, method, ::Type{T}) where {T <: Number}
+    cb = _generate_save_callback(e_ops, tlist, progress_bar, method, T)
     return _merge_kwargs_with_callback(kwargs, cb)
 end
-_generate_se_me_kwargs(e_ops::Nothing, progress_bar::Val{false}, tlist, kwargs, method) = kwargs
+_generate_se_me_kwargs(e_ops::Nothing, progress_bar::Val{false}, tlist, kwargs, method, ::Type{T}) where {T <: Number} =
+    kwargs
 
 function _generate_stochastic_kwargs(
         e_ops,
@@ -30,8 +31,9 @@ function _generate_stochastic_kwargs(
         store_measurement,
         kwargs,
         method::Type{SF},
-    ) where {SF <: AbstractSaveFunc}
-    cb_save = _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
+        ::Type{T},
+    ) where {SF <: AbstractSaveFunc, T <: Number}
+    cb_save = _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method, T)
 
     # Ensure that the noise is stored in tlist. # TODO: Fix this directly in DiffEqNoiseProcess.jl
     # See https://github.com/SciML/DiffEqNoiseProcess.jl/issues/214 for example
@@ -52,7 +54,8 @@ _generate_stochastic_kwargs(
     store_measurement::Val{false},
     kwargs,
     method::Type{SF},
-) where {SF <: AbstractSaveFunc} = kwargs
+    ::Type{T},
+) where {SF <: AbstractSaveFunc, T <: Number} = kwargs
 
 function _merge_kwargs_with_callback(kwargs, cb)
     kwargs2 =
@@ -62,7 +65,7 @@ function _merge_kwargs_with_callback(kwargs, cb)
     return kwargs2
 end
 
-function _generate_save_callback(e_ops, tlist, progress_bar, method)
+function _generate_save_callback(e_ops, tlist, progress_bar, method, ::Type{T}) where {T <: Number}
     e_ops_data = e_ops isa Nothing ? nothing : _get_e_ops_data(e_ops, method)
 
     progr =
@@ -74,13 +77,21 @@ function _generate_save_callback(e_ops, tlist, progress_bar, method)
             settings.ProgressMeterKWARGS...,
         ) : nothing
 
-    expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
+    expvals = e_ops isa Nothing ? nothing : Array{_complex_float_type(T)}(undef, length(e_ops), length(tlist))
 
     _save_func = method(e_ops_data, progr, Ref(1), expvals)
     return FunctionCallingCallback(_save_func, funcat = tlist)
 end
 
-function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurement, progress_bar, method)
+function _generate_stochastic_save_callback(
+        e_ops,
+        sc_ops,
+        tlist,
+        store_measurement,
+        progress_bar,
+        method,
+        ::Type{T},
+    ) where {T <: Number}
     e_ops_data = e_ops isa Nothing ? nothing : _get_e_ops_data(e_ops, method)
     m_ops_data = _get_m_ops_data(sc_ops, method)
 
@@ -88,10 +99,10 @@ function _generate_stochastic_save_callback(e_ops, sc_ops, tlist, store_measurem
         getVal(progress_bar) ?
         Progress(length(tlist); enabled = getVal(progress_bar), settings.ProgressMeterKWARGS...) : nothing
 
-    expvals = e_ops isa Nothing ? nothing : Array{ComplexF64}(undef, length(e_ops), length(tlist))
-    m_expvals = getVal(store_measurement) ? Array{Float64}(undef, length(sc_ops), length(tlist) - 1) : nothing
+    expvals = e_ops isa Nothing ? nothing : Array{_complex_float_type(T)}(undef, length(e_ops), length(tlist))
+    m_expvals = getVal(store_measurement) ? Array{_float_type(T)}(undef, length(sc_ops), length(tlist) - 1) : nothing
 
-    _save_func_cache = Array{Float64}(undef, length(sc_ops))
+    _save_func_cache = Array{_float_type(T)}(undef, length(sc_ops))
     _save_func =
         method(store_measurement, e_ops_data, m_ops_data, progr, Ref(1), expvals, m_expvals, tlist, _save_func_cache)
     return FunctionCallingCallback(_save_func, funcat = tlist)

@@ -84,6 +84,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 - **GPU Computing:** Leverage GPU resources for high-performance computing. Simulate quantum dynamics directly on the GPU with the same syntax as the CPU case.
 - **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case. See [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/cluster) for more information.
 - **Differentiable Programming:** Enable gradient-based optimization for quantum algorithms. Compute gradients of quantum dynamics with respect to their parameters using automatic differentiation. See [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/autodiff) for more information.
+- **Arbitrary Precision:** Go beyond double precision when the physics demands it. Because `Julia` specializes generic code to any number type, the same simulation runs at `Double64` or `BigFloat` precision with the same syntax — resolving exponentially small quantities like tunneling splittings and Liouvillian gaps that are lost in `Float64` roundoff. See [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/arbitrary_precision) for more information.
 - **Easy Extension:** Easily extend the package, taking advantage of the `Julia` language features, like multiple dispatch and metaprogramming.
 
 ## Installation
