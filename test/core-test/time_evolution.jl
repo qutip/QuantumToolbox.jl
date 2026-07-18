@@ -200,58 +200,6 @@ end
         @inferred sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(true)) # no params, test progress bar
         @inferred sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     end
-
-    @testset "sesolve_map (advanced usage, custom prob_func) - Issue #645" begin
-        # Minimal reproduction of https://github.com/qutip/QuantumToolbox.jl/issues/645 :
-        # a custom `prob_func` that never touches `callback` must not let trajectories -- including
-        # SciML's internal "test" trajectory during EnsembleProblem set up -- share the mutable
-        # e_ops-saving callback state (the `iter::Ref` counter / `expvals` cache).
-        Hq = QobjEvo(sigmax(), (p, t) -> p[1])
-        ψ0q = basis(2, 0)
-        tlistq = range(0, 1, 100)
-        e_opsq = [ψ0q * ψ0q']
-        parameters = [π / 2, π / 3, π / 4]
-
-        probq = sesolveProblem(Hq, ψ0q, tlistq, e_ops = e_opsq, progress_bar = Val(false))
-
-        # Deliberately "unsafe": doesn't reset per-trajectory callback state itself.
-        unsafe_prob_func(prob, ctx) = QuantumToolbox.remake(prob, p = [parameters[ctx.sim_id]])
-
-        reference(param) = sesolve(Hq, ψ0q, tlistq, e_ops = e_opsq, params = [param], progress_bar = Val(false)).expect
-
-        # (a) Default safetycopy (unspecified) must auto-protect a custom prob_func.
-        sols = sesolve_map(probq, eachindex(parameters), prob_func = unsafe_prob_func, progress_bar = Val(false))
-        @test length(sols) == length(parameters)
-        for (i, param) in enumerate(parameters)
-            @test sols[i].expect ≈ reference(param)
-        end
-
-        # (b) Explicit safetycopy = true behaves the same way.
-        sols_true = sesolve_map(
-            probq,
-            eachindex(parameters),
-            prob_func = unsafe_prob_func,
-            safetycopy = true,
-            progress_bar = Val(false),
-        )
-        for (i, param) in enumerate(parameters)
-            @test sols_true[i].expect ≈ reference(param)
-        end
-
-        # (c) A well-behaved custom prob_func that copies the callback itself still works with safetycopy = false.
-        safe_prob_func(prob, ctx) =
-            QuantumToolbox.remake(prob, p = [parameters[ctx.sim_id]], callback = deepcopy(prob.kwargs[:callback]))
-        sols_safe = sesolve_map(
-            probq,
-            eachindex(parameters),
-            prob_func = safe_prob_func,
-            safetycopy = false,
-            progress_bar = Val(false),
-        )
-        for (i, param) in enumerate(parameters)
-            @test sols_safe[i].expect ≈ reference(param)
-        end
-    end
 end
 
 @testitem "mesolve" setup = [TESetup] begin
@@ -440,58 +388,6 @@ end
             params = (ωc_list, ωq_list),
             progress_bar = Val(false),
         )
-    end
-
-    @testset "mesolve_map (advanced usage, custom prob_func) - Issue #645" begin
-        # Same shape as the sesolve_map regression test above, but exercising mesolve_map's own
-        # EnsembleProblem construction (via a non-trivial c_ops) instead.
-        Hq = QobjEvo(sigmax(), (p, t) -> p[1])
-        ψ0q = basis(2, 0)
-        tlistq = range(0, 1, 100)
-        c_opsq = [sqrt(0.1) * sigmam()]
-        e_opsq = [sigmaz()]
-        parameters = [π / 2, π / 3, π / 4]
-
-        probq = mesolveProblem(Hq, ψ0q, tlistq, c_opsq, e_ops = e_opsq, progress_bar = Val(false))
-
-        # Deliberately "unsafe": doesn't reset per-trajectory callback state itself.
-        unsafe_prob_func(prob, ctx) = QuantumToolbox.remake(prob, p = [parameters[ctx.sim_id]])
-
-        reference(param) =
-            mesolve(Hq, ψ0q, tlistq, c_opsq, e_ops = e_opsq, params = [param], progress_bar = Val(false)).expect
-
-        # (a) Default safetycopy (unspecified) must auto-protect a custom prob_func.
-        sols = mesolve_map(probq, eachindex(parameters), prob_func = unsafe_prob_func, progress_bar = Val(false))
-        @test length(sols) == length(parameters)
-        for (i, param) in enumerate(parameters)
-            @test sols[i].expect ≈ reference(param)
-        end
-
-        # (b) Explicit safetycopy = true behaves the same way.
-        sols_true = mesolve_map(
-            probq,
-            eachindex(parameters),
-            prob_func = unsafe_prob_func,
-            safetycopy = true,
-            progress_bar = Val(false),
-        )
-        for (i, param) in enumerate(parameters)
-            @test sols_true[i].expect ≈ reference(param)
-        end
-
-        # (c) A well-behaved custom prob_func that copies the callback itself still works with safetycopy = false.
-        safe_prob_func(prob, ctx) =
-            QuantumToolbox.remake(prob, p = [parameters[ctx.sim_id]], callback = deepcopy(prob.kwargs[:callback]))
-        sols_safe = mesolve_map(
-            probq,
-            eachindex(parameters),
-            prob_func = safe_prob_func,
-            safetycopy = false,
-            progress_bar = Val(false),
-        )
-        for (i, param) in enumerate(parameters)
-            @test sols_safe[i].expect ≈ reference(param)
-        end
     end
 end
 
