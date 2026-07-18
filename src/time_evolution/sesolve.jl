@@ -150,11 +150,6 @@ function sesolve(
         kwargs...,
     ) where {ST <: Union{Ket, Operator}}
 
-    # Move sensealg argument to solve for Enzyme.jl support.
-    # TODO: Remove it when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed.
-    sensealg = get(kwargs, :sensealg, nothing)
-    kwargs_filtered = isnothing(sensealg) ? kwargs : Base.structdiff((; kwargs...), (sensealg = sensealg,))
-
     prob = sesolveProblem(
         H,
         ψ0,
@@ -163,15 +158,10 @@ function sesolve(
         params = params,
         progress_bar = progress_bar,
         inplace = inplace,
-        kwargs_filtered...,
+        kwargs...,
     )
 
-    # TODO: Remove it when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed.
-    if isnothing(sensealg)
-        return sesolve(prob, alg)
-    else
-        return sesolve(prob, alg; sensealg = sensealg)
-    end
+    return sesolve(prob, alg)
 end
 
 function sesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = Vern7(lazy = false); kwargs...)
