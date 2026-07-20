@@ -76,7 +76,7 @@ function expect(O::AbstractVector{<:AbstractQuantumObject{Operator}}, ρ::Quantu
 end
 expect(O::AbstractQuantumObject{Operator}, ρ::AbstractVector{<:QuantumObject}) = expect.(Ref(O), ρ)
 function expect(O::AbstractVector{<:AbstractQuantumObject{Operator}}, ρ::AbstractVector{<:QuantumObject})
-    return expect.(reshape(O, :, 1), reshape(ρ, 1, :))
+    return expect.(O, transpose(ρ))
 end
 
 @doc raw"""

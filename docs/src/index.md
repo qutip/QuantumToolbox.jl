@@ -37,7 +37,7 @@ hero:
 
 
 features:
-  - icon: <img width="64" height="64" src="https://img.icons8.com/color/96/atom.png" />
+  - icon: <img width="64" height="64" src="https://qutip.org/images/logo.png" />
     title: Quantum State and Operator Manipulation
     details: Easily handle quantum states and operators with a rich set of tools, with the same functionalities as QuTiP.
     link: /users_guide/QuantumObject/QuantumObject

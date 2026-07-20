@@ -57,7 +57,7 @@ end
 
 ## [Using arbitrary precision in QuantumToolbox](@id doc:Arbitrary-Precision:usage)
 
-Every state and operator generating function takes an optional leading type argument:
+Every state and operator generating function takes an optional leading argument for specifying element type:
 
 ```@example arbitrary_precision
 using QuantumToolbox
@@ -192,7 +192,7 @@ eltype(sol.expect)
 
 Note that the expectation values come back in the element type you asked for, rather than being silently narrowed to `ComplexF64`.
 
-Be aware of what this does and does not buy you, though. Extra precision does **not** generally make a time-evolution result better: the error of an ODE integration is dominated by the solver tolerances, not by roundoff, and tightening `abstol`/`reltol` in `Float64` is both cheaper and more effective. High-precision solvers earn their cost when the evolution feeds something else that is precision-critical — for example [`eigsolve_al`](@ref), which integrates the master equation to extract Liouvillian eigenvalues, and so inherits exactly the sensitivity described above.
+Be aware of what this does and does not buy you. Extra precision does **not** generally make a time-evolution result better: the error of an ODE integration is dominated by the solver tolerances, not by roundoff, and tightening `abstol`/`reltol` in `Float64` is both cheaper and more effective. High-precision solvers earn their cost when the evolution feeds something else that is precision-critical — for example [`eigsolve_al`](@ref), which integrates the master equation to extract Liouvillian eigenvalues, and so inherits exactly the sensitivity described above.
 
 ## [Caveats and performance](@id doc:Arbitrary-Precision:caveats)
 
