@@ -345,11 +345,7 @@ mesolve_map(
 # User can define their own iterator structure, prob_func and output_func
 #   - `prob_func`: Function to use for generating the ODEProblem.
 #   - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
-#   - `safetycopy`: Whether to deep copy the problem before generating each trajectory. Defaults to `false`
-#     when using the built-in `prob_func` (already safe), and to `true` when a custom `prob_func` is supplied,
-#     since a custom `prob_func` that doesn't independently reset per-trajectory callback state (e.g. the e_ops
-#     save counter) would otherwise alias that state across trajectories (see issue #645). Pass `safetycopy =
-#     false` explicitly to opt back into the faster path with a custom `prob_func`, at your own risk.
+#   - `safetycopy`: Whether to deep copy the problem before generating each trajectory. Defaults to `false` when using the built-in `prob_func` (already safe), and to `true` when a custom `prob_func` is supplied, since a custom `prob_func` that doesn't independently reset per-trajectory callback state (e.g. the e_ops save counter) would otherwise alias that state across trajectories (see issue #645). Pass `safetycopy = false` explicitly to opt back into the faster path with a custom `prob_func`, at your own risk.
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function mesolve_map(

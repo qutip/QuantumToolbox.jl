@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Fix `sesolve_map` and `mesolve_map` sharing mutable e_ops-saving callback state across trajectories when a custom `prob_func` is supplied, which could throw a `BoundsError` or produce incorrect results. Both now accept a `safetycopy` keyword (smart-defaulting to `true` for a custom `prob_func`, `false` otherwise) mirroring `SciMLBase.EnsembleProblem`. ([#645])
+- Fix `sesolve_map` and `mesolve_map` sharing mutable e_ops-saving callback state across trajectories when a custom `prob_func` is supplied, which could throw a `BoundsError` or produce incorrect results. Both now accept a `safetycopy` keyword (smart-defaulting to `true` for a custom `prob_func`, `false` otherwise) mirroring `SciMLBase.EnsembleProblem`. ([#645], [#747])
 
 ## [v0.47.2]
 Release date: 2026-06-21
@@ -549,3 +549,4 @@ Release date: 2024-11-13
 [#729]: https://github.com/qutip/QuantumToolbox.jl/issues/729
 [#733]: https://github.com/qutip/QuantumToolbox.jl/issues/733
 [#736]: https://github.com/qutip/QuantumToolbox.jl/issues/736
+[#747]: https://github.com/qutip/QuantumToolbox.jl/issues/747
