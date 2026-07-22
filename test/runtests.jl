@@ -8,7 +8,8 @@ const testdir = dirname(@__FILE__)
 const EXTENSION_PATHS = Dict(
     "AutoDiff_Ext" => joinpath(testdir, "ext-test", "cpu", "autodiff"),
     "Makie_Ext" => joinpath(testdir, "ext-test", "cpu", "makie"),
-    "CUDA_Ext" => joinpath(testdir, "ext-test", "gpu"),
+    "CUDA_Ext" => joinpath(testdir, "ext-test", "gpu", "cuda"),
+    "AMDGPU_Ext" => joinpath(testdir, "ext-test", "gpu", "amdgpu"),
     "Arbitrary-Precision" => joinpath(testdir, "ext-test", "cpu", "arbitrary_precision"),
 )
 const EXTENSION_LIST = collect(keys(EXTENSION_PATHS))
@@ -72,6 +73,8 @@ if GROUP ∈ EXTENSION_LIST
         include(joinpath(path, "makie_ext.jl"))
     elseif GROUP == "CUDA_Ext"
         include(joinpath(path, "cuda_ext.jl"))
+    elseif GROUP == "AMDGPU_Ext"
+        include(joinpath(path, "amdgpu_ext.jl"))
     elseif GROUP == "Arbitrary-Precision"
         include(joinpath(path, "arbitrary_precision.jl"))
     end

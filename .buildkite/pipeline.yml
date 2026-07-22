@@ -20,6 +20,16 @@ steps:
             - "src/**"
             - "ext/QuantumToolboxCUDAExt.jl"
             - "test/runtests.jl"
-            - "test/ext-test/gpu/**"
+            - "test/ext-test/gpu/cuda/**"
             - "Project.toml"
           target: ".buildkite/CUDA_Ext.yml"
+      - staticfloat/forerunner: # AMDGPU.jl tests
+          watch:
+            - ".buildkite/pipeline.yml"
+            - ".buildkite/AMDGPU_Ext.yml"
+            - "src/**"
+            - "ext/QuantumToolboxAMDGPUExt.jl"
+            - "test/runtests.jl"
+            - "test/ext-test/gpu/amdgpu/**"
+            - "Project.toml"
+          target: ".buildkite/AMDGPU_Ext.yml"
