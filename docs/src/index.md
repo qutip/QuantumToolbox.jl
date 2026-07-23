@@ -37,6 +37,10 @@ hero:
 
 
 features:
+  - icon: <img width="64" height="64" src="https://qutip.org/images/logo.png" />
+    title: Quantum State and Operator Manipulation
+    details: Easily handle quantum states and operators with a rich set of tools, with the same functionalities as QuTiP.
+    link: /users_guide/QuantumObject/QuantumObject
   - icon: <img width="64" height="64" src="https://docs.sciml.ai/DiffEqDocs/stable/assets/logo.png" alt="markdown"/>
     title: Dynamical Evolution
     details: Advanced solvers for time evolution of quantum systems, thanks to the powerful DifferentialEquations.jl package.
@@ -53,6 +57,10 @@ features:
     title: Differentiable Programming
     details: Enable gradient-based optimization for quantum algorithms. Compute gradients of quantum dynamics with respect to their parameters using automatic differentiation.
     link: /users_guide/autodiff
+  - icon: <img width="64" height="64" src="https://img.icons8.com/color/96/caliper.png" />
+    title: Arbitrary Precision
+    details: Go beyond double precision when the physics demands it. Resolve exponentially small quantities like tunneling splittings and Liouvillian gaps that are lost in Float64 roundoff, with the same syntax.
+    link: /users_guide/arbitrary_precision
 ---
 ```
 
@@ -108,6 +116,10 @@ In order to get a better experience and take full advantage of `QuantumToolbox`
   - [`Enzyme.jl`](https://github.com/EnzymeAD/Enzyme.jl)
   - [`Mooncake.jl`](https://github.com/chalk-lab/Mooncake.jl)
   - [`Zygote.jl`](https://github.com/FluxML/Zygote.jl)
+- Arbitrary Precision:
+  - [`DoubleFloats.jl`](https://github.com/JuliaMath/DoubleFloats.jl)
+  - [`GenericSchur.jl`](https://github.com/RalphAS/GenericSchur.jl)
+  - [`Sparspak.jl`](https://github.com/PetrKryslUCSD/Sparspak.jl)
 - Progress Bars:
   - [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl)
 - Packages for other advanced usage:

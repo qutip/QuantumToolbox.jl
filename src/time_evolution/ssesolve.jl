@@ -126,6 +126,7 @@ function ssesolveProblem(
         makeVal(store_measurement),
         kwargs3,
         SaveFuncSSESolve,
+        T,
     )
 
     tspan = (tlist[1], tlist[end])

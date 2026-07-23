@@ -124,6 +124,7 @@ function smesolveProblem(
         makeVal(store_measurement),
         kwargs3,
         SaveFuncSMESolve,
+        T,
     )
 
     tspan = (tlist[1], tlist[end])
