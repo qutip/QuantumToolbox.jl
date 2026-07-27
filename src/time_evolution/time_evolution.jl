@@ -2,10 +2,10 @@ export TimeEvolutionSol
 export TimeEvolutionMultiTrajSol, TimeEvolutionMCSol, TimeEvolutionStochasticSol
 export average_states, average_expect, std_expect
 
-export liouvillian_floquet, liouvillian_dressed_nonsecular
+export liouvillian_floquet
 
-const DEFAULT_ODE_SOLVER_OPTIONS = (abstol = 1.0e-8, reltol = 1.0e-6, save_everystep = false, save_end = true)
-const DEFAULT_SDE_SOLVER_OPTIONS = (abstol = 1.0e-3, reltol = 2.0e-3, save_everystep = false, save_end = true)
+default_ode_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-8), reltol = _float_type(T)(1.0e-6), save_everystep = false, save_end = true)
+default_sde_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-3), reltol = _float_type(T)(2.0e-3), save_everystep = false, save_end = true)
 const COL_TIMES_WHICH_INIT_SIZE = 200
 
 abstract type TimeEvolutionMultiTrajSol{Tstates, Texpect} end
@@ -20,7 +20,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 - `prob::AbstractSciMLProblem`: The `ODEProblem` of the time evolution.
 - `times::AbstractVector`: The time list of the evolution.
 - `states_type::QuantumObjectType`: The type of the quantum states during the evolution (e.g., [`Ket`](@ref), [`Operator`](@ref), [`OperatorKet`](@ref), or [`SuperOperator`](@ref)).
-- `dimensions::AbstractDimensions`: The dimensions of the Hilbert space.
+- `dimensions::Dimensions`: The dimensions of the Hilbert space.
 - `kwargs::KWT`: Generic keyword arguments.
 
 !!! note "`dims` property"
@@ -28,7 +28,7 @@ A Julia constructor for handling the `ODEProblem` of the time evolution of quant
 """
 struct TimeEvolutionProblem{
         ST <: QuantumObjectType,
-        DT <: AbstractDimensions,
+        DT <: Dimensions,
         PT <: AbstractSciMLProblem,
         TT <: AbstractVector,
         KWT,
@@ -50,6 +50,33 @@ function Base.getproperty(prob::TimeEvolutionProblem, key::Symbol)
 end
 
 TimeEvolutionProblem(prob, times, states_type, dims) = TimeEvolutionProblem(prob, times, states_type, dims, nothing)
+
+raw"""
+A helper function to `check_mul_dimensions` and also generate the new type and dimensions for solutions
+"""
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{Operator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
+    !isendomorphic(H) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    check_mul_dimensions(H, ψ0)
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+end
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
+    !isendomorphic(H) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    ρ0 = ket2dm(ψ0)
+    ρ0_vec = mat2vec(ρ0)
+    check_mul_dimensions(H, ρ0_vec)
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ρ0_vec.data), Operator(), ρ0.dimensions
+end
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{OperatorKet, SuperOperator}}
+    !isendomorphic(H) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    check_mul_dimensions(H, ψ0)
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
+end
 
 @doc raw"""
     struct TimeEvolutionSol
@@ -262,8 +289,10 @@ average_states(sol::TimeEvolutionMultiTrajSol{<:Vector{<:QuantumObject}}) = sol.
 
 # TODO: Check if broadcasting division ./ size(states, 1) is type stable
 _average_traj_states(states::Matrix{<:QuantumObject{Ket}}) =
+    size(states, 2) == 0 ? Vector{Base.promote_op(ket2dm, eltype(states))}() :
     map(x -> x / size(states, 1), dropdims(sum(ket2dm, states, dims = 1), dims = 1))
 _average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType <: Union{Operator, OperatorKet}} =
+    size(states, 2) == 0 ? Vector{eltype(states)}() :
     map(x -> x / size(states, 1), dropdims(sum(states, dims = 1), dims = 1))
 
 @doc raw"""
@@ -363,15 +392,15 @@ This is very useful especially for dispatching which method to use to update the
 =#
 
 # Output function with progress bar update
-function _ensemble_output_func_progress(sol, i, progr, output_func)
+function _ensemble_output_func_progress(sol, ctx, progr, output_func)
     next!(progr)
-    return output_func(sol, i)
+    return output_func(sol, ctx)
 end
 
 # Output function with distributed channel update for progress bar
-function _ensemble_output_func_distributed(sol, i, channel, output_func)
+function _ensemble_output_func_distributed(sol, ctx, channel, output_func)
     put!(channel, true)
-    return output_func(sol, i)
+    return output_func(sol, ctx)
 end
 
 function _ensemble_dispatch_output_func(
@@ -383,7 +412,7 @@ function _ensemble_dispatch_output_func(
     ) where {ET <: Union{EnsembleSerial, EnsembleThreads}}
     if getVal(progress_bar)
         progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
-        f = (sol, i) -> _ensemble_output_func_progress(sol, i, progr, output_func)
+        f = (sol, ctx) -> _ensemble_output_func_progress(sol, ctx, progr, output_func)
         return (f, progr, nothing)
     else
         return (output_func, nothing, nothing)
@@ -400,23 +429,23 @@ function _ensemble_dispatch_output_func(
         progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
 
-        f = (sol, i) -> _ensemble_output_func_distributed(sol, i, progr_channel, output_func)
+        f = (sol, ctx) -> _ensemble_output_func_distributed(sol, ctx, progr_channel, output_func)
         return (f, progr, progr_channel)
     else
         return (output_func, nothing, nothing)
     end
 end
 
-function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
-    seeds = map(i -> rand(rng, UInt64), 1:ntraj)
-    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
+function _ensemble_dispatch_prob_func(tlist, prob_func; kwargs...)
+    return (prob, ctx) -> prob_func(prob, ctx, tlist; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
         ens_prob::TimeEvolutionProblem,
         alg::Union{<:AbstractODEAlgorithm, <:AbstractSDEAlgorithm},
         ensemblealg::ET,
-        ntraj::Int,
+        ntraj::Int;
+        kwargs...
     ) where {ET <: Union{EnsembleSplitThreads, EnsembleDistributed}}
     sol = nothing
 
@@ -426,7 +455,7 @@ function _ensemble_dispatch_solve(
         end
 
         @async begin
-            sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
+            sol = solve(ens_prob.prob, alg, ensemblealg; trajectories = ntraj, kwargs...)
             put!(ens_prob.kwargs.channel, false)
         end
     end
@@ -437,17 +466,18 @@ function _ensemble_dispatch_solve(
         ens_prob::TimeEvolutionProblem,
         alg::Union{<:AbstractODEAlgorithm, <:AbstractSDEAlgorithm},
         ensemblealg,
-        ntraj::Int,
+        ntraj::Int;
+        kwargs...
     )
-    sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
+    sol = solve(ens_prob.prob, alg, ensemblealg; trajectories = ntraj, kwargs...)
     return sol
 end
 
 # For mapped solvers
-function _se_me_map_prob_func(prob, i, repeat, iter)
+function _se_me_map_prob_func(prob, ctx, iter)
     f = deepcopy(prob.f.f)
-    u0 = iter[i][1]
-    p = iter[i][2:end]
+    u0 = iter[ctx.sim_id][1]
+    p = iter[ctx.sim_id][2:end]
     if haskey(prob.kwargs, :callback)
         return remake(prob, f = f, u0 = u0, p = p, callback = deepcopy(prob.kwargs[:callback]))
     else
@@ -459,20 +489,16 @@ end
 #=
  Stochastic funcs
 =#
-function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
-    seed = seeds[i]
-    traj_rng = typeof(rng)()
-    seed!(traj_rng, seed)
-
+function _stochastic_prob_func(prob, ctx, tlist; kwargs...)
     sc_ops = kwargs[:sc_ops]
     store_measurement = kwargs[:store_measurement]
-    noise = _make_noise(prob.prob.tspan[1], sc_ops, store_measurement, traj_rng)
+    noise = _make_noise(prob.prob.tspan[1], sc_ops, store_measurement, ctx.rng)
 
-    return remake(prob.prob, noise = noise, seed = seed)
+    return remake(prob.prob, noise = noise)
 end
 
 # Standard output function which does nothing (used for mapped and stochastic solvers)
-_standard_output_func(sol, i) = (sol, false)
+_standard_output_func(sol, ctx) = (sol, false)
 
 #= 
     Define diagonal or non-diagonal noise depending on the type of `sc_ops`.
@@ -500,7 +526,7 @@ end
 
 A struct to represent the diffusion operator. This is used to perform the diffusion process on N different Wiener processes.
 =#
-struct DiffusionOperator{T, OpType <: Tuple{Vararg{AbstractSciMLOperator}}}
+struct DiffusionOperator{T, OpType <: Union{Tuple{Vararg{AbstractSciMLOperator}}, AbstractVector{<:AbstractSciMLOperator}}}
     ops::OpType
     function DiffusionOperator(ops::OpType) where {OpType}
         T = mapreduce(eltype, promote_type, ops)
@@ -508,7 +534,7 @@ struct DiffusionOperator{T, OpType <: Tuple{Vararg{AbstractSciMLOperator}}}
     end
 end
 
-@generated function (L::DiffusionOperator)(w, v, p, t)
+@generated function (L::DiffusionOperator{T, OpType} where {T, OpType <: Tuple})(w, v, p, t)
     ops_types = L.parameters[2].parameters
     N = length(ops_types)
     return quote
@@ -516,11 +542,22 @@ end
         S = (size(w, 1), size(w, 2)) # This supports also `w` as a `Vector`
         (S[1] == M && S[2] == $N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
         Base.@nexprs $N i -> begin
-            op = L.ops[i]
-            op(@view(w[:, i]), v, v, p, t)
+            L.ops[i](@view(w[:, i]), v, v, p, t)
         end
         return w
     end
+end
+
+function (L::DiffusionOperator{T, OpType} where {T, OpType <: AbstractVector})(w, v, p, t)
+    N = length(L.ops)
+    M = length(v)
+    S = (size(w, 1), size(w, 2)) # This supports also `w` as a `Vector`
+    (S[1] == M && S[2] == N) || throw(DimensionMismatch("The size of the output vector is incorrect."))
+
+    for i in Base.OneTo(N)
+        L.ops[i](@view(w[:, i]), v, v, p, t)
+    end
+    return w
 end
 
 #######################################
@@ -550,123 +587,9 @@ function liouvillian_floquet(
         OpType2 <: Union{Operator, SuperOperator},
         OpType3 <: Union{Operator, SuperOperator},
     }
-    return liouvillian_floquet(liouvillian(H, c_ops), liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
-end
-
-@doc raw"""
-    liouvillian_dressed_nonsecular(
-        H::QuantumObject{Operator},
-        fields::Vector,
-        T_list::Vector{<:Real};
-        N_trunc::Union{Int,Nothing}=nothing,
-        tol::Real=1e-12,
-        σ_filter::Union{Nothing,Real}=nothing,
-    )
-
-Build the generalized Liouvillian for a system coupled to multiple bosonic baths in the ultrastrong-coupling regime. The Hamiltonian `H` is diagonalized, the system-bath operators in `fields` are projected into the eigenbasis, and thermal jump operators are assembled for each temperature in `T_list`.
-
-# Arguments
-- `H::QuantumObject{Operator}`: System Hamiltonian.
-- `fields::Vector`: Coupling operators that mediate the interaction with each bath; must match the length of `T_list`.
-- `T_list::Vector{<:Real}`: Bath temperatures ordered consistently with `fields`.
-
-# Keyword Arguments
-- `N_trunc::Union{Int,Nothing}`: If provided, truncate the eigenbasis to the first `N_trunc` levels; otherwise use the full dimension of `H`.
-- `tol::Real`: Tolerance passed to sparsification utilities when constructing the filters and dissipators.
-- `σ_filter::Union{Nothing,Real}`: Width of the Gaussian frequency filter. If `nothing`, a heuristic value proportional to the coupling strengths is used.
-
-# Returns
-- `E`: Eigenenergies of `H` (truncated if `N_trunc` is provided).
-- `U`: Eigenvectors of `H` as a [`QuantumObject`](@ref) mapping to the truncated basis.
-- `L`: Generalized Liouvillian [`SuperOperator`](@ref) including the frequency-filtered dissipators.
-
-# References
-- [Settineri2018](@cite)
-"""
-function liouvillian_dressed_nonsecular(
-        H::QuantumObject{Operator},
-        fields::Vector,
-        T_list::Vector{<:Real};
-        N_trunc::Union{Int, Nothing} = nothing,
-        tol::Real = 1.0e-12,
-        σ_filter::Union{Nothing, Real} = nothing,
-    )
-    (length(fields) == length(T_list)) || throw(DimensionMismatch("The number of fields and T_list must be the same."))
-
-    dims = isnothing(N_trunc) ? H.dims : (N_trunc,)
-    final_size = prod(dims)
-    final_dims = isnothing(N_trunc) ? H.dims : (H.dims, dims)
-    result = eigen(H)
-    E = real.(result.values[1:final_size])
-    U = QuantumObject(result.vectors[:, 1:final_size], result.type, final_dims)
-
-    H_d = QuantumObject(Diagonal(complex(E)), type = Operator(), dims = dims)
-
-    Ω = E' .- E
-    Ωp = triu(to_sparse(Ω, tol), 1)
-
-    # Filter width
-    σ = isnothing(σ_filter) ? 500 * maximum([norm(field) / length(field) for field in fields]) : σ_filter
-
-    L = liouvillian(H_d)
-
-    for i in eachindex(fields)
-        # The operator that couples the system to the bath in the eigenbasis
-        X_op = to_sparse((U' * fields[i] * U).data, tol)
-        if ishermitian(fields[i])
-            X_op = (X_op + X_op') / 2 # Make sure it's hermitian
-        end
-
-        # Ohmic reservoir
-        N_th = n_thermal.(Ωp, T_list[i])
-        Sp₀ = QuantumObject(triu(X_op, 1), type = Operator(), dims = dims)
-        Sp₁ = QuantumObject(droptol!((@. Ωp * N_th * Sp₀.data), tol), type = Operator(), dims = dims)
-        Sp₂ = QuantumObject(droptol!((@. Ωp * (1 + N_th) * Sp₀.data), tol), type = Operator(), dims = dims)
-        # S0 = QuantumObject( spdiagm(diag(X_op)), dims=dims )
-
-        # Build the dissipator contribution and apply Gaussian filter in Liouville space
-        D₁ = 1 / 2 * (sprepost(Sp₁', Sp₀) + sprepost(Sp₀', Sp₁) - spre(Sp₀ * Sp₁') - spost(Sp₁ * Sp₀'))
-        D₂ = 1 / 2 * (sprepost(Sp₂, Sp₀') + sprepost(Sp₀, Sp₂') - spre(Sp₀' * Sp₂) - spost(Sp₂' * Sp₀))
-
-        L += _apply_liouville_filter(D₁ + D₂, E, σ, tol)
-    end
-
-    settings.auto_tidyup && tidyup!(L)
-
-    return E, U, L
-end
-
-function _apply_liouville_filter(
-        L::QuantumObject{SuperOperator, DimsType, MT},
-        E::AbstractVector,
-        σ::Real,
-        tol::Real,
-    ) where {DimsType, MT <: AbstractSparseMatrix}
-    data = L.data
-    N = length(E)
-
-    I, J, V = findnz(data)
-
-    # Broadcast the filter computation for GPU compatibility
-    V .*= _liouville_filter_weights.(I, J, N, Ref(E), σ)
-
-    # Reconstruct sparse matrix, filtering out small values
-    mask = abs.(V) .> tol
-    filtered_data = sparse(I[mask], J[mask], V[mask], size(data)...)
-    return QuantumObject(filtered_data, SuperOperator(), L.dimensions)
-end
-
-function _liouville_filter_weights(row::Int, col::Int, N::Int, E::AbstractVector, σ::Real)
-    j, l = _linear_to_subscript(row, N)
-    k, m = _linear_to_subscript(col, N)
-    Ωdiff = (E[j] - E[k]) - (E[l] - E[m])
-    return gaussian(Ωdiff, 0, σ)
-end
-
-function _linear_to_subscript(idx::Int, N::Int)
-    row = mod1(idx, N)
-    col = div(idx - 1, N) + 1
-    return row, col
+    L₀ = liouvillian(H, c_ops)
+    (L₀ isa QuantumObject) || throw(ArgumentError("liouvillian_floquet only supports (time-independent) QuantumObject in c_ops"))
+    return liouvillian_floquet(L₀, liouvillian(Hₚ), liouvillian(Hₘ), ω, n_max = n_max, tol = tol)
 end
 
 function _liouvillian_floquet(

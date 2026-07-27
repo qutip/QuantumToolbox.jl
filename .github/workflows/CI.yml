@@ -56,11 +56,13 @@ jobs:
 
         include:
           # for core tests (intermediate versions)
-          - version: '1.11'
-            node:
-              os: 'ubuntu-latest'
-              arch: 'x64'
-            group: 'Core'
+          # comment this part first since Julia 1.11 security support ended [see https://endoflife.date/julia]
+          # but this can be re-enabled, for example, when latest version becomes 1.13, we can put 1.12 here
+          # - version: '1.11'
+          #   node:
+          #     os: 'ubuntu-latest'
+          #     arch: 'x64'
+          #   group: 'Core'
 
           # for extension tests
           - version: '1'
@@ -68,7 +70,7 @@ jobs:
               os: 'ubuntu-latest'
               arch: 'x64'
             group: 'Makie_Ext'
-          - version: '1.11'
+          - version: '1.12'
             node:
               os: 'ubuntu-latest'
               arch: 'x64'
@@ -80,12 +82,12 @@ jobs:
             group: 'Arbitrary-Precision'
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: julia-actions/setup-julia@v2
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.node.arch }}
-      - uses: julia-actions/cache@v2
+      - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         env:
@@ -94,7 +96,7 @@ jobs:
       - uses: julia-actions/julia-processcoverage@v1
         with:
           directories: src,ext
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:

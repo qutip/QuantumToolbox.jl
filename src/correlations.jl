@@ -43,12 +43,20 @@ function correlation_3op_2t(
         ψ0 = steadystate(L)
     end
 
-    check_dimensions(L, ψ0, A, B, C)
+    # check the dimensions of Operator A, B, C, and ψ0
+    # the dimension validity of L and ψ0 will be checked in mesolve
+    check_mul_dimensions(A, ψ0)
+    check_dimensions(A, B, C)
 
     kwargs2 = merge((saveat = collect(tlist),), (; kwargs...))
-    ρt_list = mesolve(L, ψ0, tlist; kwargs2...).states
 
-    corr = map((t, ρt) -> mesolve(L, C * ρt * A, τlist .+ t, e_ops = [B]; kwargs...).expect[1, :], tlist, ρt_list)
+    # generate OperatorKet first, so sol.states will store OperatorKet (skip redundant reshaping)
+    # note that doesn't need to do the first mesolve if tlist == [0] (for 2op_1t and 3op_1t cases)
+    ρ0_vec = mat2vec(ket2dm(ψ0))
+    ρt_list = (tlist == [0]) ? [ρ0_vec] : mesolve(L, ρ0_vec, tlist; kwargs2...).states
+
+    C_A = sprepost(C, A)
+    corr = map((t, ρt) -> mesolve(L, C_A * ρt, τlist .+ t, e_ops = [B]; kwargs...).expect[1, :], tlist, ρt_list)
 
     # make the output correlation Matrix align with QuTiP
     # 1st dimension corresponds to tlist
@@ -113,7 +121,7 @@ function correlation_2op_2t(
         reverse::Bool = false,
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
-    C = eye(prod(H.dimensions), dims = H.dimensions)
+    C = eye(get_size(A.dimensions)[1], type = Operator(), dims = A.dims) # same as qeye_like(A), use A instead of H (cause H might be SuperOperator)
     if reverse
         corr = correlation_3op_2t(H, ψ0, tlist, τlist, c_ops, A, B, C; kwargs...)
     else

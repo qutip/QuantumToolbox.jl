@@ -15,7 +15,6 @@ _get_save_callback_idx(cb, ::Type{SaveFuncMCSolve}) = _mcsolve_has_continuous_ju
 ##
 struct LindbladJump{
         T1,
-        T2,
         RNGType <: AbstractRNG,
         RandT,
         CT <: AbstractVector,
@@ -25,7 +24,6 @@ struct LindbladJump{
         JTWIT,
     }
     c_ops::T1
-    c_ops_herm::T2
     traj_rng::RNGType
     random_n::RandT
     cache_mc::CT
@@ -39,7 +37,6 @@ end
 (f::LindbladJump)(integrator) = _lindblad_jump_affect!(
     integrator,
     f.c_ops,
-    f.c_ops_herm,
     f.traj_rng,
     f.random_n,
     f.cache_mc,
@@ -62,15 +59,15 @@ function _save_func_mcsolve(u, integrator, e_ops, iter, expvals)
     @. expvals[:, iter[]] = _expect(e_ops)
     iter[] += 1
 
-    u_modified!(integrator, false)
+    derivative_discontinuity!(integrator, false)
     return nothing
 end
 
 function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rng, kwargs)
-    c_ops_data = get_data.(c_ops)
-    c_ops_herm_data = map(op -> op' * op, c_ops_data)
-
     cache_mc = similar(ψ0.data, T)
+
+    c_ops_data = map(op -> get_data(cache_operator(QobjEvo(op), cache_mc)), c_ops)
+
     weights_mc = Vector{Float64}(undef, length(c_ops))
     cumsum_weights_mc = similar(weights_mc)
 
@@ -82,7 +79,6 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rn
 
     _affect! = LindbladJump(
         c_ops_data,
-        c_ops_herm_data,
         rng,
         random_n,
         cache_mc,
@@ -109,7 +105,7 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rn
         # We are implicitly saying that we don't have a `Progress`
         kwargs2 = _merge_kwargs_with_callback(kwargs, cb1)
     else
-        expvals = Array{ComplexF64}(undef, length(e_ops), length(tlist))
+        expvals = Array{_complex_float_type(T)}(undef, length(e_ops), length(tlist))
 
         _save_func = SaveFuncMCSolve(get_data.(e_ops), Ref(1), expvals)
         cb2 = FunctionCallingCallback(_save_func, funcat = tlist)
@@ -121,7 +117,6 @@ end
 function _lindblad_jump_affect!(
         integrator,
         c_ops,
-        c_ops_herm,
         traj_rng,
         random_n,
         cache_mc,
@@ -132,14 +127,17 @@ function _lindblad_jump_affect!(
         col_times_which_idx,
     )
     ψ = integrator.u
+    p = integrator.p
+    t = integrator.t
 
     @inbounds for i in eachindex(weights_mc)
-        weights_mc[i] = real(dot(ψ, c_ops_herm[i], ψ))
+        c_ops[i](cache_mc, ψ, nothing, p, t)
+        weights_mc[i] = real(dot(cache_mc, cache_mc))
     end
     cumsum!(cumsum_weights_mc, weights_mc)
     r = rand(traj_rng) * sum(weights_mc)
     collapse_idx = getindex(1:length(weights_mc), findfirst(>(r), cumsum_weights_mc))
-    mul!(cache_mc, c_ops[collapse_idx], ψ)
+    c_ops[collapse_idx](cache_mc, ψ, nothing, p, t)
     normalize!(cache_mc)
     copyto!(integrator.u, cache_mc)
 
@@ -153,7 +151,7 @@ function _lindblad_jump_affect!(
         resize!(col_times, length(col_times) + COL_TIMES_WHICH_INIT_SIZE)
         resize!(col_which, length(col_which) + COL_TIMES_WHICH_INIT_SIZE)
     end
-    u_modified!(integrator, true)
+    derivative_discontinuity!(integrator, true)
     return nothing
 end
 
@@ -182,7 +180,7 @@ _mc_get_jump_callback(cb::DiscreteCallback) = cb
 ##
 
 #=
-    With this function we extract the c_ops and c_ops_herm from the LindbladJump `affect!` function of the callback of the integrator.
+    With this function we extract the c_ops from the LindbladJump `affect!` function of the callback of the integrator.
     This callback can be a DiscreteLindbladJumpCallback or a ContinuousLindbladJumpCallback.
 =#
 function _mcsolve_get_c_ops(integrator::AbstractODEIntegrator)
@@ -190,7 +188,7 @@ function _mcsolve_get_c_ops(integrator::AbstractODEIntegrator)
     if cb isa Nothing
         return nothing
     else
-        return cb.affect!.c_ops, cb.affect!.c_ops_herm
+        return cb.affect!.c_ops
     end
 end
 
@@ -258,9 +256,10 @@ function _similar_affect!(affect::LindbladJump, traj_rng)
     col_which = similar(affect.col_which)
     col_times_which_idx = Ref(1)
 
+    c_ops = map(op -> isconstant(op) ? op : deepcopy(op), affect.c_ops)
+
     return LindbladJump(
-        affect.c_ops,
-        affect.c_ops_herm,
+        c_ops,
         traj_rng,
         random_n,
         cache_mc,

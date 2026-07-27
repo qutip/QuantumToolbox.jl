@@ -106,31 +106,23 @@ function mesolveProblem(
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops)
-    check_dimensions(L_evo, ψ0)
 
-    # Convert to dense vector with complex element type
-
-    T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
-    is_operket_or_super = isoperket(ψ0) || issuper(ψ0)
-    ρ0 = is_operket_or_super ? to_dense(T, copy(ψ0.data)) : to_dense(T, mat2vec(ket2dm(ψ0).data))
-    states_type = ψ0.type
-    if !is_operket_or_super
-        states_type = Operator()
-    end
+    # Convert initial state to dense vector with complex element type (T) and check dimensions
+    T, ρ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(L_evo, ψ0)
 
     L = cache_operator(L_evo.data, ρ0)
 
     tlist = _check_tlist(tlist, _float_type(T))
 
-    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_ODE_SOLVER_OPTIONS; kwargs...)
+    kwargs2 = _merge_saveat(tlist, e_ops, default_ode_solver_options(T); kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(L), tlist)
-    kwargs4 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs3, SaveFuncMESolve)
+    kwargs4 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs3, SaveFuncMESolve, T)
 
     tspan = (tlist[1], tlist[end])
 
     prob = ODEProblem{getVal(inplace), FullSpecialize}(L, ρ0, tspan, params; kwargs4...)
 
-    return TimeEvolutionProblem(prob, tlist, states_type, L_evo.dimensions)
+    return TimeEvolutionProblem(prob, tlist, states_type, dimensions)
 end
 
 @doc raw"""
@@ -209,11 +201,6 @@ function mesolve(
         kwargs...,
     )
 
-    # Move sensealg argument to solve for Enzyme.jl support.
-    # TODO: Remove it when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed.
-    sensealg = get(kwargs, :sensealg, nothing)
-    kwargs_filtered = isnothing(sensealg) ? kwargs : Base.structdiff((; kwargs...), (sensealg = sensealg,))
-
     prob = mesolveProblem(
         H,
         ψ0,
@@ -224,15 +211,10 @@ function mesolve(
         params = params,
         progress_bar = progress_bar,
         inplace = inplace,
-        kwargs_filtered...,
+        kwargs...,
     )
 
-    # TODO: Remove sensealg when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed
-    if isnothing(sensealg)
-        return mesolve(prob, alg)
-    else
-        return mesolve(prob, alg; sensealg = sensealg)
-    end
+    return mesolve(prob, alg)
 end
 
 function mesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = DP5(); kwargs...)
@@ -363,20 +345,23 @@ mesolve_map(
 # User can define their own iterator structure, prob_func and output_func
 #   - `prob_func`: Function to use for generating the ODEProblem.
 #   - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
+#   - `safetycopy`: Whether to deep copy the problem before generating each trajectory. Defaults to `false` when using the built-in `prob_func` (already safe), and to `true` when a custom `prob_func` is supplied, since a custom `prob_func` that doesn't independently reset per-trajectory callback state (e.g. the e_ops save counter) would otherwise alias that state across trajectories (see issue #645). Pass `safetycopy = false` explicitly to opt back into the faster path with a custom `prob_func`, at your own risk.
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function mesolve_map(
-        prob::TimeEvolutionProblem{StateOpType, <:AbstractDimensions, <:ODEProblem},
+        prob::TimeEvolutionProblem{StateOpType, <:Dimensions, <:ODEProblem},
         iter::AbstractArray,
         alg::AbstractODEAlgorithm = DP5(),
         ensemblealg::EnsembleAlgorithm = EnsembleThreads();
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple, Nothing} = nothing,
+        safetycopy::Union{Bool, Nothing} = nothing,
         progress_bar::Union{Val, Bool} = Val(true),
     ) where {StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     # generate ensemble problem
     ntraj = length(iter)
-    _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func
+    _prob_func = isnothing(prob_func) ? (prob, ctx) -> _se_me_map_prob_func(prob, ctx, iter) : prob_func
+    _safetycopy = isnothing(safetycopy) ? !isnothing(prob_func) : safetycopy
     _output_func =
         isnothing(output_func) ?
         _ensemble_dispatch_output_func(
@@ -387,7 +372,7 @@ function mesolve_map(
             progr_desc = "[mesolve_map] ",
         ) : output_func
     ens_prob = TimeEvolutionProblem(
-        EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
+        EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = _safetycopy),
         prob.times,
         prob.states_type,
         prob.dimensions,
@@ -397,6 +382,6 @@ function mesolve_map(
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     # handle solution and make it become an Array of TimeEvolutionSol
-    sol_vec = [_gen_mesolve_solution(sol[:, i], prob) for i in eachindex(sol)] # map is type unstable
+    sol_vec = [_gen_mesolve_solution(sol.u[i], prob) for i in eachindex(sol.u)] # map is type unstable
     return reshape(sol_vec, size(iter))
 end

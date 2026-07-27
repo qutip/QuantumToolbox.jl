@@ -115,17 +115,17 @@
 
     @testset "Type Inference (eigen)" begin
         UnionType = Union{
-            QuantumToolbox.EigsolveResult{
+            EigsolveResult{
                 Vector{ComplexF64},
                 Matrix{ComplexF64},
-                QuantumToolbox.Operator,
-                QuantumToolbox.Dimensions{2, Tuple{QuantumToolbox.Space, QuantumToolbox.Space}},
+                Operator,
+                Dimensions{TensorSpace{2, Tuple{Space, Space}}, TensorSpace{2, Tuple{Space, Space}}},
             },
-            QuantumToolbox.EigsolveResult{
+            EigsolveResult{
                 Vector{Float64},
                 Matrix{ComplexF64},
-                QuantumToolbox.Operator,
-                QuantumToolbox.Dimensions{2, Tuple{QuantumToolbox.Space, QuantumToolbox.Space}},
+                Operator,
+                Dimensions{TensorSpace{2, Tuple{Space, Space}}, TensorSpace{2, Tuple{Space, Space}}},
             },
         }
 

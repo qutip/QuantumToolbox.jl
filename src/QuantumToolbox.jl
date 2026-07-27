@@ -4,10 +4,11 @@ module QuantumToolbox
 using LinearAlgebra
 using SparseArrays
 
+import Base: AbstractVecOrTuple
 import Distributed: RemoteChannel
 import LinearAlgebra: checksquare
 import Pkg
-import Random: AbstractRNG, default_rng, seed!
+import Random: AbstractRNG, default_rng
 import Statistics: mean, std
 
 ## SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
@@ -17,7 +18,7 @@ import SciMLBase:
     init,
     reinit!,
     remake,
-    u_modified!,
+    derivative_discontinuity!,
     NullParameters,
     LinearProblem,
     ODEFunction,
@@ -25,6 +26,7 @@ import SciMLBase:
     ODEProblem,
     SDEProblem,
     EnsembleProblem,
+    EnsembleContext,
     EnsembleAlgorithm,
     EnsembleSerial,
     EnsembleThreads,
@@ -39,7 +41,7 @@ import SciMLBase:
     AbstractODEAlgorithm,
     AbstractODESolution,
     AbstractSDEAlgorithm
-import StochasticDiffEq: SRA2, SRIW1
+import StochasticDiffEqHighOrder: SRA2, SRIW1
 import SciMLOperators:
     cache_operator,
     iscached,
@@ -55,8 +57,9 @@ import SciMLOperators:
     update_coefficients!,
     concretize
 import LinearSolve:
-    SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, LUFactorization, OperatorAssumptions
+    LinearSolve, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, LUFactorization, OperatorAssumptions
 import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
+import OrdinaryDiffEqCore
 import OrdinaryDiffEqVerner: Vern7
 import OrdinaryDiffEqLowOrderRK: DP5
 import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
@@ -92,9 +95,8 @@ include("versioninfo.jl")
 include("linear_maps.jl")
 
 ## Quantum Object
-include("qobj/space.jl")
-include("qobj/energy_restricted.jl")
 include("qobj/dimensions.jl")
+include("qobj/energy_restricted.jl")
 include("qobj/quantum_object_base.jl")
 include("qobj/quantum_object.jl")
 include("qobj/quantum_object_evo.jl")
@@ -123,6 +125,7 @@ include("time_evolution/sesolve.jl")
 include("time_evolution/mcsolve.jl")
 include("time_evolution/ssesolve.jl")
 include("time_evolution/smesolve.jl")
+include("time_evolution/liouvillian_dressed_nonsecular.jl")
 include("time_evolution/time_evolution_dynamical.jl")
 include("time_evolution/propagator.jl")
 

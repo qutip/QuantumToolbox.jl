@@ -60,6 +60,7 @@ const PAGES = [
             "Computing propagators" => "users_guide/time_evolution/propagator.md",
         ],
         "Automatic Differentiation" => "users_guide/autodiff.md",
+        "Arbitrary Precision" => "users_guide/arbitrary_precision.md",
         "Intensive parallelization on a Cluster" => "users_guide/cluster.md",
         "Hierarchical Equations of Motion" => "users_guide/HEOM.md",
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
@@ -76,7 +77,7 @@ const PAGES = [
         "API" => "resources/api.md",
         "Bibliography" => "resources/bibliography.md",
         "ChangeLog" => "resources/changelog.md",
-        "Contributing to QuantumToolbox.jl" => "resources/contributing.md",
+        "Contributor's Guide" => "resources/contributing.md",
         "Acknowledgements" => "resources/acknowledgements.md",
     ],
 ]

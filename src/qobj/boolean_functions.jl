@@ -53,6 +53,8 @@ Checks if the [`AbstractQuantumObject`](@ref) `A` is a [`SuperOperator`](@ref). 
 issuper(A::AbstractQuantumObject{<:SuperOperatorType}) = true
 issuper(A) = false # default case
 
+isendomorphic(A::AbstractQuantumObject) = isendomorphic(A.dimensions)
+
 @doc raw"""
     ishermitian(A::AbstractQuantumObject)
     isherm(A::AbstractQuantumObject)
@@ -86,6 +88,13 @@ Test whether the [`QuantumObject`](@ref) ``U`` is unitary operator. This functio
 Note that all the keyword arguments will be passed to `Base.isapprox`.
 """
 isunitary(U::QuantumObject; kwargs...) = isoper(U) ? isapprox(U.data * U.data', Eye(size(U, 1)); kwargs...) : false
+
+@doc raw"""
+    issparse(U::QuantumObject)
+
+Test whether the [`QuantumObject`](@ref) ``U`` is sparse operator. This function calls `SparseArrays.issparse`.
+"""
+SparseArrays.issparse(A::AbstractQuantumObject) = issparse(A.data)
 
 @doc raw"""
     SciMLOperators.iscached(A::AbstractQuantumObject)

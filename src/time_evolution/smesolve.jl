@@ -1,7 +1,7 @@
 export smesolveProblem, smesolveEnsembleProblem, smesolve
 
-_smesolve_generate_state(u, dims, isoperket::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
-_smesolve_generate_state(u, dims, isoperket::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
+_smesolve_generate_state(u, dims, ::Val{false}) = QuantumObject(vec2mat(u), type = Operator(), dims = dims)
+_smesolve_generate_state(u, dims, ::Val{true}) = QuantumObject(u, type = OperatorKet(), dims = dims)
 
 function _smesolve_update_coeff(u, p, t, op_vec)
     return 2 * real(dot(op_vec, u)) #this is Tr[Sn * ρ + ρ * Sn']
@@ -95,21 +95,15 @@ function smesolveProblem(
     sc_ops_isa_Qobj = sc_ops isa AbstractQuantumObject # We can avoid using non-diagonal noise if sc_ops is just an AbstractQuantumObject
 
     L_evo = _mesolve_make_L_QobjEvo(H, c_ops) + _mesolve_make_L_QobjEvo(nothing, sc_ops_list)
-    check_dimensions(L_evo, ψ0)
-    dims = L_evo.dimensions
 
-    T = _complex_float_type(Base.promote_eltype(L_evo, ψ0))
-    ρ0 = if isoperket(ψ0) # Convert it to dense vector with complex element type
-        to_dense(T, copy(ψ0.data))
-    else
-        to_dense(T, mat2vec(ket2dm(ψ0).data))
-    end
+    # Convert initial state to dense vector with complex element type (T) and check dimensions
+    T, ρ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(L_evo, ψ0)
 
-    sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
+    sc_ops_evo_data = map(get_data ∘ QobjEvo, sc_ops_list)
 
     K = cache_operator(get_data(L_evo), ρ0)
 
-    Id_op = IdentityOperator(prod(dims)^2)
+    Id_op = IdentityOperator(size(L_evo, 1))
     D_l = map(sc_ops_evo_data) do op
         # TODO: # Currently, we are assuming a time-independent MatrixOperator
         # Also, the u state may become non-hermitian, so Tr[Sn * ρ + ρ * Sn'] != real(Tr[Sn * ρ]) / 2
@@ -120,7 +114,7 @@ function smesolveProblem(
 
     tlist = _check_tlist(tlist, _float_type(T))
 
-    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
+    kwargs2 = _merge_saveat(tlist, e_ops, default_sde_solver_options(T); kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(K), tlist)
     kwargs4 = _generate_stochastic_kwargs(
         e_ops,
@@ -130,6 +124,7 @@ function smesolveProblem(
         makeVal(store_measurement),
         kwargs3,
         SaveFuncSMESolve,
+        T,
     )
 
     tspan = (tlist[1], tlist[end])
@@ -146,7 +141,7 @@ function smesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, ψ0.type, dims, (isoperket = Val(isoperket(ψ0)),))
+    return TimeEvolutionProblem(prob, tlist, states_type, dimensions, (isoperket = Val(isoperket(ψ0)),))
 end
 
 @doc raw"""
@@ -240,8 +235,6 @@ function smesolveEnsembleProblem(
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
-            rng,
-            ntraj,
             tlist,
             _stochastic_prob_func;
             sc_ops = sc_ops,
@@ -276,7 +269,7 @@ function smesolveEnsembleProblem(
         prob_sme.times,
         prob_sme.states_type,
         prob_sme.dimensions,
-        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3])),
+        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3], rng = rng)),
     )
 
     return ensemble_prob
@@ -410,25 +403,25 @@ function smesolve(
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         keep_runs_results = Val(false),
     )
-    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj; rng = ens_prob.kwargs.rng)
 
-    _sol_1 = sol[:, 1]
+    _sol_1 = sol.u[1]
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMESolve)
     _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSMESolve)
 
-    dims = ens_prob.dimensions
+    dimensions = ens_prob.dimensions
     _expvals_all =
-        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMESolve), eachindex(sol))
+        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol.u[i], SaveFuncMESolve), eachindex(sol.u))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
     states_all = stack(
-        map(i -> _smesolve_generate_state.(sol[:, i].u, Ref(dims), ens_prob.kwargs.isoperket), eachindex(sol)),
+        map(i -> _smesolve_generate_state.(sol.u[i].u, Ref(dimensions), ens_prob.kwargs.isoperket), eachindex(sol.u)),
         dims = 1,
     )
 
     _m_expvals =
-        _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSMESolve), eachindex(sol))
+        _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol.u[i], SaveFuncSMESolve), eachindex(sol.u))
     m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     kwargs = NamedTuple(_sol_1.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility

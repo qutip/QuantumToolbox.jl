@@ -12,9 +12,9 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 <!-- Table of Badges -->
 | **Release**       | [![Release][release-img]][release-url] [![License][license-img]][license-url] [![Downloads-total][download-tot-img]][download-url] [![Downloads-monthly][download-mon-img]][download-url] [![Cite][cite-img]][cite-url] |
 |:-----------------:|:-------------|
-| **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Coverage][codecov-img]][codecov-url] |
+| **Runtests**      | [![Runtests][runtests-img]][runtests-url] [![Buildkite][buildkite-img]][buildkite-url] [![Coverage][codecov-img]][codecov-url] |
 | **Code Quality**  | [![Code Quality][code-quality-img]][code-quality-url] [![Aqua QA][aqua-img]][aqua-url] [![JET][jet-img]][jet-url] [![code style: runic][runic-img]][runic-url] |
-| **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] |
+| **Documentation** | [![Doc-Stable][docs-stable-img]][docs-stable-url] [![Doc-Dev][docs-develop-img]][docs-develop-url] [![Doc-Contributor-Guide][docs-contributor-guide-img]][docs-contributor-guide-url] |
 | **Benchmark** | [![Benchmarks][benchmark-img]][benchmark-url] |
 | **Community** | [![Zulip][zulip-img]][zulip-url] [![QuTiP-discussion][QuTiP-discussion-img]][QuTiP-discussion-url] |
 | **Support** | [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund) |
@@ -35,6 +35,9 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [runtests-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main
 [runtests-url]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain
 
+[buildkite-img]: https://badge.buildkite.com/e5ecf03a0e6830993924d63263477c7938d3320d2d6151900f.svg?branch=main
+[buildkite-url]: https://buildkite.com/julialang/quantumtoolbox-dot-jl
+
 [codecov-img]: https://codecov.io/gh/qutip/QuantumToolbox.jl/branch/main/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/qutip/QuantumToolbox.jl
 
@@ -54,6 +57,8 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [docs-stable-url]: https://qutip.github.io/QuantumToolbox.jl/stable
 [docs-develop-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-develop-url]: https://qutip.github.io/QuantumToolbox.jl/dev
+[docs-contributor-guide-img]: https://img.shields.io/badge/docs-Contributor's%20Guide-blue
+[docs-contributor-guide-url]: https://qutip.org/QuantumToolbox.jl/stable/resources/contributing
 
 [benchmark-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/Benchmarks.yml/badge.svg?branch=main
 [benchmark-url]: https://qutip.org/QuantumToolbox.jl/benchmarks/
@@ -79,6 +84,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 - **GPU Computing:** Leverage GPU resources for high-performance computing. Simulate quantum dynamics directly on the GPU with the same syntax as the CPU case.
 - **Distributed Computing:** Distribute the computation over multiple nodes (e.g., a cluster). For example, you can run hundreds of quantum trajectories in parallel on a cluster, with, again, the same syntax as the simple case. See [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/cluster) for more information.
 - **Differentiable Programming:** Enable gradient-based optimization for quantum algorithms. Compute gradients of quantum dynamics with respect to their parameters using automatic differentiation. See [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/autodiff) for more information.
+- **Arbitrary Precision:** Go beyond double precision when the physics demands it. Because `Julia` specializes generic code to any number type, the same simulation runs at `Double64` or `BigFloat` precision with the same syntax — resolving exponentially small quantities like tunneling splittings and Liouvillian gaps that are lost in `Float64` roundoff. See [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/arbitrary_precision) for more information.
 - **Easy Extension:** Easily extend the package, taking advantage of the `Julia` language features, like multiple dispatch and metaprogramming.
 
 ## Installation
@@ -191,7 +197,7 @@ Contributors and users for `QuantumToolbox.jl` are invited to [![Zulip][zulip-im
 
 You can also help out with users' questions, or discuss proposed changes for the entire QuTiP organization in the [![QuTiP-discussion][QuTiP-discussion-img]][QuTiP-discussion-url].
 
-For more information about contribution, including technical advice, please see the [Contributing to Quantum Toolbox in Julia](https://qutip.org/QuantumToolbox.jl/stable/resources/contributing).
+For more information about contribution, including technical advice, please see the [![Doc-ColGuide][docs-contributor-guide-img]][docs-contributor-guide-url].
 
 ## Cite `QuantumToolbox.jl`
 If you like `QuantumToolbox.jl`, we would appreciate it if you starred the repository in order to help us increase its visibility. Furthermore, if you find the framework useful in your research, we would be grateful if you could cite our publication [ [Quantum 9, 1866 (2025)](https://doi.org/10.22331/q-2025-09-29-1866)  ] using the following bibtex entry:

@@ -149,10 +149,11 @@ function dfd_mesolveProblem(
         tol_list::Vector{<:Number} = fill(1.0e-8, length(maxdims)),
         kwargs...,
     ) where {T2 <: Integer, StateOpType <: Union{Ket, Operator}}
-    length(ψ0.dimensions) != length(maxdims) &&
+    length(ψ0.dimensions.to) != length(maxdims) &&
         throw(DimensionMismatch("`dim_list` and `maxdims` do not have the same dimension."))
 
-    dim_list = MVector(ψ0.dims)
+    # Use the "to" dimensions for the dim_list (Hilbert space dimensions)
+    dim_list = MVector(dimensions_to_dims(ψ0.dimensions.to))
     H₀ = H(dim_list, dfd_params)
     c_ops₀ = c_ops(dim_list, dfd_params)
     e_ops₀ = e_ops(dim_list, dfd_params)
@@ -336,7 +337,7 @@ function _DSF_mesolve_Affect!(integrator)
     # By doing this, we are assuming that all the arguments of ODEFunction are the default ones
     integrator.f =
         ODEFunction{true, FullSpecialize}(_mesolve_make_L_QobjEvo(H(op_l2, dsf_params), c_ops(op_l2, dsf_params)).data)
-    return u_modified!(integrator, true)
+    return derivative_discontinuity!(integrator, true)
 end
 
 function dsf_mesolveProblem(
@@ -363,7 +364,7 @@ function dsf_mesolveProblem(
     αt_list = convert(Vector{T}, α0_l)
     op_l_vec = map(op -> mat2vec(get_data(op)'), op_list)
 
-    dsf_identity = Eye(prod(H₀.dimensions))
+    dsf_identity = Eye(get_size(H₀.dimensions)[1])
 
     # Create the Krylov subspace just for initialize
     expv_cache = arnoldi(kron(dsf_identity, dsf_identity), mat2vec(ket2dm(ψ0).data), krylov_dim)
@@ -527,7 +528,7 @@ function _DSF_mcsolve_Affect!(integrator)
     # c_ops0 = params.c_ops
 
     e_ops0 = _get_e_ops(integrator, SaveFuncMCSolve)
-    c_ops0, c_ops0_herm = _mcsolve_get_c_ops(integrator)
+    c_ops0 = _mcsolve_get_c_ops(integrator)
 
     copyto!(ψt, integrator.u)
     normalize!(ψt)
@@ -570,17 +571,21 @@ function _DSF_mcsolve_Affect!(integrator)
 
     ## By copying the data, we are assuming that the variables are Vectors and not Tuple
     @. e_ops0 = get_data(e_ops2)
-    @. c_ops0 = get_data(c_ops2)
-    c_ops0_herm .= map(op -> op' * op, c_ops0)
+    # The stored collapse operators are (constant) `MatrixOperator`s. We rebuild them with
+    # the shifted data instead of `copyto!`-ing into them, since the sparsity pattern of the
+    # shifted operators may differ from the original ones.
+    @inbounds for i in eachindex(c_ops0)
+        c_ops0[i] = MatrixOperator(get_data(c_ops2[i]))
+    end
 
-    H_nh = convert(eltype(ψt), 0.5im) * sum(c_ops0_herm)
+    H_nh = convert(eltype(ψt), 0.5im) * mapreduce(op -> (d = get_data(op); d' * d), +, c_ops2)
     # By doing this, we are assuming that the system is time-independent and f is a ScaledOperator
     # of the form -1im * (H - H_nh)
-    copyto!(integrator.f.f.L, H(op_l2, dsf_params).data - H_nh)
-    return u_modified!(integrator, true)
+    copyto!(integrator.f.f.L, get_data(H(op_l2, dsf_params)) - H_nh)
+    return derivative_discontinuity!(integrator, true)
 end
 
-function _dsf_mcsolve_prob_func(prob, i, repeat)
+function _dsf_mcsolve_prob_func(prob, ctx)
     params = prob.p
 
     prm = merge(

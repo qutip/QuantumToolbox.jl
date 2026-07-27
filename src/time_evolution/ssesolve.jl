@@ -96,30 +96,27 @@ function ssesolveProblem(
 
     H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, sc_ops_list)
     isoper(H_eff_evo) || throw(ArgumentError("The Hamiltonian must be an Operator."))
-    check_dimensions(H_eff_evo, ψ0)
-    dims = H_eff_evo.dimensions
 
-    T = _complex_float_type(Base.promote_eltype(H_eff_evo, ψ0))
-
-    states_type = ψ0.type
-    ψ0 = to_dense(T, get_data(ψ0))
+    # Convert initial state to dense vector with complex element type (T) and check dimensions
+    T, ψ0, states_type, dimensions = _handle_init_state_and_sol_type_dims(H_eff_evo, ψ0)
 
     sc_ops_evo_data = Tuple(map(get_data ∘ QobjEvo, sc_ops_list))
 
     # Here the coefficients depend on the state, so this is a non-linear operator, which should be implemented with FunctionOperator instead. However, the nonlinearity is only on the coefficients, and it should be safe.
     K_l = sum(
-        op -> _ScalarOperator_e(op, +) * op + _ScalarOperator_e2_2(op, -) * IdentityOperator(prod(dims)),
+        op ->
+        _ScalarOperator_e(op, +) * op + _ScalarOperator_e2_2(op, -) * IdentityOperator(size(H_eff_evo, 1)),
         sc_ops_evo_data,
     )
 
     K = cache_operator(get_data(-1im * QuantumObjectEvolution(H_eff_evo)) + K_l, ψ0)
 
-    D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(prod(dims)), sc_ops_evo_data)
+    D_l = map(op -> op + _ScalarOperator_e(op, -) * IdentityOperator(size(H_eff_evo, 1)), sc_ops_evo_data)
     D = DiffusionOperator(D_l)
 
     tlist = _check_tlist(tlist, _float_type(T))
 
-    kwargs2 = _merge_saveat(tlist, e_ops, DEFAULT_SDE_SOLVER_OPTIONS; kwargs...)
+    kwargs2 = _merge_saveat(tlist, e_ops, default_sde_solver_options(T); kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(K), tlist)
     kwargs4 = _generate_stochastic_kwargs(
         e_ops,
@@ -129,6 +126,7 @@ function ssesolveProblem(
         makeVal(store_measurement),
         kwargs3,
         SaveFuncSSESolve,
+        T,
     )
 
     tspan = (tlist[1], tlist[end])
@@ -145,7 +143,7 @@ function ssesolveProblem(
         kwargs4...,
     )
 
-    return TimeEvolutionProblem(prob, tlist, states_type, dims)
+    return TimeEvolutionProblem(prob, tlist, states_type, dimensions)
 end
 
 @doc raw"""
@@ -238,8 +236,6 @@ function ssesolveEnsembleProblem(
     _prob_func =
         isnothing(prob_func) ?
         _ensemble_dispatch_prob_func(
-            rng,
-            ntraj,
             tlist,
             _stochastic_prob_func;
             sc_ops = sc_ops,
@@ -273,7 +269,7 @@ function ssesolveEnsembleProblem(
         prob_sme.times,
         prob_sme.states_type,
         prob_sme.dimensions,
-        (progr = _output_func[2], channel = _output_func[3]),
+        (progr = _output_func[2], channel = _output_func[3], rng = rng),
     )
 
     return ensemble_prob
@@ -408,23 +404,23 @@ function ssesolve(
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         keep_runs_results = Val(false),
     )
-    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj; rng = ens_prob.kwargs.rng)
 
-    _sol_1 = sol[:, 1]
+    _sol_1 = sol.u[1]
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncSSESolve)
     _m_expvals_sol_1 = _get_m_expvals(_sol_1, SaveFuncSSESolve)
 
     normalize_states = Val(false)
-    dims = ens_prob.dimensions
+    dimensions = ens_prob.dimensions
     _expvals_all =
-        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
+        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol.u[i], SaveFuncSSESolve), eachindex(sol.u))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
-    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol)), dims = 1)
+    states_all = stack(map(i -> _normalize_state!.(sol.u[i].u, Ref(dimensions), normalize_states), eachindex(sol.u)), dims = 1)
 
     _m_expvals =
-        _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol[:, i], SaveFuncSSESolve), eachindex(sol))
+        _m_expvals_sol_1 isa Nothing ? nothing : map(i -> _get_m_expvals(sol.u[i], SaveFuncSSESolve), eachindex(sol.u))
     m_expvals = _m_expvals isa Nothing ? nothing : stack(_m_expvals, dims = 2)
 
     kwargs = NamedTuple(_sol_1.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility

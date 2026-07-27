@@ -22,7 +22,7 @@ Pure state:
 ```jldoctest
 julia> ψ = fock(2,0)
 
-Quantum Object:   type=Ket()   dims=[2]   size=(2,)
+Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
 2-element Vector{ComplexF64}:
  1.0 + 0.0im
  0.0 + 0.0im
@@ -35,7 +35,7 @@ Mixed state:
 ```jldoctest
 julia> ρ = maximally_mixed_dm(2)
 
-Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=([2], [2])   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
  0.5+0.0im  0.0+0.0im
  0.0+0.0im  0.5+0.0im
@@ -75,14 +75,16 @@ function entropy_relative(
         base::Int = 0,
         tol::Real = 1.0e-15,
     ) where {ObjType1 <: Union{Ket, Operator}, ObjType2 <: Union{Ket, Operator}}
-    check_dimensions(ρ, σ)
+    ρ_dm = ket2dm(ρ)
+    σ_dm = ket2dm(σ)
+    check_dimensions(ρ_dm, σ_dm)
 
     # the logic of this code follows the detail given in the reference of the docstring
     # consider the eigen decompositions:
     #   ρ = Σ_i p_i |i⟩⟨i|
     #   σ = Σ_j q_j |j⟩⟨j|
-    ρ_result = eigenstates(ket2dm(ρ))
-    σ_result = eigenstates(ket2dm(σ))
+    ρ_result = eigenstates(ρ_dm)
+    σ_result = eigenstates(σ_dm)
 
     # make sure all p_i and q_j are real
     any(p_i -> imag(p_i) >= tol, ρ_result.values) && error("Input `ρ` has non-real eigenvalues.")
@@ -141,11 +143,11 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
 function entropy_mutual(
-        ρAB::QuantumObject{ObjType, <:AbstractDimensions{N, N}},
-        selA::Union{Int, AbstractVector{Int}, Tuple},
-        selB::Union{Int, AbstractVector{Int}, Tuple};
+        ρAB::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}, <:TensorSpace{N}}}, # the dimensions to == from, and should both be TensorSpace
+        selA::Union{Int, AbstractVecOrTuple{Int}},
+        selB::Union{Int, AbstractVecOrTuple{Int}};
         kwargs...,
-    ) where {ObjType <: Union{Ket, Operator}, N}
+    ) where {N}
     # check if selA and selB matches the dimensions of ρAB
     sel_A_B = (selA..., selB...)
     (length(sel_A_B) != N) && throw(
@@ -159,6 +161,12 @@ function entropy_mutual(
     ρB = ptrace(ρAB, selB)
     return entropy_vn(ρA; kwargs...) + entropy_vn(ρB; kwargs...) - entropy_vn(ρAB; kwargs...)
 end
+entropy_mutual(
+    ρAB::QuantumObject{Ket, <:Dimensions{<:TensorSpace{N}, Space}}, # the dimensions `to` should be TensorSpace
+    selA::Union{Int, AbstractVecOrTuple{Int}},
+    selB::Union{Int, AbstractVecOrTuple{Int}};
+    kwargs...,
+) where {N} = entropy_mutual(ket2dm(ρAB), selA, selB; kwargs...)
 
 @doc raw"""
     entropy_conditional(ρAB::QuantumObject, selB; kwargs...)
@@ -174,8 +182,8 @@ Here, ``S`` is the [Von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neuma
 - `kwargs` are the keyword arguments for calculating Von Neumann entropy. See also [`entropy_vn`](@ref).
 """
 entropy_conditional(
-    ρAB::QuantumObject{ObjType, <:AbstractDimensions{N, N}},
-    selB::Union{Int, AbstractVector{Int}, Tuple};
+    ρAB::QuantumObject{ObjType, <:Dimensions{N, N}},
+    selB::Union{Int, AbstractVecOrTuple{Int}};
     kwargs...,
 ) where {ObjType <: Union{Ket, Operator}, N} = entropy_vn(ρAB; kwargs...) - entropy_vn(ptrace(ρAB, selB); kwargs...)
 
@@ -192,7 +200,7 @@ Calculates the [entanglement entropy](https://en.wikipedia.org/wiki/Entropy_of_e
 """
 function entanglement(
         ρ::QuantumObject{OpType},
-        sel::Union{Int, AbstractVector{Int}, Tuple},
+        sel::Union{Int, AbstractVecOrTuple{Int}},
         kwargs...,
     ) where {OpType <: Union{Ket, Operator}}
     p = purity(ρ)
@@ -221,21 +229,22 @@ Calculate the [concurrence](https://en.wikipedia.org/wiki/Concurrence_(quantum_c
 - [Hill-Wootters1997](@citet)
 """
 function concurrence(ρ::QuantumObject{OpType}) where {OpType <: Union{Ket, Operator}}
-    (ρ.dimensions == Dimensions((Space(2), Space(2)))) || throw(
+    two_qubit_dims = TensorSpace(Space(2), Space(2))
+    is_two_qubit = (isket(ρ) || isendomorphic(ρ)) && ρ.dimensions.to == two_qubit_dims
+    is_two_qubit || throw(
         ArgumentError(
             "The `concurrence` only works for a two-qubit state, invalid dims = $(_get_dims_string(ρ.dimensions)).",
         ),
     )
 
-    _ρ = ket2dm(ρ).data
-    σy = sigmay()
-    σyσy = kron(σy, σy).data
-    ρ_tilde = σyσy * conj(_ρ) * σyσy
+    ρ_mat = ket2dm(ρ).data
+    σyσy = tensor(sigmay(), sigmay()).data
+    ρ_tilde = σyσy * conj(ρ_mat) * σyσy
 
-    # we use the alternative way to calculate concurrence (more efficient)
-    # calculate the square root of each eigenvalues (in decreasing order) of the non-Hermitian matrix: ρ * ρ_tilde
-    # note that we add abs here to avoid problems with sqrt for very small negative numbers
-    λ = sqrt.(abs.(real(eigvals(_ρ * ρ_tilde; sortby = x -> -real(x)))))
+    # We use the alternative way to calculate concurrence (more efficient):
+    # calculate the square root of each eigenvalue (in decreasing order) of the non-Hermitian matrix ρ * ρ̃.
+    # Note: we use abs() to avoid problems with sqrt for very small negative numbers due to numerical precision.
+    λ = sqrt.(abs.(real(eigvals(ρ_mat * ρ_tilde; sortby = x -> -real(x)))))
 
-    return max(0.0, λ[1] - λ[2] - λ[3] - λ[4]) # use 0.0 to make sure it always return value in Float-type
+    return max(zero(λ[1]), λ[1] - λ[2] - λ[3] - λ[4])
 end

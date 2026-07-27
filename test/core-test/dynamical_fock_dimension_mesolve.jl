@@ -44,7 +44,7 @@
     @test sum(abs.((sol.expect[1, :] .- sol0.expect[1, :]) ./ (sol0.expect[1, :] .+ 1.0e-16))) < 0.01
     @test length(sol.states) == length(t_l)
     @test all(
-        diff(getindex.(QuantumToolbox.dimensions_to_dims.(QuantumToolbox.get_dimensions_to.(sol.states)), 1)) .>= 0,
+        diff(getindex.(QuantumToolbox.dimensions_to_dims.(getfield.(getfield.(sol.states, :dimensions), :to)), 1)) .>= 0,
     )
 
     ######################

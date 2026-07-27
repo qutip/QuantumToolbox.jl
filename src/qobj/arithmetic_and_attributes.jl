@@ -34,94 +34,97 @@ for op in (:(+), :(-), :(*), :(/), :(^))
     end
 end
 
-for op in (:(+), :(-), :(*))
+# addition and subtraction for quantum object
+for op in (:(+), :(-))
     @eval begin
-        function Base.$op(A::AbstractQuantumObject, B::AbstractQuantumObject)
+        # unary operations
+        Base.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dimensions)
+
+        # binary operations between Number and QuantumObject (must be Operator or SuperOperator)
+        # the number is treated as a scalar multiplied by identity matrix
+        Base.$op(n::T, A::AbstractQuantumObject{ObjType}) where {T <: Number, ObjType <: Union{Operator, SuperOperator}} =
+            get_typename_wrapper(A)($(op)(n * I, A.data), A.type, A.dimensions)
+        Base.$op(A::AbstractQuantumObject{ObjType}, n::T) where {ObjType <: Union{Operator, SuperOperator}, T <: Number} =
+            get_typename_wrapper(A)($(op)(A.data, n * I), A.type, A.dimensions)
+
+        # binary operations between two QuantumObjects (should have same QuantumObjectType)
+        function Base.$op(A::AbstractQuantumObject{AObjType}, B::AbstractQuantumObject{BObjType}) where {AObjType <: QuantumObjectType, BObjType <: QuantumObjectType}
+            # avoid the case where A and B have same dimensions but different type, and throw error message
+            (AObjType == BObjType) || throw(ArgumentError("Invalid type for A $($op) B, where A is $AObjType and B is $BObjType"))
             check_dimensions(A, B)
             QType = promote_op_type(A, B)
             return QType($(op)(A.data, B.data), A.type, A.dimensions)
         end
-        Base.$op(A::AbstractQuantumObject) = get_typename_wrapper(A)($(op)(A.data), A.type, A.dimensions)
-
-        Base.$op(n::T, A::AbstractQuantumObject) where {T <: Number} =
-            get_typename_wrapper(A)($(op)(n * I, A.data), A.type, A.dimensions)
-        Base.$op(A::AbstractQuantumObject, n::T) where {T <: Number} =
-            get_typename_wrapper(A)($(op)(A.data, n * I), A.type, A.dimensions)
     end
 end
 
-function check_mul_dimensions(from::NTuple{NA, AbstractSpace}, to::NTuple{NB, AbstractSpace}) where {NA, NB}
-    (from != to) && throw(
+# multiplication (quantum object with Number)
+## we treat the Number as a scalar multiplied by identity matrix for GPU compatibility
+Base.:(*)(n::T, A::AbstractQuantumObject) where {T <: Number} = get_typename_wrapper(A)((n * I) * A.data, A.type, A.dimensions)
+Base.:(*)(A::AbstractQuantumObject, n::T) where {T <: Number} = n * A # it is necessary to call the method above (otherwise we will obtain incorrect type for Ket and OperatorKet)
+
+# multiplication (two quantum objects)
+function Base.:(*)(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
+    check_mul_dimensions(A, B)
+    QType = promote_op_type(A, B)
+    return QType(A.data * B.data, Operator(), Dimensions(A.dimensions.to, B.dimensions.from))
+end
+function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket})
+    check_mul_dimensions(A, B)
+    return QuantumObject(A.data * B.data, Ket(), Dimensions(A.dimensions.to, B.dimensions.from))
+end
+function Base.:(*)(A::QuantumObject{Bra}, B::AbstractQuantumObject{Operator})
+    check_mul_dimensions(A, B)
+    return QuantumObject(A.data * B.data, Bra(), Dimensions(A.dimensions.to, B.dimensions.from))
+end
+function Base.:(*)(A::QuantumObject{Ket}, B::QuantumObject{Bra})
+    check_mul_dimensions(A, B)
+    return QuantumObject(A.data * B.data, Operator(), Dimensions(A.dimensions.to, B.dimensions.from))
+end
+function Base.:(*)(A::QuantumObject{Bra}, B::QuantumObject{Ket})
+    check_mul_dimensions(A, B)
+    return A.data * B.data
+end
+function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::AbstractQuantumObject{SuperOperator})
+    check_mul_dimensions(A, B)
+    QType = promote_op_type(A, B)
+    return QType(A.data * B.data, SuperOperator(), Dimensions(A.dimensions.to, B.dimensions.from))
+end
+function Base.:(*)(A::AbstractQuantumObject{SuperOperator, <:Dimensions{T1, T2}}, B::QuantumObject{Operator}) where {T1 <: LiouvilleSpace, T2 <: LiouvilleSpace}
+    # this case is special because SuperOperator A maps Operator B into another Operator
+    check_mul_dimensions(A, B)
+    return vec2mat(A * mat2vec(B)) # vec2mat and mat2vec will handle the type and Dimensions
+end
+function Base.:(*)(A::QuantumObject{OperatorBra}, B::QuantumObject{OperatorKet})
+    check_mul_dimensions(A, B)
+    return A.data * B.data
+end
+function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{OperatorKet})
+    check_mul_dimensions(A, B)
+    return QuantumObject(A.data * B.data, OperatorKet(), Dimensions(A.dimensions.to, B.dimensions.from))
+end
+function Base.:(*)(A::QuantumObject{OperatorBra}, B::AbstractQuantumObject{SuperOperator})
+    check_mul_dimensions(A, B)
+    return QuantumObject(A.data * B.data, OperatorBra(), Dimensions(A.dimensions.to, B.dimensions.from))
+end
+
+function check_mul_dimensions(A::AbstractQuantumObject, B::AbstractQuantumObject)
+    (A.dimensions.from != B.dimensions.to) && throw(
         DimensionMismatch(
-            "The quantum object with (right) dims = $(dimensions_to_dims(from)) can not multiply a quantum object with (left) dims = $(dimensions_to_dims(to)) on the right-hand side.",
+            "The quantum object with dims = $(A.dims) can not multiply a quantum object with dims = $(B.dims) on the right-hand side.",
         ),
     )
     return nothing
 end
 
-for ADimType in (:Dimensions, :GeneralDimensions)
-    for BDimType in (:Dimensions, :GeneralDimensions)
-        if ADimType == BDimType == :Dimensions
-            @eval begin
-                function Base.:(*)(
-                        A::AbstractQuantumObject{Operator, <:$ADimType},
-                        B::AbstractQuantumObject{Operator, <:$BDimType},
-                    )
-                    check_dimensions(A, B)
-                    QType = promote_op_type(A, B)
-                    return QType(A.data * B.data, Operator(), A.dimensions)
-                end
-            end
-        else
-            @eval begin
-                function Base.:(*)(
-                        A::AbstractQuantumObject{Operator, <:$ADimType},
-                        B::AbstractQuantumObject{Operator, <:$BDimType},
-                    )
-                    check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-                    QType = promote_op_type(A, B)
-                    return QType(
-                        A.data * B.data,
-                        Operator(),
-                        GeneralDimensions(get_dimensions_to(A), get_dimensions_from(B)),
-                    )
-                end
-            end
-        end
-    end
-end
-
-function Base.:(*)(A::AbstractQuantumObject{Operator}, B::QuantumObject{Ket, <:Dimensions})
-    check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-    return QuantumObject(A.data * B.data, Ket(), Dimensions(get_dimensions_to(A)))
-end
-function Base.:(*)(A::QuantumObject{Bra, <:Dimensions}, B::AbstractQuantumObject{Operator})
-    check_mul_dimensions(get_dimensions_from(A), get_dimensions_to(B))
-    return QuantumObject(A.data * B.data, Bra(), Dimensions(get_dimensions_from(B)))
-end
-function Base.:(*)(A::QuantumObject{Ket}, B::QuantumObject{Bra})
-    check_dimensions(A, B)
-    return QuantumObject(A.data * B.data, Operator(), A.dimensions) # to align with QuTiP, don't use kron(A, B) to do it.
-end
-function Base.:(*)(A::QuantumObject{Bra}, B::QuantumObject{Ket})
-    check_dimensions(A, B)
-    return A.data * B.data
-end
-function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{Operator})
-    check_dimensions(A, B)
-    return QuantumObject(vec2mat(A.data * mat2vec(B.data)), Operator(), A.dimensions)
-end
-function Base.:(*)(A::QuantumObject{OperatorBra}, B::QuantumObject{OperatorKet})
-    check_dimensions(A, B)
-    return A.data * B.data
-end
-function Base.:(*)(A::AbstractQuantumObject{SuperOperator}, B::QuantumObject{OperatorKet})
-    check_dimensions(A, B)
-    return QuantumObject(A.data * B.data, OperatorKet(), A.dimensions)
-end
-function Base.:(*)(A::QuantumObject{OperatorBra}, B::AbstractQuantumObject{SuperOperator})
-    check_dimensions(A, B)
-    return QuantumObject(A.data * B.data, OperatorBra(), A.dimensions)
+# special case: SuperOperator A maps Operator B into another Operator
+function check_mul_dimensions(A::AbstractQuantumObject{SuperOperator, <:Dimensions{T1, T2}}, B::QuantumObject{Operator}) where {T1 <: LiouvilleSpace, T2 <: LiouvilleSpace}
+    (A.dimensions.from.op_dims != B.dimensions) && throw(
+        DimensionMismatch(
+            "The quantum object with dims = $(A.dims) can not multiply a quantum object with dims = $(B.dims) on the right-hand side.",
+        ),
+    )
+    return nothing
 end
 
 Base.:(^)(A::QuantumObject, n::T) where {T <: Number} = QuantumObject(^(A.data, n), A.type, A.dimensions)
@@ -157,7 +160,8 @@ Supports the following inputs:
     `matrix_element(i, A, j)` is a synonym of `dot(i, A, j)`.
 """
 function LinearAlgebra.dot(i::QuantumObject{Ket}, A::AbstractQuantumObject{Operator}, j::QuantumObject{Ket})
-    check_dimensions(i, A, j)
+    check_mul_dimensions(i', A)
+    check_mul_dimensions(A, j)
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 function LinearAlgebra.dot(
@@ -165,7 +169,8 @@ function LinearAlgebra.dot(
         A::AbstractQuantumObject{SuperOperator},
         j::QuantumObject{OperatorKet},
     )
-    check_dimensions(i, A, j)
+    check_mul_dimensions(i', A)
+    check_mul_dimensions(A, j)
     return LinearAlgebra.dot(i.data, A.data, j.data)
 end
 
@@ -241,7 +246,7 @@ Note that this function only supports for [`Operator`](@ref) and [`SuperOperator
 ```jldoctest
 julia> a = destroy(20)
 
-Quantum Object:   type=Operator()   dims=[20]   size=(20, 20)   ishermitian=false
+Quantum Object:   type=Operator()   dims=([20], [20])   size=(20, 20)   ishermitian=false
 20×20 SparseMatrixCSC{ComplexF64, Int64} with 19 stored entries:
 ⎡⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⎥
@@ -278,7 +283,7 @@ Return the standard vector `p`-norm or [Schatten](https://en.wikipedia.org/wiki/
 ```jldoctest
 julia> ψ = fock(10, 2)
 
-Quantum Object:   type=Ket()   dims=[10]   size=(10,)
+Quantum Object:   type=Ket()   dims=([10], [1])   size=(10,)
 10-element Vector{ComplexF64}:
  0.0 + 0.0im
  0.0 + 0.0im
@@ -360,7 +365,7 @@ Matrix square root of [`QuantumObject`](@ref)
 !!! note
     `√(A)` (where `√` can be typed by tab-completing `\sqrt` in the REPL) is a synonym of `sqrt(A)`.
 """
-Base.sqrt(A::QuantumObject) = QuantumObject(sqrt(to_dense(A.data)), A.type, A.dimensions)
+Base.sqrt(A::QuantumObject{ObjType}) where {ObjType <: Union{Operator, SuperOperator}} = QuantumObject(sqrt(to_dense(A.data)), A.type, A.dimensions)
 
 @doc raw"""
     log(A::QuantumObject)
@@ -470,7 +475,7 @@ Two qubits in the state ``\ket{\psi} = \ket{e,g}``:
 ```jldoctest
 julia> ψ = kron(fock(2,0), fock(2,1))
 
-Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
+Quantum Object:   type=Ket()   dims=([2, 2], [1])   size=(4,)
 4-element Vector{ComplexF64}:
  0.0 + 0.0im
  1.0 + 0.0im
@@ -479,7 +484,7 @@ Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
 
 julia> ptrace(ψ, 2)
 
-Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=([2], [2])   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
  0.0+0.0im  0.0+0.0im
  0.0+0.0im  1.0+0.0im
@@ -489,7 +494,7 @@ or in an entangled state ``\ket{\psi} = \frac{1}{\sqrt{2}} \left( \ket{e,e} + \k
 ```jldoctest
 julia> ψ = 1 / √2 * (kron(fock(2,0), fock(2,0)) + kron(fock(2,1), fock(2,1)))
 
-Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
+Quantum Object:   type=Ket()   dims=([2, 2], [1])   size=(4,)
 4-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
                 0.0 + 0.0im
@@ -498,13 +503,13 @@ Quantum Object:   type=Ket()   dims=[2, 2]   size=(4,)
 
 julia> ptrace(ψ, 1)
 
-Quantum Object:   type=Operator()   dims=[2]   size=(2, 2)   ishermitian=true
+Quantum Object:   type=Operator()   dims=([2], [2])   size=(2, 2)   ishermitian=true
 2×2 Matrix{ComplexF64}:
  0.5+0.0im  0.0+0.0im
  0.0+0.0im  0.5+0.0im
 ```
 """
-function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int}, Tuple})
+function ptrace(QO::QuantumObject{Ket, <:Dimensions{<:TensorSpace{N}}}, sel::AbstractVecOrTuple{T}) where {N, T <: Integer}
     any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("ptrace does not support EnrSpace"))
 
     _non_static_array_warning("sel", sel)
@@ -512,49 +517,76 @@ function ptrace(QO::QuantumObject{Ket}, sel::Union{AbstractVector{Int}, Tuple})
     if length(sel) == 0 # return full trace for empty sel
         return tr(ket2dm(QO))
     else
-        n_d = length(QO.dimensions)
-
-        (any(>(n_d), sel) || any(<(1), sel)) && throw(
-            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(n_d) sub-systems"),
+        (any(>(N), sel) || any(<(1), sel)) && throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(N) sub-systems"),
         )
         allunique(sel) || throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
-        (n_d == 1) && return ket2dm(QO) # ptrace should always return Operator
+        (N == 1) && return ket2dm(QO) # ptrace should always return Operator
     end
 
     _sort_sel = sort(SVector{length(sel), Int}(sel))
-    ρtr, dkeep = _ptrace_ket(QO.data, QO.dims, _sort_sel)
+    dims = dimensions_to_dims(QO.dimensions.to)
+    ρtr, dkeep = _ptrace_ket(QO.data, dims, _sort_sel)
     return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
 
-ptrace(QO::QuantumObject{Bra}, sel::Union{AbstractVector{Int}, Tuple}) = ptrace(QO', sel)
+ptrace(QO::QuantumObject{Bra, <:Dimensions{Space, <:TensorSpace{N}}}, sel::AbstractVecOrTuple{T}) where {N, T <: Integer} = ptrace(QO', sel)
 
-function ptrace(QO::QuantumObject{Operator}, sel::Union{AbstractVector{Int}, Tuple})
-    any(s -> s isa EnrSpace, QO.dimensions.to) && throw(ArgumentError("ptrace does not support EnrSpace"))
+function ptrace(QO::QuantumObject{Operator, <:Dimensions{<:TensorSpace{N}, <:TensorSpace{N}}}, sel::AbstractVecOrTuple{T}) where {N, T <: Integer}
+    ((QO.dimensions.to isa EnrSpace) || any(s -> s isa EnrSpace, QO.dimensions.to)) && throw(ArgumentError("ptrace does not support EnrSpace"))
 
     # TODO: support for special cases when some of the subsystems have same `to` and `from` space
-    isa(QO.dimensions, GeneralDimensions) &&
-        (get_dimensions_to(QO) != get_dimensions_from(QO)) &&
-        throw(ArgumentError("Invalid partial trace for dims = $(_get_dims_string(QO.dimensions))"))
+    !isendomorphic(QO) && _non_endomorphic_dims_error("operator for ptrace", QO.dimensions)
 
     _non_static_array_warning("sel", sel)
 
     if length(sel) == 0 # return full trace for empty sel
         return tr(QO)
     else
-        n_d = length(QO.dimensions)
-
-        (any(>(n_d), sel) || any(<(1), sel)) && throw(
-            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(n_d) sub-systems"),
+        (any(>(N), sel) || any(<(1), sel)) && throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have $(N) sub-systems"),
         )
         allunique(sel) || throw(ArgumentError("Duplicate selection indices in `sel`: $(sel)"))
-        (n_d == 1) && return QO
+        (N == 1) && return QO
     end
 
-    dims = dimensions_to_dims(get_dimensions_to(QO))
+    dims = dimensions_to_dims(QO.dimensions.to)
     _sort_sel = sort(SVector{length(sel), Int}(sel))
     ρtr, dkeep = _ptrace_oper(QO.data, dims, _sort_sel)
     return QuantumObject(ρtr, type = Operator(), dims = Dimensions(dkeep))
 end
+
+# Special cases for single-subsystem (N=1) where TensorSpace collapses to Space
+function ptrace(QO::QuantumObject{Ket, <:Dimensions{Space, Space}}, sel::AbstractVecOrTuple{T}) where {T <: Integer}
+    _non_static_array_warning("sel", sel)
+
+    N_sel = length(sel)
+    if N_sel == 0  # return full trace for empty sel
+        return tr(ket2dm(QO))
+    else
+        ((N_sel == 1) && (sel[1] == 1)) || throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have 1 sub-system"),
+        )
+        return ket2dm(QO)  # ptrace should always return Operator
+    end
+end
+function ptrace(QO::QuantumObject{Operator, <:Dimensions{Space, Space}}, sel::AbstractVecOrTuple{T}) where {T <: Integer}
+    !isendomorphic(QO) && _non_endomorphic_dims_error("operator for ptrace", QO.dimensions)
+
+    _non_static_array_warning("sel", sel)
+
+    N_sel = length(sel)
+    if N_sel == 0  # return full trace for empty sel
+        return tr(QO)
+    else
+        ((N_sel == 1) && (sel[1] == 1)) || throw(
+            ArgumentError("Invalid indices in `sel`: $(sel), the given QuantumObject only have 1 sub-system"),
+        )
+        return QO
+    end
+end
+ptrace(QO::QuantumObject{Bra, <:Dimensions{Space, Space}}, sel::AbstractVecOrTuple{T}) where {T <: Integer} = ptrace(QO', sel)
+
 ptrace(QO::QuantumObject, sel::Int) = ptrace(QO, SVector(sel))
 
 function _ptrace_ket(QO::AbstractArray, dims::Union{SVector, MVector}, sel)
@@ -672,7 +704,7 @@ Get the coherence value ``\alpha`` by measuring the expectation value of the des
 It returns both ``\alpha`` and the corresponding state with the coherence removed: ``\ket{\delta_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \ket{\psi}`` for a pure state, and ``\hat{\rho_\alpha} = \exp ( \alpha^* \hat{a} - \alpha \hat{a}^\dagger ) \hat{\rho} \exp ( -\bar{\alpha} \hat{a} + \alpha \hat{a}^\dagger )`` for a density matrix. These states correspond to the quantum fluctuations around the coherent state ``\ket{\alpha}`` or ``|\alpha\rangle\langle\alpha|``.
 """
 function get_coherence(ψ::QuantumObject{Ket})
-    a = destroy(prod(ψ.dimensions))
+    a = destroy(get_size(ψ.dimensions)[1])
     α = expect(a, ψ)
     D = exp(α * a' - conj(α) * a)
 
@@ -680,7 +712,7 @@ function get_coherence(ψ::QuantumObject{Ket})
 end
 
 function get_coherence(ρ::QuantumObject{Operator})
-    a = destroy(prod(ρ.dimensions))
+    a = destroy(get_size(ρ.dimensions)[1])
     α = expect(a, ρ)
     D = exp(α * a' - conj(α) * a)
 
@@ -715,39 +747,53 @@ true
     It is highly recommended to use `permute(A, order)` with `order` as `Tuple` or `SVector` from [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) to keep type stability. See the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
 function SparseArrays.permute(
-        A::QuantumObject{ObjType},
-        order::Union{AbstractVector{Int}, Tuple},
-    ) where {ObjType <: Union{Ket, Bra, Operator}}
-    any(s -> s isa EnrSpace, A.dimensions.to) && throw(ArgumentError("permute does not support EnrSpace"))
+        A::QuantumObject{ObjType, <:Dimensions},
+        order::AbstractVecOrTuple{T},
+    ) where {ObjType <: Union{Ket, Bra, Operator}, T <: Integer}
 
-    (length(order) != length(A.dimensions)) &&
-        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
-
-    !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))
-
+    # check validity of order (other checks will be handled in `_dims_and_perm` since it depends on ObjType)
     _non_static_array_warning("order", order)
+    !isperm(order) && throw(ArgumentError("$(order) is not a valid permutation of the subsystems (A.dims)"))
 
     order_svector = SVector{length(order), Int}(order) # convert it to SVector for performance
 
     # obtain the arguments: dims for reshape; perm for PermutedDimsArray
-    dims, perm = _dims_and_perm(A.type, A.dims, order_svector, length(order_svector))
+    dims, perm = _dims_and_perm(A.type, A.dimensions, order_svector, length(order_svector))
 
-    order_dimensions = _order_dimensions(A.dimensions, order_svector)
+    order_dimensions = _order_dimensions(A.type, A.dimensions, order_svector)
 
     return QuantumObject(reshape(permutedims(reshape(A.data, dims...), Tuple(perm)), size(A)), A.type, order_dimensions)
 end
 
-_dims_and_perm(::ObjType, dims::SVector{N, Int}, order::AbstractVector{Int}, L::Int) where {ObjType <: Union{Ket, Bra}, N} =
-    reverse(dims), reverse((L + 1) .- order)
+function _dims_and_perm(::Ket, dimensions::Dimensions{<:TensorSpace{Nq}, Space}, order::SVector{Np, Int}, L::Int) where {Nq, Np}
+    any(s -> s isa EnrSpace, dimensions.to) && throw(ArgumentError("permute does not support EnrSpace"))
 
-# if dims originates from Dimensions
-_dims_and_perm(::Operator, dims::SVector{N, Int}, order::AbstractVector{Int}, L::Int) where {N} =
-    reverse(vcat(dims, dims)), reverse((2 * L + 1) .- vcat(order, order .+ L))
+    (Nq != Np) &&
+        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
 
-# if dims originates from GeneralDimensions
-_dims_and_perm(::Operator, dims::SVector{2, SVector{N, Int}}, order::AbstractVector{Int}, L::Int) where {N} =
-    reverse(vcat(dims[2], dims[1])), reverse((2 * L + 1) .- vcat(order, order .+ L))
+    return reverse(dimensions_to_dims(dimensions.to)), reverse((L + 1) .- order)
+end
+function _dims_and_perm(::Bra, dimensions::Dimensions{Space, <:TensorSpace{Nq}}, order::SVector{Np, Int}, L::Int) where {Nq, Np}
+    any(s -> s isa EnrSpace, dimensions.from) && throw(ArgumentError("permute does not support EnrSpace"))
 
-_order_dimensions(dimensions::Dimensions, order::AbstractVector{Int}) = Dimensions(dimensions.to[order])
-_order_dimensions(dimensions::GeneralDimensions, order::AbstractVector{Int}) =
-    GeneralDimensions(dimensions.to[order], dimensions.from[order])
+    (Nq != Np) &&
+        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
+
+    return reverse(dimensions_to_dims(dimensions.from)), reverse((L + 1) .- order)
+end
+function _dims_and_perm(::Operator, dimensions::Dimensions{<:TensorSpace{Nq}, <:TensorSpace{Nq}}, order::SVector{Np, Int}, L::Int) where {Nq, Np}
+    any(s -> s isa EnrSpace, dimensions.to) && throw(ArgumentError("permute does not support EnrSpace"))
+
+    (Nq != Np) &&
+        throw(ArgumentError("The order list must have the same length as the number of subsystems (A.dims)"))
+
+    return reverse(vcat(dimensions_to_dims(dimensions.from), dimensions_to_dims(dimensions.to))), reverse((2 * L + 1) .- vcat(order, order .+ L))
+end
+_dims_and_perm(type::Union{Ket, Bra, Operator}, dimensions::Dimensions, ::AbstractVector{Int}, ::Int) = throw(ArgumentError("permute does not support for $(type) with dims = $(_get_dims_string(dimensions))"))
+
+_order_dimensions(::Ket, dimensions::Dimensions, order::SVector{N, Int}) where {N} =
+    Dimensions(dimensions.to[order], dimensions.from)  # from should be Space(1), keep as is
+_order_dimensions(::Bra, dimensions::Dimensions, order::SVector{N, Int}) where {N} =
+    Dimensions(dimensions.to, dimensions.from[order])  # to should be Space(1), keep as is
+_order_dimensions(::Operator, dimensions::Dimensions, order::SVector{N, Int}) where {N} =
+    Dimensions(dimensions.to[order], dimensions.from[order])

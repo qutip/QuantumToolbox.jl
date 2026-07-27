@@ -1,3 +1,15 @@
+using QuantumToolbox
+import LinearAlgebra: Diagonal
+import SparseArrays: SparseMatrixCSC
+using CUDA
+using CUDA.cuSPARSE
+using CUDSS
+using LinearSolve
+
+# print package versions
+QuantumToolbox.about()
+CUDA.versioninfo()
+
 @testset "CUDA Extension" verbose = true begin
     # Test that scalar indexing is disallowed
     @test_throws ErrorException CUDA.rand(1)[1]
@@ -66,10 +78,6 @@
     @test typeof(CuSparseMatrixCSR(Xsc).data) == CuSparseMatrixCSR{ComplexF64, Int32}
     @test typeof(CuSparseMatrixCSR{ComplexF32}(Xsc).data) == CuSparseMatrixCSR{ComplexF32, Int32}
 
-    # type conversion of CUDA Diagonal arrays
-    @test cu(qeye(10), word_size = Val(32)).data isa Diagonal{ComplexF32, <:CuVector{ComplexF32}}
-    @test cu(qeye(10), word_size = Val(64)).data isa Diagonal{ComplexF64, <:CuVector{ComplexF64}}
-
     # Sparse To Dense
     # @test to_dense(cu(ψsi; word_size = 64)).data isa CuVector{Int64} # TODO: Fix this in CUDA.jl
     @test to_dense(cu(ψsf; word_size = 64)).data isa CuVector{Float64}
@@ -93,40 +101,41 @@
     γ32 = 0.1f0  # Float32
     tlist = range(0, 10, 100)
 
-    ## calculate by CPU
-    a_cpu = destroy(N)
-    ψ0_cpu = fock(N, 3)
-    H_cpu = ω64 * a_cpu' * a_cpu
-    sol_cpu = mesolve(H_cpu, ψ0_cpu, tlist, [sqrt(γ64) * a_cpu], e_ops = [a_cpu' * a_cpu], progress_bar = Val(false))
+    ## calculate by CPU (with 64-bit)
+    a_cpu64 = destroy(N)
+    ψ0_cpu64 = fock(N, 3)
+    H_cpu64 = ω64 * a_cpu64' * a_cpu64
+    c_ops_cpu64 = [sqrt(γ64) * a_cpu64]
+    sol_cpu64 = mesolve(H_cpu64, ψ0_cpu64, tlist, c_ops_cpu64, e_ops = [a_cpu64' * a_cpu64], progress_bar = Val(false))
+
+    ## calculate by CPU (with 32-bit)
+    a_cpu32 = destroy(ComplexF32, N)
+    ψ0_cpu32 = fock(ComplexF32, N, 3)
+    H_cpu32 = ω32 * a_cpu32' * a_cpu32
+    c_ops_cpu32 = [sqrt(γ32) * a_cpu32]
+    sol_cpu32 = mesolve(H_cpu32, ψ0_cpu32, tlist, c_ops_cpu32, e_ops = [a_cpu32' * a_cpu32], progress_bar = Val(false))
 
     ## calculate by GPU (with 64-bit)
     a_gpu64 = cu(destroy(N))
     ψ0_gpu64 = cu(fock(N, 3))
     H_gpu64 = ω64 * a_gpu64' * a_gpu64
-    sol_gpu64 = mesolve(
-        H_gpu64,
-        ψ0_gpu64,
-        tlist,
-        [sqrt(γ64) * a_gpu64],
-        e_ops = [a_gpu64' * a_gpu64],
-        progress_bar = Val(false),
-    )
+    c_ops_gpu64 = [sqrt(γ64) * a_gpu64]
+    sol_gpu64 = mesolve(H_gpu64, ψ0_gpu64, tlist, c_ops_gpu64, e_ops = [a_gpu64' * a_gpu64], progress_bar = Val(false))
 
     ## calculate by GPU (with 32-bit)
     a_gpu32 = cu(destroy(N), word_size = 32)
     ψ0_gpu32 = cu(fock(N, 3), word_size = 32)
     H_gpu32 = ω32 * a_gpu32' * a_gpu32
-    sol_gpu32 = mesolve(
-        H_gpu32,
-        ψ0_gpu32,
-        tlist,
-        [sqrt(γ32) * a_gpu32],
-        e_ops = [a_gpu32' * a_gpu32],
-        progress_bar = Val(false),
-    )
+    c_ops_gpu32 = [sqrt(γ32) * a_gpu32]
+    sol_gpu32 = mesolve(H_gpu32, ψ0_gpu32, tlist, c_ops_gpu32, e_ops = [a_gpu32' * a_gpu32], progress_bar = Val(false))
 
-    @test all([isapprox(sol_cpu.expect[i], sol_gpu64.expect[i]) for i in 1:length(tlist)])
-    @test all([isapprox(sol_cpu.expect[i], sol_gpu32.expect[i]; atol = 1.0e-6) for i in 1:length(tlist)])
+    L_cpu64 = liouvillian(H_cpu64, c_ops_cpu64)
+    L_gpu64 = liouvillian(H_gpu64, c_ops_gpu64)
+
+    @test SparseMatrixCSC(L_gpu64.data) ≈ L_cpu64.data
+
+    @test all([isapprox(sol_cpu64.expect[i], sol_gpu64.expect[i]) for i in 1:length(tlist)])
+    @test all([isapprox(sol_cpu32.expect[i], sol_gpu32.expect[i]; atol = 1.0f-6) for i in 1:length(tlist)])
 end
 
 @testset "CUDA steadystate" begin
@@ -148,28 +157,38 @@ end
 
     H_gpu_csr = CuSparseMatrixCSR(H_gpu_csc)
     c_ops_gpu_csr = [CuSparseMatrixCSR(c_op) for c_op in c_ops_gpu_csc]
-    ρ_ss_gpu_csr = steadystate(H_gpu_csr, c_ops_gpu_csr, solver = SteadyStateLinearSolver())
+    ρ_ss_gpu_csr = steadystate(H_gpu_csr, c_ops_gpu_csr) # Direct solver using CUDSS
 
     @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csc.data) atol = 1.0e-8 * length(ρ_ss_cpu)
     @test ρ_ss_cpu.data ≈ Array(ρ_ss_gpu_csr.data) atol = 1.0e-8 * length(ρ_ss_cpu)
 end
 
-@testset "CUDA spectrum" begin
+@testset "CUDA Correlations and Spectrum" begin
     N = 10
-    a = cu(destroy(N))
+    Id = qeye(N)
+    a = destroy(N) |> cuSPARSE.CuSparseMatrixCSR
     H = a' * a
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
-    solver = Lanczos(steadystate_solver = SteadyStateLinearSolver())
+    solver = Lanczos()
 
-    ω_l = range(0, 3, length = 1000)
-    spec = spectrum(H, ω_l, c_ops, a', a; solver = solver)
+    t_l = range(0, 333 * π, length = 1000)
+    corr1 = correlation_2op_1t(H, nothing, t_l, c_ops, a', a; progress_bar = Val(false))
+    corr2 = correlation_3op_1t(H, nothing, t_l, c_ops, Id, a', a; progress_bar = Val(false))
+    ω_l1, spec1 = spectrum_correlation_fft(t_l, corr1)
 
-    spec = collect(spec)
-    spec = spec ./ maximum(spec)
+    ω_l2 = range(0, 3, length = 1000)
+    spec2 = spectrum(H, ω_l2, c_ops, a', a; solver = solver)
 
-    test_func = maximum(real.(spec)) * (0.1 / 2)^2 ./ ((ω_l .- 1) .^ 2 .+ (0.1 / 2)^2)
-    idxs = test_func .> 0.05
-    @test sum(abs2.(spec[idxs] .- test_func[idxs])) / sum(abs2.(test_func[idxs])) < 0.01
+    spec1 = spec1 ./ maximum(spec1)
+    spec2 = collect(spec2) ./ maximum(spec2)
+
+    test_func1 = maximum(real.(spec1)) * (0.1 / 2)^2 ./ ((ω_l1 .- 1) .^ 2 .+ (0.1 / 2)^2)
+    test_func2 = maximum(real.(spec2)) * (0.1 / 2)^2 ./ ((ω_l2 .- 1) .^ 2 .+ (0.1 / 2)^2)
+    idxs1 = test_func1 .> 0.05
+    idxs2 = test_func2 .> 0.05
+    @test sum(abs2.(spec1[idxs1] .- test_func1[idxs1])) / sum(abs2.(test_func1[idxs1])) < 0.01
+    @test sum(abs2.(spec2[idxs2] .- test_func2[idxs2])) / sum(abs2.(test_func2[idxs2])) < 0.01
+    @test all(corr1 .≈ corr2)
 
     # TODO: Fix this
     # @testset "Type Inference spectrum" begin

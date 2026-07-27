@@ -17,10 +17,13 @@ end
 ## [Quantum object (Qobj) and type](@id doc-API:Quantum-object-and-type)
 
 ```@docs
-Space
-EnrSpace
 Dimensions
-GeneralDimensions
+AbstractSpace
+AbstractSuperSpace
+Space
+TensorSpace
+LiouvilleSpace
+EnrSpace
 AbstractQuantumObject
 Bra
 Ket
@@ -49,6 +52,7 @@ LinearAlgebra.ishermitian
 LinearAlgebra.issymmetric
 LinearAlgebra.isposdef
 isunitary
+SparseArrays.issparse
 SciMLOperators.iscached
 SciMLOperators.isconstant
 ```
@@ -104,6 +108,7 @@ ket2dm
 expect
 variance
 LinearAlgebra.kron
+multisite_operator
 to_dense
 to_sparse
 vec2mat
@@ -289,7 +294,6 @@ bures_angle
 
 ```@docs
 Lattice
-multisite_operator
 DissipativeIsing
 ```
 
@@ -318,12 +322,15 @@ AbstractLinearMap
 QuantumToolbox.settings
 QuantumToolbox.versioninfo
 QuantumToolbox.about
+QuantumToolbox.pkginfo
+QuantumToolbox.sysinfo
 QuantumToolbox.cite
 gaussian
 n_thermal
 PhysicalConstants
 convert_unit
 row_major_reshape
+get_size
 meshgrid
 enr_state_dictionaries
 ```

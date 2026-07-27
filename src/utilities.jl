@@ -44,9 +44,14 @@ n(\omega, \omega_{\textrm{th}}) = \frac{1}{e^{\omega/\omega_{\textrm{th}}} - 1},
 where ``\hbar`` is the reduced Planck constant, and ``k_B`` is the Boltzmann constant.
 """
 function n_thermal(ω::T1, ω_th::T2) where {T1 <: Real, T2 <: Real}
-    x = exp(ω / ω_th)
-    n = ((x != 1) && (ω_th > 0)) ? 1 / (x - 1) : 0
-    return _float_type(promote_type(T1, T2))(n)
+    T = _float_type(promote_type(T1, T2))
+    if ω_th <= 0 || ω <= 0
+        return zero(T)
+    end
+
+    n = 1 / expm1(T(ω) / T(ω_th))
+
+    return n
 end
 
 @doc raw"""
@@ -135,8 +140,7 @@ _dense_similar(A::AbstractSparseMatrix, args...) = similar(nonzeros(A), args...)
 
 _sparse_similar(A::AbstractArray, args...) = sparse(args...)
 
-_Ginibre_ensemble(n::Int, rank::Int = n) = _Ginibre_ensemble(ComplexF64, n, rank)
-_Ginibre_ensemble(::Type{T}, n::Int, rank::Int = n) where {T <: Number} = randn(T, n, rank) / sqrt(n)
+_Ginibre_ensemble(rng::AbstractRNG, ::Type{T}, n::Int, rank::Int = n) where {T <: Complex} = randn(rng, T, n, rank) / sqrt(T(n))
 
 _Boltzmann_weight(β::T, E::Int) where {T <: Real} = (E != 0 || isfinite(β)) ? exp(-β * E) : one(T)
 
@@ -145,10 +149,6 @@ makeVal(x) = Val(x)
 
 getVal(x::Val{T}) where {T} = T
 getVal(x) = x # getVal for any other type
-
-_get_size(A::AbstractMatrix) = size(A)
-_get_size(A::AbstractVector) = (length(A), 1)
-_get_size(A::AbstractSciMLOperator) = size(A)
 
 _non_static_array_warning(argname, arg::Tuple{}) =
     throw(ArgumentError("The argument $argname must be a Tuple or a StaticVector of non-zero length."))
@@ -176,19 +176,20 @@ for AType in (:AbstractArray, :AbstractSciMLOperator)
     end
 end
 
+# alias of abstract types
+const FloatOrComplex = Union{AbstractFloat, Complex}
+
 # functions for getting Float or Complex element type
 _float_type(::AbstractArray{T}) where {T <: Number} = _float_type(T)
+_float_type(::AbstractSciMLOperator{T}) where {T <: Number} = _float_type(T)
 _float_type(::Type{Int32}) = Float32
 _float_type(::Type{Int64}) = Float64
-_float_type(::Type{Float32}) = Float32
-_float_type(::Type{Float64}) = Float64
 _float_type(::Type{Complex{Int32}}) = Float32
 _float_type(::Type{Complex{Int64}}) = Float64
-_float_type(::Type{Complex{Float32}}) = Float32
-_float_type(::Type{Complex{Float64}}) = Float64
 _float_type(::Type{Complex{T}}) where {T <: Real} = T
-_float_type(T::Type{<:Real}) = T # Allow other untracked Real types, like ForwardDiff.Dual
+_float_type(T::Type{<:AbstractFloat}) = T # Allow other untracked Real types, like ForwardDiff.Dual
 _complex_float_type(::AbstractArray{T}) where {T <: Number} = _complex_float_type(T)
+_complex_float_type(::AbstractSciMLOperator{T}) where {T <: Number} = _complex_float_type(T)
 _complex_float_type(::Type{Int32}) = ComplexF32
 _complex_float_type(::Type{Int64}) = ComplexF64
 _complex_float_type(::Type{Float32}) = ComplexF32
@@ -197,7 +198,7 @@ _complex_float_type(::Type{Complex{Int32}}) = ComplexF32
 _complex_float_type(::Type{Complex{Int64}}) = ComplexF64
 _complex_float_type(::Type{Complex{Float32}}) = ComplexF32
 _complex_float_type(::Type{Complex{Float64}}) = ComplexF64
-_complex_float_type(T::Type{<:Real}) = Complex{T} # Allow other untracked Complex types, like ForwardDiff.Dual
+_complex_float_type(T::Type{<:AbstractFloat}) = Complex{T} # Allow other untracked Complex types, like ForwardDiff.Dual
 _complex_float_type(T::Type{<:Complex}) = T       # Allow other untracked Complex types, like ForwardDiff.Dual
 
 _convert_eltype_wordsize(::Type{T}, ::Val{64}) where {T <: Int} = Int64

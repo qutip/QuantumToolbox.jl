@@ -143,7 +143,7 @@ function _periodicsave_func(integrator)
     ip = integrator.p
     ip.u_save .= integrator.u
     ip.scalars[2] = integrator.t
-    return u_modified!(integrator, false)
+    return derivative_discontinuity!(integrator, false)
 end
 
 _save_control_lr_mesolve(u, t, integrator) = t in integrator.p.times
@@ -161,7 +161,7 @@ function _save_affect_lr_mesolve!(integrator)
         print("\rProgress: $(round(Int, 100 * idx / length(ip.times)))%")
         flush(stdout)
     end
-    return u_modified!(integrator, false)
+    return derivative_discontinuity!(integrator, false)
 end
 
 #=
@@ -324,14 +324,14 @@ function dBdz!(du, u, p, t)
     Bi .= _pinv_smooth!(Hermitian(B), temp_MM, L, atol = opt.atol_inv)
 
     # Calculate the effective Hamiltonian part of L_tilde
-    mul!(dz, H, A0)
+    H(dz, A0, nothing, p.params, t)
     mul!(L_tilde, dz, S)
     mul!(L, dz', z)
     mul!(L_tilde, z, L, +1im, -1im)
 
     # Calculate the jump operators part of L_tilde
     @inbounds for Γi in Γ
-        mul!(dz, Γi, z)
+        Γi(dz, z, nothing, p.params, t)
         mul!(L, dz', z)
         mul!(temp_MM, B, L)
         mul!(L_tilde, dz, temp_MM, 1, 1)
@@ -368,7 +368,7 @@ get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (
 
 @doc raw"""
     lr_mesolveProblem(
-        H::QuantumObject{Operator},
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
         z::AbstractArray{T,2},
         B::AbstractArray{T,2},
         tlist::AbstractVector,
@@ -382,7 +382,7 @@ get_B(u::AbstractArray{T}, N::Integer, M::Integer) where {T} = reshape(view(u, (
 Formulates the ODEproblem for the low-rank time evolution of the system. The function is called by [`lr_mesolve`](@ref). For more information about the low-rank master equation, see [gravina2024adaptive](@cite).
 
 # Arguments
-- `H::QuantumObject`: The Hamiltonian of the system.
+- `H::Union{AbstractQuantumObject{Operator}, Tuple}`: The Hamiltonian of the system. Time dependent Hamiltonians can be provided as in [`mesolve`](@ref).
 - `z::AbstractArray`: The initial z matrix of the low-rank algorithm.
 - `B::AbstractArray`: The initial B matrix of the low-rank algorithm.
 - `tlist::AbstractVector`: The time steps at which the expectation values and function values are calculated.
@@ -393,7 +393,7 @@ Formulates the ODEproblem for the low-rank time evolution of the system. The fun
 - `kwargs`: Additional keyword arguments.
 """
 function lr_mesolveProblem(
-        H::QuantumObject{Operator},
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
         z::AbstractArray{T, 2},
         B::AbstractArray{T, 2},
         tlist::AbstractVector,
@@ -401,14 +401,17 @@ function lr_mesolveProblem(
         e_ops::Union{AbstractVector, Tuple} = (),
         f_ops::Union{AbstractVector, Tuple} = (),
         opt::NamedTuple = lr_mesolve_options_default,
+        params = nothing,
         kwargs...,
     ) where {T}
-    Hdims = H.dimensions
 
     # Formulation of problem
-    H -= 0.5im * mapreduce(op -> op' * op, +, c_ops)
-    H = get_data(H)
-    c_ops = get_data.(c_ops)
+    H_eff_evo = _mcsolve_make_Heff_QobjEvo(H, c_ops)
+    H = cache_operator(get_data(H_eff_evo), z)
+    c_ops = get_data.(cache_operator.(QuantumObjectEvolution.(c_ops), Ref(z)))
+
+    Hdims = H_eff_evo.dimensions
+
     e_ops = get_data.(e_ops)
 
     t_l = _check_tlist(tlist, _float_type(H))
@@ -446,13 +449,14 @@ function lr_mesolveProblem(
         u_save = vcat(vec(z), vec(B)),
         scalars = [0.0, t_l[1]],
         Hdims = Hdims,
+        params = params,
     )
 
     mul!(p.S, z', z)
     p.Si .= pinv(Hermitian(p.S), atol = opt.atol_inv)
 
     # Initialization of ODEProblem's kwargs
-    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., saveat = [t_l[end]])
+    default_values = (default_ode_solver_options(T)..., saveat = [t_l[end]])
     kwargs2 = merge(default_values, kwargs)
 
     # Initialization of Callbacks

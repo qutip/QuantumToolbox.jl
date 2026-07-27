@@ -22,15 +22,28 @@
         @test s_enr.idx2state == qutip_idx2state
     end
 
+    @testset "Element type" begin
+        s_enr = EnrSpace((2, 2, 3), 3)
+        float_type_list = [Float32, BigFloat]
+        for FT in float_type_list
+            CT = Complex{FT}
+            @test CT == eltype(enr_fock(CT, s_enr, zeros(Int, 3)))
+            @test FT == eltype(enr_thermal_dm(s_enr, rand(FT); sparse = Val(true)))
+            @test FT == eltype(enr_thermal_dm(s_enr, rand(FT, 3); sparse = Val(false)))
+            @test all(==(CT), eltype.(enr_destroy(CT, s_enr)))
+            @test CT == eltype(enr_identity(CT, s_enr))
+        end
+    end
+
     @testset "kron" begin
-        # normal Space
+        # normal Hilbert space
         D1 = 4
         D2 = 5
         dims_s = (D1, D2)
         ρ_s = rand_dm(dims_s)
         I_s = qeye(D1) ⊗ qeye(D2)
         size_s = prod(dims_s)
-        space_s = (Space(D1), Space(D2))
+        space_s = TensorSpace(Space(D1), Space(D2))
 
         # EnrSpace
         dims_enr = (2, 3, 2)
@@ -48,10 +61,12 @@
         @test ρTd0.data ≈ ρTs0.data ≈ fock_dm(size_enr, 0).data
         @test ρTd∞.data ≈ ρTs∞.data ≈ maximally_mixed_dm(size_enr).data
 
-        # general case (also test BigFloat)
+        # general case (also test Int and BigFloat)
         nvec = BigFloat[0.123, 0.456, 0.789]
+        ρTI = enr_thermal_dm(space_enr, Int64[1, 2, 3]; sparse = Val(false))
         ρTd = enr_thermal_dm(space_enr, nvec)
         ρTs = enr_thermal_dm(space_enr, nvec; sparse = Val(true))
+        @test eltype(ρTI.data) == Float64
         @test isoper(ρTd)
         @test tr(ρTd) ≈ tr(ρTs) ≈ 1.0
         @test diag(ρTd) ≈ Float64[
@@ -76,21 +91,26 @@
         ρ_tot = tensor(ρ_s, ρ_enr)
         opstring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot.data)
-        ρ_tot_dims = [dims_s..., dims_enr...]
+        ρ_tot_dims = ρ_tot.dims  # Now returns tuple format
         ρ_tot_size = size_s * size_enr
         ρ_tot_isherm = isherm(ρ_tot)
         @test opstring ==
             "\nQuantum Object:   type=Operator()   dims=$ρ_tot_dims   size=$((ρ_tot_size, ρ_tot_size))   ishermitian=$ρ_tot_isherm\n$datastring"
 
-        # use GeneralDimensions to do partial trace
-        new_dims1 = GeneralDimensions((Space(1), Space(1), space_enr), (Space(1), Space(1), space_enr))
+        # use non-square Dimensions to do partial trace
+        new_dims1 = Dimensions(
+            TensorSpace(Space(1), space_enr),
+            TensorSpace(Space(1), space_enr),
+        )
         ρ_enr_compound = Qobj(zeros(ComplexF64, size_enr, size_enr), dims = new_dims1)
         basis_list = [tensor(basis(D1, i), basis(D2, j)) for i in 0:(D1 - 1) for j in 0:(D2 - 1)]
         for b in basis_list
             ρ_enr_compound += tensor(b', I_enr) * ρ_tot * tensor(b, I_enr)
         end
-        new_dims2 =
-            GeneralDimensions((space_s..., Space(1), Space(1), Space(1)), (space_s..., Space(1), Space(1), Space(1)))
+        new_dims2 = Dimensions(
+            TensorSpace(space_s..., Space(1)),
+            TensorSpace(space_s..., Space(1)),
+        )
         ρ_s_compound = Qobj(zeros(ComplexF64, size_s, size_s), dims = new_dims2)
         basis_list = [enr_fock(space_enr, space_enr.idx2state[idx]) for idx in 1:space_enr.size]
         for b in basis_list

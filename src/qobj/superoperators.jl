@@ -6,14 +6,11 @@ export spre, spost, sprepost, liouvillian, lindblad_dissipator
 
 # intrinsic functions for super-operators
 ## keep these because they take AbstractMatrix as input and ensure the output is sparse matrix
-_spre(A::AbstractMatrix) = kron(Eye(size(A, 1)), sparse(A))
-_spre(A::AbstractSparseMatrix) = kron(Eye(size(A, 1)), A)
-_spost(B::AbstractMatrix) = kron(transpose(sparse(B)), Eye(size(B, 1)))
-_spost(B::AbstractSparseMatrix) = kron(transpose(B), Eye(size(B, 1)))
-_sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), sparse(A))
-_sprepost(A::AbstractMatrix, B::AbstractSparseMatrix) = kron(transpose(B), sparse(A))
-_sprepost(A::AbstractSparseMatrix, B::AbstractMatrix) = kron(transpose(sparse(B)), A)
-_sprepost(A::AbstractSparseMatrix, B::AbstractSparseMatrix) = kron(transpose(B), A)
+_spre(A::AbstractMatrix{T}) where {T} = kron(Eye{T}(size(A, 1)), A)
+_spost(B::AbstractMatrix{T}) where {T} = kron(transpose(B), Eye{T}(size(B, 1)))
+_spost(B::Adjoint{T, <:AbstractMatrix}) where {T} = kron(conj(parent(B)), Eye{T}(size(parent(B), 1))) # avoiding nested Transpose{Adjoint} wrapper
+_sprepost(A::AbstractMatrix, B::AbstractMatrix) = kron(transpose(B), A)
+_sprepost(A::AbstractMatrix, B::Adjoint) = kron(conj(parent(B)), A) # avoiding nested Transpose{Adjoint} wrapper
 _sprepost(A, B) = _spre(A) * _spost(B) # for any other input types
 
 ## if input is AbstractSciMLOperator
@@ -23,8 +20,8 @@ _spre(A::MatrixOperator) = MatrixOperator(_spre(A.A))
 _spre(A::ScaledOperator) = ScaledOperator(A.λ, _spre(A.L))
 _spre(A::AddedOperator) = AddedOperator(map(op -> _spre(op), A.ops))
 _spre(A::ComposedOperator) = ComposedOperator(map(_spre, A.ops), nothing)
-function _spre(A::AbstractSciMLOperator)
-    Id = Eye(size(A, 1))
+function _spre(A::AbstractSciMLOperator{T}) where {T}
+    Id = Eye{T}(size(A, 1))
     _lazy_tensor_warning(Id, A)
     return kron(Id, A)
 end
@@ -33,9 +30,9 @@ _spost(B::MatrixOperator) = MatrixOperator(_spost(B.A))
 _spost(B::ScaledOperator) = ScaledOperator(B.λ, _spost(B.L))
 _spost(B::AddedOperator) = AddedOperator(map(op -> _spost(op), B.ops))
 _spost(B::ComposedOperator) = ComposedOperator(map(_spost, reverse(B.ops)), nothing)
-function _spost(B::AbstractSciMLOperator)
+function _spost(B::AbstractSciMLOperator{T}) where {T}
     B_T = transpose(B)
-    Id = Eye(size(B, 1))
+    Id = Eye{T}(size(B, 1))
     _lazy_tensor_warning(B_T, Id)
     return kron(B_T, Id)
 end
@@ -87,7 +84,10 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 
 See also [`spost`](@ref) and [`sprepost`](@ref).
 """
-spre(A::AbstractQuantumObject{Operator}) = get_typename_wrapper(A)(_spre(A.data), SuperOperator(), A.dimensions)
+function spre(A::AbstractQuantumObject{Operator})
+    Lspace = LiouvilleSpace(A.dimensions)
+    return get_typename_wrapper(A)(_spre(A.data), SuperOperator(), Dimensions(Lspace, Lspace))
+end
 
 @doc raw"""
     spost(B::AbstractQuantumObject)
@@ -103,7 +103,10 @@ Since the density matrix is vectorized in [`OperatorKet`](@ref) form: ``|\hat{\r
 
 See also [`spre`](@ref) and [`sprepost`](@ref).
 """
-spost(B::AbstractQuantumObject{Operator}) = get_typename_wrapper(B)(_spost(B.data), SuperOperator(), B.dimensions)
+function spost(B::AbstractQuantumObject{Operator})
+    Lspace = LiouvilleSpace(B.dimensions)
+    return get_typename_wrapper(B)(_spost(B.data), SuperOperator(), Dimensions(Lspace, Lspace))
+end
 
 @doc raw"""
     sprepost(A::AbstractQuantumObject, B::AbstractQuantumObject)
@@ -121,7 +124,8 @@ See also [`spre`](@ref) and [`spost`](@ref).
 """
 function sprepost(A::AbstractQuantumObject{Operator}, B::AbstractQuantumObject{Operator})
     check_dimensions(A, B)
-    return promote_op_type(A, B)(_sprepost(A.data, B.data), SuperOperator(), A.dimensions)
+    Lspace = LiouvilleSpace(A.dimensions)
+    return promote_op_type(A, B)(_sprepost(A.data, B.data), SuperOperator(), Dimensions(Lspace, Lspace))
 end
 
 @doc raw"""
@@ -136,8 +140,10 @@ Returns the Lindblad [`SuperOperator`](@ref) defined as
 
 See also [`spre`](@ref), [`spost`](@ref), and [`sprepost`](@ref).
 """
-lindblad_dissipator(O::AbstractQuantumObject{Operator}) =
-    get_typename_wrapper(O)(_lindblad_dissipator(O.data), SuperOperator(), O.dimensions)
+function lindblad_dissipator(O::AbstractQuantumObject{Operator})
+    Lspace = LiouvilleSpace(O.dimensions)
+    return get_typename_wrapper(O)(_lindblad_dissipator(O.data), SuperOperator(), Dimensions(Lspace, Lspace))
+end
 
 # It is already a SuperOperator
 lindblad_dissipator(O::AbstractQuantumObject{SuperOperator}) = O
@@ -190,8 +196,10 @@ liouvillian(H::Nothing, c_ops::Union{AbstractVector, Tuple}; kwargs...) = _sum_l
 
 liouvillian(H::Nothing, c_ops::Nothing; kwargs...) = 0
 
-liouvillian(H::AbstractQuantumObject{Operator}; assume_hermitian::Union{Bool, Val} = Val(true)) =
-    get_typename_wrapper(H)(_liouvillian(H.data, makeVal(assume_hermitian)), SuperOperator(), H.dimensions)
+function liouvillian(H::AbstractQuantumObject{Operator}; assume_hermitian::Union{Bool, Val} = Val(true))
+    Lspace = LiouvilleSpace(H.dimensions)
+    return get_typename_wrapper(H)(_liouvillian(H.data, makeVal(assume_hermitian)), SuperOperator(), Dimensions(Lspace, Lspace))
+end
 
 liouvillian(H::AbstractQuantumObject{SuperOperator}; kwargs...) = H
 _sum_lindblad_dissipators(c_ops::Nothing) = 0

@@ -2,6 +2,7 @@
     import QuantumToolbox: position, momentum
     using LinearAlgebra
     using SparseArrays
+    using Random
 
     @testset "zero state" begin
         v1 = zero_ket(4)
@@ -12,8 +13,8 @@
         @test v1 != v2
         @test isket(v1)
         @test isket(v2)
-        @test v1.dims == [4]
-        @test v2.dims == [2, 2]
+        @test v1.dims == ([4], [1])
+        @test v2.dims == ([2, 2], [1])
     end
 
     @testset "fock state" begin
@@ -51,7 +52,7 @@
         ρTd = thermal_dm(N, big(0.123))
         ρTs = thermal_dm(N, big(0.123); sparse = Val(true))
         @test isoper(ρTd)
-        @test ρTd.dims == [N]
+        @test ρTd.dims == ([N], [N])
         @test tr(ρTd) ≈ tr(ρTs) ≈ 1.0
         @test diag(ρTd) ≈ Float64[
             0.8904859864731106,
@@ -74,8 +75,8 @@
         @test ρ1 != ρ2
         @test isoper(ρ1)
         @test isoper(ρ2)
-        @test ρ1.dims == [4]
-        @test ρ2.dims == [2, 2]
+        @test ρ1.dims == ([4], [4])
+        @test ρ2.dims == ([2, 2], [2, 2])
         @test entropy_vn(ρ1, base = 2) ≈ log(2, 4)
     end
 
@@ -103,6 +104,19 @@
         @test all(eigenenergies(ρ_B) .>= 0)
         @test all(isapprox.(eig_val[1:rank], 0.0, atol = 1.0e-10))
         @test all(eig_val[(rank + 1):10] .>= 0)
+
+        # reproducibility with the same seed 1234
+        rng = MersenneTwister(1234)
+        ψ1 = rand_ket(10; rng = rng)
+        rng = MersenneTwister(1234)
+        ψ2 = rand_ket(10; rng = rng)
+        rng = MersenneTwister(1234)
+        ρ1 = rand_dm(10; rng = rng)
+        rng = MersenneTwister(1234)
+        ρ2 = rand_dm(10; rng = rng)
+        @test ψ1 == ψ2
+        @test ρ1 == ρ2
+
         @test_throws DomainError rand_dm(4, rank = rank)
         @test_throws DomainError rand_dm(4, rank = 0)
     end
@@ -149,7 +163,7 @@
         Pij = projection(n, i, j)
         @test isoper(x)
         @test isoper(p)
-        @test a.dims == ad.dims == N.dims == x.dims == p.dims == [n]
+        @test a.dims == ad.dims == N.dims == x.dims == p.dims == ([n], [n])
         @test eigenenergies(ad * a) ≈ 0:(n - 1)
         @test commutator(N, a) ≈ -a
         @test commutator(N, ad) ≈ ad
@@ -221,8 +235,20 @@
         @test isunitary(U2)
         @test isunitary(U3)
         @test isunitary(U4)
-        @test U1.dims == U2.dims == [20]
-        @test U3.dims == U4.dims == [5, 5]
+        @test U1.dims == U2.dims == ([20], [20])
+        @test U3.dims == U4.dims == ([5, 5], [5, 5])
+
+        # reproducibility with the same seed 1234
+        rng = MersenneTwister(1234)
+        U5 = rand_unitary(10, Val(:haar); rng = rng)
+        rng = MersenneTwister(1234)
+        U6 = rand_unitary(10, Val(:haar); rng = rng)
+        rng = MersenneTwister(1234)
+        U7 = rand_unitary(10, Val(:exp); rng = rng)
+        rng = MersenneTwister(1234)
+        U8 = rand_unitary(10, Val(:exp); rng = rng)
+        @test U5 == U6
+        @test U7 == U8
 
         @test_throws ArgumentError rand_unitary(20, :wrong)
     end
@@ -244,7 +270,7 @@
         @test isunitary(Sy)
         @test isunitary(Sz)
         for which in [:x, :y, :z, :+, :-]
-            @test jmat(2.5, which).dims == [6] # 2.5 * 2 + 1 = 6
+            @test jmat(2.5, which).dims == ([6], [6]) # 2.5 * 2 + 1 = 6
 
             for j_wrong in [-1, 8.7]  # Invalid j
                 @test_throws ArgumentError jmat(j_wrong, which)
@@ -301,8 +327,11 @@
             (
             exp(-γ / 2) * cos(θ1 / 2) * cos(θ2 / 2) + exp(1im * (ϕ2 - ϕ1) + γ / 2) * sin(θ1 / 2) * sin(θ2 / 2)
         )^(2 * s)
+    end
 
-        # test commutation relations for fermionic creation and annihilation operators
+    @testset "fdestroy and fcreate" begin
+        # Jordan-Wigner transformation
+        ## test commutation relations for fermionic creation and annihilation operators
         sites = 4
         SIZE = 2^sites
         dims = ntuple(i -> 2, Val(sites))
@@ -335,16 +364,58 @@
         @test d1' * d2' * vac == tensor(basis(2, 1), basis(2, 1))
         @test d1' * d1' * d2' * vac == zero
         @test d2' * d1' * d2' * vac == zero
-        @test_throws ArgumentError fdestroy(0, 0)
-        @test_throws ArgumentError fdestroy(sites, 0)
-        @test_throws ArgumentError fdestroy(sites, sites + 1)
+
+        # Bravyi-Kitaev fermion-to-qubit mapping
+        @test fdestroy(1, 1; method = :BK) == fdestroy(1, 1; method = :JW)
+        @test fcreate(1, 1; method = :BK) == fcreate(1, 1; method = :JW)
+
+        N = 7
+        vac_BK = tensor(fill(basis(2, 0), N)...)
+        Cs = map(i -> fdestroy(N, i; method = :BK), 1:N)
+        for i in 1:N
+            Ci = Cs[i]
+            @test Ci' ≈ fcreate(N, i; method = :BK)
+            @test (Ci * vac_BK) ≈ zero_ket(ntuple(_ -> 2, N))
+
+            @test commutator(Ci, Ci'; anti = true) ≈ qeye(2^N; dims = ntuple(_ -> 2, N))
+            @test norm(commutator(Ci, Ci; anti = true)) ≈ 0 atol = 1.0e-12
+
+            for j in (i + 1):N
+                Cj = Cs[j]
+                @test norm(commutator(Ci, Cj; anti = true)) ≈ 0 atol = 1.0e-12
+                @test norm(commutator(Ci, Cj'; anti = true)) ≈ 0 atol = 1.0e-12
+            end
+        end
+
+        ## explicit Pauli strings for N = 4 [see O'Brien and Strelchuk, Phys. Rev. B 109, 115149 (2024)]
+        X = sigmax()
+        Y = sigmay()
+        Z = sigmaz()
+        Id2 = qeye(2)
+        d_BK = [
+            0.5 * tensor(X, X, Id2, X) + 0.5im * tensor(Y, X, Id2, X),
+            0.5 * tensor(Z, X, Id2, X) + 0.5im * tensor(Id2, Y, Id2, X),
+            0.5 * tensor(Id2, Z, X, X) + 0.5im * tensor(Id2, Z, Y, X),
+            0.5 * tensor(Id2, Z, Z, X) + 0.5im * tensor(Id2, Id2, Id2, Y),
+        ]
+        @test all([fdestroy(4, i; method = :BK) ≈ d_BK[i] for i in 1:4])
+
+        # Errors
+        @test_throws ArgumentError fdestroy(0, 0; method = :JW)
+        @test_throws ArgumentError fdestroy(sites, 0; method = :JW)
+        @test_throws ArgumentError fdestroy(sites, sites + 1; method = :JW)
+        @test_throws ArgumentError fdestroy(0, 0; method = :BK)
+        @test_throws ArgumentError fdestroy(sites, 0; method = :BK)
+        @test_throws ArgumentError fdestroy(sites, sites + 1; method = :BK)
+        @test_throws ArgumentError fdestroy(sites, 1; method = :unknown)
+        @test_throws ArgumentError fcreate(sites, 1; method = :unknown)
     end
 
     @testset "identity operator" begin
         I_op1 = qeye(4)
         I_op2 = qeye(4, dims = (2, 2))
         I_su1 = qeye(4, type = SuperOperator())
-        I_su2 = qeye(4, type = SuperOperator(), dims = 2)
+        I_su2 = qeye(4, type = SuperOperator(), dims = (((2,), (2,)), ((2,), (2,))))
         @test isunitary(I_op1) == true
         @test isunitary(I_op2) == true
         @test isunitary(I_su1) == false
@@ -358,7 +429,7 @@
         @test (I_su1 == I_su2) == true
         @test_throws DimensionMismatch qeye(4, dims = 2)
         @test_throws DimensionMismatch qeye(2, type = SuperOperator())
-        @test_throws DimensionMismatch qeye(4, type = SuperOperator(), dims = (2, 2))
+        @test_throws DimensionMismatch qeye(4, type = SuperOperator(), dims = ((2,), (2,)))
     end
 
     @testset "superoperators" begin
@@ -368,14 +439,16 @@
         A_wrong1 = Qobj(rand(4, 4), dims = 4)
         A_wrong2 = Qobj(rand(4, 4), dims = (2, 2))
         A_wrong3 = Qobj(rand(3, 3))
-        @test (typeof(spre(Xd).data) <: SparseMatrixCSC) == true
-        @test (typeof(spre(Xs).data) <: SparseMatrixCSC) == true
-        @test (typeof(spost(Xd).data) <: SparseMatrixCSC) == true
-        @test (typeof(spost(Xs).data) <: SparseMatrixCSC) == true
-        @test (typeof(sprepost(Xd, Xd).data) <: SparseMatrixCSC) == true
-        @test (typeof(sprepost(Xs, Xs).data) <: SparseMatrixCSC) == true
-        @test (typeof(sprepost(Xs, Xd).data) <: SparseMatrixCSC) == true
-        @test (typeof(sprepost(Xd, Xs).data) <: SparseMatrixCSC) == true
+        @test !issparse(spre(Xd))
+        @test issparse(spre(Xs))
+        @test !issparse(spost(Xd))
+        @test issparse(spost(Xs))
+        @test !issparse(sprepost(Xd, Xd))
+        @test issparse(sprepost(Xs, Xs))
+        if VERSION >= v"1.11" # kron(::SparseMatrixCSC, ::DenseMatrix) returns DenseArray in Julia 1.10
+            @test issparse(sprepost(Xs, Xd))
+        end
+        @test issparse(sprepost(Xd, Xs))
         @test_throws DimensionMismatch sprepost(A_wrong1, A_wrong2)
         @test_throws DimensionMismatch sprepost(A_wrong1, A_wrong3)
     end
@@ -454,8 +527,10 @@
 
         @inferred eye(20)
 
-        @inferred fdestroy(Val(10), 4)
-        @inferred fcreate(Val(10), 4)
+        @inferred fdestroy(Val(10), 4; method = Val(:JW))
+        @inferred fcreate(Val(10), 4; method = Val(:JW))
+        @inferred fdestroy(Val(10), 4; method = Val(:BK))
+        @inferred fcreate(Val(10), 4; method = Val(:BK))
 
         @inferred projection(20, 5, 3)
 
@@ -464,5 +539,78 @@
 
         @inferred qft(20)
         @inferred qft((2, 10))
+    end
+
+    @testset "Element types" begin
+        N = 2
+        float_type_list = [Float32, BigFloat]
+        for FT in float_type_list
+            CT = Complex{FT}
+
+            # states
+            @test CT == eltype(zero_ket(CT, N))
+            @test CT == eltype(fock(CT, N, 0; sparse = Val(true)))
+            @test CT == eltype(fock(CT, N, 0; sparse = Val(false)))
+            @test FT == eltype(coherent(N, rand(FT)))
+            @test CT == eltype(coherent(N, rand(CT)))
+            @test CT == eltype(rand_ket(CT, N))
+            @test CT == eltype(fock_dm(CT, N, 0; sparse = Val(true)))
+            @test CT == eltype(fock_dm(CT, N, 0; sparse = Val(false)))
+            @test FT == eltype(coherent_dm(N, rand(FT)))
+            @test CT == eltype(coherent_dm(N, rand(CT)))
+            @test FT == eltype(thermal_dm(N, rand(FT); sparse = Val(true)))
+            @test FT == eltype(thermal_dm(N, rand(FT); sparse = Val(false)))
+            @test CT == eltype(maximally_mixed_dm(CT, N))
+            @test CT == eltype(rand_dm(CT, N))
+            @test CT == eltype(spin_state(CT, 0.5, 0.5))
+            @test CT == eltype(spin_coherent(0.5, rand(FT), rand(FT)))
+            @test CT == eltype(bell_state(CT, 0, 0))
+            @test CT == eltype(singlet_state(CT))
+            @test all(==(CT), eltype.(triplet_states(CT)))
+            @test CT == eltype(w_state(CT, N))
+            @test CT == eltype(ghz_state(CT, N))
+
+            # operators
+            @test CT == eltype(rand_unitary(CT, N, Val(:haar)))
+            @test CT == eltype(rand_unitary(CT, N, Val(:exp)))
+            @test CT == eltype(spin_Jx(CT, 0.5))
+            @test CT == eltype(spin_Jy(CT, 0.5))
+            @test CT == eltype(spin_Jz(CT, 0.5))
+            @test CT == eltype(spin_Jm(CT, 0.5))
+            @test CT == eltype(spin_Jp(CT, 0.5))
+            @test all(==(CT), eltype.(spin_J_set(CT, 0.5)))
+            @test CT == eltype(sigmam(CT))
+            @test CT == eltype(sigmap(CT))
+            @test CT == eltype(sigmax(CT))
+            @test CT == eltype(sigmay(CT))
+            @test CT == eltype(sigmaz(CT))
+            @test CT == eltype(destroy(CT, N))
+            @test CT == eltype(create(CT, N))
+            @test CT == eltype(eye(CT, N))
+            @test CT == eltype(projection(CT, N, 0, 0))
+            @test FT == eltype(displace(N, rand(FT)))
+            @test CT == eltype(displace(N, rand(CT)))
+            @test FT == eltype(squeeze(N, rand(FT)))
+            @test CT == eltype(squeeze(N, rand(CT)))
+            @test CT == eltype(num(CT, N))
+            @test CT == eltype(phase(N, rand(FT)))
+            @test CT == eltype(position(CT, N))
+            @test CT == eltype(momentum(CT, N))
+            @test CT == eltype(fdestroy(CT, N, 1))
+            @test CT == eltype(fcreate(CT, N, 1))
+            @test CT == eltype(fdestroy(CT, N, 1; method = :BK))
+            @test CT == eltype(fcreate(CT, N, 1; method = :BK))
+            @test CT == eltype(tunneling(CT, N))
+            @test CT == eltype(qft(CT, N))
+        end
+
+        # check default parameter to be Int64 (1)
+        @test Float64 == eltype(coherent(N, 1))
+        @test Float64 == eltype(coherent_dm(N, 1))
+        @test Float64 == eltype(thermal_dm(N, 1; sparse = Val(true)))
+        @test Float64 == eltype(thermal_dm(N, 1; sparse = Val(false)))
+        @test Float64 == eltype(displace(N, 1))
+        @test Float64 == eltype(squeeze(N, 1))
+        @test ComplexF64 == eltype(phase(N)) # since default ϕ0 = 0 (also Int64)
     end
 end

@@ -1,19 +1,15 @@
 export mcsolveProblem, mcsolveEnsembleProblem, mcsolve
 export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
 
-function _mcsolve_prob_func(prob, i, repeat, global_rng, seeds, tlist)
-    seed = seeds[i]
-    traj_rng = typeof(global_rng)()
-    seed!(traj_rng, seed)
-
+function _mcsolve_prob_func(prob, ctx, tlist; kwargs...)
     f = deepcopy(prob.f.f)
-    cb = _mcsolve_initialize_callbacks(prob, tlist, traj_rng)
+    cb = _mcsolve_initialize_callbacks(prob, tlist, ctx.rng)
 
     return remake(prob, f = f, callback = cb)
 end
 
 # Standard output function
-function _mcsolve_output_func(sol, i)
+function _mcsolve_output_func(sol, ctx)
     idx = _mc_get_jump_callback(sol).affect!.col_times_which_idx[]
     resize!(_mc_get_jump_callback(sol).affect!.col_times, idx - 1)
     resize!(_mc_get_jump_callback(sol).affect!.col_which, idx - 1)
@@ -90,7 +86,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
-- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`. Each element can be a [`QuantumObject`](@ref) or a [`QuantumObjectEvolution`](@ref) (for time-dependent collapse operators).
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
@@ -132,7 +128,7 @@ function mcsolveProblem(
     tlist = _check_tlist(tlist, _float_type(T))
 
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
-    default_values = (DEFAULT_ODE_SOLVER_OPTIONS..., progress_bar = Val(false))
+    default_values = (default_ode_solver_options(T)..., progress_bar = Val(false))
     kwargs2 = _merge_saveat(tlist, e_ops, default_values; kwargs...)
     kwargs3 = _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rng, kwargs2)
 
@@ -196,7 +192,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
-- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`. Each element can be a [`QuantumObject`](@ref) or a [`QuantumObjectEvolution`](@ref) (for time-dependent collapse operators).
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
@@ -235,7 +231,7 @@ function mcsolveEnsembleProblem(
         output_func::Union{Tuple, Nothing} = nothing,
         kwargs...,
     ) where {TJC <: LindbladJumpCallbackType}
-    _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(rng, ntraj, tlist, _mcsolve_prob_func) : prob_func
+    _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
         _ensemble_dispatch_output_func(
@@ -263,7 +259,7 @@ function mcsolveEnsembleProblem(
         prob_mc.times,
         prob_mc.states_type,
         prob_mc.dimensions,
-        (progr = _output_func[2], channel = _output_func[3]),
+        (progr = _output_func[2], channel = _output_func[3], rng = rng),
     )
 
     return ensemble_prob
@@ -329,7 +325,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
 - `ψ0`: Initial state of the system ``|\psi(0)\rangle``.
 - `tlist`: List of time points at which to save either the state or the expectation values of the system.
-- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`. Each element can be a [`QuantumObject`](@ref) or a [`QuantumObjectEvolution`](@ref) (for time-dependent collapse operators).
 - `alg`: The algorithm to use for the ODE solver. Default to `DP5()`.
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
@@ -405,21 +401,21 @@ function mcsolve(
         keep_runs_results = Val(false),
         normalize_states = Val(true),
     )
-    sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj)
+    sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj; rng = ens_prob_mc.kwargs.rng)
 
-    dims = ens_prob_mc.dimensions
-    _sol_1 = sol[:, 1]
+    dimensions = ens_prob_mc.dimensions
+    _sol_1 = sol.u[1]
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMCSolve)
 
     _expvals_all =
-        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol[:, i], SaveFuncMCSolve), eachindex(sol))
+        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol.u[i], SaveFuncMCSolve), eachindex(sol.u))
     expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
 
     # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
-    states_all = stack(map(i -> _normalize_state!.(sol[:, i].u, Ref(dims), normalize_states), eachindex(sol)), dims = 1)
+    states_all = stack(map(i -> _normalize_state!.(sol.u[i].u, Ref(dimensions), normalize_states), eachindex(sol.u)), dims = 1)
 
-    col_times = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_times, eachindex(sol))
-    col_which = map(i -> _mc_get_jump_callback(sol[:, i]).affect!.col_which, eachindex(sol))
+    col_times = map(i -> _mc_get_jump_callback(sol.u[i]).affect!.col_times, eachindex(sol.u))
+    col_which = map(i -> _mc_get_jump_callback(sol.u[i]).affect!.col_which, eachindex(sol.u))
 
     kwargs = NamedTuple(_sol_1.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
 
