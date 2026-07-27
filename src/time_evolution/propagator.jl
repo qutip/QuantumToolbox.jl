@@ -34,13 +34,14 @@ an interval. See [`propagator`](@ref) for construction.
 """
 struct Propagator{
         HT <: Union{Operator, SuperOperator},
-        PT <: AbstractQuantumObject,
-        DT <: AbstractDimensions,
+        HType <: AbstractQuantumObject{HT},
+        PT <: QuantumObject{HT},
+        DT <: Dimensions,
         KWT,
     }
-    H::AbstractQuantumObject{HT}
-    props::Dict{Vector, PT}
-    dims::AbstractArray
+    H::HType
+    props::Dict{NTuple{2, Float64}, PT}
+    dims::Tuple
     dimensions::DT
     solver_kwargs::KWT
     max_saved::Union{Integer, Float64}
@@ -88,7 +89,7 @@ If `t` is provided, the propagator from `t0` to `t` is immediately computed and 
 - `U::Propagator`: A callable propagator object. Use `U(t; t0=0.0)` or `U([t0, t])` to evaluate.
 """
 function propagator(
-        H::AbstractQuantumObject{HOpType},
+        H::HType,
         t::Union{Nothing, Real} = nothing;
         t0 = 0.0,
         threshold::Float64 = 1.0e-9,
@@ -99,7 +100,7 @@ function propagator(
         progress_bar::Union{Val, Bool} = Val(true),
         inplace::Union{Val, Bool} = Val(true),
         kwargs...,
-    ) where {HOpType <: Union{Operator, SuperOperator}}
+    ) where {HOpType <: Union{Operator, SuperOperator}, HType <: AbstractQuantumObject{HOpType}}
 
     full_kwargs = (; params, progress_bar, inplace, kwargs...)
 
@@ -111,7 +112,8 @@ function propagator(
     if !(H isa QobjEvo)
         isconstant = true
     end
-    U = Propagator(H, Dict{Vector, AbstractQuantumObject}(), H.dims, H.dimensions, full_kwargs, max_saved, threshold, remember_by_default, isconstant)
+    
+    U = Propagator(H, Dict{NTuple{2, Float64}, QuantumObject{HOpType}}(), H.dims, H.dimensions, full_kwargs, max_saved, threshold, remember_by_default, isconstant)
 
     if t != nothing
         U(t; t0 = t0, remember = true)
@@ -169,11 +171,11 @@ function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool} = nothing, 
         if length(U.props) >= U.max_saved
             @warn "Maximum number of stored propagators reached, save is being forced because 'remember' is set to true."
         end
-        U.props[[t0, t]] = prop
+        U.props[(t0, t)] = prop
     end
 
     if return_result
-        return prop
+       return prop
     end
 end
 
@@ -209,14 +211,18 @@ function _propagator_compute_or_look_up(U::Propagator{HT}, interval) where {HT <
             end
         end
 
-        if HT <: Operator
-            return sesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{Operator}, interval; saveat = [interval[2]], U.solver_kwargs...).states[end]
-        else
-            return mesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{SuperOperator}, interval; saveat = [interval[2]], U.solver_kwargs...).states[end]
-        end
+        _get_new_propagator(U, interval)
+        
     end
 end
 
+function _get_new_propagator(U::Propagator{Operator}, interval)
+        return sesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{Operator}, collect(interval); saveat = [interval[2]], U.solver_kwargs...).states[end]
+end
+function _get_new_propagator(U::Propagator{SuperOperator}, interval)
+    return mesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{SuperOperator}, collect(interval); saveat = [interval[2]], U.solver_kwargs...).states[end]
+end
+        
 
 """
     _get_intervals_for_range(stored_intervals, target_interval; threshold=1e-9)
@@ -227,34 +233,34 @@ Returns a `NamedTuple` with:
 - `usable`: Stored intervals fully contained within `[a, b]` (within `threshold` tolerance).
 - `to_compute`: Gap intervals not covered by any stored interval that still need to be computed.
 """
-function _get_intervals_for_range(stored_intervals::AbstractVector{T}, target_interval::Vector; threshold = 1.0e-9) where {T <: Vector}
+function _get_intervals_for_range(stored_intervals::AbstractVector{T}, target_interval::Vector; threshold = 1.0e-9) where {T <: Tuple}
     a, b = target_interval
 
     # Find stored intervals that are fully contained within target range (with fuzzy boundaries)
-    usable = [[s, e] for (s, e) in stored_intervals if s >= a - threshold && e <= b + threshold]
+    usable = [(s, e) for (s, e) in stored_intervals if s >= a - threshold && e <= b + threshold]
     sort!(usable, by = first)
 
     # Merge usable intervals to find coverage
-    merged = Vector[]
+    merged = Tuple[]
     for (s, e) in usable
         if isempty(merged) || s > merged[end][2] + threshold
-            push!(merged, [s, e])
+            push!(merged, (s, e))
         else
-            merged[end] = [merged[end][1], max(merged[end][2], e)]
+            merged[end] = (merged[end][1], max(merged[end][2], e))
         end
     end
 
     # Find gaps that need to be computed
-    to_compute = Vector[]
+    to_compute = Tuple[]
     current = a
     for (s, e) in merged
         if current < s - threshold
-            push!(to_compute, [current, s])
+            push!(to_compute, (current, s))
         end
         current = max(current, e)
     end
     if current < b - threshold
-        push!(to_compute, [current, b])
+        push!(to_compute, (current, b))
     end
     return (usable = usable, to_compute = to_compute)
 end
@@ -271,12 +277,14 @@ function Base.show(io::IO, U::Propagator)
     end
     return println(
         io,
-        "\nPropagator: H Type=",
+        "\nPropagator: type=",
         U.H.type,
         "   dims=",
         _get_dims_string(U.dimensions),
         "   size=",
         size(U),
+        "\nU Is ObjEvo: ",
+        (U.H isa QobjEvo),
         "\nSaved Propagators: ",
         saved_times...,
         "\nMemory Usage: ",
