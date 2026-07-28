@@ -2,7 +2,7 @@
 
     # citation bibtex
     io_buffer = IOBuffer()
-    QuantumToolboxUtils.cite(io_buffer)
+    QuantumToolboxCore.cite(io_buffer)
     captured_output = String(take!(io_buffer))
     @test captured_output ==
         """@article{QuantumToolbox.jl2025,\n""" *

@@ -1,4 +1,4 @@
-module QuantumToolboxUtils
+module QuantumToolboxCore
 
 using LinearAlgebra
 using SparseArrays
@@ -25,7 +25,7 @@ include("physics_func.jl")
 include("deprecated.jl")
 
 function __init__()
-    _register_qt_library!(QuantumToolboxUtils)
+    _register_qt_library!(QuantumToolboxCore)
     return nothing
 end
 

@@ -4,13 +4,13 @@
 
 [[toc]] <!-- the level setting is in ".vitepress/config.mts" -->
 
-## [QuantumToolboxUtils](@id doc-API:QuantumToolboxUtils)
+## [QuantumToolboxCore](@id doc-API:QuantumToolboxCore)
 
 ```@meta
-CurrentModule = QuantumToolboxUtils
+CurrentModule = QuantumToolboxCore
 
 DocTestSetup = quote
-    using QuantumToolboxUtils
+    using QuantumToolboxCore
 end
 ```
 

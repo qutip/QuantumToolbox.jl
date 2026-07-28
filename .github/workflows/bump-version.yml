@@ -10,7 +10,7 @@ on:
         type: choice
         options:
         - QuantumToolbox
-        - QuantumToolboxUtils
+        - QuantumToolboxCore
       bump_type:
         description: 'Version bump type'
         required: true

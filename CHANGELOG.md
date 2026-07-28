@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- [lib] Introduce QuantumToolboxUtils library. ([#686])
+- [lib] Introduce `QuantumToolboxCore` library. ([#686])
 - Add documentation about arbitrary precision computations. ([#745])
 - Fix `e_ops` expectation values being always stored as `ComplexF64` in `sesolve`, `mesolve`, `mcsolve`, `ssesolve`, and `smesolve`. They now follow the element type of the problem, so that arbitrary precision solutions return `sol.expect` with the requested precision instead of silently narrowing it to double precision. ([#745])
 - Fix `sesolve_map` and `mesolve_map` sharing mutable e_ops-saving callback state across trajectories when a custom `prob_func` is supplied, which could throw a `BoundsError` or produce incorrect results. Both now accept a `safetycopy` keyword (smart-defaulting to `true` for a custom `prob_func`, `false` otherwise) mirroring `SciMLBase.EnsembleProblem`. ([#645], [#747])

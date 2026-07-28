@@ -12,7 +12,7 @@ const DRAFT = get(ENV, "DRAFT", false) == "true"  # `DRAFT   = true`  disables c
 const DOCTEST = get(ENV, "DOCTEST", true) == true # `DOCTEST = false` skips doc tests
 
 if DOCTEST
-    DocMeta.setdocmeta!(QuantumToolboxUtils, :DocTestSetup, :(using QuantumToolboxUtils); recursive = true)
+    DocMeta.setdocmeta!(QuantumToolboxCore, :DocTestSetup, :(using QuantumToolboxCore); recursive = true)
     DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox, LinearAlgebra, SparseArrays); recursive = true)
 end
 
@@ -81,7 +81,7 @@ const PAGES = [
 
 makedocs(;
     modules = [
-        QuantumToolboxUtils,
+        QuantumToolboxCore,
         QuantumToolbox,
         Base.get_extension(QuantumToolbox, :QuantumToolboxMakieExt),
     ],

@@ -21,7 +21,7 @@ raw"""
 Add new dependencies to `DEPpkgs` for the specified library. Extend this function in each QuantumToolbox library to declare its external (non-QuantumToolbox) dependencies.
 """
 _add_library_deps!(lib::Val{T}, DEPpkgs::Vector{Module}) where {T} = throw(ArgumentError("Unknown QuantumToolbox library : $T"))
-function _add_library_deps!(lib::Val{:QuantumToolboxUtils}, DEPpkgs::Vector{Module})
+function _add_library_deps!(lib::Val{:QuantumToolboxCore}, DEPpkgs::Vector{Module})
     _add_pkgs!(DEPpkgs, Module[SciMLOperators])
     return nothing
 end
@@ -35,7 +35,7 @@ function _add_pkgs!(pkgs1::Vector{Module}, pkgs2::Vector{Module})
 end
 
 raw"""
-    QuantumToolboxUtils.pkginfo(io::IO=stdout; pkgs::Vector{Module} = Module[])
+    QuantumToolboxCore.pkginfo(io::IO=stdout; pkgs::Vector{Module} = Module[])
 
 Command line output of version numbers for given vector of packages: `pkgs`.
 """
@@ -60,7 +60,7 @@ function pkginfo(io::IO = stdout; pkgs::Vector{Module} = Module[], split_after::
 end
 
 raw"""
-    QuantumToolboxUtils.sysinfo(io::IO=stdout)
+    QuantumToolboxCore.sysinfo(io::IO=stdout)
 
 Command line output of system information.
 """
@@ -121,14 +121,14 @@ end
 @doc raw"""
     QuantumToolbox.versioninfo(io::IO=stdout)
 
-Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.about`](@ref QuantumToolboxUtils.about).
+Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.about`](@ref QuantumToolboxCore.about).
 """
 versioninfo(io::IO = stdout) = _print_versioninfo(io)
 
 @doc raw"""
     QuantumToolbox.about(io::IO=stdout)
 
-Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.versioninfo`](@ref QuantumToolboxUtils.versioninfo).
+Command line output of information on QuantumToolbox, dependencies, and system information, same as [`QuantumToolbox.versioninfo`](@ref QuantumToolboxCore.versioninfo).
 """
 about(io::IO = stdout) = versioninfo(io)
 

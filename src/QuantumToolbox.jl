@@ -13,10 +13,10 @@ import Statistics: mean, std
 
 ## Re-export of QuantumToolbox libraries
 import Reexport: @reexport
-@reexport using QuantumToolboxUtils
+@reexport using QuantumToolboxCore
 
 ## internal functions of QuantumToolbox libraries
-import QuantumToolboxUtils:
+import QuantumToolboxCore:
     FloatOrComplex,
     getVal,
     makeVal,
@@ -109,8 +109,8 @@ export cache_operator, iscached, isconstant
 
 # Source files
 
-## Some overloading with QuantumToolboxUtils library
-include("utils.jl")
+## Some overloading with QuantumToolboxCore library
+include("core_overload.jl")
 
 ## Quantum Object
 include("qobj/dimensions.jl")
@@ -166,7 +166,7 @@ include("visualization/wigner.jl")
 include("deprecated.jl")
 
 function __init__()
-    QuantumToolboxUtils._register_qt_library!(QuantumToolbox)
+    QuantumToolboxCore._register_qt_library!(QuantumToolbox)
     return nothing
 end
 

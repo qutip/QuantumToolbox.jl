@@ -1,5 +1,5 @@
-name = "QuantumToolboxUtils"
-uuid = "02afad9e-e2b8-4f9a-965f-b5dca5b538ca"
+name = "QuantumToolboxCore"
+uuid = "7fbe806f-1706-4992-b132-86e53e431434"
 authors = ["Alberto Mercurio", "Yi-Te Huang"]
 version = "0.1.0"
 
