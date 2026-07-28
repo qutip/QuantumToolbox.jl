@@ -8,6 +8,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - [lib] Introduce QuantumToolboxUtils library. ([#686])
+- Add documentation about arbitrary precision computations. ([#745])
+- Fix `e_ops` expectation values being always stored as `ComplexF64` in `sesolve`, `mesolve`, `mcsolve`, `ssesolve`, and `smesolve`. They now follow the element type of the problem, so that arbitrary precision solutions return `sol.expect` with the requested precision instead of silently narrowing it to double precision. ([#745])
+- Fix `sesolve_map` and `mesolve_map` sharing mutable e_ops-saving callback state across trajectories when a custom `prob_func` is supplied, which could throw a `BoundsError` or produce incorrect results. Both now accept a `safetycopy` keyword (smart-defaulting to `true` for a custom `prob_func`, `false` otherwise) mirroring `SciMLBase.EnsembleProblem`. ([#645], [#747])
+
+## [v0.47.2]
+Release date: 2026-06-21
+
+- Add support for time-dependent collapse operators (`QobjEvo`) in `mcsolve`. ([#733])
+- Support `Base.lastindex` (`end`) for quantum objects. ([#736])
+
+## [v0.47.1]
+Release date: 2026-06-11
+
+- Improvement for `multisite_operator` ([#722], [#725], [#727]):
+  - Add a convenient method when the Hilbert space dimension of all sites are equal.
+  - Improve the documentation and docstring. 
+- Updates for `fdestroy` and `fcreate`:
+  - Efficient Jordan Wigner transformation. ([#723])
+  - Add Bravyi-Kitaev fermion-to-qubit mapping via the keyword argument `method = :BK` (`method = :JW` for Jordan-Wigner transformation remains the default). ([#724])
+- Fix `mcsolve` error when both keyword arguments `e_ops` and `save_end=false` are specified. ([#728])
+- Fix wrong order in filtered kronecker product in `liouvillian_dressed_nonsecular`. ([#729])
+
+## [v0.47.0]
+Release date: 2026-05-19
+
+- Fix `entropy_mutual` (mutual information) when the input state is a pure state (`Ket`). ([#716])
+- Use `expm1` in `n_thermal` for stability. ([#717], [#718])
+- Use `CUDACore` and `cuSPARSE` as dependencies instead of `CUDA`. ([#687])
+
+## [v0.46.0]
+Release date: 2026-05-11
+
+- Several improvements in `SteadyStateSolver`:
+  - Allow specifying initial guess for `SteadyStateLinearSolver`. ([#698])
+  - Add keyword argument (`return_details`) to `SteadyStateODESolver` and `SteadyStateLinearSolver`. ([#708])
+  - Simplify the implementation of `SteadyStateDirectSolver` and `SteadyStateLinearSolver`. ([#708])
+  - Move `steadystate_floquet` to deprecated function, use `steadystate_fourier` instead. ([#708])
+- Bump compat for several package of SciML ecosystem. ([#697])
+  - `SciMLBase.jl` v3
+  - `OrdinaryDiffEqCore.jl` v4
+  - `OrdinaryDiffEqLowOrderRK.jl` v2
+  - `OrdinaryDiffEqVerner.jl` v2
+  - `StochasticDiffEqHighOrder.jl` v2
 
 ## [v0.45.0]
 Release date: 2026-04-19
@@ -344,6 +387,10 @@ Release date: 2024-11-13
 [v0.43.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.43.1
 [v0.44.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.44.0
 [v0.45.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.45.0
+[v0.46.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.46.0
+[v0.47.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.47.0
+[v0.47.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.47.1
+[v0.47.2]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.47.2
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -470,6 +517,7 @@ Release date: 2024-11-13
 [#636]: https://github.com/qutip/QuantumToolbox.jl/issues/636
 [#638]: https://github.com/qutip/QuantumToolbox.jl/issues/638
 [#641]: https://github.com/qutip/QuantumToolbox.jl/issues/641
+[#645]: https://github.com/qutip/QuantumToolbox.jl/issues/645
 [#649]: https://github.com/qutip/QuantumToolbox.jl/issues/649
 [#650]: https://github.com/qutip/QuantumToolbox.jl/issues/650
 [#653]: https://github.com/qutip/QuantumToolbox.jl/issues/653
@@ -485,7 +533,25 @@ Release date: 2024-11-13
 [#682]: https://github.com/qutip/QuantumToolbox.jl/issues/682
 [#683]: https://github.com/qutip/QuantumToolbox.jl/issues/683
 [#686]: https://github.com/qutip/QuantumToolbox.jl/issues/686
+[#687]: https://github.com/qutip/QuantumToolbox.jl/issues/687
 [#688]: https://github.com/qutip/QuantumToolbox.jl/issues/688
 [#689]: https://github.com/qutip/QuantumToolbox.jl/issues/689
 [#690]: https://github.com/qutip/QuantumToolbox.jl/issues/690
 [#692]: https://github.com/qutip/QuantumToolbox.jl/issues/692
+[#697]: https://github.com/qutip/QuantumToolbox.jl/issues/697
+[#698]: https://github.com/qutip/QuantumToolbox.jl/issues/698
+[#708]: https://github.com/qutip/QuantumToolbox.jl/issues/708
+[#716]: https://github.com/qutip/QuantumToolbox.jl/issues/716
+[#717]: https://github.com/qutip/QuantumToolbox.jl/issues/717
+[#718]: https://github.com/qutip/QuantumToolbox.jl/issues/718
+[#722]: https://github.com/qutip/QuantumToolbox.jl/issues/722
+[#723]: https://github.com/qutip/QuantumToolbox.jl/issues/723
+[#724]: https://github.com/qutip/QuantumToolbox.jl/issues/724
+[#725]: https://github.com/qutip/QuantumToolbox.jl/issues/725
+[#727]: https://github.com/qutip/QuantumToolbox.jl/issues/727
+[#728]: https://github.com/qutip/QuantumToolbox.jl/issues/728
+[#729]: https://github.com/qutip/QuantumToolbox.jl/issues/729
+[#733]: https://github.com/qutip/QuantumToolbox.jl/issues/733
+[#736]: https://github.com/qutip/QuantumToolbox.jl/issues/736
+[#745]: https://github.com/qutip/QuantumToolbox.jl/issues/745
+[#747]: https://github.com/qutip/QuantumToolbox.jl/issues/747

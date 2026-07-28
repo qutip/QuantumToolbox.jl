@@ -2,10 +2,11 @@ using QuantumToolbox
 import LinearAlgebra: Diagonal
 import SparseArrays: SparseMatrixCSC
 using CUDA
-using CUDA.CUSPARSE
+using CUDA.cuSPARSE
 using CUDSS
 using LinearSolve
 
+# print package versions
 QuantumToolbox.about()
 CUDA.versioninfo()
 
@@ -165,7 +166,7 @@ end
 @testset "CUDA Correlations and Spectrum" begin
     N = 10
     Id = qeye(N)
-    a = destroy(N) |> CUSPARSE.CuSparseMatrixCSR
+    a = destroy(N) |> cuSPARSE.CuSparseMatrixCSR
     H = a' * a
     c_ops = [sqrt(0.1 * (0.01 + 1)) * a, sqrt(0.1 * (0.01)) * a']
     solver = Lanczos()

@@ -159,14 +159,14 @@ function _filtered_kron(A, B, E, σ, tol)
         jA = J_A[idxA]
         vA = V_A[idxA]
         for idxB in eachindex(V_B)
-            iT = I_B[idxB]
-            jT = J_B[idxB]
+            iB = I_B[idxB]
+            jB = J_B[idxB]
             vB = V_B[idxB]
-            Ωdiff = (E[iA] - E[jA]) - (E[iT] - E[jT])
+            Ωdiff = (E[iA] - E[jA]) - (E[iB] - E[jB])
             v = vA * vB * gaussian(Ωdiff, 0, σ)
             if abs(v) > tol
-                push!(I_out, iA + (iT - 1) * N)
-                push!(J_out, jA + (jT - 1) * N)
+                push!(I_out, iB + (iA - 1) * N)
+                push!(J_out, jB + (jA - 1) * N)
                 push!(V_out, v)
             end
         end

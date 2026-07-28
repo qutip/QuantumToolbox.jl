@@ -258,6 +258,15 @@
         @test issymmetric(Y) == false
         @test issymmetric(Z) == true
 
+        # indexing
+        ψ = rand_ket(N)
+        ρ = rand_dm(N)
+        @test ψ[end] == ψ.data[end]
+        @test ρ[end] == ρ[N^2] == ρ.data[end]
+        @test ρ[end, 1] == ρ[N, 1] == ρ.data[N, 1]
+        @test ρ[1, end] == ρ[1, N] == ρ.data[1, N]
+        @test ρ[end, end] == ρ[N, N] == ρ.data[N, N]
+
         # diag
         @test diag(a, 1) ≈ [sqrt(i) for i in 1:(N - 1)]
         @test diag(a_d, -1) == [sqrt(i) for i in 1:(N - 1)]
@@ -521,6 +530,44 @@
             M = ket2dm(ψ)
             @inferred normalize(ψ)
             @inferred normalize(M)
+        end
+    end
+
+    @testset "multisite operator" begin
+        dims = (3, 5, 4, 2)
+        a = destroy(5)
+        σy = sigmay()
+        M = multisite_operator(dims, 2 => a, 4 => σy)
+        @test M == tensor(qeye(3), a, qeye(4), σy)
+        @test eltype(M) == ComplexF64 # since promote_type(a, σy) == ComplexF64
+
+        # check if the method works when all sites have the same Hilbert space dimension
+        # also make sure the eltype of the multisite_operator is promoted correctly
+        N = 3
+        D = 4
+        II = qeye(Int8, D)
+        A = Qobj(rand(Float16, D, D))
+        B = Qobj(rand(Float32, D, D))
+        IAI = multisite_operator(N, 2 => A)
+        IAB = multisite_operator(N, 2 => A, 3 => B)
+        AIB = multisite_operator(N, 1 => A, 3 => B)
+        ABI = multisite_operator(N, 1 => A, 2 => B)
+        @test IAI == kron(II, A, II)
+        @test IAB == kron(II, A, B)
+        @test AIB == kron(A, II, B)
+        @test ABI == kron(A, B, II)
+        @test eltype(IAI) == Float16
+        @test eltype(IAB) == eltype(AIB) == eltype(ABI) == Float32
+
+        @test_throws ArgumentError multisite_operator(dims) # at least one Pair must be provided
+        @test_throws ArgumentError multisite_operator(dims, 0 => sigmax()) # site index out of range
+        @test_throws ArgumentError multisite_operator(dims, 5 => sigmax()) # site index out of range
+        @test_throws ArgumentError multisite_operator(dims, 1 => Qobj(rand(2, 2))) # dims mismatch
+        @test_throws ArgumentError multisite_operator(dims, 2 => Qobj(rand(2, 3))) # not endomorphic
+
+        @testset "Type Inference (multisite_operator)" begin
+            @inferred multisite_operator(Val(3), 2 => a)
+            @inferred multisite_operator(dims, 2 => a, 4 => σy)
         end
     end
 

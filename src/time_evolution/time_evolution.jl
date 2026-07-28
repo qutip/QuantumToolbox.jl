@@ -55,14 +55,14 @@ raw"""
 A helper function to `check_mul_dimensions` and also generate the new type and dimensions for solutions
 """
 function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{Operator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
-    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    !isendomorphic(H) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
     check_mul_dimensions(H, ψ0)
 
     T = _complex_float_type(Base.promote_eltype(H, ψ0))
     return T, to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
 end
 function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
-    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    !isendomorphic(H) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
     ρ0 = ket2dm(ψ0)
     ρ0_vec = mat2vec(ρ0)
     check_mul_dimensions(H, ρ0_vec)
@@ -71,7 +71,7 @@ function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOper
     return T, to_dense(T, ρ0_vec.data), Operator(), ρ0.dimensions
 end
 function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperator}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{OperatorKet, SuperOperator}}
-    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    !isendomorphic(H) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
     check_mul_dimensions(H, ψ0)
 
     T = _complex_float_type(Base.promote_eltype(H, ψ0))
@@ -289,8 +289,10 @@ average_states(sol::TimeEvolutionMultiTrajSol{<:Vector{<:QuantumObject}}) = sol.
 
 # TODO: Check if broadcasting division ./ size(states, 1) is type stable
 _average_traj_states(states::Matrix{<:QuantumObject{Ket}}) =
+    size(states, 2) == 0 ? Vector{Base.promote_op(ket2dm, eltype(states))}() :
     map(x -> x / size(states, 1), dropdims(sum(ket2dm, states, dims = 1), dims = 1))
 _average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType <: Union{Operator, OperatorKet}} =
+    size(states, 2) == 0 ? Vector{eltype(states)}() :
     map(x -> x / size(states, 1), dropdims(sum(states, dims = 1), dims = 1))
 
 @doc raw"""
@@ -390,15 +392,15 @@ This is very useful especially for dispatching which method to use to update the
 =#
 
 # Output function with progress bar update
-function _ensemble_output_func_progress(sol, i, progr, output_func)
+function _ensemble_output_func_progress(sol, ctx, progr, output_func)
     next!(progr)
-    return output_func(sol, i)
+    return output_func(sol, ctx)
 end
 
 # Output function with distributed channel update for progress bar
-function _ensemble_output_func_distributed(sol, i, channel, output_func)
+function _ensemble_output_func_distributed(sol, ctx, channel, output_func)
     put!(channel, true)
-    return output_func(sol, i)
+    return output_func(sol, ctx)
 end
 
 function _ensemble_dispatch_output_func(
@@ -410,7 +412,7 @@ function _ensemble_dispatch_output_func(
     ) where {ET <: Union{EnsembleSerial, EnsembleThreads}}
     if getVal(progress_bar)
         progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
-        f = (sol, i) -> _ensemble_output_func_progress(sol, i, progr, output_func)
+        f = (sol, ctx) -> _ensemble_output_func_progress(sol, ctx, progr, output_func)
         return (f, progr, nothing)
     else
         return (output_func, nothing, nothing)
@@ -427,23 +429,23 @@ function _ensemble_dispatch_output_func(
         progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
         progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
 
-        f = (sol, i) -> _ensemble_output_func_distributed(sol, i, progr_channel, output_func)
+        f = (sol, ctx) -> _ensemble_output_func_distributed(sol, ctx, progr_channel, output_func)
         return (f, progr, progr_channel)
     else
         return (output_func, nothing, nothing)
     end
 end
 
-function _ensemble_dispatch_prob_func(rng, ntraj, tlist, prob_func; kwargs...)
-    seeds = map(i -> rand(rng, UInt64), 1:ntraj)
-    return (prob, i, repeat) -> prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
+function _ensemble_dispatch_prob_func(tlist, prob_func; kwargs...)
+    return (prob, ctx) -> prob_func(prob, ctx, tlist; kwargs...)
 end
 
 function _ensemble_dispatch_solve(
         ens_prob::TimeEvolutionProblem,
         alg::Union{<:AbstractODEAlgorithm, <:AbstractSDEAlgorithm},
         ensemblealg::ET,
-        ntraj::Int,
+        ntraj::Int;
+        kwargs...
     ) where {ET <: Union{EnsembleSplitThreads, EnsembleDistributed}}
     sol = nothing
 
@@ -453,7 +455,7 @@ function _ensemble_dispatch_solve(
         end
 
         @async begin
-            sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
+            sol = solve(ens_prob.prob, alg, ensemblealg; trajectories = ntraj, kwargs...)
             put!(ens_prob.kwargs.channel, false)
         end
     end
@@ -464,17 +466,18 @@ function _ensemble_dispatch_solve(
         ens_prob::TimeEvolutionProblem,
         alg::Union{<:AbstractODEAlgorithm, <:AbstractSDEAlgorithm},
         ensemblealg,
-        ntraj::Int,
+        ntraj::Int;
+        kwargs...
     )
-    sol = solve(ens_prob.prob, alg, ensemblealg, trajectories = ntraj)
+    sol = solve(ens_prob.prob, alg, ensemblealg; trajectories = ntraj, kwargs...)
     return sol
 end
 
 # For mapped solvers
-function _se_me_map_prob_func(prob, i, repeat, iter)
+function _se_me_map_prob_func(prob, ctx, iter)
     f = deepcopy(prob.f.f)
-    u0 = iter[i][1]
-    p = iter[i][2:end]
+    u0 = iter[ctx.sim_id][1]
+    p = iter[ctx.sim_id][2:end]
     if haskey(prob.kwargs, :callback)
         return remake(prob, f = f, u0 = u0, p = p, callback = deepcopy(prob.kwargs[:callback]))
     else
@@ -486,20 +489,16 @@ end
 #=
  Stochastic funcs
 =#
-function _stochastic_prob_func(prob, i, repeat, rng, seeds, tlist; kwargs...)
-    seed = seeds[i]
-    traj_rng = typeof(rng)()
-    seed!(traj_rng, seed)
-
+function _stochastic_prob_func(prob, ctx, tlist; kwargs...)
     sc_ops = kwargs[:sc_ops]
     store_measurement = kwargs[:store_measurement]
-    noise = _make_noise(prob.prob.tspan[1], sc_ops, store_measurement, traj_rng)
+    noise = _make_noise(prob.prob.tspan[1], sc_ops, store_measurement, ctx.rng)
 
-    return remake(prob.prob, noise = noise, seed = seed)
+    return remake(prob.prob, noise = noise)
 end
 
 # Standard output function which does nothing (used for mapped and stochastic solvers)
-_standard_output_func(sol, i) = (sol, false)
+_standard_output_func(sol, ctx) = (sol, false)
 
 #= 
     Define diagonal or non-diagonal noise depending on the type of `sc_ops`.

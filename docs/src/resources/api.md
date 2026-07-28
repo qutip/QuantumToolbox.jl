@@ -140,6 +140,7 @@ ket2dm
 expect
 variance
 LinearAlgebra.kron
+multisite_operator
 to_dense
 to_sparse
 vec2mat
@@ -325,7 +326,6 @@ bures_angle
 
 ```@docs
 Lattice
-multisite_operator
 DissipativeIsing
 ```
 

@@ -35,9 +35,9 @@
     sx = sm + sp
     sz = sp * sm - sm * sp
 
-    H = 1 * a' * a + 1 * sz / 2 + 0.5 * (a + a') * sx
+    H = 1 * a' * a + 1 * sz / 2 + 0.5 * im * (a - a') * sx
 
-    fields = [sqrt(0.01) * (a + a'), sqrt(0.01) * sx]
+    fields = [sqrt(0.01) * im * (a - a'), sqrt(0.01) * sx]
     Tlist = [0, 0.0]
 
     E, U, L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)
@@ -58,6 +58,11 @@
     L_gme_0 = liouvillian_dressed_nonsecular(H, fields, Tlist, tol = tol, σ_filter = 1.0e-14)[3]
     L_dr = dressed_liouvillian(H, fields, tol = tol)
     @test norm(L_gme_0.data - L_dr.data) / size(L_gme_0.data, 1) < 1.0e-8
+
+    # Test that the σ = ∞ and σ >> 1 limits give the same result
+    L1 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = 1.0e5)[3]
+    L2 = liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol, σ_filter = Inf)[3]
+    @test norm(L1.data - L2.data) / size(L1.data, 1) < 1.0e-7
 
     H = 1 * a' * a + 1 * sz / 2 + 1.0e-5 * (a * sp + a' * sm)
 
@@ -87,7 +92,7 @@
 
             H = 1 * a' * a + 1 * sz / 2 + 0.5 * (a + a') * sx
 
-            fields = [sqrt(0.01) * (a + a'), sqrt(0.01) * sx]
+            fields = [sqrt(0.01) * im * (a - a'), sqrt(0.01) * sx]
             Tlist = [0, 0.01]
 
             @inferred liouvillian_dressed_nonsecular(H, fields, Tlist, N_trunc = N_trunc, tol = tol)

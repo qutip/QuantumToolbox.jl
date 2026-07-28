@@ -116,7 +116,7 @@ function mesolveProblem(
 
     kwargs2 = _merge_saveat(tlist, e_ops, default_ode_solver_options(T); kwargs...)
     kwargs3 = _merge_tstops(kwargs2, isconstant(L), tlist)
-    kwargs4 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs3, SaveFuncMESolve)
+    kwargs4 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs3, SaveFuncMESolve, T)
 
     tspan = (tlist[1], tlist[end])
 
@@ -201,11 +201,6 @@ function mesolve(
         kwargs...,
     )
 
-    # Move sensealg argument to solve for Enzyme.jl support.
-    # TODO: Remove it when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed.
-    sensealg = get(kwargs, :sensealg, nothing)
-    kwargs_filtered = isnothing(sensealg) ? kwargs : Base.structdiff((; kwargs...), (sensealg = sensealg,))
-
     prob = mesolveProblem(
         H,
         ψ0,
@@ -216,15 +211,10 @@ function mesolve(
         params = params,
         progress_bar = progress_bar,
         inplace = inplace,
-        kwargs_filtered...,
+        kwargs...,
     )
 
-    # TODO: Remove sensealg when https://github.com/SciML/SciMLSensitivity.jl/issues/1225 is fixed
-    if isnothing(sensealg)
-        return mesolve(prob, alg)
-    else
-        return mesolve(prob, alg; sensealg = sensealg)
-    end
+    return mesolve(prob, alg)
 end
 
 function mesolve(prob::TimeEvolutionProblem, alg::AbstractODEAlgorithm = DP5(); kwargs...)
@@ -355,6 +345,7 @@ mesolve_map(
 # User can define their own iterator structure, prob_func and output_func
 #   - `prob_func`: Function to use for generating the ODEProblem.
 #   - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
+#   - `safetycopy`: Whether to deep copy the problem before generating each trajectory. Defaults to `false` when using the built-in `prob_func` (already safe), and to `true` when a custom `prob_func` is supplied, since a custom `prob_func` that doesn't independently reset per-trajectory callback state (e.g. the e_ops save counter) would otherwise alias that state across trajectories (see issue #645). Pass `safetycopy = false` explicitly to opt back into the faster path with a custom `prob_func`, at your own risk.
 #
 # Return: An array of TimeEvolutionSol objects with the size same as the given iter.
 function mesolve_map(
@@ -364,11 +355,13 @@ function mesolve_map(
         ensemblealg::EnsembleAlgorithm = EnsembleThreads();
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple, Nothing} = nothing,
+        safetycopy::Union{Bool, Nothing} = nothing,
         progress_bar::Union{Val, Bool} = Val(true),
     ) where {StateOpType <: Union{Ket, Operator, OperatorKet, SuperOperator}}
     # generate ensemble problem
     ntraj = length(iter)
-    _prob_func = isnothing(prob_func) ? (prob, i, repeat) -> _se_me_map_prob_func(prob, i, repeat, iter) : prob_func
+    _prob_func = isnothing(prob_func) ? (prob, ctx) -> _se_me_map_prob_func(prob, ctx, iter) : prob_func
+    _safetycopy = isnothing(safetycopy) ? !isnothing(prob_func) : safetycopy
     _output_func =
         isnothing(output_func) ?
         _ensemble_dispatch_output_func(
@@ -379,7 +372,7 @@ function mesolve_map(
             progr_desc = "[mesolve_map] ",
         ) : output_func
     ens_prob = TimeEvolutionProblem(
-        EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = false),
+        EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = _safetycopy),
         prob.times,
         prob.states_type,
         prob.dimensions,
@@ -389,6 +382,6 @@ function mesolve_map(
     sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj)
 
     # handle solution and make it become an Array of TimeEvolutionSol
-    sol_vec = [_gen_mesolve_solution(sol[:, i], prob) for i in eachindex(sol)] # map is type unstable
+    sol_vec = [_gen_mesolve_solution(sol.u[i], prob) for i in eachindex(sol.u)] # map is type unstable
     return reshape(sol_vec, size(iter))
 end

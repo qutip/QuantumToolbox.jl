@@ -98,6 +98,9 @@ Base.copy(A::AbstractQuantumObject) = get_typename_wrapper(A)(copy(A.data), A.ty
 Base.getindex(A::AbstractQuantumObject, inds...) = getindex(A.data, inds...)
 Base.setindex!(A::AbstractQuantumObject, val, inds...) = setindex!(A.data, val, inds...)
 
+Base.lastindex(A::AbstractQuantumObject) = lastindex(A.data)
+Base.lastindex(A::AbstractQuantumObject, d::Int) = lastindex(A.data, d)
+
 @doc raw"""
     eltype(A::AbstractQuantumObject)
 

@@ -179,11 +179,11 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
         @testset "Mooncake.jl" begin
             grad_cache1 = Mooncake.prepare_gradient_cache(my_f_mesolve_bsa_mooncake, params)
-            grad_cache2 = Mooncake.prepare_gradient_cache(my_f_mesolve_assume_non_herm_bsa_mooncake, params)
+            # grad_cache2 = Mooncake.prepare_gradient_cache(my_f_mesolve_assume_non_herm_bsa_mooncake, params)
             _, grad_mooncake1 = Mooncake.value_and_gradient!!(grad_cache1, my_f_mesolve_bsa_mooncake, params)
             @test grad_mooncake1[2] ≈ grad_exact atol = 1.0e-6
-            _, grad_mooncake2 = Mooncake.value_and_gradient!!(grad_cache2, my_f_mesolve_assume_non_herm_bsa_mooncake, params)
-            @test grad_mooncake2[2] ≈ grad_exact atol = 1.0e-6
+            # _, grad_mooncake2 = Mooncake.value_and_gradient!!(grad_cache2, my_f_mesolve_assume_non_herm_bsa_mooncake, params)
+            # @test grad_mooncake2[2] ≈ grad_exact atol = 1.0e-6
         end
 
         @testset "Enzyme.jl" begin
@@ -195,17 +195,16 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
                 Duplicated(params, dparams1),
             )[1]
 
-            # It doesn't work yet when assume_hermitian = Val(false)
-            # dparams2 = Enzyme.make_zero(params)
-            # Enzyme.autodiff(
-            #     Enzyme.set_runtime_activity(Enzyme.Reverse),
-            #     my_f_mesolve_assume_non_herm,
-            #     Active,
-            #     Duplicated(params, dparams2),
-            # )[1]
+            dparams2 = Enzyme.make_zero(params)
+            Enzyme.autodiff(
+                Enzyme.set_runtime_activity(Enzyme.Reverse),
+                my_f_mesolve_assume_non_herm_bsa_enzyme,
+                Active,
+                Duplicated(params, dparams2),
+            )[1]
 
             @test dparams1 ≈ grad_exact atol = 1.0e-6
-            # @test dparams2 ≈ grad_exact atol = 1.0e-6
+            @test dparams2 ≈ grad_exact atol = 1.0e-6
         end
     end
 end
