@@ -59,3 +59,10 @@ n = 10
 
 ρt_vec = U_me^n * ρ0_vec
 ```
+## The Propagator Structure
+For problems that require many propagator evaluations, there is the [`Propagator`][@ref] object. Taking either a Hamiltonian operator or a Liouvillian superoperator, the propagator structure built as
+```@example propagator
+U = propagator(H)
+```
+and can be evaluated via ``U(tf, t0 = t0)``. By default, this call returns the calculated [`Qobject`](@ref) as well as stores it. Further evaluations will check whether or not the current evalutaion window overlaps with already calculated propagators and the time interval will be split up to make use of those that have already been computed.
+
