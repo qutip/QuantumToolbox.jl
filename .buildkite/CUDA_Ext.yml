@@ -12,8 +12,7 @@ steps:
             - lib
             - ext
     agents:
-      queue: "juliagpu"
-      cuda: "*"
+      queue: "cuda"
     commands: |
       julia --project=. -e '
         using Pkg
@@ -35,7 +34,9 @@ steps:
     matrix:
       setup:
         version:
-          - "1.11" # oldest
+          # comment this part first since Julia 1.11 security support ended [see https://endoflife.date/julia]
+          # but this can be re-enabled, for example, when latest version becomes 1.13, we can put 1.12 here
+          # - "1.11" # oldest
           - "1"    # latest
     plugins:
       - JuliaCI/julia#v1:
