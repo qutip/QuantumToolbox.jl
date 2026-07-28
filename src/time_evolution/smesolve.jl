@@ -56,14 +56,14 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `params`: `NullParameters` of parameters to pass to the solver.
 - `rng`: Random number generator for reproducibility.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
+- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`. Note that setting this to `Val(true)` forces the solver to stop at every time point in `tlist`, which can make the solve slower, with a cost growing with `length(tlist)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
-- The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
+- The default tolerances in `kwargs` are given as `reltol=2e-3` and `abstol=1e-3`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 !!! tip "Performance Tip"
@@ -198,14 +198,14 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `prob_func`: Function to use for generating the SDEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
-- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
+- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`. Note that setting this to `Val(true)` forces the solver to stop at every time point in `tlist`, which can make the solve slower, with a cost growing with `length(tlist)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
-- The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
+- The default tolerances in `kwargs` are given as `reltol=2e-3` and `abstol=1e-3`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 !!! tip "Performance Tip"
@@ -333,14 +333,14 @@ Above, ``\hat{C}_i`` represent the collapse operators related to pure dissipatio
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
-- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`.
+- `store_measurement`: Whether to store the measurement expectation values. Default is `Val(false)`. Note that setting this to `Val(true)` forces the solver to stop at every time point in `tlist`, which can make the solve slower, with a cost growing with `length(tlist)`.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
 
 - The states will be saved depend on the keyword argument `saveat` in `kwargs`.
 - If `e_ops` is empty, the default value of `saveat=tlist` (saving the states corresponding to `tlist`), otherwise, `saveat=[tlist[end]]` (only save the final state). You can also specify `e_ops` and `saveat` separately.
-- The default tolerances in `kwargs` are given as `reltol=1e-2` and `abstol=1e-2`.
+- The default tolerances in `kwargs` are given as `reltol=2e-3` and `abstol=1e-3`.
 - For more details about `kwargs` please refer to [`DifferentialEquations.jl` (Keyword Arguments)](https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/)
 
 !!! tip "Performance Tip"
