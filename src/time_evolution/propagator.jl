@@ -112,7 +112,7 @@ function propagator(
     if !(H isa QobjEvo)
         isconstant = true
     end
-    
+
     U = Propagator(H, Dict{NTuple{2, Float64}, QuantumObject{HOpType}}(), H.dims, H.dimensions, full_kwargs, max_saved, threshold, remember_by_default, isconstant)
 
     if t != nothing
@@ -175,7 +175,7 @@ function (U::Propagator)(t; t0 = 0.0, remember::Union{Nothing, Bool} = nothing, 
     end
 
     if return_result
-       return prop
+        return prop
     end
 end
 
@@ -212,17 +212,17 @@ function _propagator_compute_or_look_up(U::Propagator{HT}, interval) where {HT <
         end
 
         _get_new_propagator(U, interval)
-        
+
     end
 end
 
 function _get_new_propagator(U::Propagator{Operator}, interval)
-        return sesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{Operator}, collect(interval); saveat = [interval[2]], U.solver_kwargs...).states[end]
+    return sesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{Operator}, collect(interval); saveat = [interval[2]], U.solver_kwargs...).states[end]
 end
 function _get_new_propagator(U::Propagator{SuperOperator}, interval)
     return mesolve(U.H, qeye_like(U.H)(0.0)::QuantumObject{SuperOperator}, collect(interval); saveat = [interval[2]], U.solver_kwargs...).states[end]
 end
-        
+
 
 """
     _get_intervals_for_range(stored_intervals, target_interval; threshold=1e-9)
@@ -283,7 +283,7 @@ function Base.show(io::IO, U::Propagator)
         _get_dims_string(U.dimensions),
         "   size=",
         size(U),
-        "\nU Is ObjEvo: ",
+        "\nH Is ObjEvo: ",
         (U.H isa QobjEvo),
         "\nSaved Propagators: ",
         saved_times...,
