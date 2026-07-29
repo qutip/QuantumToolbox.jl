@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+
+
+## [v0.47.3]
+Release date: 2026-07-28
+
 - Add documentation about arbitrary precision computations. ([#745])
 - Fix `e_ops` expectation values being always stored as `ComplexF64` in `sesolve`, `mesolve`, `mcsolve`, `ssesolve`, and `smesolve`. They now follow the element type of the problem, so that arbitrary precision solutions return `sol.expect` with the requested precision instead of silently narrowing it to double precision. ([#745])
 - Fix `sesolve_map` and `mesolve_map` sharing mutable e_ops-saving callback state across trajectories when a custom `prob_func` is supplied, which could throw a `BoundsError` or produce incorrect results. Both now accept a `safetycopy` keyword (smart-defaulting to `true` for a custom `prob_func`, `false` otherwise) mirroring `SciMLBase.EnsembleProblem`. ([#645], [#747])
 - Added a propagator structure. 
+- Fix the number of solver steps in `ssesolve` and `smesolve` scaling with `length(tlist)` whenever `e_ops` or a progress bar was given. `tstops = tlist` was being forced for every callback, but it is only required by `store_measurement = true` (to reconstruct `dW/dt`); expectation values are recorded by interpolation, as in `mesolve`. Solves with `e_ops` are now up to several times faster and their cost no longer depends on the output resolution. ([#748])
 
 ## [v0.47.2]
 Release date: 2026-06-21
@@ -391,6 +397,7 @@ Release date: 2024-11-13
 [v0.47.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.47.0
 [v0.47.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.47.1
 [v0.47.2]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.47.2
+[v0.47.3]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.47.3
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -554,3 +561,4 @@ Release date: 2024-11-13
 [#736]: https://github.com/qutip/QuantumToolbox.jl/issues/736
 [#745]: https://github.com/qutip/QuantumToolbox.jl/issues/745
 [#747]: https://github.com/qutip/QuantumToolbox.jl/issues/747
+[#748]: https://github.com/qutip/QuantumToolbox.jl/issues/748
