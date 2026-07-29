@@ -166,7 +166,15 @@ include("visualization/wigner.jl")
 include("deprecated.jl")
 
 function __init__()
-    QuantumToolboxCore._register_qt_library!(QuantumToolbox)
+    if (QuantumToolbox ∉ QuantumToolboxCore.QT_LIBRARIES)
+        pushfirst!(QuantumToolboxCore.QT_LIBRARIES, QuantumToolbox) # use pushfirst! so that main API libraries are at the front of the registry (for better display order in versioninfo)
+
+        m_list = Module[SciMLBase, SciMLOperators, OrdinaryDiffEqCore, LinearSolve]
+        foreach(m_list) do m
+            (m ∉ QuantumToolboxCore.DEP_PKGS) && push!(QuantumToolboxCore.DEP_PKGS, m)
+        end
+    end
+
     return nothing
 end
 

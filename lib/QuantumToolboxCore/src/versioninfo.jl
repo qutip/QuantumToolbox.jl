@@ -3,36 +3,8 @@ Reusable version information helpers for QuantumToolbox libraries.
 =#
 
 # Registry of all loaded QuantumToolbox libraries, populated via __init__ in each library.
-const _QT_LIBRARIES = Module[]
-
-raw"""
-    _register_qt_library!(m::Module)
-
-Register a QuantumToolbox library module into the global registry. Each library should call this in its `__init__` function.
-"""
-function _register_qt_library!(m::Module)
-    (m ∉ _QT_LIBRARIES) && pushfirst!(_QT_LIBRARIES, m) # use pushfirst! so that main API libraries are at the front of the registry (for better display order in versioninfo)
-    return nothing
-end
-
-raw"""
-    _add_library_deps!(lib::Val, DEPpkgs::Vector{Module})
-
-Add new dependencies to `DEPpkgs` for the specified library. Extend this function in each QuantumToolbox library to declare its external (non-QuantumToolbox) dependencies.
-"""
-_add_library_deps!(lib::Val{T}, DEPpkgs::Vector{Module}) where {T} = throw(ArgumentError("Unknown QuantumToolbox library : $T"))
-function _add_library_deps!(lib::Val{:QuantumToolboxCore}, DEPpkgs::Vector{Module})
-    _add_pkgs!(DEPpkgs, Module[SciMLOperators])
-    return nothing
-end
-
-# add pkgs2 into pkgs1 but ensure the uniqueness
-function _add_pkgs!(pkgs1::Vector{Module}, pkgs2::Vector{Module})
-    for pkg in unique(pkgs2)
-        (pkg ∉ pkgs1) && push!(pkgs1, pkg)
-    end
-    return nothing
-end
+const QT_LIBRARIES = Module[]
+const DEP_PKGS = Module[]
 
 raw"""
     QuantumToolboxCore.pkginfo(io::IO=stdout; pkgs::Vector{Module} = Module[])
@@ -96,8 +68,7 @@ function _print_versioninfo(io::IO = stdout)
         "    Alberto Mercurio and Yi-Te Huang\n",
     )
 
-    DEPpkgs = _gen_dep_pkg_list()
-    pkginfo(io; pkgs = vcat(_QT_LIBRARIES, DEPpkgs), split_after = length(_QT_LIBRARIES))
+    pkginfo(io; pkgs = vcat(QT_LIBRARIES, DEP_PKGS), split_after = length(QT_LIBRARIES))
     sysinfo(io)
 
     println(
@@ -108,14 +79,6 @@ function _print_versioninfo(io::IO = stdout)
         "For your convenience, a bibtex reference can be easily generated using `QuantumToolbox.cite()`.\n",
     )
     return nothing
-end
-
-function _gen_dep_pkg_list()
-    DEPpkgs = Module[]
-    for lib in _QT_LIBRARIES
-        _add_library_deps!(Val(nameof(lib)), DEPpkgs)
-    end
-    return DEPpkgs
 end
 
 @doc raw"""
