@@ -82,6 +82,34 @@ end
 const my_f_mesolve_bsa_enzyme = Base.Fix{2}(my_f_mesolve, BacksolveAdjoint(autojacvec = EnzymeVJP()))
 const my_f_mesolve_bsa_mooncake = Base.Fix{2}(my_f_mesolve, BacksolveAdjoint(autojacvec = MooncakeVJP()))
 
+# `mesolve` is contracting, so BacksolveAdjoint's reverse solve is unstable and only
+# stays correct because the default `saveat = tlist` supplies checkpoints.
+# InterpolatingAdjoint never re-integrates the state backwards.
+const my_f_mesolve_ia_enzyme =
+    Base.Fix{2}(my_f_mesolve, InterpolatingAdjoint(autojacvec = EnzymeVJP(), checkpointing = true))
+const my_f_mesolve_ia_mooncake =
+    Base.Fix{2}(my_f_mesolve, InterpolatingAdjoint(autojacvec = MooncakeVJP(), checkpointing = true))
+
+# The parameters must reach the solver through `params`. If they are captured in a
+# closure instead, the ODEProblem carries `NullParameters()` and there is nothing for a
+# continuous adjoint to differentiate against. Most combinations throw, but
+# BacksolveAdjoint + EnzymeVJP silently returns an all-zero gradient, so this is
+# regression-tested rather than left to be rediscovered by users.
+function my_f_mesolve_closure(p, sensealg)
+    H_local = p[1] * a' * a + p[2] * (a + a')
+    c_ops_local = [sqrt(p[3]) * a]
+    sol = mesolve(
+        H_local,
+        ψ0_mesolve,
+        tlist_mesolve,
+        c_ops_local,
+        progress_bar = Val(false),
+        sensealg = sensealg,
+    )
+    return real(expect(ad_a, sol.states[end]))
+end
+const my_f_mesolve_closure_bsa_enzyme = Base.Fix{2}(my_f_mesolve_closure, BacksolveAdjoint(autojacvec = EnzymeVJP()))
+
 function my_f_mesolve_assume_non_herm(p, sensealg)
     sol = mesolve(
         L_assume_non_herm,
@@ -205,6 +233,39 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
             @test dparams1 ≈ grad_exact atol = 1.0e-6
             @test dparams2 ≈ grad_exact atol = 1.0e-6
+        end
+
+        @testset "InterpolatingAdjoint" begin
+            # The recommended sensealg for mesolve: unlike BacksolveAdjoint it does not
+            # re-integrate the contracting Lindblad dynamics backwards.
+            grad_cache = Mooncake.prepare_gradient_cache(my_f_mesolve_ia_mooncake, params)
+            _, grad_mooncake = Mooncake.value_and_gradient!!(grad_cache, my_f_mesolve_ia_mooncake, params)
+            @test grad_mooncake[2] ≈ grad_exact atol = 1.0e-6
+
+            dparams = Enzyme.make_zero(params)
+            Enzyme.autodiff(
+                Enzyme.set_runtime_activity(Enzyme.Reverse),
+                my_f_mesolve_ia_enzyme,
+                Active,
+                Duplicated(params, dparams),
+            )[1]
+            @test dparams ≈ grad_exact atol = 1.0e-6
+        end
+
+        @testset "closure formulation does not silently give a zero gradient" begin
+            # Parameters captured in a closure never reach the ODEProblem, so a
+            # continuous adjoint has nothing to differentiate against. Enzyme returns
+            # all zeros without erroring; make sure that stays a known, tested fact
+            # rather than something a user discovers as a wrong optimisation result.
+            dparams = Enzyme.make_zero(params)
+            Enzyme.autodiff(
+                Enzyme.set_runtime_activity(Enzyme.Reverse),
+                my_f_mesolve_closure_bsa_enzyme,
+                Active,
+                Duplicated(params, dparams),
+            )[1]
+            @test all(iszero, dparams)          # documents the current (wrong) behaviour
+            @test !isapprox(dparams, grad_exact, atol = 1.0e-6)
         end
     end
 end

@@ -5,6 +5,29 @@ const ψ0_ad = fock(N_ad, 0)
 const tlist_ad = range(0, 40, 100)
 const ad_a = a_ad' * a_ad
 
+# NOTE ON WHAT IS AND IS NOT COMPARABLE HERE
+#
+# Forward and reverse mode necessarily measure *different* formulations of the same
+# physics, and this is a library constraint rather than an oversight:
+#
+#   * ForwardDiff cannot differentiate through a `QobjEvo`. `QobjEvo` builds each
+#     coefficient as `ScalarOperator(zero(eltype(op)), update_func)`, fixing the
+#     coefficient element type to the operator's at construction time, so a `Dual`
+#     parameter has nowhere type-correct to land and `update_coefficients!` throws
+#     `MethodError: no method matching Float64(::ForwardDiff.Dual)`.
+#   * Reverse mode cannot differentiate the constant/closure formulation. Continuous
+#     adjoints form `λᵀ ∂f/∂p`, so parameters must live in the ODE's `p`. Building `H`
+#     inside the function leaves `params = NullParameters()`, which either errors or —
+#     with `BacksolveAdjoint(autojacvec = EnzymeVJP())` — silently returns an all-zero
+#     gradient while running *faster* than the correct version.
+#
+# So the `Forward` entries below solve a constant `QuantumObject` problem (one fused
+# sparse matvec per RHS evaluation, no forced `tstops`) while the `Reverse` entries
+# solve a `QobjEvo` problem (three lazy matvecs, `tstops = tlist`). The `Primal`
+# entries measure exactly the ODE the `Reverse` entries differentiate, so the tracked
+# charts show AD *overhead* rather than an absolute time that moves with every
+# dependency bump.
+
 # ---- SESOLVE ----
 # For direct Forward differentiation
 function my_f_sesolve_direct(p)
@@ -29,6 +52,13 @@ function my_f_sesolve(p, sensealg)
     )
     return real(expect(ad_a, sol.states[end]))
 end
+
+# `sesolve` is unitary, so the reverse solve of `BacksolveAdjoint` is stable and it is
+# the only adjoint that reproduces the analytic gradient here:
+#   analytic/ForwardDiff/central-difference all give [52.941064, 6.667844]
+#   BacksolveAdjoint                                 [52.941063, 6.667844]  ✓
+#   InterpolatingAdjoint(checkpointing = true)       [48.192356, 8.345162]  ✗ 9% off
+#   GaussAdjoint                                    [-204.57,   145.85   ]  ✗
 const my_f_sesolve_bsa_enzyme = Base.Fix{2}(my_f_sesolve, BacksolveAdjoint(autojacvec = EnzymeVJP()))
 const my_f_sesolve_bsa_mooncake = Base.Fix{2}(my_f_sesolve, BacksolveAdjoint(autojacvec = MooncakeVJP()))
 
@@ -57,14 +87,32 @@ function my_f_mesolve(p, sensealg)
     )
     return real(expect(ad_a, sol.states[end]))
 end
-const my_f_mesolve_bsa_enzyme = Base.Fix{2}(my_f_mesolve, BacksolveAdjoint(autojacvec = EnzymeVJP()))
-const my_f_mesolve_bsa_mooncake = Base.Fix{2}(my_f_mesolve, BacksolveAdjoint(autojacvec = MooncakeVJP()))
+
+# Lindblad dynamics is contracting, so integrating it backwards is *expanding* and
+# `BacksolveAdjoint`'s reverse solve is unstable: it only stays correct here because
+# `saveat = tlist` incidentally supplies 100 checkpoints. With `saveat = [tlist[end]]`
+# it aborts with `dt` below floating-point epsilon and returns `NaN`.
+# `InterpolatingAdjoint(checkpointing = true)` never re-integrates the state backwards,
+# and on this problem it is correct and ~1.6x faster on both engines
+# (Mooncake 805 -> 510 ms; Enzyme 702 -> 435 ms, 883 -> 509 MB).
+const mesolve_sensealg_enzyme = InterpolatingAdjoint(autojacvec = EnzymeVJP(), checkpointing = true)
+const mesolve_sensealg_mooncake = InterpolatingAdjoint(autojacvec = MooncakeVJP(), checkpointing = true)
+const my_f_mesolve_bsa_enzyme = Base.Fix{2}(my_f_mesolve, mesolve_sensealg_enzyme)
+const my_f_mesolve_bsa_mooncake = Base.Fix{2}(my_f_mesolve, mesolve_sensealg_mooncake)
 
 # Parameters for benchmarks
 const params_sesolve = [1.0, 1.0]
 const params_mesolve = [1.0, 1.0, 1.0]
 
 function benchmark_autodiff!(SUITE)
+    # Primal references: the exact ODEs the Reverse entries differentiate, with no AD.
+    # Dividing a Reverse timing by its Primal timing gives the AD overhead factor, which
+    # is what we actually want to track for regressions.
+    SUITE["Autodiff"]["sesolve"]["Primal"] =
+        @benchmarkable my_f_sesolve($params_sesolve, nothing)
+    SUITE["Autodiff"]["mesolve"]["Primal"] =
+        @benchmarkable my_f_mesolve($params_mesolve, nothing)
+
     # Benchmark sesolve - Forward
     SUITE["Autodiff"]["sesolve"]["Forward"] = @benchmarkable ForwardDiff.gradient($my_f_sesolve_direct, $params_sesolve)
 

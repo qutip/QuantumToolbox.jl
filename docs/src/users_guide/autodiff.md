@@ -150,7 +150,35 @@ Reverse-mode differentiation is significantly more challenging than forward-mode
 
 `QuantumToolbox.jl` leverages the advanced capabilities of [`SciMLSensitivity.jl`](https://github.com/SciML/SciMLSensitivity.jl) to handle this complexity. [`SciMLSensitivity.jl`](https://github.com/SciML/SciMLSensitivity.jl) implements sophisticated methods for computing gradients of ODE solutions, such as the adjoint method, which computes gradients by solving an additional "adjoint" ODE backward in time. For more details on the adjoint method and other sensitivity analysis techniques, please refer to the [`SciMLSensitivity.jl` documentation](https://docs.sciml.ai/SciMLSensitivity/stable/).
 
-In order to reverse-differentiate the master equation, we need to define the operators as [`QuantumObjectEvolution`](@ref) objects, which use [`SciMLOperators.jl`](https://github.com/SciML/SciMLOperators.jl) to represent parameter-dependent operators.
+In order to reverse-differentiate the master equation, we need to define the operators as [`QuantumObjectEvolution`](@ref) objects, which use [`SciMLOperators.jl`](https://github.com/SciML/SciMLOperators.jl) to represent parameter-dependent operators, and pass the parameters through the `params` keyword argument.
+
+!!! warning "The parameters must be passed via `params`"
+    This is a hard requirement, not a stylistic preference. Continuous adjoint methods compute the parameter gradient as ``\lambda^\top \partial f / \partial \mathbf{p}``, where ``\mathbf{p}`` is the parameter object carried by the underlying `ODEProblem`. If you instead build the Hamiltonian *inside* the differentiated function, like
+
+    ```julia
+    function my_f(p)
+        H = p[1] * a' * a + p[2] * (a + a')   # DOES NOT WORK in reverse mode
+        c_ops = [sqrt(p[3]) * a]
+        sol = mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
+        return real(expect(a' * a, sol.states[end]))
+    end
+    ```
+
+    then the parameters live in a closure, the `ODEProblem` carries `NullParameters()`, and there is nothing for the adjoint to differentiate with respect to. Most combinations raise an error (typically `MethodError: no method matching length(::SciMLBase.NullParameters)`), but **`BacksolveAdjoint(autojacvec = EnzymeVJP())` silently returns an all-zero gradient** — and does so faster than the correct formulation, so a timing-based check will not catch it. Always validate a new formulation against a known gradient before trusting it.
+
+    The `sensealg`s that *can* differentiate a closure are the discrete/direct ones (`EnzymeAdjoint`, `MooncakeAdjoint`, `ReverseDiffAdjoint`), which differentiate the solver itself. As of `SciMLSensitivity` v7.116 these are marked experimental and none of them currently work for `sesolve`/`mesolve`: they either fail to compile or crash. `ReverseDiffAdjoint` and `ReverseDiffVJP` additionally cannot be used at all here, because `ReverseDiff.jl` does not support the complex state vectors that quantum dynamics requires.
+
+!!! tip "For a small number of parameters, prefer forward mode"
+    Reverse mode only pays off when the parameters greatly outnumber the outputs — the usual guidance is above roughly 100 parameters. For the three-parameter problem on this page, [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) on the direct formulation is several times faster than every reverse-mode configuration and uses orders of magnitude less memory. It also needs no [`QuantumObjectEvolution`](@ref), since forward mode differentiates the operator construction directly.
+
+    Note that the two modes require different formulations: `ForwardDiff.jl` **cannot** differentiate through a [`QuantumObjectEvolution`](@ref), because its coefficients are stored with the element type of the operator (e.g. `ComplexF64`), leaving nowhere to put a `ForwardDiff.Dual`.
+
+!!! note "Choosing a `sensealg`"
+    Not every adjoint method is correct for every solver, so validate against a reference before relying on one:
+
+    - For [`mesolve`](@ref), the Lindblad dynamics is *contracting*, so integrating it backwards is expanding and `BacksolveAdjoint` is numerically unstable. It works below only because the default `saveat = tlist` supplies checkpoints that restart the reverse solve; with `saveat = [tlist[end]]` it aborts and returns `NaN`. `InterpolatingAdjoint(checkpointing = true)` never re-integrates the state backwards and is both correct and faster.
+    - For [`sesolve`](@ref), the dynamics is unitary and reverses stably, and `BacksolveAdjoint` is the accurate choice.
+    - `GaussAdjoint` and `QuadratureAdjoint` currently return incorrect gradients for these problems.
 
 ```@example autodiff
 using Mooncake
@@ -172,7 +200,7 @@ function my_f_mesolve(p)
         tlist,
         progress_bar = Val(false),
         params = p,
-        sensealg = BacksolveAdjoint(autojacvec = MooncakeVJP()),
+        sensealg = InterpolatingAdjoint(autojacvec = MooncakeVJP(), checkpointing = true),
     )
 
     return real(expect(a' * a, sol.states[end]))

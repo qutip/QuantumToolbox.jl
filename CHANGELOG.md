@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Use `InterpolatingAdjoint(checkpointing = true)` instead of `BacksolveAdjoint` for the reverse-mode `mesolve` benchmarks, tests and documentation. Lindblad dynamics is contracting, so `BacksolveAdjoint` integrates an expanding system backwards and is unstable: it only returned correct gradients because the default `saveat = tlist` happened to supply checkpoints, and it produced `NaN` when only the final state was saved. The new `sensealg` is ~1.6x faster on both Mooncake and Enzyme and does not re-integrate the state backwards. `sesolve` keeps `BacksolveAdjoint`, which is the accurate choice for unitary dynamics. ([#750])
+- Add `Primal` reference entries to the autodiff benchmarks, measuring the exact ODEs the reverse-mode entries differentiate, so that the tracked charts show the AD overhead factor instead of an absolute time that moves with every dependency update. ([#750])
+- Document that the parameters must be passed to `sesolve`/`mesolve` through the `params` keyword argument for reverse-mode AD, and warn that building the Hamiltonian inside the differentiated function instead makes `BacksolveAdjoint(autojacvec = EnzymeVJP())` silently return an all-zero gradient. Add a regression test for this behaviour, plus guidance on choosing a `sensealg` and on preferring forward mode for small numbers of parameters. ([#750])
 
 ## [v0.47.3]
 Release date: 2026-07-28
@@ -561,3 +563,4 @@ Release date: 2024-11-13
 [#745]: https://github.com/qutip/QuantumToolbox.jl/issues/745
 [#747]: https://github.com/qutip/QuantumToolbox.jl/issues/747
 [#748]: https://github.com/qutip/QuantumToolbox.jl/issues/748
+[#750]: https://github.com/qutip/QuantumToolbox.jl/issues/750

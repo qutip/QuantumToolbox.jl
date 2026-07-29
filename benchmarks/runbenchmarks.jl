@@ -6,7 +6,7 @@ using SciMLBase: EnsembleSerial, EnsembleThreads
 using ForwardDiff
 using Mooncake
 using Enzyme: Enzyme, Const, Active, Duplicated
-using SciMLSensitivity: BacksolveAdjoint, EnzymeVJP, MooncakeVJP
+using SciMLSensitivity: BacksolveAdjoint, InterpolatingAdjoint, EnzymeVJP, MooncakeVJP
 
 BLAS.set_num_threads(1)
 
