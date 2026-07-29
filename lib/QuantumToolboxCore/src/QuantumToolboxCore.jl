@@ -25,9 +25,12 @@ include("physics_func.jl")
 include("deprecated.jl")
 
 function __init__()
+    # register QuantumToolbox library and its dependencies
     if (QuantumToolboxCore ∉ QT_LIBRARIES)
-        pushfirst!(QT_LIBRARIES, QuantumToolboxCore) # use pushfirst! so that main API libraries are at the front of the registry (for better display order in versioninfo)
+        # use pushfirst! so that main API libraries are at the front of the registry (for better display order in versioninfo)
+        pushfirst!(QT_LIBRARIES, QuantumToolboxCore)
 
+        # dependencies
         m_list = Module[SciMLOperators]
         foreach(m_list) do m
             (m ∉ DEP_PKGS) && push!(DEP_PKGS, m)
