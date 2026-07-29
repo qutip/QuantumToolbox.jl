@@ -174,11 +174,14 @@ In order to reverse-differentiate the master equation, we need to define the ope
     Note that the two modes require different formulations: `ForwardDiff.jl` **cannot** differentiate through a [`QuantumObjectEvolution`](@ref), because its coefficients are stored with the element type of the operator (e.g. `ComplexF64`), leaving nowhere to put a `ForwardDiff.Dual`.
 
 !!! note "Choosing a `sensealg`"
-    Not every adjoint method is correct for every solver, so validate against a reference before relying on one:
+    Not every adjoint method is correct for every solver, so validate against a reference before relying on one. The two families fail in opposite regimes:
 
-    - For [`mesolve`](@ref), the Lindblad dynamics is *contracting*, so integrating it backwards is expanding and `BacksolveAdjoint` is numerically unstable. It works below only because the default `saveat = tlist` supplies checkpoints that restart the reverse solve; with `saveat = [tlist[end]]` it aborts and returns `NaN`. `InterpolatingAdjoint(checkpointing = true)` never re-integrates the state backwards and is both correct and faster.
-    - For [`sesolve`](@ref), the dynamics is unitary and reverses stably, and `BacksolveAdjoint` is the accurate choice.
-    - `GaussAdjoint` and `QuadratureAdjoint` currently return incorrect gradients for these problems.
+    - **Adjoints that re-integrate the state backwards** (`BacksolveAdjoint`) are exact for unitary dynamics but unstable for dissipative ones. Lindblad dynamics is *contracting*, so reversing it is expanding. `BacksolveAdjoint`'s checkpoints default to the saved time points, which makes its [`mesolve`](@ref) accuracy depend on `length(tlist)` rather than on the requested tolerance: for the example on this page the gradient is accurate with 100 output points, off by `2e-4` with 50, by `3e3` with 25, and diverges to `~1e30` with 10 — with no error and no `NaN`.
+    - **Adjoints that interpolate the forward solution** (`InterpolatingAdjoint`, `GaussAdjoint`, `QuadratureAdjoint`) need a dense forward solution. QuantumToolbox sets `save_everystep = false` by default, so they only have the `saveat` grid to work from. For the relaxing dynamics of [`mesolve`](@ref) that is harmless, but for the oscillatory [`sesolve`](@ref) it produces a 9% error at 100 output points. Passing `save_everystep = true` restores full accuracy (at the cost of storing the whole trajectory).
+
+    In practice, for the problems on this page: use `InterpolatingAdjoint(checkpointing = true)` for [`mesolve`](@ref), and `BacksolveAdjoint` for [`sesolve`](@ref) unless you also pass `save_everystep = true`.
+
+    `GaussAdjoint` additionally returns incorrect gradients whenever a coefficient is a `ComposedScalarOperator`, which is what [`lindblad_dissipator`](@ref) builds for a time-dependent collapse operator (the dissipator scales as ``\bar{c}(p,t) c(p,t)``). Avoid it with time-dependent `c_ops`.
 
 ```@example autodiff
 using Mooncake
