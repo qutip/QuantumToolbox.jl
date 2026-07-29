@@ -64,5 +64,5 @@ For problems that require many propagator evaluations, there is the [`Propagator
 ```@example propagator
 U = propagator(H)
 ```
-and can be evaluated via ``U(tf, t0 = t0)``. By default, this call returns the calculated [`Qobject`](@ref) as well as stores it. Further evaluations will check whether or not the current evalutaion window overlaps with already calculated propagators and the time interval will be split up to make use of those that have already been computed.
+and can be evaluated via ``U(tf, t0 = t0)``. By default, this call returns the calculated [`Qobject`](@ref) as well as stores it. Further evaluations will check whether or not the current evaluation window overlaps with already calculated propagators and the time interval will be split up to make use of those that have already been computed.
 
