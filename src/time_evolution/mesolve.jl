@@ -115,7 +115,7 @@ function mesolveProblem(
     tlist = _check_tlist(tlist, _float_type(T))
 
     kwargs2 = _merge_saveat(tlist, e_ops, default_ode_solver_options(T); kwargs...)
-    kwargs3 = _merge_tstops(kwargs2, isconstant(L), tlist)
+    kwargs3 = _merge_dtmax(kwargs2, isconstant(L), tlist)
     kwargs4 = _generate_se_me_kwargs(e_ops, makeVal(progress_bar), tlist, kwargs3, SaveFuncMESolve, T)
 
     tspan = (tlist[1], tlist[end])
