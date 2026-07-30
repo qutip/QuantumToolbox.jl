@@ -13,7 +13,9 @@ Command line output of version numbers for given vector of packages: `pkgs`.
 """
 function pkginfo(io::IO = stdout; pkgs::Vector{Module} = Module[], split_after::Union{Nothing, Int} = nothing)
     pkg_ver_list = map(pkgversion, pkgs)
-    maxLen = max(5, maximum(length ∘ string, pkgs)) # maximum string length of package names (5 refer to "Julia")
+
+    # maximum string length of package names (5 refer to "Julia")
+    maxLen = isempty(pkgs) ? max(5, maximum(length ∘ string, pkgs)) : 5
 
     separation_line = "------------------------------------"
     print(

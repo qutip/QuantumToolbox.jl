@@ -83,16 +83,16 @@ jobs:
 
             # --- PART 4: Update CHANGELOG.md ---
             content = read(changelog_file, String)
-
-            marker1 = "\n\n## [v$v_QT]"
-            insertion1 = "\n- [lib] Bump `$package` version to `v$new_v`.\n$marker1"
-            new_content = replace(content, marker1 => insertion1)
-
-            if package == "QuantumToolbox"
-              marker2 = "## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)"
-              insertion2 = "$marker2\n\n\n\n## [v$new_v]\nRelease date: $(Dates.format(now(), "yyyy-mm-dd"))"
-              new_content = replace(new_content, marker2 => insertion2)
+            
+            if package != "QuantumToolbox"
+              marker = "\n\n## [v$v_QT]"
+              insertion = "\n- [lib] Bump `$package` version to `v$new_v`.\n$marker"
+            else
+              marker = "## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)"
+              insertion = "$marker\n\n\n\n## [v$new_v]\nRelease date: $(Dates.format(now(), "yyyy-mm-dd"))"
+              new_content = replace(new_content, marker => insertion)
             end
+            new_content = replace(content, marker => insertion)
 
             write(changelog_file, new_content)
             Changelog.generate(Changelog.CommonMark(), changelog_file; repo = "qutip/QuantumToolbox.jl")

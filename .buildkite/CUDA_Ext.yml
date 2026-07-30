@@ -23,7 +23,7 @@ steps:
             Pkg.develop(path=lib)
           end
         end
-        Pkg.test(; test_args=["--quickfail"])
+        Pkg.test(; coverage=true, test_args=["--quickfail"])
       '
     env:
       GROUP: "CUDA-Ext"

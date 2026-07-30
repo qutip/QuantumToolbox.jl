@@ -10,7 +10,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
-      - 'test/core-test/**'
+      - 'test/code-quality/**'
       - 'Project.toml'
   pull_request:
     branches:
