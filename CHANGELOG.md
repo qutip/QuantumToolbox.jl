@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - [lib] Introduce `QuantumToolboxCore` library. ([#686])
+- [lib] Bump `QuantumToolboxCore` version to `v0.1.1`.
+
 
 ## [v0.47.3]
 Release date: 2026-07-28
