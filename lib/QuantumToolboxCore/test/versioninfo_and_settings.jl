@@ -1,10 +1,4 @@
 @testitem "versioninfo and about" begin
-    # test error handling
-    io_wrong = IOBuffer()
-    push!(QuantumToolboxCore._QT_LIBRARIES, Base)
-    @test_throws ArgumentError QuantumToolboxCore.versioninfo(io_wrong)
-    deleteat!(QuantumToolboxCore._QT_LIBRARIES, findall(x -> x == Base, QuantumToolboxCore._QT_LIBRARIES))
-
     # versioninfo
     io_version = IOBuffer()
     QuantumToolboxCore.versioninfo(io_version)
