@@ -4,6 +4,8 @@ using DocumenterVitepress
 using DocumenterCitations
 using Changelog
 
+using LinearAlgebra
+
 # Load of packages required to compile the extension documentation
 using CairoMakie
 
@@ -12,7 +14,7 @@ const DRAFT = get(ENV, "DRAFT", false) == "true"  # `DRAFT   = true`  disables c
 const DOCTEST = get(ENV, "DOCTEST", true) == true # `DOCTEST = false` skips doc tests
 
 if DOCTEST
-    DocMeta.setdocmeta!(QuantumToolboxCore, :DocTestSetup, :(using QuantumToolboxCore); recursive = true)
+    DocMeta.setdocmeta!(QuantumToolboxCore, :DocTestSetup, :(using QuantumToolboxCore, LinearAlgebra, SparseArrays); recursive = true)
     DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox, LinearAlgebra, SparseArrays); recursive = true)
 end
 

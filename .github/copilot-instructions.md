@@ -49,7 +49,7 @@ sol = mesolve(H, ψ0, tlist, c_ops; ...)          # Solve directly
   - `QuantumToolboxChainRulesCoreExt.jl`: Automatic differentiation
 
 - **[test/](../test/)**: Two-tier test structure
-  - `core-test/`: Core functionality via `TestItemRunner.jl`
+  - `main-test/`: Core functionality via `TestItemRunner.jl`
   - `ext-test/`: Extensions (cpu/, gpu/ subdirs)
 
 ## Code Patterns & Conventions
@@ -94,7 +94,7 @@ make format                  # Format code with Runic
 make setup                   # Install dev dependencies (Runic, Changelog)
 ```
 
-Uses Aqua.jl and JET.jl for static analysis (see [test/core-test/code-quality/](../test/core-test/code-quality/)).
+Uses Aqua.jl and JET.jl for static analysis (see [test/main-test/code-quality/](../test/main-test/code-quality/)).
 
 ### Documentation
 ```bash

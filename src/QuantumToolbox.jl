@@ -4,10 +4,7 @@ module QuantumToolbox
 using LinearAlgebra
 using SparseArrays
 
-import Base: AbstractVecOrTuple
 import Distributed: RemoteChannel
-import LinearAlgebra: checksquare
-import Pkg
 import Random: AbstractRNG, default_rng
 import Statistics: mean, std
 
@@ -17,19 +14,25 @@ import Reexport: @reexport
 
 ## internal functions of QuantumToolbox libraries
 import QuantumToolboxCore:
-    FloatOrComplex,
+    position, # since we don't export it (conflict with Base.position)
+    momentum, # since we don't export it (just to align with position)
     getVal,
     makeVal,
     get_typename_wrapper,
+    isendomorphic,
+    promote_op_type,
+    check_dimensions,
+    check_mul_dimensions,
+    dimensions_to_dims,
+    to_sparse_if_needed,
     _float_type,
     _complex_float_type,
-    _convert_eltype_wordsize,
-    _non_static_array_warning,
-    _lazy_tensor_warning,
-    _Ginibre_ensemble,
-    _Boltzmann_weight,
     _dense_similar,
-    _sparse_similar
+    _sparse_similar,
+    _spre,
+    _spost,
+    _sprepost,
+    _ptrace_oper
 
 ## SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
 import SciMLBase:
@@ -65,18 +68,13 @@ import SciMLBase:
 import StochasticDiffEqHighOrder: SRA2, SRIW1
 import SciMLOperators:
     cache_operator,
-    iscached,
     isconstant,
     SciMLOperators,
     AbstractSciMLOperator,
     MatrixOperator,
     ScalarOperator,
-    ScaledOperator,
     AddedOperator,
-    ComposedOperator,
-    IdentityOperator,
-    update_coefficients!,
-    concretize
+    IdentityOperator
 import LinearSolve:
     LinearSolve, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, LUFactorization, OperatorAssumptions
 import DiffEqCallbacks: PeriodicCallback, FunctionCallingCallback, FunctionCallingAffect, TerminateSteadyState
@@ -86,7 +84,7 @@ import OrdinaryDiffEqLowOrderRK: DP5
 import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
 
 ## other dependencies (in alphabetical order)
-import ArrayInterface: allowed_getindex, allowed_setindex!
+import ArrayInterface: allowed_setindex!
 import FFTW: fft, ifft, fftfreq, fftshift
 import FillArrays: Eye
 import Graphs: connected_components, DiGraph
@@ -96,37 +94,14 @@ import ProgressMeter: Progress, next!
 import SpecialFunctions: loggamma
 import StaticArraysCore: SVector, MVector
 
-# Export functions from the other modules
-
-## LinearAlgebra
-export ishermitian, issymmetric, isposdef, dot, tr, svdvals, norm, normalize, normalize!, diag, Hermitian, Symmetric
-
-## SparseArrays
-export permute
-
-## SciMLOperators
-export cache_operator, iscached, isconstant
-
 # Source files
 
 ## Some overloading with QuantumToolboxCore library
 include("core_overload.jl")
 
-## Quantum Object
-include("qobj/dimensions.jl")
-include("qobj/energy_restricted.jl")
-include("qobj/quantum_object_base.jl")
-include("qobj/quantum_object.jl")
-include("qobj/quantum_object_evo.jl")
-include("qobj/boolean_functions.jl")
-include("qobj/arithmetic_and_attributes.jl")
-include("qobj/eigsolve.jl")
-include("qobj/functions.jl")
-include("qobj/states.jl")
-include("qobj/operators.jl")
-include("qobj/superoperators.jl")
-include("qobj/synonyms.jl")
-include("qobj/block_diagonal_form.jl")
+## some functions for Quantum Object
+include("eigsolve.jl")
+include("block_diagonal_form.jl")
 
 ## time evolution
 include("time_evolution/time_evolution.jl")
@@ -150,9 +125,6 @@ include("time_evolution/time_evolution_dynamical.jl")
 include("correlations.jl")
 include("wigner.jl")
 include("spin_lattice.jl")
-include("entropy.jl")
-include("metrics.jl")
-include("negativity.jl")
 include("steadystate.jl")
 include("spectrum.jl")
 

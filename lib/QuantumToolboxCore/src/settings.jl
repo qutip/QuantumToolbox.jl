@@ -21,7 +21,7 @@ Contains all the default global settings of QuantumToolbox.jl and all related li
 
 # List of settings
 
-- `tidyup_tol::Float64 = 1.0e-14` : tolerance for [`tidyup`](@ref QuantumToolbox.tidyup), [`tidyup!`](@ref QuantumToolbox.tidyup!) and [`to_sparse`](@ref QuantumToolbox.to_sparse).
+- `tidyup_tol::Float64 = 1.0e-14` : tolerance for [`tidyup`](@ref QuantumToolboxCore.tidyup), [`tidyup!`](@ref QuantumToolboxCore.tidyup!) and [`to_sparse`](@ref QuantumToolboxCore.to_sparse).
 - `auto_tidyup::Bool = true` : Automatically `tidyup`.
 - `ProgressMeterKWARGS::NamedTuple = (showspeed = true, printed = true)` : Default keyword arguments for progress bar in [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl). This allows the customization of progress bar.
 

@@ -46,7 +46,7 @@ julia> entropy_vn(ρ, base=2)
 """
 function entropy_vn(ρ::QuantumObject{ObjType}; base::Int = 0, tol::Real = 1.0e-15) where {ObjType <: Union{Ket, Operator}}
     T = eltype(ρ)
-    vals = eigenenergies(ket2dm(ρ))
+    vals = eigvals(ket2dm(ρ))
     indexes = findall(x -> abs(x) > tol, vals)
     length(indexes) == 0 && return zero(real(T))
     nzvals = vals[indexes]
@@ -83,8 +83,8 @@ function entropy_relative(
     # consider the eigen decompositions:
     #   ρ = Σ_i p_i |i⟩⟨i|
     #   σ = Σ_j q_j |j⟩⟨j|
-    ρ_result = eigenstates(ρ_dm)
-    σ_result = eigenstates(σ_dm)
+    ρ_result = eigen(ρ_dm)
+    σ_result = eigen(σ_dm)
 
     # make sure all p_i and q_j are real
     any(p_i -> imag(p_i) >= tol, ρ_result.values) && error("Input `ρ` has non-real eigenvalues.")

@@ -27,18 +27,6 @@ PhysicalConstants
 convert_unit
 ```
 
-## [QuantumToolbox](@id doc-API:QuantumToolbox)
-
-```@meta
-CurrentModule = QuantumToolbox
-
-DocTestSetup = quote
-    using LinearAlgebra
-    using SparseArrays
-    using QuantumToolbox
-end
-```
-
 ### [Dimensions](@id doc-API:Dimensions)
 
 ```@docs
@@ -125,12 +113,8 @@ partial_transpose
 
 ```@docs
 EigsolveResult
-eigenenergies
-eigenstates
 LinearAlgebra.eigen
 LinearAlgebra.eigvals
-eigsolve
-eigsolve_al
 ```
 
 ### [Qobj manipulation](@id doc-API:Qobj-manipulation)
@@ -187,8 +171,8 @@ create
 displace
 squeeze
 num
-QuantumToolbox.position
-QuantumToolbox.momentum
+QuantumToolboxCore.position
+QuantumToolboxCore.momentum
 phase
 fdestroy
 fcreate
@@ -227,6 +211,46 @@ sinm
 cosm
 qeye_like
 qzero_like
+```
+
+### [Entropy and Metrics](@id doc-API:Entropy-and-Metrics)
+
+```@docs
+entropy_vn
+entropy_relative
+entropy_linear
+entropy_mutual
+entropy_conditional
+entanglement
+concurrence
+negativity
+fidelity
+tracedist
+hilbert_dist
+hellinger_dist
+bures_dist
+bures_angle
+```
+
+## [QuantumToolbox](@id doc-API:QuantumToolbox)
+
+```@meta
+CurrentModule = QuantumToolbox
+
+DocTestSetup = quote
+    using LinearAlgebra
+    using SparseArrays
+    using QuantumToolbox
+end
+```
+
+### [Extra eigen solvers](@id doc-API:Extra-eigen-solvers)
+
+```@docs
+eigenenergies
+eigenstates
+eigsolve
+eigsolve_al
 ```
 
 ### [Time evolution](@id doc-API:Time-evolution)
@@ -301,25 +325,6 @@ spectrum
 ExponentialSeries
 PseudoInverse
 Lanczos
-```
-
-### [Entropy and Metrics](@id doc-API:Entropy-and-Metrics)
-
-```@docs
-entropy_vn
-entropy_relative
-entropy_linear
-entropy_mutual
-entropy_conditional
-entanglement
-concurrence
-negativity
-fidelity
-tracedist
-hilbert_dist
-hellinger_dist
-bures_dist
-bures_angle
 ```
 
 ### [Spin Lattice](@id doc-API:Spin-Lattice)

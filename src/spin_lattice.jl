@@ -13,7 +13,7 @@ Base.@kwdef struct Lattice{TN <: Integer, TLI <: LinearIndices, TCI <: Cartesian
     car_idx::TCI = CartesianIndices((Nx, Ny))
 end
 
-multisite_operator(latt::Lattice, pairs::Pair{<:Integer, <:QuantumObject{Operator}}...) = multisite_operator(makeVal(latt.N), pairs...)
+QuantumToolbox.multisite_operator(latt::Lattice, pairs::Pair{<:Integer, <:QuantumObject{Operator}}...) = multisite_operator(makeVal(latt.N), pairs...)
 
 #Definition of nearest-neighbour sites on lattice
 periodic_boundary_conditions(i::Integer, N::Integer) = 1 + (i - 1 + N) % N

@@ -27,26 +27,6 @@ FFTCorrelation() = error(
     "`FFTCorrelation` is deprecated and will be removed in next major release, use `spectrum_correlation_fft` to calculate the spectrum with FFT method instead.",
 )
 
-export sparse_to_dense
-function sparse_to_dense(args...)
-    Base.depwarn(
-        "`sparse_to_dense` is deprecated and will be removed in next major release, use `to_dense` instead.",
-        :sparse_to_dense,
-        force = true,
-    )
-    return to_dense(args...)
-end
-
-export dense_to_sparse
-function dense_to_sparse(args...)
-    Base.depwarn(
-        "`dense_to_sparse` is deprecated and will be removed in next major release, use `to_sparse` instead.",
-        :dense_to_sparse,
-        force = true,
-    )
-    return to_sparse(args...)
-end
-
 function correlation_3op_2t(
         H::QuantumObject{HOpType},
         ψ0::QuantumObject{StateOpType},
@@ -121,73 +101,12 @@ function correlation_2op_1t(
     return correlation_2op_1t(H, ψ0, τ_l, c_ops, A, B; reverse = reverse, kwargs...)
 end
 
-export MultiSiteOperator
-function MultiSiteOperator(args...)
-    Base.depwarn(
-        "`MultiSiteOperator` is deprecated and will be removed in next major release, use `multisite_operator` instead.",
-        :MultiSiteOperator,
-        force = true,
-    )
-    return multisite_operator(args...)
-end
-
 export ProgressBar
 function ProgressBar(args...; kwargs...)
     # Use error instead of depwarn, since ProgressBar and Progress have different arguments
     return error(
         "`ProgressBar` is deprecated and will be removed in next major release. Use `Progress` from `ProgressMeter.jl` instead.",
     )
-end
-
-function spre(A::AbstractQuantumObject{Operator}, Id_cache)
-    Base.depwarn(
-        "The argument `Id_cache` for `spre` is now deprecated, as we now internally use FillArrays.jl, which preserves the same efficiency without requiring this parameter.",
-        :spre,
-        force = true,
-    )
-    return spre(A)
-end
-
-function spost(A::AbstractQuantumObject{Operator}, Id_cache)
-    Base.depwarn(
-        "The argument `Id_cache` for `spost` is now deprecated, as we now internally use FillArrays.jl, which preserves the same efficiency without requiring this parameter.",
-        :spost,
-        force = true,
-    )
-    return spost(A)
-end
-
-function lindblad_dissipator(C::QuantumObject{Operator}, Id_cache)
-    Base.depwarn(
-        "The argument `Id_cache` for `lindblad_dissipator` is now deprecated, as we now internally use FillArrays.jl, which preserves the same efficiency without requiring this parameter.",
-        :lindblad_dissipator,
-        force = true,
-    )
-    return lindblad_dissipator(C)
-end
-
-function liouvillian(
-        H::QuantumObject{HOpType},
-        c_ops::AbstractVector,
-        Id_cache;
-        kwargs...,
-    ) where {HOpType <: Union{Operator, SuperOperator}}
-    Base.depwarn(
-        "The argument `Id_cache` for `liouvillian` is now deprecated, as we now internally use FillArrays.jl, which preserves the same efficiency without requiring this parameter.",
-        :liouvillian,
-        force = true,
-    )
-    return liouvillian(H, c_ops; kwargs...)
-end
-
-export liouvillian_generalized
-function liouvillian_generalized(args...; kwargs...)
-    Base.depwarn(
-        "`liouvillian_generalized` is deprecated and will be removed in next major release, use `liouvillian_dressed_nonsecular` instead.",
-        :liouvillian_generalized,
-        force = true,
-    )
-    return liouvillian_dressed_nonsecular(args...; kwargs...)
 end
 
 export steadystate_floquet

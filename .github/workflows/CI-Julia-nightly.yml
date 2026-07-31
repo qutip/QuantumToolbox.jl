@@ -10,7 +10,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
-      - 'test/core-test/**'
+      - 'test/main-test/**'
       - 'Project.toml'
   pull_request:
     branches:
@@ -21,7 +21,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
-      - 'test/core-test/**'
+      - 'test/main-test/**'
       - 'Project.toml'
     types:
       - opened

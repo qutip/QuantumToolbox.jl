@@ -39,7 +39,17 @@ Here is a table that summarizes all the supported linear algebra functions and a
 | get data | [`get_data(Q)`](@ref get_data) | - |
 | get coherence | [`get_coherence(Q)`](@ref get_coherence) | - |
 
-## Eigenvalue decomposition
+## Eigen decomposition
+
+### `LinearAlgebra.jl` eigen solvers
+
+- [`eigvals`](@ref LinearAlgebra.eigvals): return eigenenergies (eigenvalues)
+- [`eigen`](@ref LinearAlgebra.eigen): return [`EigsolveResult`](@ref) (contains eigenvalues and eigenvectors)
+
+!!! note "Only work for dense matrices"
+    The eigen decomposition methods provided by `LinearAlgebra.jl` only works for dense matrices. If you pass-in a sparse matrix, the function automatically convert it to dense matrix.
+
+### Extra eigen solvers
 
 - [`eigenenergies`](@ref): return eigenenergies (eigenvalues)
 - [`eigenstates`](@ref): return [`EigsolveResult`](@ref) (contains eigenvalues and eigenvectors)

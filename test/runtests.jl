@@ -64,7 +64,7 @@ if (GROUP == "All") || (GROUP == "Main")
 
     # main package tests (all tests except those in the lib folder)
     println("\n[QuantumToolbox]")
-    @run_package_tests filter = ti -> !occursin("lib", ti.filename) verbose = true
+    @run_package_tests filter = ti -> occursin(joinpath(@__DIR__, "main-test"), ti.filename) verbose = true
 
     println("\n===============> Main tests completed <===============\n")
 end
