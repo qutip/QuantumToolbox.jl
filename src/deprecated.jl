@@ -109,6 +109,16 @@ function ProgressBar(args...; kwargs...)
     )
 end
 
+export liouvillian_generalized
+function liouvillian_generalized(args...; kwargs...)
+    Base.depwarn(
+        "`liouvillian_generalized` is deprecated and will be removed in next major release, use `liouvillian_dressed_nonsecular` instead.",
+        :liouvillian_generalized,
+        force = true,
+    )
+    return liouvillian_dressed_nonsecular(args...; kwargs...)
+end
+
 export steadystate_floquet
 function steadystate_floquet(args...; kwargs...)
     Base.depwarn(

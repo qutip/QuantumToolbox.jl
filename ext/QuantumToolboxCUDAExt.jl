@@ -1,9 +1,8 @@
 module QuantumToolboxCUDAExt
 
-# QuantumToolbox
-using QuantumToolbox
-using QuantumToolbox: makeVal, getVal
-import QuantumToolbox: _sparse_similar, _convert_eltype_wordsize
+# QuantumToolboxCore
+using QuantumToolboxCore
+import QuantumToolboxCore: makeVal, getVal, _sparse_similar, _convert_eltype_wordsize
 
 # CUDA libraries
 import CUDACore: CUDACore, cu, CuArray, allowscalar
@@ -102,7 +101,7 @@ function CUDACore.cu(
     return CuSparseMatrixCSC{_convert_eltype_wordsize(eltype(A), word_size)}(A)
 end
 
-QuantumToolbox._sparse_similar(A::CuSparseMatrixCSC, args...) = sparse(args..., fmt = :csc)
-QuantumToolbox._sparse_similar(A::CuSparseMatrixCSR, args...) = sparse(args..., fmt = :csr)
+QuantumToolboxCore._sparse_similar(A::CuSparseMatrixCSC, args...) = sparse(args..., fmt = :csc)
+QuantumToolboxCore._sparse_similar(A::CuSparseMatrixCSR, args...) = sparse(args..., fmt = :csr)
 
 end

@@ -1,7 +1,7 @@
 module QuantumToolboxChainRulesCoreExt
 
 using LinearAlgebra
-import QuantumToolbox: QuantumObject
+import QuantumToolboxCore: QuantumObject
 import ChainRulesCore: rrule, NoTangent, Tangent
 
 function rrule(::Type{QuantumObject}, data, type, dimensions)

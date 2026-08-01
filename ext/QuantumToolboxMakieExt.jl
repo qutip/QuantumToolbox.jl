@@ -1,8 +1,9 @@
 module QuantumToolboxMakieExt
 
-using QuantumToolbox
+using QuantumToolboxCore
+import QuantumToolboxCore: makeVal, getVal
 import QuantumToolbox:
-    makeVal, getVal, _state_to_bloch, _handle_matrix_plot_data, _gen_default_ket_labels, _gen_default_bra_labels
+    _state_to_bloch, _handle_matrix_plot_data, _gen_default_ket_labels, _gen_default_bra_labels
 
 import LinearAlgebra: cross, deg2rad, normalize, size
 import Makie:

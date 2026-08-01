@@ -27,6 +27,7 @@ import QuantumToolboxCore:
     to_sparse_if_needed,
     _float_type,
     _complex_float_type,
+    _non_endomorphic_dims_error,
     _dense_similar,
     _sparse_similar,
     _spre,

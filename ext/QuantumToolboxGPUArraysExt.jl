@@ -1,14 +1,14 @@
 module QuantumToolboxGPUArraysExt
 
-using QuantumToolbox
+using QuantumToolboxCore
 
 import GPUArrays: AbstractGPUArray, AbstractGPUSparseArray, dense_array_type
 import KernelAbstractions
 import KernelAbstractions: @kernel, @Const, @index, get_backend, synchronize
 
-QuantumToolbox.to_dense(::Type{T1}, A::AbstractGPUArray{T2}) where {T1 <: Number, T2 <: Number} = T1.(A)
-QuantumToolbox.to_dense(A::AbstractGPUSparseArray) = dense_array_type(typeof(A))(A)
-QuantumToolbox.to_dense(::Type{T}, A::AbstractGPUSparseArray) where {T <: Number} = dense_array_type(typeof(A)){T}(A)
+QuantumToolboxCore.to_dense(::Type{T1}, A::AbstractGPUArray{T2}) where {T1 <: Number, T2 <: Number} = T1.(A)
+QuantumToolboxCore.to_dense(A::AbstractGPUSparseArray) = dense_array_type(typeof(A))(A)
+QuantumToolboxCore.to_dense(::Type{T}, A::AbstractGPUSparseArray) where {T <: Number} = dense_array_type(typeof(A)){T}(A)
 
 @kernel function tr_kernel!(B, @Const(A))
     # i, j, k = @index(Global, NTuple)
@@ -21,7 +21,7 @@ QuantumToolbox.to_dense(::Type{T}, A::AbstractGPUSparseArray) where {T <: Number
     end
 end
 
-function QuantumToolbox._map_trace(A::AbstractGPUArray{T, 4}) where {T}
+function QuantumToolboxCore._map_trace(A::AbstractGPUArray{T, 4}) where {T}
     B = similar(A, size(A, 1), size(A, 2))
     fill!(B, 0)
 
