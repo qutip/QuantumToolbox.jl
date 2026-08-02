@@ -90,7 +90,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
-- `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
+- `jump_callback`: The Jump Callback type: [`ContinuousLindbladJumpCallback`](@ref) or [`DiscreteLindbladJumpCallback`](@ref). The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -198,7 +198,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemblealg`: Ensemble algorithm to use. Default to `EnsembleThreads()`.
-- `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
+- `jump_callback`: The Jump Callback type: [`ContinuousLindbladJumpCallback`](@ref) or [`DiscreteLindbladJumpCallback`](@ref). The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
@@ -332,7 +332,7 @@ If the environmental measurements register a quantum jump, the wave function und
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemblealg`: Ensemble algorithm to use. Default to `EnsembleThreads()`.
-- `jump_callback`: The Jump Callback type: Discrete or Continuous. The default is `ContinuousLindbladJumpCallback()`, which is more precise.
+- `jump_callback`: The Jump Callback type: [`ContinuousLindbladJumpCallback`](@ref) or [`DiscreteLindbladJumpCallback`](@ref). The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.

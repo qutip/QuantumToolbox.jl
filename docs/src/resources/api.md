@@ -263,6 +263,8 @@ TimeEvolutionProblem
 TimeEvolutionSol
 TimeEvolutionMCSol
 TimeEvolutionStochasticSol
+ContinuousLindbladJumpCallback
+DiscreteLindbladJumpCallback
 average_states
 average_expect
 std_expect
