@@ -45,8 +45,7 @@ sol = mesolve(H, ψ0, tlist, c_ops; ...)          # Solve directly
   
 - **[ext/](../ext/)**: Optional extensions (loaded via weakdeps)
   - `QuantumToolboxMakieExt.jl`: Visualization (Bloch sphere, Wigner)
-  - `QuantumToolboxCUDAExt.jl`: GPU acceleration
-  - `QuantumToolboxChainRulesCoreExt.jl`: Automatic differentiation
+  - `QuantumToolboxCoreCUDAExt.jl`: GPU acceleration
 
 - **[test/](../test/)**: Two-tier test structure
   - `main-test/`: Core functionality via `TestItemRunner.jl`
@@ -141,7 +140,7 @@ julia --project=benchmarks benchmarks/runbenchmarks.jl
 
 **Adding new solver**: Copy mesolve (or similars) pattern, create `*Problem`/`solve` functions in new file, add to [src/QuantumToolbox.jl](../src/QuantumToolbox.jl) include list.
 
-**Adding GPU support**: Extend ext/QuantumToolboxCUDAExt.jl with appropriate CuArray dispatches.
+**Adding GPU support**: Extend lib/ext/QuantumToolboxCoreCUDAExt.jl with appropriate CuArray dispatches.
 
 **Debugging**: When debugging, create a new environment in a new folder with only QuantumToolbox.jl and dependencies to isolate issues. Remove them when debugging is complete.
 
