@@ -1,4 +1,4 @@
-module QuantumToolboxGPUArraysExt
+module QuantumToolboxCoreGPUArraysExt
 
 using QuantumToolboxCore
 

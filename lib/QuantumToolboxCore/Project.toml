@@ -11,8 +11,22 @@ SciMLOperators = "c0aeaf25-5076-4817-a8d5-81caf7dfa961"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 
+[weakdeps]
+CUDACore = "bd0ed864-bdfe-4181-a5ed-ce625a5fdea2"
+cuSPARSE = "b26da814-b3bc-49ef-b0ee-c816305aa060"
+GPUArrays = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
+KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
+
+[extensions]
+QuantumToolboxCoreCUDAExt = ["CUDACore", "cuSPARSE"]
+QuantumToolboxCoreGPUArraysExt = ["GPUArrays", "KernelAbstractions"]
+
 [compat]
+CUDACore = "6"
+cuSPARSE = "6"
 FillArrays = "1"
+GPUArrays = "11.4.1"
+KernelAbstractions = "0.9"
 LinearAlgebra = "1"
 Random = "1"
 SciMLOperators = "1.12"

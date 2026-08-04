@@ -1,4 +1,4 @@
-module QuantumToolboxCUDAExt
+module QuantumToolboxCoreCUDAExt
 
 # QuantumToolboxCore
 using QuantumToolboxCore
