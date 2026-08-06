@@ -159,7 +159,7 @@ jobs:
                 new_v = new_versions[pkg]
                 marker = "\n\n## [v$v_QT]"
                 insertion = "\n- [lib] Bump `$pkg` version to `v$new_v`. ([#$pr_number])\n$marker"
-                content = replace(content, marker => insertion)
+                global content = replace(content, marker => insertion)
               end
             end
 
@@ -168,7 +168,7 @@ jobs:
               new_v = new_versions["QuantumToolbox"]
               marker = "## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)"
               insertion = "$marker\n\n\n\n## [v$new_v]\nRelease date: $(Dates.format(now(), "yyyy-mm-dd"))"
-              content = replace(content, marker => insertion)
+              global content = replace(content, marker => insertion)
             end
 
             # write CHANGELOG.md
