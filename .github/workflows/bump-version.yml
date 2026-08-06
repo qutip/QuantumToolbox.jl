@@ -6,20 +6,20 @@ on:
       QuantumToolbox:
         description: 'Bump version for QuantumToolbox'
         required: true
-        default: 'no'
+        default: 'skip'
         type: choice
         options:
-        - no
+        - skip
         - patch
         - minor
         - major
       QuantumToolboxCore:
         description: 'Bump version for QuantumToolboxCore'
         required: true
-        default: 'no'
+        default: 'skip'
         type: choice
         options:
-        - no
+        - skip
         - patch
         - minor
         - major
@@ -60,8 +60,8 @@ jobs:
 
             # handle input BUMPS
             BUMPS = JSON.parse(ENV["BUMPS"])
-            package_list = String[k for (k, v) in BUMPS if v != "no"]
-            isempty(package_list) && error("Every package is set to `no`. Select a bump version type for at least one package.")
+            package_list = String[k for (k, v) in BUMPS if v != "skip"]
+            isempty(package_list) && error("Every package is set to `skip`. Select a bump version type for at least one package.")
 
             old_QT_version = TOML.parsefile("Project.toml")["version"]
             old_versions = Dict{String,VersionNumber}()
