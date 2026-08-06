@@ -89,10 +89,14 @@ jobs:
             open(ENV["GITHUB_OUTPUT"], "a") do io
               println(io, "branch_name=$branch")
               println(io, "pr_title=$title")
-              println(io, "pr_body=$body")
               println(io, "changed_files=$(join(changed_files, " "))")
               println(io, "old_QT_version=$old_QT_version")
               println(io, "new_versions=$(JSON.json(new_versions))")
+
+              # since body is multi-line, so it needs to use heredoc-style delimiter syntax
+              println(io, "pr_body<<PR_BODY_EOF")
+              println(io, body)
+              println(io, "PR_BODY_EOF")
             end
           '
         env:
