@@ -158,7 +158,7 @@ jobs:
               if pkg != "QuantumToolbox"
                 new_v = new_versions[pkg]
                 marker = "\n\n## [v$v_QT]"
-                insertion = "\n- [lib] Bump `$pkg` version to `v$new_v`. ([#$pr_number])\n$marker"
+                insertion = "\n- [lib] Bump `$pkg` version to `v$new_v`. ([#$pr_number])$marker"
                 global content = replace(content, marker => insertion)
               end
             end
