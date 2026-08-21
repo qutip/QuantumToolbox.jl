@@ -7,9 +7,9 @@ const QT_LIBRARIES = Module[]
 const DEP_PKGS = Module[]
 
 # separation lines
-const SEPARATION_LENGTH = 36
-const SINGLE_SEPARATION_LINE = repeat("-", SEPARATION_LENGTH) * "\n"
-const DOUBLE_SEPARATION_LINE = repeat("=", SEPARATION_LENGTH) * "\n"
+const SEPARATION_LINE_LENGTH = 36
+const SINGLE_SEPARATION_LINE = repeat("-", SEPARATION_LINE_LENGTH) * "\n"
+const DOUBLE_SEPARATION_LINE = repeat("=", SEPARATION_LINE_LENGTH) * "\n"
 
 raw"""
     QuantumToolboxCore.pkginfo(io::IO=stdout; pkgs::Vector{Module} = Module[])
