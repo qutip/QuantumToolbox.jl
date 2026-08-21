@@ -15,7 +15,7 @@ function pkginfo(io::IO = stdout; pkgs::Vector{Module} = Module[], split_after::
     pkg_ver_list = map(pkgversion, pkgs)
 
     # maximum string length of package names (5 refer to "Julia")
-    maxLen = isempty(pkgs) ? max(5, maximum(length ∘ string, pkgs)) : 5
+    maxLen = isempty(pkgs) ? 5 : max(5, maximum(length ∘ string, pkgs))
 
     separation_line = "------------------------------------"
     print(
