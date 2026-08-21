@@ -6,6 +6,11 @@ Reusable version information helpers for QuantumToolbox libraries.
 const QT_LIBRARIES = Module[]
 const DEP_PKGS = Module[]
 
+# separation lines
+const SEPARATION_LENGTH = 36
+const SINGLE_SEPARATION_LINE = repeat("-", SEPARATION_LENGTH) * "\n"
+const DOUBLE_SEPARATION_LINE = repeat("=", SEPARATION_LENGTH) * "\n"
+
 raw"""
     QuantumToolboxCore.pkginfo(io::IO=stdout; pkgs::Vector{Module} = Module[])
 
@@ -15,19 +20,19 @@ function pkginfo(io::IO = stdout; pkgs::Vector{Module} = Module[], split_after::
     pkg_ver_list = map(pkgversion, pkgs)
 
     # maximum string length of package names (5 refer to "Julia")
-    maxLen = isempty(pkgs) ? 5 : max(5, maximum(length ∘ string, pkgs))
+    pkgs_is_empty = isempty(pkgs)
+    maxLen = pkgs_is_empty ? 5 : max(5, maximum(length ∘ string, pkgs))
 
-    separation_line = "------------------------------------"
     print(
         io,
         "Package information:\n",
-        "====================================\n",
+        DOUBLE_SEPARATION_LINE,
     )
     println(io, rpad("Julia", maxLen, " "), " Ver. ", VERSION) # print Julia version first
-    println(io, separation_line)
+    pkgs_is_empty || print(io, SINGLE_SEPARATION_LINE)
     for (idx, (pkg, pkg_ver)) in enumerate(zip(pkgs, pkg_ver_list))
         println(io, rpad(pkg, maxLen, " "), " Ver. ", pkg_ver)
-        !isnothing(split_after) && (idx == split_after) && (idx < length(pkgs)) && println(io, separation_line)
+        !isnothing(split_after) && (idx == split_after) && (idx < length(pkgs)) && print(io, SINGLE_SEPARATION_LINE)
     end
     print(io, "\n")
     return nothing
@@ -46,7 +51,7 @@ function sysinfo(io::IO = stdout)
     println(
         io,
         "System information:\n",
-        "====================================\n",
+        DOUBLE_SEPARATION_LINE,
         """OS       : $(OS_name) ($(Sys.MACHINE))\n""",
         """CPU      : $(length(cpu)) × $(cpu[1].model)\n""",
         """Memory   : $(round(Sys.total_memory() / 2^30, digits = 3)) GB\n""",
