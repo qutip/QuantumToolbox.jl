@@ -18,7 +18,7 @@ steps:
             - ".buildkite/pipeline.yml"
             - ".buildkite/CUDA_Ext.yml"
             - "src/**"
-            - "lib/QuantumToolboxCore"
+            - "lib/QuantumToolboxCore/**"
             - "test/runtests.jl"
             - "test/ext-test/gpu/**"
           target: ".buildkite/CUDA_Ext.yml"

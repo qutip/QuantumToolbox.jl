@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [lib] Introduce `QuantumToolboxCore` library. ([#686], [#753])
 - [lib] Move more basic functionalities to `QuantumToolboxCore` library. ([#751])
+- [lib] Use `tensor` and `⊗` defined in `TensorCore.jl`. ([#764], [#765])
 
 ## [v0.47.3]
 Release date: 2026-07-28
@@ -565,3 +566,5 @@ Release date: 2024-11-13
 [#748]: https://github.com/qutip/QuantumToolbox.jl/issues/748
 [#751]: https://github.com/qutip/QuantumToolbox.jl/issues/751
 [#753]: https://github.com/qutip/QuantumToolbox.jl/issues/753
+[#764]: https://github.com/qutip/QuantumToolbox.jl/issues/764
+[#765]: https://github.com/qutip/QuantumToolbox.jl/issues/765

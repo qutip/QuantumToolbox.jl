@@ -142,8 +142,8 @@ to_sparse_if_needed(::Val{needed}, A::Union{QuantumObject, AbstractArray}, tol::
 
 @doc raw"""
     kron(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
-    tensor(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
-    ⊗(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
+    TensorCore.tensor(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
+    TensorCore.⊗(A::AbstractQuantumObject, B::AbstractQuantumObject, ...)
     A ⊗ B
 
 Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) ``\hat{A} \otimes \hat{B} \otimes \cdots``.
@@ -173,6 +173,8 @@ julia> a.dims, O.dims
 (([20], [20]), ([20, 20], [20, 20]))
 ```
 """
+Base.kron, TensorCore.tensor # add the same docstring to both methods
+
 Base.kron(A::AbstractQuantumObject) = A
 
 # kron for two quantum objects A and B
@@ -204,6 +206,13 @@ function Base.kron(A::Vector{<:AbstractQuantumObject})
     @warn "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead."
     return kron(A...)
 end
+
+# Add methods to TensorCore.jl
+# Note that
+#   const ⊗ = tensor
+# is defined in TensorCore.jl already, so we only need to overload tensor for AbstractQuantumObject here
+TensorCore.tensor(A::AbstractQuantumObject...) = kron(A...)
+TensorCore.tensor(A::Vector{<:AbstractQuantumObject}) = kron(A)
 
 @doc raw"""
     multisite_operator(dims::Union{AbstractVecOrTuple,Integer,Val}, pairs::Pair{Integer,QuantumObject{Operator}}...)

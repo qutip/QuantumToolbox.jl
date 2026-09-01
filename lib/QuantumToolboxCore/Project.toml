@@ -10,6 +10,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SciMLOperators = "c0aeaf25-5076-4817-a8d5-81caf7dfa961"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
+TensorCore = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
 
 [weakdeps]
 CUDACore = "bd0ed864-bdfe-4181-a5ed-ce625a5fdea2"
@@ -32,4 +33,5 @@ Random = "1"
 SciMLOperators = "1.12"
 SparseArrays = "1"
 StaticArraysCore = "1"
+TensorCore = "0.1.1"
 julia = "1.10"

@@ -5,7 +5,6 @@ Synonyms of the functions for QuantumObject
 export Qobj, QobjEvo, shape, isherm
 export trans, dag, matrix_element, unit
 export basis
-export tensor, ⊗
 export qeye, qeye_like, qzero_like
 export vector_to_operator, operator_to_vector
 export sqrtm, logm, expm, sinm, cosm
@@ -50,9 +49,6 @@ Supports the following inputs:
 matrix_element(i, A, j) = dot(i, A, j)
 
 const unit = normalize
-
-const tensor = kron
-const ⊗ = kron
 
 const qeye = eye
 

@@ -468,15 +468,27 @@
     end
 
     @testset "tensor" begin
+        # the following functions acts the same:
+        #   - Base.kron
+        #   - TensorCore.tensor
+        #   - TensorCore.⊗
         σx = sigmax()
-        X3 = kron(σx, σx, σx)
-        @test tensor(σx) == kron(σx)
-        @test tensor(fill(σx, 3)...) == X3
-        X_warn = @test_logs (
+        X_tuple = (σx, σx, σx)
+        X_full = kron(X_tuple...)
+        @test kron(σx) == tensor(σx) == ⊗(σx)
+        @test X_full == tensor(X_tuple...) == σx ⊗ σx ⊗ σx == ⊗(X_tuple...)
+
+        # warnings
+        X_vector = [σx, σx, σx]
+        X_warn_kron = @test_logs (
             :warn,
             "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead.",
-        ) tensor(fill(σx, 3))
-        @test X_warn == X3
+        ) kron(X_vector)
+        X_warn_tensor = @test_logs (
+            :warn,
+            "`tensor(A)` or `kron(A)` with `A` is a `Vector` can hurt performance. Try to use `tensor(A...)` or `kron(A...)` instead.",
+        ) tensor(X_vector)
+        @test X_warn_kron == X_warn_tensor == X_full
     end
 
     @testset "projection" begin

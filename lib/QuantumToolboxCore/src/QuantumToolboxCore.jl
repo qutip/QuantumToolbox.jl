@@ -5,12 +5,16 @@ using SparseArrays
 using LinearAlgebra
 import LinearAlgebra: checksquare
 
+# JuliaMath libraries
+import TensorCore: TensorCore, tensor, ⊗
+
 # other dependencies (in alphabetical order)
 import Base: AbstractVecOrTuple
 import FillArrays: Eye
 import Random: AbstractRNG, default_rng
 import StaticArraysCore: SVector, MVector
 
+# SciML
 import SciMLOperators:
     SciMLOperators,
     cache_operator,
@@ -32,6 +36,9 @@ export ishermitian, issymmetric, isposdef, dot, tr, svdvals, norm, normalize, no
 
 ## SparseArrays
 export permute
+
+## TensorCore
+export tensor, ⊗
 
 ## SciMLOperators
 export cache_operator, iscached, isconstant
