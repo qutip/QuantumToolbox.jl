@@ -23,6 +23,16 @@ on:
         - patch
         - minor
         - major
+      QuantumToolboxVisualization:
+        description: 'Bump version for QuantumToolboxVisualization'
+        required: true
+        default: 'skip'
+        type: choice
+        options:
+        - skip
+        - patch
+        - minor
+        - major
 
 permissions:
   contents: write

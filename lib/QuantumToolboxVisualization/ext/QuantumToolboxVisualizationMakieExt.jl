@@ -1,11 +1,10 @@
-module QuantumToolboxMakieExt
+module QuantumToolboxVisualizationMakieExt
 
 using QuantumToolboxCore
 import QuantumToolboxCore: makeVal, getVal
 
-# TODO: change this part to `QuantumToolboxVisualization` instead of using `QuantumToolbox`
-using QuantumToolbox
-import QuantumToolbox:
+using QuantumToolboxVisualization
+import QuantumToolboxVisualization:
     _state_to_bloch,
     _handle_matrix_plot_data,
     _gen_default_ket_labels,

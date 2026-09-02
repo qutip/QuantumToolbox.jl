@@ -29,7 +29,7 @@ The keyword argument `location` can be in the either type:
 - `GridPosition`: Plot the Bloch sphere in the specified location of the plot in the layout.
 - `LScene`: Update the existing Bloch sphere using new data and settings in `b::Bloch` without creating new `Figure` and `LScene` (efficient for drawing animation).
 """
-function QuantumToolbox.render(b::Bloch; location = nothing)
+function QuantumToolboxVisualization.render(b::Bloch; location = nothing)
     fig, lscene = _setup_bloch_plot!(location)
     _setup_bloch_camara!(b, lscene)
     _draw_bloch_sphere!(b, lscene)
@@ -386,7 +386,7 @@ Plot a pure quantum state on the Bloch sphere using the `Makie` backend.
 !!! note "Internal function"
     This is the `Makie`-specific implementation called by the main `plot_bloch` function.
 """
-function QuantumToolbox.plot_bloch(
+function QuantumToolboxVisualization.plot_bloch(
         ::Val{:Makie},
         state::QuantumObject{OpType};
         kwargs...,

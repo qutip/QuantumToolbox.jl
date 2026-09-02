@@ -7,6 +7,7 @@ const testdir = dirname(@__FILE__)
 # Define the paths to the library
 const LIBRARY_NAME_AND_PATH = Dict(
     "Core" => ("QuantumToolboxCore", joinpath(testdir, "..", "lib", "QuantumToolboxCore")),
+    "Visualization" => ("QuantumToolboxVisualization", joinpath(testdir, "..", "lib", "QuantumToolboxVisualization")),
 )
 const LIBRARY_LIST = collect(keys(LIBRARY_NAME_AND_PATH))
 

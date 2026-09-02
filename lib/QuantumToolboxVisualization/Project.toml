@@ -1,0 +1,31 @@
+name = "QuantumToolboxVisualization"
+uuid = "55215885-936c-44a4-bc34-179862077577"
+authors = ["Alberto Mercurio", "Yi-Te Huang"]
+version = "0.1.0"
+
+[deps]
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+QuantumToolboxCore = "7fbe806f-1706-4992-b132-86e53e431434"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+
+[weakdeps]
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+
+[sources]
+QuantumToolboxCore = {path = "../QuantumToolboxCore"}
+
+[extensions]
+QuantumToolboxVisualizationMakieExt = "Makie"
+
+[compat]
+LaTeXStrings = "1.2"
+LinearAlgebra = "1"
+Makie = "0.24"
+QuantumToolboxCore = "0.1"
+Reexport = "1"
+SparseArrays = "1"
+SpecialFunctions = "2"
+julia = "1.10"
