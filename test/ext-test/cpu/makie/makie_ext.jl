@@ -1,7 +1,7 @@
-using QuantumToolbox
+using QuantumToolboxVisual
 # CarioMakie is imported in the following script
 
-QuantumToolbox.about()
+QuantumToolboxVisual.about()
 
 @testset "Makie Extension" verbose = true begin
     ψ = normalize(coherent(50, 5.0) + coherent(50, -5.0))

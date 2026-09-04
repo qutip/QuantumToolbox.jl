@@ -44,7 +44,7 @@ sol = mesolve(H, ψ0, tlist, c_ops; ...)          # Solve directly
   - `steadystate.jl`, `entropy.jl`, `correlations.jl`: Analysis tools
   
 - **[ext/](../ext/)**: Optional extensions (loaded via weakdeps)
-  - `QuantumToolboxMakieExt.jl`: Visualization (Bloch sphere, Wigner)
+  - `QuantumToolboxVisualMakieExt.jl`: Visualization (Bloch sphere, Wigner)
   - `QuantumToolboxCoreCUDAExt.jl`: GPU acceleration
 
 - **[test/](../test/)**: Two-tier test structure
