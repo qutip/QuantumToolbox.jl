@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [lib] Introduce `QuantumToolboxCore` library. ([#686], [#753])
 - [lib] Move more basic functionalities to `QuantumToolboxCore` library. ([#751])
-- [lib] Introduce `QuantumToolboxVisualization` library. ([#766])
+- [lib] Introduce `QuantumToolboxVisual` library. ([#766])
 
 ## [v0.47.3]
 Release date: 2026-07-28

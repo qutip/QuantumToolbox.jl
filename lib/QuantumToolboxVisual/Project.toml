@@ -1,5 +1,5 @@
-name = "QuantumToolboxVisualization"
-uuid = "55215885-936c-44a4-bc34-179862077577"
+name = "QuantumToolboxVisual"
+uuid = "f2591f1c-fdd7-47fd-9d44-967f3caec145"
 authors = ["Alberto Mercurio", "Yi-Te Huang"]
 version = "0.1.0"
 
@@ -18,7 +18,7 @@ Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 QuantumToolboxCore = {path = "../QuantumToolboxCore"}
 
 [extensions]
-QuantumToolboxVisualizationMakieExt = "Makie"
+QuantumToolboxVisualMakieExt = "Makie"
 
 [compat]
 LaTeXStrings = "1.2"

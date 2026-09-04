@@ -19,7 +19,7 @@ OrdinaryDiffEqLowOrderRK = "1344f307-1e59-4825-a18e-ace9aa3fa4c6"
 OrdinaryDiffEqVerner = "79d7bb75-1356-48c1-b8c0-6832512096c2"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 QuantumToolboxCore = "7fbe806f-1706-4992-b132-86e53e431434"
-QuantumToolboxVisualization = "55215885-936c-44a4-bc34-179862077577"
+QuantumToolboxVisual = "f2591f1c-fdd7-47fd-9d44-967f3caec145"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
@@ -31,7 +31,7 @@ StochasticDiffEqHighOrder = "0520c28c-50fd-4d16-9c96-902fc80b3bab"
 
 [sources]
 QuantumToolboxCore = {path = "lib/QuantumToolboxCore"}
-QuantumToolboxVisualization = {path = "lib/QuantumToolboxVisualization"}
+QuantumToolboxVisual = {path = "lib/QuantumToolboxVisual"}
 
 [compat]
 ArrayInterface = "6, 7"
@@ -49,7 +49,7 @@ OrdinaryDiffEqLowOrderRK = "2"
 OrdinaryDiffEqVerner = "2"
 ProgressMeter = "1.11.0"
 QuantumToolboxCore = "0.1"
-QuantumToolboxVisualization = "0.1"
+QuantumToolboxVisual = "0.1"
 Random = "1"
 Reexport = "1"
 SciMLBase = "3"

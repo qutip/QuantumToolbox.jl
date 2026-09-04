@@ -37,7 +37,7 @@ Plot the [Wigner quasipropability distribution](https://en.wikipedia.org/wiki/Wi
 !!! warning "Beware of type-stability!"
     If you want to keep type stability, it is recommended to use `Val(:two_dim)` and `Val(:three_dim)` instead of `:two_dim` and `:three_dim`, respectively. Also, specify the library as `Val(:Makie)` See [this link](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type) and the [related Section](@ref doc:Type-Stability) about type stability for more details.
 """
-function QuantumToolboxVisualization.plot_wigner(
+function QuantumToolboxVisual.plot_wigner(
         library::Val{:Makie},
         state::QuantumObject{OpType};
         xvec::Union{Nothing, AbstractVector} = LinRange(-7.5, 7.5, 200),

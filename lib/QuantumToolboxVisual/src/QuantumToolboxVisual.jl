@@ -1,4 +1,4 @@
-module QuantumToolboxVisualization
+module QuantumToolboxVisual
 
 ## Re-export of QuantumToolboxCore
 import Reexport: @reexport
@@ -28,9 +28,9 @@ include("deprecated.jl")
 
 function __init__()
     # register QuantumToolbox library and its dependencies
-    if (QuantumToolboxVisualization ∉ QuantumToolboxCore.QT_LIBRARIES)
+    if (QuantumToolboxVisual ∉ QuantumToolboxCore.QT_LIBRARIES)
         # use pushfirst! so that main API libraries are at the front of the registry (for better display order in versioninfo)
-        pushfirst!(QuantumToolboxCore.QT_LIBRARIES, QuantumToolboxVisualization)
+        pushfirst!(QuantumToolboxCore.QT_LIBRARIES, QuantumToolboxVisual)
 
         # so far, no need to add DEP_PKGS for this library
     end

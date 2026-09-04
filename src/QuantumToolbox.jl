@@ -11,7 +11,7 @@ import Statistics: mean, std
 ## Re-export of QuantumToolbox libraries
 import Reexport: @reexport
 @reexport using QuantumToolboxCore
-@reexport using QuantumToolboxVisualization
+@reexport using QuantumToolboxVisual
 
 ## internal functions of QuantumToolbox libraries
 import QuantumToolboxCore:
