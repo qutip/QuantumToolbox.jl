@@ -341,22 +341,25 @@ block_diagonal_form
 BlockDiagonalForm
 ```
 
-### [Miscellaneous](@id doc-API:Miscellaneous)
+## [QuantumToolboxVisual](@id doc-API:QuantumToolboxVisual)
+
+```@meta
+CurrentModule = QuantumToolboxVisual
+
+DocTestSetup = quote
+    using QuantumToolboxVisual
+end
+```
 
 ```@docs
 wigner
-```
-
-### [Visualization](@id doc-API:Visualization)
-
-```@docs
 plot_wigner
 plot_fock_distribution
 matrix_heatmap
 matrix_histogram
 ```
 
-#### [Bloch Sphere](@id doc-API:Bloch-Sphere)
+### [Bloch Sphere](@id doc-API:Bloch-Sphere)
 
 ```@docs
 Bloch
