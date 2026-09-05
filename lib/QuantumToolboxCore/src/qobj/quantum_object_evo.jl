@@ -162,14 +162,12 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type = Operator(), 
     _check_type(type)
 
     if dims isa Nothing
-        if type isa Operator
+        if (type isa Operator) || (type isa SuperOperatorMatrixForm)
             dims = ((size(data, 1),), (size(data, 2),))
         elseif type isa SuperOperator
             sm = isqrt(size(data, 1))
             sn = isqrt(size(data, 2))
             dims = (((sm,), (sm,)), ((sn,), (sn,)))
-        elseif type isa SuperOperatorMatrixForm
-            dims = ((size(data, 1),), (size(data, 2),))
         end
     end
 

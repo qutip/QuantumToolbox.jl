@@ -62,7 +62,7 @@ include("qobj/eigen.jl")
 include("qobj/functions.jl")
 include("qobj/states.jl")
 include("qobj/operators.jl")
-include("qobj/superoperators_scimloperators.jl")
+include("qobj/superoperators_matrix_form.jl")
 include("qobj/superoperators.jl")
 include("qobj/synonyms.jl")
 

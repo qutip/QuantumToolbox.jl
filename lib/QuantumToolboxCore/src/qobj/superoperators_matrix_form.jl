@@ -8,8 +8,7 @@ export SpostSuperOperator, SprePostSuperOperator
 @doc raw"""
     SpostSuperOperator{T, OpType <: Union{AbstractMatrix, AbstractSciMLOperator}} <: AbstractSciMLOperator{T}
 
-Represents the superoperator ``\mathcal{O}(\hat{B})[\hat{\rho}] = \hat{\rho}\hat{B}`` acting on the **non-vectorized**
-density operator matrix ``\hat{\rho}``.
+Represents the superoperator ``\mathcal{O}(\hat{B})[\hat{\rho}] = \hat{\rho}\hat{B}`` acting on the **non-vectorized** density matrix ``\hat{\rho}``.
 
 The action is defined as:
 ```math
@@ -17,13 +16,16 @@ The action is defined as:
 ```
 
 # Fields
-- `R::OpType`: The operator ``\hat{B}`` (right-multiplier) as an `AbstractSciMLOperator`
+- `R`: The operator ``\hat{B}`` (right-multiplier) as an `AbstractSciMLOperator`
 
 See also [`SprePostSuperOperator`](@ref), [`spost`](@ref).
 """
 struct SpostSuperOperator{T, OpType <: Union{AbstractMatrix, AbstractSciMLOperator}} <: AbstractSciMLOperator{T}
     R::OpType
     function SpostSuperOperator(R::OpType) where {OpType <: Union{AbstractMatrix, AbstractSciMLOperator}}
+        m, n = size(R)
+        (m == n) || throw(ArgumentError("The right-multiplier should be a square matrix."))
+
         T = eltype(R)
         return new{T, OpType}(R)
     end
@@ -65,8 +67,7 @@ end
 @doc raw"""
     SprePostSuperOperator{T, LOp <: Union{AbstractMatrix, AbstractSciMLOperator}, ROp <: Union{AbstractMatrix, AbstractSciMLOperator}, CT} <: AbstractSciMLOperator{T}
 
-Represents the superoperator ``\mathcal{O}(\hat{A}, \hat{B})[\hat{\rho}] = \hat{A}\hat{\rho}\hat{B}`` acting on the
-**non-vectorized** density operator matrix ``\hat{\rho}``.
+Represents the superoperator ``\mathcal{O}(\hat{A}, \hat{B})[\hat{\rho}] = \hat{A}\hat{\rho}\hat{B}`` acting on the **non-vectorized** density matrix ``\hat{\rho}``.
 
 The action is defined as:
 ```math
@@ -74,9 +75,9 @@ The action is defined as:
 ```
 
 # Fields
-- `L::LOp`: The operator ``\hat{A}`` (left-multiplier) as an `AbstractSciMLOperator`
-- `R::ROp`: The operator ``\hat{B}`` (right-multiplier) as an `AbstractSciMLOperator`
-- `cache::CT`: A cache matrix for intermediate computation (allocated via [`cache_operator`](@ref))
+- `L`: The operator ``\hat{A}`` (left-multiplier) as an `AbstractSciMLOperator`
+- `R`: The operator ``\hat{B}`` (right-multiplier) as an `AbstractSciMLOperator`
+- `cache`: A cache matrix for intermediate computation (allocated via [`cache_operator`](@ref))
 
 See also [`SpostSuperOperator`](@ref), [`sprepost`](@ref).
 """
@@ -85,6 +86,11 @@ struct SprePostSuperOperator{T, LOp <: Union{AbstractMatrix, AbstractSciMLOperat
     R::ROp
     cache::CT
     function SprePostSuperOperator(L::LOp, R::ROp, cache::CT = nothing) where {LOp <: Union{AbstractMatrix, AbstractSciMLOperator}, ROp <: Union{AbstractMatrix, AbstractSciMLOperator}, CT}
+        m_L, n_L = size(L)
+        m_R, n_R = size(R)
+        (m_L == n_L == m_R == n_R) ||
+            throw(ArgumentError("Both left- and right-multiplier should be square matrices and share the same size."))
+
         T = promote_type(eltype(L), eltype(R))
         return new{T, LOp, ROp, CT}(L, R, cache)
     end
