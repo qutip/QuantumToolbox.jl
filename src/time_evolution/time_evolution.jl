@@ -355,9 +355,7 @@ abstract type LindbladJumpCallbackType end
 @doc raw"""
     ContinuousLindbladJumpCallback(; interp_points::Int = 0)
 
-Quantum jump detection for [`mcsolve`](@ref) based on root-finding. The jump time is located by a
-`ContinuousCallback`, which brackets the step in which the norm ``\langle \psi | \psi \rangle``
-crosses below its randomly drawn target and then bisects to find the crossing.
+Quantum jump detection for [`mcsolve`](@ref) based on root-finding. The jump time is located by a `ContinuousCallback`, which brackets the step in which the norm ``\langle \psi | \psi \rangle`` crosses below its randomly drawn target and then bisects to find the crossing.
 
 # Arguments
 
@@ -365,21 +363,15 @@ crosses below its randomly drawn target and then bisects to find the crossing.
 
 # Notes
 
-The default `interp_points = 0` is exact, not an approximation. Since ``|\psi(t)\rangle`` is
-propagated under the non-Hermitian effective Hamiltonian
-``\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_n \hat{C}_n^\dagger \hat{C}_n``, its norm obeys
+The default `interp_points = 0` is exact, not an approximation. Since ``|\psi(t)\rangle`` is propagated under the non-Hermitian effective Hamiltonian ``\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_n \hat{C}_n^\dagger \hat{C}_n``, its norm obeys
 
 ```math
 \frac{d}{dt} \langle \psi | \psi \rangle = - \sum_n \langle \psi | \hat{C}_n^\dagger \hat{C}_n | \psi \rangle \leq 0 ,
 ```
 
-so the norm decreases monotonically between jumps and can cross the target at most once per step.
-The crossing is therefore always visible from the sign of the condition at the two step endpoints,
-and the interior points added by `interp_points > 0` are redundant work repeated on every accepted
-step.
+so the norm decreases monotonically between jumps and can cross the target at most once per step. The crossing is therefore always visible from the sign of the condition at the two step endpoints, and the interior points added by `interp_points > 0` are redundant work repeated on every accepted step.
 
-Set `interp_points > 0` only if that monotonicity is broken, which requires supplying a
-deliberately non-Hermitian ``\hat{H}`` that makes the norm increase.
+Set `interp_points > 0` only if that monotonicity is broken, which requires supplying a deliberately non-Hermitian ``\hat{H}`` that makes the norm increase.
 
 See also [`DiscreteLindbladJumpCallback`](@ref) and [`mcsolve`](@ref).
 """
@@ -390,13 +382,9 @@ end
 @doc raw"""
     DiscreteLindbladJumpCallback()
 
-Quantum jump detection for [`mcsolve`](@ref) based on a `DiscreteCallback`. The jump is applied at
-the end of the first solver step in which the norm ``\langle \psi | \psi \rangle`` is found to be
-below its randomly drawn target, without root-finding.
+Quantum jump detection for [`mcsolve`](@ref) based on a `DiscreteCallback`. The jump is applied at the end of the first solver step in which the norm ``\langle \psi | \psi \rangle`` is found to be below its randomly drawn target, without root-finding.
 
-This is cheaper per step than [`ContinuousLindbladJumpCallback`](@ref), but less precise: the
-recorded jump time is the step boundary rather than the actual crossing, so its accuracy is limited
-by the solver step size.
+This is cheaper per step than [`ContinuousLindbladJumpCallback`](@ref), but less precise: the recorded jump time is the step boundary rather than the actual crossing, so its accuracy is limited by the solver step size.
 
 See also [`ContinuousLindbladJumpCallback`](@ref) and [`mcsolve`](@ref).
 """
