@@ -46,7 +46,7 @@ function pkginfo(io::IO = stdout)
 
     # dependencies
     if !isempty(DEP_PKGS)
-        println(io, SINGLE_SEPARATION_LINE, "dependencies:")
+        println(io, SINGLE_SEPARATION_LINE, "Dependencies:")
         for pkg in DEP_PKGS
             println(io, rpad(pkg, maxLen, " "), " Ver. ", all_pkgs_ver[idx])
             idx += 1
@@ -55,7 +55,7 @@ function pkginfo(io::IO = stdout)
 
     # triggered extensions
     if !isempty(EXT_PKGS)
-        println(io, SINGLE_SEPARATION_LINE, "triggered extensions for:")
+        println(io, SINGLE_SEPARATION_LINE, "Triggered extensions:")
         for pkg in EXT_PKGS
             println(io, rpad(pkg, maxLen, " "), " Ver. ", all_pkgs_ver[idx])
             idx += 1
