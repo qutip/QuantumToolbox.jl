@@ -77,6 +77,14 @@ function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOper
     T = _complex_float_type(Base.promote_eltype(H, ψ0))
     return T, to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
 end
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperatorMatrixForm}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
+    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    ρ0 = isket(ψ0) ? ket2dm(ψ0) : ψ0
+    check_mul_dimensions(H, ρ0)
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ρ0.data), Operator(), ρ0.dimensions
+end
 
 @doc raw"""
     struct TimeEvolutionSol

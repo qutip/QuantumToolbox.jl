@@ -121,6 +121,8 @@ CUDA.versioninfo()
     H_gpu64 = ω64 * a_gpu64' * a_gpu64
     c_ops_gpu64 = [sqrt(γ64) * a_gpu64]
     sol_gpu64 = mesolve(H_gpu64, ψ0_gpu64, tlist, c_ops_gpu64, e_ops = [a_gpu64' * a_gpu64], progress_bar = Val(false))
+    # matrix_form = Val(true) case
+    sol_gpu64_mat = mesolve(H_gpu64, ψ0_gpu64, tlist, c_ops_gpu64, e_ops = [a_gpu64' * a_gpu64], progress_bar = Val(false), matrix_form = Val(true))
 
     ## calculate by GPU (with 32-bit)
     a_gpu32 = cu(destroy(N), word_size = 32)
@@ -128,6 +130,8 @@ CUDA.versioninfo()
     H_gpu32 = ω32 * a_gpu32' * a_gpu32
     c_ops_gpu32 = [sqrt(γ32) * a_gpu32]
     sol_gpu32 = mesolve(H_gpu32, ψ0_gpu32, tlist, c_ops_gpu32, e_ops = [a_gpu32' * a_gpu32], progress_bar = Val(false))
+    # matrix_form = Val(true) case
+    sol_gpu32_mat = mesolve(H_gpu32, ψ0_gpu32, tlist, c_ops_gpu32, e_ops = [a_gpu32' * a_gpu32], progress_bar = Val(false), matrix_form = Val(true))
 
     L_cpu64 = liouvillian(H_cpu64, c_ops_cpu64)
     L_gpu64 = liouvillian(H_gpu64, c_ops_gpu64)
@@ -136,6 +140,8 @@ CUDA.versioninfo()
 
     @test all([isapprox(sol_cpu64.expect[i], sol_gpu64.expect[i]) for i in 1:length(tlist)])
     @test all([isapprox(sol_cpu32.expect[i], sol_gpu32.expect[i]; atol = 1.0f-6) for i in 1:length(tlist)])
+    @test all([isapprox(sol_cpu64.expect[i], sol_gpu64_mat.expect[i]) for i in 1:length(tlist)])
+    @test all([isapprox(sol_cpu32.expect[i], sol_gpu32_mat.expect[i]; atol = 1.0f-6) for i in 1:length(tlist)])
 end
 
 @testset "CUDA steadystate" begin

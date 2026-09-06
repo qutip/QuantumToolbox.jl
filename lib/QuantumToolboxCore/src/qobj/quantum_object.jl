@@ -134,7 +134,7 @@ end
 function Base.show(
         io::IO,
         QO::QuantumObject{OpType},
-    ) where {OpType <: Union{Bra, Ket, OperatorBra, OperatorKet, SuperOperator}}
+    ) where {OpType <: Union{Bra, Ket, OperatorBra, OperatorKet, SuperOperatorType}}
     op_data = QO.data
     println(
         io,
@@ -176,30 +176,42 @@ SparseArrays.dropzeros(A::QuantumObject) = QuantumObject(dropzeros(A.data), A.ty
 SparseArrays.dropzeros!(A::QuantumObject) = (dropzeros!(A.data); return A)
 
 @doc raw"""
-    SciMLOperators.cached_operator(L::AbstractQuantumObject, u)
+    SciMLOperators.cache_operator(L::AbstractQuantumObject, u)
 
-Allocate caches for [`AbstractQuantumObject`](@ref) `L` for in-place evaluation with `u`-like input vectors.
+Allocate caches for in-place evaluation of [`AbstractQuantumObject`](@ref) `L` with a state shaped like `u`.
 
-Here, `u` can be in either the following types:
-- `AbstractVector`
+Here, `u` can be one of the following types:
+- `AbstractVector` or `AbstractMatrix`
 - [`Ket`](@ref)-type [`QuantumObject`](@ref) (if `L` is an [`Operator`](@ref))
 - [`OperatorKet`](@ref)-type [`QuantumObject`](@ref) (if `L` is a [`SuperOperator`](@ref))
+- [`Operator`](@ref)-type [`QuantumObject`](@ref) (if `L` is a [`SuperOperatorMatrixForm`](@ref))
+
+[`QuantumToolbox.mesolve`](@ref) manages this cache automatically. Calling `cache_operator` directly is useful when repeatedly applying a matrix-form superoperator to a density matrix outside a solver.
 """
 SciMLOperators.cache_operator(
     L::AbstractQuantumObject{OpType},
-    u::AbstractVector,
-) where {OpType <: Union{Operator, SuperOperator}} =
+    u::AbstractVecOrMat,
+) where {OpType <: Union{Operator, SuperOperatorType}} =
     get_typename_wrapper(L)(cache_operator(L.data, to_dense(similar(u))), L.type, L.dimensions)
 
 function SciMLOperators.cache_operator(
         L::AbstractQuantumObject{OpType},
         u::QuantumObject{SType},
-    ) where {OpType <: Union{Operator, SuperOperator}, SType <: Union{Ket, OperatorKet}}
-    if isoper(L) && isoperket(u)
-        throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))
-    elseif issuper(L) && isket(u)
-        throw(ArgumentError("The input state `u` must be an OperatorKet if `L` is a SuperOperator."))
+    ) where {OpType <: Union{Operator, SuperOperatorType}, SType <: Union{Ket, Operator, OperatorKet}}
+    if isoper(L)
+        if !isket(u)
+            throw(ArgumentError("The input state `u` must be a Ket if `L` is an Operator."))
+        end
+    elseif issuper(L)
+        if !isoperket(u)
+            throw(ArgumentError("The input state `u` must be an OperatorKet if `L` is a SuperOperator."))
+        end
+    elseif issupermatform(L)
+        if !isoper(u)
+            throw(ArgumentError("The input state `u` must be an Operator if `L` is a SuperOperatorMatrixForm in matrix form."))
+        end
     end
+
     check_mul_dimensions(L, u)
     return cache_operator(L, u.data)
 end

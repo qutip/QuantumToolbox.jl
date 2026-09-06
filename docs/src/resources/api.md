@@ -51,6 +51,9 @@ Operator
 OperatorBra
 OperatorKet
 SuperOperator
+SuperOperatorMatrixForm
+SpostSuperOperator
+SprePostSuperOperator
 QuantumObject
 QuantumObjectEvolution
 Base.size
