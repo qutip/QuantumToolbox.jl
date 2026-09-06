@@ -383,8 +383,8 @@ deliberately non-Hermitian ``\hat{H}`` that makes the norm increase.
 
 See also [`DiscreteLindbladJumpCallback`](@ref) and [`mcsolve`](@ref).
 """
-struct ContinuousLindbladJumpCallback <: LindbladJumpCallbackType
-    interp_points::Int
+Base.@kwdef struct ContinuousLindbladJumpCallback <: LindbladJumpCallbackType
+    interp_points::Int = 0
 end
 
 @doc raw"""
@@ -401,8 +401,6 @@ by the solver step size.
 See also [`ContinuousLindbladJumpCallback`](@ref) and [`mcsolve`](@ref).
 """
 struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType end
-
-ContinuousLindbladJumpCallback(; interp_points::Int = 0) = ContinuousLindbladJumpCallback(interp_points)
 
 function _check_tlist(tlist, T::Type)
     tlist2 = convert(Vector{T}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl
