@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [lib] Introduce `QuantumToolboxCore` library. ([#686], [#753])
 - [lib] Move more basic functionalities to `QuantumToolboxCore` library. ([#751])
 - Add support for matrix form `liouvillian`, `liouvillian_dressed_nonsecular` and `mesolve` time evolution. By setting `matrix_form = Val(true)`, the density matrix is not vectorized, which improves the memory efficiency for large systems. The superoperators are now stored through SciMLOperators.jl objects. ([#707])
-- Speed up `mcsolve` by changing the default of `ContinuousLindbladJumpCallback` from `interp_points = 10` to `interp_points = 0`. Since `mcsolve` propagates the unnormalized state under the non-Hermitian effective Hamiltonian, `d⟨ψ|ψ⟩/dt = -Σₙ⟨ψ|Ĉₙ†Ĉₙ|ψ⟩ ≤ 0`, so the norm decreases monotonically between jumps and the jump condition can change sign at most once per solver step. Checking only the step endpoints is therefore exact, whereas the previous default also evaluated the ODE interpolant at 9 interior points on every accepted step. Trajectories are bit-for-bit unchanged; the driven Jaynes-Cummings benchmark gets `1.2x` to `1.6x` faster, with the largest gains at small Hilbert space dimensions. Pass `interp_points > 0` to restore the old behaviour, which is only needed if a deliberately non-Hermitian `H` breaks the monotonicity of the norm.
+- Speed up `mcsolve` by changing the default of `ContinuousLindbladJumpCallback` from `interp_points = 10` to `interp_points = 0`. Since `mcsolve` propagates the unnormalized state under the non-Hermitian effective Hamiltonian, `d⟨ψ|ψ⟩/dt = -Σₙ⟨ψ|Ĉₙ†Ĉₙ|ψ⟩ ≤ 0`, so the norm decreases monotonically between jumps and the jump condition can change sign at most once per solver step. Checking only the step endpoints is therefore exact, whereas the previous default also evaluated the ODE interpolant at 9 interior points on every accepted step. Trajectories are bit-for-bit unchanged; the driven Jaynes-Cummings benchmark gets `1.2x` to `1.6x` faster, with the largest gains at small Hilbert space dimensions. Pass `interp_points > 0` to restore the old behaviour, which is only needed if a deliberately non-Hermitian `H` breaks the monotonicity of the norm. ([#752])
 
 ## [v0.47.3]
 Release date: 2026-07-28
@@ -567,4 +567,5 @@ Release date: 2024-11-13
 [#747]: https://github.com/qutip/QuantumToolbox.jl/issues/747
 [#748]: https://github.com/qutip/QuantumToolbox.jl/issues/748
 [#751]: https://github.com/qutip/QuantumToolbox.jl/issues/751
+[#752]: https://github.com/qutip/QuantumToolbox.jl/issues/752
 [#753]: https://github.com/qutip/QuantumToolbox.jl/issues/753
