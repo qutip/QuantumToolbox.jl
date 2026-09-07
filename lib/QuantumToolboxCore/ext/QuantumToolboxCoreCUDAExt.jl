@@ -106,4 +106,12 @@ end
 QuantumToolboxCore._sparse_similar(A::CuSparseMatrixCSC, args...) = sparse(args..., fmt = :csc)
 QuantumToolboxCore._sparse_similar(A::CuSparseMatrixCSR, args...) = sparse(args..., fmt = :csr)
 
+function __init__()
+    # register to QuantumToolboxCore.EXT_PKGS
+    (CUDACore ∉ QuantumToolboxCore.EXT_PKGS) && push!(QuantumToolboxCore.EXT_PKGS, CUDACore)
+    (cuSPARSE ∉ QuantumToolboxCore.EXT_PKGS) && push!(QuantumToolboxCore.EXT_PKGS, cuSPARSE)
+
+    return nothing
+end
+
 end
