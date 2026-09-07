@@ -15,6 +15,7 @@ steps:
     plugins:
       - staticfloat/forerunner: # CUDA.jl tests
           watch:
+            - "codecov.yml"
             - ".buildkite/pipeline.yml"
             - ".buildkite/CUDA_Ext.yml"
             - "src/**"
