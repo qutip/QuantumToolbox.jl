@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show extension information in `versioninfo`. ([#767])
 - Add support for matrix form `liouvillian`, `liouvillian_dressed_nonsecular` and `mesolve` time evolution. By setting `matrix_form = Val(true)`, the density matrix is not vectorized, which improves the memory efficiency for large systems. The superoperators are now stored through SciMLOperators.jl objects. ([#707])
 - Speed up `mcsolve` by changing the default of `ContinuousLindbladJumpCallback` from `interp_points = 10` to `interp_points = 0`. Since `mcsolve` propagates the unnormalized state under the non-Hermitian effective Hamiltonian, `d⟨ψ|ψ⟩/dt = -Σₙ⟨ψ|Ĉₙ†Ĉₙ|ψ⟩ ≤ 0`, so the norm decreases monotonically between jumps and the jump condition can change sign at most once per solver step. Checking only the step endpoints is therefore exact, whereas the previous default also evaluated the ODE interpolant at 9 interior points on every accepted step. Trajectories are bit-for-bit unchanged; the driven Jaynes-Cummings benchmark gets `1.2x` to `1.6x` faster, with the largest gains at small Hilbert space dimensions. Pass `interp_points > 0` to restore the old behaviour, which is only needed if a deliberately non-Hermitian `H` breaks the monotonicity of the norm. ([#752])
+- Support weighted number operators (`N = \sum_j c_j a_j^\dagger a_j`) for excitation number restricted (ENR) spaces through the new `excitation_weights` keyword argument of `EnrSpace` (and the `enr_*` functions), useful for Hamiltonians that conserve a weighted excitation number such as parametric down-conversion. ([#663], [#739])
 
 ## [v0.47.3]
 Release date: 2026-07-28
@@ -534,6 +535,7 @@ Release date: 2024-11-13
 [#656]: https://github.com/qutip/QuantumToolbox.jl/issues/656
 [#657]: https://github.com/qutip/QuantumToolbox.jl/issues/657
 [#659]: https://github.com/qutip/QuantumToolbox.jl/issues/659
+[#663]: https://github.com/qutip/QuantumToolbox.jl/issues/663
 [#667]: https://github.com/qutip/QuantumToolbox.jl/issues/667
 [#669]: https://github.com/qutip/QuantumToolbox.jl/issues/669
 [#670]: https://github.com/qutip/QuantumToolbox.jl/issues/670
@@ -564,6 +566,7 @@ Release date: 2024-11-13
 [#729]: https://github.com/qutip/QuantumToolbox.jl/issues/729
 [#733]: https://github.com/qutip/QuantumToolbox.jl/issues/733
 [#736]: https://github.com/qutip/QuantumToolbox.jl/issues/736
+[#739]: https://github.com/qutip/QuantumToolbox.jl/issues/739
 [#745]: https://github.com/qutip/QuantumToolbox.jl/issues/745
 [#747]: https://github.com/qutip/QuantumToolbox.jl/issues/747
 [#748]: https://github.com/qutip/QuantumToolbox.jl/issues/748
