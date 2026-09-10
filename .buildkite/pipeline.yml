@@ -21,4 +21,6 @@ steps:
             - "lib/QuantumToolboxCore/**"
             - "test/runtests.jl"
             - "test/ext-test/gpu/**"
+            - 'Project.toml'
+            - 'codecov.yml'
           target: ".buildkite/CUDA_Ext.yml"
