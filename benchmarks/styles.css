@@ -1,0 +1,181 @@
+/* Base styles */
+html {
+  font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
+    Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-color: #fff;
+  font-size: 20px;
+}
+
+body {
+  color: #4a4a4a;
+  margin: 8px;
+  font-size: 1em;
+  font-weight: 400;
+}
+
+/* Header styles */
+header {
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-label {
+  margin-right: 4px;
+}
+
+h1 {
+  text-align: center;
+}
+
+/* Main content */
+main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Links */
+a {
+  color: #3273dc;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #000;
+}
+
+/* Buttons */
+button {
+  color: #fff;
+  background-color: #3298dc;
+  border-color: transparent;
+  cursor: pointer;
+  text-align: center;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  font-size: 0.9rem;
+}
+
+button:hover {
+  background-color: #2793da;
+}
+
+/* Footer */
+footer {
+  margin-top: 40px;
+  padding: 20px 0;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #e0e0e0;
+}
+
+.spacer {
+  flex: auto;
+}
+
+.small {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Benchmark sections */
+.charts-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 10px;
+}
+
+.benchmark-set {
+  margin: 40px 0 20px 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.benchmark-title {
+  font-size: 2rem;
+  font-weight: 600;
+  word-break: break-word;
+  text-align: center;
+  margin: 0 0 30px 0;
+  width: 100%;
+  color: #363636;
+}
+
+/* Charts grid layout */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+  gap: 30px;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.chartCard {
+  width: 100%;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fafafa;
+  border-radius: 8px;
+  padding: 15px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.chartCard:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.benchmark-chart {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+
+  .benchmark-title {
+    font-size: 1.5rem;
+  }
+
+  .chartCard {
+    height: 300px;
+    padding: 10px;
+  }
+
+  .charts-grid {
+    gap: 20px;
+  }
+
+  footer {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+}
