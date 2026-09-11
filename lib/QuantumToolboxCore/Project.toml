@@ -1,7 +1,7 @@
 name = "QuantumToolboxCore"
 uuid = "7fbe806f-1706-4992-b132-86e53e431434"
 authors = ["Alberto Mercurio", "Yi-Te Huang"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
