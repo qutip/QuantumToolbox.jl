@@ -34,13 +34,15 @@ const GROUP_LIST = String[
 # function to set up the environment for subtests
 function setup_subtest_env(path::String)
     Pkg.activate(path)
+    specs = PackageSpec[]
     if VERSION < v"1.11"
         for lib in LIBRARY_LIST
             _, lib_path = LIBRARY_NAME_AND_PATH[lib]
-            Pkg.develop(path = lib_path)
+            push!(specs, PackageSpec(path = lib_path))
         end
     end
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    push!(specs, PackageSpec(path = dirname(@__DIR__)))
+    Pkg.develop(specs)
     Pkg.update()
     return nothing
 end
