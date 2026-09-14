@@ -5,6 +5,7 @@ Reusable version information helpers for QuantumToolbox libraries.
 # Registry of all loaded QuantumToolbox libraries, populated via __init__ in each library.
 const QT_LIBRARIES = Module[]
 const DEP_PKGS = Module[]
+const EXT_PKGS = Module[]
 
 # separation lines
 const SEPARATION_LINE_LENGTH = 36
@@ -12,16 +13,21 @@ const SINGLE_SEPARATION_LINE = repeat("-", SEPARATION_LINE_LENGTH) * "\n"
 const DOUBLE_SEPARATION_LINE = repeat("=", SEPARATION_LINE_LENGTH) * "\n"
 
 raw"""
-    QuantumToolboxCore.pkginfo(io::IO=stdout; pkgs::Vector{Module} = Module[])
+    QuantumToolboxCore.pkginfo(io::IO=stdout)
 
-Command line output of version numbers for given vector of packages: `pkgs`.
+Command line output of version numbers for:
+
+- QuantumToolbox libraries
+- Dependencies
+- Triggered extensions
 """
-function pkginfo(io::IO = stdout; pkgs::Vector{Module} = Module[], split_after::Union{Nothing, Int} = nothing)
-    pkg_ver_list = map(pkgversion, pkgs)
+function pkginfo(io::IO = stdout)
+
+    all_pkgs = vcat(QT_LIBRARIES, DEP_PKGS, EXT_PKGS)
+    all_pkgs_ver = map(pkgversion, all_pkgs)
 
     # maximum string length of package names (5 refer to "Julia")
-    pkgs_is_empty = isempty(pkgs)
-    maxLen = pkgs_is_empty ? 5 : max(5, maximum(length ∘ string, pkgs))
+    maxLen = max(5, maximum(length ∘ string, all_pkgs))
 
     print(
         io,
@@ -29,11 +35,33 @@ function pkginfo(io::IO = stdout; pkgs::Vector{Module} = Module[], split_after::
         DOUBLE_SEPARATION_LINE,
     )
     println(io, rpad("Julia", maxLen, " "), " Ver. ", VERSION) # print Julia version first
-    pkgs_is_empty || print(io, SINGLE_SEPARATION_LINE)
-    for (idx, (pkg, pkg_ver)) in enumerate(zip(pkgs, pkg_ver_list))
-        println(io, rpad(pkg, maxLen, " "), " Ver. ", pkg_ver)
-        !isnothing(split_after) && (idx == split_after) && (idx < length(pkgs)) && print(io, SINGLE_SEPARATION_LINE)
+
+    idx = 1  # index for all_pkgs_ver iteration
+
+    # QuantumToolbox libraries
+    for pkg in QT_LIBRARIES
+        println(io, rpad(pkg, maxLen, " "), " Ver. ", all_pkgs_ver[idx])
+        idx += 1
     end
+
+    # dependencies
+    if !isempty(DEP_PKGS)
+        println(io, SINGLE_SEPARATION_LINE, "Dependencies:")
+        for pkg in DEP_PKGS
+            println(io, rpad(pkg, maxLen, " "), " Ver. ", all_pkgs_ver[idx])
+            idx += 1
+        end
+    end
+
+    # triggered extensions
+    if !isempty(EXT_PKGS)
+        println(io, SINGLE_SEPARATION_LINE, "Triggered extensions:")
+        for pkg in EXT_PKGS
+            println(io, rpad(pkg, maxLen, " "), " Ver. ", all_pkgs_ver[idx])
+            idx += 1
+        end
+    end
+
     print(io, "\n")
     return nothing
 end
@@ -75,7 +103,7 @@ function _print_versioninfo(io::IO = stdout)
         "    Alberto Mercurio and Yi-Te Huang\n",
     )
 
-    pkginfo(io; pkgs = vcat(QT_LIBRARIES, DEP_PKGS), split_after = length(QT_LIBRARIES))
+    pkginfo(io)
     sysinfo(io)
 
     println(

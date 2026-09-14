@@ -2,9 +2,8 @@ module QuantumToolboxCoreGPUArraysExt
 
 using QuantumToolboxCore
 
-import GPUArrays: AbstractGPUArray, AbstractGPUSparseArray, dense_array_type
-import KernelAbstractions
-import KernelAbstractions: @kernel, @Const, @index, get_backend, synchronize
+import GPUArrays: GPUArrays, AbstractGPUArray, AbstractGPUSparseArray, dense_array_type
+import KernelAbstractions: KernelAbstractions, @kernel, @Const, @index, get_backend, synchronize
 
 QuantumToolboxCore.to_dense(::Type{T1}, A::AbstractGPUArray{T2}) where {T1 <: Number, T2 <: Number} = T1.(A)
 QuantumToolboxCore.to_dense(A::AbstractGPUSparseArray) = dense_array_type(typeof(A))(A)
@@ -32,6 +31,14 @@ function QuantumToolboxCore._map_trace(A::AbstractGPUArray{T, 4}) where {T}
     KernelAbstractions.synchronize(backend)
 
     return B
+end
+
+function __init__()
+    # register to QuantumToolboxCore.EXT_PKGS
+    (GPUArrays ∉ QuantumToolboxCore.EXT_PKGS) && push!(QuantumToolboxCore.EXT_PKGS, GPUArrays)
+    (KernelAbstractions ∉ QuantumToolboxCore.EXT_PKGS) && push!(QuantumToolboxCore.EXT_PKGS, KernelAbstractions)
+
+    return nothing
 end
 
 end

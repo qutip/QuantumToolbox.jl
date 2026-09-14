@@ -135,8 +135,8 @@ function _lindblad_jump_affect!(
         weights_mc[i] = real(dot(cache_mc, cache_mc))
     end
     cumsum!(cumsum_weights_mc, weights_mc)
-    r = rand(traj_rng) * sum(weights_mc)
-    collapse_idx = getindex(1:length(weights_mc), findfirst(>(r), cumsum_weights_mc))
+    r = rand(traj_rng) * last(cumsum_weights_mc)
+    collapse_idx = something(findfirst(>(r), cumsum_weights_mc), lastindex(cumsum_weights_mc))
     c_ops[collapse_idx](cache_mc, ψ, nothing, p, t)
     normalize!(cache_mc)
     copyto!(integrator.u, cache_mc)

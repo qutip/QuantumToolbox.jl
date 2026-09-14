@@ -109,7 +109,7 @@ Quantum Object:   type=Operator()   dims=([10, 2], [10, 2])   size=(20, 20)   is
 ```
 """
 struct QuantumObjectEvolution{
-        ObjType <: Union{Operator, SuperOperator},
+        ObjType <: Union{Operator, SuperOperatorType},
         DimType <: Dimensions,
         DataType <: AbstractSciMLOperator,
     } <: AbstractQuantumObject{ObjType, DimType, DataType}
@@ -117,16 +117,18 @@ struct QuantumObjectEvolution{
     type::ObjType
     dimensions::DimType
 
-    function QuantumObjectEvolution(data::DT, type, dims) where {DT <: AbstractSciMLOperator}
+    function QuantumObjectEvolution(data::DT, type, dims) where {DT <: Union{AbstractMatrix, AbstractSciMLOperator}}
         ObjType = _check_type(type)
-        (type isa Operator || type isa SuperOperator) ||
+        (type isa Operator || type isa SuperOperatorType) ||
             throw(ArgumentError("The type $type is not supported for QuantumObjectEvolution."))
 
         dimensions = _gen_dimensions(type, dims)
 
         _check_QuantumObject(type, dimensions, size(data))
 
-        return new{ObjType, typeof(dimensions), DT}(data, type, dimensions)
+        data_sciml = _promote_to_scimloperator(data)
+
+        return new{ObjType, typeof(dimensions), typeof(data_sciml)}(data_sciml, type, dimensions)
     end
 end
 
@@ -160,7 +162,7 @@ function QuantumObjectEvolution(data::AbstractSciMLOperator; type = Operator(), 
     _check_type(type)
 
     if dims isa Nothing
-        if type isa Operator
+        if (type isa Operator) || (type isa SuperOperatorMatrixForm)
             dims = ((size(data, 1),), (size(data, 2),))
         elseif type isa SuperOperator
             sm = isqrt(size(data, 1))
@@ -273,10 +275,6 @@ function QuantumObjectEvolution(op_func_list::Tuple; type = nothing)
         type = op.type
     end
 
-    # Preallocate the SciMLOperator cache using a dense vector as a reference
-    v0 = to_dense(similar(op.data, size(op, 1)))
-    data = cache_operator(data, v0)
-
     return QuantumObjectEvolution(data, type, dims)
 end
 
@@ -315,9 +313,9 @@ Quantum Object Evo.:   type=Operator()   dims=([10, 2], [10, 2])   size=(20, 20)
 ScalarOperator(0.0 + 0.0im) * MatrixOperator(20 × 20)
 ```
 """
-QuantumObjectEvolution(op::QuantumObject, f::Function; type = nothing) = QuantumObjectEvolution(((op, f),); type = type)
+QuantumObjectEvolution(op::AbstractQuantumObject, f::Function; type = nothing) = QuantumObjectEvolution(((op, f),); type = type)
 
-function QuantumObjectEvolution(op::QuantumObject; type = nothing)
+function QuantumObjectEvolution(op::AbstractQuantumObject; type = nothing)
     _check_type(type)
     if type isa Nothing
         type = op.type
@@ -351,11 +349,11 @@ function _QobjEvo_generate_data(op_func_list::Tuple)
     first_op = _QobjEvo_get_first_op(op_func_list[1])
 
     ops_constant = filter(op_func_list) do x
-        if x isa QuantumObject
+        if x isa AbstractQuantumObject
             x.type == first_op.type || throw(ArgumentError("The types of the operators must be the same."))
             x.dimensions == first_op.dimensions ||
                 throw(ArgumentError("The dimensions of the operators must be the same."))
-            return true
+            return isconstant(x.data)
         elseif x isa Tuple
             return false
         else
@@ -372,8 +370,8 @@ function _QobjEvo_generate_data(op_func_list::Tuple)
             op.dimensions == first_op.dimensions ||
                 throw(ArgumentError("The dimensions of the operators must be the same."))
             return true
-        elseif x isa QuantumObject
-            return false
+        elseif x isa AbstractQuantumObject
+            return !isconstant(x.data)
         else
             throw(ArgumentError("Each element of the tuple must be either a QuantumObject or a Tuple."))
         end
@@ -389,7 +387,7 @@ function _QobjEvo_generate_data(op_func_list::Tuple)
 end
 
 function _QobjEvo_check_op(op::AbstractQuantumObject)
-    (isoper(op) || issuper(op)) || throw(ArgumentError("The element must be a Operator or SuperOperator."))
+    (isoper(op) || issuper(op) || issupermatform(op)) || throw(ArgumentError("The element must be a Operator, SuperOperator, or SuperOperatorMatrixForm."))
     return nothing
 end
 
@@ -435,7 +433,7 @@ Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the inpu
 
 # Arguments
 - `ψout::QuantumObject`: The output state. It must have the same type as `ψin`.
-- `ψin::QuantumObject`: The input state. It must be either a [`Ket`](@ref) or a [`OperatorKet`](@ref).
+- `ψin::QuantumObject`: The input state. It must be a [`Ket`](@ref) for an [`Operator`](@ref), an [`OperatorKet`](@ref) for a vectorized [`SuperOperator`](@ref), or an [`Operator`](@ref) density matrix for a [`SuperOperatorMatrixForm`](@ref).
 - `p`: The parameters of the time-dependent coefficients.
 - `t`: The time at which the coefficients are evaluated.
 
@@ -478,13 +476,19 @@ function (A::QuantumObjectEvolution)(
         ψin::QuantumObject{QobjType},
         p,
         t,
-    ) where {QobjType <: Union{Ket, OperatorKet}}
-    if isoper(A) && isoperket(ψin)
+    ) where {QobjType <: Union{Ket, Operator, OperatorKet}}
+    if isoper(A) && !isket(ψin)
         throw(ArgumentError("The input state must be a Ket if the QuantumObjectEvolution object is an Operator."))
-    elseif issuper(A) && isket(ψin)
+    elseif issuper(A) && !isoperket(ψin)
         throw(
             ArgumentError(
                 "The input state must be an OperatorKet if the QuantumObjectEvolution object is a SuperOperator.",
+            ),
+        )
+    elseif issupermatform(A) && !isoper(ψin)
+        throw(
+            ArgumentError(
+                "The input state must be an Operator if the QuantumObjectEvolution object is a SuperOperatorMatrixForm.",
             ),
         )
     end
@@ -501,7 +505,7 @@ end
 
 Apply the time-dependent [`QuantumObjectEvolution`](@ref) object `A` to the input state `ψ` at time `t` with parameters `p`. Out-of-place version of [`(A::QuantumObjectEvolution)(ψout, ψin, p, t)`](@ref). The output state is stored in a new [`QuantumObject`](@ref) object. This function mimics the behavior of a `AbstractSciMLOperator` object.
 """
-function (A::QuantumObjectEvolution)(ψ::QuantumObject{QobjType}, p, t) where {QobjType <: Union{Ket, OperatorKet}}
+function (A::QuantumObjectEvolution)(ψ::QuantumObject{QobjType}, p, t) where {QobjType <: Union{Ket, Operator, OperatorKet}}
     ψout = QuantumObject(similar(ψ.data), ψ.type, ψ.dimensions)
     return A(ψout, ψ, p, t)
 end

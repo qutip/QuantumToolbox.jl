@@ -13,6 +13,7 @@
 - [Lindblad Master Equation Solver](@ref doc-TE:Lindblad-Master-Equation-Solver)
     - [Von Neumann equation](@ref doc-TE:Von-Neumann-equation)
     - [The Lindblad master equation](@ref doc-TE:The-Lindblad-master-equation)
+    - [Matrix-form evolution](@ref doc-TE:Matrix-form-evolution)
     - [Example: Dissipative Spin dynamics](@ref doc-TE:Example:Dissipative-Spin-dynamics)
     - [Example: Harmonic oscillator in thermal bath](@ref doc-TE:Example:Harmonic-oscillator-in-thermal-bath)
     - [Example: Two-level atom coupled to dissipative single-mode cavity](@ref doc-TE:Example:Two-level-atom-coupled-to-dissipative-single-mode-cavity)

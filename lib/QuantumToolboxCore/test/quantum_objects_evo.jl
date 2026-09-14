@@ -214,7 +214,8 @@
             conj(coef2(p, t)) * coef3(p, t) * (spre(X) * spost(a') - 0.5 * spre(a' * X) - 0.5 * spost(a' * X))   # cross terms
         L_ti = liouvillian(H_ti) + D1_ti + D2_ti
         L_td = @test_logs liouvillian(H_td, c_ops) # Test there are no warnings from lazy tensor
-        ρvec = mat2vec(rand_dm(N))
+        ρ = rand_dm(N)
+        ρvec = mat2vec(ρ)
         @test L_td(p, t) ≈ L_ti
         @test iscached(L_td) == false
         L_td = cache_operator(L_td, ρvec)
@@ -241,6 +242,12 @@
         @test_throws ArgumentError H_td(ρvec, p, t)
         @test_throws ArgumentError cache_operator(H_td, ρvec)
         @test_throws ArgumentError L_td(ψ, p, t)
+        L_mat = liouvillian(QobjEvo(a' * a), (a,); matrix_form = Val(true))
+        @test_throws ArgumentError H_td(ρ, p, t)
+        @test_throws ArgumentError L_td(ρ, p, t)
+        @test_throws ArgumentError L_mat(ψ, p, t)
+        @test_throws ArgumentError L_mat(ρvec, p, t)
+
         @test_throws ArgumentError cache_operator(L_td, ψ)
 
         @testset "Type Inference" begin

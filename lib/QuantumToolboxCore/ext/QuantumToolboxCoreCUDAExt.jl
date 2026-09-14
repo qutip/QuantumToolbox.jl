@@ -1,5 +1,7 @@
 module QuantumToolboxCoreCUDAExt
 
+import LinearAlgebra
+
 # QuantumToolboxCore
 using QuantumToolboxCore
 import QuantumToolboxCore: makeVal, getVal, _sparse_similar, _convert_eltype_wordsize
@@ -12,7 +14,7 @@ import cuSPARSE: cuSPARSE, CuSparseVector, CuSparseMatrixCSC, CuSparseMatrixCSR
 # other imports
 import SparseArrays: SparseVector, SparseMatrixCSC, sparse
 
-CUDACore.allowscalar(false)
+LinearAlgebra.dot(x::CuSparseVector{T}, y::CuArray{T, 2}) where {T} = dot(x, reshape(y, :))
 
 @doc raw"""
     CUDACore.CuArray(A::QuantumObject)
@@ -103,5 +105,13 @@ end
 
 QuantumToolboxCore._sparse_similar(A::CuSparseMatrixCSC, args...) = sparse(args..., fmt = :csc)
 QuantumToolboxCore._sparse_similar(A::CuSparseMatrixCSR, args...) = sparse(args..., fmt = :csr)
+
+function __init__()
+    # register to QuantumToolboxCore.EXT_PKGS
+    (CUDACore ∉ QuantumToolboxCore.EXT_PKGS) && push!(QuantumToolboxCore.EXT_PKGS, CUDACore)
+    (cuSPARSE ∉ QuantumToolboxCore.EXT_PKGS) && push!(QuantumToolboxCore.EXT_PKGS, cuSPARSE)
+
+    return nothing
+end
 
 end

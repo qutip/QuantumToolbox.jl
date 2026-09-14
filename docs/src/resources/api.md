@@ -51,6 +51,9 @@ Operator
 OperatorBra
 OperatorKet
 SuperOperator
+SuperOperatorMatrixForm
+SpostSuperOperator
+SprePostSuperOperator
 QuantumObject
 QuantumObjectEvolution
 Base.size
@@ -260,6 +263,8 @@ TimeEvolutionProblem
 TimeEvolutionSol
 TimeEvolutionMCSol
 TimeEvolutionStochasticSol
+ContinuousLindbladJumpCallback
+DiscreteLindbladJumpCallback
 average_states
 average_expect
 std_expect

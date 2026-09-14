@@ -13,6 +13,7 @@ on:
       - 'test/main-test/**'
       - 'test/ext-test/cpu/**'
       - 'Project.toml'
+      - 'codecov.yml'
   pull_request:
     branches:
       - 'main'
@@ -25,6 +26,7 @@ on:
       - 'test/main-test/**'
       - 'test/ext-test/cpu/**'
       - 'Project.toml'
+      - 'codecov.yml'
     types:
       - opened
       - reopened
@@ -111,7 +113,7 @@ jobs:
           JULIA_NUM_THREADS: auto
       - uses: julia-actions/julia-processcoverage@v1
         with:
-          directories: src,ext
+          directories: src,lib,ext
       - uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

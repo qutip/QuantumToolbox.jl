@@ -10,7 +10,6 @@ steps:
           dirs:
             - src
             - lib
-            - ext
     agents:
       queue: "cuda"
     commands: |
@@ -48,7 +47,6 @@ steps:
           dirs:
             - src
             - lib
-            - ext
     agents:
       queue: "cuda"
     env:

@@ -77,6 +77,14 @@ function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOper
     T = _complex_float_type(Base.promote_eltype(H, ψ0))
     return T, to_dense(T, ψ0.data), ψ0.type, ψ0.dimensions
 end
+function _handle_init_state_and_sol_type_dims(H::AbstractQuantumObject{SuperOperatorMatrixForm}, ψ0::QuantumObject{Tψ}) where {Tψ <: Union{Ket, Operator}}
+    !isendomorphic(H.dimensions) && _non_endomorphic_dims_error("Hamiltonian or Liouvillian for time evolution solvers", H.dimensions)
+    ρ0 = isket(ψ0) ? ket2dm(ψ0) : ψ0
+    check_mul_dimensions(H, ρ0)
+
+    T = _complex_float_type(Base.promote_eltype(H, ψ0))
+    return T, to_dense(T, ρ0.data), Operator(), ρ0.dimensions
+end
 
 @doc raw"""
     struct TimeEvolutionSol
@@ -344,13 +352,43 @@ std_expect(::TimeEvolutionMultiTrajSol{TS, Nothing}) where {TS} = nothing
 
 abstract type LindbladJumpCallbackType end
 
-struct ContinuousLindbladJumpCallback <: LindbladJumpCallbackType
-    interp_points::Int
+@doc raw"""
+    ContinuousLindbladJumpCallback(; interp_points::Int = 0)
+
+Quantum jump detection for [`mcsolve`](@ref) based on root-finding. The jump time is located by a `ContinuousCallback`, which brackets the step in which the norm ``\langle \psi | \psi \rangle`` crosses below its randomly drawn target and then bisects to find the crossing.
+
+# Arguments
+
+- `interp_points`: Number of interior interpolation points checked per solver step when looking for the crossing. The default `0` checks only the two step endpoints.
+
+# Notes
+
+The default `interp_points = 0` is exact, not an approximation. Since ``|\psi(t)\rangle`` is propagated under the non-Hermitian effective Hamiltonian ``\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_n \hat{C}_n^\dagger \hat{C}_n``, its norm obeys
+
+```math
+\frac{d}{dt} \langle \psi | \psi \rangle = - \sum_n \langle \psi | \hat{C}_n^\dagger \hat{C}_n | \psi \rangle \leq 0 ,
+```
+
+so the norm decreases monotonically between jumps and can cross the target at most once per step. The crossing is therefore always visible from the sign of the condition at the two step endpoints, and the interior points added by `interp_points > 0` are redundant work repeated on every accepted step.
+
+Set `interp_points > 0` only if that monotonicity is broken, which requires supplying a deliberately non-Hermitian ``\hat{H}`` that makes the norm increase.
+
+See also [`DiscreteLindbladJumpCallback`](@ref) and [`mcsolve`](@ref).
+"""
+Base.@kwdef struct ContinuousLindbladJumpCallback <: LindbladJumpCallbackType
+    interp_points::Int = 0
 end
 
-struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType end
+@doc raw"""
+    DiscreteLindbladJumpCallback()
 
-ContinuousLindbladJumpCallback(; interp_points::Int = 10) = ContinuousLindbladJumpCallback(interp_points)
+Quantum jump detection for [`mcsolve`](@ref) based on a `DiscreteCallback`. The jump is applied at the end of the first solver step in which the norm ``\langle \psi | \psi \rangle`` is found to be below its randomly drawn target, without root-finding.
+
+This is cheaper per step than [`ContinuousLindbladJumpCallback`](@ref), but less precise: the recorded jump time is the step boundary rather than the actual crossing, so its accuracy is limited by the solver step size.
+
+See also [`ContinuousLindbladJumpCallback`](@ref) and [`mcsolve`](@ref).
+"""
+struct DiscreteLindbladJumpCallback <: LindbladJumpCallbackType end
 
 function _check_tlist(tlist, T::Type)
     tlist2 = convert(Vector{T}, tlist) # Convert it to support GPUs and avoid type instabilities for OrdinaryDiffEq.jl

@@ -110,6 +110,56 @@ Furthermore, `QuantumToolbox` solves the master equation in the [`SuperOperator`
 - [`liouvillian`](@ref)
 - [`lindblad_dissipator`](@ref)
 
+## [Matrix-form evolution](@id doc-TE:Matrix-form-evolution)
+
+By default, `QuantumToolbox` vectorizes an ``N \times N`` density matrix into a vector of length ``N^2`` and represents its Liouvillian as an ``N^2 \times N^2`` matrix. With `matrix_form = Val(true)`, the density matrix remains an [`Operator`](@ref), while lazy left- and right-multiplication operators apply terms such as ``A\rho``, ``\rho B``, and ``A\rho B`` without materializing their Kronecker products.
+
+This approach can be more memory-efficient and faster when:
+
+- the Hilbert-space dimension is moderate to large;
+- the Hamiltonian and collapse operators are relatively dense; or
+- memory is constrained, since matrix form avoids storing the full ``N^2 \times N^2`` Liouvillian.
+
+Matrix form can also be useful for sparse many-body operators, GPU calculations, or [`liouvillian_dressed_nonsecular`](@ref), whose vectorized representation can be poorly sparse. For small systems, the default vectorized form can still be faster because it has less operator-composition overhead. Keep the default when an algorithm requires the explicit Liouville-space matrix.
+
+Enable matrix form directly in [`mesolve`](@ref):
+
+```@example mesolve
+N_matrix = 10
+a_matrix = destroy(N_matrix)
+n_matrix = a_matrix' * a_matrix
+H_matrix = n_matrix
+ρ0_matrix = ket2dm(fock(N_matrix, 4))
+κ_matrix = 0.1
+c_ops_matrix = (sqrt(κ_matrix) * a_matrix,)
+tlist_matrix = LinRange(0, 10, 20)
+
+sol_matrix = mesolve(
+    H_matrix,
+    ρ0_matrix,
+    tlist_matrix,
+    c_ops_matrix;
+    e_ops = (n_matrix,),
+    matrix_form = Val(true),
+    progress_bar = Val(false),
+)
+```
+
+The same representation can be constructed explicitly with [`liouvillian`](@ref). When passing a prebuilt matrix-form Liouvillian to [`mesolve`](@ref), also set `matrix_form = Val(true)` so that the solver keeps the state as a matrix:
+
+```@example mesolve
+L_matrix = liouvillian(H_matrix, c_ops_matrix; matrix_form = Val(true))
+sol_matrix_from_L = mesolve(
+    L_matrix,
+    ρ0_matrix,
+    tlist_matrix;
+    e_ops = (n_matrix,),
+    matrix_form = Val(true),
+    progress_bar = Val(false),
+)
+sol_matrix_from_L.expect ≈ sol_matrix.expect
+```
+
 ## [Example: Dissipative Spin dynamics](@id doc-TE:Example:Dissipative-Spin-dynamics)
 
 Using the example with the dynamics of spin-``\frac{1}{2}`` from the previous section ([Schrödinger Equation Solver](@ref doc-TE:Schrödinger-Equation-Solver)), we can easily add a relaxation process (describing the dissipation of energy from the spin to the environment), by adding `[sqrt(γ) * sigmax()]` in the fourth parameter of the [`mesolve`](@ref) function.
