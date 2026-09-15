@@ -1,7 +1,5 @@
-using QuantumToolbox
-# CarioMakie is imported in the following script
-
-QuantumToolbox.about()
+using QuantumToolboxVisual
+# Makie is imported in the following script
 
 @testset "Makie Extension" verbose = true begin
     ψ = normalize(coherent(50, 5.0) + coherent(50, -5.0))
@@ -21,7 +19,9 @@ QuantumToolbox.about()
     @test_throws ArgumentError matrix_heatmap(H; library = :Makie)
     @test_throws ArgumentError matrix_histogram(H; library = :Makie)
 
+    # import Makie and make sure versioninfo prints Makie's version number
     using Makie
+    QuantumToolboxVisual.about()
 
     #############################################
     # plot_wigner

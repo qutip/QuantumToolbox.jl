@@ -15,6 +15,7 @@ const DOCTEST = get(ENV, "DOCTEST", true) == true # `DOCTEST = false` skips doc 
 
 if DOCTEST
     DocMeta.setdocmeta!(QuantumToolboxCore, :DocTestSetup, :(using QuantumToolboxCore, LinearAlgebra, SparseArrays); recursive = true)
+    DocMeta.setdocmeta!(QuantumToolboxVisual, :DocTestSetup, :(using QuantumToolboxVisual); recursive = true)
     DocMeta.setdocmeta!(QuantumToolbox, :DocTestSetup, :(using QuantumToolbox, LinearAlgebra, SparseArrays); recursive = true)
 end
 
@@ -84,8 +85,9 @@ const PAGES = [
 makedocs(;
     modules = [
         QuantumToolboxCore,
+        QuantumToolboxVisual,
         QuantumToolbox,
-        Base.get_extension(QuantumToolbox, :QuantumToolboxMakieExt),
+        Base.get_extension(QuantumToolboxVisual, :QuantumToolboxVisualMakieExt),
     ],
     authors = "Alberto Mercurio and Yi-Te Huang",
     repo = Remotes.GitHub("qutip", "QuantumToolbox.jl"),

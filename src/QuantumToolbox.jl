@@ -11,6 +11,7 @@ import Statistics: mean, std
 ## Re-export of QuantumToolbox libraries
 import Reexport: @reexport
 @reexport using QuantumToolboxCore
+@reexport using QuantumToolboxVisual
 
 ## internal functions of QuantumToolbox libraries
 import QuantumToolboxCore:
@@ -90,9 +91,7 @@ import FFTW: fft, ifft, fftfreq, fftshift
 import FillArrays: Eye
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
-import LaTeXStrings: @L_str
 import ProgressMeter: Progress, next!
-import SpecialFunctions: loggamma
 import StaticArraysCore: SVector, MVector
 
 # Source files
@@ -124,16 +123,9 @@ include("time_evolution/time_evolution_dynamical.jl")
 
 ## Other functionalities
 include("correlations.jl")
-include("wigner.jl")
 include("spin_lattice.jl")
 include("steadystate.jl")
 include("spectrum.jl")
-
-## Visualization
-include("visualization/bloch_sphere.jl")
-include("visualization/fock_distribution.jl")
-include("visualization/matrix.jl")
-include("visualization/wigner.jl")
 
 ## deprecated functions
 include("deprecated.jl")

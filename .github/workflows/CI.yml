@@ -98,11 +98,13 @@ jobs:
           julia --project=. -e '
             using Pkg
             if VERSION < v"1.11"
+              specs = Pkg.PackageSpec[]
               for lib in readdir("lib"; join=true)
                 isdir(lib) || continue
                 isfile(joinpath(lib, "Project.toml")) || continue
-                Pkg.develop(path=lib)
+                push!(specs, Pkg.PackageSpec(path=lib))
               end
+              Pkg.develop(specs)
             end
             Pkg.instantiate()
           '
@@ -113,7 +115,7 @@ jobs:
           JULIA_NUM_THREADS: auto
       - uses: julia-actions/julia-processcoverage@v1
         with:
-          directories: src,lib,ext
+          directories: src,lib
       - uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
