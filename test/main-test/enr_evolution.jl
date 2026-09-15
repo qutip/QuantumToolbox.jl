@@ -37,3 +37,39 @@
     λ, v = eigenstates(H_enr)
     @test all([H_enr * v[k] ≈ λ[k] * v[k] for k in eachindex(λ)])
 end
+
+@testitem "Excitation number restricted state space (weighted evolution)" begin
+    # Parametric down-conversion conserves the weighted number n_a + n_b + 2 n_c, but not
+    # the total number, so it requires `excitation_weights`. Compare the full Fock-space
+    # dynamics with the (much smaller) ENR-space dynamics.
+    Δa, Δb, Δc = 1.0, 1.3, 2.1
+    g = 0.5
+    γ = 0.1
+    tlist = range(0, 10, 50)
+
+    # full Fock space (signal, idler, pump)
+    Na = Nb = Nc = 2
+    a = destroy(Na) ⊗ qeye(Nb) ⊗ qeye(Nc)
+    b = qeye(Na) ⊗ destroy(Nb) ⊗ qeye(Nc)
+    c = qeye(Na) ⊗ qeye(Nb) ⊗ destroy(Nc)
+    Mf = a' * b' * c
+    H = Δa * a' * a + Δb * b' * b + Δc * c' * c + g * (Mf + Mf')
+    ψ0 = fock(Na, 0) ⊗ fock(Nb, 0) ⊗ fock(Nc, 1)  # one pump excitation, N = 2
+    c_ops = (√γ * a, √γ * b)
+    sol_full = mesolve(H, ψ0, tlist, c_ops; e_ops = [a' * a, c' * c], progress_bar = Val(false))
+
+    # ENR space with conserved weighted number n_a + n_b + 2 * n_c <= 2
+    dims = (2, 2, 2)
+    n_exc = 2
+    weights = (1, 1, 2)
+    s_enr = EnrSpace(dims, n_exc; excitation_weights = weights)
+    ae, be, ce = enr_destroy(s_enr)
+    Me = ae' * be' * ce  # annihilation on the right => intermediate states stay in the ENR space
+    H_enr = Δa * ae' * ae + Δb * be' * be + Δc * ce' * ce + g * (Me + Me')
+    ψ0_enr = enr_fock(s_enr, [0, 0, 1])
+    c_ops_enr = (√γ * ae, √γ * be)
+    sol_enr = mesolve(H_enr, ψ0_enr, tlist, c_ops_enr; e_ops = [ae' * ae, ce' * ce], progress_bar = Val(false))
+
+    @test size(H_enr.data, 1) == 5  # ENR truncation (vs 8 for the full space)
+    @test all(isapprox.(sol_full.expect, sol_enr.expect, atol = 1.0e-5))
+end
