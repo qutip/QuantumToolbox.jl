@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Low Rank Master Equation · QuantumToolbox.jl</title><meta name="title" content="Low Rank Master Equation · QuantumToolbox.jl"/><meta property="og:title" content="Low Rank Master Equation · QuantumToolbox.jl"/><meta property="twitter:title" content="Low Rank Master Equation · QuantumToolbox.jl"/><meta name="description" content="Documentation for QuantumToolbox.jl."/><meta property="og:description" content="Documentation for QuantumToolbox.jl."/><meta property="twitter:description" content="Documentation for QuantumToolbox.jl."/><meta property="og:url" content="https://albertomercurio.github.io/QuantumToolbox.jl/lowrank/"/><meta property="twitter:url" content="https://albertomercurio.github.io/QuantumToolbox.jl/lowrank/"/><link rel="canonical" href="https://albertomercurio.github.io/QuantumToolbox.jl/lowrank/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">QuantumToolbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li><a class="tocitem" href="../api/">API</a></li><li><span class="tocitem">Users Guide</span><ul><li class="is-active"><a class="tocitem" href>Low Rank Master Equation</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Users Guide</a></li><li class="is-active"><a href>Low Rank Master Equation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Low Rank Master Equation</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/albertomercurio/QuantumToolbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/albertomercurio/QuantumToolbox.jl/blob/main/docs/src/lowrank.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Low-Rank-Master-Equation"><a class="docs-heading-anchor" href="#Low-Rank-Master-Equation">Low Rank Master Equation</a><a id="Low-Rank-Master-Equation-1"></a><a class="docs-heading-anchor-permalink" href="#Low-Rank-Master-Equation" title="Permalink"></a></h1><p>We start by importing the packages</p><pre><code class="language-julia hljs">using Plots
+using LaTeXStrings
+using QuantumToolbox;</code></pre><p>Define lattice</p><pre><code class="language-julia hljs">Nx, Ny = 2, 3
+latt = Lattice(Nx=Nx, Ny=Ny)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Lattice{Int64, LinearIndices{2, Tuple{Base.OneTo{Int64}, Base.OneTo{Int64}}}, CartesianIndices{2, Tuple{Base.OneTo{Int64}, Base.OneTo{Int64}}}}(2, 3, 6, [1 3 5; 2 4 6], CartesianIndices((2, 3)))</code></pre><p>Define lr-space dimensions</p><pre><code class="language-julia hljs">N_cut = 2         # Number of states of each mode
+N_modes = latt.N  # Number of modes
+N = N_cut^N_modes # Total number of states
+M = Nx*Ny+1       # Number of states in the LR basis</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">7</code></pre><p>Define lr states. Take as initial state all spins up. All other N states are taken as those with miniman Hamming distance to the initial state.</p><pre><code class="language-julia hljs">ϕ = Vector{QuantumObject{Vector{ComplexF64}, KetQuantumObject}}(undef, M)
+ϕ[1] = kron(repeat([basis(2,0)],N_modes)...)
+
+global i=1
+for j in 1:N_modes
+    global i+=1
+    i&lt;=M &amp;&amp; (ϕ[i] = mb(sp, j, latt) * ϕ[1])
+end
+for k in 1:N_modes-1
+    for l=k+1:N_modes
+        global i+=1
+        i&lt;=M &amp;&amp; (ϕ[i] = mb(sp, k, latt) * mb(sp, l, latt) * ϕ[1])
+    end
+end
+for i in i+1:M
+    ϕ[i] = QuantumObject(rand(ComplexF64,size(ϕ[1])[1]), dims=ϕ[1].dims)
+    normalize!(ϕ[i])
+end</code></pre><p>Define the initial state</p><pre><code class="language-julia hljs">z  = hcat(broadcast(x-&gt;x.data, ϕ)...)
+p0 = 0. # Population of the lr states other than the initial state
+B  = Matrix(Diagonal([1+0im; p0 * ones(M-1)]))
+S  = z&#39;*z # Overlap matrix
+B = B / tr(S*B) # Normalize B
+
+ρ = QuantumObject(z*B*z&#39;, dims=ones(Int,N_modes)*N_cut); # Full density matrix</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[2, 2, 2, 2, 2, 2]   size=(64, 64)   ishermitian=true
+64×64 Matrix{ComplexF64}:
+ 1.0+0.0im  0.0+0.0im  0.0+0.0im  …  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  …  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+    ⋮                             ⋱                        
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  …  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  …  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im</code></pre><p>Define the Hamiltonian and collapse operators</p><pre><code class="language-julia hljs"># Define Hamiltonian and collapse operators
+Jx = 0.9
+Jy = 1.04
+Jz = 1.
+hx = 0.
+γ  = 1
+
+Sx = sum([mb(sx, i, latt) for i in 1:latt.N])
+Sy = sum([mb(sy, i, latt) for i in 1:latt.N])
+Sz = sum([mb(sz, i, latt) for i in 1:latt.N])
+SFxx = sum([mb(sx, i, latt) * mb(sx, j, latt) for i in 1:latt.N for j in 1:latt.N])
+
+H, c_ops = TFIM(Jx, Jy, Jz, hx, γ, latt; bc=pbc, order=1)
+e_ops = (Sx,Sy,Sz,SFxx)
+
+tl = LinRange(0,10,100);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">100-element LinRange{Float64, Int64}:
+ 0.0, 0.10101, 0.20202, 0.30303, 0.40404, …, 9.69697, 9.79798, 9.89899, 10.0</code></pre><h3 id="Full-evolution"><a class="docs-heading-anchor" href="#Full-evolution">Full evolution</a><a id="Full-evolution-1"></a><a class="docs-heading-anchor-permalink" href="#Full-evolution" title="Permalink"></a></h3><pre><code class="language-julia hljs">@time mesol = mesolve(H, ρ, tl, c_ops; e_ops=[e_ops...]);
+A = Matrix(mesol.states[end].data)
+λ = eigvals(Hermitian(A))
+Strue  = -sum(λ.*log2.(λ))/latt.N;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.29324728071737893</code></pre><h3 id="Low-Rank-evolution"><a class="docs-heading-anchor" href="#Low-Rank-evolution">Low Rank evolution</a><a id="Low-Rank-evolution-1"></a><a class="docs-heading-anchor-permalink" href="#Low-Rank-evolution" title="Permalink"></a></h3><p>Define functions to be evaluated during the low-rank evolution</p><pre><code class="language-julia hljs">function f_purity(p,z,B)
+    N  = p.N
+    M  = p.M
+    S  = p.S
+    T  = p.temp_MM
+
+    mul!(T, S, B)
+    tr(T^2)
+end
+
+function f_trace(p,z,B)
+    N  = p.N
+    M  = p.M
+    S  = p.S
+    T  = p.temp_MM
+
+    mul!(T,S,B)
+    tr(T)
+end
+
+function f_entropy(p,z,B)
+    C = p.A0
+    σ = p.Bi
+
+    mul!(C, z, sqrt(B))
+    mul!(σ, C&#39;, C)
+    λ = eigvals(Hermitian(σ))
+    λ = λ[λ.&gt;1e-10]
+    return -sum(λ .* log2.(λ))
+end;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">f_entropy (generic function with 1 method)</code></pre><p>Define the options for the low-rank evolution</p><pre><code class="language-julia hljs">opt = LRMesolveOptions(
+    alg        = Tsit5(),
+    err_max    = 1e-3,
+    p0         = 0.,
+    atol_inv   = 1e-6,
+    adj_condition=&quot;variational&quot;,
+    Δt = 0.
+);
+
+@time lrsol = lr_mesolve(H, z, B, tl, c_ops; e_ops=e_ops, f_ops=(f_purity, f_entropy, f_trace,), opt=opt);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">LRTimeEvolutionSol{Vector{Float64}, Vector{Base.ReshapedArray{ComplexF64, 2, SubArray{ComplexF64, 1, Vector{ComplexF64}, Tuple{UnitRange{Int64}}, true}, Tuple{}}}, Matrix{ComplexF64}, Vector{Int64}}([10.0], Base.ReshapedArray{ComplexF64, 2, SubArray{ComplexF64, 1, Vector{ComplexF64}, Tuple{UnitRange{Int64}}, true}, Tuple{}}[[0.9765077144286615 - 0.006219079334131151im 3.2738471569113803e-7 - 1.2433471897187135e-7im … -6.041837417576852e-5 - 5.104087727021705e-5im -7.765622853291598e-5 - 9.71957521734838e-6im; -3.2129191790072773e-6 + 8.087303783668407e-8im 0.0022678070883443095 - 0.010329981916013795im … -0.05404631687980407 - 0.005849192984818809im -0.034612086469765393 + 0.00614939201344269im; … ; -5.118646376613913e-6 - 1.2877734070820306e-5im -0.012499998833705214 - 0.005168867520479114im … 0.009743669962713142 - 0.030474128946095323im -0.011403424060781445 - 0.013910409417949476im; 0.002555201012396967 - 0.006054926255348682im -5.153994446765919e-6 + 8.471326158858638e-6im … 0.00020920502670602656 - 0.00011539567778750413im 4.6442622956752305e-5 - 9.348971972053967e-6im]], Base.ReshapedArray{ComplexF64, 2, SubArray{ComplexF64, 1, Vector{ComplexF64}, Tuple{UnitRange{Int64}}, true}, Tuple{}}[[0.6667701299939592 - 2.4264498604930655e-25im -2.905934722054598e-7 - 1.6201572430339277e-7im … 1.573099961485082e-5 - 1.272074949756447e-5im 1.7111520631743565e-6 - 1.8000758891826222e-6im; -2.905934722054598e-7 + 1.6201572430339277e-7im 0.040572988483578896 - 1.4764956889514336e-26im … -1.0317461348245335e-6 + 1.8644462488532083e-5im 3.30123653071663e-7 - 9.08827931179431e-6im; … ; 1.573099961485082e-5 + 1.272074949756447e-5im -1.0317461348245335e-6 - 1.8644462488532083e-5im … 0.0003126801411520382 - 1.1378774344378459e-28im -1.72807072659889e-5 + 4.262386051411162e-6im; 1.7111520631743565e-6 + 1.8000758891826222e-6im 3.30123653071663e-7 + 9.08827931179431e-6im … -1.72807072659889e-5 - 4.262386051411162e-6im 0.00029207375150039913 - 1.0628885153992282e-28im]], ComplexF64[0.0 + 0.0im 0.0 + 0.0im … -1.0560591333953762e-6 + 5.421010862427522e-19im -1.0652403984604333e-6 - 1.8431436932253575e-18im; 0.0 + 0.0im 0.0 + 0.0im … 3.823589705409525e-6 + 8.673617379884035e-19im 3.637521248456418e-6 + 3.577867169202165e-18im; -6.0 + 0.0im -5.987982183320124 - 5.811416879613635e-20im … -4.5642437343926625 - 6.245004513516506e-17im -4.56432675976526 + 8.673617379884035e-19im; 6.0 + 0.0im 6.0135145926944364 - 7.497557741935917e-17im … 8.148126910955343 - 5.134781488891349e-16im 8.148018212334872 - 1.0547118733938987e-15im], ComplexF64[1.0 + 0.0im 0.9995913405809307 + 1.456507381741672e-38im … 0.516253382141987 - 4.1298876929083915e-18im 0.5162767010000036 - 3.658063043294913e-18im; -0.0 + 0.0im 0.0031973769106007264 + 0.0im … 1.7339345602122123 + 0.0im 1.7338510328083667 + 0.0im; 1.0 + 0.0im 1.0000000000000007 - 8.816207631167156e-39im … 1.0 - 3.0776934900654643e-25im 1.0 - 3.1503949110906327e-25im], [7, 7, 7, 7, 7, 7, 7, 8, 15, 17  …  36, 36, 36, 36, 36, 36, 36, 36, 36, 36])</code></pre><p>Plot the results</p><pre><code class="language-julia hljs">fig = plot(layout=(1,2), size=(800,400), legend=:topleft, xlabel=L&quot;\gamma t&quot;)
+
+m_me = real(mesol.expect[3,:])/Nx/Ny
+m_lr = real(lrsol.expvals[3,:])/Nx/Ny
+
+plot!(fig[1], tl, m_lr, label=raw&quot;LR $[M=M(t)]$&quot;, lw=2)
+plot!(fig[1], tl, m_me, ls=:dash, label=&quot;Fock&quot;, lw=2)
+ylabel!(fig[1], L&quot;M_{z}&quot;)
+
+plot!(fig[2], tl, 1 .-real(lrsol.funvals[1,:]), label=L&quot;$1-P$&quot;, lw=2)
+plot!(fig[2], tl, 1 .-real(lrsol.funvals[3,:]), c=:orange, label=L&quot;$1-\rm{Tr}(\rho)$&quot;, lw=2, ls=:dash)
+plot!(fig[2], tl, real(lrsol.funvals[2,:])/Nx/Ny, c=:blue, label=L&quot;S&quot;, lw=2)
+hline!(fig[2], [Strue], c=:blue, ls=:dash, lw=2, label=L&quot;S^{\rm \,true}_{\rm ss}&quot;)
+ylabel!(fig[2], &quot;value&quot;)
+xlabel!(fig[2], L&quot;\gamma t&quot;)</code></pre><img src="96629da8.svg" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/">« API</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Friday 15 March 2024 17:55">Friday 15 March 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
