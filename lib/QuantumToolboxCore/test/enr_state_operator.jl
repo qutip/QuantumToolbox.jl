@@ -1,5 +1,5 @@
 @testitem "Excitation number restricted state space" begin
-    using StaticArraysCore
+    using StaticArrays
     using SparseArrays
 
     @testset "EnrSpace" begin
