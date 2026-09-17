@@ -59,14 +59,12 @@ jobs:
           - 'Main'
 
         include:
-          # for core tests (intermediate versions)
-          # comment this part first since Julia 1.11 security support ended [see https://endoflife.date/julia]
-          # but this can be re-enabled, for example, when latest version becomes 1.13, we can put 1.12 here
-          # - version: '1.11'
-          #   node:
-          #     os: 'ubuntu-latest'
-          #     arch: 'x64'
-          #   group: 'Main'
+          # for Main tests (intermediate versions)
+          - version: '1.12'
+            node:
+              os: 'ubuntu-latest'
+              arch: 'x64'
+            group: 'Main'
 
           # for extension tests
           - version: '1'

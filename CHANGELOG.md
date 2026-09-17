@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support weighted number operators (`N = \sum_j c_j a_j^\dagger a_j`) for excitation number restricted (ENR) spaces through the new `excitation_weights` keyword argument of `EnrSpace` (and the `enr_*` functions), useful for Hamiltonians that conserve a weighted excitation number such as parametric down-conversion. ([#663], [#739])
 - [lib] Introduce `QuantumToolboxVisual` library. ([#766])
+- [lib] Fix `SVector`-related errors in `Core` library. Now we use `StaticArrays` as dependency instead of `StaticArraysCore`. ([#771])
 
 ## [v0.48.0]
 Release date: 2026-09-11
@@ -583,3 +584,4 @@ Release date: 2024-11-13
 [#766]: https://github.com/qutip/QuantumToolbox.jl/issues/766
 [#767]: https://github.com/qutip/QuantumToolbox.jl/issues/767
 [#769]: https://github.com/qutip/QuantumToolbox.jl/issues/769
+[#771]: https://github.com/qutip/QuantumToolbox.jl/issues/771

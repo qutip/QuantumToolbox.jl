@@ -1,29 +1,21 @@
-name: Runtests (Julia nightly)
+# This workflow make sures that each library works individually
+# Note that this workflow only triggers when the files in 'lib' are changed
+name: Runtests (Library)
 
 on:
   push:
     branches:
       - 'main'
     paths:
-      - '.github/workflows/CI-Julia-nightly.yml'
-      - 'src/**'
+      - '.github/workflows/CI-Library.yml'
       - 'lib/**'
-      - 'ext/**'
-      - 'test/runtests.jl'
-      - 'test/main-test/**'
-      - 'Project.toml'
       - 'codecov.yml'
   pull_request:
     branches:
       - 'main'
     paths:
-      - '.github/workflows/CI-Julia-nightly.yml'
-      - 'src/**'
+      - '.github/workflows/CI-Library.yml'
       - 'lib/**'
-      - 'ext/**'
-      - 'test/runtests.jl'
-      - 'test/main-test/**'
-      - 'Project.toml'
       - 'codecov.yml'
     types:
       - opened
@@ -33,8 +25,8 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }} - ${{ matrix.arch }} ( ${{ matrix.group }} )
-    runs-on: ${{ matrix.os }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.node.os }} - ${{ matrix.node.arch }} ( ${{ matrix.group }} )
+    runs-on: ${{ matrix.node.os }}
     permissions: # needed to allow julia-actions/cache to delete old caches that it has created
       actions: write
       contents: read
@@ -42,24 +34,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # for core tests (latest and oldest supported versions)
         version:
-          - 'nightly'
-        os:
-          - 'ubuntu-latest'
-        arch:
-          - 'x64'
+          - '1' # latest
+        node:
+          - os: 'ubuntu-latest'
+            arch: 'x64'
         group:
-          - 'Main'
+          - 'Core'
+          - 'Visual'
 
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
+          arch: ${{ matrix.node.arch }}
       - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         env:
           GROUP: ${{ matrix.group }}
           JULIA_NUM_THREADS: auto
+      - uses: julia-actions/julia-processcoverage@v1
+        with:
+          directories: lib
+      - uses: codecov/codecov-action@v7
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          files: lcov.info
+          fail_ci_if_error: false

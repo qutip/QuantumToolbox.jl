@@ -1,7 +1,7 @@
 @testitem "Quantum Objects Evolution" begin
     using LinearAlgebra
     using SparseArrays
-    using StaticArraysCore
+    using StaticArrays
     using SciMLOperators
     import SciMLOperators: AddedOperator
 
