@@ -74,9 +74,13 @@ end
 
 # only run tests for a specific library
 if GROUP ∈ LIBRARY_LIST
-    import QuantumToolbox
-
-    QuantumToolbox.about()
+    if GROUP == "Core"
+        import QuantumToolboxCore
+        QuantumToolboxCore.about()
+    elseif GROUP == "Visual"
+        import QuantumToolboxVisual
+        QuantumToolboxVisual.about()
+    end
 
     lib_name, _ = LIBRARY_NAME_AND_PATH[GROUP]
     println("\n[$lib_name]")

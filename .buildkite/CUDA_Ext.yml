@@ -35,9 +35,7 @@ steps:
     matrix:
       setup:
         version:
-          # comment this part first since Julia 1.11 security support ended [see https://endoflife.date/julia]
-          # but this can be re-enabled, for example, when latest version becomes 1.13, we can put 1.12 here
-          # - "1.11" # oldest
+          - "1.12" # oldest except 1.10 (and ignore 1.11 since security support ended)
           - "1"    # latest
     plugins:
       - JuliaCI/julia#v1:
