@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Support weighted number operators (`N = \sum_j c_j a_j^\dagger a_j`) for excitation number restricted (ENR) spaces through the new `excitation_weights` keyword argument of `EnrSpace` (and the `enr_*` functions), useful for Hamiltonians that conserve a weighted excitation number such as parametric down-conversion. ([#663], [#739])
 - [lib] Introduce `QuantumToolboxVisual` library. ([#766])
 
 ## [v0.48.0]
@@ -541,6 +542,7 @@ Release date: 2024-11-13
 [#656]: https://github.com/qutip/QuantumToolbox.jl/issues/656
 [#657]: https://github.com/qutip/QuantumToolbox.jl/issues/657
 [#659]: https://github.com/qutip/QuantumToolbox.jl/issues/659
+[#663]: https://github.com/qutip/QuantumToolbox.jl/issues/663
 [#667]: https://github.com/qutip/QuantumToolbox.jl/issues/667
 [#669]: https://github.com/qutip/QuantumToolbox.jl/issues/669
 [#670]: https://github.com/qutip/QuantumToolbox.jl/issues/670
@@ -571,6 +573,7 @@ Release date: 2024-11-13
 [#729]: https://github.com/qutip/QuantumToolbox.jl/issues/729
 [#733]: https://github.com/qutip/QuantumToolbox.jl/issues/733
 [#736]: https://github.com/qutip/QuantumToolbox.jl/issues/736
+[#739]: https://github.com/qutip/QuantumToolbox.jl/issues/739
 [#745]: https://github.com/qutip/QuantumToolbox.jl/issues/745
 [#747]: https://github.com/qutip/QuantumToolbox.jl/issues/747
 [#748]: https://github.com/qutip/QuantumToolbox.jl/issues/748
