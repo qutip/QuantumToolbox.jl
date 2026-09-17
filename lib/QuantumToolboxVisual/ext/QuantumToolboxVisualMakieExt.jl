@@ -1,18 +1,19 @@
-module QuantumToolboxMakieExt
+module QuantumToolboxVisualMakieExt
 
 using QuantumToolboxCore
 import QuantumToolboxCore: makeVal, getVal
 
-# TODO: change this part to `QuantumToolboxVisualization` instead of using `QuantumToolbox`
-using QuantumToolbox
-import QuantumToolbox:
+using QuantumToolboxVisual
+import QuantumToolboxVisual:
     _state_to_bloch,
     _handle_matrix_plot_data,
     _gen_default_ket_labels,
     _gen_default_bra_labels
 
 import LinearAlgebra: cross, deg2rad, normalize, size
+
 import Makie:
+    Makie,
     Axis,
     Axis3,
     LScene,
@@ -50,5 +51,12 @@ include("MakieExt/bloch_sphere.jl")
 include("MakieExt/fock_distribution.jl")
 include("MakieExt/matrix.jl")
 include("MakieExt/wigner.jl")
+
+function __init__()
+    # register to QuantumToolboxCore.EXT_PKGS
+    (Makie ∉ QuantumToolboxCore.EXT_PKGS) && push!(QuantumToolboxCore.EXT_PKGS, Makie)
+
+    return nothing
+end
 
 end

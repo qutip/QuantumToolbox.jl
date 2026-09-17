@@ -9,20 +9,30 @@ on:
         default: 'skip'
         type: choice
         options:
-        - skip
-        - patch
-        - minor
-        - major
+          - skip
+          - patch
+          - minor
+          - major
       QuantumToolboxCore:
         description: 'Bump version for QuantumToolboxCore'
         required: true
         default: 'skip'
         type: choice
         options:
-        - skip
-        - patch
-        - minor
-        - major
+          - skip
+          - patch
+          - minor
+          - major
+      QuantumToolboxVisual:
+        description: 'Bump version for QuantumToolboxVisual'
+        required: true
+        default: 'skip'
+        type: choice
+        options:
+          - skip
+          - patch
+          - minor
+          - major
 
 permissions:
   contents: write
