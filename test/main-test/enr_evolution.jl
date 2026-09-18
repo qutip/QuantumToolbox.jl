@@ -1,4 +1,7 @@
-@testitem "Excitation number restricted state space (evolution)" begin
+using Test
+using QuantumToolbox
+
+@testset "Excitation number restricted state space (evolution)" begin
     ε = 2π
     ωc = 2π
     g = 0.1ωc

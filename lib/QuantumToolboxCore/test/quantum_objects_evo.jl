@@ -1,4 +1,7 @@
-@testitem "Quantum Objects Evolution" begin
+using Test
+using QuantumToolboxCore
+
+@testset "Quantum Objects Evolution" begin
     using LinearAlgebra
     using SparseArrays
     using StaticArraysCore
@@ -65,10 +68,10 @@
     @testset "Promote Operators Type" begin
         a = destroy(20)
         A = QobjEvo(a)
-        @test QuantumToolbox.promote_op_type(a, A) == QuantumObjectEvolution
-        @test QuantumToolbox.promote_op_type(A, a) == QuantumObjectEvolution
-        @test QuantumToolbox.promote_op_type(A, A) == QuantumObjectEvolution
-        @test QuantumToolbox.promote_op_type(a, a) == QuantumObject
+        @test QuantumToolboxCore.promote_op_type(a, A) == QuantumObjectEvolution
+        @test QuantumToolboxCore.promote_op_type(A, a) == QuantumObjectEvolution
+        @test QuantumToolboxCore.promote_op_type(A, A) == QuantumObjectEvolution
+        @test QuantumToolboxCore.promote_op_type(a, a) == QuantumObject
     end
 
     @testset "arithmetic" begin

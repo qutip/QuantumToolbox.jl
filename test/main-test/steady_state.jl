@@ -1,4 +1,7 @@
-@testitem "Steady State" begin
+using Test
+using QuantumToolbox
+
+@testset "Steady State" begin
     N = 10
     a = destroy(N)
     a_d = a'

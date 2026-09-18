@@ -1,4 +1,7 @@
-@testitem "Bloch-Redfield tensor sec_cutoff" begin
+using Test
+using QuantumToolbox
+
+@testset "Bloch-Redfield tensor sec_cutoff" begin
     N = 5
     H = num(N)
     a = destroy(N)
@@ -19,7 +22,7 @@
     end
 end
 
-@testitem "Compare brterm and Lindblad" begin
+@testset "Compare brterm and Lindblad" begin
     N = 5
     H = num(N)
     a = destroy(N) + destroy(N)^2 / 2
@@ -32,7 +35,7 @@ end
     @test isapprox(lindblad, computation, atol = 1.0e-15)
 end
 
-@testitem "brterm basis" begin
+@testset "brterm basis" begin
     using SparseArrays: issparse
 
     N = 5
@@ -56,7 +59,7 @@ end
     end
 end
 
-@testitem "brterm sprectra function" begin
+@testset "brterm sprectra function" begin
     using SparseArrays: issparse
 
     f(x) = exp(x) / 10
@@ -97,7 +100,7 @@ end
     end
 end
 
-@testitem "simple qubit system" begin
+@testset "simple qubit system" begin
     pauli_vectors = [sigmax(), sigmay(), sigmaz()]
     γ = 0.25
     spectra(x) = γ * (x >= 0)

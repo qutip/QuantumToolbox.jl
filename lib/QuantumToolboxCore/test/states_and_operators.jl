@@ -1,5 +1,8 @@
-@testitem "States and Operators" begin
-    import QuantumToolbox: position, momentum
+using Test
+using QuantumToolboxCore
+
+@testset "States and Operators" begin
+    import QuantumToolboxCore: position, momentum
     using LinearAlgebra
     using SparseArrays
     using Random

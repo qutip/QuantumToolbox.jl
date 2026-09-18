@@ -1,4 +1,7 @@
-@testitem "Dressed Nonsecular Master Equation" begin
+using Test
+using QuantumToolbox
+
+@testset "Dressed Nonsecular Master Equation" begin
     using LinearAlgebra
     using SparseArrays
 

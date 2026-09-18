@@ -1,75 +1,69 @@
-@testmodule TESetup begin
-    using QuantumToolbox
-    using Random
+using Test
+using QuantumToolbox
+using Random
 
-    # Global definition of the system
-    N = 10
-    a = kron(destroy(N), qeye(2))
-    σm = kron(qeye(N), sigmam())
-    σz = qeye(N) ⊗ sigmaz()
+# Global definition of the system
+N = 10
+a = kron(destroy(N), qeye(2))
+σm = kron(qeye(N), sigmam())
+σz = qeye(N) ⊗ sigmaz()
 
-    g = 0.01
-    ωc = 1
-    ωq = 0.99
-    γ = 0.1
-    nth = 0.001
+g = 0.01
+ωc = 1
+ωq = 0.99
+γ = 0.1
+nth = 0.001
 
-    # Jaynes-Cummings Hamiltonian
-    H = ωc * a' * a + ωq / 2 * σz + g * (a' * σm + a * σm')
-    ψ0 = kron(fock(N, 0), fock(2, 0))
+# Jaynes-Cummings Hamiltonian
+H = ωc * a' * a + ωq / 2 * σz + g * (a' * σm + a * σm')
+ψ0 = kron(fock(N, 0), fock(2, 0))
 
-    e_ops = (a' * a, σz)
-    c_ops = (sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σm')
+e_ops = (a' * a, σz)
+c_ops = (sqrt(γ * (1 + nth)) * a, sqrt(γ * nth) * a', sqrt(γ * (1 + nth)) * σm, sqrt(γ * nth) * σm')
 
-    sme_η = 0.7 # Efficiency of the homodyne detector for smesolve
-    c_ops_sme = ntuple(i -> sqrt(1 - sme_η) * c_ops[i], Val(length(c_ops)))
-    sc_ops_sme = ntuple(i -> sqrt(sme_η) * c_ops[i], Val(length(c_ops)))
+sme_η = 0.7 # Efficiency of the homodyne detector for smesolve
+c_ops_sme = ntuple(i -> sqrt(1 - sme_η) * c_ops[i], Val(length(c_ops)))
+sc_ops_sme = ntuple(i -> sqrt(sme_η) * c_ops[i], Val(length(c_ops)))
 
-    # The following definition is to test the case of `sc_ops` as an `AbstractQuantumObject`
-    c_ops_sme2 = c_ops[2:end]
-    sc_ops_sme2 = c_ops[1]
+# The following definition is to test the case of `sc_ops` as an `AbstractQuantumObject`
+c_ops_sme2 = c_ops[2:end]
+sc_ops_sme2 = c_ops[1]
 
-    ψ0_int = Qobj(round.(Int, real.(ψ0.data)), dims = ψ0.dims) # Used for testing the type inference
+ψ0_int = Qobj(round.(Int, real.(ψ0.data)), dims = ψ0.dims) # Used for testing the type inference
 
-    ψ_wrong = kron(fock(N - 1, 0), fock(2, 0))
+ψ_wrong = kron(fock(N - 1, 0), fock(2, 0))
 
-    rng = MersenneTwister(12)
+rng = MersenneTwister(12)
 
-    # QobjEvo
-    ωd = 1.02
-    F = 0.05
-    coef1(p, t) = p.F * exp(1im * p.ωd * t)
-    coef2(p, t) = p.F * exp(-1im * p.ωd * t)
-    p = (F = F, ωd = ωd)
-    H_td = (H, (a, coef1), (a', coef2))
-    H_td2 = QobjEvo(H_td)
-    L_td = liouvillian(H_td2)
+# QobjEvo
+ωd = 1.02
+F = 0.05
+coef1(p, t) = p.F * exp(1im * p.ωd * t)
+coef2(p, t) = p.F * exp(-1im * p.ωd * t)
+p = (F = F, ωd = ωd)
+H_td = (H, (a, coef1), (a', coef2))
+H_td2 = QobjEvo(H_td)
+L_td = liouvillian(H_td2)
 
-    # time list and saveat
-    tlist = range(0, 10 / γ, 100)
-    saveat_idxs = 50:90
-    saveat = tlist[saveat_idxs]
+# time list and saveat
+tlist = range(0, 10 / γ, 100)
+saveat_idxs = 50:90
+saveat = tlist[saveat_idxs]
 
-    # time list for testing exceptions
-    tlist1 = Float64[]
-    tlist2 = [0, 0.2, 0.1]
-    tlist3 = [0, 0.1, 0.1, 0.2]
+# time list for testing exceptions
+tlist1 = Float64[]
+tlist2 = [0, 0.2, 0.1]
+tlist3 = [0, 0.1, 0.1, 0.2]
 
-    # mesolve solution used for comparing results from mcsolve, ssesolve, and smesolve with mesolve
-    prob_me = mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
-    sol_me = mesolve(prob_me)
-end
+# mesolve solution used for comparing results from mcsolve, ssesolve, and smesolve with mesolve
+prob_me = mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+sol_me = mesolve(prob_me)
 
-@testitem "sesolve" setup = [TESetup] begin
+@testset "sesolve" begin
     using SciMLOperators
     import SciMLOperators: ScaledOperator
 
-    # Get parameters from TESetup to simplify the code
-    H = TESetup.H
-    ψ0 = TESetup.ψ0
-    e_ops = TESetup.e_ops
-
-    tlist = range(0, 20 * 2π / TESetup.g, 1000)
+    tlist = range(0, 20 * 2π / g, 1000)
     saveat_idxs = 500:900
     saveat = tlist[saveat_idxs]
 
@@ -79,8 +73,8 @@ end
     sol3 = sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
 
     ## Analytical solution for the expectation value of a' * a
-    Ω_rabi = sqrt(TESetup.g^2 + ((TESetup.ωc - TESetup.ωq) / 2)^2)
-    amp_rabi = TESetup.g^2 / Ω_rabi^2
+    Ω_rabi = sqrt(g^2 + ((ωc - ωq) / 2)^2)
+    amp_rabi = g^2 / Ω_rabi^2
     ##
 
     @test prob.prob.f.f isa ScaledOperator
@@ -122,11 +116,11 @@ end
         "abstol = $(sol2.abstol)\n" *
         "reltol = $(sol2.reltol)\n"
 
-    @test_throws ArgumentError sesolve(H, ψ0, TESetup.tlist1, progress_bar = Val(false))
-    @test_throws ArgumentError sesolve(H, ψ0, TESetup.tlist2, progress_bar = Val(false))
-    @test_throws ArgumentError sesolve(H, ψ0, TESetup.tlist3, progress_bar = Val(false))
+    @test_throws ArgumentError sesolve(H, ψ0, tlist1, progress_bar = Val(false))
+    @test_throws ArgumentError sesolve(H, ψ0, tlist2, progress_bar = Val(false))
+    @test_throws ArgumentError sesolve(H, ψ0, tlist3, progress_bar = Val(false))
     @test_throws ArgumentError sesolve(H, ψ0, tlist, save_idxs = [1, 2], progress_bar = Val(false))
-    @test_throws DimensionMismatch sesolve(H, TESetup.ψ_wrong, tlist, progress_bar = Val(false))
+    @test_throws DimensionMismatch sesolve(H, ψ_wrong, tlist, progress_bar = Val(false))
 
     @testset "Memory Allocations" begin
         allocs_tot = @allocations sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false)) # Warm-up
@@ -141,22 +135,15 @@ end
     @testset "Type Inference sesolve" begin
         @inferred sesolveProblem(H, ψ0, tlist, progress_bar = Val(false))
         @inferred sesolveProblem(H, ψ0, [0, 10], progress_bar = Val(false))
-        @inferred sesolveProblem(H, TESetup.ψ0_int, tlist, progress_bar = Val(false))
+        @inferred sesolveProblem(H, ψ0_int, tlist, progress_bar = Val(false))
         @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(true)) # test progress bar
         @inferred sesolve(H, ψ0, tlist, progress_bar = Val(false))
         @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
-        @inferred sesolve(H, ψ0, tlist, e_ops = (TESetup.a' * TESetup.a, TESetup.a'), progress_bar = Val(false)) # We test the type inference for Tuple of different types
+        @inferred sesolve(H, ψ0, tlist, e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple of different types
     end
 end
 
-@testitem "sesolve_map" setup = [TESetup] begin
-
-    # Get parameters from TESetup to simplify the code
-    N = TESetup.N
-    a = TESetup.a
-    σz = TESetup.σz
-    σm = TESetup.σm
-    e_ops = TESetup.e_ops
+@testset "sesolve_map" begin
 
     g = 0.01
 
@@ -173,7 +160,7 @@ end
     ωq_fun(p, t) = p[2]
     H = QobjEvo(a' * a, ωc_fun) + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σm')
 
-    sols0 = sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(false)) # no params
+    sols0 = sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(false)) # no params
     sols1 = sesolve_map(H, ψ_0_e, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     sols2 = sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     @test size(sols0) == (2,)
@@ -197,22 +184,13 @@ end
     end
 
     @testset "Type Inference sesolve_map" begin
-        @inferred sesolve_map(TESetup.H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(true)) # no params, test progress bar
+        @inferred sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, progress_bar = Val(true)) # no params, test progress bar
         @inferred sesolve_map(H, ψ0_list, tlist; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     end
 end
 
-@testitem "mesolve" setup = [TESetup] begin
+@testset "mesolve" begin
     using SciMLOperators
-
-    # Get parameters from TESetup to simplify the code
-    H = TESetup.H
-    ψ0 = TESetup.ψ0
-    tlist = TESetup.tlist
-    c_ops = TESetup.c_ops
-    e_ops = TESetup.e_ops
-    saveat = TESetup.saveat
-    sol_me = TESetup.sol_me
 
     sol_me2 = mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
     sol_me3 = mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
@@ -227,8 +205,8 @@ end
     # Redirect to `sesolve`
     sol_me5 = mesolve(H, ψ0, tlist, progress_bar = Val(false))
 
-    @test TESetup.prob_me.prob.f.f isa MatrixOperator
-    @test !haskey(TESetup.prob_me.prob.kwargs, :tstops) # tstops should not exist for time-independent cases
+    @test prob_me.prob.f.f isa MatrixOperator
+    @test !haskey(prob_me.prob.kwargs, :tstops) # tstops should not exist for time-independent cases
     @test !haskey(prob_me_mat.prob.kwargs, :tstops)
     @test isket(sol_me5.states[1])
     @test length(sol_me.times) == length(tlist)
@@ -243,14 +221,14 @@ end
     @test length(sol_me3.times_states) == length(saveat)
     @test length(sol_me3.states) == length(saveat)
     @test size(sol_me3.expect) == (length(e_ops), length(tlist))
-    @test sol_me3.expect[1, TESetup.saveat_idxs] ≈ expect(e_ops[1], sol_me3.states) atol = 1.0e-6
+    @test sol_me3.expect[1, saveat_idxs] ≈ expect(e_ops[1], sol_me3.states) atol = 1.0e-6
     @test all([sol_me3.states[i] ≈ vector_to_operator(sol_me4.states[i]) for i in eachindex(saveat)])
     @test length(sol_me_mat.times_states) == length(tlist)
     @test length(sol_me_mat.states) == length(tlist)
     @test sol_me_mat.expect === nothing
     @test all(isoper, sol_me_mat.states)
     @test size(sol_me_mat2.expect) == (length(e_ops), length(tlist))
-    @test sol_me_mat2.expect[1, TESetup.saveat_idxs] ≈ expect(e_ops[1], sol_me_mat2.states) atol = 1.0e-6
+    @test sol_me_mat2.expect[1, saveat_idxs] ≈ expect(e_ops[1], sol_me_mat2.states) atol = 1.0e-6
     @test sol_me_mat2.expect[1, :] ≈ sol_me.expect[1, :] atol = 1.0e-6
 
     @testset "Pure-dissipator Liouvillian matrix form" begin
@@ -271,19 +249,17 @@ end
         "abstol = $(sol_me.abstol)\n" *
         "reltol = $(sol_me.reltol)\n"
 
-    @test_throws ArgumentError mesolve(H, ψ0, TESetup.tlist1, c_ops, progress_bar = Val(false))
-    @test_throws ArgumentError mesolve(H, ψ0, TESetup.tlist2, c_ops, progress_bar = Val(false))
-    @test_throws ArgumentError mesolve(H, ψ0, TESetup.tlist3, c_ops, progress_bar = Val(false))
+    @test_throws ArgumentError mesolve(H, ψ0, tlist1, c_ops, progress_bar = Val(false))
+    @test_throws ArgumentError mesolve(H, ψ0, tlist2, c_ops, progress_bar = Val(false))
+    @test_throws ArgumentError mesolve(H, ψ0, tlist3, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError mesolve(H, ψ0, tlist, c_ops, save_idxs = [1, 2], progress_bar = Val(false))
-    @test_throws DimensionMismatch mesolve(H, TESetup.ψ_wrong, tlist, c_ops, progress_bar = Val(false))
+    @test_throws DimensionMismatch mesolve(H, ψ_wrong, tlist, c_ops, progress_bar = Val(false))
 
     @testset "Memory Allocations (mesolve)" begin
-        a = TESetup.a
-        p = TESetup.p
 
         # We predefine the Liouvillian to avoid to count the allocations of the liouvillian function
         L = liouvillian(H, c_ops)
-        L_td = QobjEvo((liouvillian(H, c_ops), (liouvillian(a), TESetup.coef1), (liouvillian(a'), TESetup.coef2)))
+        L_td = QobjEvo((liouvillian(H, c_ops), (liouvillian(a), coef1), (liouvillian(a'), coef2)))
 
         allocs_tot = @allocations mesolve(L, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false)) # Warm-up
         allocs_tot = @allocations mesolve(L, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
@@ -303,8 +279,6 @@ end
     end
 
     @testset "Type Inference (mesolve)" begin
-        a = TESetup.a
-        p = TESetup.p
 
         coef(p, t) = exp(-t)
         ad_t = QobjEvo(a', coef)
@@ -312,30 +286,19 @@ end
         @inferred mesolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), matrix_form = Val(true))
         @inferred liouvillian(nothing, c_ops; matrix_form = Val(true))
         @inferred mesolveProblem(H, ψ0, [0, 10], c_ops, e_ops = e_ops, progress_bar = Val(false))
-        @inferred mesolveProblem(H, TESetup.ψ0_int, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
+        @inferred mesolveProblem(H, ψ0_int, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
         @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(true)) # also test progress bar
         @inferred mesolve(H, ψ0, tlist, c_ops, progress_bar = Val(false))
         @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), matrix_form = Val(true))
         @inferred mesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, saveat = tlist, progress_bar = Val(false))
         @inferred mesolve(H, ψ0, tlist, (a, ad_t), e_ops = (a' * a, a'), progress_bar = Val(false)) # We test the type inference for Tuple
-        @inferred mesolve(TESetup.H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
-        @inferred mesolve(TESetup.H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
-        @inferred mesolve(TESetup.L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+        @inferred mesolve(H_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+        @inferred mesolve(H_td2, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
+        @inferred mesolve(L_td, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), params = p)
     end
 end
 
-@testitem "mesolve_map" setup = [TESetup] begin
-
-    # Get parameters from TESetup to simplify the code
-    N = TESetup.N
-    a = TESetup.a
-    σz = TESetup.σz
-    σm = TESetup.σm
-    ψ0 = TESetup.ψ0
-    c_ops = TESetup.c_ops
-    e_ops = TESetup.e_ops
-    γ = TESetup.γ
-    nth = TESetup.nth
+@testset "mesolve_map" begin
 
     g = 0.01
 
@@ -353,7 +316,7 @@ end
     H = QobjEvo(a' * a, ωc_fun) + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σm')
 
     # Test with multiple initial states but no params
-    sols0 = mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops, progress_bar = Val(false))
+    sols0 = mesolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, progress_bar = Val(false))
     # Test with single initial state
     sols1 = mesolve_map(H, ψ_0_e, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
     # Test with multiple initial states
@@ -408,7 +371,7 @@ end
     @test sols5 isa Array{<:TimeEvolutionSol}
 
     @testset "Type Inference mesolve_map" begin
-        @inferred mesolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops, progress_bar = Val(true)) # no params, but test progress bar
+        @inferred mesolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, progress_bar = Val(true)) # no params, but test progress bar
         @inferred mesolve_map(
             H,
             ψ0_list,
@@ -421,20 +384,10 @@ end
     end
 end
 
-@testitem "mcsolve" setup = [TESetup] begin
+@testset "mcsolve" begin
     using SciMLOperators
     import SciMLOperators: ScaledOperator
     using Statistics
-
-    # Get parameters from TESetup to simplify the code
-    H = TESetup.H
-    ψ0 = TESetup.ψ0
-    tlist = TESetup.tlist
-    c_ops = TESetup.c_ops
-    e_ops = TESetup.e_ops
-    saveat = TESetup.saveat
-    saveat_idxs = TESetup.saveat_idxs
-    sol_me = TESetup.sol_me
 
     prob_mc = mcsolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
     sol_mc = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
@@ -516,11 +469,11 @@ end
     @test length(sol_mc_save_end_false.states) == length(sol_mc_save_end_false.times_states) == 0
     @test size(sol_mc_save_end_false.expect) == (length(e_ops), length(tlist))
 
-    @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist1, c_ops, progress_bar = Val(false))
-    @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist2, c_ops, progress_bar = Val(false))
-    @test_throws ArgumentError mcsolve(H, ψ0, TESetup.tlist3, c_ops, progress_bar = Val(false))
+    @test_throws ArgumentError mcsolve(H, ψ0, tlist1, c_ops, progress_bar = Val(false))
+    @test_throws ArgumentError mcsolve(H, ψ0, tlist2, c_ops, progress_bar = Val(false))
+    @test_throws ArgumentError mcsolve(H, ψ0, tlist3, c_ops, progress_bar = Val(false))
     @test_throws ArgumentError mcsolve(H, ψ0, tlist, c_ops, save_idxs = [1, 2], progress_bar = Val(false))
-    @test_throws DimensionMismatch mcsolve(H, TESetup.ψ_wrong, tlist, c_ops, progress_bar = Val(false))
+    @test_throws DimensionMismatch mcsolve(H, ψ_wrong, tlist, c_ops, progress_bar = Val(false))
 
     # test average_states, average_expect, and std_expect
     expvals_all = sol_mc3.expect[:, :, 2:end] # ignore testing initial time point since its standard deviation is a very small value (basically zero)
@@ -592,8 +545,6 @@ end
     end
 
     @testset "Type Inference (mcsolve)" begin
-        a = TESetup.a
-        rng = TESetup.rng
 
         @inferred mcsolveEnsembleProblem(
             H,
@@ -608,30 +559,23 @@ end
         @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
         @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng) # test progress bar
         @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
-        @inferred mcsolve(H, TESetup.ψ0_int, tlist, c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
+        @inferred mcsolve(H, ψ0_int, tlist, c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
         @inferred mcsolve(H, ψ0, tlist, (a, a'), e_ops = (a' * a, a'), ntraj = 5, progress_bar = Val(false), rng = rng) # We test the type inference for Tuple of different types
         @inferred mcsolve(
-            TESetup.H_td,
+            H_td,
             ψ0,
             tlist,
             c_ops,
             ntraj = 5,
             e_ops = e_ops,
             progress_bar = Val(false),
-            params = TESetup.p,
+            params = p,
             rng = rng,
         )
     end
 end
 
-@testitem "ssesolve" setup = [TESetup] begin
-    # Get parameters from TESetup to simplify the code
-    H = TESetup.H
-    ψ0 = TESetup.ψ0
-    tlist = TESetup.tlist
-    c_ops = TESetup.c_ops
-    e_ops = TESetup.e_ops
-    sol_me = TESetup.sol_me
+@testset "ssesolve" begin
 
     sol_sse = ssesolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
     sol_sse2 = ssesolve(
@@ -665,9 +609,9 @@ end
         "abstol = $(sol_sse.abstol)\n" *
         "reltol = $(sol_sse.reltol)\n"
 
-    @test_throws ArgumentError ssesolve(H, ψ0, TESetup.tlist1, c_ops, progress_bar = Val(false))
-    @test_throws ArgumentError ssesolve(H, ψ0, TESetup.tlist2, c_ops, progress_bar = Val(false))
-    @test_throws ArgumentError ssesolve(H, ψ0, TESetup.tlist3, c_ops, progress_bar = Val(false))
+    @test_throws ArgumentError ssesolve(H, ψ0, tlist1, c_ops, progress_bar = Val(false))
+    @test_throws ArgumentError ssesolve(H, ψ0, tlist2, c_ops, progress_bar = Val(false))
+    @test_throws ArgumentError ssesolve(H, ψ0, tlist3, c_ops, progress_bar = Val(false))
 
     @testset "Memory Allocations (ssesolve)" begin
         ntraj = 100
@@ -722,9 +666,6 @@ end
     end
 
     @testset "Type Inference (ssesolve)" begin
-        a = TESetup.a
-        rng = TESetup.rng
-        p = TESetup.p
 
         c_ops_tuple = Tuple(c_ops) # To avoid type instability, we must have a Tuple instead of a Vector
         @inferred ssesolveEnsembleProblem(
@@ -740,7 +681,7 @@ end
         @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
         @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng) # test progress bar
         @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
-        @inferred ssesolve(H, TESetup.ψ0_int, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
+        @inferred ssesolve(H, ψ0_int, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
         @inferred ssesolve(
             H,
             ψ0,
@@ -752,7 +693,7 @@ end
             rng = rng,
         ) # We test the type inference for Tuple of different types
         @inferred ssesolve(
-            TESetup.H_td,
+            H_td,
             ψ0,
             tlist,
             c_ops_tuple,
@@ -765,20 +706,8 @@ end
     end
 end
 
-@testitem "smesolve" setup = [TESetup] begin
+@testset "smesolve" begin
     using Random
-
-    # Get parameters from TESetup to simplify the code
-    H = TESetup.H
-    ψ0 = TESetup.ψ0
-    tlist = TESetup.tlist
-    c_ops_sme = TESetup.c_ops_sme
-    sc_ops_sme = TESetup.sc_ops_sme
-    c_ops_sme2 = TESetup.c_ops_sme2
-    sc_ops_sme2 = TESetup.sc_ops_sme2
-    e_ops = TESetup.e_ops
-    sol_me = TESetup.sol_me
-    saveat = TESetup.saveat
 
     sol_sme = smesolve(H, ψ0, tlist, c_ops_sme, sc_ops_sme, e_ops = e_ops, progress_bar = Val(false))
     sol_sme2 = smesolve(
@@ -840,9 +769,9 @@ end
         "abstol = $(sol_sme.abstol)\n" *
         "reltol = $(sol_sme.reltol)\n"
 
-    @test_throws ArgumentError smesolve(H, ψ0, TESetup.tlist1, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
-    @test_throws ArgumentError smesolve(H, ψ0, TESetup.tlist2, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
-    @test_throws ArgumentError smesolve(H, ψ0, TESetup.tlist3, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
+    @test_throws ArgumentError smesolve(H, ψ0, tlist1, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
+    @test_throws ArgumentError smesolve(H, ψ0, tlist2, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
+    @test_throws ArgumentError smesolve(H, ψ0, tlist3, c_ops_sme, sc_ops_sme, progress_bar = Val(false))
 
     @testset "Memory Allocations (smesolve)" begin
         ntraj = 100
@@ -952,8 +881,6 @@ end
     end
 
     @testset "Type Inference (smesolve)" begin
-        a = TESetup.a
-        rng = TESetup.rng
 
         # To avoid type instability, we must have a Tuple instead of a Vector
         c_ops_sme_tuple = Tuple(c_ops_sme)
@@ -1015,7 +942,7 @@ end
         )
         @inferred smesolve(
             H,
-            TESetup.ψ0_int,
+            ψ0_int,
             tlist,
             c_ops_sme_tuple,
             sc_ops_sme_tuple,
@@ -1037,21 +964,7 @@ end
     end
 end
 
-@testitem "Time-dependent Hamiltonian" setup = [TESetup] begin
-    # Get parameters from TESetup to simplify the code
-    ωd = TESetup.ωd
-    F = TESetup.F
-    a = TESetup.a
-    σz = TESetup.σz
-    H = TESetup.H
-    H_td = TESetup.H_td
-    H_td2 = TESetup.H_td2
-    L_td = TESetup.L_td
-    ψ0 = TESetup.ψ0
-    c_ops = TESetup.c_ops
-    e_ops = TESetup.e_ops
-    p = TESetup.p
-    rng = TESetup.rng
+@testset "Time-dependent Hamiltonian" begin
 
     # ssesolve is slow to be run on CI. It is not removed from the test because it may be useful for testing in more powerful machines.
 
@@ -1059,7 +972,7 @@ end
 
     H_dr_fr = H - ωd * a' * a - ωd * σz / 2 + F * (a + a')
 
-    tlist = range(0, 10 / TESetup.γ, 1000)
+    tlist = range(0, 10 / γ, 1000)
 
     sol_se = sesolve(H_dr_fr, ψ0, tlist, e_ops = e_ops, progress_bar = Val(false))
     sol_me = mesolve(H_dr_fr, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
@@ -1095,8 +1008,7 @@ end
     @test sol_me.expect ≈ sol_me_td3.expect atol = 1.0e-6 * length(tlist)
 end
 
-@testitem "Time-dependent collapse operators" setup = [TESetup] begin
-    rng = TESetup.rng
+@testset "Time-dependent collapse operators" begin
 
     # ---- Analytic benchmark: a single qubit with a time-dependent decay rate ----
     # For C(t) = √γ(t) σ⁻, the excited-state population obeys dP/dt = -γ(t) P, hence
@@ -1120,13 +1032,6 @@ end
     @test real.(sol_mc_q.expect[1, :]) ≈ analytic atol = 1.0e-2 * length(tlist_q)
 
     # ---- mesolve ↔ mcsolve consistency on a richer system (decay + heating) ----
-    N = TESetup.N
-    a = TESetup.a
-    σm = TESetup.σm
-    H = TESetup.H
-    e_ops = TESetup.e_ops
-    γ = TESetup.γ
-    nth = TESetup.nth
 
     ψ0 = kron(fock(N, 1), fock(2, 1)) # start with excitation so the dynamics are nontrivial
     tlist = range(0, 10 / γ, 100)
@@ -1182,18 +1087,8 @@ end
     end
 end
 
-@testitem "mcsolve, ssesolve and smesolve reproducibility" setup = [TESetup] begin
+@testset "mcsolve, ssesolve and smesolve reproducibility" begin
     using Random
-
-    # Get parameters from TESetup to simplify the code
-    H = TESetup.H
-    ψ0 = TESetup.ψ0
-    tlist = TESetup.tlist
-    c_ops = TESetup.c_ops
-    c_ops_sme = TESetup.c_ops_sme
-    sc_ops_sme = TESetup.sc_ops_sme
-    e_ops = TESetup.e_ops
-    rng = TESetup.rng
 
     rng = MersenneTwister(1234)
     sol_mc1 =
@@ -1306,7 +1201,7 @@ end
     @test sol_sme1.expect ≈ sol_sme3.expect[:, 1:50, :] atol = 1.0e-10
 end
 
-@testitem "Example: Two qubit model" begin
+@testset "Example: Two qubit model" begin
     sp1 = kron(sigmap(), qeye(2))
     sm1 = sp1'
     sx1 = sm1 + sp1
@@ -1331,7 +1226,7 @@ end
     @test expect(sp1 * sm1, sol_me.states[end]) ≈ expect(sigmap() * sigmam(), ptrace(sol_me.states[end], 1))
 end
 
-@testitem "Example: Qubit driven by two sequential cosine pulses" begin
+@testset "Example: Qubit driven by two sequential cosine pulses" begin
     # settings of pulses
     A1 = rand() # Rabi amplitude of pulse 1
     A2 = rand() # Rabi amplitude of pulse 2
@@ -1381,7 +1276,7 @@ end
     @test all(isapprox.(Z_analytic, sol_me.expect[2, :]; atol = 1.0e-6))
 end
 
-@testitem "ComposedOperator support in time evolution" begin
+@testset "ComposedOperator support in time evolution" begin
     N = 10  # number of basis states
     a = destroy(N)
     H = a' * a

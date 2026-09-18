@@ -1,4 +1,7 @@
-@testitem "Block Diagonal Form" begin
+using Test
+using QuantumToolbox
+
+@testset "Block Diagonal Form" begin
     # Block Diagonal Form
     N = 20
     Δ = 0

@@ -1,4 +1,7 @@
-@testitem "Low Rank Dynamics" begin
+using Test
+using QuantumToolbox
+
+@testset "Low Rank Dynamics" begin
     using LinearAlgebra
 
     # Define lattice

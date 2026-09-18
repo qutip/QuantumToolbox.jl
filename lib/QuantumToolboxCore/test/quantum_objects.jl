@@ -1,4 +1,7 @@
-@testitem "Quantum Objects" begin
+using Test
+using QuantumToolboxCore
+
+@testset "Quantum Objects" begin
     using LinearAlgebra
     using SparseArrays
     using StaticArraysCore

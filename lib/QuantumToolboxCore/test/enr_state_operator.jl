@@ -1,4 +1,7 @@
-@testitem "Excitation number restricted state space" begin
+using Test
+using QuantumToolboxCore
+
+@testset "Excitation number restricted state space" begin
     using StaticArraysCore
     using SparseArrays
 
