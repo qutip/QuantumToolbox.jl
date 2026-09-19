@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+
+
+## [v0.49.0]
+Release date: 2026-09-19
+
 - Support weighted number operators (`N = \sum_j c_j a_j^\dagger a_j`) for excitation number restricted (ENR) spaces through the new `excitation_weights` keyword argument of `EnrSpace` (and the `enr_*` functions), useful for Hamiltonians that conserve a weighted excitation number such as parametric down-conversion. ([#663], [#739])
 - [lib] Introduce `QuantumToolboxVisual` library. ([#766])
 - [lib] Fix `SVector`-related errors in `Core` library. Now we use `StaticArrays` as dependency instead of `StaticArraysCore`. ([#771])
 - [lib] Bump `QuantumToolboxCore` version to `v0.3.0`. ([#772])
+- [lib] Bump `QuantumToolboxVisual` version to `v0.2.0`. ([#775])
 
 ## [v0.48.0]
 Release date: 2026-09-11
@@ -411,6 +417,7 @@ Release date: 2024-11-13
 [v0.47.2]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.47.2
 [v0.47.3]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.47.3
 [v0.48.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.48.0
+[v0.49.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.49.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -587,3 +594,4 @@ Release date: 2024-11-13
 [#769]: https://github.com/qutip/QuantumToolbox.jl/issues/769
 [#771]: https://github.com/qutip/QuantumToolbox.jl/issues/771
 [#772]: https://github.com/qutip/QuantumToolbox.jl/issues/772
+[#775]: https://github.com/qutip/QuantumToolbox.jl/issues/775
