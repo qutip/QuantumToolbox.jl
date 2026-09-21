@@ -6,10 +6,6 @@ using CUDA.cuSPARSE
 using CUDSS
 using LinearSolve
 
-# print package versions
-QuantumToolbox.about()
-CUDA.versioninfo()
-
 @testset "CUDA Extension" verbose = true begin
     # Test that scalar indexing is disallowed
     @test_throws ErrorException CUDA.rand(1)[1]

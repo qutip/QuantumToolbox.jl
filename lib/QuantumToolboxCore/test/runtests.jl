@@ -3,4 +3,6 @@ using ParallelTestRunner
 
 QuantumToolboxCore.about()
 
-runtests(QuantumToolboxCore, ARGS)
+testsuite = find_tests(dirname(@__FILE__))
+
+runtests(QuantumToolboxCore, ARGS; testsuite)

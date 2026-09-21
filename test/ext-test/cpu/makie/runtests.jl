@@ -1,8 +1,6 @@
 using QuantumToolboxVisual
 using ParallelTestRunner
 
-QuantumToolboxVisual.about()
-
 testsuite = find_tests(dirname(@__FILE__))
 
 runtests(QuantumToolboxVisual, ARGS; testsuite)

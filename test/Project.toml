@@ -17,6 +17,4 @@ QuantumToolboxVisual = {path = "../lib/QuantumToolboxVisual"}
 [compat]
 ParallelTestRunner = "2"
 Pkg = "1"
-QuantumToolboxCore = "0.2"
-QuantumToolboxVisual = "0.1"
 Test = "1"
