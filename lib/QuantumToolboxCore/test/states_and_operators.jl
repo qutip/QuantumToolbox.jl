@@ -91,7 +91,7 @@ using QuantumToolboxCore
         ρ_B = ptrace(ρ_AB, 2)
         rank = 5
         ρ_low_rank = rand_dm(10, rank = rank)
-        eig_val = eigenenergies(ρ_low_rank)
+        eig_val = eigvals(ρ_low_rank)
         @test ψ' * ψ ≈ 1.0
         @test tr(ρ_AB) ≈ 1.0
         @test tr(ρ_A) ≈ 1.0
@@ -102,9 +102,9 @@ using QuantumToolboxCore
         @test ishermitian(ρ_A) == true
         @test ishermitian(ρ_B) == true
         @test ishermitian(ρ_low_rank) == true
-        @test all(eigenenergies(ρ_AB) .>= 0)
-        @test all(eigenenergies(ρ_A) .>= 0)
-        @test all(eigenenergies(ρ_B) .>= 0)
+        @test all(eigvals(ρ_AB) .>= 0)
+        @test all(eigvals(ρ_A) .>= 0)
+        @test all(eigvals(ρ_B) .>= 0)
         @test all(isapprox.(eig_val[1:rank], 0.0, atol = 1.0e-10))
         @test all(eig_val[(rank + 1):10] .>= 0)
 
@@ -167,7 +167,7 @@ using QuantumToolboxCore
         @test isoper(x)
         @test isoper(p)
         @test a.dims == ad.dims == N.dims == x.dims == p.dims == ([n], [n])
-        @test eigenenergies(ad * a) ≈ 0:(n - 1)
+        @test eigvals(ad * a) ≈ 0:(n - 1)
         @test commutator(N, a) ≈ -a
         @test commutator(N, ad) ≈ ad
         @test all(diag(commutator(x, p))[1:(n - 1)] .≈ 1.0im)

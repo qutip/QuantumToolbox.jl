@@ -1,13 +1,12 @@
 using Test
 using QuantumToolboxCore
+using LinearAlgebra
+using SparseArrays
+using StaticArrays
+using SciMLOperators
+import SciMLOperators: AddedOperator
 
 @testset "Quantum Objects Evolution" begin
-    using LinearAlgebra
-    using SparseArrays
-    using StaticArrays
-    using SciMLOperators
-    import SciMLOperators: AddedOperator
-
     # DomainError: incompatible between size of array and type
     @testset "Thrown Errors" begin
         a = MatrixOperator(rand(ComplexF64, 3, 2))

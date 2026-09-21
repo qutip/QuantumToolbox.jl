@@ -37,10 +37,10 @@ function setup_subtest_env(path::String)
     return nothing
 end
 
-##################################
-# Main package and library tests #
-##################################
-if (GROUP == "All") || (GROUP == "Main") || (GROUP ∈ LIBRARY_LIST)
+######################################
+# Main package and all library tests #
+######################################
+if (GROUP == "All") || (GROUP == "Main")
     # build up the set of tests to run for this GROUP, merging the main package's
     # tests with all library-tests (namespaced by library name, e.g., "Core/quantum_objects")
     testsuite = Dict{String, Expr}()
