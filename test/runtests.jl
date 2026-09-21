@@ -33,7 +33,7 @@ const GROUP_LIST = String[
 # function to set up the environment for subtests
 function setup_subtest_env(path::String)
     Pkg.activate(path)
-    Pkg.instantiate()
+    Pkg.update()
     return nothing
 end
 
