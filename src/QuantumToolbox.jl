@@ -92,7 +92,7 @@ import FillArrays: Eye
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import ProgressMeter: Progress, next!
-import StaticArraysCore: SVector, MVector
+import StaticArrays: SVector, MVector
 
 # Source files
 

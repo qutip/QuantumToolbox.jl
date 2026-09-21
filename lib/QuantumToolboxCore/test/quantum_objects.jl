@@ -4,7 +4,7 @@ using QuantumToolboxCore
 @testset "Quantum Objects" begin
     using LinearAlgebra
     using SparseArrays
-    using StaticArraysCore
+    using StaticArrays
 
     # ArgumentError: type is incompatible with vector or matrix
     @testset "ArgumentError" begin

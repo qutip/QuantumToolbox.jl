@@ -9,7 +9,7 @@ import LinearAlgebra: checksquare
 import Base: AbstractVecOrTuple
 import FillArrays: Eye
 import Random: AbstractRNG, default_rng
-import StaticArraysCore: SVector, MVector
+import StaticArrays: SVector, MVector
 
 import SciMLOperators:
     SciMLOperators,

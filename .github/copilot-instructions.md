@@ -60,7 +60,7 @@ sol = mesolve(H, ψ0, tlist, c_ops; ...)          # Solve directly
 
 ### Dimension Handling
 Never assume 1D systems. All code must handle arbitrary composite Hilbert spaces:
-- `dimensions::Dimensions` stores as `StaticArraysCore.SVector`
+- `dimensions::Dimensions` stores as `StaticArrays.SVector`
 - Access via `qobj.dims` (returns dims Tuple) or `qobj.dimensions` (full Dimensions object)
 - Use `Dimensions()` constructor to create from integer/tuple specifications
 

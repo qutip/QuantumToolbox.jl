@@ -96,10 +96,10 @@ if (GROUP == "All") || (GROUP == "Main") || (GROUP ∈ LIBRARY_LIST)
     end
 end
 
+
 ############################################################
 # Use traditional Test.jl instead of ParallelTestRunner.jl #
 ############################################################
-
 # Code Quality tests
 if (GROUP == "All") || (GROUP == "Code-Quality")
     path = joinpath(testdir, "code-quality")
