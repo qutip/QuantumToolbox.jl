@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Fix type inference failures in `ssesolve` and `smesolve`. Newer `DiffEqBase` versions (`v7.21.2+`, on `Julia ≥ 1.12`) erase the concrete type of the solved `SciMLBase.CallbackSet` (e.g. storing `discrete_callbacks` as a `Vector{Any}` instead of a `Tuple`) to reduce compilation time, which broke the type-stable extraction of the expectation values from the solved trajectories. `ssesolve`/`smesolve` now dispatch on compile-time instead of introspecting the solved callback at runtime, restoring full type stability regardless of the solver's internal callback representation. ([#776])
 
 ## [v0.49.0]
 Release date: 2026-09-19
@@ -595,3 +595,4 @@ Release date: 2024-11-13
 [#771]: https://github.com/qutip/QuantumToolbox.jl/issues/771
 [#772]: https://github.com/qutip/QuantumToolbox.jl/issues/772
 [#775]: https://github.com/qutip/QuantumToolbox.jl/issues/775
+[#776]: https://github.com/qutip/QuantumToolbox.jl/issues/776

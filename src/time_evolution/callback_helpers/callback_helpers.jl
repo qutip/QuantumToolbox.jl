@@ -126,18 +126,6 @@ end
 ##
 
 #=
-    To extract the measurement outcomes of a stochastic solver
-=#
-function _get_m_expvals(integrator::AbstractODESolution, method::Type{SF}) where {SF <: AbstractSaveFunc}
-    cb = _get_save_callback(integrator, method)
-    if cb isa Nothing
-        return nothing
-    else
-        return cb.affect!.func.m_expvals
-    end
-end
-
-#=
     With this function we extract the e_ops from the SaveFuncMCSolve `affect!` function of the callback of the integrator.
     This callback can only be a FunctionCallingCallback (DiscreteCallback).
 =#
@@ -150,15 +138,70 @@ function _get_e_ops(integrator::AbstractODEIntegrator, method::Type{SF}) where {
     end
 end
 
-# Get the e_ops from a given AbstractODESolution. Valid for `sesolve`, `mesolve` and `ssesolve`.
+# Get the e_ops from a given AbstractODESolution. Valid for `sesolve`, `mesolve` and `mcsolve`.
+#
+# Note: depending on the solver internals (e.g. the SDE/ODE integrator), the callback stored in `sol`
+# may have had its concrete type erased (e.g. `discrete_callbacks` stored as a `Vector{Any}` instead
+# of a `Tuple`) to reduce compilation. This makes `cb.affect!.func.expvals` inferred as `Any`. Since we
+# know the element type of `expvals` must match the (complex) element type of the solution itself, we
+# recover type stability with an explicit type assertion.
 function _get_expvals(sol::AbstractODESolution, method::Type{SF}) where {SF <: AbstractSaveFunc}
     cb = _get_save_callback(sol, method)
-    if cb isa Nothing
-        return nothing
-    else
-        return cb.affect!.func.expvals
-    end
+    return _get_expvals(cb, _complex_float_type(eltype(eltype(sol.u))))
 end
+_get_expvals(cb::Nothing, ::Type{CT}) where {CT <: Number} = nothing
+_get_expvals(cb, ::Type{CT}) where {CT <: Number} = cb.affect!.func.expvals::Union{Nothing, Matrix{CT}}
+
+#=
+    Variants of `_get_expvals`/`_get_m_expvals` for the ensemble-based stochastic solvers
+    (`ssesolve`/`smesolve`), where the caller already knows at compile time (from the type of
+    `e_ops`/`store_measurement`, propagated as a `Val`) whether the result must be `nothing` or a
+    concrete `Matrix`. Dispatching on that `Val`, instead of on a runtime `isnothing` check on the
+    (possibly type-erased) callback, avoids `Union{Nothing, ...}` creeping into the return type of
+    `ssesolve`/`smesolve` and breaking `@inferred`.
+=#
+_get_expvals(sol::AbstractODESolution, method::Type{SF}, ::Val{false}) where {SF <: AbstractSaveFunc} = nothing
+function _get_expvals(sol::AbstractODESolution, method::Type{SF}, ::Val{true}) where {SF <: AbstractSaveFunc}
+    cb = _get_save_callback(sol, method)
+    return cb.affect!.func.expvals::Matrix{_complex_float_type(eltype(eltype(sol.u)))}
+end
+
+_get_m_expvals(sol::AbstractODESolution, method::Type{SF}, ::Val{false}) where {SF <: AbstractSaveFunc} = nothing
+function _get_m_expvals(sol::AbstractODESolution, method::Type{SF}, ::Val{true}) where {SF <: AbstractSaveFunc}
+    cb = _get_save_callback(sol, method)
+    return cb.affect!.func.m_expvals::Matrix{_float_type(eltype(eltype(sol.u)))}
+end
+
+#=
+    Stack per-trajectory `expvals`/`m_expvals` across an ensemble solution, given a compile-time `Val`
+    flag (known from `e_ops`/`store_measurement` at the call site) stating whether they were requested.
+    See the note above regarding why dispatching on `Val` (rather than a runtime check) is necessary.
+
+    Note: these use an explicit loop into a preallocated `Vector`, rather than `map` with a closure
+    over `method`. A closure capturing a `Type{SF} where {SF <: AbstractSaveFunc}`-typed argument is
+    inferred as `Any` inside the closure (the argument's declared type is the abstract `where`-bound,
+    not the concrete type it is instantiated with), which would make `_get_expvals`/`_get_m_expvals`
+    dispatch dynamically and infer as `Any` again, undoing the fix above.
+=#
+function _stack_traj_expvals(::Val{true}, sol, method::Type{SF}) where {SF <: AbstractSaveFunc}
+    CT = _complex_float_type(eltype(eltype(sol.u)))
+    v = Vector{Matrix{CT}}(undef, length(sol.u))
+    for i in eachindex(sol.u)
+        v[i] = _get_expvals(sol.u[i], method, Val(true))
+    end
+    return stack(v, dims = 2)
+end
+_stack_traj_expvals(::Val{false}, sol, method::Type{SF}) where {SF <: AbstractSaveFunc} = nothing
+
+function _stack_traj_m_expvals(::Val{true}, sol, method::Type{SF}) where {SF <: AbstractSaveFunc}
+    FT = _float_type(eltype(eltype(sol.u)))
+    v = Vector{Matrix{FT}}(undef, length(sol.u))
+    for i in eachindex(sol.u)
+        v[i] = _get_m_expvals(sol.u[i], method, Val(true))
+    end
+    return stack(v, dims = 2)
+end
+_stack_traj_m_expvals(::Val{false}, sol, method::Type{SF}) where {SF <: AbstractSaveFunc} = nothing
 
 #=
     _get_save_callback
