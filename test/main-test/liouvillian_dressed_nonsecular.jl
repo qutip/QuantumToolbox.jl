@@ -1,10 +1,9 @@
 using Test
 using QuantumToolbox
+using LinearAlgebra
+using SparseArrays
 
 @testset "Dressed Nonsecular Master Equation" begin
-    using LinearAlgebra
-    using SparseArrays
-
     function dressed_liouvillian(H, fields; tol = 1.0e-12)
         vals, vecs = eigenstates(H)
         N_tot = size(H, 1)

@@ -41,7 +41,7 @@ using QuantumToolbox
     @test all([H_enr * v[k] ≈ λ[k] * v[k] for k in eachindex(λ)])
 end
 
-@testitem "Excitation number restricted state space (weighted evolution)" begin
+@testset "Excitation number restricted state space (weighted evolution)" begin
     # Parametric down-conversion conserves the weighted number n_a + n_b + 2 n_c, but not
     # the total number, so it requires `excitation_weights`. Compare the full Fock-space
     # dynamics with the (much smaller) ENR-space dynamics.

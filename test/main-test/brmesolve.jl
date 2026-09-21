@@ -1,5 +1,6 @@
 using Test
 using QuantumToolbox
+import SparseArrays: issparse
 
 @testset "Bloch-Redfield tensor sec_cutoff" begin
     N = 5
@@ -36,8 +37,6 @@ end
 end
 
 @testset "brterm basis" begin
-    using SparseArrays: issparse
-
     N = 5
     H = num(N)
     a = destroy(N) + destroy(N)^2 / 2
@@ -60,8 +59,6 @@ end
 end
 
 @testset "brterm sprectra function" begin
-    using SparseArrays: issparse
-
     f(x) = exp(x) / 10
     function g(x)
         nbar = n_thermal(abs(x), 1)
