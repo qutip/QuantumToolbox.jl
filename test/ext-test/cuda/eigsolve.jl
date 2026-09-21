@@ -3,6 +3,7 @@ using QuantumToolbox
 using CUDA
 using CUDA.cuSPARSE
 using CUDSS
+import LinearSolve: LUFactorization
 
 @testset "CUDA (eigsolve)" begin
     N = 30

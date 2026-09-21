@@ -2,6 +2,7 @@ using Test
 using QuantumToolbox
 using CUDA
 using CUDA.cuSPARSE
+using CUDSS
 
 @testset "CUDA (Spectrum)" begin
     N = 10
