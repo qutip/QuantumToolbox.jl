@@ -62,7 +62,7 @@ const my_f_mesolve_assume_non_herm_bsa_mooncake = Base.Fix{2}(my_f_mesolve_assum
 # Analytical solution
 n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
 
-@testset "mesolve" verbose = true begin
+@testset "AutoDiff (mesolve)" verbose = true begin
     Δ = 1.0
     F = 1.0
     γ = 1.0

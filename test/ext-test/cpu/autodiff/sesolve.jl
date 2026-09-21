@@ -41,7 +41,7 @@ const my_f_sesolve_bsa_mooncake = Base.Fix{2}(my_f_sesolve, BacksolveAdjoint(aut
 my_f_analytic(Ω) = abs2(sin(Ω * t_max))
 my_f_analytic_deriv(Ω) = 2 * t_max * sin(Ω * t_max) * cos(Ω * t_max)
 
-@testset "sesolve" verbose = true begin
+@testset "AutoDiff (sesolve)" verbose = true begin
     Ω = 1.0
     params = [Ω]
 
