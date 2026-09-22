@@ -47,6 +47,7 @@ if (GROUP == "All") || (GROUP == "Main")
 
     if (GROUP == "All") || (GROUP == "Main")
         main_tests = find_tests(joinpath(testdir, "main-test"))
+        delete!(main_tests, "basic_solvers/setup") # remove the setup.jl, since it is not a test but a setup file
 
         for (name, include_expr) in main_tests
             testsuite["Main/$name"] = include_expr
@@ -58,6 +59,7 @@ if (GROUP == "All") || (GROUP == "Main")
     for lib in LIBRARY_LIST
         path = LIBRARY_PATH[lib]
         lib_tests = find_tests(path)
+        delete!(lib_tests, "setup") # remove the setup.jl, since it is not a test but a setup file
 
         for (name, include_expr) in lib_tests
             testsuite["$lib/$name"] = include_expr
@@ -66,6 +68,7 @@ if (GROUP == "All") || (GROUP == "Main")
 
     import QuantumToolbox
     QuantumToolbox.about()
+    println("[Tests for GROUP = $GROUP]")
     runtests(QuantumToolbox, ARGS; testsuite)
 end
 
@@ -81,6 +84,7 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
 
     (GROUP == "Code-Quality") && QuantumToolbox.about() # print version info. for code quality CI in GitHub
 
+    println("[Tests for GROUP = $GROUP]")
     include(joinpath(path, "code_quality.jl"))
 end
 
@@ -91,6 +95,7 @@ if GROUP ∈ LIBRARY_LIST
     lib_path = LIBRARY_PATH[GROUP]
     setup_subtest_env(lib_path)
 
+    println("[Tests for GROUP = $GROUP]")
     include(joinpath(lib_path, "runtests.jl"))
 end
 
@@ -101,5 +106,6 @@ if GROUP ∈ EXTENSION_LIST
     path = EXTENSION_PATH[GROUP]
     setup_subtest_env(path)
 
+    println("[Tests for GROUP = $GROUP]")
     include(joinpath(path, "runtests.jl"))
 end
