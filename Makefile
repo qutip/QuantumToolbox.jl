@@ -12,6 +12,9 @@ format:
 changelog:
 	${JULIA} -e 'using Changelog; Changelog.generate(Changelog.CommonMark(), "CHANGELOG.md"; repo = "qutip/QuantumToolbox.jl")'
 
+testgroups:
+	${JULIA} test/group_list.jl
+
 test:
 	${JULIA} --project -e 'using Pkg; Pkg.update(); Pkg.test(; test_args = ARGS)' -- $(ARGS)
 
@@ -28,9 +31,10 @@ help:
 	@echo " - make setup: install the dependencies for make command"
 	@echo " - make format: format codes with Runic"
 	@echo " - make changelog: generate changelog"
+	@echo " - make testgroups: show the available test groups"
 	@echo " - make test: run the tests"
 	@echo " - make docs: instantiate and build the documentation"
 	@echo " - make vitepress: start Vitepress site of documentation"
 	@echo " - make all: run every commands in the above order"
 
-.PHONY: default setup format changelog test docs vitepress all help
+.PHONY: default setup format changelog testgroups test docs vitepress all help

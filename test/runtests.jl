@@ -1,34 +1,11 @@
 using ParallelTestRunner
 using Pkg
 
-const testdir = dirname(@__FILE__)
-
-# Define the paths to the library-tests
-const LIBRARY_PATH = Dict(
-    "Core" => joinpath(testdir, "..", "lib", "QuantumToolboxCore", "test"),
-    "Visual" => joinpath(testdir, "..", "lib", "QuantumToolboxVisual", "test"),
-)
-const LIBRARY_LIST = collect(keys(LIBRARY_PATH))
-
-# Define the paths to the extension tests
-const EXTENSION_PATH = Dict(
-    "AutoDiff-Ext" => joinpath(testdir, "ext-test", "cpu", "autodiff"),
-    "Makie-Ext" => joinpath(testdir, "ext-test", "cpu", "makie"),
-    "CUDA-Ext" => joinpath(testdir, "ext-test", "cuda"),
-    "Arbitrary-Precision" => joinpath(testdir, "ext-test", "cpu", "arbitrary_precision"),
-)
-const EXTENSION_LIST = collect(keys(EXTENSION_PATH))
+include("group_list.jl")
 
 # Handle the GROUP environment variable to determine which tests to run
 const GROUP = get(ENV, "GROUP", "All")
-const GROUP_LIST = String[
-    "All",
-    "Main",
-    "Code-Quality",
-    LIBRARY_LIST...,
-    EXTENSION_LIST...,
-]
-(GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nThe allowed groups are: $GROUP_LIST\n"))
+(GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nAvailable test GROUP are:\n$SHOW_GROUP_LIST\n"))
 
 # function to set up the environment for subtests
 function setup_subtest_env(path::String)

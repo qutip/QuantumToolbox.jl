@@ -39,11 +39,12 @@ make setup
 to install necessary dependencies. Here are several other common commands:
 
 ```shell
-make test      # run the tests
-make format    # format codes with Runic
-make docs      # instantiate and build the documentation
-make changelog # generate changelog
-make help      # view all commands
+make testgroups # show the available test groups
+make test       # run the tests
+make format     # format codes with Runic
+make docs       # instantiate and build the documentation
+make changelog  # generate changelog
+make help       # view all commands
 ```
 
 Each command may accept additional options or environment variables to customize its behavior. The following sections describe these commands in detail and explain the available configuration options.
@@ -54,7 +55,7 @@ The rest of this document covers programming standards for `QuantumToolbox.jl`.
 
 ### [Runtests](@id doc-Contribute:Runtests)
 
-All the test scripts should be located in the folder `test` in the repository. To run the test, use the following command under the *__root directory of the repository__* you are working on:
+To run the test, use the following command under the *__root directory of the repository__* you are working on:
 
 ```shell
 make test
@@ -62,17 +63,41 @@ make test
 
 This command will automatically rebuild `Julia` and run the script located in `test/runtests.jl` (should cover both the original tests and the new test(s) you add).
 
-The tests are divided into several test groups, where the group names are defined in the file `test/runtests.jl` with a variable `GROUP`. One can also run the test scripts just for a certain test group by adding an argument `GROUP=<test-group-name>` to the `make test` command. For example, to run the tests for group `Main`, one can use the following command:
+The tests are divided into several test groups, where the available groups can be shown with:
+
+```shell
+make testgroups
+```
+
+One can also run the test scripts just for a certain test group by adding an argument `GROUP=<test-group-name>` to the `make test` command. For example, to run the tests for group `Main`, one can use the following command:
 
 ```shell
 make test GROUP=Main
 ```
 
-#### [Test Item Framework for Main tests](@id doc-Contribute:Test-Item-Framework-for-Main-tests)
+#### [ParallelTestRunner.jl](@id doc-Contribute:ParallelTestRunner)
 
-The tests in `GROUP=Main` are provided using the [Test Item Framework](https://www.julia-vscode.org/docs/stable/userguide/testitems/), which structures the test codes into `@testitems` and makes it easier to run individually.
+Almost all test `GROUP`s are run using [`ParallelTestRunner.jl`](https://github.com/JuliaTesting/ParallelTestRunner.jl), which automatically discovers every `.jl` file under the corresponding `**/test/**` folders and runs each one as an isolated `@testset` in its own parallel worker process. This keeps individual test files independent from one another and speeds up each test group considerably.
 
-The [VS Code](https://code.visualstudio.com/) and its [Julia extension](https://www.julia-vscode.org/) provides us with options to run individual `@testitems`. It is much easier to find the specific core test that failed since the [Julia extension](https://www.julia-vscode.org/) in [VS Code](https://code.visualstudio.com/) will collect all core test failures and then display them in a structured way, directly at the place in the code where a specific core test failed. See [here](https://www.julia-vscode.org/docs/stable/userguide/testitems/) for more details.
+Since each file runs in its own worker, you can filter down to a specific file (or set of files) instead of running the whole group. This works the same way for any of these `GROUP`s. First, find the available test names by passing `ARGS="--list"` as an extra argument of `make test`:
+
+```shell
+make test GROUP=Main ARGS="--list"
+```
+
+Then run one (or more) of the listed names by passing it the same way, matched with `startswith`. For example, to run only the tests in `test/main-test/basic_solvers/sesolve.jl`:
+
+```shell
+make test GROUP=Main ARGS="Main/basic_solvers/sesolve"
+```
+
+or every file under `test/main-test/basic_solvers/`:
+
+```shell
+make test GROUP=Main ARGS="Main/basic_solvers"
+```
+
+Other useful flags can be passed the same way, e.g. `ARGS="--verbose"` for more detailed output, or `ARGS="--jobs=N"` to control the number of parallel worker processes. See the [`ParallelTestRunner.jl` documentation](https://juliatesting.github.io/ParallelTestRunner.jl/) for more details.
 
 ### [Julia Code Format](@id doc-Contribute:Julia-Code-Format)
 
