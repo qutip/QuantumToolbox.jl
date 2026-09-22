@@ -5,11 +5,11 @@ using LinearAlgebra
 using SparseArrays
 using GenericSchur
 
-include("setup.jl") # parameters and operators are defined in this file
+include("setup.jl") # module TESetup (parameters and operators) are defined in this file
 
 @testset "Arbitrary Precision (eigsolve)" begin
-    L = liouvillian(H, c_ops)
-    L_big = liouvillian(H_big, c_ops_big)
+    L = liouvillian(TESetup.H, TESetup.c_ops)
+    L_big = liouvillian(TESetup.H_big, TESetup.c_ops_big)
 
     # eigenstates(..., sparse=Val(true), ...) directly passes to eigsolve(...)
     vals, vecs = eigenstates(L; sparse = Val(true), sigma = 0.01, eigvals = 7, krylovdim = 30)

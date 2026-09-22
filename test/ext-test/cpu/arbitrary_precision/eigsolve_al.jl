@@ -5,16 +5,16 @@ using LinearAlgebra
 using SparseArrays
 using GenericSchur
 
-include("setup.jl") # parameters and operators are defined in this file
+include("setup.jl") # module TESetup (parameters and operators) are defined in this file
 
 @testset "Arbitrary Precision (eigsolve_al)" begin
-    L = liouvillian(H, c_ops)
-    L_big = liouvillian(H_big, c_ops_big)
+    L = liouvillian(TESetup.H, TESetup.c_ops)
+    L_big = liouvillian(TESetup.H_big, TESetup.c_ops_big)
 
-    vals_al, vecs_al = eigsolve_al(L, 1 \ (50 * κ), eigvals = 7, krylovdim = 30)
+    vals_al, vecs_al = eigsolve_al(L, 1 \ (50 * TESetup.κ), eigvals = 7, krylovdim = 30)
     vals_big_al, vecs_big_al = eigsolve_al(
         L_big,
-        1 \ (50 * BigFloat(κ)),
+        1 \ (50 * BigFloat(TESetup.κ)),
         eigvals = 7,
         krylovdim = 30,
         maxiter = 3,
