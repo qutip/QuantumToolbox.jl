@@ -6,7 +6,7 @@ import Statistics: mean
 include("setup.jl") # module TESetup (parameters and operators) are defined in this file
 
 @testset "mcsolve" begin
-    
+
 
     # Get parameters from TESetup to simplify the code
     H = TESetup.H
