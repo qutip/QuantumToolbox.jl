@@ -63,3 +63,4 @@ jobs:
         env:
           GROUP: ${{ matrix.group }}
           JULIA_NUM_THREADS: auto
+          PTR_NUM_JOBS: 4
