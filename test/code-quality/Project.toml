@@ -7,7 +7,7 @@ QuantumToolboxVisual = "f2591f1c-fdd7-47fd-9d44-967f3caec145"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [sources]
-QuantumToolbox = {path = "/Users/yide/Git/QuantumToolbox.jl"}
+QuantumToolbox = {path = "../.."}
 QuantumToolboxCore = {path = "../../lib/QuantumToolboxCore"}
 QuantumToolboxVisual = {path = "../../lib/QuantumToolboxVisual"}
 
