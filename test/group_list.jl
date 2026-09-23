@@ -9,9 +9,9 @@ const LIBRARY_LIST = collect(keys(LIBRARY_PATH))
 
 # Define the paths to the extension tests
 const EXTENSION_PATH = Dict(
-    "AutoDiff-Ext" => joinpath(testdir, "ext-test", "cpu", "autodiff"),
-    "Makie-Ext" => joinpath(testdir, "ext-test", "cpu", "makie"),
-    "CUDA-Ext" => joinpath(testdir, "ext-test", "cuda"),
+    "AutoDiff" => joinpath(testdir, "ext-test", "cpu", "autodiff"),
+    "Makie" => joinpath(testdir, "ext-test", "cpu", "makie"),
+    "CUDA" => joinpath(testdir, "ext-test", "cuda"),
     "Arbitrary-Precision" => joinpath(testdir, "ext-test", "cpu", "arbitrary_precision"),
 )
 const EXTENSION_LIST = collect(keys(EXTENSION_PATH))
