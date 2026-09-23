@@ -7,4 +7,4 @@ CUDA.versioninfo()
 
 testsuite = find_tests(dirname(@__FILE__))
 
-runtests(QuantumToolbox, ARGS; testsuite, init_worker_code)
+runtests(QuantumToolbox, ARGS; testsuite)
