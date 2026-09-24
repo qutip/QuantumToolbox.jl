@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix type inference failures in `ssesolve` and `smesolve`. Their `SDEProblem` was built without specifying a solver specialization level, defaulting to `SciMLBase.AutoSpecialize`. After this update, we build their `SDEProblem` with `SciMLBase.FullSpecialize`, matching what `sesolve`/`mesolve`/`mcsolve` already do. ([#776])
 - Reduce the memory allocated by `mcsolve`, `ssesolve`, `smesolve` (with the default `keep_runs_results = Val(false)`) and `average_states` when averaging the states over trajectories. The average is now accumulated in place, allocating a single array per saved time instead of one (or two, for kets) per trajectory. For `mcsolve` with `N = 120` and `200` trajectories, the total memory allocated drops from `188` MiB to `12` MiB.
+- Reduce the memory allocated for each trajectory of `mcsolve`, and for each element of `sesolve_map` and `mesolve_map`, which deep-copied the whole operator. The matrices of its constant terms are now shared between trajectories, since they are only read during the time evolution, while the scalar coefficients are still copied. For `mcsolve` with a dense Hamiltonian (`N = 120`) and `200` trajectories, the total memory allocated drops from `54` MiB to `10` MiB, with `20` fewer allocations per trajectory.
 
 ## [v0.49.0]
 Release date: 2026-09-19

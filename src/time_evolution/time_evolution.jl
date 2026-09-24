@@ -531,9 +531,16 @@ function _ensemble_dispatch_solve(
     return sol
 end
 
+# Copy the operator for each trajectory. The matrices of the constant terms are only read, so they are shared between trajectories (and threads).
+# The scalar coefficients are updated in place at each time step (even when they are constant), so they are copied, as well as any other operator (e.g., a ComposedOperator, which has a cache).
+_copy_for_trajectory(L) = deepcopy(L)
+_copy_for_trajectory(L::MatrixOperator) = isconstant(L) ? L : deepcopy(L)
+_copy_for_trajectory(L::ScaledOperator) = ScaledOperator(deepcopy(L.λ), _copy_for_trajectory(L.L))
+_copy_for_trajectory(L::AddedOperator) = AddedOperator(map(_copy_for_trajectory, L.ops))
+
 # For mapped solvers
 function _se_me_map_prob_func(prob, ctx, iter)
-    f = deepcopy(prob.f.f)
+    f = _copy_for_trajectory(prob.f.f)
     u0 = iter[ctx.sim_id][1]
     p = iter[ctx.sim_id][2:end]
     if haskey(prob.kwargs, :callback)
