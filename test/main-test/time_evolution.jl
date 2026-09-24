@@ -547,8 +547,8 @@ end
     @testset "Memory Allocations (mcsolve)" begin
         ntraj = 100
         for keep_runs_results in (Val(false), Val(true))
-            n1 = 145
-            n2 = 135
+            n1 = 125
+            n2 = 115
 
             allocs_tot = @allocations mcsolve(
                 H,
@@ -570,7 +570,7 @@ end
                 progress_bar = Val(false),
                 keep_runs_results = keep_runs_results,
             )
-            @test allocs_tot < n1 * ntraj + 600 # 150 allocations per trajectory + 600 for initialization
+            @test allocs_tot < n1 * ntraj + 600 # 125 allocations per trajectory + 600 for initialization
 
             allocs_tot = @allocations mcsolve(
                 H,
@@ -592,7 +592,7 @@ end
                 progress_bar = Val(false),
                 keep_runs_results = keep_runs_results,
             )
-            @test allocs_tot < n2 * ntraj + 300 # 100 allocations per trajectory + 300 for initialization
+            @test allocs_tot < n2 * ntraj + 300 # 115 allocations per trajectory + 300 for initialization
         end
     end
 
