@@ -553,7 +553,7 @@ end
                 e_ops = e_ops,
                 ntraj = ntraj,
                 progress_bar = Val(false),
-                keep_runs_results = Val(true),
+                keep_runs_results = keep_runs_results,
             ) # Warm-up
             allocs_tot = @allocations mcsolve(
                 H,
@@ -563,7 +563,7 @@ end
                 e_ops = e_ops,
                 ntraj = ntraj,
                 progress_bar = Val(false),
-                keep_runs_results = Val(true),
+                keep_runs_results = keep_runs_results,
             )
             @test allocs_tot < n1 * ntraj + 600 # 150 allocations per trajectory + 600 for initialization
 
@@ -575,7 +575,7 @@ end
                 ntraj = ntraj,
                 saveat = [tlist[end]],
                 progress_bar = Val(false),
-                keep_runs_results = Val(true),
+                keep_runs_results = keep_runs_results,
             ) # Warm-up
             allocs_tot = @allocations mcsolve(
                 H,
@@ -585,7 +585,7 @@ end
                 ntraj = ntraj,
                 saveat = [tlist[end]],
                 progress_bar = Val(false),
-                keep_runs_results = Val(true),
+                keep_runs_results = keep_runs_results,
             )
             @test allocs_tot < n2 * ntraj + 300 # 100 allocations per trajectory + 300 for initialization
         end
