@@ -295,13 +295,33 @@ Return the trajectory-averaged result states (as density [`Operator`](@ref)) at 
 average_states(sol::TimeEvolutionMultiTrajSol{<:Matrix{<:QuantumObject}}) = _average_traj_states(sol.states)
 average_states(sol::TimeEvolutionMultiTrajSol{<:Vector{<:QuantumObject}}) = sol.states  # this case should already be averaged over all trajectories
 
-# TODO: Check if broadcasting division ./ size(states, 1) is type stable
+# The averages are accumulated in place (one array per saved time) instead of allocating a new array for each trajectory
 _average_traj_states(states::Matrix{<:QuantumObject{Ket}}) =
     size(states, 2) == 0 ? Vector{Base.promote_op(ket2dm, eltype(states))}() :
-    map(x -> x / size(states, 1), dropdims(sum(ket2dm, states, dims = 1), dims = 1))
+    map(_average_traj_ket2dm, eachcol(states))
 _average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType <: Union{Operator, OperatorKet}} =
-    size(states, 2) == 0 ? Vector{eltype(states)}() :
-    map(x -> x / size(states, 1), dropdims(sum(states, dims = 1), dims = 1))
+    size(states, 2) == 0 ? Vector{eltype(states)}() : map(_average_traj_state, eachcol(states))
+
+function _average_traj_ket2dm(states::AbstractVector{<:QuantumObject{Ket}})
+    ψ1 = first(states)
+    ρ = similar(ψ1.data, length(ψ1.data), length(ψ1.data))
+    fill!(ρ, zero(eltype(ρ)))
+    for ψ in states
+        mul!(ρ, ψ.data, ψ.data', true, true) # ρ += |ψ⟩⟨ψ|
+    end
+    ρ ./= length(states)
+    return QuantumObject(ρ, Operator(), Dimensions(ψ1.dimensions.to, adjoint(ψ1.dimensions).from))
+end
+
+function _average_traj_state(states::AbstractVector{<:QuantumObject{ObjType}}) where {ObjType <: Union{Operator, OperatorKet}}
+    ρ1 = first(states)
+    ρ = zero(ρ1.data)
+    for ρi in states
+        ρ .+= ρi.data # in place, whereas sum(states) would allocate a new matrix for each +
+    end
+    ρ ./= length(states)
+    return QuantumObject(ρ, ρ1.type, ρ1.dimensions)
+end
 
 @doc raw"""
     average_expect(sol::TimeEvolutionMultiTrajSol)
@@ -511,9 +531,16 @@ function _ensemble_dispatch_solve(
     return sol
 end
 
+# Copy the operator for each trajectory. The matrices of the constant terms are only read, so they are shared between trajectories (and threads).
+# The scalar coefficients are updated in place at each time step (even when they are constant), so they are copied, as well as any other operator (e.g., a ComposedOperator, which has a cache).
+_copy_for_trajectory(L) = deepcopy(L)
+_copy_for_trajectory(L::MatrixOperator) = isconstant(L) ? L : deepcopy(L)
+_copy_for_trajectory(L::ScaledOperator) = ScaledOperator(deepcopy(L.λ), _copy_for_trajectory(L.L))
+_copy_for_trajectory(L::AddedOperator) = AddedOperator(map(_copy_for_trajectory, L.ops))
+
 # For mapped solvers
 function _se_me_map_prob_func(prob, ctx, iter)
-    f = deepcopy(prob.f.f)
+    f = _copy_for_trajectory(prob.f.f)
     u0 = iter[ctx.sim_id][1]
     p = iter[ctx.sim_id][2:end]
     if haskey(prob.kwargs, :callback)

@@ -2,7 +2,7 @@ export mcsolveProblem, mcsolveEnsembleProblem, mcsolve
 export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
 
 function _mcsolve_prob_func(prob, ctx, tlist; kwargs...)
-    f = deepcopy(prob.f.f)
+    f = _copy_for_trajectory(prob.f.f)
     cb = _mcsolve_initialize_callbacks(prob, tlist, ctx.rng)
 
     return remake(prob, f = f, callback = cb)

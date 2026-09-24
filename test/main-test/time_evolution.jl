@@ -467,6 +467,11 @@ end
     expect_mc_states_mean2 = expect.(Ref(e_ops[1]), average_states(sol_mc_states2))
 
     @test prob_mc.prob.f.f isa ScaledOperator
+    # the constant matrices are shared between trajectories, while the scalar coefficients are copied
+    L_mc = prob_mc.prob.f.f
+    L_mc_copy = @inferred QuantumToolbox._copy_for_trajectory(L_mc)
+    @test L_mc_copy.L.A === L_mc.L.A
+    @test L_mc_copy.λ !== L_mc.λ
     @test !haskey(prob_mc.prob.kwargs, :tstops) # tstops should not exist for time-independent cases
     @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
@@ -542,8 +547,8 @@ end
     @testset "Memory Allocations (mcsolve)" begin
         ntraj = 100
         for keep_runs_results in (Val(false), Val(true))
-            n1 = 145
-            n2 = 135
+            n1 = 125
+            n2 = 115
 
             allocs_tot = @allocations mcsolve(
                 H,
@@ -553,7 +558,7 @@ end
                 e_ops = e_ops,
                 ntraj = ntraj,
                 progress_bar = Val(false),
-                keep_runs_results = Val(true),
+                keep_runs_results = keep_runs_results,
             ) # Warm-up
             allocs_tot = @allocations mcsolve(
                 H,
@@ -563,9 +568,9 @@ end
                 e_ops = e_ops,
                 ntraj = ntraj,
                 progress_bar = Val(false),
-                keep_runs_results = Val(true),
+                keep_runs_results = keep_runs_results,
             )
-            @test allocs_tot < n1 * ntraj + 600 # 150 allocations per trajectory + 600 for initialization
+            @test allocs_tot < n1 * ntraj + 600 # 125 allocations per trajectory + 600 for initialization
 
             allocs_tot = @allocations mcsolve(
                 H,
@@ -575,7 +580,7 @@ end
                 ntraj = ntraj,
                 saveat = [tlist[end]],
                 progress_bar = Val(false),
-                keep_runs_results = Val(true),
+                keep_runs_results = keep_runs_results,
             ) # Warm-up
             allocs_tot = @allocations mcsolve(
                 H,
@@ -585,9 +590,9 @@ end
                 ntraj = ntraj,
                 saveat = [tlist[end]],
                 progress_bar = Val(false),
-                keep_runs_results = Val(true),
+                keep_runs_results = keep_runs_results,
             )
-            @test allocs_tot < n2 * ntraj + 300 # 100 allocations per trajectory + 300 for initialization
+            @test allocs_tot < n2 * ntraj + 300 # 115 allocations per trajectory + 300 for initialization
         end
     end
 
