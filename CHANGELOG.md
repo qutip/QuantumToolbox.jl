@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Fix type inference failures in `ssesolve` and `smesolve`. Their `SDEProblem` was built without specifying a solver specialization level, defaulting to `SciMLBase.AutoSpecialize`. After this update, we build their `SDEProblem` with `SciMLBase.FullSpecialize`, matching what `sesolve`/`mesolve`/`mcsolve` already do. ([#776])
+- Reduce the memory allocated by `mcsolve`, `ssesolve`, `smesolve` (with the default `keep_runs_results = Val(false)`) and `average_states` when averaging the states over trajectories. The average is now accumulated in place, allocating a single array per saved time instead of one (or two, for kets) per trajectory. For `mcsolve` with `N = 120` and `200` trajectories, the total memory allocated drops from `188` MiB to `12` MiB.
 
 ## [v0.49.0]
 Release date: 2026-09-19
