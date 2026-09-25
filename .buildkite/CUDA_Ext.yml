@@ -7,9 +7,7 @@ steps:
           version: "1.10"
       - JuliaCI/julia-coverage#v1:
           codecov: true
-          dirs:
-            - src
-            - lib
+          dirs: ["."] # see https://github.com/JuliaGPU/CUDA.jl/pull/3287 for more details
     agents:
       queue: "cuda"
     commands: |
@@ -45,9 +43,7 @@ steps:
           test_args: "--quickfail"
       - JuliaCI/julia-coverage#v1:
           codecov: true
-          dirs:
-            - src
-            - lib
+          dirs: ["."] # see https://github.com/JuliaGPU/CUDA.jl/pull/3287 for more details
     agents:
       queue: "cuda"
     env:
