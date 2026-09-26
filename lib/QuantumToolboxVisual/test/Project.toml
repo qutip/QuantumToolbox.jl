@@ -1,0 +1,11 @@
+[deps]
+ParallelTestRunner = "d3525ed8-44d0-4b2c-a655-542cee43accc"
+QuantumToolboxVisual = "f2591f1c-fdd7-47fd-9d44-967f3caec145"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+QuantumToolboxVisual = {path = ".."}
+
+[compat]
+ParallelTestRunner = "2"
+Test = "1"

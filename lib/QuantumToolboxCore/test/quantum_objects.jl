@@ -1,8 +1,10 @@
-@testitem "Quantum Objects" begin
-    using LinearAlgebra
-    using SparseArrays
-    using StaticArrays
+using Test
+using QuantumToolboxCore
+using LinearAlgebra
+using SparseArrays
+using StaticArrays
 
+@testset "Quantum Objects" begin
     # ArgumentError: type is incompatible with vector or matrix
     @testset "ArgumentError" begin
         a = rand(ComplexF64, 2)
@@ -643,8 +645,8 @@
         Ms = Qobj(sprand(ComplexF64, 10, 10, 0.5))
         @test svdvals(vd)[1] ≈ √(vd' * vd)
         @test svdvals(vs)[1] ≈ √(vs' * vs)
-        @test norm(Md, 1) ≈ sum(sqrt, abs.(eigenenergies(Md' * Md))) atol = 1.0e-6
-        @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigenenergies(Ms' * Ms))) atol = 1.0e-6
+        @test norm(Md, 1) ≈ sum(sqrt, abs.(eigvals(Md' * Md))) atol = 1.0e-6
+        @test norm(Ms, 1) ≈ sum(sqrt, abs.(eigvals(Ms' * Ms))) atol = 1.0e-6
 
         @testset "Type Inference (SVD and Schatten p-norm)" begin
             @inferred svdvals(vd)

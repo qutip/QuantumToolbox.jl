@@ -44,44 +44,42 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # for core tests (latest and oldest supported versions)
+        # for tests in latest supported version
         version:
-          - '1.10' # oldest
-          - '1'    # latest
+          - '1' # latest
         node:
           - os: 'ubuntu-latest'
             arch: 'x64'
-          - os: 'windows-latest'
-            arch: 'x64'
-          - os: 'macOS-latest'
-            arch: 'arm64'
         group:
           - 'Main'
+          - 'Makie'
+          - 'AutoDiff'
+          - 'Arbitrary-Precision'
 
         include:
-          # for Main tests (intermediate versions)
+          # Main test in other platforms
+          - version: '1'
+            node:
+              os: 'windows-latest'
+              arch: 'x64'
+            group: 'Main'
+          - version: '1'
+            node:
+              os: 'macOS-latest'
+              arch: 'arm64'
+            group: 'Main'  
+
+          # Main test in other versions
+          - version: '1.10'
+            node:
+              os: 'ubuntu-latest'
+              arch: 'x64'
+            group: 'Main'
           - version: '1.12'
             node:
               os: 'ubuntu-latest'
               arch: 'x64'
             group: 'Main'
-
-          # for extension tests
-          - version: '1'
-            node:
-              os: 'ubuntu-latest'
-              arch: 'x64'
-            group: 'Makie-Ext'
-          - version: '1.12'
-            node:
-              os: 'ubuntu-latest'
-              arch: 'x64'
-            group: 'AutoDiff-Ext'
-          - version: '1'
-            node:
-              os: 'ubuntu-latest'
-              arch: 'x64'
-            group: 'Arbitrary-Precision'
 
     steps:
       - uses: actions/checkout@v7
@@ -111,6 +109,7 @@ jobs:
         env:
           GROUP: ${{ matrix.group }}
           JULIA_NUM_THREADS: auto
+          PTR_NUM_JOBS: 4
       - uses: julia-actions/julia-processcoverage@v1
         with:
           directories: src,lib

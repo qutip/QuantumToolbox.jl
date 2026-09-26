@@ -1,97 +1,58 @@
-using Test
-using TestItemRunner
+using ParallelTestRunner
 using Pkg
 
-const testdir = dirname(@__FILE__)
-
-# Define the paths to the library
-const LIBRARY_NAME_AND_PATH = Dict(
-    "Core" => ("QuantumToolboxCore", joinpath(testdir, "..", "lib", "QuantumToolboxCore")),
-    "Visual" => ("QuantumToolboxVisual", joinpath(testdir, "..", "lib", "QuantumToolboxVisual")),
-)
-const LIBRARY_LIST = collect(keys(LIBRARY_NAME_AND_PATH))
-
-# Define the paths to the extension tests
-const EXTENSION_PATH = Dict(
-    "AutoDiff-Ext" => joinpath(testdir, "ext-test", "cpu", "autodiff"),
-    "Makie-Ext" => joinpath(testdir, "ext-test", "cpu", "makie"),
-    "CUDA-Ext" => joinpath(testdir, "ext-test", "gpu"),
-    "Arbitrary-Precision" => joinpath(testdir, "ext-test", "cpu", "arbitrary_precision"),
-)
-const EXTENSION_LIST = collect(keys(EXTENSION_PATH))
+include("group_list.jl")
 
 # Handle the GROUP environment variable to determine which tests to run
 const GROUP = get(ENV, "GROUP", "All")
-const GROUP_LIST = String[
-    "All",
-    "Main",
-    "Code-Quality",
-    LIBRARY_LIST...,
-    EXTENSION_LIST...,
-]
-(GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nThe allowed groups are: $GROUP_LIST\n"))
+(GROUP in GROUP_LIST) || throw(ArgumentError("Unknown GROUP = $GROUP\nAvailable test GROUP are:\n$SHOW_GROUP_LIST\n"))
 
 # function to set up the environment for subtests
 function setup_subtest_env(path::String)
     Pkg.activate(path)
-    specs = PackageSpec[]
-    if VERSION < v"1.11"
-        for lib in LIBRARY_LIST
-            _, lib_path = LIBRARY_NAME_AND_PATH[lib]
-            push!(specs, PackageSpec(path = lib_path))
-        end
-    end
-    push!(specs, PackageSpec(path = dirname(@__DIR__)))
-    Pkg.develop(specs)
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__))) # must `develop` otherwise the code coverage for libraries will not be collected
     Pkg.update()
     return nothing
 end
 
-#######################################
-# Main tests (use TestItemRunner.jl) #
-#######################################
+######################################
+# Main package and all library tests #
+######################################
 if (GROUP == "All") || (GROUP == "Main")
-    import QuantumToolbox
+    # build up the set of tests to run for this GROUP, merging the main package's
+    # tests with all library-tests (namespaced by library name, e.g., "Core/quantum_objects")
+    testsuite = Dict{String, Expr}()
 
-    QuantumToolbox.about()
+    if (GROUP == "All") || (GROUP == "Main")
+        main_tests = find_tests(joinpath(testdir, "main-test"))
+        delete!(main_tests, "basic_solvers/setup") # remove the setup.jl, since it is not a test but a setup file
 
-    println("\nStart running Main tests...")
+        for (name, include_expr) in main_tests
+            testsuite["Main/$name"] = include_expr
+        end
+    end
 
     # tests in lib folder for each library
-    # PATH: lib/LIBRARY_NAME/test/
+    # PATH: lib/***/test/
     for lib in LIBRARY_LIST
-        lib_name, _ = LIBRARY_NAME_AND_PATH[lib]
-        println("\n[$lib_name]")
-        @run_package_tests filter = ti -> occursin(joinpath("lib", lib_name, "test"), ti.filename) verbose = true
+        path = LIBRARY_PATH[lib]
+        lib_tests = find_tests(path)
+        delete!(lib_tests, "setup") # remove the setup.jl, since it is not a test but a setup file
+
+        for (name, include_expr) in lib_tests
+            testsuite["$lib/$name"] = include_expr
+        end
     end
 
-    # main package tests (all tests except those in the lib folder)
-    println("\n[QuantumToolbox]")
-    @run_package_tests filter = ti -> occursin(joinpath(@__DIR__, "main-test"), ti.filename) verbose = true
-
-    println("\n===============> Main tests completed <===============\n")
+    import QuantumToolbox
+    QuantumToolbox.about()
+    println("[Tests for GROUP = $GROUP]")
+    runtests(QuantumToolbox, ARGS; testsuite)
 end
 
-# only run tests for a specific library
-if GROUP ∈ LIBRARY_LIST
-    if GROUP == "Core"
-        import QuantumToolboxCore
-        QuantumToolboxCore.about()
-    elseif GROUP == "Visual"
-        import QuantumToolboxVisual
-        QuantumToolboxVisual.about()
-    end
-
-    lib_name, _ = LIBRARY_NAME_AND_PATH[GROUP]
-    println("\n[$lib_name]")
-    @run_package_tests filter = ti -> occursin(joinpath("lib", lib_name, "test"), ti.filename) verbose = true
-end
-
-########################################################################
-# Use traditional Test.jl instead of TestItemRunner.jl for other tests #
-########################################################################
-
-# Code Quality tests
+######################
+# Code Quality tests #
+######################
 if (GROUP == "All") || (GROUP == "Code-Quality")
     path = joinpath(testdir, "code-quality")
     setup_subtest_env(path)
@@ -101,27 +62,28 @@ if (GROUP == "All") || (GROUP == "Code-Quality")
 
     (GROUP == "Code-Quality") && QuantumToolbox.about() # print version info. for code quality CI in GitHub
 
-    # run code quality tests for all libraries and the main package
-    for lib in LIBRARY_LIST
-        _, lib_path = LIBRARY_NAME_AND_PATH[lib]
-        include(joinpath(lib_path, "test", "code_quality.jl"))
-    end
+    println("[Tests for GROUP = $GROUP]")
     include(joinpath(path, "code_quality.jl"))
 end
 
-# Extension tests
+##############################
+# (individual) Library tests #
+##############################
+if GROUP ∈ LIBRARY_LIST
+    lib_path = LIBRARY_PATH[GROUP]
+    setup_subtest_env(lib_path)
+
+    println("[Tests for GROUP = $GROUP]")
+    include(joinpath(lib_path, "runtests.jl"))
+end
+
+###################
+# Extension tests #
+###################
 if GROUP ∈ EXTENSION_LIST
     path = EXTENSION_PATH[GROUP]
     setup_subtest_env(path)
 
-    if GROUP == "AutoDiff-Ext"
-        println(Pkg.status())
-        include(joinpath(path, "autodiff.jl"))
-    elseif GROUP == "Makie-Ext"
-        include(joinpath(path, "makie_ext.jl"))
-    elseif GROUP == "CUDA-Ext"
-        include(joinpath(path, "cuda_ext.jl"))
-    elseif GROUP == "Arbitrary-Precision"
-        include(joinpath(path, "arbitrary_precision.jl"))
-    end
+    println("[Tests for GROUP = $GROUP]")
+    include(joinpath(path, "runtests.jl"))
 end

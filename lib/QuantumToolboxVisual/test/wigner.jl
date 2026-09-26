@@ -1,4 +1,7 @@
-@testitem "Wigner" begin
+using Test
+using QuantumToolboxVisual
+
+@testset "Wigner" begin
     α = 0.5 + 0.8im
     ψ = coherent(30, α)
     ρ = to_sparse(ket2dm(ψ), 1.0e-6)

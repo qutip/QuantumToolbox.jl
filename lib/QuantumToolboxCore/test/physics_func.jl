@@ -1,4 +1,7 @@
-@testitem "gaussian" begin
+using Test
+using QuantumToolboxCore
+
+@testset "gaussian" begin
     mu = 0.7
     sigma = 1.2
     delta = 0.4
@@ -11,7 +14,7 @@
     end
 end
 
-@testitem "n_thermal" begin
+@testset "n_thermal" begin
 
     ω1 = rand(Float64)
     ω2 = rand(Float64)
