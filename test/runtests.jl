@@ -10,6 +10,7 @@ const GROUP = get(ENV, "GROUP", "All")
 # function to set up the environment for subtests
 function setup_subtest_env(path::String)
     Pkg.activate(path)
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__))) # must `develop` otherwise the code coverage for libraries will not be collected
     Pkg.update()
     return nothing
 end
