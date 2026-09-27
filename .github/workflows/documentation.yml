@@ -5,7 +5,7 @@ on:
     branches:
       - 'main'
     tags: 
-      - '*'
+      - 'v*' # the tags must start with 'v', so that it does not trigger with library version tags
   pull_request:
     branches:
       - 'main'

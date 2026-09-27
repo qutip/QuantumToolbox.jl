@@ -7,32 +7,38 @@ on:
   workflow_dispatch:
 
 jobs:
-  TagBotMain:
+  TagBot:
     if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
     runs-on: ubuntu-latest
     steps:
-      - uses: JuliaRegistries/TagBot@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ssh: ${{ secrets.DOCUMENTER_KEY }}
-          tag_prefix: NO_PREFIX
-
-  TagBotCore:
-    if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: JuliaRegistries/TagBot@v1
+      - name: Tag QuantumToolboxCore.jl
+        uses: JuliaRegistries/TagBot@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ssh: ${{ secrets.DOCUMENTER_KEY }}
           subdir: lib/QuantumToolboxCore
 
-  TagBotVisual:
-    if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: JuliaRegistries/TagBot@v1
+      - name: Tag QuantumToolboxVisual.jl
+        uses: JuliaRegistries/TagBot@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ssh: ${{ secrets.DOCUMENTER_KEY }}
           subdir: lib/QuantumToolboxVisual
+
+      - name: Tag QuantumToolbox.jl
+        uses: JuliaRegistries/TagBot@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh: ${{ secrets.DOCUMENTER_KEY }}
+          tag_prefix: NO_PREFIX
+      
+      - uses: actions/checkout@v4
+      - name: Keep main package tag as Latest # e.g., vX.Y.Z, so that the latest release is always the latest tag of the main package, not the subpackages
+        run: |
+          git fetch --tags --force
+          tag=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)
+          if [ -n "$tag" ]; then
+            gh release edit "$tag" --repo ${{ github.repository }} --latest
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
