@@ -306,8 +306,12 @@ function _average_traj_ket2dm(states::AbstractVector{<:QuantumObject{Ket}})
     ψ1 = first(states)
     ρ = similar(ψ1.data, length(ψ1.data), length(ψ1.data))
     fill!(ρ, zero(eltype(ρ)))
-    for ψ in states
-        mul!(ρ, ψ.data, ψ.data', true, true) # ρ += |ψ⟩⟨ψ|
+    # ρ += Ψ Ψ†, with the kets of up to 64 trajectories as the columns of Ψ
+    Ψ = similar(ψ1.data, length(ψ1.data), min(64, length(states)))
+    for block in Iterators.partition(states, size(Ψ, 2))
+        Ψb = view(Ψ, :, 1:length(block))
+        foreach((column, ψ) -> copyto!(column, ψ.data), eachcol(Ψb), block)
+        mul!(ρ, Ψb, Ψb', true, true)
     end
     ρ ./= length(states)
     return QuantumObject(ρ, Operator(), Dimensions(ψ1.dimensions.to, adjoint(ψ1.dimensions).from))
