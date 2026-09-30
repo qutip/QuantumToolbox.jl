@@ -600,7 +600,7 @@ end
         a = TESetup.a
         rng = TESetup.rng
 
-        @inferred mcsolveEnsembleProblem(
+        ens_prob_mc = @inferred mcsolveEnsembleProblem(
             H,
             ψ0,
             tlist,
@@ -610,6 +610,9 @@ end
             progress_bar = Val(false),
             rng = rng,
         )
+        sol_mc_prob = @inferred mcsolve(ens_prob_mc, keep_runs_results = Val(true)) # ntraj is taken from the problem
+        @test sol_mc_prob.ntraj == 5
+        @test size(sol_mc_prob.states, 1) == 5
         @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
         @inferred mcsolve(H, ψ0, tlist, c_ops, ntraj = 5, progress_bar = Val(true), rng = rng) # test progress bar
         @inferred mcsolve(H, ψ0, [0, 10], c_ops, ntraj = 5, progress_bar = Val(false), rng = rng)
@@ -732,7 +735,7 @@ end
         p = TESetup.p
 
         c_ops_tuple = Tuple(c_ops) # To avoid type instability, we must have a Tuple instead of a Vector
-        @inferred ssesolveEnsembleProblem(
+        ens_prob_sse = @inferred ssesolveEnsembleProblem(
             H,
             ψ0,
             tlist,
@@ -742,6 +745,9 @@ end
             progress_bar = Val(false),
             rng = rng,
         )
+        sol_sse_prob = @inferred ssesolve(ens_prob_sse, keep_runs_results = Val(true)) # ntraj is taken from the problem
+        @test sol_sse_prob.ntraj == 5
+        @test size(sol_sse_prob.states, 1) == 5
         @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
         @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng) # test progress bar
         @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)
@@ -965,7 +971,7 @@ end
         sc_ops_sme_tuple = Tuple(sc_ops_sme)
         c_ops_sme2_tuple = Tuple(c_ops_sme2)
         sc_ops_sme2_tuple = sc_ops_sme2 # This is an `AbstractQuantumObject`
-        @inferred smesolveEnsembleProblem(
+        ens_prob_sme = @inferred smesolveEnsembleProblem(
             H,
             ψ0,
             tlist,
@@ -976,6 +982,9 @@ end
             progress_bar = Val(false),
             rng = rng,
         )
+        sol_sme_prob = @inferred smesolve(ens_prob_sme, keep_runs_results = Val(true)) # ntraj is taken from the problem
+        @test sol_sme_prob.ntraj == 5
+        @test size(sol_sme_prob.states, 1) == 5
         @inferred smesolve(
             H,
             ψ0,

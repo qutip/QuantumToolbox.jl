@@ -741,5 +741,5 @@ function dsf_mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc, alg, ntraj, ensemblealg)
+    return mcsolve(ens_prob_mc, alg)
 end

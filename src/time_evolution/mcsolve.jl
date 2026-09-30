@@ -259,7 +259,7 @@ function mcsolveEnsembleProblem(
         prob_mc.times,
         prob_mc.states_type,
         prob_mc.dimensions,
-        (progr = _output_func[2], channel = _output_func[3], rng = rng),
+        (progr = _output_func[2], channel = _output_func[3], rng = rng, ntraj = ntraj, ensemblealg = ensemblealg),
     )
 
     return ensemble_prob
@@ -377,7 +377,6 @@ function mcsolve(
         ψ0,
         tlist,
         c_ops;
-        alg = alg,
         e_ops = e_ops,
         params = params,
         rng = rng,
@@ -390,18 +389,17 @@ function mcsolve(
         kwargs...,
     )
 
-    return mcsolve(ens_prob_mc, alg, ntraj, ensemblealg, makeVal(keep_runs_results), normalize_states)
+    return mcsolve(ens_prob_mc, alg; keep_runs_results = keep_runs_results, normalize_states = normalize_states)
 end
 
 function mcsolve(
         ens_prob_mc::TimeEvolutionProblem,
-        alg::AbstractODEAlgorithm = DP5(),
-        ntraj::Int = 500,
-        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-        keep_runs_results = Val(false),
-        normalize_states = Val(true),
+        alg::AbstractODEAlgorithm = DP5();
+        keep_runs_results::Union{Val, Bool} = Val(false),
+        normalize_states::Union{Val, Bool} = Val(true),
     )
-    sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ensemblealg, ntraj; rng = ens_prob_mc.kwargs.rng)
+    ntraj = ens_prob_mc.kwargs.ntraj
+    sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ens_prob_mc.kwargs.ensemblealg, ntraj; rng = ens_prob_mc.kwargs.rng)
 
     dimensions = ens_prob_mc.dimensions
     _sol_1 = sol.u[1]
@@ -423,8 +421,8 @@ function mcsolve(
         ntraj,
         ens_prob_mc.times,
         _sol_1.t,
-        _store_multitraj_states(states_all, keep_runs_results),
-        _store_multitraj_expect(expvals_all, keep_runs_results),
+        _store_multitraj_states(states_all, makeVal(keep_runs_results)),
+        _store_multitraj_expect(expvals_all, makeVal(keep_runs_results)),
         col_times,
         col_which,
         sol.converged,
