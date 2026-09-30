@@ -296,21 +296,24 @@ average_states(sol::TimeEvolutionMultiTrajSol{<:Matrix{<:QuantumObject}}) = _ave
 average_states(sol::TimeEvolutionMultiTrajSol{<:Vector{<:QuantumObject}}) = sol.states  # this case should already be averaged over all trajectories
 
 # The averages are accumulated in place (one array per saved time) instead of allocating a new array for each trajectory
-_average_traj_states(states::Matrix{<:QuantumObject{Ket}}) =
-    size(states, 2) == 0 ? Vector{Base.promote_op(ket2dm, eltype(states))}() :
-    map(_average_traj_ket2dm, eachcol(states))
+function _average_traj_states(states::Matrix{<:QuantumObject{Ket}})
+    size(states, 2) == 0 && return Vector{Base.promote_op(ket2dm, eltype(states))}()
+    # Buffer for the kets of up to 64 trajectories, shared by all the saved times
+    ψ1 = first(states)
+    Ψ = similar(ψ1.data, length(ψ1.data), min(64, size(states, 1)))
+    return map(states_t -> _average_traj_ket2dm(states_t, Ψ), eachcol(states))
+end
 _average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType <: Union{Operator, OperatorKet}} =
     size(states, 2) == 0 ? Vector{eltype(states)}() : map(_average_traj_state, eachcol(states))
 
-function _average_traj_ket2dm(states::AbstractVector{<:QuantumObject{Ket}})
+function _average_traj_ket2dm(states::AbstractVector{<:QuantumObject{Ket}}, Ψ::AbstractMatrix)
     ψ1 = first(states)
     ρ = similar(ψ1.data, length(ψ1.data), length(ψ1.data))
     fill!(ρ, zero(eltype(ρ)))
-    # ρ += Ψ Ψ†, with the kets of up to 64 trajectories as the columns of Ψ
-    Ψ = similar(ψ1.data, length(ψ1.data), min(64, length(states)))
+    # ρ += Ψ Ψ†, with the kets of a block of trajectories as the columns of Ψ
     for block in Iterators.partition(states, size(Ψ, 2))
         Ψb = view(Ψ, :, 1:length(block))
-        foreach((column, ψ) -> copyto!(column, ψ.data), eachcol(Ψb), block)
+        foreach((column, ψ) -> column .= ψ.data, eachcol(Ψb), block)
         mul!(ρ, Ψb, Ψb', true, true)
     end
     ρ ./= length(states)
