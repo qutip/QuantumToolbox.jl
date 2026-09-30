@@ -1,4 +1,4 @@
-# Setup problem for arbitrary precision tests
+# Setup problem for time evolution tests
 module TESetup
 using QuantumToolbox
 using Random

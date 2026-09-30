@@ -23,13 +23,12 @@ if (GROUP == "All") || (GROUP == "Main")
     # tests with all library-tests (namespaced by library name, e.g., "Core/quantum_objects")
     testsuite = Dict{String, Expr}()
 
-    if (GROUP == "All") || (GROUP == "Main")
-        main_tests = find_tests(joinpath(testdir, "main-test"))
-        delete!(main_tests, "basic_solvers/setup") # remove the setup.jl, since it is not a test but a setup file
+    # Main package tests
+    main_tests = find_tests(joinpath(testdir, "main-test"))
+    delete!(main_tests, "basic_solvers/setup") # remove the setup.jl, since it is not a test but a setup file
 
-        for (name, include_expr) in main_tests
-            testsuite["Main/$name"] = include_expr
-        end
+    for (name, include_expr) in main_tests
+        testsuite["Main/$name"] = include_expr
     end
 
     # tests in lib folder for each library

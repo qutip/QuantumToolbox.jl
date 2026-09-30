@@ -1,3 +1,4 @@
+using Test
 using QuantumToolboxVisual
 # Makie is imported in the following script
 

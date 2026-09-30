@@ -47,9 +47,11 @@ sol = mesolve(H, ψ0, tlist, c_ops; ...)          # Solve directly
   - `QuantumToolboxVisualMakieExt.jl`: Visualization (Bloch sphere, Wigner)
   - `QuantumToolboxCoreCUDAExt.jl`: GPU acceleration
 
-- **[test/](../test/)**: Two-tier test structure
-  - `main-test/`: Core functionality via `TestItemRunner.jl`
-  - `ext-test/`: Extensions (cpu/, gpu/ subdirs)
+- **test**: Test structure via `ParallelTestRunner.jl`
+  - `test/main-test/`: Main package functionality
+  - `test/ext-test/`: Extensions (cpu/, cuda/ subdirs)
+  - `lib/QuantumToolboxCore/test/`: QuantumToolboxCore library tests
+  - `lib/QuantumToolboxVisual/test/`: QuantumToolboxVisual library tests
 
 ## Code Patterns & Conventions
 

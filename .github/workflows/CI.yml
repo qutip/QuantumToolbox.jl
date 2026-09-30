@@ -10,6 +10,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
+      - 'test/group_list.jl'
       - 'test/main-test/**'
       - 'test/ext-test/cpu/**'
       - 'Project.toml'
@@ -23,6 +24,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
+      - 'test/group_list.jl'
       - 'test/main-test/**'
       - 'test/ext-test/cpu/**'
       - 'Project.toml'
@@ -67,7 +69,7 @@ jobs:
             node:
               os: 'macOS-latest'
               arch: 'arm64'
-            group: 'Main'  
+            group: 'Main'
 
           # Main test in other versions
           - version: '1.10'

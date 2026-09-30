@@ -77,7 +77,7 @@ make test GROUP=Main
 
 #### [ParallelTestRunner.jl](@id doc-Contribute:ParallelTestRunner)
 
-Almost all test `GROUP`s are run using [`ParallelTestRunner.jl`](https://github.com/JuliaTesting/ParallelTestRunner.jl), which automatically discovers every `.jl` file under the corresponding `**/test/**` folders and runs each one as an isolated `@testset` in its own parallel worker process. This keeps individual test files independent from one another and speeds up each test group considerably.
+Almost all test `GROUP`s are run using [`ParallelTestRunner.jl`](https://github.com/JuliaTesting/ParallelTestRunner.jl), which automatically discovers every `.jl` file under the corresponding `**/test/**` folders and runs each one as an isolated `@testset` in a parallel worker process. This keeps individual test files independent from one another and speeds up each test group considerably.
 
 Since each file runs in its own worker, you can filter down to a specific file (or set of files) instead of running the whole group. This works the same way for any of these `GROUP`s. First, find the available test names by passing `ARGS="--list"` as an extra argument of `make test`:
 

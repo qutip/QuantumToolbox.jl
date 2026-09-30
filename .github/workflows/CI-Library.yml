@@ -9,6 +9,8 @@ on:
     paths:
       - '.github/workflows/CI-Library.yml'
       - 'lib/**'
+      - 'test/runtests.jl'
+      - 'test/group_list.jl'
       - 'codecov.yml'
   pull_request:
     branches:
@@ -16,6 +18,8 @@ on:
     paths:
       - '.github/workflows/CI-Library.yml'
       - 'lib/**'
+      - 'test/runtests.jl'
+      - 'test/group_list.jl'
       - 'codecov.yml'
     types:
       - opened

@@ -1,8 +1,9 @@
-setprecision(128) # Instead of 256. This speeds up the tests.
-
+using Test
 using QuantumToolbox
 
-include("setup.jl") # module TESetup (parameters and operators) are defined in this file
+# module TESetup (parameters and operators) are defined in this file
+# note that this file also sets the precision to 128 bits
+include("setup.jl")
 
 @testset "Arbitrary Precision (sesolve)" begin
     sol = sesolve(TESetup.H, TESetup.ψ0, TESetup.tlist; progress_bar = Val(false))

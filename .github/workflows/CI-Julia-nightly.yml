@@ -10,6 +10,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
+      - 'test/group_list.jl'
       - 'test/main-test/**'
       - 'Project.toml'
       - 'codecov.yml'
