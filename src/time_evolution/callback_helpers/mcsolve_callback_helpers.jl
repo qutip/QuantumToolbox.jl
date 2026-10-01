@@ -57,8 +57,7 @@ function _save_func_mcsolve(u, integrator, e_ops, iter, expvals)
     return nothing
 end
 
-# The steps of mcsolve that read the state. An ODE algorithm that stores the state in
-# another form can add methods for its integrators.
+# Write explicit functions for cleaner code and allow other packages to use them through multiple dispatch.
 function _mcsolve_expect!(expvals, e_ops, u, integrator)
     norm2 = real(dot(u, u))
     _expect = op -> dot(u, op, u) / norm2
