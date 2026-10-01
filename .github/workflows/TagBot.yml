@@ -32,7 +32,7 @@ jobs:
           ssh: ${{ secrets.DOCUMENTER_KEY }}
           tag_prefix: NO_PREFIX
       
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Keep main package tag as Latest # e.g., vX.Y.Z, so that the latest release is always the latest tag of the main package, not the subpackages
         run: |
           git fetch --tags --force
