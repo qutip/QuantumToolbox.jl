@@ -1,4 +1,7 @@
-@testitem "linalg helpers" begin
+using Test
+using QuantumToolboxCore
+
+@testset "linalg helpers" begin
     # meshgrid
     x = [1, 2, 3]
     y = [10, 20]
@@ -7,7 +10,7 @@
     @test Y == [10 10 10; 20 20 20]
 end
 
-@testitem "Arnoldi and expv" begin
+@testset "Arnoldi and expv" begin
     import LinearAlgebra: norm
 
     # Use n = 3 and m = 2 to avoid exact Arnoldi breakdown (and NaN in AS).

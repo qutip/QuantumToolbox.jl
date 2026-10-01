@@ -1,15 +1,108 @@
 name: TagBot
+
 on:
   issue_comment:
     types:
       - created
   workflow_dispatch:
+
 jobs:
   TagBot:
     if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
     runs-on: ubuntu-latest
     steps:
-      - uses: JuliaRegistries/TagBot@v1
+      - name: Tag QuantumToolboxCore.jl
+        uses: JuliaRegistries/TagBot@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ssh: ${{ secrets.DOCUMENTER_KEY }}
+          subdir: lib/QuantumToolboxCore
+          changelog: | # the changelog will only gather merged PRs and closed issues that have the label "lib-Core"
+            ## {{ version }}
+
+            {% if previous_release %}
+            [Diff since {{ previous_release }}]({{ compare_url }})
+            {% endif %}
+
+            {% if custom %}
+            {{ custom }}
+            {% endif %}
+
+            {% set ns = namespace(pulls=[], issues=[]) %}
+            {% for pull in pulls if "lib-Core" in pull.labels %}
+            {% set ns.pulls = ns.pulls + [pull] %}
+            {% endfor %}
+            {% for issue in issues if "lib-Core" in issue.labels %}
+            {% set ns.issues = ns.issues + [issue] %}
+            {% endfor %}
+
+            {% if ns.pulls %}
+            **Merged pull requests:**
+            {% for pull in ns.pulls %}
+            - {{ pull.title }} (#{{ pull.number }}) (@{{ pull.author.username }})
+            {% endfor %}
+            {% endif %}
+
+            {% if ns.issues %}
+            **Closed issues:**
+            {% for issue in ns.issues %}
+            - {{ issue.title }} (#{{ issue.number }})
+            {% endfor %}
+            {% endif %}
+
+      - name: Tag QuantumToolboxVisual.jl
+        uses: JuliaRegistries/TagBot@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh: ${{ secrets.DOCUMENTER_KEY }}
+          subdir: lib/QuantumToolboxVisual
+          changelog: | # the changelog will only gather merged PRs and closed issues that have the label "lib-Visual"
+            ## {{ version }}
+
+            {% if previous_release %}
+            [Diff since {{ previous_release }}]({{ compare_url }})
+            {% endif %}
+
+            {% if custom %}
+            {{ custom }}
+            {% endif %}
+
+            {% set ns = namespace(pulls=[], issues=[]) %}
+            {% for pull in pulls if "lib-Visual" in pull.labels %}
+            {% set ns.pulls = ns.pulls + [pull] %}
+            {% endfor %}
+            {% for issue in issues if "lib-Visual" in issue.labels %}
+            {% set ns.issues = ns.issues + [issue] %}
+            {% endfor %}
+
+            {% if ns.pulls %}
+            **Merged pull requests:**
+            {% for pull in ns.pulls %}
+            - {{ pull.title }} (#{{ pull.number }}) (@{{ pull.author.username }})
+            {% endfor %}
+            {% endif %}
+
+            {% if ns.issues %}
+            **Closed issues:**
+            {% for issue in ns.issues %}
+            - {{ issue.title }} (#{{ issue.number }})
+            {% endfor %}
+            {% endif %}
+
+      # the changelog for the main package will use the default one, which gathers all merged PRs and closed issues, regardless of labels
+      - name: Tag QuantumToolbox.jl
+        uses: JuliaRegistries/TagBot@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh: ${{ secrets.DOCUMENTER_KEY }}
+          tag_prefix: NO_PREFIX
+      
+      - uses: actions/checkout@v7
+      - name: Keep main package tag as Latest # e.g., vX.Y.Z, so that the latest release is always the latest tag of the main package, not the subpackages
+        run: |
+          git fetch --tags --force
+          tag=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)
+          echo "Latest tag: $tag"
+          gh release edit "$tag" --repo ${{ github.repository }} --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

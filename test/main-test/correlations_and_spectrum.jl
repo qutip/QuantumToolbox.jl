@@ -1,4 +1,7 @@
-@testitem "Correlations and Spectrum" begin
+using Test
+using QuantumToolbox
+
+@testset "Correlations and Spectrum" begin
     N = 10
     Id = qeye(N)
     a = destroy(N)

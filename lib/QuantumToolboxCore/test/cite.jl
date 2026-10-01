@@ -1,4 +1,7 @@
-@testitem "cite" begin
+using Test
+using QuantumToolboxCore
+
+@testset "cite" begin
 
     # citation bibtex
     io_buffer = IOBuffer()

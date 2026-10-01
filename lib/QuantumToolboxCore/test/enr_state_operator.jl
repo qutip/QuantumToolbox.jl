@@ -1,6 +1,9 @@
-@testitem "Excitation number restricted state space" begin
-    using StaticArrays
-    using SparseArrays
+using Test
+using QuantumToolboxCore
+using StaticArrays
+import SparseArrays: AbstractSparseMatrix
+
+@testset "Excitation number restricted state space" begin
 
     @testset "EnrSpace" begin
         s_enr = EnrSpace((2, 2, 3), 3)

@@ -1,4 +1,7 @@
-@testitem "CODATA Physical Constants" begin
+using Test
+using QuantumToolboxCore
+
+@testset "CODATA Physical Constants" begin
     c = PhysicalConstants.c
     h = PhysicalConstants.h
     ħ = PhysicalConstants.ħ

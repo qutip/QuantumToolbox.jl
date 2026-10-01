@@ -9,6 +9,8 @@ on:
     paths:
       - '.github/workflows/CI-Library.yml'
       - 'lib/**'
+      - 'test/runtests.jl'
+      - 'test/utils/**'
       - 'codecov.yml'
   pull_request:
     branches:
@@ -16,6 +18,8 @@ on:
     paths:
       - '.github/workflows/CI-Library.yml'
       - 'lib/**'
+      - 'test/runtests.jl'
+      - 'test/utils/**'
       - 'codecov.yml'
     types:
       - opened
@@ -55,7 +59,8 @@ jobs:
       - uses: julia-actions/julia-runtest@v1
         env:
           GROUP: ${{ matrix.group }}
-          JULIA_NUM_THREADS: auto
+          JULIA_NUM_THREADS: 1 # multithreading is configured in test/utils/generate_test_worker.jl
+          PTR_NUM_JOBS: 4
       - uses: julia-actions/julia-processcoverage@v1
         with:
           directories: lib

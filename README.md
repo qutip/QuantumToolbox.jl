@@ -20,7 +20,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 | **Support** | [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund) |
 
 [release-img]: https://img.shields.io/github/release/qutip/QuantumToolbox.jl.svg
-[release-url]: https://github.com/qutip/QuantumToolbox.jl/releases
+[release-url]: https://github.com/qutip/QuantumToolbox.jl/releases/latest
 
 [license-img]: https://img.shields.io/badge/license-New%20BSD-blue.svg
 [license-url]: https://opensource.org/licenses/BSD-3-Clause

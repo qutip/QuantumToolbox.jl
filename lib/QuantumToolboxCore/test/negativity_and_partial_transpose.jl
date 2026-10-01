@@ -1,4 +1,7 @@
-@testitem "Negativity and Partial Transpose" begin
+using Test
+using QuantumToolboxCore
+
+@testset "Negativity and Partial Transpose" begin
     @testset "negativity" begin
         rho1 = (1 / 40) * Qobj(
             [

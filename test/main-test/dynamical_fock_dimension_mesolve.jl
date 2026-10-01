@@ -1,5 +1,8 @@
+using Test
+using QuantumToolbox
+
 ### DYNAMICAL FOCK DIMENSION ###
-@testitem "Dynamical Fock Dimension" begin
+@testset "Dynamical Fock Dimension" begin
     F, Δ, κ = 5, 0.25, 1
     t_l = range(0, 15, length = 100)
 

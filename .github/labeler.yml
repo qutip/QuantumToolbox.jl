@@ -1,0 +1,14 @@
+documentation: # label for documentation
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'docs/**'
+
+lib-Core: # label for QuantumToolboxCore
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'lib/QuantumToolboxCore/**'
+
+lib-Visual: # label for QuantumToolboxVisual
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'lib/QuantumToolboxVisual/**'

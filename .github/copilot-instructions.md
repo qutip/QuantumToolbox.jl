@@ -47,9 +47,11 @@ sol = mesolve(H, ψ0, tlist, c_ops; ...)          # Solve directly
   - `QuantumToolboxVisualMakieExt.jl`: Visualization (Bloch sphere, Wigner)
   - `QuantumToolboxCoreCUDAExt.jl`: GPU acceleration
 
-- **[test/](../test/)**: Two-tier test structure
-  - `main-test/`: Core functionality via `TestItemRunner.jl`
-  - `ext-test/`: Extensions (cpu/, gpu/ subdirs)
+- **test**: Test structure via `ParallelTestRunner.jl`
+  - `test/main-test/`: Main package functionality
+  - `test/ext-test/`: Extensions (cpu/, cuda/ subdirs)
+  - `lib/QuantumToolboxCore/test/`: QuantumToolboxCore library tests
+  - `lib/QuantumToolboxVisual/test/`: QuantumToolboxVisual library tests
 
 ## Code Patterns & Conventions
 
@@ -82,10 +84,10 @@ QuantumToolbox.settings.ProgressMeterKWARGS = (showspeed=true, printed=true)
 ```bash
 make test                    # Run all core tests
 GROUP=Main make test         # Run Main tests only
-GROUP=CUDA-Ext make test     # Run CUDA extension tests only
+GROUP=CUDA make test     # Run CUDA extension tests only
 ```
 
-Test groups (set `GROUP` env var): "All", "Main", "Code-Quality", "AutoDiff-Ext", "Makie-Ext", "CUDA-Ext", "Arbitrary-Precision"
+Test groups (set `GROUP` env var): "All", "Main", "Code-Quality", "AutoDiff", "Makie", "CUDA", "Arbitrary-Precision"
 
 ### Code Quality & Formatting
 ```bash

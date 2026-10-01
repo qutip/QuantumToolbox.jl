@@ -1,4 +1,10 @@
-@testitem "Dynamical Shifted Fock" begin
+#!PTR_MULTITHREAD
+using Test
+using QuantumToolbox
+
+@testset "Dynamical Shifted Fock" begin
+    @test Base.Threads.nthreads() > 1 # make sure the test runs with multi-threading
+
     F = 3
     Δ = 0.25
     κ = 1
