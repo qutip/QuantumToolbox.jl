@@ -60,8 +60,14 @@ end
 # Write explicit functions for cleaner code and allow other packages to use them through multiple dispatch.
 function _mcsolve_expect!(expvals, e_ops, u, integrator)
     norm2 = real(dot(u, u))
-    _expect = op -> dot(u, op, u) / norm2
-    @. expvals = _expect(e_ops)
+    expect_f = op -> dot(u, op, u) / norm2
+
+    # @. expvals = expect_f(e_ops) allocates memory when e_ops is a tuple
+    if e_ops isa Tuple
+        expvals .= map(expect_f, e_ops)
+    else
+        @. expvals = expect_f(e_ops)
+    end
     return expvals
 end
 
