@@ -1,4 +1,4 @@
-const testdir = dirname(@__FILE__)
+const testdir = dirname(dirname(@__FILE__)) # test/utils/group_list.jl -> test
 
 # Define the paths to the library-tests
 const LIBRARY_PATH = Dict(

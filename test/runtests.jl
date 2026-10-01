@@ -1,7 +1,9 @@
 using ParallelTestRunner
 using Pkg
 
-include("group_list.jl")
+# include utilities
+include("utils/group_list.jl")
+include("utils/generate_test_worker.jl")
 
 # Handle the GROUP environment variable to determine which tests to run
 const GROUP = get(ENV, "GROUP", "All")
@@ -46,7 +48,7 @@ if (GROUP == "All") || (GROUP == "Main")
     import QuantumToolbox
     QuantumToolbox.about()
     println("[Tests for GROUP = $GROUP]")
-    runtests(QuantumToolbox, ARGS; testsuite)
+    runtests(QuantumToolbox, ARGS; testsuite, test_worker = generate_test_worker(testsuite))
 end
 
 ######################

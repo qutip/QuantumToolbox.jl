@@ -10,7 +10,7 @@ on:
       - '.github/workflows/CI-Library.yml'
       - 'lib/**'
       - 'test/runtests.jl'
-      - 'test/group_list.jl'
+      - 'test/utils/**'
       - 'codecov.yml'
   pull_request:
     branches:
@@ -19,7 +19,7 @@ on:
       - '.github/workflows/CI-Library.yml'
       - 'lib/**'
       - 'test/runtests.jl'
-      - 'test/group_list.jl'
+      - 'test/utils/**'
       - 'codecov.yml'
     types:
       - opened

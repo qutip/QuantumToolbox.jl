@@ -20,6 +20,7 @@ steps:
             - "src/**"
             - "lib/QuantumToolboxCore/**"
             - "test/runtests.jl"
+            - "test/utils/**"
             - "test/ext-test/cuda/**"
             - 'Project.toml'
             - 'codecov.yml'

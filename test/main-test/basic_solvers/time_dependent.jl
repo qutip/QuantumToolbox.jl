@@ -1,9 +1,12 @@
+#!PTR_MULTITHREAD
 using Test
 using QuantumToolbox
 
 include("setup.jl") # module TESetup (parameters and operators) are defined in this file
 
 @testset "Time-dependent Hamiltonian" begin
+    @test Base.Threads.nthreads() > 1 # make sure the test runs with multi-threading
+
     # Get parameters from TESetup to simplify the code
     ωd = TESetup.ωd
     F = TESetup.F

@@ -1,3 +1,4 @@
+#!PTR_MULTITHREAD
 using Test
 using QuantumToolbox
 import Random: MersenneTwister
@@ -5,6 +6,7 @@ import Random: MersenneTwister
 include("setup.jl") # module TESetup (parameters and operators) are defined in this file
 
 @testset "smesolve" begin
+    @test Base.Threads.nthreads() > 1 # make sure the test runs with multi-threading
 
     # Get parameters from TESetup to simplify the code
     H = TESetup.H

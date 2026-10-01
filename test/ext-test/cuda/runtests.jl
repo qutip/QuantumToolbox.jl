@@ -7,4 +7,6 @@ CUDA.versioninfo()
 
 testsuite = find_tests(dirname(@__FILE__))
 
-runtests(QuantumToolbox, ARGS; testsuite)
+include(joinpath(@__DIR__, "..", "..", "utils", "generate_test_worker.jl"))
+
+runtests(QuantumToolbox, ARGS; testsuite, test_worker = generate_test_worker(testsuite))

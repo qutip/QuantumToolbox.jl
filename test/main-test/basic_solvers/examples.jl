@@ -1,7 +1,10 @@
+#!PTR_MULTITHREAD
 using Test
 using QuantumToolbox
 
 @testset "Example: Two qubit model" begin
+    @test Base.Threads.nthreads() > 1 # make sure the test runs with multi-threading
+
     sp1 = kron(sigmap(), qeye(2))
     sm1 = sp1'
     sx1 = sm1 + sp1

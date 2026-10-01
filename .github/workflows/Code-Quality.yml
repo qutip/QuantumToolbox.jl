@@ -10,7 +10,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
-      - 'test/group_list.jl'
+      - 'test/utils/**'
       - 'test/code-quality/**'
       - 'Project.toml'
   pull_request:
@@ -22,7 +22,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
-      - 'test/group_list.jl'
+      - 'test/utils/**'
       - 'test/code-quality/**'
       - 'Project.toml'
     types:

@@ -9,4 +9,6 @@ QuantumToolboxVisual.about()
 
 testsuite = find_tests(dirname(@__FILE__))
 
-runtests(QuantumToolboxVisual, ARGS; testsuite)
+include(joinpath(@__DIR__, "..", "..", "..", "test", "utils", "generate_test_worker.jl"))
+
+runtests(QuantumToolboxVisual, ARGS; testsuite, test_worker = generate_test_worker(testsuite))
