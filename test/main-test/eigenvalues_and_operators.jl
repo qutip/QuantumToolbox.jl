@@ -1,4 +1,7 @@
-@testitem "Eigenvalues" begin
+using Test
+using QuantumToolbox
+
+@testset "Eigenvalues" begin
     σx = sigmax()
     result = eigenstates(σx, sparse = Val(false))
     vals_pauli_dense, vecs_pauli_dense, mat_pauli_dense = result

@@ -1,4 +1,7 @@
-@testitem "versioninfo and about" begin
+using Test
+using QuantumToolboxCore
+
+@testset "versioninfo and about" begin
     # versioninfo
     io_version = IOBuffer()
     QuantumToolboxCore.versioninfo(io_version)
@@ -16,7 +19,7 @@
     @test version_output == about_output
 end
 
-@testitem "Settings" begin
+@testset "Settings" begin
     io = IOBuffer()
     show(io, QuantumToolboxCore.settings)
     out = String(take!(io))

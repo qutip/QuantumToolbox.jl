@@ -10,6 +10,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
+      - 'test/utils/**'
       - 'test/main-test/**'
       - 'Project.toml'
       - 'codecov.yml'
@@ -22,6 +23,7 @@ on:
       - 'lib/**'
       - 'ext/**'
       - 'test/runtests.jl'
+      - 'test/utils/**'
       - 'test/main-test/**'
       - 'Project.toml'
       - 'codecov.yml'
@@ -62,4 +64,5 @@ jobs:
       - uses: julia-actions/julia-runtest@v1
         env:
           GROUP: ${{ matrix.group }}
-          JULIA_NUM_THREADS: auto
+          JULIA_NUM_THREADS: 1 # multithreading is configured in test/utils/generate_test_worker.jl
+          PTR_NUM_JOBS: 4

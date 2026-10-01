@@ -1,4 +1,7 @@
-@testitem "Propagator (by solvers)" begin
+using Test
+using QuantumToolbox
+
+@testset "Propagator (by solvers)" begin
     ϵ0 = 1.0 * 2π
     Ω = 0.8 * 2π
     H = (ϵ0 / 2) * sigmaz() + (Ω / 2) * sigmax()

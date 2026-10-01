@@ -1,10 +1,12 @@
-@testitem "Quantum Objects Evolution" begin
-    using LinearAlgebra
-    using SparseArrays
-    using StaticArrays
-    using SciMLOperators
-    import SciMLOperators: AddedOperator
+using Test
+using QuantumToolboxCore
+using LinearAlgebra
+using SparseArrays
+using StaticArrays
+using SciMLOperators
+import SciMLOperators: AddedOperator
 
+@testset "Quantum Objects Evolution" begin
     # DomainError: incompatible between size of array and type
     @testset "Thrown Errors" begin
         a = MatrixOperator(rand(ComplexF64, 3, 2))
@@ -65,10 +67,10 @@
     @testset "Promote Operators Type" begin
         a = destroy(20)
         A = QobjEvo(a)
-        @test QuantumToolbox.promote_op_type(a, A) == QuantumObjectEvolution
-        @test QuantumToolbox.promote_op_type(A, a) == QuantumObjectEvolution
-        @test QuantumToolbox.promote_op_type(A, A) == QuantumObjectEvolution
-        @test QuantumToolbox.promote_op_type(a, a) == QuantumObject
+        @test QuantumToolboxCore.promote_op_type(a, A) == QuantumObjectEvolution
+        @test QuantumToolboxCore.promote_op_type(A, a) == QuantumObjectEvolution
+        @test QuantumToolboxCore.promote_op_type(A, A) == QuantumObjectEvolution
+        @test QuantumToolboxCore.promote_op_type(a, a) == QuantumObject
     end
 
     @testset "arithmetic" begin
