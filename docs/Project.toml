@@ -20,4 +20,5 @@ QuantumToolboxCore = {path = "../lib/QuantumToolboxCore"}
 QuantumToolboxVisual = {path = "../lib/QuantumToolboxVisual"}
 
 [compat]
+DocumenterCitations = "1.4.0"
 DocumenterVitepress = "0.3"
