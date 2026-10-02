@@ -269,7 +269,7 @@ function smesolveEnsembleProblem(
         prob_sme.times,
         prob_sme.states_type,
         prob_sme.dimensions,
-        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3], rng = rng)),
+        merge(prob_sme.kwargs, (progr = _output_func[2], channel = _output_func[3], rng = rng, ntraj = ntraj, ensemblealg = ensemblealg)),
     )
 
     return ensemble_prob
@@ -393,17 +393,17 @@ function smesolve(
         alg = sc_ops_isa_Qobj ? SRIW1() : SRA2()
     end
 
-    return smesolve(ensemble_prob, alg, ntraj, ensemblealg, makeVal(keep_runs_results))
+    return smesolve(ensemble_prob, alg; keep_runs_results = keep_runs_results)
 end
 
+# `ntraj` and `ensemblealg` are taken from `ens_prob`, since its progress bar (and channel) were built for them
 function smesolve(
         ens_prob::TimeEvolutionProblem,
-        alg::AbstractSDEAlgorithm = SRA2(),
-        ntraj::Int = 500,
-        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-        keep_runs_results = Val(false),
+        alg::AbstractSDEAlgorithm = SRA2();
+        keep_runs_results::Union{Val, Bool} = Val(false),
     )
-    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj; rng = ens_prob.kwargs.rng)
+    ntraj = ens_prob.kwargs.ntraj
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ens_prob.kwargs.ensemblealg, ntraj; rng = ens_prob.kwargs.rng)
 
     _sol_1 = sol.u[1]
     _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMESolve)
@@ -430,8 +430,8 @@ function smesolve(
         ntraj,
         ens_prob.times,
         _sol_1.t,
-        _store_multitraj_states(states_all, keep_runs_results),
-        _store_multitraj_expect(expvals_all, keep_runs_results),
+        _store_multitraj_states(states_all, makeVal(keep_runs_results)),
+        _store_multitraj_expect(expvals_all, makeVal(keep_runs_results)),
         m_expvals, # Measurement expectation values
         sol.converged,
         _sol_1.alg,

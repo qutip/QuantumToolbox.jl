@@ -109,7 +109,7 @@ include("setup.jl") # module TESetup (parameters and operators) are defined in t
         p = TESetup.p
 
         c_ops_tuple = Tuple(c_ops) # To avoid type instability, we must have a Tuple instead of a Vector
-        @inferred ssesolveEnsembleProblem(
+        ens_prob_sse = @inferred ssesolveEnsembleProblem(
             H,
             ψ0,
             tlist,
@@ -119,6 +119,9 @@ include("setup.jl") # module TESetup (parameters and operators) are defined in t
             progress_bar = Val(false),
             rng = rng,
         )
+        sol_sse_prob = @inferred ssesolve(ens_prob_sse, keep_runs_results = Val(true)) # ntraj is taken from the problem
+        @test sol_sse_prob.ntraj == 5
+        @test size(sol_sse_prob.states, 1) == 5
         @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, e_ops = e_ops, progress_bar = Val(false), rng = rng)
         @inferred ssesolve(H, ψ0, tlist, c_ops_tuple, ntraj = 5, progress_bar = Val(true), rng = rng) # test progress bar
         @inferred ssesolve(H, ψ0, [0, 10], c_ops_tuple, ntraj = 5, progress_bar = Val(false), rng = rng)

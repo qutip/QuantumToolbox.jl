@@ -200,7 +200,7 @@ include("setup.jl") # module TESetup (parameters and operators) are defined in t
         sc_ops_sme_tuple = Tuple(sc_ops_sme)
         c_ops_sme2_tuple = Tuple(c_ops_sme2)
         sc_ops_sme2_tuple = sc_ops_sme2 # This is an `AbstractQuantumObject`
-        @inferred smesolveEnsembleProblem(
+        ens_prob_sme = @inferred smesolveEnsembleProblem(
             H,
             ψ0,
             tlist,
@@ -211,6 +211,9 @@ include("setup.jl") # module TESetup (parameters and operators) are defined in t
             progress_bar = Val(false),
             rng = rng,
         )
+        sol_sme_prob = @inferred smesolve(ens_prob_sme, keep_runs_results = Val(true)) # ntraj is taken from the problem
+        @test sol_sme_prob.ntraj == 5
+        @test size(sol_sme_prob.states, 1) == 5
         @inferred smesolve(
             H,
             ψ0,

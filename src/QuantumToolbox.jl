@@ -75,6 +75,7 @@ import SciMLOperators:
     AbstractSciMLOperator,
     MatrixOperator,
     ScalarOperator,
+    ScaledOperator,
     AddedOperator,
     IdentityOperator
 import LinearSolve:

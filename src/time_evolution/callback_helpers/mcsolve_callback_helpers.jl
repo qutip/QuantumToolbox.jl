@@ -50,16 +50,42 @@ end
 ##
 
 function _save_func_mcsolve(u, integrator, e_ops, iter, expvals)
-    cache_mc = _mc_get_jump_callback(integrator).affect!.cache_mc
-
-    copyto!(cache_mc, u)
-    normalize!(cache_mc)
-    ψ = cache_mc
-    _expect = op -> dot(ψ, op, ψ)
-    @. expvals[:, iter[]] = _expect(e_ops)
+    _mcsolve_expect!(view(expvals, :, iter[]), e_ops, u, integrator)
     iter[] += 1
 
     derivative_discontinuity!(integrator, false)
+    return nothing
+end
+
+# Write explicit functions for cleaner code and allow other packages to use them through multiple dispatch.
+function _mcsolve_expect!(expvals, e_ops, u, integrator)
+    norm2 = real(dot(u, u))
+    expect_f = op -> dot(u, op, u) / norm2
+
+    # @. expvals = expect_f(e_ops) allocates memory when e_ops is a tuple
+    if e_ops isa Tuple
+        expvals .= map(expect_f, e_ops)
+    else
+        @. expvals = expect_f(e_ops)
+    end
+    return expvals
+end
+
+function _mcsolve_jump_weights!(weights, c_ops, cache_mc, integrator)
+    ψ = integrator.u
+    p = integrator.p
+    t = integrator.t
+    @inbounds for i in eachindex(weights)
+        c_ops[i](cache_mc, ψ, nothing, p, t)
+        weights[i] = real(dot(cache_mc, cache_mc))
+    end
+    return weights
+end
+
+function _mcsolve_jump!(integrator, c_ops, i, cache_mc)
+    c_ops[i](cache_mc, integrator.u, nothing, integrator.p, integrator.t)
+    normalize!(cache_mc)
+    copyto!(integrator.u, cache_mc)
     return nothing
 end
 
@@ -126,20 +152,11 @@ function _lindblad_jump_affect!(
         col_which,
         col_times_which_idx,
     )
-    ψ = integrator.u
-    p = integrator.p
-    t = integrator.t
-
-    @inbounds for i in eachindex(weights_mc)
-        c_ops[i](cache_mc, ψ, nothing, p, t)
-        weights_mc[i] = real(dot(cache_mc, cache_mc))
-    end
+    _mcsolve_jump_weights!(weights_mc, c_ops, cache_mc, integrator)
     cumsum!(cumsum_weights_mc, weights_mc)
     r = rand(traj_rng) * last(cumsum_weights_mc)
     collapse_idx = something(findfirst(>(r), cumsum_weights_mc), lastindex(cumsum_weights_mc))
-    c_ops[collapse_idx](cache_mc, ψ, nothing, p, t)
-    normalize!(cache_mc)
-    copyto!(integrator.u, cache_mc)
+    _mcsolve_jump!(integrator, c_ops, collapse_idx, cache_mc)
 
     random_n[] = rand(traj_rng)
 
