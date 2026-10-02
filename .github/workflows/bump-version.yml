@@ -73,6 +73,10 @@ jobs:
             package_list = String[k for (k, v) in BUMPS if v != "skip"]
             isempty(package_list) && error("Every package is set to `skip`. Select a bump version type for at least one package.")
 
+            # get library labels from .github/library-label.json
+            library_labels = JSON.parsefile(".github/library-label.json")
+            labels = [library_labels[pkg] for pkg in package_list if haskey(library_labels, pkg)]
+
             old_QT_version = TOML.parsefile("Project.toml")["version"]
             old_versions = Dict{String,VersionNumber}()
             new_versions = Dict{String,VersionNumber}()
@@ -102,6 +106,7 @@ jobs:
               println(io, "changed_files=$(join(changed_files, " "))")
               println(io, "old_QT_version=$old_QT_version")
               println(io, "new_versions=$(JSON.json(new_versions))")
+              println(io, "labels=$(join(labels, ","))")
 
               # since body is multi-line, so it needs to use heredoc-style delimiter syntax
               println(io, "pr_body<<PR_BODY_EOF")
@@ -120,6 +125,7 @@ jobs:
           PR_TITLE: ${{ steps.updates.outputs.pr_title }}
           PR_BODY: ${{ steps.updates.outputs.pr_body }}
           CHANGED_FILES: ${{ steps.updates.outputs.changed_files }}
+          LABELS: ${{ steps.updates.outputs.labels }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -136,6 +142,16 @@ jobs:
             --body "$PR_BODY")
 
           PR_NUMBER="${PR_URL##*/}"
+
+          # add library labels to the PR
+          if [ -n "$LABELS" ]; then
+            IFS=',' read -ra LABEL_LIST <<< "$LABELS"
+            LABEL_ARGS=()
+            for label in "${LABEL_LIST[@]}"; do
+              LABEL_ARGS+=(--add-label "$label")
+            done
+            gh pr edit "$PR_URL" "${LABEL_ARGS[@]}"
+          fi
 
           echo "Created PR: $PR_URL"
           {
