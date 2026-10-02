@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
 - Fix type inference failures in `ssesolve` and `smesolve`. Their `SDEProblem` was built without specifying a solver specialization level, defaulting to `SciMLBase.AutoSpecialize`. After this update, we build their `SDEProblem` with `SciMLBase.FullSpecialize`, matching what `sesolve`/`mesolve`/`mcsolve` already do. ([#776])
+- [lib] Bump `QuantumToolboxCore` version to `v0.3.1`. ([#784])
+- [lib] Bump `QuantumToolboxVisual` version to `v0.2.1`. ([#784])
 
 ## [v0.49.0]
 Release date: 2026-09-19
@@ -596,3 +598,4 @@ Release date: 2024-11-13
 [#772]: https://github.com/qutip/QuantumToolbox.jl/issues/772
 [#775]: https://github.com/qutip/QuantumToolbox.jl/issues/775
 [#776]: https://github.com/qutip/QuantumToolbox.jl/issues/776
+[#784]: https://github.com/qutip/QuantumToolbox.jl/issues/784
