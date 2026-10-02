@@ -2,4 +2,4 @@ ignore:
   - "docs/"
   - "benchmarks/"
   - "test/"
-  - "lib/**/test/"
+  - "lib/*/test/**"
