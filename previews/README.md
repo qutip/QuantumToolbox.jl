@@ -1,0 +1,1 @@
+This directory includes all the preview documentation built from different pull requests (PRs), and will be automatically deleted by CI pipeline ([CleanPreviewDoc.yml](https://github.com/qutip/QuantumToolbox.jl/blob/main/.github/workflows/CleanPreviewDoc.yml)) after the PR is closed.

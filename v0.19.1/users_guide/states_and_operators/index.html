@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Manipulating States and Operators · QuantumToolbox.jl</title><meta name="title" content="Manipulating States and Operators · QuantumToolbox.jl"/><meta property="og:title" content="Manipulating States and Operators · QuantumToolbox.jl"/><meta property="twitter:title" content="Manipulating States and Operators · QuantumToolbox.jl"/><meta name="description" content="Documentation for QuantumToolbox.jl."/><meta property="og:description" content="Documentation for QuantumToolbox.jl."/><meta property="twitter:description" content="Documentation for QuantumToolbox.jl."/><meta property="og:url" content="https://qutip.github.io/QuantumToolbox.jl/users_guide/states_and_operators/"/><meta property="twitter:url" content="https://qutip.github.io/QuantumToolbox.jl/users_guide/states_and_operators/"/><link rel="canonical" href="https://qutip.github.io/QuantumToolbox.jl/users_guide/states_and_operators/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="QuantumToolbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">QuantumToolbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Getting Started</span><ul><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../qutip_differences/">Key differences from QuTiP</a></li><li><a class="tocitem" href="../../type_stability/">The Importance of Type-Stability</a></li></ul></li><li><span class="tocitem">Users Guide</span><ul><li><input class="collapse-toggle" id="menuitem-2-1" type="checkbox"/><label class="tocitem" for="menuitem-2-1"><span class="docs-label">Basic Operations on Quantum Objects</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../QuantumObject/QuantumObject/">Quantum Objects (Qobj)</a></li><li><a class="tocitem" href="../QuantumObject/QuantumObject_functions/">Functions operating on Qobj</a></li></ul></li><li class="is-active"><a class="tocitem" href>Manipulating States and Operators</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#doc:State-vectors"><span>State Vectors (kets or bras)</span></a></li><li><a class="tocitem" href="#doc:Density-matrices"><span>Density matrices</span></a></li><li><a class="tocitem" href="#doc:Two-level-systems"><span>Two-level systems (Qubits)</span></a></li><li><a class="tocitem" href="#doc:Expectation-values"><span>Expectation values</span></a></li><li><a class="tocitem" href="#doc:Superoperators-and-Vectorized-Operators"><span>Superoperators and Vectorized Operators</span></a></li></ul></li><li><a class="tocitem" href="../tensor/">Tensor Products and Partial Traces</a></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">Time Evolution and Dynamics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../time_evolution/intro/">Introduction</a></li><li><a class="tocitem" href="../time_evolution/solution/">Time Evolution Solutions</a></li><li><a class="tocitem" href="../time_evolution/sesolve/">Schrödinger Equation Solver</a></li><li><a class="tocitem" href="../time_evolution/mesolve/">Lindblad Master Equation Solver</a></li><li><a class="tocitem" href="../time_evolution/mcsolve/">Monte-Carlo Solver</a></li><li><a class="tocitem" href="../time_evolution/stochastic/">Stochastic Solver</a></li><li><a class="tocitem" href="../time_evolution/time_dependent/">Solving Problems with Time-dependent Hamiltonians</a></li></ul></li><li><a class="tocitem" href="../steadystate/">Solving for Steady-State Solutions</a></li><li><span class="tocitem">Symmetries</span></li><li><span class="tocitem">Two-time correlation functions</span></li><li><input class="collapse-toggle" id="menuitem-2-8" type="checkbox"/><label class="tocitem" for="menuitem-2-8"><span class="docs-label">Extensions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../extensions/cuda/">Extension for CUDA.jl</a></li></ul></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Time Evolution</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../tutorials/lowrank/">Low Rank Master Equation</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Miscellaneous Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../tutorials/logo/">Create QuantumToolbox.jl logo</a></li></ul></li></ul></li><li><a class="tocitem" href="../../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Users Guide</a></li><li class="is-active"><a href>Manipulating States and Operators</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Manipulating States and Operators</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/qutip/QuantumToolbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/qutip/QuantumToolbox.jl/blob/main/docs/src/users_guide/states_and_operators.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="doc:Manipulating-States-and-Operators"><a class="docs-heading-anchor" href="#doc:Manipulating-States-and-Operators">Manipulating States and Operators</a><a id="doc:Manipulating-States-and-Operators-1"></a><a class="docs-heading-anchor-permalink" href="#doc:Manipulating-States-and-Operators" title="Permalink"></a></h1><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>In the previous guide section <a href="../QuantumObject/QuantumObject/#doc:Qobj">Basic Operations on Quantum Objects</a>, we saw how to create states and operators, using the functions built into <code>QuantumToolbox</code>. In this portion of the guide, we will look at performing basic operations with states and operators. For more detailed demonstrations on how to use and manipulate these objects, see the examples given in the tutorial section.</p><h2 id="doc:State-vectors"><a class="docs-heading-anchor" href="#doc:State-vectors">State Vectors (kets or bras)</a><a id="doc:State-vectors-1"></a><a class="docs-heading-anchor-permalink" href="#doc:State-vectors" title="Permalink"></a></h2><p>Here we begin by creating a Fock <a href="../../api/#QuantumToolbox.basis"><code>basis</code></a> (or <a href="../../api/#QuantumToolbox.fock"><code>fock</code></a>) vacuum state vector <span>$|0\rangle$</span> with in a Hilbert space with <code>5</code> number states, from <code>0</code> to <code>4</code>:</p><pre><code class="language-julia hljs">vac = basis(5, 0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+ 1.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>and then create a lowering operator <span>$\hat{a}$</span> corresponding to <code>5</code> number states using the <a href="../../api/#QuantumToolbox.destroy"><code>destroy</code></a> function:</p><pre><code class="language-julia hljs">a = destroy(5)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=false
+5×5 SparseMatrixCSC{ComplexF64, Int64} with 4 stored entries:
+     ⋅      1.0+0.0im          ⋅              ⋅          ⋅    
+     ⋅          ⋅      1.41421+0.0im          ⋅          ⋅    
+     ⋅          ⋅              ⋅      1.73205+0.0im      ⋅    
+     ⋅          ⋅              ⋅              ⋅      2.0+0.0im
+     ⋅          ⋅              ⋅              ⋅          ⋅    </code></pre><p>Now lets apply the lowering operator <code>\hat{a}</code> to our vacuum state <code>vac</code>:</p><pre><code class="language-julia hljs">a * vac</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>We see that, as expected, the vacuum is transformed to the zero vector. A more interesting example comes from using the <code>adjoint</code> of the lowering operator <span>$\hat{a}$</span>, the raising operator <span>$\hat{a}^\dagger$</span>:</p><pre><code class="language-julia hljs">a&#39; * vac</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 1.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>The raising operator has in indeed raised the state <code>vac</code> from the vacuum to the <span>$|1\rangle$</span> state. Instead of using the <code>adjoint</code> method to raise the state, we could have also used the built-in <a href="../../api/#QuantumToolbox.create"><code>create</code></a> function to make a raising operator:</p><pre><code class="language-julia hljs">ad = create(5)
+ad * vac</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 1.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>which does the same thing. We can raise the vacuum state more than once by successively apply the raising operator:</p><pre><code class="language-julia hljs">ad * ad * vac</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 1.4142135623730951 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im</code></pre><p>or just taking the square of the raising operator <span>$\left(\hat{a}^\dagger\right)^2$</span>:</p><pre><code class="language-julia hljs">ad^2 * vac</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 1.4142135623730951 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im</code></pre><p>Applying the raising operator twice gives the expected <span>$\sqrt{n+1}$</span> dependence. We can use the product of <span>$\hat{a}^\dagger \hat{a}$</span> to also apply the number operator to the state vector <code>vac</code>:</p><pre><code class="language-julia hljs">ad * a * vac</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>or on the <span>$|1\rangle$</span> state:</p><pre><code class="language-julia hljs">ad * a * (ad * vac)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 1.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>or on the <span>$|2\rangle$</span> state:</p><pre><code class="language-julia hljs">ad * a * (ad^2 * vac)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 2.8284271247461907 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im</code></pre><p>Notice how in this last example, application of the number operator does not give the expected value <span>$n=2$</span>, but rather <span>$2\sqrt{2}$</span>. This is because this last state is not normalized to unity as <span>$\hat{a}^\dagger|n\rangle=\sqrt{n+1}|n+1\rangle$</span>. Therefore, we should <a href="../../api/#LinearAlgebra.normalize"><code>normalize</code></a> (or use <a href="../../api/#QuantumToolbox.unit"><code>unit</code></a>) our vector first:</p><pre><code class="language-julia hljs">ad * a * normalize(ad^2 * vac)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 2.0000000000000004 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im</code></pre><p>Since we are giving a demonstration of using states and operators, we have done a lot more work than we should have. For example, we do not need to operate on the vacuum state to generate a higher number Fock state. Instead we can use the <a href="../../api/#QuantumToolbox.basis"><code>basis</code></a> (or <a href="../../api/#QuantumToolbox.fock"><code>fock</code></a>) function to directly obtain the required state:</p><pre><code class="language-julia hljs">ket = basis(5, 2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 1.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>Notice how it is automatically normalized. We can also use the built in number operator <a href="../../api/#QuantumToolbox.num"><code>num</code></a>:</p><pre><code class="language-julia hljs">n = num(5)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
+5×5 SparseMatrixCSC{ComplexF64, Int64} with 5 stored entries:
+ 0.0+0.0im      ⋅          ⋅          ⋅          ⋅    
+     ⋅      1.0+0.0im      ⋅          ⋅          ⋅    
+     ⋅          ⋅      2.0+0.0im      ⋅          ⋅    
+     ⋅          ⋅          ⋅      3.0+0.0im      ⋅    
+     ⋅          ⋅          ⋅          ⋅      4.0+0.0im</code></pre><p>Therefore, instead of <code>ad * a * normalize(ad^2 * vac)</code>, we have:</p><pre><code class="language-julia hljs">n * ket</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 2.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>We can also create superpositions of states:</p><pre><code class="language-julia hljs">ket = normalize(basis(5, 0) + basis(5, 1))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+ 0.7071067811865475 + 0.0im
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im</code></pre><p>where we have used the <code>normalize</code> function again to normalize the state. Apply the number opeartor again:</p><pre><code class="language-julia hljs">n * ket</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+                0.0 + 0.0im
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im</code></pre><p>We can also create coherent states and squeezed states by applying the <a href="../../api/#QuantumToolbox.displace"><code>displace</code></a> and <a href="../../api/#QuantumToolbox.squeeze"><code>squeeze</code></a> functions to the vacuum state:</p><pre><code class="language-julia hljs">vac = basis(5, 0)
+
+d = displace(5, 1im)
+
+s = squeeze(5, 0.25 + 0.25im)
+
+d * vac</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+  0.6065568176126114 + 0.0im
+                 0.0 + 0.6062813254779008im
+ -0.4303873979781239 + 0.0im
+                 0.0 - 0.24104350624628343im
+ 0.14552146626026782 + 0.0im</code></pre><pre><code class="language-julia hljs">d * s * vac</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[5]   size=(5,)
+5-element Vector{ComplexF64}:
+   0.6589378628979528 + 0.08139380927428255im
+  0.10779461991734264 + 0.5157973476443225im
+   -0.375672173778824 - 0.013268528813115979im
+ -0.02688063342547209 - 0.2382877475293735im
+    0.263528135717665 + 0.11512177609766486im</code></pre><p>Of course, displacing the vacuum gives a coherent state, which can also be generated using the built in <a href="../../api/#QuantumToolbox.coherent"><code>coherent</code></a> function.</p><h2 id="doc:Density-matrices"><a class="docs-heading-anchor" href="#doc:Density-matrices">Density matrices</a><a id="doc:Density-matrices-1"></a><a class="docs-heading-anchor-permalink" href="#doc:Density-matrices" title="Permalink"></a></h2><p>One of the main purpose of <code>QuantumToolbox</code> is to explore the dynamics of open quantum systems, where the most general state of a system is no longer a state vector, but rather a density matrix. Since operations on density matrices operate identically to those of vectors, we will just briefly highlight creating and using these structures.</p><p>The simplest density matrix is created by forming the outer-product <span>$|\psi\rangle\langle\psi|$</span> of a ket vector:</p><pre><code class="language-julia hljs">ket = basis(5, 2)
+ket * ket&#39;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
+5×5 Matrix{ComplexF64}:
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  1.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im</code></pre><p>A similar task can also be accomplished via the <a href="../../api/#QuantumToolbox.fock_dm"><code>fock_dm</code></a> or <a href="../../api/#QuantumToolbox.ket2dm"><code>ket2dm</code></a> functions:</p><pre><code class="language-julia hljs">fock_dm(5, 2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
+5×5 Matrix{ComplexF64}:
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  1.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im</code></pre><pre><code class="language-julia hljs">ket2dm(ket)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
+5×5 Matrix{ComplexF64}:
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  1.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im</code></pre><p>If we want to create a density matrix with equal classical probability of being found in the <span>$|2\rangle$</span> or <span>$|4\rangle$</span> number states, we can do the following:</p><pre><code class="language-julia hljs">0.5 * fock_dm(5, 2) + 0.5 * fock_dm(5, 4) # with fock_dm
+0.5 * ket2dm(basis(5, 2)) + 0.5 * ket2dm(basis(5, 4)) # with ket2dm</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
+5×5 Matrix{ComplexF64}:
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.5+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im  0.5+0.0im</code></pre><p>There are also several other built-in functions for creating predefined density matrices, for example <a href="../../api/#QuantumToolbox.coherent_dm"><code>coherent_dm</code></a> and <a href="../../api/#QuantumToolbox.thermal_dm"><code>thermal_dm</code></a> which create coherent state and thermal state density matrices, respectively.</p><pre><code class="language-julia hljs">coherent_dm(5, 1.25)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
+5×5 Matrix{ComplexF64}:
+ 0.209807+0.0im  0.261411+0.0im  …   0.155726+0.0im   0.133908+0.0im
+ 0.261411+0.0im  0.325707+0.0im      0.194028+0.0im   0.166843+0.0im
+ 0.235097+0.0im  0.292921+0.0im      0.174497+0.0im   0.150049+0.0im
+ 0.155726+0.0im  0.194028+0.0im      0.115585+0.0im  0.0993908+0.0im
+ 0.133908+0.0im  0.166843+0.0im     0.0993908+0.0im  0.0854655+0.0im</code></pre><pre><code class="language-julia hljs">thermal_dm(5, 1.25)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[5]   size=(5, 5)   ishermitian=true
+5×5 Matrix{Float64}:
+ 0.46928  0.0       0.0       0.0        0.0
+ 0.0      0.260711  0.0       0.0        0.0
+ 0.0      0.0       0.144839  0.0        0.0
+ 0.0      0.0       0.0       0.0804663  0.0
+ 0.0      0.0       0.0       0.0        0.0447035</code></pre><p><code>QuantumToolbox</code> also provides a set of distance metrics for determining how close two density matrix distributions are to each other. Included are the <a href="../../api/#QuantumToolbox.fidelity"><code>fidelity</code></a>, and trace distance (<a href="../../api/#QuantumToolbox.tracedist"><code>tracedist</code></a>).</p><pre><code class="language-julia hljs">x = coherent_dm(5, 1.25)
+
+y = coherent_dm(5, 1.25im)
+
+z = thermal_dm(5, 0.125)
+
+fidelity(x, y)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.2125206772965313</code></pre><p>Note that the definition of <a href="../../api/#QuantumToolbox.fidelity"><code>fidelity</code></a> here is from <strong>Nielsen &amp; Chuang, &quot;Quantum Computation and Quantum Information&quot;</strong>. It is the square root of the fidelity defined in <strong>R. Jozsa, Journal of Modern Optics, 41:12, 2315 (1994)</strong>. We also know that for two pure states, the trace distance (<span>$T$</span>) and the fidelity (<span>$F$</span>) are related by <span>$T = \sqrt{1-F^2}$</span>:</p><pre><code class="language-julia hljs">tracedist(x, y) ≈ sqrt(1 - (fidelity(x, y))^2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><p>For a pure state and a mixed state, <span>$1 - F \leq T$</span> which can also be verified:</p><pre><code class="language-julia hljs">1 - fidelity(x, z) &lt; tracedist(x, z)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><h2 id="doc:Two-level-systems"><a class="docs-heading-anchor" href="#doc:Two-level-systems">Two-level systems (Qubits)</a><a id="doc:Two-level-systems-1"></a><a class="docs-heading-anchor-permalink" href="#doc:Two-level-systems" title="Permalink"></a></h2><p>Having spent a fair amount of time on basis states that represent harmonic oscillator states, we now move on to qubit, or two-level quantum systems (for example a spin-<span>$1/2$</span>). To create a state vector corresponding to a qubit system, we use the same basis, or fock, function with only two levels:</p><pre><code class="language-julia hljs">spin = basis(2, 0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 1.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>Now at this point one may ask how this state is different than that of a harmonic oscillator in the vacuum state truncated to two energy levels?</p><pre><code class="language-julia hljs">vac = basis(2, 0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 1.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>At this stage, there is no difference. This should not be surprising as we called the exact same function twice. The difference between the two comes from the action of the spin operators <a href="../../api/#QuantumToolbox.sigmax"><code>sigmax</code></a>, <a href="../../api/#QuantumToolbox.sigmay"><code>sigmay</code></a>, <a href="../../api/#QuantumToolbox.sigmaz"><code>sigmaz</code></a>, <a href="../../api/#QuantumToolbox.sigmap"><code>sigmap</code></a>, and <a href="../../api/#QuantumToolbox.sigmam"><code>sigmam</code></a> on these two-level states. For example, if <code>vac</code> corresponds to the vacuum state of a harmonic oscillator, then, as we have already seen, we can use the raising operator (<a href="../../api/#QuantumToolbox.create"><code>create</code></a>) to get the <span>$|1\rangle$</span> state:</p><pre><code class="language-julia hljs">create(2) * vac</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 1.0 + 0.0im</code></pre><p>For a spin system, the operator analogous to the raising operator is the <span>$\hat{\sigma}_+$</span> operator <a href="../../api/#QuantumToolbox.sigmap"><code>sigmap</code></a>. Applying on the spin state gives:</p><pre><code class="language-julia hljs">sigmap() * spin</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 0.0 + 0.0im</code></pre><p>Now we see the difference! The <a href="../../api/#QuantumToolbox.sigmap"><code>sigmap</code></a> operator acting on the spin state returns the zero vector. Why is this? To see what happened, let us use the <span>$\hat{\sigma}_z$</span> (<a href="../../api/#QuantumToolbox.sigmaz"><code>sigmaz</code></a>) operator:</p><pre><code class="language-julia hljs">sigmaz()</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=true
+2×2 SparseMatrixCSC{ComplexF64, Int64} with 2 stored entries:
+ 1.0+0.0im       ⋅    
+     ⋅      -1.0+0.0im</code></pre><pre><code class="language-julia hljs">sigmaz() * spin</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 1.0 + 0.0im
+ 0.0 + 0.0im</code></pre><pre><code class="language-julia hljs">spin2 = basis(2, 1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 1.0 + 0.0im</code></pre><pre><code class="language-julia hljs">sigmaz() * spin2</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Ket   dims=[2]   size=(2,)
+2-element Vector{ComplexF64}:
+  0.0 + 0.0im
+ -1.0 + 0.0im</code></pre><p>The answer is now apparent. Since the <code>QuantumToolbox</code> <a href="../../api/#QuantumToolbox.sigmaz"><code>sigmaz</code></a> function uses the standard <span>$Z$</span>-basis representation of the <span>$\hat{\sigma}_z$</span> spin operator, the <code>spin</code> state corresponds to the <span>$|\uparrow\rangle$</span> state of a two-level spin system while <code>spin2</code> gives the <span>$|\downarrow\rangle$</span> state. Therefore, in our previous example <code>sigmap() * spin</code>, we raised the qubit state out of the truncated two-level Hilbert space resulting in the zero state.</p><p>While at first glance this convention might seem somewhat odd, it is in fact quite handy. For one, the spin operators remain in the conventional form. Second, this corresponds nicely with the quantum information definitions of qubit states, where the excited <span>$|\uparrow\rangle$</span> state is label as <span>$|0\rangle$</span>, and the <span>$|\downarrow\rangle$</span> state by <span>$|1\rangle$</span>.</p><p>If one wants to create spin operators for higher spin systems, then the <a href="../../api/#QuantumToolbox.jmat"><code>jmat</code></a> function comes in handy.</p><h2 id="doc:Expectation-values"><a class="docs-heading-anchor" href="#doc:Expectation-values">Expectation values</a><a id="doc:Expectation-values-1"></a><a class="docs-heading-anchor-permalink" href="#doc:Expectation-values" title="Permalink"></a></h2><p>Some of the most important information about quantum systems comes from calculating the expectation value of operators, both Hermitian and non-Hermitian, as the state or density matrix of the system varies in time. Therefore, in this section we demonstrate the use of the <a href="../../api/#QuantumToolbox.expect"><code>expect</code></a> function. To begin:</p><pre><code class="language-julia hljs">vac = basis(5, 0)
+
+one = basis(5, 1)
+
+c = create(5)
+
+N = num(5)
+
+coh = coherent_dm(5, 1.0im)
+
+cat = normalize(basis(5, 4) + 1.0im * basis(5, 3))
+
+println(expect(N, vac) ≈ 0)
+println(expect(N, one) ≈ 1)
+println(expect(N, coh) ≈ 0.9970555745806597)
+println(expect(c, cat) ≈ 1im)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true
+true
+true
+true</code></pre><p>The <a href="../../api/#QuantumToolbox.expect"><code>expect</code></a> function also accepts lists or arrays of state vectors or density matrices for the second input:</p><pre><code class="language-julia hljs">states = [normalize(c^k * vac) for k in 0:4]
+
+expect(N, states)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">5-element Vector{ComplexF64}:
+ 0.0 + 0.0im
+ 1.0 + 0.0im
+ 2.0 + 0.0im
+ 3.0 + 0.0im
+ 4.0 + 0.0im</code></pre><pre><code class="language-julia hljs">cat_list = [normalize(basis(5, 4) + x * basis(5, 3)) for x in [0, 1.0im, -1.0, -1.0im]]
+
+expect(c, cat_list)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4-element Vector{ComplexF64}:
+                 0.0 + 0.0im
+                 0.0 + 0.9999999999999998im
+ -0.9999999999999998 + 0.0im
+                 0.0 - 0.9999999999999998im</code></pre><p>Notice how in this last example, all of the return values are complex numbers. This is because the expect function looks to see whether the operator is Hermitian or not. If the operator is Hermitian, then the output will always be real. In the case of non-Hermitian operators, the return values may be complex. Therefore, the expect function will return an array of complex values for non-Hermitian operators when the input is a list/array of states or density matrices.</p><p>Of course, the expect function works for spin states and operators:</p><pre><code class="language-julia hljs">up = basis(2, 0)
+
+dn = basis(2, 1)
+
+println(expect(sigmaz(), up) ≈ 1)
+println(expect(sigmaz(), dn) ≈ -1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true
+true</code></pre><p>as well as the composite objects discussed in the next section <a href="../tensor/#doc:Tensor-products-and-Partial-Traces">Tensor Products and Partial Traces</a>:</p><pre><code class="language-julia hljs">spin1 = basis(2, 0)
+
+spin2 = basis(2, 1)
+
+two_spins = tensor(spin1, spin2)
+
+sz1 = tensor(sigmaz(), qeye(2))
+
+sz2 = tensor(qeye(2), sigmaz())
+
+println(expect(sz1, two_spins) ≈ 1)
+println(expect(sz2, two_spins) ≈ -1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true
+true</code></pre><h2 id="doc:Superoperators-and-Vectorized-Operators"><a class="docs-heading-anchor" href="#doc:Superoperators-and-Vectorized-Operators">Superoperators and Vectorized Operators</a><a id="doc:Superoperators-and-Vectorized-Operators-1"></a><a class="docs-heading-anchor-permalink" href="#doc:Superoperators-and-Vectorized-Operators" title="Permalink"></a></h2><p>In addition to state vectors and density operators, <code>QuantumToolbox</code> allows for representing maps that act linearly on density operators using the Liouville supermatrix formalisms.</p><p>This support is based on the correspondence between linear operators acting on a Hilbert space, and vectors in two copies of that Hilbert space (which is also called the Fock-Liouville space), </p><p class="math-container">\[\textrm{vec} : \mathcal{L}(\mathcal{H}) \rightarrow \mathcal{H}\otimes\mathcal{H}.\]</p><p>Therefore, a given density matrix <span>$\hat{\rho}$</span> can then be vectorized, denoted as </p><p class="math-container">\[|\hat{\rho}\rangle\rangle = \textrm{vec}(\hat{\rho}).\]</p><p><code>QuantumToolbox</code> uses the column-stacking convention for the isomorphism between <span>$\mathcal{L}(\mathcal{H})$</span> and <span>$\mathcal{H}\otimes\mathcal{H}$</span>. This isomorphism is implemented by the functions <a href="../../api/#QuantumToolbox.mat2vec"><code>mat2vec</code></a> and <a href="../../api/#QuantumToolbox.vec2mat"><code>vec2mat</code></a>:</p><pre><code class="language-julia hljs">rho = Qobj([1 2; 3 4])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
+2×2 Matrix{Int64}:
+ 1  2
+ 3  4</code></pre><pre><code class="language-julia hljs">vec_rho = mat2vec(rho)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=OperatorKet   dims=[2]   size=(4,)
+4-element Vector{Int64}:
+ 1
+ 3
+ 2
+ 4</code></pre><pre><code class="language-julia hljs">rho2 = vec2mat(vec_rho)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=Operator   dims=[2]   size=(2, 2)   ishermitian=false
+2×2 Matrix{Int64}:
+ 1  2
+ 3  4</code></pre><p>The <code>QuantumObject.type</code> attribute indicates whether a quantum object is a vector corresponding to an <a href="../../api/#QuantumToolbox.OperatorKet"><code>OperatorKet</code></a>, or its Hermitian conjugate <a href="../../api/#QuantumToolbox.OperatorBra"><code>OperatorBra</code></a>. One can also use <a href="../../api/#QuantumToolbox.isoper"><code>isoper</code></a>, <a href="../../api/#QuantumToolbox.isoperket"><code>isoperket</code></a>, and <a href="../../api/#QuantumToolbox.isoperbra"><code>isoperbra</code></a> to check the type:</p><pre><code class="language-julia hljs">println(isoper(vec_rho))
+println(isoperket(vec_rho))
+println(isoperbra(vec_rho))
+println(isoper(vec_rho&#39;))
+println(isoperket(vec_rho&#39;))
+println(isoperbra(vec_rho&#39;))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">false
+true
+false
+false
+false
+true</code></pre><p>Because <code>Julia</code> is a column-oriented languages (like <code>Fortran</code> and <code>MATLAB</code>), in <code>QuantumToolbox</code>, we define the <a href="../../api/#QuantumToolbox.spre"><code>spre</code></a> (left), <a href="../../api/#QuantumToolbox.spost"><code>spost</code></a> (right), and <a href="../../api/#QuantumToolbox.sprepost"><code>sprepost</code></a> (left-and-right) multiplication superoperators as follows:</p><p class="math-container">\[\begin{align}
+\hat{A}\hat{\rho}~~~ &amp;\rightarrow \textrm{spre}(\hat{A}) * \textrm{vec}(\hat{\rho}) = \hat{\mathbb{1}}\otimes \hat{A} ~ |\hat{\rho}\rangle\rangle,\notag\\
+\hat{\rho} \hat{B} &amp;\rightarrow \textrm{spost}(\hat{B}) * \textrm{vec}(\hat{\rho}) = \hat{B}^T\otimes \hat{\mathbb{1}} ~ |\hat{\rho}\rangle\rangle,\notag\\
+\hat{A} \hat{\rho} \hat{B} &amp;\rightarrow \textrm{sprepost}(\hat{A},\hat{B}) * \textrm{vec}(\hat{\rho}) = \hat{B}^T\otimes \hat{A} ~ |\hat{\rho}\rangle\rangle,\notag
+\end{align}\]</p><p>where <span>$\hat{\mathbb{1}}$</span> represents the identity operator with Hilbert space dimension equal to <span>$\hat{\rho}$</span>.</p><pre><code class="language-julia hljs">A = Qobj([1 2; 3 4])
+S_A = spre(A)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=SuperOperator   dims=[2]   size=(4, 4)
+4×4 SparseMatrixCSC{Int64, Int64} with 8 stored entries:
+ 1  2  ⋅  ⋅
+ 3  4  ⋅  ⋅
+ ⋅  ⋅  1  2
+ ⋅  ⋅  3  4</code></pre><pre><code class="language-julia hljs">B = Qobj([5 6; 7 8])
+S_B = spost(B)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=SuperOperator   dims=[2]   size=(4, 4)
+4×4 SparseMatrixCSC{Int64, Int64} with 8 stored entries:
+ 5  ⋅  7  ⋅
+ ⋅  5  ⋅  7
+ 6  ⋅  8  ⋅
+ ⋅  6  ⋅  8</code></pre><pre><code class="language-julia hljs">S_AB = sprepost(A, B)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=SuperOperator   dims=[2]   size=(4, 4)
+4×4 SparseMatrixCSC{Int64, Int64} with 16 stored entries:
+  5  10   7  14
+ 15  20  21  28
+  6  12   8  16
+ 18  24  24  32</code></pre><pre><code class="language-julia hljs">S_AB ≈ S_A * S_B ≈ S_B * S_A</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><p>One can also use <a href="../../api/#QuantumToolbox.issuper"><code>issuper</code></a> to check the type:</p><pre><code class="language-julia hljs">println(isoper(S_AB))
+println(issuper(S_AB))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">false
+true</code></pre><p>With the above definitions, the following equalities hold in <code>Julia</code>:</p><p class="math-container">\[\textrm{vec}(\hat{A} \hat{\rho} \hat{B}) = \textrm{spre}(\hat{A}) * \textrm{spre}(\hat{B}) * \textrm{vec}(\hat{\rho}) = \textrm{sprepost}(\hat{A},\hat{B}) * \textrm{vec}(\hat{\rho}) ~~\forall~~\hat{A}, \hat{B}, \hat{\rho}\]</p><pre><code class="language-julia hljs">N  = 10
+A = Qobj(rand(ComplexF64, N, N))
+B = Qobj(rand(ComplexF64, N, N))
+ρ = rand_dm(N) # random density matrix
+mat2vec(A * ρ * B) ≈ spre(A) * spost(B) * mat2vec(ρ) ≈ sprepost(A, B) * mat2vec(ρ)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><p>In addition, dynamical generators on this extended space, often called Liouvillian superoperators, can be created using the <a href="../../api/#QuantumToolbox.liouvillian"><code>liouvillian</code></a> function. Each of these takes a Hamiltonian along with a list of collapse operators, and returns a <a href="../../api/#QuantumToolbox.SuperOperator"><code>type=SuperOperator</code></a> object that can be exponentiated to find the superoperator for that evolution.</p><pre><code class="language-julia hljs">H = 10 * sigmaz()
+
+c = destroy(2)
+
+L = liouvillian(H, [c])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=SuperOperator   dims=[2]   size=(4, 4)
+4×4 SparseMatrixCSC{ComplexF64, Int64} with 4 stored entries:
+     ⋅           ⋅            ⋅        1.0+0.0im
+     ⋅      -0.5+20.0im       ⋅            ⋅    
+     ⋅           ⋅       -0.5-20.0im       ⋅    
+     ⋅           ⋅            ⋅       -1.0+0.0im</code></pre><pre><code class="language-julia hljs">t = 0.8
+exp(L * t)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Quantum Object:   type=SuperOperator   dims=[2]   size=(4, 4)
+4×4 SparseMatrixCSC{ComplexF64, Int64} with 5 stored entries:
+ 1.0+0.0im            ⋅                     ⋅           0.550671+0.0im
+     ⋅      -0.641938-0.192987im            ⋅                    ⋅    
+     ⋅                ⋅           -0.641938+0.192987im           ⋅    
+     ⋅                ⋅                     ⋅           0.449329+0.0im</code></pre><p>See the section <a href="../time_evolution/mesolve/#doc-TE:Lindblad-Master-Equation-Solver">Lindblad Master Equation Solver</a> for more details.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../QuantumObject/QuantumObject_functions/">« Functions operating on Qobj</a><a class="docs-footer-nextpage" href="../tensor/">Tensor Products and Partial Traces »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Tuesday 29 October 2024 01:19">Tuesday 29 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
