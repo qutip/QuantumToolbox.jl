@@ -22,6 +22,6 @@ steps:
             - "test/runtests.jl"
             - "test/utils/**"
             - "test/ext-test/cuda/**"
-            - 'Project.toml'
-            - 'codecov.yml'
+            - "Project.toml"
+            - "codecov.yml"
           target: ".buildkite/CUDA_Ext.yml"
