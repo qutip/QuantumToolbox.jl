@@ -301,10 +301,10 @@ function _average_traj_states(states::Matrix{<:QuantumObject{Ket}})
     # Buffer for the kets of up to 64 trajectories, shared by all the saved times
     ψ1 = first(states)
     Ψ = similar(ψ1.data, length(ψ1.data), min(64, size(states, 1)))
-    return map(states_t -> _average_traj_ket2dm(states_t, Ψ), eachcol(states))
+    return _average_traj_ket2dm.(eachcol(states), Ref(Ψ))
 end
 _average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType <: Union{Operator, OperatorKet}} =
-    size(states, 2) == 0 ? Vector{eltype(states)}() : map(_average_traj_state, eachcol(states))
+    size(states, 2) == 0 ? Vector{eltype(states)}() : _average_traj_state.(eachcol(states))
 
 function _average_traj_ket2dm(states::AbstractVector{<:QuantumObject{Ket}}, Ψ::AbstractMatrix)
     ψ1 = first(states)

@@ -49,10 +49,12 @@ function _gen_mcsolve_solution(
     )
     traj_1 = first(trajs)
 
-    expvals_all = traj_1.expect isa Nothing ? nothing : stack(map(traj -> traj.expect, trajs), dims = 2) # Stack on dimension 2 to align with QuTiP
+    # We use flat broadcasting instead of `map`: Julia fails to infer nested `map`s (or nested broadcasting),
+    # and this function is itself called inside a `map` by `mcsolve_map`.
+    expvals_all = traj_1.expect isa Nothing ? nothing : stack(getprop.(trajs, Val(:expect)), dims = 2) # Stack on dimension 2 to align with QuTiP
 
-    # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
-    states_all = stack(map(traj -> _normalize_state!.(traj.states, Ref(dimensions), normalize_states), trajs), dims = 1)
+    # Matrix{QuantumObject} of size (ntraj, length(times_states))
+    states_all = _normalize_state!.(stack(getprop.(trajs, Val(:states)), dims = 1), Ref(dimensions), normalize_states)
 
     return TimeEvolutionMCSol(
         length(trajs),
@@ -60,8 +62,8 @@ function _gen_mcsolve_solution(
         traj_1.times_states,
         _store_multitraj_states(states_all, makeVal(keep_runs_results)),
         _store_multitraj_expect(expvals_all, makeVal(keep_runs_results)),
-        map(traj -> traj.col_times, trajs),
-        map(traj -> traj.col_which, trajs),
+        getprop.(trajs, Val(:col_times)),
+        getprop.(trajs, Val(:col_which)),
         converged,
         alg,
         abstol,
@@ -627,28 +629,20 @@ function mcsolve_map(
     # handle solution and make it become an Array of TimeEvolutionMCSol
     trajs = reshape(sol.u, length(iter), ntraj) # the i-th row contains the trajectories of iter[i]
     kwargs = NamedTuple(prob.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
-    gen_sol =
-        i -> _gen_mcsolve_solution(
-        view(trajs, i, :),
-        prob.times,
-        prob.dimensions,
-        alg,
-        kwargs.abstol,
-        kwargs.reltol,
-        sol.converged,
-        normalize_states,
-        keep_runs_results,
-    )
-
-    # We don't use `map` here: `_gen_mcsolve_solution` itself uses `map`, and Julia's inference loses the element type of a `map`
-    # whose function calls `map` with a closure (recursion limiting heuristic), making the return type unstable. An explicit loop avoids it.
-    sol_1 = gen_sol(1)
-    sol_arr = similar(iter, typeof(sol_1))
-    sol_arr[1] = sol_1
-    for i in 2:length(iter)
-        sol_arr[i] = gen_sol(i)
+    sol_vec = map(eachrow(trajs)) do trajs_i
+        _gen_mcsolve_solution(
+            trajs_i,
+            prob.times,
+            prob.dimensions,
+            alg,
+            kwargs.abstol,
+            kwargs.reltol,
+            sol.converged,
+            normalize_states,
+            keep_runs_results,
+        )
     end
-    return sol_arr
+    return reshape(sol_vec, size(iter))
 end
 
 function _mcsolve_map_prob_func(prob, ctx, tlist, iter)
