@@ -32,7 +32,7 @@ and [Y.-T. Huang](https://github.com/ytdHuang).
 [cite-img]: https://img.shields.io/badge/cite-Quantum_9%2C_1866_(2025)-blue
 [cite-url]: https://doi.org/10.22331/q-2025-09-29-1866
 
-[runtests-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg?branch=main
+[runtests-img]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml/badge.svg
 [runtests-url]: https://github.com/qutip/QuantumToolbox.jl/actions/workflows/CI.yml?query=branch%3Amain
 
 [buildkite-img]: https://badge.buildkite.com/e5ecf03a0e6830993924d63263477c7938d3320d2d6151900f.svg?branch=main
