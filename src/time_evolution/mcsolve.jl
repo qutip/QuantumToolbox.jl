@@ -1,4 +1,4 @@
-export mcsolveProblem, mcsolveEnsembleProblem, mcsolve
+export mcsolveProblem, mcsolveEnsembleProblem, mcsolve, mcsolve_map
 export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
 
 function _mcsolve_prob_func(prob, ctx, tlist; kwargs...)
@@ -16,9 +16,59 @@ function _mcsolve_output_func(sol, ctx)
     return (sol, false)
 end
 
+# Keep only the data needed to build a `TimeEvolutionMCSol`, dropping the operators and the integrator cache stored in the `ODESolution`.
+# This reduces the memory and the data sent back by the workers of distributed ensembles.
+function _mcsolve_trajectory_output(sol::AbstractODESolution)
+    jump_affect! = _mc_get_jump_callback(sol).affect!
+    n_jumps = jump_affect!.col_times_which_idx[] - 1
+    return (
+        times_states = sol.t,
+        states = sol.u,
+        expect = _get_expvals(sol, SaveFuncMCSolve),
+        col_times = resize!(jump_affect!.col_times, n_jumps),
+        col_which = resize!(jump_affect!.col_which, n_jumps),
+    )
+end
+
 function _normalize_state!(u, dims, normalize_states)
     getVal(normalize_states) && normalize!(u)
     return QuantumObject(u, Ket(), dims)
+end
+
+# Build the `TimeEvolutionMCSol` from the outputs of `_mcsolve_trajectory_output` of all the trajectories
+function _gen_mcsolve_solution(
+        trajs::AbstractVector,
+        times,
+        dimensions,
+        alg,
+        abstol,
+        reltol,
+        converged::Bool,
+        normalize_states,
+        keep_runs_results,
+    )
+    traj_1 = first(trajs)
+
+    # We use flat broadcasting instead of `map`: Julia fails to infer nested `map`s (or nested broadcasting),
+    # and this function is itself called inside a `map` by `mcsolve_map`.
+    expvals_all = traj_1.expect isa Nothing ? nothing : stack(getprop.(trajs, Val(:expect)), dims = 2) # Stack on dimension 2 to align with QuTiP
+
+    # Matrix{QuantumObject} of size (ntraj, length(times_states))
+    states_all = _normalize_state!.(stack(getprop.(trajs, Val(:states)), dims = 1), Ref(dimensions), normalize_states)
+
+    return TimeEvolutionMCSol(
+        length(trajs),
+        times,
+        traj_1.times_states,
+        _store_multitraj_states(states_all, makeVal(keep_runs_results)),
+        _store_multitraj_expect(expvals_all, makeVal(keep_runs_results)),
+        getprop.(trajs, Val(:col_times)),
+        getprop.(trajs, Val(:col_which)),
+        converged,
+        alg,
+        abstol,
+        reltol,
+    )
 end
 
 function _mcsolve_make_Heff_QobjEvo(H::QuantumObject, c_ops)
@@ -401,33 +451,206 @@ function mcsolve(
     ntraj = ens_prob_mc.kwargs.ntraj
     sol = _ensemble_dispatch_solve(ens_prob_mc, alg, ens_prob_mc.kwargs.ensemblealg, ntraj; rng = ens_prob_mc.kwargs.rng)
 
-    dimensions = ens_prob_mc.dimensions
     _sol_1 = sol.u[1]
-    _expvals_sol_1 = _get_expvals(_sol_1, SaveFuncMCSolve)
-
-    _expvals_all =
-        _expvals_sol_1 isa Nothing ? nothing : map(i -> _get_expvals(sol.u[i], SaveFuncMCSolve), eachindex(sol.u))
-    expvals_all = _expvals_all isa Nothing ? nothing : stack(_expvals_all, dims = 2) # Stack on dimension 2 to align with QuTiP
-
-    # stack to transform Vector{Vector{QuantumObject}} -> Matrix{QuantumObject}
-    states_all = stack(map(i -> _normalize_state!.(sol.u[i].u, Ref(dimensions), normalize_states), eachindex(sol.u)), dims = 1)
-
-    col_times = map(i -> _mc_get_jump_callback(sol.u[i]).affect!.col_times, eachindex(sol.u))
-    col_which = map(i -> _mc_get_jump_callback(sol.u[i]).affect!.col_which, eachindex(sol.u))
-
     kwargs = NamedTuple(_sol_1.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
 
-    return TimeEvolutionMCSol(
-        ntraj,
+    return _gen_mcsolve_solution(
+        map(_mcsolve_trajectory_output, sol.u),
         ens_prob_mc.times,
-        _sol_1.t,
-        _store_multitraj_states(states_all, makeVal(keep_runs_results)),
-        _store_multitraj_expect(expvals_all, makeVal(keep_runs_results)),
-        col_times,
-        col_which,
-        sol.converged,
+        ens_prob_mc.dimensions,
         _sol_1.alg,
         kwargs.abstol,
         kwargs.reltol,
+        sol.converged,
+        normalize_states,
+        keep_runs_results,
     )
 end
+
+@doc raw"""
+    mcsolve_map(
+        H::Union{AbstractQuantumObject{Operator},Tuple},
+        ψ0::Union{QuantumObject{Ket},AbstractVector{<:QuantumObject{Ket}}},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing,AbstractVector,Tuple} = nothing;
+        alg::AbstractODEAlgorithm = DP5(),
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
+        params::Union{NullParameters,Tuple} = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 500,
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        progress_bar::Union{Val,Bool} = Val(true),
+        keep_runs_results::Union{Val,Bool} = Val(false),
+        normalize_states::Union{Val,Bool} = Val(true),
+        kwargs...,
+    )
+
+Solve the quantum trajectories for multiple initial states and parameter sets using ensemble simulation.
+
+This function computes the Monte Carlo wave function time evolution (see [`mcsolve`](@ref)) with `ntraj` trajectories for all combinations (Cartesian product) of initial states and parameter sets. Each trajectory evolves under the non-Hermitian effective Hamiltonian
+
+```math
+\hat{H}_{\textrm{eff}} = \hat{H} - \frac{i}{2} \sum_n \hat{C}_n^\dagger \hat{C}_n,
+```
+
+interrupted by quantum jumps.
+
+All the trajectories, of all the combinations, are solved within a single `EnsembleProblem`, so that the parallelization (and the load balancing) is performed over the whole set of trajectories at once.
+
+# Arguments
+
+- `H`: Hamiltonian of the system ``\hat{H}``. It can be either a [`QuantumObject`](@ref), a [`QuantumObjectEvolution`](@ref), or a `Tuple` of operator-function pairs.
+- `ψ0`: Initial state(s) of the system. Can be a single [`Ket`](@ref) or a `Vector` of [`Ket`](@ref).
+- `tlist`: List of time points at which to save either the state or the expectation values of the system.
+- `c_ops`: List of collapse operators ``\{\hat{C}_n\}_n``. It can be either a `Vector` or a `Tuple`. Each element can be a [`QuantumObject`](@ref) or a [`QuantumObjectEvolution`](@ref) (for time-dependent or parameter-dependent collapse operators).
+- `alg`: The algorithm for the ODE solver. The default is `DP5()`.
+- `ensemblealg`: Ensemble algorithm to use for parallel computation. Default is `EnsembleThreads()`.
+- `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
+- `params`: A `Tuple` of parameter sets. Each element should be an `AbstractVector` representing the sweep range for that parameter. The function will solve for all combinations of initial states and parameter sets.
+- `rng`: Random number generator for reproducibility.
+- `ntraj`: Number of trajectories for each combination of initial state and parameters.
+- `jump_callback`: The Jump Callback type: [`ContinuousLindbladJumpCallback`](@ref) or [`DiscreteLindbladJumpCallback`](@ref). The default is `ContinuousLindbladJumpCallback()`, which is more precise.
+- `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
+- `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
+- `normalize_states`: Whether to normalize the states. Default to `Val(true)`.
+- `kwargs`: The keyword arguments for the ODEProblem.
+
+# Notes
+
+- The function returns an array of solutions with dimensions matching the Cartesian product of initial states and parameter sets.
+- If `ψ0` is a vector of `m` states and `params = (p1, p2, ...)` where `p1` has length `n1`, `p2` has length `n2`, etc., the output will be of size `(m, n1, n2, ...)`.
+- The total number of solved trajectories is `ntraj * m * n1 * n2 * ...`.
+- See [`mcsolve`](@ref) for more details.
+
+# Returns
+
+- An array of [`TimeEvolutionMCSol`](@ref) objects with dimensions `(length(ψ0), length(params[1]), length(params[2]), ...)`.
+"""
+function mcsolve_map(
+        H::Union{AbstractQuantumObject{Operator}, Tuple},
+        ψ0::AbstractVector{<:QuantumObject{Ket}},
+        tlist::AbstractVector,
+        c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+        alg::AbstractODEAlgorithm = DP5(),
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
+        e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
+        params::Union{NullParameters, Tuple} = NullParameters(),
+        rng::AbstractRNG = default_rng(),
+        ntraj::Int = 500,
+        jump_callback::TJC = ContinuousLindbladJumpCallback(),
+        progress_bar::Union{Val, Bool} = Val(true),
+        keep_runs_results::Union{Val, Bool} = Val(false),
+        normalize_states::Union{Val, Bool} = Val(true),
+        kwargs...,
+    ) where {TJC <: LindbladJumpCallbackType}
+    # mapping initial states and parameters
+    ψ0_iter = map(state -> to_dense(_complex_float_type(eltype(state)), copy(state.data)), ψ0)
+    if params isa NullParameters
+        iter = collect(Iterators.product(ψ0_iter, [params])) |> vec # convert nx1 Matrix into Vector
+    else
+        iter = collect(Iterators.product(ψ0_iter, params...))
+    end
+
+    prob = mcsolveProblem(
+        H,
+        first(ψ0),
+        tlist,
+        c_ops;
+        e_ops = e_ops,
+        params = Base.tail(first(iter)),
+        rng = rng,
+        jump_callback = jump_callback,
+        kwargs...,
+    )
+
+    return mcsolve_map(
+        prob,
+        iter,
+        alg,
+        ensemblealg;
+        ntraj = ntraj,
+        rng = rng,
+        progress_bar = progress_bar,
+        keep_runs_results = keep_runs_results,
+        normalize_states = normalize_states,
+    )
+end
+mcsolve_map(
+    H::Union{AbstractQuantumObject{Operator}, Tuple},
+    ψ0::QuantumObject{Ket},
+    tlist::AbstractVector,
+    c_ops::Union{Nothing, AbstractVector, Tuple} = nothing;
+    kwargs...,
+) = mcsolve_map(H, [ψ0], tlist, c_ops; kwargs...)
+
+# this method is for advanced usage (see `sesolve_map`)
+# Each element `(u0, p...)` of `iter` is solved with `ntraj` trajectories.
+# A custom `output_func` must return the output of `_mcsolve_trajectory_output`.
+function mcsolve_map(
+        prob::TimeEvolutionProblem{Ket, <:Dimensions, <:ODEProblem},
+        iter::AbstractArray,
+        alg::AbstractODEAlgorithm = DP5(),
+        ensemblealg::EnsembleAlgorithm = EnsembleThreads();
+        ntraj::Int = 500,
+        rng::AbstractRNG = default_rng(),
+        prob_func::Union{Function, Nothing} = nothing,
+        output_func::Union{Tuple, Nothing} = nothing,
+        safetycopy::Union{Bool, Nothing} = nothing,
+        progress_bar::Union{Val, Bool} = Val(true),
+        keep_runs_results::Union{Val, Bool} = Val(false),
+        normalize_states::Union{Val, Bool} = Val(true),
+    )
+    # The trajectory `sim_id` solves `iter[mod1(sim_id, length(iter))]`, so the order is (A, B, C, A, B, C, ...) instead of (A, A, ..., B, B, ..., C, C, ...).
+    # `EnsembleThreads` gives each thread a contiguous block of trajectories, so the expensive elements of `iter` are spread over all the threads.
+    ntraj_tot = ntraj * length(iter)
+    tlist = prob.times
+    _prob_func = isnothing(prob_func) ? (prob, ctx) -> _mcsolve_map_prob_func(prob, ctx, tlist, iter) : prob_func
+    _safetycopy = isnothing(safetycopy) ? !isnothing(prob_func) : safetycopy
+    _output_func =
+        isnothing(output_func) ?
+        _ensemble_dispatch_output_func(
+            ensemblealg,
+            progress_bar,
+            ntraj_tot,
+            _mcsolve_map_output_func;
+            progr_desc = "[mcsolve_map] ",
+        ) : output_func
+    ens_prob = TimeEvolutionProblem(
+        EnsembleProblem(prob.prob, prob_func = _prob_func, output_func = _output_func[1], safetycopy = _safetycopy),
+        prob.times,
+        prob.states_type,
+        prob.dimensions,
+        (progr = _output_func[2], channel = _output_func[3]),
+    )
+
+    sol = _ensemble_dispatch_solve(ens_prob, alg, ensemblealg, ntraj_tot; rng = rng)
+
+    # handle solution and make it become an Array of TimeEvolutionMCSol
+    trajs = reshape(sol.u, length(iter), ntraj) # the i-th row contains the trajectories of iter[i]
+    kwargs = NamedTuple(prob.prob.kwargs) # Convert to NamedTuple for Zygote.jl compatibility
+    sol_vec = map(eachrow(trajs)) do trajs_i
+        _gen_mcsolve_solution(
+            trajs_i,
+            prob.times,
+            prob.dimensions,
+            alg,
+            kwargs.abstol,
+            kwargs.reltol,
+            sol.converged,
+            normalize_states,
+            keep_runs_results,
+        )
+    end
+    return reshape(sol_vec, size(iter))
+end
+
+function _mcsolve_map_prob_func(prob, ctx, tlist, iter)
+    x = iter[mod1(ctx.sim_id, length(iter))]
+    f = _copy_for_trajectory(prob.f.f)
+    cb = _mcsolve_initialize_callbacks(prob, tlist, ctx.rng)
+
+    return remake(prob, f = f, u0 = first(x), p = Base.tail(x), callback = cb)
+end
+
+_mcsolve_map_output_func(sol, ctx) = (_mcsolve_trajectory_output(sol), false)

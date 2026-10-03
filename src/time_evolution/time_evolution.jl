@@ -301,10 +301,10 @@ function _average_traj_states(states::Matrix{<:QuantumObject{Ket}})
     # Buffer for the kets of up to 64 trajectories, shared by all the saved times
     ψ1 = first(states)
     Ψ = similar(ψ1.data, length(ψ1.data), min(64, size(states, 1)))
-    return map(states_t -> _average_traj_ket2dm(states_t, Ψ), eachcol(states))
+    return _average_traj_ket2dm.(eachcol(states), Ref(Ψ))
 end
 _average_traj_states(states::Matrix{<:QuantumObject{ObjType}}) where {ObjType <: Union{Operator, OperatorKet}} =
-    size(states, 2) == 0 ? Vector{eltype(states)}() : map(_average_traj_state, eachcol(states))
+    size(states, 2) == 0 ? Vector{eltype(states)}() : _average_traj_state.(eachcol(states))
 
 function _average_traj_ket2dm(states::AbstractVector{<:QuantumObject{Ket}}, Ψ::AbstractMatrix)
     ψ1 = first(states)
@@ -456,49 +456,24 @@ Helpers for handling output of ensemble problems.
 This is very useful especially for dispatching which method to use to update the progress bar.
 =#
 
-# Output function with progress bar update
-function _ensemble_output_func_progress(sol, ctx, progr, output_func)
-    next!(progr)
-    return output_func(sol, ctx)
-end
+# With threads, the trajectories update the progress bar directly.
+# With other processes, they notify the main process through a `RemoteChannel`, and the main process updates the progress bar (see `_ensemble_dispatch_solve`).
+_progress_channel(::Union{EnsembleSerial, EnsembleThreads}) = nothing
+_progress_channel(::Union{EnsembleSplitThreads, EnsembleDistributed}) =
+    RemoteChannel(() -> Channel{Bool}(1))::RemoteChannel{Channel{Bool}}
 
-# Output function with distributed channel update for progress bar
-function _ensemble_output_func_distributed(sol, ctx, channel, output_func)
-    put!(channel, true)
-    return output_func(sol, ctx)
-end
+_progress_next!(progr::Progress) = next!(progr)
+_progress_next!(channel::RemoteChannel) = put!(channel, true)
 
-function _ensemble_dispatch_output_func(
-        ::ET,
-        progress_bar,
-        ntraj,
-        output_func;
-        progr_desc = "Progress: ",
-    ) where {ET <: Union{EnsembleSerial, EnsembleThreads}}
-    if getVal(progress_bar)
-        progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
-        f = (sol, ctx) -> _ensemble_output_func_progress(sol, ctx, progr, output_func)
-        return (f, progr, nothing)
-    else
-        return (output_func, nothing, nothing)
-    end
-end
-function _ensemble_dispatch_output_func(
-        ::ET,
-        progress_bar,
-        ntraj,
-        output_func;
-        progr_desc = "Progress... ",
-    ) where {ET <: Union{EnsembleSplitThreads, EnsembleDistributed}}
-    if getVal(progress_bar)
-        progr = Progress(ntraj; enabled = getVal(progress_bar), desc = progr_desc, settings.ProgressMeterKWARGS...)
-        progr_channel::RemoteChannel{Channel{Bool}} = RemoteChannel(() -> Channel{Bool}(1))
+# Return the output function updating the progress bar, the `Progress` object, and the `RemoteChannel` (or `nothing`)
+function _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, output_func; progr_desc = "Progress: ")
+    getVal(progress_bar) || return (output_func, nothing, nothing)
 
-        f = (sol, ctx) -> _ensemble_output_func_distributed(sol, ctx, progr_channel, output_func)
-        return (f, progr, progr_channel)
-    else
-        return (output_func, nothing, nothing)
-    end
+    progr = Progress(ntraj; desc = progr_desc, settings.ProgressMeterKWARGS...)
+    channel = _progress_channel(ensemblealg)
+    progr_target = isnothing(channel) ? progr : channel
+    f = (sol, ctx) -> (_progress_next!(progr_target); output_func(sol, ctx))
+    return (f, progr, channel)
 end
 
 function _ensemble_dispatch_prob_func(tlist, prob_func; kwargs...)
@@ -512,6 +487,9 @@ function _ensemble_dispatch_solve(
         ntraj::Int;
         kwargs...
     ) where {ET <: Union{EnsembleSplitThreads, EnsembleDistributed}}
+    # without progress bar, there is no channel to listen to
+    isnothing(ens_prob.kwargs.channel) && return solve(ens_prob.prob, alg, ensemblealg; trajectories = ntraj, kwargs...)
+
     sol = nothing
 
     @sync begin
