@@ -3,6 +3,7 @@ using Test
 using QuantumToolbox
 import SciMLOperators: ScaledOperator
 import Statistics: mean
+import Random: MersenneTwister
 
 include("setup.jl") # module TESetup (parameters and operators) are defined in this file
 
@@ -212,5 +213,111 @@ include("setup.jl") # module TESetup (parameters and operators) are defined in t
             params = TESetup.p,
             rng = rng,
         )
+    end
+end
+
+@testset "mcsolve_map" begin
+    # Get parameters from TESetup to simplify the code
+    N = TESetup.N
+    a = TESetup.a
+    σz = TESetup.σz
+    σm = TESetup.σm
+    c_ops = TESetup.c_ops
+    e_ops = TESetup.e_ops
+    γ = TESetup.γ
+
+    g = 0.01
+
+    ψ_0_e = tensor(fock(N, 0), basis(2, 0))
+    ψ_1_g = tensor(fock(N, 1), basis(2, 1))
+
+    ψ0_list = [ψ_0_e, ψ_1_g]
+    ωc_list = [1, 1.01, 1.02]
+    ωq_list = [0.96, 0.98]
+
+    tlist = range(0, 10 / γ, 100)
+
+    ωc_fun(p, t) = p[1]
+    ωq_fun(p, t) = p[2]
+    H = QobjEvo(a' * a, ωc_fun) + QobjEvo(σz / 2, ωq_fun) + g * (a' * σm + a * σm')
+
+    sols_me = mesolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+
+    # Test with multiple initial states but no params
+    sols0 = mcsolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops, ntraj = 10, progress_bar = Val(false))
+    # Test with single initial state
+    sols1 = mcsolve_map(H, ψ_0_e, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), ntraj = 10, progress_bar = Val(false))
+    # Test with multiple initial states
+    sols2 = mcsolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), progress_bar = Val(false))
+    # Test with the states saved for each trajectory
+    sols3 = mcsolve_map(
+        H,
+        ψ0_list,
+        tlist,
+        c_ops;
+        saveat = tlist[(end - 4):end],
+        params = (ωc_list, ωq_list),
+        ntraj = 10,
+        progress_bar = Val(false),
+        keep_runs_results = Val(true),
+    )
+
+    @test size(sols0) == (2,)
+    @test sols0 isa Vector{<:TimeEvolutionMCSol}
+    @test size(sols1) == (1, 3, 2)
+    @test sols1 isa Array{<:TimeEvolutionMCSol}
+    @test size(sols2) == (2, 3, 2)
+    @test sols2 isa Array{<:TimeEvolutionMCSol}
+    @test size(sols3) == (2, 3, 2)
+    @test all(sol -> sol.ntraj == 10, sols1)
+    @test all(sol -> sol.ntraj == 500, sols2) # ntraj = 500 by default
+    @test all(sol -> size(sol.expect) == (length(e_ops), length(tlist)), sols2)
+    @test all(sol -> length(sol.col_times) == length(sol.col_which) == sol.ntraj, sols2)
+    @test all(sol -> size(sol.states) == (10, 5), sols3)
+    @test all(sol -> sol.expect === nothing, sols3)
+
+    # Compare each combination of initial state and parameters with mesolve_map
+    for I in eachindex(sols2)
+        @test sum(abs, sols2[I].expect .- sols_me[I].expect) / length(tlist) < 0.1
+    end
+
+    # Test with parameter-dependent collapse operators
+    γ_fun(p, t) = sqrt(p[1])
+    γ_list = [0.05, 0.2]
+    sols_γ = mcsolve_map(
+        TESetup.H,
+        ψ_1_g,
+        tlist,
+        (QobjEvo(a, γ_fun), sqrt(γ) * σm);
+        e_ops = e_ops,
+        params = (γ_list,),
+        progress_bar = Val(false),
+    )
+    for (i, γ_a) in enumerate(γ_list)
+        sol_me = mesolve(TESetup.H, ψ_1_g, tlist, (sqrt(γ_a) * a, sqrt(γ) * σm); e_ops = e_ops, progress_bar = Val(false))
+        @test sum(abs, sols_γ[1, i].expect .- sol_me.expect) / length(tlist) < 0.1
+    end
+
+    # Test reproducibility
+    sols_rng1 = mcsolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), ntraj = 10, rng = MersenneTwister(1234), progress_bar = Val(false), keep_runs_results = Val(true))
+    sols_rng2 = mcsolve_map(H, ψ0_list, tlist, c_ops; e_ops = e_ops, params = (ωc_list, ωq_list), ntraj = 10, rng = MersenneTwister(1234), progress_bar = Val(false), keep_runs_results = Val(true))
+    @test all(I -> sols_rng1[I].expect == sols_rng2[I].expect, eachindex(sols_rng1))
+    @test all(I -> sols_rng1[I].col_times == sols_rng2[I].col_times, eachindex(sols_rng1))
+
+    @test_throws ArgumentError mcsolve_map(H, ψ0_list, tlist; params = (ωc_list, ωq_list), progress_bar = Val(false))
+
+    @testset "Type Inference mcsolve_map" begin
+        @inferred mcsolve_map(TESetup.H, ψ0_list, tlist, c_ops; e_ops = e_ops, ntraj = 5, progress_bar = Val(true)) # no params, but test progress bar
+        @inferred mcsolve_map(
+            H,
+            ψ0_list,
+            tlist,
+            c_ops;
+            e_ops = e_ops,
+            params = (ωc_list, ωq_list),
+            ntraj = 5,
+            progress_bar = Val(false),
+        )
+        @inferred mcsolve_map(H, ψ0_list, tlist, c_ops; params = (ωc_list, ωq_list), ntraj = 5, progress_bar = Val(false), keep_runs_results = Val(true))
     end
 end

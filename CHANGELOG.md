@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Add `mcsolve_map` to solve the quantum trajectories for multiple initial states and parameter sets. All the trajectories of all the combinations are solved within a single `EnsembleProblem`, interleaved over the combinations to balance the load, and each trajectory is reduced to its states, expectation values and jump records before being returned, which reduces the memory usage and the data sent back by the workers of distributed ensembles.
+- Fix `EnsembleDistributed` and `EnsembleSplitThreads` failing with `progress_bar = Val(false)` in `sesolve_map`, `mesolve_map`, `mcsolve`, `ssesolve`, and `smesolve`.
 
 ## [v0.50.0]
 Release date: 2026-10-02

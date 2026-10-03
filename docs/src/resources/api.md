@@ -283,6 +283,7 @@ ssesolve
 smesolve
 sesolve_map
 mesolve_map
+mcsolve_map
 dfd_mesolve
 liouvillian
 liouvillian_dressed_nonsecular
