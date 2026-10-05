@@ -35,8 +35,18 @@ function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby,
     values = F.values
     sortperm!(sorted_vals, values, by = sortby, rev = rev)
 
+    # Keep p ≥ k Ritz values, never cutting through a tie in `sortby` (e.g. a complex-conjugate pair of a
+    # Hermiticity-preserving map): if only one of two tied values is kept, the less accurate one tends to win the
+    # ranking at every restart while the converged one is discarded, and the iteration can stall.
+    p = k
+    δ = sqrt(sqrt(eps(real(eltype(values)))))
+    while p < length(values) - 1 &&
+            abs(sortby(values[sorted_vals[p + 1]]) - sortby(values[sorted_vals[p]])) <= δ * abs(sortby(values[sorted_vals[p]]))
+        p += 1
+    end
+
     select = fill(false, length(values))
-    @inbounds for j in 1:k
+    @inbounds for j in 1:p
         select[sorted_vals[j]] = true
     end
 
@@ -46,8 +56,12 @@ function _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby,
     copyto!(Uₘ, F.Z)
     mul!(f, Uₘᵥ, β)
 
-    return nothing
+    return p
 end
+
+# Number of converged Ritz pairs among the k wanted ones (the leading p Schur positions hold the p kept values, unsorted)
+_nconverged(Hₘ, f, k, p, tol, sortby, rev) =
+    count(j -> abs(f[j]) < tol, partialsortperm([Hₘ[j, j] for j in 1:p], 1:k; by = sortby, rev = rev))
 
 # Pure Julia implementation of computing right eigenvectors from Schur form
 # Instead of using LAPACK.trevc!('R', 'A', select, Tₘ)
@@ -121,55 +135,49 @@ function _eigsolve(
     cache2 = similar(H, m)
     sorted_vals = Array{Int}(undef, m)
 
-    V₁ₖ = view(V, :, 1:k)
-    Vₖ₊₁ = view(V, :, k + 1)
-    Hₖ₊₁₁ₖ = view(H, k + 1, 1:k)
-    cache1₁ₖ = view(cache1, :, 1:k)
-    cache2₁ₖ = view(cache2, 1:k)
-
     M = typeof(cache0)
 
-    _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
+    # p ≥ k: number of Schur vectors kept at the restart (see _update_schur_eigs!)
+    p = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
 
     numops = m
     iter = 0
-    while iter < maxiter && count(x -> abs(x) < tol, f) < k && β > tol
+    while iter < maxiter && _nconverged(Hₘ, f, k, p, tol, sortby, rev) < k && β > tol
         # println( A * Vₘ * Uₘ ≈ Vₘ * Uₘ * M(Tₘ) + qₘ * M(transpose(βeₘ)) * Uₘ )     # SHOULD BE TRUE
 
         copyto!(cache0, Uₘ)
         mul!(cache1, Vₘ, cache0)
-        copyto!(V₁ₖ, cache1₁ₖ)
-        copyto!(Vₖ₊₁, qₘ)
+        copyto!(view(V, :, 1:p), view(cache1, :, 1:p))
+        copyto!(view(V, :, p + 1), qₘ)
         mul!(cache2, transpose(Uₘ), βeₘ) # transpose(βeₘ) * Uₘ
-        copyto!(Hₖ₊₁₁ₖ, cache2₁ₖ)
+        copyto!(view(H, p + 1, 1:p), view(cache2, 1:p))
 
         # println( A * view(V, :, 1:k) ≈ view(V, :, 1:k) * M(view(H, 1:k, 1:k)) + qₘ * M(transpose(view(transpose(βeₘ) * Uₘ, 1:k))) )     # SHOULD BE TRUE
 
-        for j in (k + 1):m
+        for j in (p + 1):m
             β = arnoldi_step!(A, V, H, j)
             if β < tol
-                numops += j - k - 1
+                numops += j - p - 1
                 break
             end
         end
 
         # println( A * Vₘ ≈ Vₘ * M(Hₘ) + qₘ * M(transpose(βeₘ)) )     # SHOULD BE TRUE
 
-        _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
-
-        numops += m - k - 1
+        numops += m - p - 1
+        p = _update_schur_eigs!(Hₘ, Uₘ, Uₘᵥ, f, k, β, sorted_vals, sortby, rev)
         iter += 1
     end
 
+    # The k wanted eigenvalues (sorted) among the p kept ones, and their eigenvectors
     Tₘ = Hₘ
-    vals = diag(view(Tₘ, 1:k, 1:k))
-    VR = _schur_right_eigenvectors(Tₘ, k)
-    mul!(cache1₁ₖ, Vₘ, M(Uₘ * VR))
-
-    # Order the eigenvalues and eigenvectors
-    idxs = sortperm(vals, by = sortby, rev = rev)
+    vals = diag(view(Tₘ, 1:p, 1:p))
+    idxs = partialsortperm(vals, 1:k, by = sortby, rev = rev)
+    VR = _schur_right_eigenvectors(Tₘ, p)
+    cache1₁ₖ = view(cache1, :, 1:k)
+    mul!(cache1₁ₖ, Vₘ, M(Uₘ * view(VR, :, idxs)))
     vals = vals[idxs]
-    vecs = cache1₁ₖ[:, idxs]
+    vecs = cache1₁ₖ[:, 1:k]
 
     settings.auto_tidyup && tidyup!(vecs)
 
