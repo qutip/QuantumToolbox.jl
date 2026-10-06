@@ -4,6 +4,10 @@ makeVal(x) = Val(x)
 getVal(x::Val{T}) where {T} = T
 getVal(x) = x # getVal for any other type
 
+# `getproperty` with the property name in the type, so that broadcasting it is type-stable: `getproperty_val.(list, Val(:name))`
+# We define a new function instead of extending `Base.getproperty` for `Val`, which would be type piracy.
+getproperty_val(x, ::Val{P}) where {P} = getproperty(x, P)
+
 _non_static_array_warning(argname, arg::Tuple{}) =
     throw(ArgumentError("The argument $argname must be a Tuple or a StaticVector of non-zero length."))
 _non_static_array_warning(argname, arg::Union{SVector{N, T}, MVector{N, T}, NTuple{N, T}}) where {N, T} = nothing
