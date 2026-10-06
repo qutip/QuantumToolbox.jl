@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Fix `eigsolve` and `eigsolve_al` (restarted Arnoldi) stalling when the `eigvals`-th and the next Ritz values tie in `sortby`, e.g. a complex-conjugate pair of a Hermiticity-preserving map. Tied values are now kept together at each restart, and convergence is checked only on the wanted eigenvalues. ([#791])
 
 ## [v0.50.0]
 Release date: 2026-10-02
@@ -605,3 +605,4 @@ Release date: 2024-11-13
 [#775]: https://github.com/qutip/QuantumToolbox.jl/issues/775
 [#776]: https://github.com/qutip/QuantumToolbox.jl/issues/776
 [#778]: https://github.com/qutip/QuantumToolbox.jl/issues/778
+[#791]: https://github.com/qutip/QuantumToolbox.jl/issues/791
