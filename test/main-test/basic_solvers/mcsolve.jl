@@ -22,33 +22,13 @@ include("setup.jl") # module TESetup (parameters and operators) are defined in t
 
     prob_mc = mcsolveProblem(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
     sol_mc = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false))
-    sol_mc2 = mcsolve(
-        H,
-        ψ0,
-        tlist,
-        c_ops,
-        e_ops = e_ops,
-        progress_bar = Val(false),
-        jump_callback = DiscreteLindbladJumpCallback(),
-    )
     sol_mc3 = mcsolve(H, ψ0, tlist, c_ops, e_ops = e_ops, progress_bar = Val(false), keep_runs_results = Val(true))
     sol_mc_states =
         mcsolve(H, ψ0, tlist, c_ops, saveat = saveat, progress_bar = Val(false), keep_runs_results = Val(true))
-    sol_mc_states2 = mcsolve(
-        H,
-        ψ0,
-        tlist,
-        c_ops,
-        saveat = saveat,
-        progress_bar = Val(false),
-        jump_callback = DiscreteLindbladJumpCallback(),
-        keep_runs_results = Val(true),
-    )
 
     # also test function average_states
     # average the states from all trajectories, and then calculate the expectation value
     expect_mc_states_mean = expect.(Ref(e_ops[1]), average_states(sol_mc_states))
-    expect_mc_states_mean2 = expect.(Ref(e_ops[1]), average_states(sol_mc_states2))
 
     @test prob_mc.prob.f.f isa ScaledOperator
     # the constant matrices are shared between trajectories, while the scalar coefficients are copied
@@ -58,10 +38,8 @@ include("setup.jl") # module TESetup (parameters and operators) are defined in t
     @test L_mc_copy.λ !== L_mc.λ
     @test !haskey(prob_mc.prob.kwargs, :tstops) # tstops should not exist for time-independent cases
     @test sum(abs, sol_mc.expect .- sol_me.expect) / length(tlist) < 0.1
-    @test sum(abs, sol_mc2.expect .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, average_expect(sol_mc3) .- sol_me.expect) / length(tlist) < 0.1
     @test sum(abs, expect_mc_states_mean .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
-    @test sum(abs, expect_mc_states_mean2 .- vec(sol_me.expect[1, saveat_idxs])) / length(tlist) < 0.1
     @test length(sol_mc.times) == length(tlist)
     @test length(sol_mc.times_states) == 1
     @test size(sol_mc.expect) == (length(e_ops), length(tlist))
