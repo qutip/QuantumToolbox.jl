@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `mcsolve_map` to solve the quantum trajectories for multiple initial states and parameter sets. All the trajectories of all the combinations are solved within a single `EnsembleProblem`, interleaved over the combinations to balance the load, and each trajectory is reduced to its states, expectation values and jump records before being returned, which reduces the memory usage and the data sent back by the workers of distributed ensembles. ([#790])
 - Fix `EnsembleDistributed` and `EnsembleSplitThreads` failing with `progress_bar = Val(false)` in `sesolve_map`, `mesolve_map`, `mcsolve`, `ssesolve`, and `smesolve`. ([#790])
 - Fix `eigsolve` and `eigsolve_al` (restarted Arnoldi) stalling when the `eigvals`-th and the next Ritz values tie in `sortby`, e.g. a complex-conjugate pair of a Hermiticity-preserving map. Tied values are now kept together at each restart, and convergence is checked only on the wanted eigenvalues. ([#791])
+- Fix `mcsolveProblem` and `mcsolveEnsembleProblem` consuming a random number from `rng` when building the problem, which made reusing a built problem with a new `rng` not reproduce `mcsolve(...; rng = rng)`. The threshold of the first jump is now drawn when the solver starts, and it has the precision of the system instead of always `Float64`. Seeded `mcsolve` results change. ([#792])
+- Remove `ContinuousLindbladJumpCallback`, `DiscreteLindbladJumpCallback`, and keyword argument `jump_callback`. The jumps are now always handled by the continuous callback with `interp_points = 0`, which is exact. This change affects all `mcsolve`-related functions, including: ([#792])
+  - `mcsolve`
+  - `mcsolveProblem`
+  - `mcsolveEnsembleProblem`
+  - `mcsolve_map`
+  - `dsf_mcsolve`
+  - `dsf_mcsolveEnsembleProblem`
 
 ## [v0.50.0]
 Release date: 2026-10-02
@@ -609,3 +617,4 @@ Release date: 2024-11-13
 [#778]: https://github.com/qutip/QuantumToolbox.jl/issues/778
 [#790]: https://github.com/qutip/QuantumToolbox.jl/issues/790
 [#791]: https://github.com/qutip/QuantumToolbox.jl/issues/791
+[#792]: https://github.com/qutip/QuantumToolbox.jl/issues/792

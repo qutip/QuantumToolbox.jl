@@ -128,3 +128,9 @@ function steadystate_floquet(args...; kwargs...)
     )
     return steadystate_fourier(args...; kwargs...)
 end
+
+export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
+DiscreteLindbladJumpCallback() = error(
+    "The `ContinuousLindbladJumpCallback`, `DiscreteLindbladJumpCallback`, and keyword argument `jump_callback` in all `mcsolve`-related functions have been removed. The jumps are now always handled by the continuous callback internally.",
+)
+ContinuousLindbladJumpCallback(; interp_points::Int = 0) = DiscreteLindbladJumpCallback()

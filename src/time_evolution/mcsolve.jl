@@ -1,5 +1,4 @@
 export mcsolveProblem, mcsolveEnsembleProblem, mcsolve, mcsolve_map
-export ContinuousLindbladJumpCallback, DiscreteLindbladJumpCallback
 
 function _mcsolve_prob_func(prob, ctx, tlist; kwargs...)
     f = _copy_for_trajectory(prob.f.f)
@@ -93,7 +92,6 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        jump_callback::TJC = ContinuousLindbladJumpCallback(),
         kwargs...,
     )
 
@@ -140,7 +138,6 @@ If the environmental measurements register a quantum jump, the wave function und
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
-- `jump_callback`: The Jump Callback type: [`ContinuousLindbladJumpCallback`](@ref) or [`DiscreteLindbladJumpCallback`](@ref). The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -162,9 +159,8 @@ function mcsolveProblem(
         e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
-        jump_callback::TJC = ContinuousLindbladJumpCallback(),
         kwargs...,
-    ) where {TJC <: LindbladJumpCallbackType}
+    )
     haskey(kwargs, :save_idxs) &&
         throw(ArgumentError("The keyword argument \"save_idxs\" is not supported in QuantumToolbox."))
 
@@ -180,7 +176,7 @@ function mcsolveProblem(
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
     default_values = (default_ode_solver_options(T)..., progress_bar = Val(false))
     kwargs2 = _merge_saveat(tlist, e_ops, default_values; kwargs...)
-    kwargs3 = _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, jump_callback, rng, kwargs2)
+    kwargs3 = _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, rng, kwargs2)
 
     return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs3...)
 end
@@ -196,7 +192,6 @@ end
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-        jump_callback::TJC = ContinuousLindbladJumpCallback(),
         progress_bar::Union{Val,Bool} = Val(true),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
@@ -248,7 +243,6 @@ If the environmental measurements register a quantum jump, the wave function und
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemblealg`: Ensemble algorithm to use. Default to `EnsembleThreads()`.
-- `jump_callback`: The Jump Callback type: [`ContinuousLindbladJumpCallback`](@ref) or [`DiscreteLindbladJumpCallback`](@ref). The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
@@ -275,12 +269,11 @@ function mcsolveEnsembleProblem(
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-        jump_callback::TJC = ContinuousLindbladJumpCallback(),
         progress_bar::Union{Val, Bool} = Val(true),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple, Nothing} = nothing,
         kwargs...,
-    ) where {TJC <: LindbladJumpCallbackType}
+    )
     _prob_func = isnothing(prob_func) ? _ensemble_dispatch_prob_func(tlist, _mcsolve_prob_func) : prob_func
     _output_func =
         output_func isa Nothing ?
@@ -300,7 +293,6 @@ function mcsolveEnsembleProblem(
         e_ops = e_ops,
         params = params,
         rng = rng,
-        jump_callback = jump_callback,
         kwargs...,
     )
 
@@ -327,7 +319,6 @@ end
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-        jump_callback::TJC = ContinuousLindbladJumpCallback(),
         progress_bar::Union{Val,Bool} = Val(true),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple,Nothing} = nothing,
@@ -382,7 +373,6 @@ If the environmental measurements register a quantum jump, the wave function und
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories to use.
 - `ensemblealg`: Ensemble algorithm to use. Default to `EnsembleThreads()`.
-- `jump_callback`: The Jump Callback type: [`ContinuousLindbladJumpCallback`](@ref) or [`DiscreteLindbladJumpCallback`](@ref). The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `prob_func`: Function to use for generating the ODEProblem.
 - `output_func`: a `Tuple` containing the `Function` to use for generating the output of a single trajectory, the (optional) `Progress` object, and the (optional) `RemoteChannel` object.
@@ -414,14 +404,13 @@ function mcsolve(
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
-        jump_callback::TJC = ContinuousLindbladJumpCallback(),
         progress_bar::Union{Val, Bool} = Val(true),
         prob_func::Union{Function, Nothing} = nothing,
         output_func::Union{Tuple, Nothing} = nothing,
         keep_runs_results::Union{Val, Bool} = Val(false),
         normalize_states::Union{Val, Bool} = Val(true),
         kwargs...,
-    ) where {TJC <: LindbladJumpCallbackType}
+    )
     ens_prob_mc = mcsolveEnsembleProblem(
         H,
         ψ0,
@@ -432,7 +421,6 @@ function mcsolve(
         rng = rng,
         ntraj = ntraj,
         ensemblealg = ensemblealg,
-        jump_callback = jump_callback,
         progress_bar = progress_bar,
         prob_func = prob_func,
         output_func = output_func,
@@ -479,7 +467,6 @@ end
         params::Union{NullParameters,Tuple} = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
-        jump_callback::TJC = ContinuousLindbladJumpCallback(),
         progress_bar::Union{Val,Bool} = Val(true),
         keep_runs_results::Union{Val,Bool} = Val(false),
         normalize_states::Union{Val,Bool} = Val(true),
@@ -510,7 +497,6 @@ All the trajectories, of all the combinations, are solved within a single `Ensem
 - `params`: A `Tuple` of parameter sets. Each element should be an `AbstractVector` representing the sweep range for that parameter. The function will solve for all combinations of initial states and parameter sets.
 - `rng`: Random number generator for reproducibility.
 - `ntraj`: Number of trajectories for each combination of initial state and parameters.
-- `jump_callback`: The Jump Callback type: [`ContinuousLindbladJumpCallback`](@ref) or [`DiscreteLindbladJumpCallback`](@ref). The default is `ContinuousLindbladJumpCallback()`, which is more precise.
 - `progress_bar`: Whether to show the progress bar. Using non-`Val` types might lead to type instabilities.
 - `keep_runs_results`: Whether to save the results of each trajectory. Default to `Val(false)`.
 - `normalize_states`: Whether to normalize the states. Default to `Val(true)`.
@@ -538,12 +524,11 @@ function mcsolve_map(
         params::Union{NullParameters, Tuple} = NullParameters(),
         rng::AbstractRNG = default_rng(),
         ntraj::Int = 500,
-        jump_callback::TJC = ContinuousLindbladJumpCallback(),
         progress_bar::Union{Val, Bool} = Val(true),
         keep_runs_results::Union{Val, Bool} = Val(false),
         normalize_states::Union{Val, Bool} = Val(true),
         kwargs...,
-    ) where {TJC <: LindbladJumpCallbackType}
+    )
     # mapping initial states and parameters
     ψ0_iter = map(state -> to_dense(_complex_float_type(eltype(state)), copy(state.data)), ψ0)
     if params isa NullParameters
@@ -560,7 +545,6 @@ function mcsolve_map(
         e_ops = e_ops,
         params = Base.tail(first(iter)),
         rng = rng,
-        jump_callback = jump_callback,
         kwargs...,
     )
 
