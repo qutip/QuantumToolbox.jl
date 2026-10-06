@@ -19,7 +19,7 @@ import QuantumToolboxCore:
     momentum, # since we don't export it (just to align with position)
     getVal,
     makeVal,
-    getprop,
+    getproperty_val,
     get_typename_wrapper,
     isendomorphic,
     promote_op_type,

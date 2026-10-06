@@ -1,7 +1,7 @@
 #!PTR_MULTITHREAD
 using Test
 using QuantumToolbox
-import QuantumToolbox: EnsembleDistributed, EnsembleSplitThreads, EnsembleSerial
+import SciMLBase: EnsembleDistributed, EnsembleSplitThreads, EnsembleSerial
 
 @testset "Distributed ensemble algorithms" begin
     @test Base.Threads.nthreads() > 1 # make sure the test runs with multi-threading

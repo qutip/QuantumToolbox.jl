@@ -51,10 +51,10 @@ function _gen_mcsolve_solution(
 
     # We use flat broadcasting instead of `map`: Julia fails to infer nested `map`s (or nested broadcasting),
     # and this function is itself called inside a `map` by `mcsolve_map`.
-    expvals_all = traj_1.expect isa Nothing ? nothing : stack(getprop.(trajs, Val(:expect)), dims = 2) # Stack on dimension 2 to align with QuTiP
+    expvals_all = traj_1.expect isa Nothing ? nothing : stack(getproperty_val.(trajs, Val(:expect)), dims = 2) # Stack on dimension 2 to align with QuTiP
 
     # Matrix{QuantumObject} of size (ntraj, length(times_states))
-    states_all = _normalize_state!.(stack(getprop.(trajs, Val(:states)), dims = 1), Ref(dimensions), normalize_states)
+    states_all = _normalize_state!.(stack(getproperty_val.(trajs, Val(:states)), dims = 1), Ref(dimensions), normalize_states)
 
     return TimeEvolutionMCSol(
         length(trajs),
@@ -62,8 +62,8 @@ function _gen_mcsolve_solution(
         traj_1.times_states,
         _store_multitraj_states(states_all, makeVal(keep_runs_results)),
         _store_multitraj_expect(expvals_all, makeVal(keep_runs_results)),
-        getprop.(trajs, Val(:col_times)),
-        getprop.(trajs, Val(:col_which)),
+        getproperty_val.(trajs, Val(:col_times)),
+        getproperty_val.(trajs, Val(:col_which)),
         converged,
         alg,
         abstol,
