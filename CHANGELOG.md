@@ -11,8 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `EnsembleDistributed` and `EnsembleSplitThreads` failing with `progress_bar = Val(false)` in `sesolve_map`, `mesolve_map`, `mcsolve`, `ssesolve`, and `smesolve`. ([#790])
 - Fix `eigsolve` and `eigsolve_al` (restarted Arnoldi) stalling when the `eigvals`-th and the next Ritz values tie in `sortby`, e.g. a complex-conjugate pair of a Hermiticity-preserving map. Tied values are now kept together at each restart, and convergence is checked only on the wanted eigenvalues. ([#791])
 - Fix `mcsolveProblem` and `mcsolveEnsembleProblem` consuming a random number from `rng` when building the problem, which made reusing a built problem with a new `rng` not reproduce `mcsolve(...; rng = rng)`. The threshold of the first jump is now drawn when the solver starts, and it has the precision of the system instead of always `Float64`. Seeded `mcsolve` results change. ([#792])
-- Remove `DiscreteLindbladJumpCallback`, which simplifies the callbacks of `mcsolve`. ([#792])
-- Remove `ContinuousLindbladJumpCallback` and the `jump_callback` keyword argument of `mcsolve`, `mcsolveProblem`, `mcsolveEnsembleProblem`, `mcsolve_map`, `dsf_mcsolve` and `dsf_mcsolveEnsembleProblem`, since only one jump callback is left. The jump detection always uses `interp_points = 0`, which is exact. ([#792])
+- Remove `ContinuousLindbladJumpCallback`, `DiscreteLindbladJumpCallback`, and keyword argument `jump_callback`. The jumps are now always handled by the continuous callback with `interp_points = 0`, which is exact. This change affects all `mcsolve`-related functions, including: ([#792])
+  - `mcsolve`
+  - `mcsolveProblem`
+  - `mcsolveEnsembleProblem`
+  - `mcsolve_map`
+  - `dsf_mcsolve`
+  - `dsf_mcsolveEnsembleProblem`
 
 ## [v0.50.0]
 Release date: 2026-10-02
