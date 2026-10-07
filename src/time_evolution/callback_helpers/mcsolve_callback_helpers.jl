@@ -184,9 +184,14 @@ function _mcsolve_continuous_derivative(u, t, integrator, ::Val{Log}) where {Log
     s = real(dot(u, u))
     iszero(s) && return zero(s)   # bisect at an underflowed endpoint
     jump = _mc_get_jump_callback(integrator).affect!
-    _mcsolve_jump_weights!(jump.weights_mc, jump.c_ops, jump.cache_mc, integrator, u, t)
-    rate = sum(jump.weights_mc)
+    rate = _mcsolve_jump_rate(jump, u, t, integrator)
     return Log ? rate / s : rate
+end
+
+# Total norm-loss rate; custom integrators can evaluate it without channel weights.
+function _mcsolve_jump_rate(jump, u, t, integrator)
+    _mcsolve_jump_weights!(jump.weights_mc, jump.c_ops, jump.cache_mc, integrator, u, t)
+    return sum(jump.weights_mc)
 end
 
 function _mcsolve_jump_condition(::Val{Derivative}, logarithm::Val{Log}) where {Derivative, Log}

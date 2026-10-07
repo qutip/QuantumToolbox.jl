@@ -356,4 +356,6 @@ end
     integrator = (; u = ComplexF64[9], p = nothing, t = 7.0)
     QuantumToolbox._mcsolve_jump_weights!(weights, [operator], tmp, integrator, ComplexF64[2], 0.5)
     @test weights == [9.0]
+    jump = (; weights_mc = weights, c_ops = [operator], cache_mc = tmp)
+    @test QuantumToolbox._mcsolve_jump_rate(jump, ComplexF64[2], 0.5, integrator) == 9.0
 end
