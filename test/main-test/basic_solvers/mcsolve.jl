@@ -337,6 +337,15 @@ end
         jump.affect!.random_n[] = 0
         @test jump.condition(zero(u), t, integrator) < 0
 
+        # The adapter preserves SciML's state preparation for ordinary integrators.
+        condition = derivative ? jump.condition.condition : jump.condition
+        @test condition isa QuantumToolbox.MCSolveJumpCondition
+        @test QuantumToolbox.DiffEqBase.condition_state(integrator, jump, integrator.t) === integrator.u
+        SciMLBase.step!(integrator)
+        middle = (integrator.tprev + integrator.t) / 2
+        state = copy(QuantumToolbox.DiffEqBase.condition_state(integrator, jump, middle))
+        @test state ≈ integrator(middle)
+
         sol = run(derivative, logarithm, EnsembleSerial())
         @test sol.col_which == reference.col_which
         @test all(isapprox(x, y; atol = 1.0e-5) for (x, y) in zip(sol.col_times, reference.col_times))
@@ -357,5 +366,6 @@ end
     QuantumToolbox._mcsolve_jump_weights!(weights, [operator], tmp, integrator, ComplexF64[2], 0.5)
     @test weights == [9.0]
     jump = (; weights_mc = weights, c_ops = [operator], cache_mc = tmp)
+    @test QuantumToolbox._mcsolve_jump_survival(ComplexF64[2], 0.5, integrator) == 4.0
     @test QuantumToolbox._mcsolve_jump_rate(jump, ComplexF64[2], 0.5, integrator) == 9.0
 end

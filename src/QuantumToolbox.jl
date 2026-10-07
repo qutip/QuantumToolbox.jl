@@ -38,7 +38,7 @@ import QuantumToolboxCore:
     _ptrace_oper
 
 ## SciML packages (for QobjEvo, OrdinaryDiffEq, and LinearSolve)
-import DiffEqBase: ConditionWithDerivative
+import DiffEqBase: DiffEqBase, ConditionWithDerivative
 import SciMLBase:
     SciMLBase,
     solve,

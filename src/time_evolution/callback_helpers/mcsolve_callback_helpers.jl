@@ -175,13 +175,13 @@ end
 
 function _mcsolve_continuous_condition(u, t, integrator, ::Val{Log} = Val(false)) where {Log}
     r = _mc_get_jump_callback(integrator).affect!.random_n[]
-    s = real(dot(u, u))
+    s = _mcsolve_jump_survival(u, t, integrator)
     iszero(r) && return -one(s)   # a zero threshold has no finite crossing
     return Log ? log(r) - log(s) : r - s
 end
 
 function _mcsolve_continuous_derivative(u, t, integrator, ::Val{Log}) where {Log}
-    s = real(dot(u, u))
+    s = _mcsolve_jump_survival(u, t, integrator)
     iszero(s) && return zero(s)   # bisect at an underflowed endpoint
     jump = _mc_get_jump_callback(integrator).affect!
     rate = _mcsolve_jump_rate(jump, u, t, integrator)
@@ -194,9 +194,26 @@ function _mcsolve_jump_rate(jump, u, t, integrator)
     return sum(jump.weights_mc)
 end
 
+# Custom integrators can supply a survival probability without constructing a state.
+_mcsolve_jump_survival(u, t, integrator) = real(dot(u, u))
+
+struct MCSolveJumpCondition{Log} end
+(c::MCSolveJumpCondition{Log})(u, t, integrator) where {Log} =
+    _mcsolve_continuous_condition(u, t, integrator, Val(Log))
+
+const _MCSolveJumpCondition = Union{MCSolveJumpCondition, ConditionWithDerivative{<:MCSolveJumpCondition}}
+
+# Route only mcsolve's jump conditions through the customizable state preparation.
+function DiffEqBase.condition_state(integrator::SciMLBase.DEIntegrator, callback::ContinuousCallback{<:_MCSolveJumpCondition}, t)
+    return _mcsolve_jump_condition_state(integrator, callback, t)
+end
+
+function _mcsolve_jump_condition_state(integrator, callback, t)
+    return invoke(DiffEqBase.condition_state, Tuple{SciMLBase.DEIntegrator, Any, Any}, integrator, callback, t)
+end
+
 function _mcsolve_jump_condition(::Val{Derivative}, logarithm::Val{Log}) where {Derivative, Log}
-    condition = Log ? (u, t, integrator) -> _mcsolve_continuous_condition(u, t, integrator, logarithm) :
-        _mcsolve_continuous_condition
+    condition = MCSolveJumpCondition{Log}()
     derivative(u, t, integrator) = _mcsolve_continuous_derivative(u, t, integrator, logarithm)
     return Derivative ? ConditionWithDerivative(condition, derivative) : condition
 end
