@@ -5,6 +5,7 @@ authors = ["Alberto Mercurio", "Yi-Te Huang"]
 
 [deps]
 ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
+DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
 DiffEqCallbacks = "459566f4-90b8-5000-8ac3-15dfb0a30def"
 DiffEqNoiseProcess = "77a26b50-5914-5dd7-bc55-306e6241c503"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
@@ -35,6 +36,7 @@ QuantumToolboxVisual = {path = "lib/QuantumToolboxVisual"}
 
 [compat]
 ArrayInterface = "6, 7"
+DiffEqBase = "7"
 DiffEqCallbacks = "4.2.1 - 4"
 DiffEqNoiseProcess = "5"
 Distributed = "1"
@@ -52,7 +54,7 @@ QuantumToolboxCore = "0.3"
 QuantumToolboxVisual = "0.2"
 Random = "1"
 Reexport = "1"
-SciMLBase = "3"
+SciMLBase = "3.57"
 SciMLOperators = "1.26"
 SparseArrays = "1"
 StaticArrays = "1.9"
