@@ -14,6 +14,6 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/labeler@v6 # the path rules are defined in .github/labeler.yml
+      - uses: actions/labeler@v7 # the path rules are defined in .github/labeler.yml
         with:
           sync-labels: true
