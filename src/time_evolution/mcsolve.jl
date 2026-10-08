@@ -92,6 +92,8 @@ end
         e_ops::Union{Nothing,AbstractVector,Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
+        jump_derivative::Union{Val, Bool} = Val(false),
+        jump_log::Union{Val, Bool} = Val(false),
         kwargs...,
     )
 
@@ -138,6 +140,8 @@ If the environmental measurements register a quantum jump, the wave function und
 - `e_ops`: List of operators for which to calculate expectation values. It can be either a `Vector` or a `Tuple`.
 - `params`: Parameters to pass to the solver. This argument is usually expressed as a `NamedTuple` or `AbstractVector` of parameters. For more advanced usage, any custom struct can be used.
 - `rng`: Random number generator for reproducibility.
+- `jump_derivative`: Use the analytical survival derivative and safeguarded Newton steps to locate jumps. Default `false`, which uses the derivative-free root solver. The survival derivative is computed from the collapse operators, assuming a Hermitian Hamiltonian. Use `Val(true)` to preserve type inference.
+- `jump_log`: Locate the crossing using `log(r) - log(s)` instead of `r - s`, where `r` is the random threshold and `s` the survival probability. Default `false`. Use `Val(true)` to preserve type inference.
 - `kwargs`: The keyword arguments for the ODEProblem.
 
 # Notes
@@ -159,6 +163,8 @@ function mcsolveProblem(
         e_ops::Union{Nothing, AbstractVector, Tuple} = nothing,
         params = NullParameters(),
         rng::AbstractRNG = default_rng(),
+        jump_derivative::Union{Val, Bool} = Val(false),
+        jump_log::Union{Val, Bool} = Val(false),
         kwargs...,
     )
     haskey(kwargs, :save_idxs) &&
@@ -176,7 +182,7 @@ function mcsolveProblem(
     # We disable the progress bar of the sesolveProblem because we use a global progress bar for all the trajectories
     default_values = (default_ode_solver_options(T)..., progress_bar = Val(false))
     kwargs2 = _merge_saveat(tlist, e_ops, default_values; kwargs...)
-    kwargs3 = _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, rng, kwargs2)
+    kwargs3 = _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, rng, kwargs2; jump_derivative = makeVal(jump_derivative), jump_log = makeVal(jump_log))
 
     return sesolveProblem(H_eff_evo, ψ0, tlist; params = params, kwargs3...)
 end

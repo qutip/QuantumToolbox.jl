@@ -49,6 +49,8 @@ Evaluating the MC evolution to first-order in time is quite tedious. Instead, `Q
 
 In `QuantumToolbox.jl`, Monte Carlo evolution is implemented with the [`mcsolve`](@ref) function. It takes nearly the same arguments as the [`mesolve`](@ref) function for [Lindblad master equation evolution](@ref doc-TE:Lindblad-Master-Equation-Solver), except that the initial state must be a [`Ket`](@ref) vector, as oppose to a density matrix, and there is an optional keyword argument `ntraj` that defines the number of stochastic trajectories to be simulated. By default, `ntraj=500` indicating that `500` Monte Carlo trajectories will be performed.
 
+The optional `jump_derivative = true` locates jumps with safeguarded Newton steps using the analytical survival derivative ``-\sum_n \|\hat C_n\psi\|^2``. `jump_log = true` uses the equivalent condition ``\log r_1 - \log \langle\psi|\psi\rangle`` and transforms the derivative consistently. Both options default to `false` and can also be passed to `mcsolveProblem`, `mcsolveEnsembleProblem`, and `mcsolve_map`. The derivative is useful when evaluating the continuous state is expensive and the jump weights are cheap; for ordinary Runge–Kutta interpolation the default derivative-free solver can be faster.
+
 To illustrate the use of the Monte Carlo evolution of quantum systems in `QuantumToolbox.jl`, let’s again consider the case of a two-level atom coupled to a leaky cavity. The only differences to the master equation treatment is that in this case we invoke the [`mcsolve`](@ref) function instead of [`mesolve`](@ref)
 
 ```@setup mcsolve

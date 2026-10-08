@@ -4,6 +4,8 @@ using QuantumToolbox
 import SciMLOperators: ScaledOperator
 import Statistics: mean
 import Random: MersenneTwister
+import SciMLBase
+import SciMLBase: EnsembleSerial, EnsembleThreads
 
 include("setup.jl") # module TESetup (parameters and operators) are defined in this file
 
@@ -298,4 +300,72 @@ end
         )
         @inferred mcsolve_map(H, ψ0_list, tlist, c_ops; params = (ωc_list, ωq_list), ntraj = 5, progress_bar = Val(false), keep_runs_results = Val(true))
     end
+end
+
+@testset "mcsolve jump root finding" begin
+    a, κ = destroy(2), 0.7
+    H, ψ0, c_ops = 0 * a, fock(2, 1), [sqrt(κ) * a]
+    tlist = [0.0, 1.0, 3.0, 10.0]
+    run(derivative, logarithm, ensemblealg) = mcsolve(
+        H, ψ0, tlist, c_ops; e_ops = [a' * a], ntraj = 12, rng = MersenneTwister(42),
+        progress_bar = Val(false), ensemblealg, jump_derivative = derivative, jump_log = logarithm
+    )
+    reference = run(false, false, EnsembleSerial())
+    for derivative in (false, true), logarithm in (false, true)
+        # Construction and cloning still draw no threshold: PR 792 initializes it at solve time.
+        rng = MersenneTwister(12)
+        expected = copy(rng)
+        prob = @inferred mcsolveProblem(H, ψ0, tlist, c_ops; e_ops = (), rng, jump_derivative = Val(derivative), jump_log = Val(logarithm))
+        @test rand(copy(rng)) == rand(copy(expected))
+        jump = QuantumToolbox._mc_get_jump_callback(prob.prob.kwargs[:callback])
+        @test iszero(jump.affect!.random_n[])
+        @test (jump.condition isa QuantumToolbox.ConditionWithDerivative) == derivative
+        integrator = SciMLBase.init(prob.prob, QuantumToolbox.DP5())
+        @test jump.affect!.random_n[] == rand(expected)
+        SciMLBase.reinit!(integrator)
+        @test jump.affect!.random_n[] == rand(expected)
+        s, t = exp(-κ * 0.9), 0.9
+        u = ComplexF64[0, sqrt(s)]
+        before = copy(u)
+        r = jump.affect!.random_n[]
+        @test jump.condition(u, t, integrator) ≈ (logarithm ? log(r) - log(s) : r - s)
+        if derivative
+            @test jump.condition.derivative(u, t, integrator) ≈ (logarithm ? κ : κ * s)
+            @test u == before
+            @test iszero(jump.condition.derivative(zero(u), t, integrator))
+        end
+        jump.affect!.random_n[] = 0
+        @test jump.condition(zero(u), t, integrator) < 0
+
+        # The adapter preserves SciML's state preparation for ordinary integrators.
+        condition = derivative ? jump.condition.condition : jump.condition
+        @test condition isa QuantumToolbox.MCSolveJumpCondition
+        @test QuantumToolbox.DiffEqBase.condition_state(integrator, jump, integrator.t) === integrator.u
+        SciMLBase.step!(integrator)
+        middle = (integrator.tprev + integrator.t) / 2
+        state = copy(QuantumToolbox.DiffEqBase.condition_state(integrator, jump, middle))
+        @test state ≈ integrator(middle)
+
+        sol = run(derivative, logarithm, EnsembleSerial())
+        @test sol.col_which == reference.col_which
+        @test all(isapprox(x, y; atol = 1.0e-5) for (x, y) in zip(sol.col_times, reference.col_times))
+        @test sol.expect ≈ reference.expect atol = 1.0e-5
+        @test run(derivative, logarithm, EnsembleThreads()).col_times == sol.col_times
+        mapped = mcsolve_map(
+            H, [ψ0], tlist, c_ops;
+            e_ops = [a' * a], ntraj = 12, rng = MersenneTwister(42), ensemblealg = EnsembleSerial(),
+            progress_bar = Val(false), jump_derivative = derivative, jump_log = logarithm
+        )
+        @test only(mapped).col_times == sol.col_times
+    end
+
+    # Root finding must evaluate time-dependent operators at its interpolated state/time.
+    weights, tmp = zeros(1), zeros(ComplexF64, 1)
+    operator(out, u, _, p, t) = (out .= (1 + t) .* u)
+    integrator = (; u = ComplexF64[9], p = nothing, t = 7.0)
+    QuantumToolbox._mcsolve_jump_weights!(weights, [operator], tmp, integrator, ComplexF64[2], 0.5)
+    @test weights == [9.0]
+    jump = (; weights_mc = weights, c_ops = [operator], cache_mc = tmp)
+    @test QuantumToolbox._mcsolve_jump_survival(ComplexF64[2], 0.5, integrator) == 4.0
+    @test QuantumToolbox._mcsolve_jump_rate(jump, ComplexF64[2], 0.5, integrator) == 9.0
 end

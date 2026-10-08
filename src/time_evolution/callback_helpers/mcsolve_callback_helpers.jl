@@ -69,10 +69,8 @@ function _mcsolve_expect!(expvals, e_ops, u, integrator)
     return expvals
 end
 
-function _mcsolve_jump_weights!(weights, c_ops, cache_mc, integrator)
-    ψ = integrator.u
+function _mcsolve_jump_weights!(weights, c_ops, cache_mc, integrator, ψ = integrator.u, t = integrator.t)
     p = integrator.p
-    t = integrator.t
     @inbounds for i in eachindex(weights)
         c_ops[i](cache_mc, ψ, nothing, p, t)
         weights[i] = real(dot(cache_mc, cache_mc))
@@ -87,7 +85,7 @@ function _mcsolve_jump!(integrator, c_ops, i, cache_mc)
     return nothing
 end
 
-function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, rng, kwargs)
+function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, rng, kwargs; jump_derivative = Val(false), jump_log = Val(false))
     cache_mc = similar(ψ0.data, T)
 
     c_ops_data = map(op -> get_data(cache_operator(QobjEvo(op), cache_mc)), c_ops)
@@ -116,7 +114,7 @@ function _generate_mcsolve_kwargs(ψ0, T, e_ops, tlist, c_ops, rng, kwargs)
     # `interp_points = 0` is exact: the norm of the state decreases monotonically between jumps, so it crosses the random threshold
     # at most once per step, and the crossing is visible from the sign of the condition at the two step endpoints.
     cb1 = ContinuousCallback(
-        _mcsolve_continuous_condition,
+        _mcsolve_jump_condition(jump_derivative, jump_log),
         _affect!,
         nothing,
         initialize = _lindblad_jump_initialize!,
@@ -175,8 +173,50 @@ function _lindblad_jump_affect!(
     return nothing
 end
 
-_mcsolve_continuous_condition(u, t, integrator) =
-    @inbounds _mc_get_jump_callback(integrator).affect!.random_n[] - real(dot(u, u))
+function _mcsolve_continuous_condition(u, t, integrator, ::Val{Log} = Val(false)) where {Log}
+    r = _mc_get_jump_callback(integrator).affect!.random_n[]
+    s = _mcsolve_jump_survival(u, t, integrator)
+    iszero(r) && return -one(s)   # a zero threshold has no finite crossing
+    return Log ? log(r) - log(s) : r - s
+end
+
+function _mcsolve_continuous_derivative(u, t, integrator, ::Val{Log}) where {Log}
+    s = _mcsolve_jump_survival(u, t, integrator)
+    iszero(s) && return zero(s)   # bisect at an underflowed endpoint
+    jump = _mc_get_jump_callback(integrator).affect!
+    rate = _mcsolve_jump_rate(jump, u, t, integrator)
+    return Log ? rate / s : rate
+end
+
+# Total norm-loss rate; custom integrators can evaluate it without channel weights.
+function _mcsolve_jump_rate(jump, u, t, integrator)
+    _mcsolve_jump_weights!(jump.weights_mc, jump.c_ops, jump.cache_mc, integrator, u, t)
+    return sum(jump.weights_mc)
+end
+
+# Custom integrators can supply a survival probability without constructing a state.
+_mcsolve_jump_survival(u, t, integrator) = real(dot(u, u))
+
+struct MCSolveJumpCondition{Log} end
+(c::MCSolveJumpCondition{Log})(u, t, integrator) where {Log} =
+    _mcsolve_continuous_condition(u, t, integrator, Val(Log))
+
+const _MCSolveJumpCondition = Union{MCSolveJumpCondition, ConditionWithDerivative{<:MCSolveJumpCondition}}
+
+# Route only mcsolve's jump conditions through the customizable state preparation.
+function DiffEqBase.condition_state(integrator::SciMLBase.DEIntegrator, callback::ContinuousCallback{<:_MCSolveJumpCondition}, t)
+    return _mcsolve_jump_condition_state(integrator, callback, t)
+end
+
+function _mcsolve_jump_condition_state(integrator, callback, t)
+    return invoke(DiffEqBase.condition_state, Tuple{SciMLBase.DEIntegrator, Any, Any}, integrator, callback, t)
+end
+
+function _mcsolve_jump_condition(::Val{Derivative}, logarithm::Val{Log}) where {Derivative, Log}
+    condition = MCSolveJumpCondition{Log}()
+    derivative(u, t, integrator) = _mcsolve_continuous_derivative(u, t, integrator, logarithm)
+    return Derivative ? ConditionWithDerivative(condition, derivative) : condition
+end
 
 ##
 
