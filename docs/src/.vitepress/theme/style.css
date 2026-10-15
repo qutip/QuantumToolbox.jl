@@ -78,6 +78,19 @@ font-feature-settings: "calt" off;
   --vp-custom-block-tip-bg: var(--vp-tip-bg);
 }
 
+ /* Reset text color of code blocks to default text color
+  * Vitepress uses --vp-c-brand-1 by default, which makes code look like links (#377) */
+:root {
+  --vp-code-color: var(--vp-c-text-1);
+}
+.custom-block.tip code {
+  color: var(--vp-c-text-1);
+  background-color: var(--vp-code-bg);
+}
+.custom-block.tip a>code {
+  color:var(--vp-c-tip-1);
+}
+
  /* Component: Button */
 :root {
   --vp-button-brand-border: var(--vp-light-gray);
@@ -205,4 +218,123 @@ mjx-container svg path {
 .MathJax_ref:hover {
   color: var(--vp-c-brand-2);
   cursor: pointer;
+}
+
+/* ===== Custom colors for input and output code blocks ===== */
+:root {
+  /* --vp-c-bg-input: #eef0f3; */
+  --vp-c-bg-output: #fbfbfb;
+  --vp-c-bg-output-outline: #e2e2e3;
+}
+
+.dark {
+  /* --vp-c-bg-input: #1a1a1a; */
+  --vp-c-bg-output: #1a1a1a;
+  --vp-c-bg-output-outline: #2e2e32;
+}
+
+/*
+.language-julia {
+  background-color: var(--vp-c-bg-input) !important;
+}
+*/
+
+.language- {
+  background-color: var(--vp-c-bg-output) !important;
+  outline: 1px solid var(--vp-c-bg-output-outline);
+}
+
+/* Julia REPL prompt syntax highlighting */
+/* prompt token behavior */
+.vp-doc .shiki .repl-prompt {
+  opacity: 1.0;
+  user-select: none;
+}
+
+:root:not(.dark) .vp-doc .shiki .repl-prompt-julia {
+  color: var(--vp-dark-green);
+}
+
+:root:not(.dark) .vp-doc .shiki .repl-prompt-pkg {
+  color: var(--vp-c-brand-light);
+}
+
+.dark .vp-doc .shiki .repl-prompt-julia {
+  color: var(--vp-dark-green-light);
+}
+
+.dark .vp-doc .shiki .repl-prompt-pkg {
+  color: var(--vp-c-brand-dark);
+}
+
+/* ===== Sidebar Drawer Toggle ===== */
+/* Smooth transitions for sidebar collapse/expand on desktop */
+@media (min-width: 960px) {
+  .VPSidebar {
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease;
+  }
+
+  .VPContent.has-sidebar {
+    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                padding-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Smooth transitions for navbar elements (needed for expand-back too) */
+  .VPNavBar.has-sidebar .content {
+    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .VPNavBar.has-sidebar .divider {
+    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .VPNavBar.has-sidebar .title {
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease !important;
+  }
+
+  /* Collapsed state: zero the sidebar width variable so all layout formulas
+     (VitePress defaults + Enhanced Readabilities plugin) adjust automatically */
+  html.sidebar-drawer-collapsed {
+    --vp-sidebar-width: 0px !important;
+  }
+
+  html.sidebar-drawer-collapsed .VPSidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Original width mode only: let content fill space up to the aside */
+  html.sidebar-drawer-collapsed
+    body:not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchFullWidth):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchSidebarWidthAdjustableOnly):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchBothWidthAdjustable)
+    .VPDoc.has-sidebar .container {
+    display: flex;
+    justify-content: center;
+    max-width: 992px;
+  }
+
+  html.sidebar-drawer-collapsed
+    body:not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchFullWidth):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchSidebarWidthAdjustableOnly):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchBothWidthAdjustable)
+    .VPDoc.has-sidebar .content-container {
+    max-width: none;
+  }
+
+  /* Collapse the navbar title area (site logo + name) */
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .title,
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar > .wrapper > .container > .title {
+    width: 0 !important;
+    overflow: hidden;
+    opacity: 0;
+    padding: 0 !important;
+    pointer-events: none;
+  }
+
+  /* Move drawer button closer to the edge */
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .content,
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar > .wrapper > .container > .content {
+    padding-left: 8px !important;
+  }
 }
