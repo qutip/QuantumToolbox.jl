@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Fix documentation. ([#797])
 
 ## [v0.51.0]
 Release date: 2026-10-12
@@ -626,3 +626,4 @@ Release date: 2024-11-13
 [#791]: https://github.com/qutip/QuantumToolbox.jl/issues/791
 [#792]: https://github.com/qutip/QuantumToolbox.jl/issues/792
 [#795]: https://github.com/qutip/QuantumToolbox.jl/issues/795
+[#797]: https://github.com/qutip/QuantumToolbox.jl/issues/797
