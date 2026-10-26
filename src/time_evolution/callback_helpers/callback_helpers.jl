@@ -65,17 +65,16 @@ function _merge_kwargs_with_callback(kwargs, cb)
     return kwargs2
 end
 
+# Because Settings needs to be mutable, and ProgressMeterKWARGS is a NamedTuple
+# assert the default `output` type here so that type-instability doesn't leak into the solvers' inferred return type
+_make_progress(n::Integer; kwargs...) = (Progress(n; kwargs..., settings.ProgressMeterKWARGS...))::Progress{IO}
+
 function _generate_save_callback(e_ops, tlist, progress_bar, method, ::Type{T}) where {T <: Number}
     e_ops_data = e_ops isa Nothing ? nothing : _get_e_ops_data(e_ops, method)
 
     progr =
         getVal(progress_bar) ?
-        Progress(
-            length(tlist);
-            enabled = getVal(progress_bar),
-            desc = _get_progress_desc(method),
-            settings.ProgressMeterKWARGS...,
-        ) : nothing
+        _make_progress(length(tlist); enabled = getVal(progress_bar), desc = _get_progress_desc(method)) : nothing
 
     expvals = e_ops isa Nothing ? nothing : Array{_complex_float_type(T)}(undef, length(e_ops), length(tlist))
 
@@ -95,9 +94,7 @@ function _generate_stochastic_save_callback(
     e_ops_data = e_ops isa Nothing ? nothing : _get_e_ops_data(e_ops, method)
     m_ops_data = _get_m_ops_data(sc_ops, method)
 
-    progr =
-        getVal(progress_bar) ?
-        Progress(length(tlist); enabled = getVal(progress_bar), settings.ProgressMeterKWARGS...) : nothing
+    progr = getVal(progress_bar) ? _make_progress(length(tlist); enabled = getVal(progress_bar)) : nothing
 
     expvals = e_ops isa Nothing ? nothing : Array{_complex_float_type(T)}(undef, length(e_ops), length(tlist))
     m_expvals = getVal(store_measurement) ? Array{_float_type(T)}(undef, length(sc_ops), length(tlist) - 1) : nothing

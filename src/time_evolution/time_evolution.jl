@@ -424,7 +424,7 @@ _progress_next!(channel::RemoteChannel) = put!(channel, true)
 function _ensemble_dispatch_output_func(ensemblealg, progress_bar, ntraj, output_func; progr_desc = "Progress: ")
     getVal(progress_bar) || return (output_func, nothing, nothing)
 
-    progr = Progress(ntraj; desc = progr_desc, settings.ProgressMeterKWARGS...)
+    progr = _make_progress(ntraj; desc = progr_desc)
     channel = _progress_channel(ensemblealg)
     progr_target = isnothing(channel) ? progr : channel
     f = (sol, ctx) -> (_progress_next!(progr_target); output_func(sol, ctx))

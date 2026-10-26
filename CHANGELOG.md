@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Fix type-instability for progress bar. ([#802])
 
 ## [v0.51.1]
 Release date: 2026-10-16
@@ -633,3 +633,4 @@ Release date: 2024-11-13
 [#792]: https://github.com/qutip/QuantumToolbox.jl/issues/792
 [#795]: https://github.com/qutip/QuantumToolbox.jl/issues/795
 [#797]: https://github.com/qutip/QuantumToolbox.jl/issues/797
+[#802]: https://github.com/qutip/QuantumToolbox.jl/issues/802
