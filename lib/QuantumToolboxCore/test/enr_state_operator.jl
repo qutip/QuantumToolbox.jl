@@ -4,6 +4,7 @@ using StaticArrays
 import SparseArrays: AbstractSparseMatrix
 
 @testset "Excitation number restricted state space" begin
+    QuantumToolboxCore.settings.default_eltype_warning = false # these tests create higher precision objects on purpose
 
     @testset "EnrSpace" begin
         s_enr = EnrSpace((2, 2, 3), 3)
@@ -192,4 +193,5 @@ import SparseArrays: AbstractSparseMatrix
         @test_throws DomainError EnrSpace((2, 2, 2), 2; excitation_weights = (1, 1, 0))
         @test_throws DomainError EnrSpace((2, 2, 2), 2; excitation_weights = (1, 1, -1))
     end
+    QuantumToolboxCore.settings.default_eltype_warning = true
 end

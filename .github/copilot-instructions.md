@@ -75,7 +75,7 @@ _check_QuantumObject(type, dimensions, (rows, cols))  # In quantum_object.jl
 ### Progress Bars
 Implemented via `ProgressMeter.jl` with settings at [src/settings.jl](../src/settings.jl):
 ```julia
-QuantumToolbox.settings.ProgressMeterKWARGS = (showspeed=true, printed=true)
+QuantumToolbox.settings.progressmeter_kwargs = (showspeed=true, printed=true)
 ```
 
 ## Developer Workflows

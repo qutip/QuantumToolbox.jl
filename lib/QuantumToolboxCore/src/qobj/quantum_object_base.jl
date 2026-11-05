@@ -205,6 +205,16 @@ _check_type(::Type{T}) where {T} =
     throw(ArgumentError("The argument `$T` is not valid. You may probably want to use `$T()` instead."))
 _check_type(t) = throw(ArgumentError("The argument $t is not valid. It should be a subtype of `QuantumObjectType`."))
 
+# Warn (once) when the element type of a quantum object is more general than `settings.default_eltype`
+function _check_eltype(::Type{T}) where {T <: FloatOrComplex}
+    D = _DEFAULT_ELTYPE
+    if (promote_type(T, D) !== D) && settings.default_eltype_warning
+        @warn "A quantum object with element type `$T` was created, which is more general than `QuantumToolbox.settings.default_eltype = $D`. This happens, e.g., with `0.5 * destroy(N)` when `default_eltype = ComplexF32`, or with complex states and operators when `default_eltype` is real. This warning is shown only once. To disable it, set `QuantumToolbox.settings.default_eltype_warning = false`." maxlog = 1
+    end
+    return nothing
+end
+_check_eltype(::Type) = nothing # e.g., integers or the types of automatic differentiation
+
 function Base.getproperty(A::AbstractQuantumObject, key::Symbol)
     # a comment here to avoid bad render by JuliaFormatter
     if key === :dims

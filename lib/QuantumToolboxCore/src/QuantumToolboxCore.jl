@@ -8,6 +8,7 @@ import LinearAlgebra: checksquare
 # other dependencies (in alphabetical order)
 import Base: AbstractVecOrTuple
 import FillArrays: Eye
+import Preferences: load_preference, set_preferences!
 import Random: AbstractRNG, default_rng
 import StaticArrays: SVector, MVector
 
@@ -37,9 +38,9 @@ export permute
 export cache_operator, iscached, isconstant
 
 ## Basic utilities for QuantumToolbox libraries
+include("type_handle.jl")
 include("settings.jl")
 include("versioninfo.jl")
-include("type_handle.jl")
 
 ## Linear Algebra
 include("linalg/linalg.jl")

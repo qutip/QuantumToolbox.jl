@@ -56,6 +56,8 @@ struct QuantumObject{ObjType <: QuantumObjectType, DimType <: Dimensions, DataTy
 
         _check_QuantumObject(type, dimensions, size(data))
 
+        _check_eltype(eltype(data))
+
         return new{ObjType, typeof(dimensions), DT}(data, type, dimensions)
     end
 end
