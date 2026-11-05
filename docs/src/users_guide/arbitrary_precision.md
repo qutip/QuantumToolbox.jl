@@ -96,8 +96,8 @@ eltype(destroy(5))
 !!! note "Numbers keep their own precision"
     A `Float64` number such as `0.1` is promoted to the default element type, but it keeps the value of the nearest `Float64`, which is only accurate to ~16 digits. When a parameter must be accurate to more digits, create it in the high precision type, e.g., `BigFloat("0.1")` or `Double64("0.1")`. Integers, and numbers such as `0.5` that `Float64` represents exactly, need no care.
 
-!!! note "Change the setting outside of the code using it"
-    The setting must be changed outside of the function that creates the quantum objects, for example at the beginning of your script, otherwise an error is thrown (see [the settings page](@ref doc:QuantumToolbox-Settings)). To compare several precisions within a single function, pass the element type explicitly instead.
+!!! note "Change the setting with a separate statement"
+    Change the setting with a separate statement, for example at the beginning of your script, and not inside the function or the block (such as `begin`, `let`, `try` or `for`) that creates the quantum objects, otherwise an error is thrown (see [the settings page](@ref doc:QuantumToolbox-Settings)). To compare several precisions within a single function or loop, pass the element type explicitly instead.
 
 !!! note "Which packages do I need?"
     Core operations work out of the box, but the eigensolvers need generic linear algebra backends that are not `QuantumToolbox.jl` dependencies. Load them yourself:
@@ -207,9 +207,9 @@ sol = mesolve(H, ψ0, tlist, c_ops, e_ops = [a' * a], progress_bar = Val(false))
 eltype(sol.expect)
 ```
 
-```@example arbitrary_precision
-QuantumToolbox.settings.default_eltype = ComplexF64 # hide
-nothing # hide
+```@setup arbitrary_precision
+# restore the default, since the other pages of the documentation run in the same Julia session
+QuantumToolbox.settings.default_eltype = ComplexF64
 ```
 
 Note that the expectation values come back in the element type you asked for, rather than being silently narrowed to `ComplexF64`.

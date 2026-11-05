@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Add `default_eltype` to `QuantumToolbox.settings`, which sets the element type of the quantum objects created without specifying it, e.g., `destroy(N)` or `fock(N, j)`. Add also `default_eltype_warning`, which warns (once) when a quantum object with a higher precision than `default_eltype` is created. ([#803])
+- Add `default_eltype` to `QuantumToolbox.settings`, which sets the element type of the quantum objects created without specifying it, e.g., `destroy(N)` or `fock(N, j)`. Add also `default_eltype_warning`, which warns (once) when a quantum object is created with an element type more general than `default_eltype`. ([#803])
 - Rename `ProgressMeterKWARGS` in `QuantumToolbox.settings` to `progressmeter_kwargs`. The old name is deprecated. ([#803])
 - Fix type-instability of the progress bar, which also allows a custom `output` stream in `progressmeter_kwargs`. ([#803])
 

@@ -3,6 +3,7 @@ module TESetup
 setprecision(128) # Instead of 256. This speeds up the tests.
 
 using QuantumToolbox
+QuantumToolbox.settings.default_eltype_warning = false # these tests create higher precision objects on purpose
 
 N = 20
 Δ = 1.0

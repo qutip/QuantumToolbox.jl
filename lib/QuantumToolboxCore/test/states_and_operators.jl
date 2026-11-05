@@ -2,6 +2,7 @@ using Test
 using QuantumToolboxCore
 
 @testset "States and Operators" begin
+    QuantumToolboxCore.settings.default_eltype_warning = false # these tests create higher precision objects on purpose
     import QuantumToolboxCore: position, momentum
     using LinearAlgebra
     using SparseArrays
@@ -616,4 +617,5 @@ using QuantumToolboxCore
         @test Float64 == eltype(squeeze(N, 1))
         @test ComplexF64 == eltype(phase(N)) # since default ϕ0 = 0 (also Int64)
     end
+    QuantumToolboxCore.settings.default_eltype_warning = true
 end
