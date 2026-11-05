@@ -73,4 +73,4 @@ nothing # hide
 ```
 
 !!! warning "Change `progressmeter_kwargs` and `default_eltype` outside of the code using them"
-    Changing `progressmeter_kwargs` or `default_eltype` redefines a method, so code that is already running keeps using the previous value. If this code reads the setting, an error is thrown. Change them outside of that code, for example at the beginning of your script. For the same reason, they cannot be changed by a package while it is being precompiled.
+    Changing `progressmeter_kwargs` or `default_eltype` redefines a method, so code that is already running keeps using the previous value. If this code reads the setting, an error is thrown. Change them outside of that code, for example at the beginning of your script. For the same reason, they cannot be changed by a package while it is being precompiled: packages should pass the element type explicitly instead, e.g., `destroy(T, N)`.

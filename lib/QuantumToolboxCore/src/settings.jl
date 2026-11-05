@@ -26,6 +26,16 @@ function _check_world(changed_world::Base.RefValue{UInt}, name::Symbol)
     return nothing
 end
 
+# A package being precompiled cannot redefine methods of another package, because the change could not be saved
+function _check_not_precompiling(name::Symbol)
+    (ccall(:jl_generating_output, Cint, ()) == 1) && throw(
+        ErrorException(
+            "`QuantumToolbox.settings.$name` cannot be changed while a package is being precompiled. Packages should not change it for their users: pass the element type explicitly instead, e.g., `destroy(T, N)`.",
+        ),
+    )
+    return nothing
+end
+
 _depwarn_ProgressMeterKWARGS() = Base.depwarn(
     "`settings.ProgressMeterKWARGS` is deprecated and will be removed in next major release, use `settings.progressmeter_kwargs` instead.",
     :ProgressMeterKWARGS,
@@ -51,10 +61,12 @@ function Base.setproperty!(s::Settings, name::Symbol, value)
         (isconcretetype(value) && value <: FloatOrComplex) || throw(
             ArgumentError("`default_eltype` must be a concrete floating point or complex type, such as `ComplexF32` or `Float64`, but got `$value`."),
         )
+        _check_not_precompiling(name)
         @eval _default_eltype() = $value
         _default_eltype_world[] = Base.get_world_counter()
     elseif name === :progressmeter_kwargs
         (value isa NamedTuple) || throw(ArgumentError("`progressmeter_kwargs` must be a `NamedTuple`, but got `$(typeof(value))`."))
+        _check_not_precompiling(name)
         @eval _progressmeter_kwargs() = $value
         _progressmeter_kwargs_world[] = Base.get_world_counter()
     elseif name === :ProgressMeterKWARGS
@@ -127,6 +139,6 @@ QuantumToolbox.settings.default_eltype = ComplexF32
 ```
 
 !!! warning "Change `progressmeter_kwargs` and `default_eltype` outside of the code using them"
-    Changing `progressmeter_kwargs` or `default_eltype` redefines a method, so code that is already running keeps using the previous value. If this code reads the setting, an error is thrown. Change them outside of that code, for example at the beginning of your script. For the same reason, they cannot be changed by a package while it is being precompiled.
+    Changing `progressmeter_kwargs` or `default_eltype` redefines a method, so code that is already running keeps using the previous value. If this code reads the setting, an error is thrown. Change them outside of that code, for example at the beginning of your script. For the same reason, they cannot be changed by a package while it is being precompiled: packages should pass the element type explicitly instead, e.g., `destroy(T, N)`.
 """
 const settings = Settings()
