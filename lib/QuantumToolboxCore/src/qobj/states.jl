@@ -22,7 +22,7 @@ The `dimensions` can be either the following types:
 zero_ket(::Type{T}, dimensions::Int) where {T <: Number} = QuantumObject(zeros(T, dimensions), Ket(), dimensions)
 zero_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVecOrTuple{Int}}) where {T <: Number} =
     QuantumObject(zeros(T, get_size(dimensions)[1]), Ket(), dimensions)
-zero_ket(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}) = zero_ket(ComplexF64, dimensions)
+zero_ket(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}) = zero_ket(settings.default_eltype, dimensions)
 
 @doc raw"""
     fock([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -48,7 +48,7 @@ function fock(::Type{T}, N::Int, j::Int = 0; dims::Union{Int, AbstractVecOrTuple
     end
     return QuantumObject(array; type = Ket(), dims = dims)
 end
-fock(N::Int, j::Int = 0; dims::Union{Int, AbstractVecOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) = fock(ComplexF64, N, j; dims, sparse)
+fock(N::Int, j::Int = 0; dims::Union{Int, AbstractVecOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) = fock(settings.default_eltype, N, j; dims, sparse)
 
 @doc raw"""
     coherent(N::Int, α::Number)
@@ -79,7 +79,7 @@ function rand_ket(::Type{T}, dimensions::Union{Dimensions, AbstractVecOrTuple{In
     ψ = rand(rng, T, N) .- (one(T) / 2 + one(T) * im / 2)
     return QuantumObject(normalize!(ψ); type = Ket(), dims = dimensions)
 end
-rand_ket(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}; rng::AbstractRNG = default_rng()) = rand_ket(ComplexF64, dimensions; rng)
+rand_ket(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}; rng::AbstractRNG = default_rng()) = rand_ket(complex(settings.default_eltype), dimensions; rng)
 
 @doc raw"""
     fock_dm([T::Type=ComplexF64,] N::Int, j::Int=0; dims::Union{Int,AbstractVector{Int},Tuple}=N, sparse::Union{Bool,Val}=Val(false))
@@ -101,7 +101,7 @@ function fock_dm(
     ψ = fock(T, N, j; dims, sparse)
     return ket2dm(ψ)
 end
-fock_dm(N::Int, j::Int = 0; dims::Union{Int, AbstractVecOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) = fock_dm(ComplexF64, N, j; dims, sparse)
+fock_dm(N::Int, j::Int = 0; dims::Union{Int, AbstractVecOrTuple{Int}} = N, sparse::Union{Bool, Val} = Val(false)) = fock_dm(settings.default_eltype, N, j; dims, sparse)
 
 @doc raw"""
     coherent_dm(N::Int, α::Number)
@@ -152,7 +152,7 @@ function maximally_mixed_dm(::Type{T}, dimensions::Union{Dimensions, AbstractVec
     N = get_size(dimensions)[1]
     return QuantumObject(diagm(0 => fill(1 / T(N), N)), Operator(), dimensions)
 end
-maximally_mixed_dm(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}) = maximally_mixed_dm(ComplexF64, dimensions)
+maximally_mixed_dm(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}) = maximally_mixed_dm(settings.default_eltype, dimensions)
 
 @doc raw"""
     rand_dm([T::Type=ComplexF64,] dimensions; rank::Int=get_size(dimensions)[1], rng::AbstractRNG=default_rng())
@@ -192,7 +192,7 @@ function rand_dm(
     return QuantumObject(ρ; type = Operator(), dims = dimensions)
 end
 rand_dm(dimensions::Union{Int, Dimensions, AbstractVecOrTuple{Int}}; rank::Int = get_size(dimensions)[1], rng::AbstractRNG = default_rng()) =
-    rand_dm(ComplexF64, dimensions; rank, rng)
+    rand_dm(complex(settings.default_eltype), dimensions; rank, rng)
 
 @doc raw"""
     spin_state([T::Type=ComplexF64,] j::Real, m::Real)
@@ -215,7 +215,7 @@ function spin_state(::Type{T}, j::Real, m::Real) where {T <: Number}
 
     return fock(T, Int(J), Int(Δ))
 end
-spin_state(j::Real, m::Real) = spin_state(ComplexF64, j, m)
+spin_state(j::Real, m::Real) = spin_state(settings.default_eltype, j, m)
 
 @doc raw"""
     spin_coherent(j::Real, θ::Real, ϕ::Real)
@@ -293,7 +293,7 @@ bell_state(::Type{T}, ::Val{0}, ::Val{1}) where {T <: FloatOrComplex} = QuantumO
 bell_state(::Type{T}, ::Val{1}, ::Val{0}) where {T <: FloatOrComplex} = QuantumObject(T[0, 1, 1, 0] / sqrt(T(2)), Ket(), (2, 2))
 bell_state(::Type{T}, ::Val{1}, ::Val{1}) where {T <: FloatOrComplex} = QuantumObject(T[0, 1, -1, 0] / sqrt(T(2)), Ket(), (2, 2))
 bell_state(::Type{T}, ::Val{T1}, ::Val{T2}) where {T <: FloatOrComplex, T1, T2} = throw(ArgumentError("Invalid Bell state: $(T1), $(T2)"))
-bell_state(x::Union{Int, Val}, z::Union{Int, Val}) = bell_state(ComplexF64, x, z)
+bell_state(x::Union{Int, Val}, z::Union{Int, Val}) = bell_state(settings.default_eltype, x, z)
 
 @doc raw"""
     singlet_state([T::Type=ComplexF64])
@@ -301,7 +301,7 @@ bell_state(x::Union{Int, Val}, z::Union{Int, Val}) = bell_state(ComplexF64, x, z
 Return the two particle singlet state with element type `T = ComplexF64` (default): ``\frac{1}{\sqrt{2}} ( |01\rangle - |10\rangle )``
 """
 singlet_state(::Type{T}) where {T <: FloatOrComplex} = QuantumObject(T[0, 1, -1, 0] / sqrt(T(2)), Ket(), (2, 2))
-singlet_state() = singlet_state(ComplexF64)
+singlet_state() = singlet_state(settings.default_eltype)
 
 @doc raw"""
     triplet_states([T::Type=ComplexF64])
@@ -319,7 +319,7 @@ function triplet_states(::Type{T}) where {T <: FloatOrComplex}
         QuantumObject(T[1, 0, 0, 0], Ket(), (2, 2)),
     ]
 end
-triplet_states() = triplet_states(ComplexF64)
+triplet_states() = triplet_states(settings.default_eltype)
 
 @doc raw"""
     w_state([T::Type=ComplexF64,] n::Union{Int,Val})
@@ -343,7 +343,7 @@ function w_state(::Type{T}, ::Val{n}) where {T <: FloatOrComplex, n}
     return QuantumObject(data, Ket(), ntuple(x -> 2, Val(n)))
 end
 w_state(::Type{T}, n::Int) where {T <: FloatOrComplex} = w_state(T, Val(n))
-w_state(n::Union{Int, Val}) = w_state(ComplexF64, n)
+w_state(n::Union{Int, Val}) = w_state(settings.default_eltype, n)
 
 @doc raw"""
     ghz_state([T::Type=ComplexF64,] n::Union{Int,Val}; d::Int=2)
@@ -370,4 +370,4 @@ function ghz_state(::Type{T}, ::Val{n}; d::Int = 2) where {T <: FloatOrComplex, 
     return QuantumObject(data, Ket(), ntuple(x -> d, Val(n)))
 end
 ghz_state(::Type{T}, n::Int; d::Int = 2) where {T <: FloatOrComplex} = ghz_state(T, Val(n); d)
-ghz_state(n::Union{Int, Val}; d::Int = 2) = ghz_state(ComplexF64, n; d)
+ghz_state(n::Union{Int, Val}; d::Int = 2) = ghz_state(settings.default_eltype, n; d)
