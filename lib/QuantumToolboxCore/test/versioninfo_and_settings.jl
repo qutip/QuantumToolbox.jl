@@ -20,11 +20,38 @@ using QuantumToolboxCore
 end
 
 @testset "Settings" begin
-    io = IOBuffer()
-    show(io, QuantumToolboxCore.settings)
-    out = String(take!(io))
-    @test occursin("QuantumToolbox.jl Settings", out)
-    @test occursin("tidyup_tol", out)
-    @test occursin("auto_tidyup", out)
-    @test occursin("ProgressMeterKWARGS", out)
+    settings = QuantumToolboxCore.settings
+    @test occursin("default_eltype", sprint(show, settings))
+
+    # `default_eltype` and `progressmeter_kwargs` change a type, so reading them must be type-stable
+    get_eltype() = settings.default_eltype
+    get_kwargs() = settings.progressmeter_kwargs
+    @test @inferred(get_eltype()) === ComplexF64
+    @test @inferred(get_kwargs()) == (showspeed = true, printed = true)
+
+    # they are saved as preferences of the active project, and used after restarting Julia
+    active_project = Base.ACTIVE_PROJECT[]
+    mktempdir() do dir
+        Base.ACTIVE_PROJECT[] = joinpath(dir, "Project.toml")
+        try
+            @test_logs (:info, r"Restart Julia") settings.default_eltype = ComplexF32
+            @test_logs (:info, r"Restart Julia") settings.progressmeter_kwargs = (showspeed = false, output = devnull)
+            prefs = read(joinpath(dir, "LocalPreferences.toml"), String)
+            @test occursin("default_eltype = \"ComplexF32\"", prefs)
+            @test occursin("progressmeter_kwargs = \"(showspeed = false, output = Base.DevNull())\"", prefs)
+            @test settings.default_eltype === ComplexF64 # still the one in use
+        finally
+            Base.ACTIVE_PROJECT[] = active_project
+        end
+    end
+    @test_throws ArgumentError settings.default_eltype = Int
+    @test_throws ArgumentError settings.progressmeter_kwargs = (output = stdout,) # it cannot be read back
+    @test (@test_logs (:warn, r"deprecated") settings.ProgressMeterKWARGS) == settings.progressmeter_kwargs
+
+    # warn when the element type is more general than the default one
+    @test_logs (:warn, r"more general") QuantumObject(rand(Complex{BigFloat}, 2))
+    @test_logs QuantumObject(rand(ComplexF32, 2))
+    settings.default_eltype_warning = false
+    @test_logs QuantumObject(rand(Complex{BigFloat}, 2))
+    settings.default_eltype_warning = true
 end

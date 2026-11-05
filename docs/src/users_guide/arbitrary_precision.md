@@ -57,10 +57,11 @@ end
 
 ## [Using arbitrary precision in QuantumToolbox](@id doc:Arbitrary-Precision:usage)
 
-Every state and operator generating function takes an optional leading argument for specifying element type:
+Every state and operator generating function takes an optional leading argument for specifying element type. Since the default element type is `ComplexF64`, a warning is shown when a quantum object with a higher precision is created (see [the settings page](@ref doc:QuantumToolbox-Settings)). Here we create them on purpose, so we first disable it:
 
 ```@example arbitrary_precision
 using QuantumToolbox
+QuantumToolbox.settings.default_eltype_warning = false
 
 destroy(Complex{BigFloat}, 5)
 ```
@@ -84,6 +85,15 @@ The working precision of `BigFloat` is global and set with `setprecision` (in bi
 setprecision(BigFloat, 128)
 eltype(destroy(Complex{BigFloat}, 5))
 ```
+
+!!! note "Use a higher precision by default"
+    To use a higher precision in a whole project without passing the element type every time, set `default_eltype` in [`QuantumToolbox.settings`](@ref doc:QuantumToolbox-Settings). It is saved as a preference, and used after restarting Julia:
+
+    ```julia
+    QuantumToolbox.settings.default_eltype = Complex{BigFloat}
+    ```
+
+    Then, `destroy(5)` gives a `Complex{BigFloat}` operator. Only types defined in Julia's `Base` can be saved, so `Complex{Double64}` must always be passed explicitly.
 
 !!! note "Which packages do I need?"
     Core operations work out of the box, but the eigensolvers need generic linear algebra backends that are not `QuantumToolbox.jl` dependencies. Load them yourself:
@@ -188,6 +198,11 @@ tlist = range(0, 10, 100)
 sol = mesolve(H_big, ψ0_big, tlist, c_ops_big, e_ops = [a_big' * a_big], progress_bar = Val(false))
 
 eltype(sol.expect)
+```
+
+```@setup arbitrary_precision
+# restore the default, since the other pages of the documentation run in the same Julia session
+QuantumToolbox.settings.default_eltype_warning = true
 ```
 
 Note that the expectation values come back in the element type you asked for, rather than being silently narrowed to `ComplexF64`.
