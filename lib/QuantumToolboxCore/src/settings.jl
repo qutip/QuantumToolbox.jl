@@ -9,22 +9,14 @@ The settings below change a type, so they are stored as methods instead of field
 value, which keeps the code using them type-stable. Changing them redefines the method (see `Base.setproperty!` below).
 
 Code that is already running keeps seeing the previous method (Julia's world age). To avoid silently creating quantum
-objects with the previous element type, we store the world in which `default_eltype` was last changed, and throw an error
-when it is read from an older world. A previous `progressmeter_kwargs` only changes how the progress bar looks, so it is
-not checked.
+objects with the previous element type, we also store the current value of `default_eltype`, and throw an error when the
+method returns a different one. A previous `progressmeter_kwargs` only changes how the progress bar looks, so it is not
+checked.
 =#
 _default_eltype() = ComplexF64
 _progressmeter_kwargs() = (showspeed = true, printed = true)
 
-const _default_eltype_world = Ref(UInt(0))
-
-# the world of the running code
-# TODO: remove this branching and just use `Base.tls_world_age()` when Julia 1.10 is no longer supported
-@static if isdefined(Base, :tls_world_age)
-    _tls_world_age() = Base.tls_world_age()
-else # Julia 1.10
-    _tls_world_age() = ccall(:jl_get_tls_world_age, UInt, ())
-end
+const _current_default_eltype = Ref{DataType}(ComplexF64)
 
 @noinline _throw_previous_eltype_error() = throw(
     ErrorException(
@@ -40,8 +32,9 @@ _depwarn_ProgressMeterKWARGS() = Base.depwarn(
 
 Base.@constprop :aggressive function Base.getproperty(s::Settings, name::Symbol)
     if name === :default_eltype
-        (_tls_world_age() < _default_eltype_world[]) && _throw_previous_eltype_error()
-        return _default_eltype()
+        T = _default_eltype()
+        (T === _current_default_eltype[]) || _throw_previous_eltype_error()
+        return T
     elseif name === :progressmeter_kwargs
         return _progressmeter_kwargs()
     elseif name === :ProgressMeterKWARGS
@@ -57,7 +50,7 @@ function Base.setproperty!(s::Settings, name::Symbol, value)
             ArgumentError("`default_eltype` must be a concrete floating point or complex type, such as `ComplexF32` or `Float64`, but got `$value`."),
         )
         @eval _default_eltype() = $value
-        _default_eltype_world[] = Base.get_world_counter()
+        _current_default_eltype[] = value
     elseif name === :progressmeter_kwargs
         (value isa NamedTuple) || throw(ArgumentError("`progressmeter_kwargs` must be a `NamedTuple`, but got `$(typeof(value))`."))
         @eval _progressmeter_kwargs() = $value
