@@ -74,7 +74,7 @@ function _generate_save_callback(e_ops, tlist, progress_bar, method, ::Type{T}) 
             length(tlist);
             enabled = getVal(progress_bar),
             desc = _get_progress_desc(method),
-            settings.ProgressMeterKWARGS...,
+            settings.progressmeter_kwargs...,
         ) : nothing
 
     expvals = e_ops isa Nothing ? nothing : Array{_complex_float_type(T)}(undef, length(e_ops), length(tlist))
@@ -97,7 +97,7 @@ function _generate_stochastic_save_callback(
 
     progr =
         getVal(progress_bar) ?
-        Progress(length(tlist); enabled = getVal(progress_bar), settings.ProgressMeterKWARGS...) : nothing
+        Progress(length(tlist); enabled = getVal(progress_bar), settings.progressmeter_kwargs...) : nothing
 
     expvals = e_ops isa Nothing ? nothing : Array{_complex_float_type(T)}(undef, length(e_ops), length(tlist))
     m_expvals = getVal(store_measurement) ? Array{_float_type(T)}(undef, length(sc_ops), length(tlist) - 1) : nothing

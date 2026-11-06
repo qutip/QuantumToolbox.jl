@@ -4,7 +4,7 @@ Double precision (`Float64`) carries about 16 significant decimal digits. For th
 
 But some of the most interesting quantities in quantum physics are *exponentially small*: tunneling splittings, Liouvillian gaps, metastable switching rates, and the lifetimes of symmetry-broken states all scale like ``e^{-S}`` for some action or system size ``S``. Push a little deeper into the parameter regime and the number you are chasing drops below ``10^{-16}`` relative to the energy scales in your Hamiltonian. At that point the answer is no longer physics — it is roundoff.
 
-The failure is quiet, which is what makes it dangerous. The eigensolver still converges, the numbers still look plausible, and the plot still has a curve on it. It is simply the wrong curve. Below we show an example where `Float64` confidently reports a result that is wrong by nearly ten orders of magnitude, and where switching a single type argument fixes it.
+The failure is quiet, which is what makes it dangerous. The eigensolver still converges, the numbers still look plausible, and the plot still has a curve on it. It is simply the wrong curve. Below we show an example where `Float64` confidently reports a result that is wrong by nearly ten orders of magnitude, and where changing a single setting fixes it.
 
 `QuantumToolbox.jl` supports arbitrary precision throughout: states, operators, superoperators, the eigensolvers, and the time-evolution solvers are all generic over the number type.
 
@@ -57,18 +57,26 @@ end
 
 ## [Using arbitrary precision in QuantumToolbox](@id doc:Arbitrary-Precision:usage)
 
-Every state and operator generating function takes an optional leading argument for specifying element type:
+The simplest way is to change the default element type once, at the beginning of your script, with `default_eltype` in [`QuantumToolbox.settings`](@ref doc:QuantumToolbox-Settings). Every state and operator created without specifying the element type then uses it:
 
 ```@example arbitrary_precision
 using QuantumToolbox
 
-destroy(Complex{BigFloat}, 5)
+QuantumToolbox.settings.default_eltype = Complex{BigFloat}
+
+destroy(5)
 ```
 
 which propagates through arithmetic exactly as you would expect:
 
 ```@example arbitrary_precision
-normalize(fock(BigFloat, 10, 3) + fock(BigFloat, 10, 4))
+normalize(fock(10, 3) + fock(10, 4))
+```
+
+Every state and operator generating function also takes an optional leading argument for specifying the element type of a single object, which takes precedence over the setting:
+
+```@example arbitrary_precision
+destroy(Complex{Double64}, 5)
 ```
 
 Some functions instead infer the element type from the *value* you pass, which is often more convenient:
@@ -82,8 +90,14 @@ The working precision of `BigFloat` is global and set with `setprecision` (in bi
 
 ```@example arbitrary_precision
 setprecision(BigFloat, 128)
-eltype(destroy(Complex{BigFloat}, 5))
+eltype(destroy(5))
 ```
+
+!!! note "Numbers keep their own precision"
+    A `Float64` number such as `0.1` is promoted to the default element type, but it keeps the value of the nearest `Float64`, which is only accurate to ~16 digits. When a parameter must be accurate to more digits, create it in the high precision type, e.g., `BigFloat("0.1")` or `Double64("0.1")`. Integers, and numbers such as `0.5` that `Float64` represents exactly, need no care.
+
+!!! note "Change the setting with a separate statement"
+    Change the setting with a separate statement, for example at the beginning of your script, and not inside the function or the block (such as `begin`, `let`, `try` or `for`) that creates the quantum objects, otherwise an error is thrown (see [the settings page](@ref doc:QuantumToolbox-Settings)). To compare several precisions within a single function or loop, pass the element type explicitly instead.
 
 !!! note "Which packages do I need?"
     Core operations work out of the box, but the eigensolvers need generic linear algebra backends that are not `QuantumToolbox.jl` dependencies. Load them yourself:
@@ -104,40 +118,43 @@ Now the physics. Take a particle in a quartic double well (in units ``\hbar = m 
 
 with minima at ``x = \pm x_0`` separated by a barrier of height ``\lambda x_0^4``. The two lowest eigenstates are the symmetric and antisymmetric combinations of the states localized in each well, and they are split by an energy ``\Delta E = E_1 - E_0`` that is *exponentially small* in the barrier action. That splitting is the entire physics of the problem: a particle prepared in the left well tunnels to the right one in a time ``\pi / \Delta E``.
 
-We build ``\hat{x}`` and ``\hat{p}`` from the annihilation operator, so that the whole Hamiltonian inherits whatever type we pass in:
+We build the Hamiltonian without specifying any element type, so that it uses `QuantumToolbox.settings.default_eltype`:
 
 ```@example arbitrary_precision
 using LinearAlgebra
 using GenericSchur   # generic Schur decomposition, needed for non-Float64 eigensolvers
 
-function double_well(::Type{T}, N, λ, x0) where {T}
-    a = destroy(T, N)
-    x = (a' + a) / sqrt(T(2))
-    p = im * (a' - a) / sqrt(T(2))
-    W = x * x - T(x0)^2 * qeye(T, N)
-    return p * p / 2 + T(λ) * W * W
+function double_well(N, λ, x0)
+    x = QuantumToolbox.position(N)
+    p = QuantumToolbox.momentum(N)
+    W = x * x - x0^2 * qeye(N)
+    return p * p / 2 + λ * W * W
 end
 
 # splitting between the two lowest levels
-function splitting(::Type{T}, N, λ, x0) where {T}
-    E = real.(eigenstates(double_well(T, N, λ, x0)).values)
+function splitting(N, λ, x0)
+    E = real.(eigenstates(double_well(N, λ, x0)).values)
     return E[2] - E[1]
 end
 nothing # hide
 ```
 
-Note that `double_well` contains no reference to precision whatsoever — it is ordinary code, written the way you would write it anyway. Now sweep the well separation ``x_0`` (deepening the barrier) at three different precisions:
+Note that `double_well` contains no reference to precision whatsoever — it is ordinary code, written the way you would write it anyway. Now sweep the well separation ``x_0`` (deepening the barrier) at three different precisions, changing only the setting between the runs:
 
 ```@example arbitrary_precision
 N = 250     # Fock cutoff, large enough to be converged at the deepest barrier
 λ = 0.5
 x0_list = range(1.0, 3.5, 11)
 
-Δ64  = [splitting(ComplexF64, N, λ, x0) for x0 in x0_list]
-Δd64 = [splitting(Complex{Double64}, N, λ, x0) for x0 in x0_list]
+QuantumToolbox.settings.default_eltype = ComplexF64
+Δ64 = [splitting(N, λ, x0) for x0 in x0_list]
+
+QuantumToolbox.settings.default_eltype = Complex{Double64}
+Δd64 = [splitting(N, λ, x0) for x0 in x0_list]
 
 # cross-check the deepest barrier against BigFloat (much slower, so just one point)
-Δbig_end = splitting(Complex{BigFloat}, N, λ, x0_list[end])
+QuantumToolbox.settings.default_eltype = Complex{BigFloat}
+Δbig_end = splitting(N, λ, x0_list[end])
 
 println("at the deepest barrier, x0 = ", x0_list[end])
 println("  Float64  : ", Δ64[end])
@@ -169,25 +186,30 @@ The two curves agree perfectly while the splitting is large. Around ``\Delta E \
 
 Read physically, the `Float64` curve claims that beyond ``x_0 \approx 3`` the barrier stops mattering and the tunneling rate saturates. That is not a small quantitative error; it is a qualitatively wrong statement about the system. Tunneling keeps slowing down exponentially, and only the high-precision types can see it.
 
-The same trap appears in open systems. The **Liouvillian gap** of a driven-dissipative resonator — the eigenvalue of ``\mathcal{L}`` with the smallest nonzero real part, which sets the switching time between metastable states — becomes exponentially small near a bistability, and shrinks further with system size. Computed in `Float64` it eventually stops being physics: it flattens into the same roundoff floor, can come out *negative* (implying a density matrix that grows without bound, which no Lindblad master equation permits), and can place the gap minimum at entirely the wrong drive amplitude. The remedy is identical — pass a wider element type to [`liouvillian`](@ref) and [`eigenstates`](@ref).
+The same trap appears in open systems. The **Liouvillian gap** of a driven-dissipative resonator — the eigenvalue of ``\mathcal{L}`` with the smallest nonzero real part, which sets the switching time between metastable states — becomes exponentially small near a bistability, and shrinks further with system size. Computed in `Float64` it eventually stops being physics: it flattens into the same roundoff floor, can come out *negative* (implying a density matrix that grows without bound, which no Lindblad master equation permits), and can place the gap minimum at entirely the wrong drive amplitude. The remedy is identical — build the Hamiltonian and the collapse operators with a wider element type before calling [`liouvillian`](@ref) and [`eigenstates`](@ref).
 
 Note also that `Double64`, not `BigFloat`, was enough here, at roughly a tenth of the cost. Reaching for `BigFloat` on every problem is rarely the right move; it is usually worth trying the cheap type first.
 
 ## [The solvers are generic too](@id doc:Arbitrary-Precision:solvers)
 
-The same type argument flows through the time-evolution solvers, so [`sesolve`](@ref) and [`mesolve`](@ref) work unchanged at high precision:
+The same element type flows through the time-evolution solvers, so [`sesolve`](@ref) and [`mesolve`](@ref) work unchanged at high precision. Here the default element type is still `Complex{BigFloat}`, from the last run above:
 
 ```@example arbitrary_precision
 N_solver = 20
-a_big = destroy(Complex{BigFloat}, N_solver)
-ψ0_big = fock(Complex{BigFloat}, N_solver, 1)
-H_big = a_big' * a_big + BigFloat(0.1) / 2 * a_big' * a_big' * a_big * a_big
-c_ops_big = [sqrt(BigFloat(0.1)) * a_big]
+a = destroy(N_solver)
+ψ0 = fock(N_solver, 1)
+H = a' * a + 0.1 / 2 * a' * a' * a * a
+c_ops = [sqrt(BigFloat(0.1)) * a]
 
 tlist = range(0, 10, 100)
-sol = mesolve(H_big, ψ0_big, tlist, c_ops_big, e_ops = [a_big' * a_big], progress_bar = Val(false))
+sol = mesolve(H, ψ0, tlist, c_ops, e_ops = [a' * a], progress_bar = Val(false))
 
 eltype(sol.expect)
+```
+
+```@setup arbitrary_precision
+# restore the default, since the other pages of the documentation run in the same Julia session
+QuantumToolbox.settings.default_eltype = ComplexF64
 ```
 
 Note that the expectation values come back in the element type you asked for, rather than being silently narrowed to `ComplexF64`.

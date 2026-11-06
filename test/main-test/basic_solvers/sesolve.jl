@@ -88,6 +88,15 @@ include("setup.jl") # module TESetup (parameters and operators) are defined in t
         @inferred sesolve(H, ψ0, tlist, progress_bar = Val(false))
         @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, saveat = saveat, progress_bar = Val(false))
         @inferred sesolve(H, ψ0, tlist, e_ops = (TESetup.a' * TESetup.a, TESetup.a'), progress_bar = Val(false)) # We test the type inference for Tuple of different types
+
+        # a custom `output` stream changes the type of the `Progress` object
+        default_kwargs = QuantumToolbox.settings.progressmeter_kwargs
+        QuantumToolbox.settings.progressmeter_kwargs = (default_kwargs..., output = devnull)
+        try
+            @inferred sesolve(H, ψ0, tlist, e_ops = e_ops, progress_bar = Val(true))
+        finally
+            QuantumToolbox.settings.progressmeter_kwargs = default_kwargs
+        end
     end
 end
 
