@@ -31,9 +31,11 @@ end
         A::QuantumObject,
         B::QuantumObject,
         C::QuantumObject;
+        alg::AbstractODEAlgorithm = DP5(),
         max_t_plus_tau::Union{Nothing,Real} = nothing,
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         matrix_form::Union{Val,Bool} = Val(false),
+        progress_bar::Union{Val,Bool} = Val(true),
         kwargs...
     )
 
@@ -57,9 +59,11 @@ function correlation_3op_2t(
         A::QuantumObject{Operator},
         B::QuantumObject{Operator},
         C::QuantumObject{Operator};
+        alg::AbstractODEAlgorithm = DP5(),
         max_t_plus_tau::Union{Nothing, Real} = nothing,
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         matrix_form::Union{Val, Bool} = Val(false),
+        progress_bar::Union{Val, Bool} = Val(true),
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     # check tlist, τlist, and max_t_plus_tau
@@ -109,19 +113,14 @@ function correlation_3op_2t(
         kwargs2 = merge((saveat = collect(tlist_kept),), (; kwargs...))
 
         # note that doesn't need to do the first mesolve if tlist_kept == [0] (for 2op_1t and 3op_1t cases)
-        ρt_list = (tlist_kept == [0]) ? [ρ0] : mesolve(L, ρ0, tlist_kept; matrix_form = matrix_form_val, kwargs2...).states
+        ρt_list =
+            (tlist_kept == [0]) ? [ρ0] :
+            mesolve(L, ρ0, tlist_kept; alg, progress_bar, matrix_form = matrix_form_val, kwargs2...).states
 
         C_A = cache_operator(sprepost(C, A; matrix_form = matrix_form_val), ρt_list[1])
         CρA_list = map(ρt -> C_A * ρt, ρt_list)
 
-        # the entire problem is solved via a single mesolve_map call using the advanced (prob, iter, prob_func) method
-        # each kept t is solved only up to τlist[n_compute] instead of the full τlist
-        kwargs_nt = NamedTuple(kwargs)
-        alg = get(kwargs_nt, :alg, DP5())
-        progress_bar = get(kwargs_nt, :progress_bar, Val(true))
-        rest_kwargs = Base.structdiff(kwargs_nt, NamedTuple{(:alg, :progress_bar)})
-
-        prob = mesolveProblem(L, CρA_list[1], τlist, nothing; e_ops = [B], progress_bar = Val(false), matrix_form = matrix_form_val, rest_kwargs...)
+        prob = mesolveProblem(L, CρA_list[1], τlist, nothing; e_ops = [B], progress_bar = Val(false), matrix_form = matrix_form_val, kwargs...)
         iter = collect(zip([ρ.data for ρ in CρA_list], kept_n_compute))
         sols = mesolve_map(
             prob,
@@ -150,7 +149,9 @@ end
         A::QuantumObject,
         B::QuantumObject,
         C::QuantumObject;
+        alg::AbstractODEAlgorithm = DP5(),
         matrix_form::Union{Val,Bool} = Val(false),
+        progress_bar::Union{Val,Bool} = Val(true),
         kwargs...
     )
 
@@ -169,11 +170,13 @@ function correlation_3op_1t(
         A::QuantumObject{Operator},
         B::QuantumObject{Operator},
         C::QuantumObject{Operator};
+        alg::AbstractODEAlgorithm = DP5(),
         matrix_form::Union{Val, Bool} = Val(false),
+        progress_bar::Union{Val, Bool} = Val(true),
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     # there is only a single t = 0, so the underlying mesolve_map ensemble has just one trajectory
-    corr = correlation_3op_2t(H, ψ0, [0], τlist, c_ops, A, B, C; ensemblealg = EnsembleSerial(), matrix_form = makeVal(matrix_form), kwargs...)
+    corr = correlation_3op_2t(H, ψ0, [0], τlist, c_ops, A, B, C; alg, ensemblealg = EnsembleSerial(), matrix_form = makeVal(matrix_form), progress_bar, kwargs...)
 
     return corr[1, :] # 1 means tlist[1] = 0
 end
@@ -187,10 +190,12 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple},
         A::QuantumObject,
         B::QuantumObject;
+        alg::AbstractODEAlgorithm = DP5(),
         reverse::Bool=false,
         max_t_plus_tau::Union{Nothing,Real} = nothing,
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         matrix_form::Union{Val,Bool} = Val(false),
+        progress_bar::Union{Val,Bool} = Val(true),
         kwargs...
     )
 
@@ -201,7 +206,7 @@ Returns the two-time correlation function of two operators ``\hat{A}`` and ``\ha
 - If the initial state `ψ0` is specified as `nothing`, then the [`steadystate`](@ref) will be used as the initial state. Note that this doesn't support matrix form and is only implemented if `H` is constant ([`QuantumObject`](@ref)).
 - When `reverse=true`, the correlation function is calculated as ``\left\langle \hat{A}(t) \hat{B}(t + \tau) \right\rangle``.
 - If `max_t_plus_tau` is specified, skip computation where ``t + \tau >`` `max_t_plus_tau`. Skipped entries are filled with ``0``. Default `nothing` means compute all entries (equivalent to `Inf`).
-- The ``\tau``-evolution starting from every `t` in `tlist` is solved together as a single [`mesolve_map`](@ref), and `ensemblealg` (default to `EnsembleThreads()`) controls how that ensemble is parallelized.
+- The ``\tau``-evolution starting from every `t` in `tlist` is solved together as a single [`mesolve_map`](@ref), and `ensemblealg` (default to `EnsembleThreads()`) controls how that ensemble is parallelized. `alg` and `progress_bar` are forwarded to both the [`mesolve`](@ref) and [`mesolve_map`](@ref) calls.
 - If `matrix_form = Val(true)`, the solving process is done with matrix form instead of vectorizing the density matrices, which is most useful for large Hilbert spaces, sparse operators, GPU calculations, and poorly sparse Liouvillians. See the `matrix_form` keyword argument of [`mesolve`](@ref) for more details.
 """
 function correlation_2op_2t(
@@ -212,18 +217,20 @@ function correlation_2op_2t(
         c_ops::Union{Nothing, AbstractVector, Tuple},
         A::QuantumObject{Operator},
         B::QuantumObject{Operator};
+        alg::AbstractODEAlgorithm = DP5(),
         reverse::Bool = false,
         max_t_plus_tau::Union{Nothing, Real} = nothing,
         ensemblealg::EnsembleAlgorithm = EnsembleThreads(),
         matrix_form::Union{Val, Bool} = Val(false),
+        progress_bar::Union{Val, Bool} = Val(true),
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     matrix_form_val = makeVal(matrix_form)
     C = eye(get_size(A.dimensions)[1], type = Operator(), dims = A.dims) # same as qeye_like(A), use A instead of H (cause H might be SuperOperator)
     if reverse
-        corr = correlation_3op_2t(H, ψ0, tlist, τlist, c_ops, A, B, C; max_t_plus_tau, ensemblealg, matrix_form = matrix_form_val, kwargs...)
+        corr = correlation_3op_2t(H, ψ0, tlist, τlist, c_ops, A, B, C; alg, max_t_plus_tau, ensemblealg, matrix_form = matrix_form_val, progress_bar, kwargs...)
     else
-        corr = correlation_3op_2t(H, ψ0, tlist, τlist, c_ops, C, A, B; max_t_plus_tau, ensemblealg, matrix_form = matrix_form_val, kwargs...)
+        corr = correlation_3op_2t(H, ψ0, tlist, τlist, c_ops, C, A, B; alg, max_t_plus_tau, ensemblealg, matrix_form = matrix_form_val, progress_bar, kwargs...)
     end
 
     return corr
@@ -237,8 +244,10 @@ end
         c_ops::Union{Nothing,AbstractVector,Tuple},
         A::QuantumObject,
         B::QuantumObject;
+        alg::AbstractODEAlgorithm = DP5(),
         reverse::Bool=false,
         matrix_form::Union{Val,Bool} = Val(false),
+        progress_bar::Union{Val,Bool} = Val(true),
         kwargs...
     )
 
@@ -257,12 +266,14 @@ function correlation_2op_1t(
         c_ops::Union{Nothing, AbstractVector, Tuple},
         A::QuantumObject{Operator},
         B::QuantumObject{Operator};
+        alg::AbstractODEAlgorithm = DP5(),
         reverse::Bool = false,
         matrix_form::Union{Val, Bool} = Val(false),
+        progress_bar::Union{Val, Bool} = Val(true),
         kwargs...,
     ) where {HOpType <: Union{Operator, SuperOperator}, StateOpType <: Union{Ket, Operator}}
     # there is only a single t = 0, so the underlying mesolve_map ensemble has just one trajectory
-    corr = correlation_2op_2t(H, ψ0, [0], τlist, c_ops, A, B; reverse, ensemblealg = EnsembleSerial(), matrix_form = makeVal(matrix_form), kwargs...)
+    corr = correlation_2op_2t(H, ψ0, [0], τlist, c_ops, A, B; alg, reverse, ensemblealg = EnsembleSerial(), matrix_form = makeVal(matrix_form), progress_bar, kwargs...)
 
     return corr[1, :] # 1 means tlist[1] = 0
 end
