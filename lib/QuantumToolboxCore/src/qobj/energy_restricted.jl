@@ -209,8 +209,8 @@ enr_fock(
     sparse::Union{Bool, Val} = Val(false),
     excitation_weights::AbstractVecOrTuple{Td} = ntuple(_ -> 1, length(dims)),
 ) where {Td <: Integer} =
-    enr_fock(ComplexF64, dims, n_excitations, state; sparse, excitation_weights)
-enr_fock(s_enr::EnrSpace, state::AbstractVector{Td}; sparse::Union{Bool, Val} = Val(false)) where {Td <: Integer} = enr_fock(ComplexF64, s_enr, state; sparse)
+    enr_fock(settings.default_eltype, dims, n_excitations, state; sparse, excitation_weights)
+enr_fock(s_enr::EnrSpace, state::AbstractVector{Td}; sparse::Union{Bool, Val} = Val(false)) where {Td <: Integer} = enr_fock(settings.default_eltype, s_enr, state; sparse)
 
 @doc raw"""
     enr_thermal_dm(dims::Union{AbstractVector,Tuple}, n_excitations::Int, n::Union{Real,AbstractVector}; sparse::Union{Bool,Val}=Val(false), excitation_weights::Union{AbstractVector,Tuple})
@@ -312,8 +312,8 @@ enr_destroy(
     dims::AbstractVecOrTuple{Td},
     n_excitations::Int;
     excitation_weights::AbstractVecOrTuple{Td} = ntuple(_ -> 1, length(dims)),
-) where {Td <: Integer} = enr_destroy(ComplexF64, dims, n_excitations; excitation_weights)
-enr_destroy(s_enr::EnrSpace{N}) where {N} = enr_destroy(ComplexF64, s_enr)
+) where {Td <: Integer} = enr_destroy(settings.default_eltype, dims, n_excitations; excitation_weights)
+enr_destroy(s_enr::EnrSpace{N}) where {N} = enr_destroy(settings.default_eltype, s_enr)
 
 @doc raw"""
     enr_identity([T::Type=ComplexF64,] dims::Union{AbstractVector,Tuple}, n_excitations::Int; excitation_weights::Union{AbstractVector,Tuple})
@@ -340,5 +340,5 @@ enr_identity(
     dims::AbstractVecOrTuple{Td},
     n_excitations::Int;
     excitation_weights::AbstractVecOrTuple{Td} = ntuple(_ -> 1, length(dims)),
-) where {Td <: Integer} = enr_identity(ComplexF64, dims, n_excitations; excitation_weights)
-enr_identity(s_enr::EnrSpace) = enr_identity(ComplexF64, s_enr)
+) where {Td <: Integer} = enr_identity(settings.default_eltype, dims, n_excitations; excitation_weights)
+enr_identity(s_enr::EnrSpace) = enr_identity(settings.default_eltype, s_enr)
