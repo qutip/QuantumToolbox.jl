@@ -16,10 +16,12 @@ CUDACore = "bd0ed864-bdfe-4181-a5ed-ce625a5fdea2"
 cuSPARSE = "b26da814-b3bc-49ef-b0ee-c816305aa060"
 GPUArrays = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
+QuantumInterface = "5717a53b-5d69-4fa3-b976-0bf2f97ca1e5"
 
 [extensions]
 QuantumToolboxCoreCUDAExt = ["CUDACore", "cuSPARSE"]
 QuantumToolboxCoreGPUArraysExt = ["GPUArrays", "KernelAbstractions"]
+QuantumToolboxCoreQuantumInterfaceExt = "QuantumInterface"
 
 [compat]
 CUDACore = "6"
@@ -28,6 +30,7 @@ FillArrays = "1"
 GPUArrays = "11.4.1, 12.1"
 KernelAbstractions = "0.9, 0.10"
 LinearAlgebra = "1"
+QuantumInterface = "0.3.8, 0.4"
 Random = "1"
 SciMLOperators = "1.12"
 SparseArrays = "1"

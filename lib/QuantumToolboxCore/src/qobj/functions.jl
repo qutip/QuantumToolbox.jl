@@ -151,6 +151,8 @@ Returns the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product)
 !!! note
     `tensor` and `⊗` (where `⊗` can be typed by tab-completing `\otimes` in the REPL) are synonyms of `kron`.
 
+    The packages built on [`QuantumInterface.jl`](https://github.com/qojulia/QuantumInterface.jl) (e.g., [`QuantumOptics.jl`](https://github.com/qojulia/QuantumOptics.jl) and [`SecondQuantizedAlgebra.jl`](https://github.com/qojulia/SecondQuantizedAlgebra.jl)) export a different `tensor` and `⊗`, which causes a name conflict when they are loaded together with `QuantumToolbox`. When `QuantumInterface.jl` is loaded, its `tensor` and `⊗` are also extended for [`AbstractQuantumObject`](@ref) (returning the same result as `kron`), as well as its `expect`, `variance`, `fidelity`, `entropy_vn`, and `commutator`. Thus, one can resolve the conflict by explicitly importing them from one of these packages (e.g., `using SecondQuantizedAlgebra: tensor, ⊗`) and use them for all the objects.
+
 # Examples
 
 ```jldoctest
