@@ -1,7 +1,7 @@
 Base.@kwdef mutable struct Settings
     tidyup_tol::Float64 = 1.0e-14
     auto_tidyup::Bool = true
-    default_eltype_warning::Bool = true
+    show_eltype_warning::Bool = true
 end
 
 #=
@@ -64,7 +64,7 @@ function Base.setproperty!(s::Settings, name::Symbol, value)
 end
 
 Base.propertynames(::Settings, ::Bool = false) =
-    (:tidyup_tol, :auto_tidyup, :progressmeter_kwargs, :default_eltype, :default_eltype_warning)
+    (:tidyup_tol, :auto_tidyup, :progressmeter_kwargs, :default_eltype, :show_eltype_warning)
 
 function Base.show(io::IO, s::Settings)
     # get maximum property name to align the output and make it easier to read
@@ -87,7 +87,7 @@ Contains all the default global settings of QuantumToolbox.jl and all related li
 - `auto_tidyup::Bool = true` : Automatically `tidyup`.
 - `progressmeter_kwargs::NamedTuple = (showspeed = true, printed = true)` : Default keyword arguments for progress bar in [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl). This allows the customization of progress bar.
 - `default_eltype::Type = ComplexF64` : Element type of the quantum objects created without specifying it, e.g., `destroy(N)` or `fock(N, j)`. It must be a concrete floating point or complex type, such as `ComplexF32` or `Float64`.
-- `default_eltype_warning::Bool = true` : Warn (once) when a quantum object is created with an element type more general than `default_eltype`, e.g., `0.5 * destroy(N)` with `default_eltype = ComplexF32`.
+- `show_eltype_warning::Bool = true` : Warn (once) when a quantum object is created with an element type more general than `default_eltype`, e.g., `0.5 * destroy(N)` with `default_eltype = ComplexF32`.
 
 For detailed explanation of each settings, see our documentation [here](https://qutip.org/QuantumToolbox.jl/stable/users_guide/settings).
 

@@ -42,7 +42,7 @@ end
     @test_logs (:warn, r"more general") 0.5 * destroy(3)
     @test_logs (:warn, r"more general") QuantumObject(rand(Complex{BigFloat}, 2))
     @test_logs QuantumObject(rand(Float16, 2))
-    settings.default_eltype_warning = false
+    settings.show_eltype_warning = false
     @test_logs 0.5 * destroy(3)
 
     settings.progressmeter_kwargs = (showspeed = false, output = devnull)
@@ -51,6 +51,6 @@ end
 
     # restore the defaults, so that the other tests are not affected
     settings.default_eltype = ComplexF64
-    settings.default_eltype_warning = true
+    settings.show_eltype_warning = true
     settings.progressmeter_kwargs = (showspeed = true, printed = true)
 end

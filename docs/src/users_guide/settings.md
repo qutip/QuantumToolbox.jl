@@ -17,7 +17,7 @@ Here, we list out each setting along with the specific functions that will use i
     * Creating [`bloch_redfield_tensor`](@ref) or [`brterm`](@ref), and solving [`brmesolve`](@ref).
 - `progressmeter_kwargs::NamedTuple = (showspeed = true, printed = true)` : Default keyword arguments for progress bar in [`ProgressMeter.jl`](https://github.com/timholy/ProgressMeter.jl). This allows the customization of progress bar.
 - `default_eltype::Type = ComplexF64` : Element type of the quantum objects created without specifying it, such as `destroy(N)` or `fock(N, j)`. It must be a concrete floating point or complex type, such as `ComplexF32` or `Float64`. A real type can be used for real-valued systems: functions that need complex numbers, such as [`sigmay`](@ref) or [`rand_ket`](@ref), then use its complex version.
-- `default_eltype_warning::Bool = true` : Warn (once) when a quantum object is created with an element type more general than `default_eltype`, e.g., `0.5 * destroy(N)` with `default_eltype = ComplexF32`, or a complex state with a real `default_eltype`.
+- `show_eltype_warning::Bool = true` : Warn (once) when a quantum object is created with an element type more general than `default_eltype`, e.g., `0.5 * destroy(N)` with `default_eltype = ComplexF32`, or a complex state with a real `default_eltype`.
 
 ## Change default settings
 
@@ -61,7 +61,7 @@ To keep the lower precision, use `Float32` numbers instead, such as `0.5f0`:
 eltype(0.5f0 * a)
 ```
 
-An element type given explicitly is still used. The warning above cannot tell it apart from a promotion, so set `QuantumToolbox.settings.default_eltype_warning = false` if a more general type is intended:
+An element type given explicitly is still used. The warning above cannot tell it apart from a promotion, so set `QuantumToolbox.settings.show_eltype_warning = false` if a more general type is intended:
 
 ```@example settings
 eltype(destroy(ComplexF64, 5))
