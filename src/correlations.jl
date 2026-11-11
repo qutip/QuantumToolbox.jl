@@ -45,7 +45,7 @@ Returns the two-time correlation function of three operators ``\hat{A}``, ``\hat
 
 This function is implemented based on [`mesolve_map`](@ref) by the following adjustments:
 
-- If the initial state `ψ0` is specified as `nothing`, then the [`steadystate`](@ref) will be used as the initial state. Note that this doesn't support matrix form and is only implemented if `H` is constant ([`QuantumObject`](@ref)).
+- If the initial state `ψ0` is specified as `nothing`, then the [`steadystate`](@ref) will be used as the initial state.
 - If `max_t_plus_tau` is specified, skip computation where ``t + \tau >`` `max_t_plus_tau`. Skipped entries are filled with ``0``. Default `nothing` means compute all entries (equivalent to `Inf`).
 - The ``\tau``-evolution starting from every `t` in `tlist` is solved together as a single [`mesolve_map`](@ref), and `ensemblealg` (default to `EnsembleThreads()`) controls how that ensemble is parallelized.
 - If `matrix_form = Val(true)`, the solving process is done with matrix form instead of vectorizing the density matrices, which is most useful for large Hilbert spaces, sparse operators, GPU calculations, and poorly sparse Liouvillians. See the `matrix_form` keyword argument of [`mesolve`](@ref) for more details.
@@ -76,11 +76,6 @@ function correlation_3op_2t(
 
     L = liouvillian(H, c_ops; matrix_form = matrix_form_val)
     if ψ0 isa Nothing
-        # steadystate doesn't support time-dependent systems or matrix form, so it always needs the constant and vectorized Liouvillian
-        isconstant(L) ||
-            throw(ArgumentError("The state must be specified if the Hamiltonian/Liouvillian is time-dependent."))
-        is_matrix_form &&
-            throw(ArgumentError("The state must be specified for the support of matrix form."))
         ψ0 = steadystate(L)
     end
 
@@ -159,7 +154,7 @@ Returns the two-time correlation function (with only one time coordinate ``\tau`
 
 # Notes
 
-- If the initial state `ψ0` is specified as `nothing`, then the [`steadystate`](@ref) will be used as the initial state. Note that this doesn't support matrix form and is only implemented if `H` is constant ([`QuantumObject`](@ref)).
+- If the initial state `ψ0` is specified as `nothing`, then the [`steadystate`](@ref) will be used as the initial state.
 - If `matrix_form = Val(true)`, the solving process is done with matrix form instead of vectorizing the density matrices, which is most useful for large Hilbert spaces, sparse operators, GPU calculations, and poorly sparse Liouvillians. See the `matrix_form` keyword argument of [`mesolve`](@ref) for more details.
 """
 function correlation_3op_1t(
@@ -203,7 +198,7 @@ Returns the two-time correlation function of two operators ``\hat{A}`` and ``\ha
 
 # Notes
 
-- If the initial state `ψ0` is specified as `nothing`, then the [`steadystate`](@ref) will be used as the initial state. Note that this doesn't support matrix form and is only implemented if `H` is constant ([`QuantumObject`](@ref)).
+- If the initial state `ψ0` is specified as `nothing`, then the [`steadystate`](@ref) will be used as the initial state.
 - When `reverse=true`, the correlation function is calculated as ``\left\langle \hat{A}(t) \hat{B}(t + \tau) \right\rangle``.
 - If `max_t_plus_tau` is specified, skip computation where ``t + \tau >`` `max_t_plus_tau`. Skipped entries are filled with ``0``. Default `nothing` means compute all entries (equivalent to `Inf`).
 - The ``\tau``-evolution starting from every `t` in `tlist` is solved together as a single [`mesolve_map`](@ref), and `ensemblealg` (default to `EnsembleThreads()`) controls how that ensemble is parallelized. `alg` and `progress_bar` are forwarded to both the [`mesolve`](@ref) and [`mesolve_map`](@ref) calls.
@@ -255,7 +250,7 @@ Returns the two-time correlation function (with only one time coordinate ``\tau`
 
 # Notes
 
-- If the initial state `ψ0` is specified as `nothing`, then the [`steadystate`](@ref) will be used as the initial state. Note that this doesn't support matrix form and is only implemented if `H` is constant ([`QuantumObject`](@ref)).
+- If the initial state `ψ0` is specified as `nothing`, then the [`steadystate`](@ref) will be used as the initial state.
 - When `reverse=true`, the correlation function is calculated as ``\left\langle \hat{A}(t) \hat{B}(t + \tau) \right\rangle``.
 - If `matrix_form = Val(true)`, the solving process is done with matrix form instead of vectorizing the density matrices, which is most useful for large Hilbert spaces, sparse operators, GPU calculations, and poorly sparse Liouvillians. See the `matrix_form` keyword argument of [`mesolve`](@ref) for more details.
 """
