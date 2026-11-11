@@ -10,7 +10,7 @@ const QI = QuantumInterface
     # the functions exported by QuantumToolboxCore are not changed
     @test tensor === kron
     @test (⊗) === kron
-    for f in (:expect, :variance, :fidelity, :entropy_vn, :commutator)
+    for f in (:expect, :variance, :fidelity, :entropy_vn, :ptrace, :commutator)
         @test getfield(QuantumToolboxCore, f) !== getfield(QI, f)
     end
 
@@ -61,6 +61,23 @@ const QI = QuantumInterface
         @test QI.entropy_vn(ψ) == entropy_vn(ψ)
     end
 
+    @testset "ptrace" begin
+        # `QuantumInterface.ptrace` takes the subsystems to trace out, while `QuantumToolbox.ptrace` takes the ones to keep
+        ψ123 = tensor(rand_ket(2), rand_ket(3), rand_ket(4))
+        ρ123 = ket2dm(ψ123)
+        @test QI.ptrace(ρ123, 2) == ptrace(ρ123, (1, 3))
+        @test QI.ptrace(ρ123, [1, 3]) == ptrace(ρ123, (2,))
+        @test QI.ptrace(ρ123, (3, 1)) == ptrace(ρ123, (2,))
+        @test QI.ptrace(ρ123, Int[]) == ptrace(ρ123, (1, 2, 3))
+        @test QI.ptrace(ψ123, 1) == ptrace(ψ123, (2, 3))
+        @test QI.ptrace(ψ123', [2, 3]) == ptrace(ψ123', (1,))
+        @test_throws ArgumentError QI.ptrace(ρ123, (1, 2, 3)) # full trace is not allowed
+        @test_throws ArgumentError QI.ptrace(ρ, 1) # full trace of a single subsystem
+        @test_throws ArgumentError QI.ptrace(ρ123, 4)
+        @test_throws ArgumentError QI.ptrace(ρ123, 0)
+        @test_throws ArgumentError QI.ptrace(ρ123, [1, 1])
+    end
+
     @testset "commutator" begin
         @test QI.commutator(a, a') == commutator(a, a')
         @test QI.commutator(a, a'; anti = true) == commutator(a, a'; anti = true)
@@ -77,21 +94,22 @@ const QI = QuantumInterface
 
     # mimic a package which exports the functions owned by QuantumInterface.jl (e.g., QuantumOptics.jl and SecondQuantizedAlgebra.jl)
     @eval module OtherPackage
-    import QuantumInterface: tensor, ⊗, expect, variance, fidelity, entropy_vn, commutator
-    export tensor, ⊗, expect, variance, fidelity, entropy_vn, commutator
+    import QuantumInterface: tensor, ⊗, expect, variance, fidelity, entropy_vn, ptrace, commutator
+    export tensor, ⊗, expect, variance, fidelity, entropy_vn, ptrace, commutator
     end
 
     # the name conflicts can be resolved by explicitly importing them from that package
     @eval module UserCode
     using QuantumToolboxCore
     using ..OtherPackage
-    using ..OtherPackage: tensor, ⊗, expect, variance, fidelity, entropy_vn, commutator
+    using ..OtherPackage: tensor, ⊗, expect, variance, fidelity, entropy_vn, ptrace, commutator
     f_tensor() = tensor(destroy(3), sigmax())
     f_otimes() = destroy(3) ⊗ sigmax()
     f_expect() = expect(num(3), basis(3, 1))
     f_variance() = variance(num(3), basis(3, 1))
     f_fidelity() = fidelity(basis(3, 1), basis(3, 1))
     f_entropy_vn() = entropy_vn(maximally_mixed_dm(2))
+    f_ptrace() = ptrace(kron(basis(2, 0), basis(3, 1)), 1)
     f_commutator() = commutator(destroy(3), create(3))
     end
 
@@ -102,5 +120,6 @@ const QI = QuantumInterface
     @test UserCode.f_variance() == variance(num(3), basis(3, 1))
     @test UserCode.f_fidelity() == fidelity(basis(3, 1), basis(3, 1))
     @test UserCode.f_entropy_vn() == entropy_vn(maximally_mixed_dm(2))
+    @test UserCode.f_ptrace() == ptrace(kron(basis(2, 0), basis(3, 1)), 2)
     @test UserCode.f_commutator() == commutator(destroy(3), create(3))
 end

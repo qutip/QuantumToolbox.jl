@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Add `QuantumInterface.jl` extension, which extends its `tensor`, `⊗`, `expect`, `variance`, `fidelity`, `entropy_vn`, and `commutator` for `QuantumObject`. This allows resolving the name conflicts with the packages built on `QuantumInterface.jl` (e.g., `QuantumOptics.jl` and `SecondQuantizedAlgebra.jl`) by explicitly importing these functions from one of them. The functions exported by `QuantumToolbox` are not changed. ([#805])
+- Add `QuantumInterface.jl` extension, which extends its `tensor`, `⊗`, `expect`, `variance`, `fidelity`, `entropy_vn`, `ptrace`, and `commutator` for `QuantumObject`. This allows resolving the name conflicts with the packages built on `QuantumInterface.jl` (e.g., `QuantumOptics.jl` and `SecondQuantizedAlgebra.jl`) by explicitly importing these functions from one of them. Note that `QuantumInterface.ptrace` follows the convention of `QuantumInterface.jl`, namely the given indices are the subsystems to trace out. The functions exported by `QuantumToolbox` are not changed. ([#805])
 
 
 ## [v0.51.1]
