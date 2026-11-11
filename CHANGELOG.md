@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+- Add `default_eltype` to `QuantumToolbox.settings`, which sets the element type of the quantum objects created without specifying it, e.g., `destroy(N)` or `fock(N, j)`. Add also `show_eltype_warning`, which warns (once) when a quantum object is created with an element type more general than `default_eltype`. ([#803])
+- Rename `ProgressMeterKWARGS` in `QuantumToolbox.settings` to `progressmeter_kwargs`. The old name is deprecated. ([#803])
+- Fix type-instability of the progress bar, which also allows a custom `output` stream in `progressmeter_kwargs`. ([#803])
 - Add `ensemblealg`, `matrix_form`, and `max_t_plus_tau` keyword arguments to the two-time correlation functions ([#801]):
   - The `τ`-evolution starting from every `t` is now solved with `mesolve_map` in parallel.
   - `matrix_form` allows matrix form support instead of vectorizing the density matrices. 
@@ -637,3 +640,4 @@ Release date: 2024-11-13
 [#795]: https://github.com/qutip/QuantumToolbox.jl/issues/795
 [#797]: https://github.com/qutip/QuantumToolbox.jl/issues/797
 [#801]: https://github.com/qutip/QuantumToolbox.jl/issues/801
+[#803]: https://github.com/qutip/QuantumToolbox.jl/issues/803

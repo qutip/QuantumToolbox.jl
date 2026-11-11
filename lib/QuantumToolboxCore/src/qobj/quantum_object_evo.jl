@@ -128,6 +128,8 @@ struct QuantumObjectEvolution{
 
         data_sciml = _promote_to_scimloperator(data)
 
+        _check_eltype(eltype(data_sciml))
+
         return new{ObjType, typeof(dimensions), typeof(data_sciml)}(data_sciml, type, dimensions)
     end
 end
