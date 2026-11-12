@@ -30,6 +30,7 @@ import QuantumToolboxCore:
     _float_type,
     _complex_float_type,
     _non_endomorphic_dims_error,
+    _summands,
     _dense_similar,
     _sparse_similar,
     _spre,

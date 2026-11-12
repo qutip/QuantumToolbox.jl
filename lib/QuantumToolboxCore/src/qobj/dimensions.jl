@@ -43,6 +43,16 @@ The fields `to` and `from` are related to the left (row) and right (column) dime
 - `Dimensions(dims)`: Create `Dimensions` where `to == from`
 - `Dimensions((to_dims, from_dims))`: Create `Dimensions` from a 2-element tuple of integer tuple/vectors
 
+# Printing
+
+The `dims` of a quantum object are printed as `(to, from)`, where:
+- a [`Space`](@ref) is printed as its size, e.g. `2`;
+- a [`TensorSpace`](@ref) is printed with `⊗`, e.g. `2⊗3`;
+- a [`LiouvilleSpace`](@ref) of the operators with dims `(to, from)`, i.e., of the operators that take a ket of `from` to a ket of `to`, is printed as `ℒ(to ← from)`, e.g. `ℒ(2⊗3 ← 2⊗3)`;
+- a [`SumSpace`](@ref) is printed with `⊕`, e.g. `2 ⊕ 3`.
+
+For example, a [`Ket`](@ref) of two qubits has dims `(2⊗2, 1)`, an [`Operator`](@ref) acting on them `(2⊗2, 2⊗2)`, and a [`SuperOperator`](@ref) acting on these operators `(ℒ(2⊗2 ← 2⊗2), ℒ(2⊗2 ← 2⊗2))`. The integer form of the dims is given by `A.dims`.
+
 # Examples
 
 ```jldoctest
@@ -147,15 +157,8 @@ get_size(dimensions::Union{T, AbstractVecOrTuple{T}}) where {T <: Integer} = get
 Base.transpose(dimensions::Dimensions) = Dimensions(dimensions.from, dimensions.to) # switch `to` and `from`
 Base.adjoint(dimensions::Dimensions) = transpose(dimensions)
 
-# this is used to show `dims` for Qobj and QobjEvo
-function _get_dims_string(dimensions::Dimensions)
-    # the integer form `dims` cannot represent a direct sum, so a readable form is used instead
-    (_has_sum_space(dimensions.to) || _has_sum_space(dimensions.from)) &&
-        return "($(_space_string(dimensions.to)), $(_space_string(dimensions.from)))"
-
-    dims = dimensions_to_dims(dimensions)
-    return "($(string(dims[1])), $(string(dims[2])))"
-end
+# this is used to show `dims` for Qobj and QobjEvo, in the readable form of `_space_string`
+_get_dims_string(dimensions::Dimensions) = "($(_space_string(dimensions.to)), $(_space_string(dimensions.from)))"
 _get_dims_string(::Nothing) = "nothing" # for EigsolveResult.dimensions = nothing
 
 Base.:(==)(dim1::Dimensions, dim2::Dimensions) = (dim1.to == dim2.to) && (dim1.from == dim2.from)
@@ -280,9 +283,9 @@ A structure that describes the direct sum ``\mathcal{S}_1 \oplus \mathcal{S}_2 \
 
 Its dimension is the sum of the dimensions of the summands, a vector of it is the concatenation of one vector of each summand, and a matrix acting on it is a block matrix with one block for each pair of summands. Unlike [`TensorSpace`](@ref), a single summand stays a `SumSpace`, so that a block-diagonal matrix with a single block keeps the same structure.
 
-A `SumSpace` is also created by [`direct_sum`](@ref) (or `⊕`) of spaces. It is used by [`direct_sum`](@ref) of quantum objects and by [`block_diagonal_form`](@ref QuantumToolbox.block_diagonal_form).
+A `SumSpace` is also created by [`direct_sum`](@ref) (or `⊕`) of spaces, which flattens the direct sums of direct sums. It is used by [`direct_sum`](@ref) of quantum objects and by [`block_diagonal_form`](@ref QuantumToolbox.block_diagonal_form).
 
-The `dims` of a quantum object with a `SumSpace` are printed in a readable form: a [`Space`](@ref) as its size, a [`TensorSpace`](@ref) with `⊗`, a [`LiouvilleSpace`](@ref) of the operators with dims `(to, from)` as `ℒ(to ← from)`, and a `SumSpace` with `⊕`. For example, `ℒ(2⊗2 ← 2⊗2) ⊕ ℒ(3 ← 3)` is the direct sum of the Liouville spaces of the operators on two qubits and on a three-level system.
+In the `dims` of a quantum object, a `SumSpace` is printed with `⊕`. For example, `ℒ(2⊗2 ← 2⊗2) ⊕ ℒ(3 ← 3)` is the direct sum of the Liouville spaces of the operators on two qubits and on a three-level system (see [`Dimensions`](@ref)).
 
 # Examples
 
@@ -306,7 +309,8 @@ function Base.show(io::IO, s::SumSpace)
     return nothing
 end
 
-Base.:(==)(s1::SumSpace, s2::SumSpace) = s1.spaces == s2.spaces
+# compare the summands, whether they are stored in a Tuple or in a Vector
+Base.:(==)(s1::SumSpace, s2::SumSpace) = (length(s1.spaces) == length(s2.spaces)) && all(splat(==), zip(s1.spaces, s2.spaces))
 
 get_size(s::SumSpace) = sum(get_size, s.spaces)
 
@@ -320,12 +324,7 @@ function _summand_range(s::SumSpace, k::Int)
 end
 
 ##########################################
-# Readable form of the spaces, used to show the `dims` that contain a `SumSpace`
-
-_has_sum_space(::AbstractSpace) = false
-_has_sum_space(::SumSpace) = true
-_has_sum_space(s::TensorSpace) = any(_has_sum_space, s.spaces)
-_has_sum_space(s::LiouvilleSpace) = _has_sum_space(s.op_dims.to) || _has_sum_space(s.op_dims.from)
+# Readable form of the spaces, used to show the `dims` of quantum objects
 
 _space_string(s::AbstractSpace) = sprint(show, s) # e.g. EnrSpace
 _space_string(s::Space) = string(s.size)

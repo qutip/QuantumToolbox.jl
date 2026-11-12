@@ -95,7 +95,7 @@ import SparseArrays: AbstractSparseMatrix
         ρ_tot = tensor(ρ_s, ρ_enr)
         opstring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ρ_tot.data)
-        ρ_tot_dims = ρ_tot.dims  # Now returns tuple format
+        ρ_tot_dims = "($D1⊗$D2⊗$space_enr, $D1⊗$D2⊗$space_enr)"
         ρ_tot_size = size_s * size_enr
         ρ_tot_isherm = isherm(ρ_tot)
         @test opstring ==

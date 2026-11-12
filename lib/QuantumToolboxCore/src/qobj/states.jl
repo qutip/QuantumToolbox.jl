@@ -267,7 +267,7 @@ Here, `x = 1` (`z = 1`) means applying Pauli-``X`` ( Pauli-``Z``) unitary transf
 ```jldoctest
 julia> real(bell_state(0, 0))
 
-Quantum Object:   type=Ket()   dims=([2, 2], [1])   size=(4,)
+Quantum Object:   type=Ket()   dims=(2⊗2, 1)   size=(4,)
 4-element Vector{Float64}:
  0.7071067811865475
  0.0
@@ -276,7 +276,7 @@ Quantum Object:   type=Ket()   dims=([2, 2], [1])   size=(4,)
 
 julia> real(bell_state(Val(1), Val(0)))
 
-Quantum Object:   type=Ket()   dims=([2, 2], [1])   size=(4,)
+Quantum Object:   type=Ket()   dims=(2⊗2, 1)   size=(4,)
 4-element Vector{Float64}:
  0.0
  0.7071067811865475

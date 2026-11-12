@@ -70,12 +70,18 @@ A = sigmaz() ⊕ qeye(3)
 direct_component(ψ, 2)
 ```
 
-The `dims` of a quantum object that contains a direct sum are printed in a readable form:
+The direct sum is associative, so, as for the tensor product, a direct sum of direct sums is flattened:
+
+```@example symmetries
+Space(2) ⊕ Space(3) ⊕ Space(4)
+```
+
+The `dims` of the quantum objects are printed as `(to, from)`, where:
 - a Hilbert space is printed as its size (`3`), and a tensor product with `⊗` (`3⊗3`);
 - the Liouville space of the operators that take a ket of ``W`` to a ket of ``V`` (see below) is printed as `ℒ(V ← W)`;
 - a direct sum is printed with `⊕`.
 
-The other quantum objects keep the usual form, where e.g. `([3, 3], [3, 3])` means `(3⊗3, 3⊗3)` and `(([3], [3]), ([3], [3]))` means `(ℒ(3 ← 3), ℒ(3 ← 3))`.
+The integer form of the `dims` is still given by `A.dims`.
 
 ## Block-diagonal form of a Hamiltonian
 
@@ -156,10 +162,14 @@ The sectors of the Liouvillian also tell which states of ``V`` belong together: 
 L_odd
 ```
 
-`bdf_L.B` acts on the direct sum of the two: the outer `⊕` separates the blocks of ``\mathcal{L}``, and the parentheses group the blocks of ``\hat{\rho}`` in each of them.
+`bdf_L.B` acts on the direct sum of all the blocks of ``\hat{\rho}``, `ℒ(5 ← 5) ⊕ ℒ(4 ← 4) ⊕ ℒ(5 ← 4) ⊕ ℒ(4 ← 5)`, since the direct sums are flattened. Which of them form a block of ``\mathcal{L}`` is given by `bdf_L.blocks`, and `bdf_L.B == direct_sum(bdf_L.blocks...)`:
 
 ```@example symmetries
 bdf_L.P
+```
+
+```@example symmetries
+bdf_L.B == L_even ⊕ L_odd
 ```
 
 A vector of `L_even` is made of ``\hat{\rho}_{++}`` and ``\hat{\rho}_{--}``, one after the other, each vectorized as by [`mat2vec`](@ref). Therefore, [`direct_component`](@ref) and [`vec2mat`](@ref) give them back as matrices, acting on ``V_+`` (dims `([5], [5])`) and ``V_-`` (dims `([4], [4])`). For example, the steady state is the eigenvector of `L_even` with zero eigenvalue, and the trace of its block ``\hat{\rho}_{++}`` is the probability of an even number of photons:
@@ -172,7 +182,7 @@ v = vecs[argmin(abs.(λ))]
 real(tr(ρ₊₊) / (tr(ρ₊₊) + tr(ρ₋₋)))
 ```
 
-The full density matrix is obtained by bringing the vector back to the original Liouville space with `bdf_L.P'`:
+The full density matrix is obtained by bringing the vector back to the original Liouville space with `bdf_L.P'`. Since `L_even` acts on the first two summands of the space of `bdf_L.B`, `direct_sum(S, 1 => v)` puts `v` there and zeros elsewhere:
 
 ```@example symmetries
 ρ = vec2mat(bdf_L.P' * direct_sum(bdf_L.B.dimensions.to, 1 => v))
@@ -220,11 +230,11 @@ bdf_JC.blocks[2] # d = 1
 
 ## Summary
 
-| System | Hamiltonian blocks | Liouvillian blocks |
-|:-------|:-------------------|:-------------------|
-| Two modes, weak ``\mathbb{Z}_2`` (``\hat{a}``, ``\hat{b}``) | ``V_+ \oplus V_-`` | ``[\mathcal{L}(V_+ \leftarrow V_+) \oplus \mathcal{L}(V_- \leftarrow V_-)] \oplus [\mathcal{L}(V_+ \leftarrow V_-) \oplus \mathcal{L}(V_- \leftarrow V_+)]`` |
-| Two modes, strong ``\mathbb{Z}_2`` (``\hat{a}^2``, ``\hat{b}^2``) | ``V_+ \oplus V_-`` | ``\mathcal{L}(V_+ \leftarrow V_+) \oplus \mathcal{L}(V_- \leftarrow V_+) \oplus \mathcal{L}(V_+ \leftarrow V_-) \oplus \mathcal{L}(V_- \leftarrow V_-)`` |
-| Jaynes-Cummings, weak ``U(1)`` (``\hat{a}``, ``\hat{\sigma}_-``) | ``V_0 \oplus V_1 \oplus \cdots`` | ``\bigoplus_d \left[ \bigoplus_{N - N' = d} \mathcal{L}(V_N \leftarrow V_{N'}) \right]`` |
+| System | Blocks of the Hamiltonian | Blocks of the Liouvillian |
+|:-------|:--------------------------|:--------------------------|
+| Two modes, weak ``\mathbb{Z}_2`` (``\hat{a}``, ``\hat{b}``) | ``V_+``, ``V_-`` | ``\mathcal{L}(V_+ \leftarrow V_+) \oplus \mathcal{L}(V_- \leftarrow V_-)``, ``\mathcal{L}(V_+ \leftarrow V_-) \oplus \mathcal{L}(V_- \leftarrow V_+)`` |
+| Two modes, strong ``\mathbb{Z}_2`` (``\hat{a}^2``, ``\hat{b}^2``) | ``V_+``, ``V_-`` | ``\mathcal{L}(V_+ \leftarrow V_+)``, ``\mathcal{L}(V_- \leftarrow V_+)``, ``\mathcal{L}(V_+ \leftarrow V_-)``, ``\mathcal{L}(V_- \leftarrow V_-)`` |
+| Jaynes-Cummings, weak ``U(1)`` (``\hat{a}``, ``\hat{\sigma}_-``) | ``V_0``, ``V_1``, … | ``\bigoplus_{N - N' = d} \mathcal{L}(V_N \leftarrow V_{N'})`` for each ``d`` |
 
 !!! note
     [`block_diagonal_form`](@ref) only finds the blocks of a matrix in the basis it is written in. It finds the symmetries that are diagonal in that basis (such as the parity or the number of excitations in the Fock basis), but not, e.g., the exchange of two identical modes, whose sectors are the symmetric and antisymmetric combinations of Fock states.
