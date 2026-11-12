@@ -17,7 +17,7 @@ using QuantumToolbox
     @test sort(eigenenergies(σx, sparse = Val(false)); by = real) ≈ sort(vals_pauli_dense; by = real)
     @test sort(eigenenergies(σx, sparse = Val(true), eigvals = 2); by = real) ≈ sort(vals_pauli_sparse; by = real)
     @test resstring ==
-        "EigsolveResult:   type=$(Operator())   dims=$(result.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
+        "EigsolveResult:   type=$(Operator())   dims=(2, 2)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
     N = 30
     a = kron(destroy(N), qeye(2))
@@ -94,7 +94,7 @@ using QuantumToolbox
     valstring = sprint((t, s) -> show(t, "text/plain", s), result_sparse.values)
     vecsstring = sprint((t, s) -> show(t, "text/plain", s), result_sparse.vectors)
     @test resstring ==
-        "EigsolveResult:   type=$(SuperOperator())   dims=$(result_sparse.dims)\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
+        "EigsolveResult:   type=$(SuperOperator())   dims=(ℒ(5⊗5 ← 5⊗5), ℒ(5⊗5 ← 5⊗5))\nvalues:\n$(valstring)\nvectors:\n$vecsstring"
 
     vals_qobj_sorted, vecs_qobj_sorted = eigenstates(L, sortby = abs)
     vals_qobj_sorted = vals_qobj_sorted[1:10]

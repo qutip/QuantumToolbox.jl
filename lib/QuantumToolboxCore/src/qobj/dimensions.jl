@@ -3,10 +3,11 @@ This file defines the Dimensions structure and also the following space structur
     - Space
     - TensorSpace
     - LiouvilleSpace
+    - SumSpace
 =#
 
 export Dimensions, get_size
-export AbstractSpace, Space, TensorSpace
+export AbstractSpace, Space, TensorSpace, SumSpace
 export AbstractSuperSpace, LiouvilleSpace
 
 @doc raw"""
@@ -41,6 +42,16 @@ The fields `to` and `from` are related to the left (row) and right (column) dime
 - `Dimensions(to, from)`: Create `Dimensions` with explicit `to` and `from` [`AbstractSpace`](@ref)
 - `Dimensions(dims)`: Create `Dimensions` where `to == from`
 - `Dimensions((to_dims, from_dims))`: Create `Dimensions` from a 2-element tuple of integer tuple/vectors
+
+# Printing
+
+The `dims` of a quantum object are printed as `(to, from)`, where:
+- a [`Space`](@ref) is printed as its size, e.g. `2`;
+- a [`TensorSpace`](@ref) is printed with `⊗`, e.g. `2⊗3`;
+- a [`LiouvilleSpace`](@ref) of the operators with dims `(to, from)`, i.e., of the operators that take a ket of `from` to a ket of `to`, is printed as `ℒ(to ← from)`, e.g. `ℒ(2⊗3 ← 2⊗3)`;
+- a [`SumSpace`](@ref) is printed with `⊕`, e.g. `2 ⊕ 3`.
+
+For example, a [`Ket`](@ref) of two qubits has dims `(2⊗2, 1)`, an [`Operator`](@ref) acting on them `(2⊗2, 2⊗2)`, and a [`SuperOperator`](@ref) acting on these operators `(ℒ(2⊗2 ← 2⊗2), ℒ(2⊗2 ← 2⊗2))`. The integer form of the dims is given by `A.dims`.
 
 # Examples
 
@@ -146,11 +157,8 @@ get_size(dimensions::Union{T, AbstractVecOrTuple{T}}) where {T <: Integer} = get
 Base.transpose(dimensions::Dimensions) = Dimensions(dimensions.from, dimensions.to) # switch `to` and `from`
 Base.adjoint(dimensions::Dimensions) = transpose(dimensions)
 
-# this is used to show `dims` for Qobj and QobjEvo
-function _get_dims_string(dimensions::Dimensions)
-    dims = dimensions_to_dims(dimensions)
-    return "($(string(dims[1])), $(string(dims[2])))"
-end
+# this is used to show `dims` for Qobj and QobjEvo, in the readable form of `_space_string`
+_get_dims_string(dimensions::Dimensions) = "($(_space_string(dimensions.to)), $(_space_string(dimensions.from)))"
 _get_dims_string(::Nothing) = "nothing" # for EigsolveResult.dimensions = nothing
 
 Base.:(==)(dim1::Dimensions, dim2::Dimensions) = (dim1.to == dim2.to) && (dim1.from == dim2.from)
@@ -262,3 +270,75 @@ Base.:(==)(s1::LiouvilleSpace, s2::LiouvilleSpace) = s1.op_dims == s2.op_dims
 get_size(s::LiouvilleSpace) = prod(get_size(s.op_dims)) # get_size(Dimensions.to) × get_size(Dimensions.from)
 
 dimensions_to_dims(s::LiouvilleSpace) = dimensions_to_dims(s.op_dims)
+
+##########################################
+# SumSpace
+
+@doc raw"""
+    struct SumSpace{T} <: AbstractSpace
+        spaces::T
+    end
+
+A structure that describes the direct sum ``\mathcal{S}_1 \oplus \mathcal{S}_2 \oplus \cdots`` of the spaces in `spaces` (a `Tuple` or an `AbstractVector`).
+
+Its dimension is the sum of the dimensions of the summands, a vector of it is the concatenation of one vector of each summand, and a matrix acting on it is a block matrix with one block for each pair of summands. Unlike [`TensorSpace`](@ref), a single summand stays a `SumSpace`, so that a block-diagonal matrix with a single block keeps the same structure.
+
+A `SumSpace` is also created by [`direct_sum`](@ref) (or `⊕`) of spaces, which flattens the direct sums of direct sums. It is used by [`direct_sum`](@ref) of quantum objects and by [`block_diagonal_form`](@ref QuantumToolbox.block_diagonal_form).
+
+The summands of a `SumSpace` can also be `SumSpace`s, to group them: e.g., [`block_diagonal_form`](@ref QuantumToolbox.block_diagonal_form) groups the blocks of the density matrix that belong to the same block of a Liouvillian. Since the direct sum is associative, such a nested `SumSpace` is equal (`==`) to the flat one with the same summands, and only the indices of [`direct_component`](@ref) refer to the groups.
+
+In the `dims` of a quantum object, a `SumSpace` is printed with `⊕`. For example, `ℒ(2⊗2 ← 2⊗2) ⊕ ℒ(3 ← 3)` is the direct sum of the Liouville spaces of the operators on two qubits and on a three-level system (see [`Dimensions`](@ref)).
+
+# Examples
+
+```jldoctest
+julia> S = Space(2) ⊕ Space(3)
+SumSpace(Space(2), Space(3))
+
+julia> get_size(S)
+5
+```
+"""
+struct SumSpace{T <: Union{Tuple{Vararg{AbstractSpace}}, AbstractVector{<:AbstractSpace}}} <: AbstractSpace
+    spaces::T # the summands
+end
+SumSpace(spaces::AbstractSpace...) = SumSpace(spaces)
+
+function Base.show(io::IO, s::SumSpace)
+    print(io, "SumSpace(")
+    join(io, s.spaces, ", ")
+    print(io, ")")
+    return nothing
+end
+
+# The direct sum is associative: `(S₁ ⊕ S₂) ⊕ S₃` and `S₁ ⊕ S₂ ⊕ S₃` have the same vectors and matrices, so two direct
+# sums are equal if they have the same summands once flattened (whether they are stored in a Tuple or in a Vector).
+Base.:(==)(s1::SumSpace, s2::SumSpace) = _flat_summands(s1) == _flat_summands(s2)
+
+_flat_summands(s::SumSpace) = mapreduce(_flat_summands, vcat, s.spaces; init = AbstractSpace[])
+_flat_summands(s::AbstractSpace) = AbstractSpace[s]
+
+get_size(s::SumSpace) = sum(get_size, s.spaces)
+
+# the integer form of each summand
+dimensions_to_dims(s::SumSpace) = map(dimensions_to_dims, s.spaces)
+
+# the indices of the k-th summand
+function _summand_range(s::SumSpace, k::Int)
+    offset = sum(get_size, s.spaces[1:(k - 1)]; init = 0)
+    return (offset + 1):(offset + get_size(s.spaces[k]))
+end
+_summand_range(s::SumSpace, k::UnitRange{Int}) = first(_summand_range(s, first(k))):last(_summand_range(s, last(k)))
+
+##########################################
+# Readable form of the spaces, used to show the `dims` of quantum objects
+
+_space_string(s::AbstractSpace) = sprint(show, s) # e.g. EnrSpace
+_space_string(s::Space) = string(s.size)
+_space_string(s::TensorSpace) = join(map(_factor_string, s.spaces), "⊗")
+_space_string(s::LiouvilleSpace) = "ℒ($(_space_string(s.op_dims.to)) ← $(_space_string(s.op_dims.from)))"
+_space_string(s::SumSpace) = join(map(_factor_string, s.spaces), " ⊕ ")
+
+# a space inside a tensor product or a direct sum: direct sums get parentheses
+_factor_string(s::AbstractSpace) = _space_string(s)
+_factor_string(s::SumSpace) = (length(s.spaces) == 1) ? _space_string(s) : "($(_space_string(s)))"

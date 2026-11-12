@@ -119,7 +119,7 @@ import SciMLOperators: AddedOperator
 
         opstring = sprint((t, s) -> show(t, "text/plain", s), H)
         datastring = sprint((t, s) -> show(t, "text/plain", s), H.data)
-        H_dims = H.dims
+        H_dims = "($N, $N)"
         H_size = size(H)
         H_isherm = isherm(H)
         H_isconst = isconstant(H)
@@ -129,7 +129,7 @@ import SciMLOperators: AddedOperator
         L = QobjEvo(spre(a))
         opstring = sprint((t, s) -> show(t, "text/plain", s), L)
         datastring = sprint((t, s) -> show(t, "text/plain", s), L.data)
-        L_dims = L.dims
+        L_dims = "(ℒ($N ← $N), ℒ($N ← $N))"
         L_size = size(L)
         L_isherm = isherm(L)
         L_isconst = isconstant(L)

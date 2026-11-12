@@ -318,7 +318,7 @@ using StaticArrays
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
         datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
         dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), a.dimensions)
-        a_dims = a.dims
+        a_dims = "($N, $N)"
         a_size = size(a)
         a_isherm = isherm(a)
         @test opstring ==
@@ -330,7 +330,7 @@ using StaticArrays
         opstring = sprint((t, s) -> show(t, "text/plain", s), Gop)
         datastring = sprint((t, s) -> show(t, "text/plain", s), Gop.data)
         dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), Gop.dimensions)
-        Gop_dims = ([N, N], [N, 1])  # Tuple of vectors for non-square operator
+        Gop_dims = "($N⊗$N, $N⊗1)" # non-square operator
         Gop_size = size(Gop)
         Gop_isherm = isherm(Gop)
         @test opstring ==
@@ -341,7 +341,7 @@ using StaticArrays
         opstring = sprint((t, s) -> show(t, "text/plain", s), a)
         datastring = sprint((t, s) -> show(t, "text/plain", s), a.data)
         dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), a.dimensions)
-        a_dims = a.dims
+        a_dims = "(ℒ($N ← $N), ℒ($N ← $N))"
         a_size = size(a)
         a_isherm = isherm(a)
         @test opstring == "\nQuantum Object:   type=SuperOperator()   dims=$a_dims   size=$a_size\n$datastring"
@@ -350,7 +350,7 @@ using StaticArrays
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
         dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), ψ.dimensions)
-        ψ_dims = ψ.dims
+        ψ_dims = "($N, 1)"
         ψ_size = size(ψ)
         @test opstring == "\nQuantum Object:   type=Ket()   dims=$ψ_dims   size=$ψ_size\n$datastring"
         @test dimsensions_string == "Dimensions(Space($N), Space(1))"
@@ -359,7 +359,7 @@ using StaticArrays
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ.data)
         dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), ψ.dimensions)
-        ψ_dims = ψ.dims
+        ψ_dims = "(1, $N)"
         ψ_size = size(ψ)
         @test opstring == "\nQuantum Object:   type=Bra()   dims=$ψ_dims   size=$ψ_size\n$datastring"
         @test dimsensions_string == "Dimensions(Space(1), Space($N))"
@@ -368,7 +368,7 @@ using StaticArrays
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
         dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), ψ2.dimensions)
-        ψ2_dims = ψ2.dims
+        ψ2_dims = "(ℒ(2 ← 2), 1)"
         ψ2_size = size(ψ2)
         @test opstring == "\nQuantum Object:   type=OperatorKet()   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
         @test dimsensions_string == "Dimensions(LiouvilleSpace(Dimensions(Space(2), Space(2))), Space(1))"
@@ -377,7 +377,7 @@ using StaticArrays
         opstring = sprint((t, s) -> show(t, "text/plain", s), ψ2)
         datastring = sprint((t, s) -> show(t, "text/plain", s), ψ2.data)
         dimsensions_string = sprint((t, s) -> show(t, "text/plain", s), ψ2.dimensions)
-        ψ2_dims = ψ2.dims
+        ψ2_dims = "(1, ℒ(2 ← 2))"
         ψ2_size = size(ψ2)
         @test opstring == "\nQuantum Object:   type=OperatorBra()   dims=$ψ2_dims   size=$ψ2_size\n$datastring"
         @test dimsensions_string == "Dimensions(Space(1), LiouvilleSpace(Dimensions(Space(2), Space(2))))"

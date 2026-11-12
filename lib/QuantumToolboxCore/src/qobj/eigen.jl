@@ -25,7 +25,7 @@ A struct containing the eigenvalues, the eigenvectors, and some information from
 One can obtain the eigenvalues and the corresponding [`QuantumObject`](@ref)-type eigenvectors by:
 ```jldoctest
 julia> result = eigen(sigmax())
-EigsolveResult:   type=Operator()   dims=([2], [2])
+EigsolveResult:   type=Operator()   dims=(2, 2)
 values:
 2-element Vector{Float64}:
  -1.0
@@ -45,12 +45,12 @@ julia> λ # eigenvalues
 julia> ψ # eigenvectors
 2-element Vector{QuantumObject{Ket, Dimensions{Space, Space}, Vector{ComplexF64}}}:
 
-Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
+Quantum Object:   type=Ket()   dims=(2, 1)   size=(2,)
 2-element Vector{ComplexF64}:
  -0.7071067811865475 + 0.0im
   0.7071067811865475 + 0.0im
 
-Quantum Object:   type=Ket()   dims=([2], [1])   size=(2,)
+Quantum Object:   type=Ket()   dims=(2, 1)   size=(2,)
 2-element Vector{ComplexF64}:
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
