@@ -285,6 +285,8 @@ Its dimension is the sum of the dimensions of the summands, a vector of it is th
 
 A `SumSpace` is also created by [`direct_sum`](@ref) (or `⊕`) of spaces, which flattens the direct sums of direct sums. It is used by [`direct_sum`](@ref) of quantum objects and by [`block_diagonal_form`](@ref QuantumToolbox.block_diagonal_form).
 
+The summands of a `SumSpace` can also be `SumSpace`s, to group them: e.g., [`block_diagonal_form`](@ref QuantumToolbox.block_diagonal_form) groups the blocks of the density matrix that belong to the same block of a Liouvillian. Since the direct sum is associative, such a nested `SumSpace` is equal (`==`) to the flat one with the same summands, and only the indices of [`direct_component`](@ref) refer to the groups.
+
 In the `dims` of a quantum object, a `SumSpace` is printed with `⊕`. For example, `ℒ(2⊗2 ← 2⊗2) ⊕ ℒ(3 ← 3)` is the direct sum of the Liouville spaces of the operators on two qubits and on a three-level system (see [`Dimensions`](@ref)).
 
 # Examples
@@ -309,8 +311,12 @@ function Base.show(io::IO, s::SumSpace)
     return nothing
 end
 
-# compare the summands, whether they are stored in a Tuple or in a Vector
-Base.:(==)(s1::SumSpace, s2::SumSpace) = (length(s1.spaces) == length(s2.spaces)) && all(splat(==), zip(s1.spaces, s2.spaces))
+# The direct sum is associative: `(S₁ ⊕ S₂) ⊕ S₃` and `S₁ ⊕ S₂ ⊕ S₃` have the same vectors and matrices, so two direct
+# sums are equal if they have the same summands once flattened (whether they are stored in a Tuple or in a Vector).
+Base.:(==)(s1::SumSpace, s2::SumSpace) = _flat_summands(s1) == _flat_summands(s2)
+
+_flat_summands(s::SumSpace) = mapreduce(_flat_summands, vcat, s.spaces; init = AbstractSpace[])
+_flat_summands(s::AbstractSpace) = AbstractSpace[s]
 
 get_size(s::SumSpace) = sum(get_size, s.spaces)
 

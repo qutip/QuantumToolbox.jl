@@ -48,7 +48,7 @@ end
 
 Return the block-diagonal form of an [`Operator`](@ref) or a [`SuperOperator`](@ref) `A`. This is very useful in the presence of symmetries: see the [Symmetries and block diagonalization](@ref doc:Symmetries) page of the documentation.
 
-The blocks are the connected components of the graph of the nonzero elements of `A`. The ``k``-th block acts on a space ``S_k``, and `A` in the basis of the blocks acts on the direct sum ``S = S_1 \oplus S_2 \oplus \cdots`` (see [`SumSpace`](@ref)).
+The blocks are the connected components of the graph of the nonzero elements of `A`. The ``k``-th block acts on a space ``S_k``, and `A` in the basis of the blocks acts on the direct sum ``S = S_1 \oplus S_2 \oplus \cdots`` (see [`SumSpace`](@ref)), whose ``k``-th summand is ``S_k``.
 
 # Arguments
 - `A::QuantumObject`: The quantum object.
@@ -57,12 +57,12 @@ The blocks are the connected components of the graph of the nonzero elements of 
 The [`BlockDiagonalForm`](@ref) `bdf` of `A`, with
 - `bdf.B`: `A` in the basis of the blocks, with dims `(S, S)`;
 - `bdf.P`: the permutation from the basis of `A` to the basis of the blocks, with dims `(S, dims of A)`, such that `bdf.B = bdf.P * A * bdf.P'`;
-- `bdf.blocks`: the blocks, with dims `(Sₖ, Sₖ)`, such that `bdf.B == direct_sum(bdf.blocks...)`;
+- `bdf.blocks`: the blocks `direct_component(bdf.B, k, k)`, with dims `(Sₖ, Sₖ)`, such that `bdf.B == direct_sum(bdf.blocks...)`;
 - `bdf.block_sizes`: the sizes of the blocks.
 
 For an [`Operator`](@ref), each ``S_k`` is a [`Space`](@ref).
 
-For a [`SuperOperator`](@ref) acting on the operators on a Hilbert space ``V`` (e.g., a Liouvillian), the blocks also split ``V`` into sectors ``V_1 \oplus V_2 \oplus \cdots``, and each ``S_k`` is a direct sum of the [`LiouvilleSpace`](@ref)s of some blocks ``\hat{\rho}_{ij}`` of the density matrix (the operators from ``V_j`` to ``V_i``). The vector of a block is made of the vectorized ``\hat{\rho}_{ij}``, one after the other, so that `vec2mat(direct_component(v, i))` returns the ``i``-th of them as a matrix. As direct sums are flattened, ``S`` is the direct sum of all these Liouville spaces, and `direct_sum(S, k => v)` brings a vector `v` of a block back to the space of `bdf.B` if the block starts at the `k`-th summand of ``S``.
+For a [`SuperOperator`](@ref) acting on the operators on a Hilbert space ``V`` (e.g., a Liouvillian), the blocks also split ``V`` into sectors ``V_1 \oplus V_2 \oplus \cdots``, and each ``S_k`` is a direct sum of the [`LiouvilleSpace`](@ref)s of some blocks ``\hat{\rho}_{ij}`` of the density matrix (the operators from ``V_j`` to ``V_i``). The vector of a block is made of the vectorized ``\hat{\rho}_{ij}``, one after the other, so that `vec2mat(direct_component(v, i))` returns the ``i``-th of them as a matrix. Then ``S`` is a nested direct sum: its summands are the blocks of `A`, and their summands are the blocks of the density matrix. For example, `direct_sum(S, k => v)` brings a vector `v` of the ``k``-th block back to the space of `bdf.B`.
 """
 function block_diagonal_form(A::QuantumObject{OpType}) where {OpType <: Union{Operator, SuperOperator}}
     indices = _block_indices(A.data)
@@ -93,19 +93,13 @@ function block_diagonal_form(L::QuantumObject{SuperOperator, <:Dimensions{<:Liou
     return _block_diagonal_form(L, indices, spaces)
 end
 
-# `spaces[k]` is the space of the k-th block, and the space of B is the (flattened) direct sum of them
+# `spaces[k]` is the space of the k-th block, and each of them is a summand of the space of B
 function _block_diagonal_form(A::QuantumObject, indices, spaces)
     isendomorphic(A.dimensions) || _non_endomorphic_dims_error("QuantumObject", A.dimensions)
 
-    S = SumSpace(reduce(vcat, [collect(_summands(s)) for s in spaces]))
+    S = SumSpace(spaces)
     P = QuantumObject(_block_permutation(A.data, indices), A.type, Dimensions(S, A.dimensions.to))
     B = QuantumObject(P.data * A.data * P.data', A.type, Dimensions(S, S))
-
-    block_sizes = length.(indices)
-    offsets = cumsum(vcat(0, block_sizes))
-    blocks = map(eachindex(indices)) do k
-        r = (offsets[k] + 1):offsets[k + 1]
-        return QuantumObject(B.data[r, r], A.type, Dimensions(spaces[k], spaces[k]))
-    end
-    return BlockDiagonalForm(B, P, blocks, block_sizes)
+    blocks = [direct_component(B, k, k) for k in eachindex(indices)]
+    return BlockDiagonalForm(B, P, blocks, length.(indices))
 end

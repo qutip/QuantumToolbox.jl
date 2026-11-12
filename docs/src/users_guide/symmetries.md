@@ -76,6 +76,16 @@ The direct sum is associative, so, as for the tensor product, a direct sum of di
 Space(2) ⊕ Space(3) ⊕ Space(4)
 ```
 
+An operator on a direct sum is a block matrix, which can also have blocks outside the diagonal. It can be built from a matrix of blocks, where `nothing` stands for a zero block:
+
+```@example symmetries
+B = direct_sum([sigmax() basis(2, 0) * basis(3, 1)'; nothing qeye(3)])
+```
+
+```@example symmetries
+direct_component(B, 1, 2)
+```
+
 The `dims` of the quantum objects are printed as `(to, from)`, where:
 - a Hilbert space is printed as its size (`3`), and a tensor product with `⊗` (`3⊗3`);
 - the Liouville space of the operators that take a ket of ``W`` to a ket of ``V`` (see below) is printed as `ℒ(V ← W)`;
@@ -162,7 +172,7 @@ The sectors of the Liouvillian also tell which states of ``V`` belong together: 
 L_odd
 ```
 
-`bdf_L.B` acts on the direct sum of all the blocks of ``\hat{\rho}``, `ℒ(5 ← 5) ⊕ ℒ(4 ← 4) ⊕ ℒ(5 ← 4) ⊕ ℒ(4 ← 5)`, since the direct sums are flattened. Which of them form a block of ``\mathcal{L}`` is given by `bdf_L.blocks`, and `bdf_L.B == direct_sum(bdf_L.blocks...)`:
+`bdf_L.B` acts on a direct sum with two levels: the outer `⊕` separates the two blocks of ``\mathcal{L}``, and the parentheses group the blocks of ``\hat{\rho}`` inside each of them. The dims of an operator do not say whether it is block diagonal (e.g., ``\hat{a}`` written in the basis of the sectors also acts on `5 ⊕ 4`, but it only has blocks outside the diagonal), so `block_diagonal_form` uses the outer level to keep track of its blocks: `direct_component(bdf_L.B, k, k) == bdf_L.blocks[k]`. Since the direct sum is associative, this nested direct sum is equal to the flat one, and `bdf_L.B == L_even ⊕ L_odd`:
 
 ```@example symmetries
 bdf_L.P
@@ -182,7 +192,7 @@ v = vecs[argmin(abs.(λ))]
 real(tr(ρ₊₊) / (tr(ρ₊₊) + tr(ρ₋₋)))
 ```
 
-The full density matrix is obtained by bringing the vector back to the original Liouville space with `bdf_L.P'`. Since `L_even` acts on the first two summands of the space of `bdf_L.B`, `direct_sum(S, 1 => v)` puts `v` there and zeros elsewhere:
+The full density matrix is obtained by bringing the vector back to the original Liouville space with `bdf_L.P'`. Since `L_even` acts on the first summand of the space of `bdf_L.B`, `direct_sum(S, 1 => v)` puts `v` there and zeros elsewhere:
 
 ```@example symmetries
 ρ = vec2mat(bdf_L.P' * direct_sum(bdf_L.B.dimensions.to, 1 => v))
