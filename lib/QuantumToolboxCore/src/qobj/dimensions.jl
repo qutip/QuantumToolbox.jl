@@ -322,6 +322,7 @@ function _summand_range(s::SumSpace, k::Int)
     offset = sum(get_size, s.spaces[1:(k - 1)]; init = 0)
     return (offset + 1):(offset + get_size(s.spaces[k]))
 end
+_summand_range(s::SumSpace, k::UnitRange{Int}) = first(_summand_range(s, first(k))):last(_summand_range(s, last(k)))
 
 ##########################################
 # Readable form of the spaces, used to show the `dims` of quantum objects

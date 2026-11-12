@@ -77,24 +77,33 @@ function _check_component(S::SumSpace, k::Int, s::AbstractSpace)
 end
 
 @doc raw"""
-    direct_component(v::QuantumObject, k::Int)
-    direct_component(A::QuantumObject, i::Int, j::Int)
+    direct_component(v::QuantumObject, k)
+    direct_component(A::QuantumObject, i, j)
 
 Return the `k`-th component of a [`Ket`](@ref) (or [`OperatorKet`](@ref)) `v` of a [`SumSpace`](@ref), or the block `(i, j)` of an [`Operator`](@ref) (or [`SuperOperator`](@ref)) `A` between two [`SumSpace`](@ref)s. The result has the dims of the corresponding summands.
 
+The indices can also be ranges of consecutive summands, e.g. `direct_component(A, 1:2, 1:2)`, in which case the result acts on the direct sum of these summands.
+
 See also [`direct_sum`](@ref).
 """
-function direct_component(v::QuantumObject{VType, <:Dimensions{<:SumSpace}}, k::Int) where {VType <: Union{Ket, OperatorKet}}
+function direct_component(
+        v::QuantumObject{VType, <:Dimensions{<:SumSpace}},
+        k::Union{Int, UnitRange{Int}},
+    ) where {VType <: Union{Ket, OperatorKet}}
     S = v.dimensions.to
-    return QuantumObject(v.data[_summand_range(S, k)], v.type, Dimensions(S.spaces[k], Space(1)))
+    return QuantumObject(v.data[_summand_range(S, k)], v.type, Dimensions(_summand_space(S, k), Space(1)))
 end
 
 function direct_component(
         A::QuantumObject{OpType, <:Dimensions{<:SumSpace, <:SumSpace}},
-        i::Int,
-        j::Int,
+        i::Union{Int, UnitRange{Int}},
+        j::Union{Int, UnitRange{Int}},
     ) where {OpType <: Union{Operator, SuperOperator}}
     to, from = A.dimensions.to, A.dimensions.from
     data = A.data[_summand_range(to, i), _summand_range(from, j)]
-    return QuantumObject(data, A.type, Dimensions(to.spaces[i], from.spaces[j]))
+    return QuantumObject(data, A.type, Dimensions(_summand_space(to, i), _summand_space(from, j)))
 end
+
+# the space of the k-th summand, or the direct sum of the summands in the range k
+_summand_space(S::SumSpace, k::Int) = S.spaces[k]
+_summand_space(S::SumSpace, k::UnitRange{Int}) = SumSpace(S.spaces[k])
