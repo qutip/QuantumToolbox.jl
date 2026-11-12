@@ -282,7 +282,7 @@ Its dimension is the sum of the dimensions of the summands, a vector of it is th
 
 A `SumSpace` is also created by [`direct_sum`](@ref) (or `⊕`) of spaces. It is used by [`direct_sum`](@ref) of quantum objects and by [`block_diagonal_form`](@ref QuantumToolbox.block_diagonal_form).
 
-The `dims` of a quantum object with a `SumSpace` are printed in a readable form: a [`Space`](@ref) as its size, a [`TensorSpace`](@ref) with `⊗`, a [`LiouvilleSpace`](@ref) of the operators with dims `(to, from)` as `ℒ(to ← from)`, and a `SumSpace` with `⊕`. For example, `ℒ(2⊗2 ← 2⊗2) ⊕ 3` is the direct sum of the Liouville space of the operators on two qubits and of a three-level system.
+The `dims` of a quantum object with a `SumSpace` are printed in a readable form: a [`Space`](@ref) as its size, a [`TensorSpace`](@ref) with `⊗`, a [`LiouvilleSpace`](@ref) of the operators with dims `(to, from)` as `ℒ(to ← from)`, and a `SumSpace` with `⊕`. For example, `ℒ(2⊗2 ← 2⊗2) ⊕ ℒ(3 ← 3)` is the direct sum of the Liouville spaces of the operators on two qubits and on a three-level system.
 
 # Examples
 
