@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `default_eltype` to `QuantumToolbox.settings`, which sets the element type of the quantum objects created without specifying it, e.g., `destroy(N)` or `fock(N, j)`. Add also `show_eltype_warning`, which warns (once) when a quantum object is created with an element type more general than `default_eltype`. ([#803])
 - Rename `ProgressMeterKWARGS` in `QuantumToolbox.settings` to `progressmeter_kwargs`. The old name is deprecated. ([#803])
 - Fix type-instability of the progress bar, which also allows a custom `output` stream in `progressmeter_kwargs`. ([#803])
+- Add `QuantumInterface.jl` extension, which extends its `tensor`, `⊗`, `expect`, `variance`, `fidelity`, `entropy_vn`, `ptrace`, and `commutator` for `QuantumObject`. This allows resolving the name conflicts with the packages built on `QuantumInterface.jl` (e.g., `QuantumOptics.jl` and `SecondQuantizedAlgebra.jl`) by explicitly importing these functions from one of them. Note that `QuantumInterface.ptrace` follows the convention of `QuantumInterface.jl`, namely the given indices are the subsystems to trace out. The functions exported by `QuantumToolbox` are not changed. ([#805])
 
 ## [v0.51.1]
 Release date: 2026-10-16
@@ -636,3 +637,4 @@ Release date: 2024-11-13
 [#795]: https://github.com/qutip/QuantumToolbox.jl/issues/795
 [#797]: https://github.com/qutip/QuantumToolbox.jl/issues/797
 [#803]: https://github.com/qutip/QuantumToolbox.jl/issues/803
+[#805]: https://github.com/qutip/QuantumToolbox.jl/issues/805

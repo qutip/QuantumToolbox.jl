@@ -2,6 +2,7 @@
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 ParallelTestRunner = "d3525ed8-44d0-4b2c-a655-542cee43accc"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+QuantumInterface = "5717a53b-5d69-4fa3-b976-0bf2f97ca1e5"
 QuantumToolboxCore = "7fbe806f-1706-4992-b132-86e53e431434"
 QuantumToolboxVisual = "f2591f1c-fdd7-47fd-9d44-967f3caec145"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -19,4 +20,5 @@ QuantumToolboxVisual = {path = "../lib/QuantumToolboxVisual"}
 [compat]
 ParallelTestRunner = "2"
 Pkg = "1"
+QuantumInterface = "0.4"
 Test = "1"
