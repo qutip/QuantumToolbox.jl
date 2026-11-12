@@ -5,20 +5,8 @@ function _check_correlation_time_list(tlist::AbstractVector)
         throw(ArgumentError("The time list for calculating correlation function must contain the element `0`"))
     all(>=(0), tlist) ||
         throw(ArgumentError("All the elements in the time list for calculating correlation function must be positive."))
+    issorted(tlist) || throw(ArgumentError("The time list for calculating correlation function must be sorted."))
     return nothing
-end
-
-# Truncates each trajectory's tspan to (τlist[1], τlist[n_compute])
-# so a trajectory is integrated only up to τlist[n_compute] instead of the full τlist.
-function _correlation_truncated_prob_func(prob, ctx, iter, τlist)
-    u0, n_compute = iter[ctx.sim_id]
-    f = _copy_for_trajectory(prob.f.f)
-    tspan = (τlist[1], τlist[n_compute])
-    if haskey(prob.kwargs, :callback)
-        return remake(prob, f = f, u0 = u0, tspan = tspan, callback = deepcopy(prob.kwargs[:callback]))
-    else
-        return remake(prob, f = f, u0 = u0, tspan = tspan)
-    end
 end
 
 @doc raw"""
@@ -69,11 +57,10 @@ function correlation_3op_2t(
     # check tlist, τlist, and max_t_plus_tau
     _check_correlation_time_list(tlist)
     _check_correlation_time_list(τlist)
-    isnothing(max_t_plus_tau) || (max_t_plus_tau >= 0) || throw(ArgumentError("`max_t_plus_tau` must be `nothing` or a non-negative number."))
+    max_time = something(max_t_plus_tau, Inf)
+    max_time >= 0 || throw(ArgumentError("`max_t_plus_tau` must be `nothing` or a non-negative number."))
 
     matrix_form_val = makeVal(matrix_form)
-    is_matrix_form = getVal(matrix_form_val)
-
     L = liouvillian(H, c_ops; matrix_form = matrix_form_val)
     if ψ0 isa Nothing
         ψ0 = steadystate(L)
@@ -84,55 +71,36 @@ function correlation_3op_2t(
     check_mul_dimensions(A, ψ0)
     check_dimensions(A, B, C)
 
-    # generate OperatorKet for non-matrix form, so sol.states will store OperatorKet (skip redundant reshaping)
-    ρ0 = is_matrix_form ? ket2dm(ψ0) : mat2vec(ket2dm(ψ0))
+    # number of τ values with t + τ ≤ max_time for each t (same as QuTiP's searchsorted(..., side='right'))
+    # tlist is sorted, so the t values without any τ left (t > max_time) are all at the end and are skipped
+    nτ_list = [searchsortedlast(τlist, max_time - t) for t in tlist]
+    tlist_kept = tlist[nτ_list .> 0]
+
+    ρ0 = ket2dm(ψ0)
+    kwargs2 = merge((saveat = collect(tlist_kept),), (; kwargs...))
+
+    # note that doesn't need to do the first mesolve if tlist_kept == [0] (for 2op_1t and 3op_1t cases)
+    ρt_list =
+        (tlist_kept == [0]) ? [ρ0] : mesolve(L, ρ0, tlist_kept; alg, progress_bar, matrix_form = matrix_form_val, kwargs2...).states
+
+    # every t is one trajectory of a single mesolve_map ensemble, evolving C ρ(t) A over t + τ and recording ⟨B⟩
+    probs = [
+        mesolveProblem(L, C * ρt_list[i] * A, t .+ τlist[1:nτ_list[i]]; e_ops = [B], progress_bar = Val(false), matrix_form = matrix_form_val, kwargs...)
+            for (i, t) in enumerate(tlist_kept)
+    ]
+
+    # each problem already has its own e_ops callback, so only the Liouvillian (its coefficients are updated in place) is copied
+    _prob_func(_, ctx) = (prob = probs[ctx.sim_id].prob; remake(prob, f = _copy_for_trajectory(prob.f.f)))
+    sols = mesolve_map(first(probs), probs, alg, ensemblealg; prob_func = _prob_func, safetycopy = false, progress_bar)
 
     # make the output correlation Matrix align with QuTiP
     # 1st dimension corresponds to tlist
-    # 2nd dimension corresponds to τlist
-    T = _complex_float_type(ρ0)
-    corr_mat = zeros(T, length(tlist), length(τlist))
-
-    # n_compute: number of τ values with t + τ ≤ max_t_plus_tau, i.e., τ ≤ max_t_plus_tau - t
-    # τlist is sorted (enforced by mesolve), so this is the same searchsorted(..., side='right') QuTiP uses
-    # when max_t_plus_tau is nothing, it defaults to the full τlist
-    n_compute_list =
-        isnothing(max_t_plus_tau) ? fill(length(τlist), length(tlist)) :
-        [searchsortedlast(τlist, max_t_plus_tau - t) for t in tlist]
-
-    # n_compute == 0 means t itself already exceeds max_t_plus_tau (since τ >= 0), so there is no valid τ at all
-    needs_solving = n_compute_list .> 0
-    if any(needs_solving)
-        tlist_kept = tlist[needs_solving]
-        kept_n_compute = n_compute_list[needs_solving]
-        kwargs2 = merge((saveat = collect(tlist_kept),), (; kwargs...))
-
-        # note that doesn't need to do the first mesolve if tlist_kept == [0] (for 2op_1t and 3op_1t cases)
-        ρt_list =
-            (tlist_kept == [0]) ? [ρ0] :
-            mesolve(L, ρ0, tlist_kept; alg, progress_bar, matrix_form = matrix_form_val, kwargs2...).states
-
-        C_A = cache_operator(sprepost(C, A; matrix_form = matrix_form_val), ρt_list[1])
-        CρA_list = map(ρt -> C_A * ρt, ρt_list)
-
-        prob = mesolveProblem(L, CρA_list[1], τlist, nothing; e_ops = [B], progress_bar = Val(false), matrix_form = matrix_form_val, kwargs...)
-        iter = collect(zip([ρ.data for ρ in CρA_list], kept_n_compute))
-        sols = mesolve_map(
-            prob,
-            iter,
-            alg,
-            ensemblealg;
-            prob_func = (p, ctx) -> _correlation_truncated_prob_func(p, ctx, iter, τlist),
-            progress_bar = progress_bar,
-        )
-
-        for (k, i) in enumerate(findall(needs_solving))
-            n = kept_n_compute[k]
-            corr_mat[i, 1:n] .= sols[k].expect[1, 1:n] # corr_mat[i, n+1:end] stays 0 (already initialized)
-        end
+    # 2nd dimension corresponds to τlist (the entries with t + τ > max_t_plus_tau are left as 0)
+    corr = zeros(eltype(first(sols).expect), length(tlist), length(τlist))
+    for (i, sol) in enumerate(sols)
+        corr[i, 1:nτ_list[i]] .= @view sol.expect[1, :]
     end
-
-    return corr_mat
+    return corr
 end
 
 @doc raw"""

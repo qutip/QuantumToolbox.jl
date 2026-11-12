@@ -13,6 +13,7 @@ using QuantumToolbox
     ρss = steadystate(H, c_ops)
 
     # test correlation_3op_2t (calculate g² correlations)
+    # also test matrix_form and max_t_plus_tau options
     Nt = 10
     Nτ = 8
     tlist = range(0, Nt, length = Nt)
@@ -40,6 +41,20 @@ using QuantumToolbox
             end
         end
     end
+
+    # check for time-dependent Hamiltonian
+    # reference: the τ-evolution starting from t must run over t .+ τlist
+    H_t = QobjEvo((H, (a + a', (p, t) -> p[1] * cos(t))))
+    L_t = liouvillian(H_t, c_ops)
+    params = [0.5]
+    ρ0 = fock_dm(N, 0)
+    tlist_td = range(0, 4, length = 5)
+    τlist_td = range(0, 3, length = 7)
+    ρ_vec_t = mesolve(L_t, mat2vec(ρ0), tlist_td; params, saveat = tlist_td, progress_bar = Val(false)).states
+    C_A = sprepost(C, A)
+    ref = reduce(vcat, [transpose(mesolve(L_t, C_A * ρ_vec_t[i], τlist_td .+ t; params, e_ops = [a' * a], progress_bar = Val(false)).expect[1, :]) for (i, t) in enumerate(tlist_td)])
+    corr_td = correlation_3op_2t(L_t, ρ0, tlist_td, τlist_td, nothing, A, B, C; params, progress_bar = Val(false))
+    @test all(isapprox.(corr_td, ref; atol = 1.0e-5))
 
     # consistency check between correlation function and spectrum
     t_l = range(0, 333 * π, length = 1000)
