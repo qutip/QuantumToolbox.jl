@@ -9,7 +9,8 @@ explicitly importing the functions from one of them (e.g., `using SecondQuantize
 This extension does NOT change the functions exported by QuantumToolbox. It only defines the QuantumInterface.jl
 functions for the QuantumToolbox types, so that they still work on QuantumObjects after such an explicit import.
 
-Note that `tensor` and `⊗` of QuantumInterface.jl (v0.4.4 and above) are the ones owned by TensorCore.jl.
+Note that `tensor` and `⊗` of QuantumInterface.jl (v0.4.4 and above) are the ones owned by TensorCore.jl, and that `⊕`
+of QuantumInterface.jl is a synonym of its `directsum`.
 
 The following conflicting functions are not extended on purpose:
 - `basis`, `displace`, `squeeze`: the QuantumToolbox methods only take numbers as arguments, so it would be type piracy.
@@ -21,6 +22,8 @@ import QuantumInterface
 
 QuantumInterface.tensor(A::AbstractQuantumObject, B::AbstractQuantumObject...) = kron(A, B...)
 QuantumInterface.tensor(A::Vector{<:AbstractQuantumObject}) = kron(A)
+
+QuantumInterface.directsum(A::QuantumObject, B::QuantumObject...) = direct_sum(A, B...)
 
 QuantumInterface.expect(O::AbstractQuantumObject, ψ) = expect(O, ψ)
 QuantumInterface.expect(O::AbstractVector{<:AbstractQuantumObject}, ψ) = expect(O, ψ)

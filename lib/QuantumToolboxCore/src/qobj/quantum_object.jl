@@ -143,7 +143,7 @@ function Base.show(
         "\nQuantum Object:   type=",
         QO.type,
         "   dims=",
-        QO.dims,
+        _get_dims_string(QO.dimensions),
         "   size=",
         size(op_data),
     )
@@ -157,7 +157,7 @@ function Base.show(io::IO, QO::QuantumObject)
         "\nQuantum Object:   type=",
         QO.type,
         "   dims=",
-        QO.dims,
+        _get_dims_string(QO.dimensions),
         "   size=",
         size(op_data),
         "   ishermitian=",

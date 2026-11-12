@@ -64,6 +64,7 @@ const PAGES = [
         "Intensive parallelization on a Cluster" => "users_guide/cluster.md",
         "Hierarchical Equations of Motion" => "users_guide/HEOM.md",
         "Solving for Steady-State Solutions" => "users_guide/steadystate.md",
+        "Symmetries and Block Diagonalization" => "users_guide/symmetries.md",
         "Two-time correlation functions" => "users_guide/two_time_corr_func.md",
         "Plotting on the Bloch Sphere" => "users_guide/plotting_the_bloch_sphere.md",
         "Visualization of quantum states and operators" => "users_guide/visualization.md",

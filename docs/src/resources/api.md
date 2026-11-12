@@ -37,6 +37,7 @@ AbstractSuperSpace
 Space
 TensorSpace
 LiouvilleSpace
+SumSpace
 EnrSpace
 enr_state_dictionaries
 ```
@@ -132,6 +133,8 @@ to_dense
 to_sparse
 vec2mat
 mat2vec
+direct_sum
+direct_component
 ```
 
 ### [Generate states and operators](@id doc-API:Generate-states-and-operators)
@@ -204,6 +207,7 @@ matrix_element
 unit
 tensor
 ⊗
+⊕
 qeye
 vector_to_operator
 operator_to_vector
