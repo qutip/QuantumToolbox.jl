@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
+
+
+## [v0.52.0]
+Release date: 2026-11-13
+
 - Add `default_eltype` to `QuantumToolbox.settings`, which sets the element type of the quantum objects created without specifying it, e.g., `destroy(N)` or `fock(N, j)`. Add also `show_eltype_warning`, which warns (once) when a quantum object is created with an element type more general than `default_eltype`. ([#803])
 - Rename `ProgressMeterKWARGS` in `QuantumToolbox.settings` to `progressmeter_kwargs`. The old name is deprecated. ([#803])
 - Fix type-instability of the progress bar, which also allows a custom `output` stream in `progressmeter_kwargs`. ([#803])
@@ -15,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The `τ`-evolution starting from every `t` is now solved with `mesolve_map` in parallel.
   - `matrix_form` allows matrix form support instead of vectorizing the density matrices. 
   - Add keyword argument `max_t_plus_tau` to align with `qutip` (python).
+- [lib] Bump `QuantumToolboxCore` version to `v0.4.0`. ([#807])
+- [lib] Bump `QuantumToolboxVisual` version to `v0.3.0`. ([#807])
 
 ## [v0.51.1]
 Release date: 2026-10-16
@@ -456,6 +463,7 @@ Release date: 2024-11-13
 [v0.50.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.50.0
 [v0.51.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.51.0
 [v0.51.1]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.51.1
+[v0.52.0]: https://github.com/qutip/QuantumToolbox.jl/releases/tag/v0.52.0
 [#86]: https://github.com/qutip/QuantumToolbox.jl/issues/86
 [#139]: https://github.com/qutip/QuantumToolbox.jl/issues/139
 [#271]: https://github.com/qutip/QuantumToolbox.jl/issues/271
@@ -643,3 +651,4 @@ Release date: 2024-11-13
 [#801]: https://github.com/qutip/QuantumToolbox.jl/issues/801
 [#803]: https://github.com/qutip/QuantumToolbox.jl/issues/803
 [#805]: https://github.com/qutip/QuantumToolbox.jl/issues/805
+[#807]: https://github.com/qutip/QuantumToolbox.jl/issues/807
