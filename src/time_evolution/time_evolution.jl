@@ -4,7 +4,9 @@ export average_states, average_expect, std_expect
 
 export liouvillian_floquet
 
-default_ode_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-8), reltol = _float_type(T)(1.0e-6), save_everystep = false, save_end = true)
+# `save_everystep` is left to its default (`false`, since `saveat` is never empty): setting it explicitly
+# gives wrong gradients with the dense adjoints of SciMLSensitivity.jl (SciML/SciMLSensitivity.jl#1721)
+default_ode_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-8), reltol = _float_type(T)(1.0e-6), save_end = true)
 default_sde_solver_options(::Type{T}) where {T} = (abstol = _float_type(T)(1.0e-3), reltol = _float_type(T)(2.0e-3), save_everystep = false, save_end = true)
 const COL_TIMES_WHICH_INIT_SIZE = 200
 

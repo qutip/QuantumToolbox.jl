@@ -42,8 +42,6 @@ function my_f_mesolve(p, sensealg)
 
     return real(expect(ad_a, sol.states[end]))
 end
-const my_f_mesolve_bsa_enzyme = Base.Fix{2}(my_f_mesolve, BacksolveAdjoint(autojacvec = EnzymeVJP()))
-const my_f_mesolve_bsa_mooncake = Base.Fix{2}(my_f_mesolve, BacksolveAdjoint(autojacvec = MooncakeVJP()))
 
 function my_f_mesolve_assume_non_herm(p, sensealg)
     sol = mesolve(
@@ -57,8 +55,9 @@ function my_f_mesolve_assume_non_herm(p, sensealg)
 
     return real(expect(ad_a, sol.states[end]))
 end
-const my_f_mesolve_assume_non_herm_bsa_enzyme = Base.Fix{2}(my_f_mesolve_assume_non_herm, BacksolveAdjoint(autojacvec = EnzymeVJP()))
-const my_f_mesolve_assume_non_herm_bsa_mooncake = Base.Fix{2}(my_f_mesolve_assume_non_herm, BacksolveAdjoint(autojacvec = MooncakeVJP()))
+
+# Continuous adjoint methods of SciMLSensitivity.jl
+const adjoint_methods = (BacksolveAdjoint, InterpolatingAdjoint, GaussAdjoint)
 
 # Analytical solution
 n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
@@ -70,10 +69,6 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
     params = [Δ, F, γ]
 
     my_f_mesolve_direct(params)
-    my_f_mesolve_bsa_enzyme(params)
-    my_f_mesolve_bsa_mooncake(params)
-    my_f_mesolve_assume_non_herm_bsa_enzyme(params)
-    my_f_mesolve_assume_non_herm_bsa_mooncake(params)
 
     grad_exact_cache = Mooncake.prepare_gradient_cache(splat(n_ss), params)
     grad_exact = Mooncake.value_and_gradient!!(grad_exact_cache, splat(n_ss), params)[2][2]
@@ -83,33 +78,19 @@ n_ss(Δ, F, γ) = abs2(F / (Δ + 1im * γ / 2))
         @test grad_qt ≈ grad_exact atol = 1.0e-6
     end
 
-    @testset "Mooncake.jl" begin
-        grad_cache1 = Mooncake.prepare_gradient_cache(my_f_mesolve_bsa_mooncake, params)
-        # grad_cache2 = Mooncake.prepare_gradient_cache(my_f_mesolve_assume_non_herm_bsa_mooncake, params)
-        _, grad_mooncake1 = Mooncake.value_and_gradient!!(grad_cache1, my_f_mesolve_bsa_mooncake, params)
-        @test grad_mooncake1[2] ≈ grad_exact atol = 1.0e-6
-        # _, grad_mooncake2 = Mooncake.value_and_gradient!!(grad_cache2, my_f_mesolve_assume_non_herm_bsa_mooncake, params)
-        # @test grad_mooncake2[2] ≈ grad_exact atol = 1.0e-6
+    @testset "Mooncake.jl ($(nameof(adjoint)))" for adjoint in adjoint_methods
+        f = Base.Fix{2}(my_f_mesolve, adjoint(autojacvec = MooncakeVJP()))
+        grad_cache = Mooncake.prepare_gradient_cache(f, params)
+        _, grad_mooncake = Mooncake.value_and_gradient!!(grad_cache, f, params)
+        @test grad_mooncake[2] ≈ grad_exact atol = 1.0e-6
     end
 
-    @testset "Enzyme.jl" begin
-        dparams1 = Enzyme.make_zero(params)
-        Enzyme.autodiff(
-            Enzyme.set_runtime_activity(Enzyme.Reverse),
-            my_f_mesolve_bsa_enzyme,
-            Active,
-            Duplicated(params, dparams1),
-        )[1]
-
-        dparams2 = Enzyme.make_zero(params)
-        Enzyme.autodiff(
-            Enzyme.set_runtime_activity(Enzyme.Reverse),
-            my_f_mesolve_assume_non_herm_bsa_enzyme,
-            Active,
-            Duplicated(params, dparams2),
-        )[1]
-
-        @test dparams1 ≈ grad_exact atol = 1.0e-6
-        @test dparams2 ≈ grad_exact atol = 1.0e-6
+    @testset "Enzyme.jl ($(nameof(adjoint)))" for adjoint in adjoint_methods
+        for my_f in (my_f_mesolve, my_f_mesolve_assume_non_herm)
+            f = Base.Fix{2}(my_f, adjoint(autojacvec = EnzymeVJP()))
+            dparams = Enzyme.make_zero(params)
+            Enzyme.autodiff(Enzyme.set_runtime_activity(Enzyme.Reverse), f, Active, Duplicated(params, dparams))
+            @test dparams ≈ grad_exact atol = 1.0e-6
+        end
     end
 end
