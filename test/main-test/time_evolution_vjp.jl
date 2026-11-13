@@ -2,6 +2,7 @@ using Test
 using QuantumToolbox
 using LinearAlgebra
 using SciMLBase: SciMLBase
+using SciMLOperators: TensorProductOperator, MatrixOperator
 
 # Reference vector-Jacobian products of the (linear) right-hand side f(du, u, p, t):
 # - state: J(p, t)ᴴ λ, with J built column by column from f applied to the basis states
@@ -37,10 +38,17 @@ function test_analytic_vjp(prob; t = 0.37)
     dλ = similar(u)
     f.vjp(dλ, λ, u, p, t)
     @test dλ ≈ reference_vjp(f, λ, u, p, t)
+    # the adjoint methods of SciMLSensitivity.jl pass λ and dλ as vectors, also for matrix states
+    dλ_vec = similar(vec(u))
+    f.vjp(dλ_vec, vec(λ), u, p, t)
+    @test dλ_vec ≈ vec(dλ)
     if f.vjp_p !== nothing && p isa AbstractVector
         dp = zero(p)
         f.vjp_p(dp, λ, u, p, t)
         @test dp ≈ reference_param_vjp(f, λ, u, p, t) rtol = 1.0e-6 atol = 1.0e-8
+        dp_vec = zero(p)
+        f.vjp_p(dp_vec, vec(λ), u, p, t)
+        @test dp_vec ≈ dp
     end
     return nothing
 end
@@ -78,9 +86,16 @@ end
         prob = mesolveProblem(L, ψ0, tlist; params = params, progress_bar = Val(false)).prob
         test_analytic_vjp(prob)
 
-        # whichever VJP the matrix form gets must be correct
+        # matrix form: the density matrix is also multiplied from the right
         prob = mesolveProblem(H, ψ0, tlist, c_ops; params = params, matrix_form = Val(true), progress_bar = Val(false)).prob
-        prob.f.vjp === nothing || test_analytic_vjp(prob)
+        @test prob.u0 isa AbstractMatrix
+        @test prob.f.vjp isa QuantumToolbox.LinearOperatorVJP
+        @test prob.f.vjp_p isa QuantumToolbox.LinearOperatorParamVJP
+        test_analytic_vjp(prob)
+
+        L = liouvillian(H, c_ops; assume_hermitian = Val(false), matrix_form = Val(true))
+        prob = mesolveProblem(L, ψ0, tlist; params = params, matrix_form = Val(true), progress_bar = Val(false)).prob
+        test_analytic_vjp(prob)
     end
 
     @testset "time-independent operators" begin
@@ -105,7 +120,12 @@ end
         @test prob.f.vjp === nothing
         @test prob.f.vjp_p === nothing
 
+        # products of operators are supported
+        prob = sesolveProblem(QobjEvo(a' * a) + QobjEvo(a, coef_drive) * QobjEvo(a', coef_decay), ψ0, tlist; params = params, progress_bar = Val(false)).prob
+        @test prob.f.vjp isa QuantumToolbox.LinearOperatorVJP
+        test_analytic_vjp(prob)
+
         # unsupported operator structures are left untouched
-        @test QuantumToolbox._linear_terms(QobjEvo(a, coef_drive).data * QobjEvo(a', coef_drive).data) === nothing
+        @test QuantumToolbox._linear_terms(TensorProductOperator(MatrixOperator(a.data), MatrixOperator(a.data))) === nothing
     end
 end

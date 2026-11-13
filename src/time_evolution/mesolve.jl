@@ -141,7 +141,7 @@ function mesolveProblem(
 
     tspan = (tlist[1], tlist[end])
 
-    f = _time_evolution_ode_function(L, params, makeVal(inplace))
+    f = _time_evolution_ode_function(L, ρ0, params, makeVal(inplace))
     prob = ODEProblem{getVal(inplace), FullSpecialize}(f, ρ0, tspan, params; kwargs4...)
 
     return TimeEvolutionProblem(prob, tlist, states_type, dimensions)

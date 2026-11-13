@@ -78,6 +78,7 @@ import SciMLOperators:
     ScalarOperator,
     ScaledOperator,
     AddedOperator,
+    ComposedOperator,
     IdentityOperator
 import LinearSolve:
     LinearSolve, SciMLLinearSolveAlgorithm, KrylovJL_MINRES, KrylovJL_GMRES, UMFPACKFactorization, LUFactorization, OperatorAssumptions
