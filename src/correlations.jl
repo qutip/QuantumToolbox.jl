@@ -76,7 +76,8 @@ function correlation_3op_2t(
     nτ_list = [searchsortedlast(τlist, max_time - t) for t in tlist]
     tlist_kept = tlist[nτ_list .> 0]
 
-    ρ0 = ket2dm(ψ0)
+    # generate OperatorKet for non-matrix form, so sol.states will store OperatorKet (skip redundant reshaping)
+    ρ0 = getVal(matrix_form_val) ? ket2dm(ψ0) : mat2vec(ket2dm(ψ0))
     kwargs2 = merge((saveat = collect(tlist_kept),), (; kwargs...))
 
     # note that doesn't need to do the first mesolve if tlist_kept == [0] (for 2op_1t and 3op_1t cases)
@@ -84,8 +85,10 @@ function correlation_3op_2t(
         (tlist_kept == [0]) ? [ρ0] : mesolve(L, ρ0, tlist_kept; alg, progress_bar, matrix_form = matrix_form_val, kwargs2...).states
 
     # every t is one trajectory of a single mesolve_map ensemble, evolving C ρ(t) A over t + τ and recording ⟨B⟩
+    # cache sprepost(C, A) to avoid repeated calls in the inner loop of mesolve_map
+    C_A = cache_operator(sprepost(C, A; matrix_form = matrix_form_val), first(ρt_list))
     probs = [
-        mesolveProblem(L, C * ρt_list[i] * A, t .+ τlist[1:nτ_list[i]]; e_ops = [B], progress_bar = Val(false), matrix_form = matrix_form_val, kwargs...)
+        mesolveProblem(L, C_A * ρt_list[i], t .+ τlist[1:nτ_list[i]]; e_ops = [B], progress_bar = Val(false), matrix_form = matrix_form_val, kwargs...)
             for (i, t) in enumerate(tlist_kept)
     ]
 
