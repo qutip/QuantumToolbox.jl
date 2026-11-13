@@ -32,6 +32,8 @@ _coef_value(c::ScalarOperator, u, p, t) = c.update_func(c.val, u, p, t)
 _coef_value(c::SciMLOperators.AddedScalarOperator, u, p, t) = sum(map(op -> _coef_value(op, u, p, t), c.ops))
 _coef_value(c::SciMLOperators.ComposedScalarOperator, u, p, t) = prod(map(op -> _coef_value(op, u, p, t), c.ops))
 _coef_value(c::SciMLOperators.InvertedScalarOperator, u, p, t) = inv(_coef_value(c.λ, u, p, t))
+_coef_value(c::SciMLOperators.AbstractSciMLScalarOperator, u, p, t) =
+    SciMLOperators.concretize(SciMLOperators.update_coefficients(c, u, p, t))
 
 # The state VJP: dλ = Σₖ conj(cₖ) Aₖᴴ λ
 struct LinearOperatorVJP{TT <: Tuple}
