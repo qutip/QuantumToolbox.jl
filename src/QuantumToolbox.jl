@@ -91,6 +91,7 @@ import DiffEqNoiseProcess: RealWienerProcess!, RealWienerProcess
 import ArrayInterface: allowed_setindex!
 import FFTW: fft, ifft, fftfreq, fftshift
 import FillArrays: Eye
+import ForwardDiff
 import Graphs: connected_components, DiGraph
 import IncompleteLU: ilu
 import ProgressMeter: Progress, next!
@@ -107,6 +108,7 @@ include("block_diagonal_form.jl")
 
 ## time evolution
 include("time_evolution/time_evolution.jl")
+include("time_evolution/adjoint_vjp.jl")
 include("time_evolution/callback_helpers/callback_helpers.jl")
 include("time_evolution/callback_helpers/sesolve_callback_helpers.jl")
 include("time_evolution/callback_helpers/mesolve_callback_helpers.jl")

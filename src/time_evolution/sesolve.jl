@@ -89,7 +89,8 @@ function sesolveProblem(
 
     tspan = (tlist[1], tlist[end])
 
-    prob = ODEProblem{getVal(inplace), FullSpecialize}(U, ψ0_vec, tspan, params; kwargs4...)
+    f = _time_evolution_ode_function(U, params, makeVal(inplace))
+    prob = ODEProblem{getVal(inplace), FullSpecialize}(f, ψ0_vec, tspan, params; kwargs4...)
 
     return TimeEvolutionProblem(prob, tlist, states_type, dimensions)
 end
