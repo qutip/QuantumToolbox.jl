@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-
+- Fix wrong gradients of `sesolve` and `mesolve` with the adjoint methods of `SciMLSensitivity.jl` other than `BacksolveAdjoint` (e.g. `InterpolatingAdjoint` and `GaussAdjoint`), by no longer setting `save_everystep = false`, which is already the default. ([#808])
 
 ## [v0.52.0]
 Release date: 2026-11-13
@@ -652,3 +652,4 @@ Release date: 2024-11-13
 [#803]: https://github.com/qutip/QuantumToolbox.jl/issues/803
 [#805]: https://github.com/qutip/QuantumToolbox.jl/issues/805
 [#807]: https://github.com/qutip/QuantumToolbox.jl/issues/807
+[#808]: https://github.com/qutip/QuantumToolbox.jl/issues/808
